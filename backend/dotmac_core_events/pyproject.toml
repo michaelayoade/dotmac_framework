@@ -1,0 +1,273 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dotmac-core-events"
+version = "1.0.0"
+description = "Event streaming platform with multi-tenant safety, observability, and extensible adapters"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Dotmac Platform Team", email = "platform@dotmac.com"}
+]
+maintainers = [
+    {name = "Dotmac Platform Team", email = "platform@dotmac.com"}
+]
+keywords = [
+    "events",
+    "streaming",
+    "kafka",
+    "redis",
+    "microservices",
+    "async",
+    "fastapi",
+    "multi-tenant",
+    "observability"
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Distributed Computing",
+    "Framework :: FastAPI",
+    "Framework :: AsyncIO",
+]
+requires-python = ">=3.8"
+dependencies = [
+    # Core dependencies
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "pydantic>=2.0.0",
+    "structlog>=23.0.0",
+    
+    # HTTP client
+    "httpx>=0.25.0",
+    
+    # JSON Schema validation
+    "jsonschema>=4.19.0",
+    
+    # Async utilities
+    "asyncio-mqtt>=0.13.0",
+    
+    # Configuration
+    "pyyaml>=6.0",
+    
+    # Optional database support
+    "sqlalchemy[asyncio]>=2.0.0",
+    "asyncpg>=0.29.0",
+    "alembic>=1.12.0",
+]
+
+[project.optional-dependencies]
+redis = [
+    "redis[hiredis]>=5.0.0",
+]
+kafka = [
+    "aiokafka>=0.10.0",
+]
+all = [
+    "redis[hiredis]>=5.0.0",
+    "aiokafka>=0.10.0",
+]
+dev = [
+    # Testing
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.11.0",
+    "factory-boy>=3.2.0",
+    
+    # Code quality
+    "ruff>=0.1.6",
+    "black>=23.9.0",
+    "mypy>=1.6.0",
+    
+    # Security
+    "bandit[toml]>=1.7.5",
+    "safety>=2.3.0",
+    "pip-audit>=2.6.0",
+    
+    # Documentation
+    "mkdocs>=1.5.0",
+    "mkdocs-material>=9.0.0",
+    "mkdocstrings[python]>=0.23.0",
+    
+    # Pre-commit hooks
+    "pre-commit>=3.5.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/dotmac/dotmac-core-events"
+Documentation = "https://dotmac-core-events.readthedocs.io/"
+Repository = "https://github.com/dotmac/dotmac-core-events.git"
+"Bug Tracker" = "https://github.com/dotmac/dotmac-core-events/issues"
+Changelog = "https://github.com/dotmac/dotmac-core-events/blob/main/CHANGELOG.md"
+
+[project.scripts]
+dotmac-events = "dotmac_core_events.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["dotmac_core_events*"]
+exclude = ["tests*", "docs*"]
+
+[tool.setuptools.package-data]
+dotmac_core_events = ["py.typed"]
+
+# Black configuration
+[tool.black]
+line-length = 88
+target-version = ['py38', 'py39', 'py310', 'py311', 'py312']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+# Ruff configuration - ENFORCES COMPLEXITY RULES
+[tool.ruff]
+target-version = "py38"
+line-length = 88
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "UP", # pyupgrade
+    "ARG001", # unused-function-argument
+    "SIM", # flake8-simplify
+    "TCH", # flake8-type-checking
+    "TID", # flake8-tidy-imports
+    "Q", # flake8-quotes
+    "PLE", # pylint errors
+    "PLR", # pylint refactor
+    "PLW", # pylint warnings
+    "C901", # complexity - NOW ENFORCED
+]
+ignore = [
+    "E501",  # line too long, handled by black
+    "B008",  # do not perform function calls in argument defaults
+]
+
+# COMPLEXITY RULES - NO LONGER IGNORED
+
+[tool.ruff.lint]
+select = []
+ignore = []
+unfixable = ["B"]
+[tool.ruff.lint.pylint]
+max-args = 8
+max-branches = 12
+max-returns = 6
+max-statements = 50
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*" = ["PLR2004", "S101", "TID252", "C901", "PLR0913", "PLR0915"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["dotmac_core_events"]
+known-third-party = ["fastapi", "pydantic", "structlog", "httpx", "redis", "aiokafka"]
+
+# MyPy configuration - Standardized strict settings
+[tool.mypy]
+python_version = "3.8"
+check_untyped_defs = true
+disallow_any_generics = true
+disallow_incomplete_defs = true
+disallow_untyped_decorators = true
+disallow_untyped_defs = true
+ignore_missing_imports = false
+no_implicit_optional = true
+show_error_codes = true
+strict_equality = true
+warn_redundant_casts = true
+warn_return_any = true
+warn_unreachable = true
+warn_unused_configs = true
+warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+module = [
+    "redis.*",
+    "aiokafka.*",
+    "kafka.*",
+    "sqlalchemy.*",
+    "alembic.*",
+    "structlog.*",
+]
+ignore_missing_imports = true
+
+# Pytest configuration - Standardized with coverage enforcement
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--cov=dotmac_core_events",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--cov-report=xml",
+    "--cov-fail-under=80",
+]
+testpaths = ["tests"]
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests", 
+    "slow: Slow tests",
+    "redis: Tests requiring Redis",
+    "kafka: Tests requiring Kafka",
+]
+asyncio_mode = "auto"
+
+# Coverage configuration
+[tool.coverage.run]
+source = ["dotmac_core_events"]
+omit = [
+    "*/tests/*",
+    "*/test_*.py",
+    "*/__pycache__/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+fail_under = 80
+
+# Bandit security linting
+[tool.bandit]
+exclude_dirs = ["tests", "test"]
+skips = ["B101"]  # Allow assert in tests
+

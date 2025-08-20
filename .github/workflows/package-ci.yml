@@ -1,0 +1,103 @@
+name: Package CI - Individual Testing
+
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        description: 'Package to test (e.g., dotmac_core_events)'
+        required: true
+        type: choice
+        options:
+          - dotmac_core_events
+          - dotmac_core_ops
+          - dotmac_platform
+          - dotmac_api_gateway
+          - dotmac_networking
+          - dotmac_identity
+          - dotmac_billing
+          - dotmac_services
+          - dotmac_analytics
+          - dotmac_devtools
+
+env:
+  PYTHON_VERSION: "3.9"
+
+jobs:
+  test-package:
+    name: Test ${{ github.event.inputs.package }}
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        working-directory: ${{ github.event.inputs.package }}
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,test]"
+
+      - name: Enforce Complexity Rules
+        working-directory: ${{ github.event.inputs.package }}
+        run: |
+          echo "🔍 Enforcing complexity rules..."
+          ruff check --select C901,PLR0913,PLR0915 .
+
+      - name: Code Quality Checks
+        working-directory: ${{ github.event.inputs.package }}
+        run: |
+          echo "✨ Running code quality checks..."
+          black --check .
+          ruff check .
+          mypy . --install-types --non-interactive
+
+      - name: Security Scan
+        working-directory: ${{ github.event.inputs.package }}
+        run: |
+          echo "🔐 Running security scan..."
+          pip install bandit[toml]
+          bandit -r . --exit-zero
+
+      - name: Run Tests
+        working-directory: ${{ github.event.inputs.package }}
+        env:
+          DATABASE_URL: postgresql://postgres:testpass@localhost:5432/test_db
+          REDIS_URL: redis://localhost:6379/0
+        run: |
+          echo "🧪 Running test suite..."
+          pytest --cov --cov-fail-under=80 --tb=short
+
+      - name: Success Summary
+        run: |
+          echo "✅ ${{ github.event.inputs.package }} passed all checks!"
+          echo "🎯 Complexity rules enforced"
+          echo "✨ Code quality validated"
+          echo "🔐 Security scan completed"
+          echo "🧪 Tests passed with ≥80% coverage"

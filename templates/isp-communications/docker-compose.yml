@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  communications:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - EMAIL_DRIVER=${EMAIL_DRIVER:-smtp2go}
+      - SMS_DRIVER=${SMS_DRIVER:-twilio}
+      - WHATSAPP_DRIVER=${WHATSAPP_DRIVER:-ultramsg}
+      - DOTMAC_EVENTS_URL=${DOTMAC_EVENTS_URL:-http://dotmac_core_events:8000}
+      - DOTMAC_ANALYTICS_URL=${DOTMAC_ANALYTICS_URL:-http://dotmac_analytics:8000}
+    env_file:
+      - .env
+    networks:
+      - dotmac_network
+    depends_on:
+      - dotmac_core_events
+      - dotmac_analytics
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  dotmac_network:
+    external: true

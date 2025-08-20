@@ -1,0 +1,317 @@
+version: '3.8'
+
+# Unified SignOz Monitoring Stack - Replaces Prometheus/Grafana
+# Single platform for metrics, traces, and logs
+
+networks:
+  monitoring:
+    driver: bridge
+    name: monitoring_network
+  dotmac_internal:
+    external: true
+    name: dotmac_framework_dotmac_internal
+
+volumes:
+  signoz-clickhouse-data:
+    driver: local
+  signoz-zookeeper-data:
+    driver: local
+
+services:
+  # ====================
+  # SignOz Core Services
+  # ====================
+  
+  # Zookeeper for ClickHouse
+  zookeeper:
+    image: bitnami/zookeeper:3.8
+    container_name: signoz-zookeeper
+    networks:
+      - monitoring
+    environment:
+      ALLOW_ANONYMOUS_LOGIN: "yes"
+      ZOO_AUTOPURGE_INTERVAL: 1
+    volumes:
+      - signoz-zookeeper-data:/bitnami/zookeeper
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "zkServer.sh", "status"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ClickHouse - Replaces Prometheus TSDB & Loki
+  clickhouse:
+    image: clickhouse/clickhouse-server:23.8-alpine
+    container_name: signoz-clickhouse
+    networks:
+      - monitoring
+    depends_on:
+      - zookeeper
+    volumes:
+      - signoz-clickhouse-data:/var/lib/clickhouse
+      - ./signoz/clickhouse-config.xml:/etc/clickhouse-server/config.xml:ro
+      - ./signoz/clickhouse-users.xml:/etc/clickhouse-server/users.xml:ro
+    environment:
+      CLICKHOUSE_DB: signoz
+      CLICKHOUSE_USER: signoz
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-signoz@123}
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    ports:
+      - "127.0.0.1:9000:9000"  # Native protocol
+      - "127.0.0.1:8123:8123"  # HTTP interface
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8123/ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 262144
+        hard: 262144
+
+  # Schema migration
+  clickhouse-migrate:
+    image: signoz/migrate:0.37.0
+    container_name: signoz-migrate
+    networks:
+      - monitoring
+    command:
+      - "--dsn=tcp://clickhouse:9000?database=signoz"
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+    restart: on-failure
+
+  # SignOz Query Service - Replaces Grafana backend
+  query-service:
+    image: signoz/query-service:0.37.0
+    container_name: signoz-query
+    networks:
+      - monitoring
+      - dotmac_internal
+    environment:
+      ClickHouseUrl: tcp://clickhouse:9000/?database=signoz
+      STORAGE: clickhouse
+      TELEMETRY_ENABLED: ${SIGNOZ_TELEMETRY:-false}
+      DEPLOYMENT_TYPE: docker
+    volumes:
+      - ./signoz/dashboards:/root/config/dashboards:ro
+      - ./signoz/alerts:/root/config/alerts:ro
+    depends_on:
+      clickhouse-migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/api/v1/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # SignOz Frontend - Replaces Grafana UI
+  frontend:
+    image: signoz/frontend:0.37.0
+    container_name: signoz-frontend
+    networks:
+      - monitoring
+    environment:
+      QUERY_SERVICE_URL: http://query-service:8080
+      # Customization
+      SIGNOZ_BRAND_NAME: "DotMac Observability"
+      SIGNOZ_BRAND_LOGO_URL: "/logo.png"
+    depends_on:
+      query-service:
+        condition: service_healthy
+    ports:
+      - "3301:3301"  # SignOz UI (replaces Grafana 3000)
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3301"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ====================
+  # OpenTelemetry Collectors
+  # ====================
+  
+  # Primary collector - Replaces Prometheus scraper
+  otel-collector:
+    image: signoz/signoz-otel-collector:0.88.13
+    container_name: signoz-collector
+    hostname: otel-collector
+    networks:
+      - monitoring
+      - dotmac_internal
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./signoz/otel-collector-unified.yaml:/etc/otel-collector-config.yaml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    environment:
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_PORT: 9000
+      CLICKHOUSE_DATABASE: signoz
+      CLICKHOUSE_USER: signoz
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-signoz@123}
+      # Resource management
+      GOMEMLIMIT: 2GiB
+      GOGC: 80
+    ports:
+      - "4317:4317"   # OTLP gRPC (replaces Prometheus remote_write)
+      - "4318:4318"   # OTLP HTTP
+      - "8888:8888"   # Collector metrics
+      - "13133:13133" # Health check
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+      query-service:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:13133"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # Metrics-specific collector - Enhanced metrics processing
+  otel-collector-metrics:
+    image: signoz/signoz-otel-collector:0.88.13
+    container_name: signoz-collector-metrics
+    networks:
+      - monitoring
+      - dotmac_internal
+    command: ["--config=/etc/otel-collector-metrics.yaml"]
+    volumes:
+      - ./signoz/otel-collector-metrics.yaml:/etc/otel-collector-metrics.yaml:ro
+    environment:
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_PORT: 9000
+      CLICKHOUSE_DATABASE: signoz
+      CLICKHOUSE_USER: signoz
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-signoz@123}
+      GOMEMLIMIT: 1GiB
+    ports:
+      - "8889:8889"   # Prometheus-compatible metrics endpoint
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+
+  # ====================
+  # Alerting - Replaces Prometheus Alertmanager
+  # ====================
+  
+  alertmanager:
+    image: signoz/alertmanager:0.25.0
+    container_name: signoz-alertmanager
+    networks:
+      - monitoring
+    volumes:
+      - ./signoz/alertmanager-unified.yml:/etc/alertmanager/config.yml:ro
+    command:
+      - "--config.file=/etc/alertmanager/config.yml"
+      - "--storage.path=/alertmanager"
+    ports:
+      - "127.0.0.1:9093:9093"
+    depends_on:
+      - query-service
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9093/-/healthy"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ====================
+  # Log Collection - Replaces Loki/Promtail
+  # ====================
+  
+  fluentbit:
+    image: fluent/fluent-bit:2.1
+    container_name: signoz-fluentbit
+    networks:
+      - monitoring
+      - dotmac_internal
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ./signoz/fluent-bit-unified.conf:/fluent-bit/etc/fluent-bit.conf:ro
+    environment:
+      OTEL_COLLECTOR_HOST: otel-collector
+      OTEL_COLLECTOR_PORT: 4318
+    depends_on:
+      - otel-collector
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+
+  # ====================
+  # Migration Helper - Prometheus to SignOz
+  # ====================
+  
+  prometheus-migrator:
+    image: signoz/prometheus-migrator:latest
+    container_name: signoz-prometheus-migrator
+    networks:
+      - monitoring
+    environment:
+      PROMETHEUS_URL: ${OLD_PROMETHEUS_URL:-http://prometheus:9090}
+      SIGNOZ_ENDPOINT: http://otel-collector:4317
+      MIGRATION_START_TIME: ${MIGRATION_START:-2024-01-01T00:00:00Z}
+      MIGRATION_END_TIME: ${MIGRATION_END:-2024-02-01T00:00:00Z}
+    volumes:
+      - ./signoz/migration-config.yaml:/etc/migration/config.yaml:ro
+    profiles:
+      - migration
+    depends_on:
+      - otel-collector
+    restart: "no"
+
+  # ====================
+  # Nginx Reverse Proxy (Optional)
+  # ====================
+  
+  nginx:
+    image: nginx:alpine
+    container_name: signoz-nginx
+    networks:
+      - monitoring
+    volumes:
+      - ./signoz/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./signoz/certs:/etc/nginx/certs:ro
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - frontend
+      - query-service
+    profiles:
+      - production
+    restart: unless-stopped
+
+# ====================
+# Deployment Profiles
+# ====================
+# 
+# Default: Basic SignOz stack
+# docker-compose up
+#
+# With migration tools:
+# docker-compose --profile migration up
+#
+# Production with TLS:
+# docker-compose --profile production up

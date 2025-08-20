@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-config
+  namespace: dotmac
+data:
+  api_url: "http://api-gateway.dotmac.svc.cluster.local:8000"
+  websocket_url: "ws://api-gateway.dotmac.svc.cluster.local:3001"
+  otel_endpoint: "http://otel-collector.monitoring.svc.cluster.local:4318"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: frontend-secrets
+  namespace: dotmac
+type: Opaque
+stringData:
+  sentry_dsn: "https://your-sentry-dsn@sentry.io/project-id"

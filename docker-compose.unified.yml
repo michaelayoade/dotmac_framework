@@ -1,0 +1,97 @@
+version: '3.8'
+
+networks:
+  dotmac-backend:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+
+services:
+  # Core Infrastructure
+  postgres:
+    image: postgres:16-alpine
+    container_name: dotmac-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: dotmac_platform
+      POSTGRES_USER: dotmac
+      POSTGRES_PASSWORD: dotmac_secure_password
+      POSTGRES_MULTIPLE_DATABASES: "dotmac_platform,dotmac_events,dotmac_billing,dotmac_identity,dotmac_networking,dotmac_analytics,dotmac_services"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-multiple-databases.sh:/docker-entrypoint-initdb.d/init-multiple-databases.sh:ro
+    networks:
+      - dotmac-backend
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dotmac -d dotmac_platform"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  redis:
+    image: redis:7-alpine
+    container_name: dotmac-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - dotmac-backend
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Unified API Service
+  unified-api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile.unified
+    container_name: dotmac-unified-api
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgresql://dotmac:dotmac_secure_password@postgres:5432/dotmac_platform
+      - REDIS_URL=redis://redis:6379/0
+      - ENVIRONMENT=development
+      - LOG_LEVEL=INFO
+      - AUTH_SECRET_KEY=your-secret-key-change-in-production
+    ports:
+      - "8000:8000"  # Main unified API
+      - "8001:8001"  # Identity service
+      - "8002:8002"  # Billing service
+      - "8003:8003"  # Services provisioning
+      - "8004:8004"  # Network management
+      - "8005:8005"  # Analytics
+      - "8006:8006"  # Platform
+      - "8007:8007"  # Events
+      - "8008:8008"  # Core Ops
+    networks:
+      - dotmac-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app/backend:ro
+      - ./dotmac_api_gateway:/app/dotmac_api_gateway:ro
+      - ./dotmac_identity:/app/dotmac_identity:ro
+      - ./dotmac_billing:/app/dotmac_billing:ro
+      - ./dotmac_services:/app/dotmac_services:ro
+      - ./dotmac_networking:/app/dotmac_networking:ro
+      - ./dotmac_analytics:/app/dotmac_analytics:ro
+      - ./dotmac_platform:/app/dotmac_platform:ro
+      - ./dotmac_core_events:/app/dotmac_core_events:ro
+      - ./dotmac_core_ops:/app/dotmac_core_ops:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

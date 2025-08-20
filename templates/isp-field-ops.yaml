@@ -1,0 +1,52 @@
+name: isp-field-ops
+type: rest-api
+description: Installation projects, technician dispatch, field tools
+planes:
+  - dotmac_identity        # staff & customer auth
+  - dotmac_networking      # site surveys, CPE inventory
+  - dotmac_services        # job status & SLA
+  - dotmac_analytics       # on-time %, travel time
+entities:
+  - Project
+  - Task
+  - Technician
+  - Checklist
+  - Photo
+  - Signature
+  - Equipment
+routes:
+  POST /projects               # from sales hand-off
+  GET  /projects/:id
+  POST /projects/:id/schedule  # assign tech + slot
+  GET  /projects/:id/tasks     # installation checklist
+  POST /tasks/:id/start        # tech mobile app
+  POST /tasks/:id/complete     # with photos/signatures
+  PUT  /tasks/:id/status       # update progress
+  GET  /technicians/me/jobs    # mobile app feed
+  POST /projects/:id/survey    # site survey results
+  GET  /analytics/performance  # completion rates, travel time
+env:
+  - DOTMAC_IDENTITY_URL
+  - DOTMAC_NETWORKING_URL
+  - DOTMAC_SERVICES_URL
+  - DOTMAC_ANALYTICS_URL
+  - GPS_TRACKING_ENABLED
+  - PHOTO_UPLOAD_BUCKET
+  - SLA_COMPLETION_HOURS
+files:
+  - main.py
+  - services/__init__.py
+  - services/project_service.py
+  - services/technician_service.py
+  - services/scheduling_service.py
+  - models/__init__.py
+  - models/project.py
+  - models/task.py
+  - models/technician.py
+  - mobile/__init__.py
+  - mobile/mobile_api.py
+  - mobile/offline_sync.py
+  - requirements.txt
+  - .env.example
+  - docker-compose.yml
+  - Dockerfile

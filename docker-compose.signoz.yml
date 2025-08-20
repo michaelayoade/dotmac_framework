@@ -1,0 +1,325 @@
+version: '3.8'
+
+# SignOz Observability Stack for DotMac Platform
+# Full APM with Tracing, Metrics, and Logs
+
+x-clickhouse-defaults: &clickhouse-defaults
+  restart: unless-stopped
+  image: clickhouse/clickhouse-server:23.8-alpine
+  tty: true
+  depends_on:
+    - zookeeper
+  logging:
+    driver: "json-file"
+    options:
+      max-size: "10m"
+      max-file: "3"
+  healthcheck:
+    test: ["CMD", "wget", "--spider", "-q", "http://localhost:8123/ping"]
+    interval: 30s
+    timeout: 5s
+    retries: 3
+  ulimits:
+    nproc: 65535
+    nofile:
+      soft: 262144
+      hard: 262144
+
+networks:
+  signoz:
+    driver: bridge
+  dotmac_internal:
+    external: true
+    name: dotmac_framework_dotmac_internal
+
+volumes:
+  signoz-clickhouse-data:
+    driver: local
+  signoz-zookeeper-data:
+    driver: local
+  signoz-alertmanager-data:
+    driver: local
+
+secrets:
+  signoz_jwt_secret:
+    file: ./secrets/signoz_jwt_secret.txt
+
+services:
+  # Zookeeper for ClickHouse coordination
+  zookeeper:
+    image: bitnami/zookeeper:3.8
+    container_name: signoz-zookeeper
+    hostname: zookeeper
+    networks:
+      - signoz
+    environment:
+      ALLOW_ANONYMOUS_LOGIN: "yes"
+      ZOO_AUTOPURGE_INTERVAL: 1
+      ZOO_AUTOPURGE_RETAIN_COUNT: 3
+    volumes:
+      - signoz-zookeeper-data:/bitnami/zookeeper
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "zkServer.sh", "status"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ClickHouse for trace/log storage
+  clickhouse:
+    <<: *clickhouse-defaults
+    container_name: signoz-clickhouse
+    hostname: clickhouse
+    networks:
+      - signoz
+    volumes:
+      - signoz-clickhouse-data:/var/lib/clickhouse
+      - ./signoz/clickhouse/config.xml:/etc/clickhouse-server/config.xml:ro
+      - ./signoz/clickhouse/users.xml:/etc/clickhouse-server/users.xml:ro
+      - ./signoz/clickhouse/cluster.xml:/etc/clickhouse-server/config.d/cluster.xml:ro
+      - ./signoz/schemas:/docker-entrypoint-initdb.d:ro
+    environment:
+      CLICKHOUSE_DB: signoz
+      CLICKHOUSE_USER: signoz
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-signoz123}
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+      CLICKHOUSE_CLUSTER: cluster
+      KEEPER_SERVER_ID: 1
+
+  # Migration service for ClickHouse schema
+  clickhouse-migrate:
+    image: signoz/migrate:0.37.0
+    container_name: signoz-migrate
+    networks:
+      - signoz
+    command:
+      - "--dsn=tcp://clickhouse:9000"
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+    restart: on-failure
+
+  # SignOz Query Service
+  query-service:
+    image: signoz/query-service:0.37.0
+    container_name: signoz-query-service
+    networks:
+      - signoz
+      - dotmac_internal
+    command: ["-config=/configs/query-config.yaml"]
+    volumes:
+      - ./signoz/dashboards:/root/config/dashboards:ro
+      - ./signoz/query-config.yaml:/configs/query-config.yaml:ro
+    environment:
+      ClickHouseUrl: tcp://clickhouse:9000/?database=signoz
+      ALERTMANAGER_API_PREFIX: http://alertmanager:9093/api/
+      SIGNOZ_LOCAL_DB_PATH: /var/lib/signoz/signoz.db
+      DASHBOARDS_PATH: /root/config/dashboards
+      STORAGE: clickhouse
+      GODEBUG: netdns=go
+      TELEMETRY_ENABLED: false
+      JWT_SECRET_FILE: /run/secrets/signoz_jwt_secret
+    secrets:
+      - signoz_jwt_secret
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+      clickhouse-migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/api/v1/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # SignOz Frontend
+  frontend:
+    image: signoz/frontend:0.37.0
+    container_name: signoz-frontend
+    networks:
+      - signoz
+    depends_on:
+      - query-service
+    restart: unless-stopped
+    environment:
+      QUERY_SERVICE_URL: http://query-service:8080
+    ports:
+      - "127.0.0.1:3301:3301"  # SignOz UI
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3301"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # OpenTelemetry Collector - Primary
+  otel-collector:
+    image: signoz/signoz-otel-collector:0.88.13
+    container_name: signoz-otel-collector
+    hostname: otel-collector
+    networks:
+      - signoz
+      - dotmac_internal
+    command: ["--config=/configs/otel-collector-config.yaml"]
+    volumes:
+      - ./signoz/otel-collector-config.yaml:/configs/otel-collector-config.yaml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/log/pods:/var/log/pods:ro
+    environment:
+      OTEL_RESOURCE_ATTRIBUTES: host.name=otel-collector,os.type=linux
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_PORT: 9000
+      CLICKHOUSE_DATABASE: signoz
+      CLICKHOUSE_USER: signoz
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-signoz123}
+      ALERTMANAGER_URL: http://alertmanager:9093/api/v1/alerts
+      # Resource limits
+      GOMEMLIMIT: 2GiB
+      GOGC: 80
+    ports:
+      - "4317:4317"   # OTLP gRPC receiver
+      - "4318:4318"   # OTLP HTTP receiver
+      - "8888:8888"   # Prometheus metrics (collector)
+      - "13133:13133" # Health check
+      - "14250:14250" # Jaeger gRPC
+      - "14268:14268" # Jaeger HTTP
+      - "9411:9411"   # Zipkin
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+      query-service:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:13133"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # OpenTelemetry Collector - Metrics
+  otel-collector-metrics:
+    image: signoz/signoz-otel-collector:0.88.13
+    container_name: signoz-otel-collector-metrics
+    hostname: otel-collector-metrics
+    networks:
+      - signoz
+      - dotmac_internal
+    command: ["--config=/configs/otel-collector-metrics-config.yaml"]
+    volumes:
+      - ./signoz/otel-collector-metrics-config.yaml:/configs/otel-collector-metrics-config.yaml:ro
+    environment:
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_PORT: 9000
+      CLICKHOUSE_DATABASE: signoz
+      CLICKHOUSE_USER: signoz
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-signoz123}
+      PROMETHEUS_SCRAPE_INTERVAL: 60s
+      # Resource limits
+      GOMEMLIMIT: 1GiB
+      GOGC: 80
+    ports:
+      - "8889:8889"   # Prometheus metrics endpoint
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+
+  # Alertmanager for alert routing
+  alertmanager:
+    image: signoz/alertmanager:0.25.0
+    container_name: signoz-alertmanager
+    networks:
+      - signoz
+    volumes:
+      - signoz-alertmanager-data:/data
+      - ./signoz/alertmanager.yml:/configs/alertmanager.yml:ro
+    command:
+      - "--config.file=/configs/alertmanager.yml"
+      - "--storage.path=/data"
+      - "--web.listen-address=:9093"
+      - "--cluster.listen-address="
+    depends_on:
+      - query-service
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9093/-/healthy"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # Log collector using Fluentbit
+  fluentbit:
+    image: fluent/fluent-bit:2.1
+    container_name: signoz-fluentbit
+    networks:
+      - signoz
+      - dotmac_internal
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/log:/var/log:ro
+      - ./signoz/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf:ro
+      - ./signoz/parsers.conf:/fluent-bit/etc/parsers.conf:ro
+    environment:
+      OTEL_COLLECTOR_HOST: otel-collector
+      OTEL_COLLECTOR_PORT: 4318
+    depends_on:
+      - otel-collector
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+
+  # Hotrod demo app (optional, for testing)
+  hotrod:
+    image: jaegertracing/example-hotrod:latest
+    container_name: signoz-hotrod
+    networks:
+      - signoz
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      OTEL_SERVICE_NAME: hotrod
+      OTEL_RESOURCE_ATTRIBUTES: "application=hotrod"
+    depends_on:
+      - otel-collector
+    profiles:
+      - demo
+    restart: unless-stopped
+
+  # Load generator for testing (optional)
+  load-generator:
+    image: signoz/locust:latest
+    container_name: signoz-load-generator
+    hostname: load-generator
+    networks:
+      - signoz
+      - dotmac_internal
+    environment:
+      LOCUST_WEB_HOST: 0.0.0.0
+      LOCUST_MODE: standalone
+      LOCUST_USERS: 10
+      LOCUST_SPAWN_RATE: 1
+      LOCUST_HOST: http://api_gateway:8000
+      TARGET_ENDPOINT: /health
+    command: ["--config=/configs/locust.conf"]
+    volumes:
+      - ./signoz/locust.conf:/configs/locust.conf:ro
+      - ./signoz/locustfile.py:/mnt/locust/locustfile.py:ro
+    ports:
+      - "127.0.0.1:8089:8089"  # Locust web UI
+    profiles:
+      - load-test
+    depends_on:
+      - otel-collector
+    restart: unless-stopped

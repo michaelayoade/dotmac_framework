@@ -1,0 +1,307 @@
+version: '3.8'
+
+services:
+  # Database Services (already running, we'll use external)
+  postgres:
+    image: postgres:16-alpine
+    container_name: dotmac-postgres
+    environment:
+      POSTGRES_USER: dotmac
+      POSTGRES_PASSWORD: dotmac123
+      POSTGRES_DB: dotmac
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dotmac"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - dotmac-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: dotmac-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - dotmac-network
+
+  freeradius:
+    image: freeradius/freeradius-server:latest
+    container_name: dotmac-freeradius
+    ports:
+      - "1812:1812/udp"
+      - "1813:1813/udp"
+    volumes:
+      - ./config/freeradius:/etc/freeradius
+    networks:
+      - dotmac-network
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile.gateway
+    container_name: dotmac-api-gateway
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://dotmac:dotmac123@postgres:5432/dotmac
+      REDIS_URL: redis://redis:6379
+      SECRET_KEY: ${SECRET_KEY:-development-secret-key}
+      DEBUG: "true"
+      TENANT_ID: default
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - dotmac-network
+
+  # Identity Service
+  identity:
+    build:
+      context: .
+      dockerfile: Dockerfile.identity
+    container_name: dotmac-identity
+    ports:
+      - "8001:8001"
+    environment:
+      DATABASE_URL: postgresql://dotmac:dotmac123@postgres:5432/dotmac
+      REDIS_URL: redis://redis:6379
+      SECRET_KEY: ${SECRET_KEY:-development-secret-key}
+      DEBUG: "true"
+      TENANT_ID: default
+      SERVICE_NAME: identity
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - dotmac-network
+
+  # Billing Service
+  billing:
+    build:
+      context: .
+      dockerfile: Dockerfile.billing
+    container_name: dotmac-billing
+    ports:
+      - "8002:8002"
+    environment:
+      DATABASE_URL: postgresql://dotmac:dotmac123@postgres:5432/dotmac
+      REDIS_URL: redis://redis:6379
+      SECRET_KEY: ${SECRET_KEY:-development-secret-key}
+      DEBUG: "true"
+      TENANT_ID: default
+      SERVICE_NAME: billing
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - dotmac-network
+
+  # Services Platform
+  services:
+    build:
+      context: .
+      dockerfile: Dockerfile.services
+    container_name: dotmac-services
+    ports:
+      - "8003:8003"
+    environment:
+      DATABASE_URL: postgresql://dotmac:dotmac123@postgres:5432/dotmac
+      REDIS_URL: redis://redis:6379
+      SECRET_KEY: ${SECRET_KEY:-development-secret-key}
+      DEBUG: "true"
+      TENANT_ID: default
+      SERVICE_NAME: services
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - dotmac-network
+
+  # Networking Service
+  networking:
+    build:
+      context: .
+      dockerfile: Dockerfile.networking
+    container_name: dotmac-networking
+    ports:
+      - "8004:8004"
+    environment:
+      DATABASE_URL: postgresql://dotmac:dotmac123@postgres:5432/dotmac
+      REDIS_URL: redis://redis:6379
+      SECRET_KEY: ${SECRET_KEY:-development-secret-key}
+      DEBUG: "true"
+      TENANT_ID: default
+      SERVICE_NAME: networking
+      VOLTHA_ENABLED: "false"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - dotmac-network
+
+  # Analytics Service
+  analytics:
+    build:
+      context: .
+      dockerfile: Dockerfile.analytics
+    container_name: dotmac-analytics
+    ports:
+      - "8005:8005"
+    environment:
+      DATABASE_URL: postgresql://dotmac:dotmac123@postgres:5432/dotmac
+      REDIS_URL: redis://redis:6379
+      SECRET_KEY: ${SECRET_KEY:-development-secret-key}
+      DEBUG: "true"
+      TENANT_ID: default
+      SERVICE_NAME: analytics
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8005/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - dotmac-network
+
+  # Platform Service
+  platform:
+    build:
+      context: .
+      dockerfile: Dockerfile.platform
+    container_name: dotmac-platform
+    ports:
+      - "8006:8006"
+    environment:
+      DATABASE_URL: postgresql://dotmac:dotmac123@postgres:5432/dotmac
+      REDIS_URL: redis://redis:6379
+      SECRET_KEY: ${SECRET_KEY:-development-secret-key}
+      DEBUG: "true"
+      TENANT_ID: default
+      SERVICE_NAME: platform
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8006/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - dotmac-network
+
+  # Core Events Service
+  core-events:
+    build:
+      context: .
+      dockerfile: Dockerfile.core-events
+    container_name: dotmac-core-events
+    ports:
+      - "8007:8007"
+    environment:
+      DATABASE_URL: postgresql://dotmac:dotmac123@postgres:5432/dotmac
+      REDIS_URL: redis://redis:6379
+      SECRET_KEY: ${SECRET_KEY:-development-secret-key}
+      DEBUG: "true"
+      TENANT_ID: default
+      SERVICE_NAME: core-events
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8007/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - dotmac-network
+
+  # Core Operations Service
+  core-ops:
+    build:
+      context: .
+      dockerfile: Dockerfile.core-ops
+    container_name: dotmac-core-ops
+    ports:
+      - "8008:8008"
+    environment:
+      DATABASE_URL: postgresql://dotmac:dotmac123@postgres:5432/dotmac
+      REDIS_URL: redis://redis:6379
+      SECRET_KEY: ${SECRET_KEY:-development-secret-key}
+      DEBUG: "true"
+      TENANT_ID: default
+      SERVICE_NAME: core-ops
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8008/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - dotmac-network
+
+networks:
+  dotmac-network:
+    driver: bridge
+    name: dotmac-network
+
+volumes:
+  postgres_data:
+    name: dotmac-postgres-data

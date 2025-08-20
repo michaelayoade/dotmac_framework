@@ -1,0 +1,39 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🔍 Running pre-commit checks..."
+
+# Run linting with auto-fix
+echo "📝 Running ESLint with auto-fix..."
+pnpm run lint:fix || {
+  echo "❌ ESLint auto-fix encountered issues that need manual attention"
+  echo "💡 Please review and fix the remaining linting errors"
+  exit 1
+}
+
+# Run type checking
+echo "🔍 Running TypeScript type check..."
+pnpm run type-check || {
+  echo "❌ TypeScript type checking failed"
+  echo "💡 Please fix type errors before committing"
+  exit 1
+}
+
+# Run format check
+echo "🎨 Running Prettier format check..."
+pnpm format --check || {
+  echo "❌ Code formatting issues found"
+  echo "💡 Running Prettier to fix formatting..."
+  pnpm format
+  echo "✅ Code formatted. Please add the changes and commit again."
+  exit 1
+}
+
+# Check for composition orchestration patterns (basic check)
+echo "🎼 Checking for composition patterns..."
+if grep -r "complexity.*1[0-9]" packages/*/src --exclude-dir=node_modules; then
+  echo "⚠️  High complexity functions detected. Consider using composition orchestration."
+  echo "💡 Review the composition patterns in src/patterns/composition.ts"
+fi
+
+echo "✅ All pre-commit checks passed!"

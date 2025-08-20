@@ -1,0 +1,292 @@
+name: API Documentation
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - '**.py'
+      - 'dotmac_*/dotmac_*/api/**'
+      - 'dotmac_*/dotmac_*/models/**'
+      - 'scripts/generate_openapi_docs.py'
+      - '.github/workflows/api-documentation.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - '**.py'
+      - 'dotmac_*/dotmac_*/api/**'
+      - 'dotmac_*/dotmac_*/models/**'
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: 'Deploy to GitHub Pages'
+        required: false
+        default: 'false'
+
+jobs:
+  generate-docs:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: dotmac
+          POSTGRES_PASSWORD: dotmac123
+          POSTGRES_DB: dotmac_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client redis-tools
+      
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install httpx pyyaml
+      
+      - name: Set up environment
+        run: |
+          cat > .env << EOF
+          DATABASE_URL=postgresql://dotmac:dotmac123@localhost:5432/dotmac_test
+          REDIS_URL=redis://localhost:6379
+          SECRET_KEY=test-secret-key-for-ci
+          DEBUG=true
+          TENANT_ID=default
+          EOF
+      
+      - name: Start services in background
+        run: |
+          # Start each service in background
+          python -m dotmac_identity.main &
+          python -m dotmac_billing.main &
+          python -m dotmac_services.main &
+          python -m dotmac_networking.main &
+          python -m dotmac_analytics.main &
+          python -m dotmac_platform.main &
+          python -m dotmac_api_gateway.main &
+          
+          # Wait for services to be ready
+          echo "Waiting for services to start..."
+          sleep 15
+          
+          # Check service health
+          for port in 8000 8001 8002 8003 8004 8005 8006; do
+            curl -f http://localhost:$port/health || echo "Service on port $port not ready"
+          done
+      
+      - name: Generate API documentation
+        run: |
+          python scripts/generate_openapi_docs.py
+          
+          # Validate generated files
+          test -f docs/api/openapi.json || exit 1
+          test -f docs/api/openapi.yaml || exit 1
+          test -f docs/api/index.html || exit 1
+          test -f docs/api/postman_collection.json || exit 1
+      
+      - name: Validate OpenAPI specification
+        run: |
+          pip install openapi-spec-validator
+          python -m openapi_spec_validator docs/api/openapi.json
+      
+      - name: Generate SDK samples
+        if: success()
+        run: |
+          # Generate Python SDK sample
+          pip install openapi-python-client
+          openapi-python-client generate --path docs/api/openapi.json --output-path sdk/python || true
+          
+          # Generate TypeScript types
+          npx @openapitools/openapi-generator-cli generate \
+            -i docs/api/openapi.json \
+            -g typescript-axios \
+            -o sdk/typescript || true
+      
+      - name: Upload documentation artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: api-documentation
+          path: |
+            docs/api/
+            sdk/
+      
+      - name: Comment PR with documentation link
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const artifactUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `📚 API Documentation has been generated!\n\n[View Artifacts](${artifactUrl})\n\nDocumentation includes:\n- OpenAPI Specification (JSON/YAML)\n- Interactive HTML Documentation\n- Postman Collection\n- API Summary`
+            });
+  
+  deploy-docs:
+    needs: generate-docs
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.event.inputs.deploy == 'true'
+    
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
+    steps:
+      - name: Download documentation artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: api-documentation
+          path: ./public
+      
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+      
+      - name: Upload to GitHub Pages
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: ./public/docs/api
+      
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
+  
+  validate-schemas:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install pydantic fastapi
+      
+      - name: Validate Pydantic models
+        run: |
+          python << 'EOF'
+          import sys
+          import importlib.util
+          from pathlib import Path
+          
+          errors = []
+          
+          # Find all model files
+          for model_file in Path(".").glob("dotmac_*/dotmac_*/models/*.py"):
+              if "__pycache__" in str(model_file):
+                  continue
+              
+              print(f"Validating {model_file}")
+              
+              try:
+                  spec = importlib.util.spec_from_file_location("module", model_file)
+                  module = importlib.util.module_from_spec(spec)
+                  spec.loader.exec_module(module)
+              except Exception as e:
+                  errors.append(f"Error in {model_file}: {e}")
+          
+          if errors:
+              print("\n❌ Validation errors found:")
+              for error in errors:
+                  print(f"  - {error}")
+              sys.exit(1)
+          else:
+              print("\n✅ All models validated successfully")
+          EOF
+  
+  documentation-coverage:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Check documentation coverage
+        run: |
+          python << 'EOF'
+          import ast
+          import sys
+          from pathlib import Path
+          
+          total_endpoints = 0
+          documented_endpoints = 0
+          
+          # Check all API route files
+          for api_file in Path(".").glob("dotmac_*/dotmac_*/api/*.py"):
+              if "__pycache__" in str(api_file):
+                  continue
+              
+              with open(api_file) as f:
+                  try:
+                      tree = ast.parse(f.read())
+                      
+                      for node in ast.walk(tree):
+                          # Check for route decorators
+                          if isinstance(node, ast.FunctionDef):
+                              for decorator in node.decorator_list:
+                                  if isinstance(decorator, ast.Attribute):
+                                      if decorator.attr in ['get', 'post', 'put', 'patch', 'delete']:
+                                          total_endpoints += 1
+                                          
+                                          # Check if function has docstring
+                                          if ast.get_docstring(node):
+                                              documented_endpoints += 1
+                  except:
+                      pass
+          
+          coverage = (documented_endpoints / total_endpoints * 100) if total_endpoints > 0 else 0
+          
+          print(f"📊 Documentation Coverage Report")
+          print(f"Total endpoints: {total_endpoints}")
+          print(f"Documented endpoints: {documented_endpoints}")
+          print(f"Coverage: {coverage:.1f}%")
+          
+          if coverage < 80:
+              print(f"\n❌ Documentation coverage ({coverage:.1f}%) is below 80% threshold")
+              sys.exit(1)
+          else:
+              print(f"\n✅ Documentation coverage meets requirements")
+          EOF

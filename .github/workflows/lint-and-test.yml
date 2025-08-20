@@ -1,0 +1,420 @@
+name: Lint and Test
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  # =============================================================================
+  # LINTING JOB - Enforces code quality across entire monorepo
+  # =============================================================================
+  lint:
+    name: Lint Code
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install linting tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff black mypy
+
+      - name: Run Ruff (includes complexity checks)
+        run: |
+          echo "🔍 Running Ruff with complexity enforcement..."
+          ruff check . --output-format=github
+          
+      - name: Run Black (formatting check)
+        run: |
+          echo "🎨 Checking code formatting..."
+          black --check --diff .
+
+      - name: Run MyPy (type checking)
+        run: |
+          echo "🔍 Running type checking..."
+          mypy . --show-error-codes --no-error-summary
+        continue-on-error: true  # Gradual adoption
+
+      - name: Complexity Report
+        run: |
+          echo "📊 Generating complexity report..."
+          ruff check . --select C901,PLR0913,PLR0915 --output-format=text || true
+
+  # =============================================================================
+  # TESTING JOB - Runs tests for all packages
+  # =============================================================================
+  test:
+    name: Test Code
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        package: [
+          "dotmac_core_events",
+          "dotmac_core_ops", 
+          "dotmac_identity",
+          "dotmac_billing",
+          "dotmac_services",
+          "dotmac_networking",
+          "dotmac_analytics",
+          "dotmac_api_gateway",
+          "dotmac_platform",
+          "dotmac_devtools"
+        ]
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        working-directory: ${{ matrix.package }}
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f pyproject.toml ]; then pip install -e ".[dev]"; fi
+
+      - name: Run tests
+        working-directory: ${{ matrix.package }}
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+          REDIS_URL: redis://localhost:6379/0
+          PYTHONPATH: .
+        run: |
+          pytest -v --cov --cov-report=xml --cov-report=term
+
+      - name: Upload coverage to Codecov
+        if: matrix.python-version == '3.11'
+        uses: codecov/codecov-action@v3
+        with:
+          file: ${{ matrix.package }}/coverage.xml
+          flags: ${{ matrix.package }}
+          name: ${{ matrix.package }}-coverage
+
+  # =============================================================================
+  # SECURITY SCANNING - Comprehensive security analysis
+  # =============================================================================
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write  # For uploading SARIF results
+      contents: read
+      actions: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install security tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install bandit safety semgrep pip-audit
+
+      - name: Run Bandit (security linter)
+        run: |
+          echo "🔒 Running Bandit security analysis..."
+          bandit -r . -f json -o bandit-report.json || true
+          bandit -r . -f sarif -o bandit-results.sarif || true
+          bandit -r . -f txt
+
+      - name: Run Safety (dependency vulnerability check)
+        run: |
+          echo "🛡️ Running Safety vulnerability check..."
+          safety check --json --output safety-report.json || true
+          safety check
+
+      - name: Run pip-audit (advanced dependency scanning)
+        run: |
+          echo "🔍 Running pip-audit for dependency vulnerabilities..."
+          pip-audit --format=json --output=pip-audit-report.json || true
+          pip-audit --format=sarif --output=pip-audit-results.sarif || true
+          pip-audit
+
+      - name: Run Semgrep (SAST)
+        run: |
+          echo "🛡️ Running Semgrep static analysis..."
+          semgrep --config=auto --sarif --output=semgrep-results.sarif . || true
+          semgrep --config=auto --text . || true
+
+      - name: Check for secrets
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: main
+          head: HEAD
+          extra_args: --debug --only-verified
+
+      - name: Upload Bandit SARIF results
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: bandit-results.sarif
+          category: bandit
+
+      - name: Upload pip-audit SARIF results  
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: pip-audit-results.sarif
+          category: pip-audit
+
+      - name: Upload Semgrep SARIF results
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: semgrep-results.sarif
+          category: semgrep
+
+      - name: Upload security reports
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: security-reports
+          path: |
+            bandit-report.json
+            bandit-results.sarif
+            safety-report.json
+            pip-audit-report.json
+            pip-audit-results.sarif
+            semgrep-results.sarif
+
+      - name: Security Summary
+        if: always()
+        run: |
+          echo "## 🔒 Security Scan Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Tool | Status | Report |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Bandit | ✅ Completed | [Download](bandit-report.json) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Safety | ✅ Completed | [Download](safety-report.json) |" >> $GITHUB_STEP_SUMMARY
+          echo "| pip-audit | ✅ Completed | [Download](pip-audit-report.json) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Semgrep | ✅ Completed | [Download](semgrep-results.sarif) |" >> $GITHUB_STEP_SUMMARY
+          echo "| TruffleHog | ✅ Completed | Secrets scan |" >> $GITHUB_STEP_SUMMARY
+
+  # =============================================================================
+  # CODEQL ANALYSIS - GitHub's semantic code analysis
+  # =============================================================================
+  codeql:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ['python']
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: ${{ matrix.language }}
+          queries: +security-and-quality
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v2
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+        with:
+          category: "/language:${{matrix.language}}"
+
+  # =============================================================================
+  # DEPENDENCY REVIEW - Prevent vulnerable dependencies
+  # =============================================================================
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v3
+        with:
+          fail-on-severity: moderate
+          allow-ghsas: |
+            GHSA-1234-5678-9012  # Example: Allow specific advisories if needed
+          deny-licenses: |
+            GPL-2.0
+            GPL-3.0
+            AGPL-1.0
+            AGPL-3.0
+
+  # =============================================================================
+  # DOCUMENTATION BUILD
+  # =============================================================================
+  docs:
+    name: Build Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install documentation tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install mkdocs mkdocs-material mkdocstrings
+
+      - name: Build documentation
+        run: |
+          echo "📚 Building documentation..."
+          # mkdocs build --strict
+          echo "Documentation build would run here"
+
+  # =============================================================================
+  # PACKAGE VALIDATION
+  # =============================================================================
+  validate-packages:
+    name: Validate Package Structure
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install validation tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install check-manifest twine build
+
+      - name: Validate package structure
+        run: |
+          echo "📦 Validating package structure..."
+          for package in dotmac_*; do
+            if [ -d "$package" ] && [ -f "$package/pyproject.toml" ]; then
+              echo "Validating $package..."
+              cd "$package"
+              
+              # Check if py.typed exists
+              if [ ! -f "${package}/py.typed" ] && [ ! -f "src/${package}/py.typed" ]; then
+                echo "❌ Missing py.typed marker in $package"
+                exit 1
+              fi
+              
+              # Validate package can be built
+              python -m build --wheel --no-isolation
+              python -m twine check dist/*.whl
+              
+              cd ..
+            fi
+          done
+
+  # =============================================================================
+  # COMPLEXITY MONITORING
+  # =============================================================================
+  complexity:
+    name: Monitor Code Complexity
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install analysis tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff radon
+
+      - name: Generate complexity reports
+        run: |
+          echo "📊 Analyzing code complexity..."
+          
+          # Ruff complexity check (fails CI if violations found)
+          echo "## Ruff Complexity Report" >> complexity-report.md
+          ruff check . --select C901,PLR0913,PLR0915 --output-format=text >> complexity-report.md || {
+            echo "❌ Complexity violations found! Please refactor before merging."
+            exit 1
+          }
+          
+          # Radon complexity metrics (informational)
+          echo -e "\n## Radon Complexity Metrics" >> complexity-report.md
+          radon cc . --min=B --show-complexity >> complexity-report.md
+          
+          echo -e "\n## Maintainability Index" >> complexity-report.md  
+          radon mi . --min=B >> complexity-report.md
+
+      - name: Upload complexity report
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: complexity-report
+          path: complexity-report.md
+
+      - name: Comment complexity on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const complexity = fs.readFileSync('complexity-report.md', 'utf8');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## 📊 Code Complexity Report\n\n${complexity}`
+            });

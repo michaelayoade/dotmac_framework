@@ -1,0 +1,104 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dotmac-config
+  namespace: dotmac-production
+data:
+  # Database Configuration
+  DATABASE_HOST: "postgres-service"
+  DATABASE_PORT: "5432"
+  DATABASE_NAME: "dotmac_core"
+  
+  # Redis Configuration
+  REDIS_HOST: "redis-service"
+  REDIS_PORT: "6379"
+  
+  # RabbitMQ Configuration
+  RABBITMQ_HOST: "rabbitmq-service"
+  RABBITMQ_PORT: "5672"
+  
+  # Service URLs
+  DOTMAC_CORE_EVENTS_URL: "http://dotmac-core-events-service:8000"
+  DOTMAC_CORE_OPS_URL: "http://dotmac-core-ops-service:8000"
+  DOTMAC_IDENTITY_URL: "http://dotmac-identity-service:8000"
+  DOTMAC_BILLING_URL: "http://dotmac-billing-service:8000"
+  DOTMAC_SERVICES_URL: "http://dotmac-services-service:8000"
+  DOTMAC_NETWORKING_URL: "http://dotmac-networking-service:8000"
+  DOTMAC_ANALYTICS_URL: "http://dotmac-analytics-service:8000"
+  
+  # Application Configuration
+  LOG_LEVEL: "INFO"
+  ENVIRONMENT: "production"
+  
+  # Monitoring
+  PROMETHEUS_ENABLED: "true"
+  METRICS_PORT: "9090"
+  
+  # Security
+  RATE_LIMIT_ENABLED: "true"
+  CORS_ENABLED: "true"
+  
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+  namespace: dotmac-ingress
+data:
+  nginx.conf: |
+    events {
+        worker_connections 1024;
+    }
+    
+    http {
+        upstream api_gateway {
+            server dotmac-api-gateway-service.dotmac-production.svc.cluster.local:8000;
+        }
+        
+        upstream customer_portal {
+            server dotmac-customer-portal-service.dotmac-production.svc.cluster.local:8000;
+        }
+        
+        upstream reseller_portal {
+            server dotmac-reseller-portal-service.dotmac-production.svc.cluster.local:8000;
+        }
+        
+        server {
+            listen 80;
+            server_name api.dotmac.local;
+            
+            location / {
+                proxy_pass http://api_gateway;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+            }
+        }
+        
+        server {
+            listen 80;
+            server_name portal.dotmac.local;
+            
+            location / {
+                proxy_pass http://customer_portal;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+            }
+        }
+        
+        server {
+            listen 80;
+            server_name partners.dotmac.local;
+            
+            location / {
+                proxy_pass http://reseller_portal;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+            }
+        }
+    }

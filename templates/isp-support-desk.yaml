@@ -1,0 +1,54 @@
+name: isp-support-desk
+type: rest-api
+description: Unified support inbox (email, WhatsApp, SMS, web chat)
+planes:
+  - dotmac_identity        # customer & agent auth
+  - dotmac_networking      # attach diagnostics / logs
+  - dotmac_communications  # inbound/outbound messages
+  - dotmac_analytics       # MTTR, CSAT
+entities:
+  - Ticket
+  - Message
+  - Attachment
+  - Agent
+  - Department
+routes:
+  POST /tickets                 # create from any channel
+  GET  /tickets/:id             # full thread
+  POST /tickets/:id/messages    # add message to thread
+  PUT  /tickets/:id/assign      # assign to agent
+  PUT  /tickets/:id/status      # update status
+  GET  /inbox                   # agent queue
+  POST /tickets/:id/close       # close with resolution
+  GET  /analytics/mttr          # mean time to resolution
+  GET  /analytics/csat          # customer satisfaction
+webhooks:
+  email:    POST /webhooks/email
+  whatsapp: POST /webhooks/whatsapp
+  sms:      POST /webhooks/sms
+  chat:     POST /webhooks/chat
+env:
+  - DOTMAC_IDENTITY_URL
+  - DOTMAC_NETWORKING_URL
+  - DOTMAC_COMMUNICATIONS_URL
+  - DOTMAC_ANALYTICS_URL
+  - DEFAULT_DEPARTMENT
+  - AUTO_ASSIGN_RULES
+  - SLA_RESPONSE_HOURS
+files:
+  - main.py
+  - services/__init__.py
+  - services/ticket_service.py
+  - services/agent_service.py
+  - services/routing_service.py
+  - models/__init__.py
+  - models/ticket.py
+  - models/message.py
+  - models/agent.py
+  - integrations/__init__.py
+  - integrations/diagnostics.py
+  - integrations/knowledge_base.py
+  - requirements.txt
+  - .env.example
+  - docker-compose.yml
+  - Dockerfile

@@ -1,0 +1,359 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "DotMac Platform API",
+    "description": "\n# DotMac ISP Platform - Unified API Documentation\n\n## Overview\nThe DotMac Platform is a comprehensive microservices-based telecommunications management platform for Internet Service Providers.\n\n## Services\n\n| Service | Port | Description |\n|---------|------|-------------|\n| API Gateway | 8000 | Central routing and authentication |\n| Identity | 8001 | User and customer management |\n| Billing | 8002 | Financial services |\n| Services | 8003 | Service provisioning |\n| Networking | 8004 | Network management |\n| Analytics | 8005 | Business intelligence |\n| Platform | 8006 | Core utilities |\n| Events | 8007 | Event bus |\n| Core Ops | 8008 | Workflow orchestration |\n\n## Authentication\nAll APIs support JWT Bearer tokens and API keys.\n\n## Rate Limiting\nDefault: 1000 requests per minute per client.\n            ",
+    "version": "1.0.0",
+    "contact": {
+      "name": "DotMac Platform Team",
+      "email": "support@dotmac.io",
+      "url": "https://dotmac.io"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "https://opensource.org/licenses/MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8000",
+      "description": "API Gateway (Local)"
+    },
+    {
+      "url": "https://api.dotmac.io",
+      "description": "API Gateway (Production)"
+    }
+  ],
+  "paths": {
+    "/dotmac-api-gateway/health": {
+      "get": {
+        "summary": "API Gateway Health Check",
+        "description": "Check API Gateway health status",
+        "tags": [
+          "API Gateway"
+        ],
+        "servers": [
+          {
+            "url": "http://localhost:8000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Service is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "service": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dotmac-identity/health": {
+      "get": {
+        "summary": "Identity Service Health Check",
+        "description": "Check Identity Service health status",
+        "tags": [
+          "Identity Service"
+        ],
+        "servers": [
+          {
+            "url": "http://localhost:8001"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Service is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "service": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dotmac-billing/health": {
+      "get": {
+        "summary": "Billing Service Health Check",
+        "description": "Check Billing Service health status",
+        "tags": [
+          "Billing Service"
+        ],
+        "servers": [
+          {
+            "url": "http://localhost:8002"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Service is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "service": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dotmac-services/health": {
+      "get": {
+        "summary": "Services Provisioning Health Check",
+        "description": "Check Services Provisioning health status",
+        "tags": [
+          "Services Provisioning"
+        ],
+        "servers": [
+          {
+            "url": "http://localhost:8003"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Service is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "service": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dotmac-networking/health": {
+      "get": {
+        "summary": "Network Management Health Check",
+        "description": "Check Network Management health status",
+        "tags": [
+          "Network Management"
+        ],
+        "servers": [
+          {
+            "url": "http://localhost:8004"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Service is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "service": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dotmac-analytics/health": {
+      "get": {
+        "summary": "Analytics Service Health Check",
+        "description": "Check Analytics Service health status",
+        "tags": [
+          "Analytics Service"
+        ],
+        "servers": [
+          {
+            "url": "http://localhost:8005"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Service is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "service": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dotmac-platform/health": {
+      "get": {
+        "summary": "Platform Service Health Check",
+        "description": "Check Platform Service health status",
+        "tags": [
+          "Platform Service"
+        ],
+        "servers": [
+          {
+            "url": "http://localhost:8006"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Service is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "service": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dotmac-core-events/health": {
+      "get": {
+        "summary": "Event Bus Health Check",
+        "description": "Check Event Bus health status",
+        "tags": [
+          "Event Bus"
+        ],
+        "servers": [
+          {
+            "url": "http://localhost:8007"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Service is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "service": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dotmac-core-ops/health": {
+      "get": {
+        "summary": "Core Ops Health Check",
+        "description": "Check Core Ops health status",
+        "tags": [
+          "Core Ops"
+        ],
+        "servers": [
+          {
+            "url": "http://localhost:8008"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Service is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "service": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT authentication token"
+      },
+      "apiKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key",
+        "description": "API key for service-to-service communication"
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    },
+    {
+      "apiKey": []
+    }
+  ]
+}

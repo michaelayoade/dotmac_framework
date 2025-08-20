@@ -1,0 +1,32 @@
+name: isp-communications
+type: microservice
+description: Unified outbound & inbound notifications (email, SMS, WhatsApp)
+planes:
+  - dotmac_core_events   # emit "notification.sent" events
+  - dotmac_analytics     # track delivery / open / click
+providers:
+  email:
+    driver: smtp2go | sendgrid | ses
+  sms:
+    driver: twilio | vonage
+  whatsapp:
+    driver: ultramsg | infobip
+env:
+  - SMTP2GO_API_KEY
+  - TWILIO_SID
+  - TWILIO_TOKEN
+  - ULTRAMSG_INSTANCE_ID
+  - ULTRAMSG_TOKEN
+routes:
+  POST /send              # body: {channel, to, template, vars}
+  POST /webhooks/:channel # inbound callbacks (SMS replies, WhatsApp)
+files:
+  - main.py
+  - providers/__init__.py
+  - providers/email.py
+  - providers/sms.py
+  - providers/whatsapp.py
+  - requirements.txt
+  - .env.example
+  - docker-compose.yml
+  - Dockerfile

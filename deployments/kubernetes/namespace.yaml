@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dotmac-production
+  labels:
+    name: dotmac-production
+    environment: production
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dotmac-monitoring
+  labels:
+    name: dotmac-monitoring
+    environment: production
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dotmac-ingress
+  labels:
+    name: dotmac-ingress
+    environment: production

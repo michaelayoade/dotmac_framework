@@ -1,0 +1,454 @@
+# Unified OpenTelemetry Collector Configuration for SignOz
+# Replaces Prometheus scraping with OTLP push model
+
+receivers:
+  # OTLP Receiver for all telemetry data
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+        max_recv_msg_size_mib: 64
+        max_concurrent_streams: 1000
+        keepalive:
+          server_parameters:
+            max_connection_idle: 11s
+            max_connection_age: 30s
+            max_connection_age_grace: 5s
+            time: 30s
+            timeout: 10s
+      http:
+        endpoint: 0.0.0.0:4318
+        max_request_body_size: 134217728  # 128MB
+        cors:
+          allowed_origins:
+            - "http://localhost:*"
+            - "http://127.0.0.1:*"
+          allowed_headers: ["*"]
+          max_age: 7200
+
+  # Host metrics collection
+  hostmetrics:
+    collection_interval: 30s
+    scrapers:
+      cpu:
+        metrics:
+          system.cpu.utilization:
+            enabled: true
+          system.cpu.time:
+            enabled: false
+      memory:
+        metrics:
+          system.memory.utilization:
+            enabled: true
+      load:
+      disk:
+        metrics:
+          system.disk.io:
+            enabled: true
+          system.disk.operations:
+            enabled: true
+      filesystem:
+        metrics:
+          system.filesystem.utilization:
+            enabled: true
+      network:
+        metrics:
+          system.network.io:
+            enabled: true
+          system.network.errors:
+            enabled: true
+      paging:
+        metrics:
+          system.paging.utilization:
+            enabled: true
+      processes:
+
+  # Docker container metrics
+  docker_stats:
+    endpoint: unix:///var/run/docker.sock
+    collection_interval: 30s
+    timeout: 20s
+    api_version: 1.40
+    container_labels_to_metric_labels:
+      com.docker.compose.service: service_name
+      com.docker.compose.project: project
+      dotmac.service: service
+      dotmac.tenant: tenant
+
+  # PostgreSQL metrics
+  postgresql:
+    endpoint: postgres:5432
+    transport: tcp
+    username: ${POSTGRES_USER:-dotmac}
+    password: ${POSTGRES_PASSWORD}
+    databases:
+      - dotmac_db
+      - identity_db
+      - billing_db
+    collection_interval: 30s
+    tls:
+      insecure: true
+
+  # Redis metrics  
+  redis:
+    endpoint: redis:6379
+    transport: tcp
+    password: ${REDIS_PASSWORD}
+    collection_interval: 30s
+    tls:
+      insecure: true
+
+  # File log receiver
+  filelog:
+    include: 
+      - /var/log/pods/**/*.log
+      - /var/lib/docker/containers/*/*.log
+    exclude:
+      - /var/log/pods/kube-system_*/**/*.log
+    start_at: beginning
+    include_file_path: true
+    include_file_name: false
+    operators:
+      # Parse JSON logs
+      - type: json_parser
+        id: parser-docker
+        timestamp:
+          parse_from: attributes.time
+          layout: '%Y-%m-%dT%H:%M:%S.%LZ'
+        severity:
+          parse_from: attributes.level
+          mapping:
+            debug: debug
+            info: info
+            warn: warn
+            error: error
+            fatal: fatal
+      # Extract metadata
+      - type: regex_parser
+        id: extract_metadata_from_filepath
+        regex: '^.*\/(?P<namespace>[^_]+)_(?P<pod_name>[^_]+)_(?P<uid>[a-f0-9\-]+)\/(?P<container_name>[^\._]+)\/.*\.log$'
+        parse_from: attributes["log.file.path"]
+      # Move parsed log to body
+      - type: move
+        from: attributes.log
+        to: body
+      # Add service name
+      - type: add
+        field: resource.service.name
+        value: attributes.container_name
+
+  # Kafka metrics (if using Kafka adapter)
+  kafka_metrics:
+    protocol_version: 2.0.0
+    brokers:
+      - kafka:9092
+    auth:
+      tls:
+        insecure: true
+    scrapers:
+      - brokers
+      - topics
+      - consumers
+    collection_interval: 30s
+
+processors:
+  # Batch processing for better throughput
+  batch:
+    send_batch_size: 10000
+    send_batch_max_size: 11000
+    timeout: 1s
+
+  # Memory limiter
+  memory_limiter:
+    check_interval: 1s
+    limit_percentage: 80
+    spike_limit_percentage: 90
+
+  # Resource detection
+  resourcedetection/system:
+    detectors: [system, env, docker]
+    timeout: 5s
+    override: false
+    system:
+      hostname_sources: ["os"]
+      resource_attributes:
+        host.id:
+          enabled: true
+        host.name:
+          enabled: true
+
+  # Resource processor - Add standard attributes
+  resource:
+    attributes:
+      - key: deployment.environment
+        value: ${ENVIRONMENT:-development}
+        action: upsert
+      - key: service.namespace
+        value: dotmac
+        action: upsert
+      - key: service.version
+        from_attribute: DOTMAC_VERSION
+        action: insert
+      - key: cloud.provider
+        value: ${CLOUD_PROVIDER:-local}
+        action: insert
+      - key: cloud.region
+        value: ${CLOUD_REGION:-us-east-1}
+        action: insert
+
+  # Attributes processor - Extract tenant context
+  attributes/extraction:
+    actions:
+      - key: tenant.id
+        from_attribute: http.request.header.x_tenant_id
+        action: insert
+      - key: user.id
+        from_attribute: http.request.header.x_user_id
+        action: insert
+      - key: request.id
+        from_attribute: http.request.header.x_request_id
+        action: insert
+      - key: api.version
+        from_attribute: http.target
+        pattern: ^\/api\/(v\d+)\/.*
+        action: extract
+
+  # Tail sampling - Smart sampling for cost control
+  tail_sampling:
+    decision_wait: 10s
+    num_traces: 100000
+    expected_new_traces_per_sec: 10000
+    policies:
+      # Always sample errors
+      - name: errors
+        type: status_code
+        status_code:
+          status_codes: [ERROR]
+      # Sample slow requests
+      - name: slow-requests
+        type: latency
+        latency:
+          threshold_ms: 1000
+      # Higher sampling for critical services
+      - name: critical-services
+        type: string_attribute
+        string_attribute:
+          key: service.name
+          values: [api-gateway, billing, identity]
+          enabled_regex_matching: false
+          invert_match: false
+      # Sample by tenant priority
+      - name: premium-tenants
+        type: string_attribute
+        string_attribute:
+          key: tenant.priority
+          values: [premium, enterprise]
+      # Default probabilistic sampling
+      - name: default
+        type: probabilistic
+        probabilistic:
+          sampling_percentage: 10
+
+  # Span metrics - Generate RED metrics from traces
+  spanmetrics/prometheus:
+    metrics_exporter: prometheus
+    latency_histogram_buckets: [1ms, 5ms, 10ms, 25ms, 50ms, 100ms, 250ms, 500ms, 1000ms, 2500ms, 5000ms, 10000ms]
+    dimensions:
+      - name: service.name
+      - name: http.method
+      - name: http.status_code
+      - name: http.route
+      - name: tenant.id
+      - name: db.system
+      - name: messaging.system
+    dimensions_cache_size: 10000
+    aggregation_temporality: AGGREGATION_TEMPORALITY_DELTA
+    metrics_flush_interval: 30s
+
+  # Transform processor for data enrichment
+  transform/traces:
+    error_mode: ignore
+    trace_statements:
+      - context: span
+        statements:
+          # Categorize latency
+          - set(attributes["latency.category"], "fast") where duration < 100000000
+          - set(attributes["latency.category"], "normal") where duration >= 100000000 and duration < 1000000000
+          - set(attributes["latency.category"], "slow") where duration >= 1000000000
+          # Extract error details
+          - set(attributes["error.type"], attributes["exception.type"]) where attributes["exception.type"] != nil
+          # Add service tier
+          - set(attributes["service.tier"], "backend") where attributes["service.name"] == "api-gateway"
+          - set(attributes["service.tier"], "database") where attributes["db.system"] != nil
+
+  # Metrics transform
+  transform/metrics:
+    error_mode: ignore
+    metric_statements:
+      - context: datapoint
+        statements:
+          # Add deployment environment to all metrics
+          - set(attributes["environment"], "${ENVIRONMENT:-development}")
+          # Normalize metric names
+          - set(metric.name, "dotmac." + metric.name) where not IsMatch(metric.name, "^dotmac\.")
+
+  # Filter processor
+  filter/logs:
+    logs:
+      # Drop health check logs
+      include:
+        match_type: regexp
+        record_attributes:
+          - key: http.target
+            value: ^(?!/health|/metrics).*
+      # Drop debug logs in production
+      exclude:
+        match_type: strict
+        record_attributes:
+          - key: severity_text
+            value: DEBUG
+
+  # Group by trace
+  groupbytrace:
+    wait_duration: 10s
+    num_workers: 4
+    num_traces: 100000
+    store_on_disk: true
+
+  # K8s attributes (if running in Kubernetes)
+  k8sattributes:
+    auth_type: serviceAccount
+    passthrough: false
+    filter:
+      node_from_env_var: K8S_NODE_NAME
+    extract:
+      metadata:
+        - k8s.namespace.name
+        - k8s.deployment.name
+        - k8s.pod.name
+        - k8s.pod.uid
+        - k8s.node.name
+        - k8s.container.name
+      annotations:
+        - tag_name: service.version
+          key: app.kubernetes.io/version
+        - tag_name: service.instance.id
+          key: app.kubernetes.io/instance
+
+exporters:
+  # ClickHouse exporter for traces and logs
+  clickhousetraces:
+    datasource: tcp://${CLICKHOUSE_HOST}:${CLICKHOUSE_PORT}/?database=${CLICKHOUSE_DATABASE}
+    docker_multi_node_cluster: ${DOCKER_MULTI_NODE_CLUSTER:-false}
+    low_cardinal_exception_grouping: true
+    timeout: 10s
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 300s
+
+  # Prometheus exporter for compatibility
+  prometheus:
+    endpoint: 0.0.0.0:8889
+    namespace: dotmac
+    const_labels:
+      environment: ${ENVIRONMENT:-development}
+    resource_to_telemetry_conversion:
+      enabled: true
+    enable_open_metrics: true
+    metric_expiration: 5m
+
+  # OTLP/HTTP exporter to SignOz
+  otlphttp/signoz:
+    endpoint: http://query-service:8080/v1/traces
+    tls:
+      insecure: true
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 300s
+
+  # Debug exporter (development only)
+  debug:
+    verbosity: detailed
+    sampling_initial: 5
+    sampling_thereafter: 200
+
+extensions:
+  # Health check
+  health_check:
+    endpoint: 0.0.0.0:13133
+    path: /health/status
+    check_collector_pipeline:
+      enabled: true
+      interval: 10s
+      exporter_failure_threshold: 5
+
+  # Performance profiler
+  pprof:
+    endpoint: 0.0.0.0:1777
+
+  # zPages for debugging
+  zpages:
+    endpoint: 0.0.0.0:55679
+
+  # Memory ballast for GC optimization
+  memory_ballast:
+    size_in_percentage: 20
+
+service:
+  extensions:
+    - health_check
+    - pprof
+    - zpages
+    - memory_ballast
+
+  pipelines:
+    # Traces pipeline
+    traces:
+      receivers: [otlp]
+      processors:
+        - memory_limiter
+        - batch
+        - resourcedetection/system
+        - resource
+        - attributes/extraction
+        - transform/traces
+        - tail_sampling
+        - spanmetrics/prometheus
+        - groupbytrace
+      exporters: [clickhousetraces, otlphttp/signoz]
+
+    # Metrics pipeline
+    metrics:
+      receivers: [otlp, hostmetrics, docker_stats, spanmetrics/prometheus]
+      processors:
+        - memory_limiter
+        - batch
+        - resourcedetection/system
+        - resource
+        - transform/metrics
+      exporters: [prometheus, clickhousetraces]
+
+    # Logs pipeline
+    logs:
+      receivers: [otlp, filelog]
+      processors:
+        - memory_limiter
+        - batch
+        - resourcedetection/system
+        - resource
+        - attributes/extraction
+        - filter/logs
+      exporters: [clickhousetraces]
+
+  telemetry:
+    logs:
+      level: ${OTEL_LOG_LEVEL:-info}
+      initial_fields:
+        service: otel-collector
+    metrics:
+      level: detailed
+      address: 0.0.0.0:8888

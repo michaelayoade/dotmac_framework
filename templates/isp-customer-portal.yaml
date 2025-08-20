@@ -1,0 +1,88 @@
+name: isp-customer-portal
+type: web-portal
+description: Self-service customer portal for billing, support, service management
+planes:
+  - dotmac_identity        # customer auth & profiles
+  - dotmac_billing         # invoices, payments, usage
+  - dotmac_services        # service management & upgrades
+  - dotmac_networking      # connection status, diagnostics
+  - dotmac_communications  # support messaging
+entities:
+  - CustomerSession
+  - SupportTicket
+  - PaymentMethod
+  - ServiceRequest
+  - UsageReport
+  - Notification
+routes:
+  # Dashboard & Overview
+  GET  /dashboard                    # customer overview
+  GET  /account                      # account settings
+  PUT  /account/profile              # update profile
+  
+  # Billing & Payments
+  GET  /billing/invoices             # invoice history
+  GET  /billing/usage                # usage details
+  POST /billing/payments             # make payment
+  PUT  /billing/autopay              # setup autopay
+  GET  /billing/statements           # download statements
+  
+  # Service Management
+  GET  /services                     # active services
+  POST /services/upgrade             # upgrade request
+  POST /services/downgrade           # downgrade request
+  PUT  /services/:id/suspend         # suspend service
+  GET  /services/:id/usage           # service usage details
+  
+  # Support & Messaging
+  GET  /support/tickets              # support history
+  POST /support/tickets              # create ticket
+  GET  /support/tickets/:id          # ticket details
+  POST /support/tickets/:id/reply    # reply to ticket
+  GET  /support/chat                 # live chat
+  
+  # Network & Diagnostics
+  GET  /network/status               # connection status
+  POST /network/speedtest            # run speed test
+  GET  /network/outages              # known outages
+  POST /network/troubleshoot         # diagnostic tools
+  
+  # Notifications & Alerts
+  GET  /notifications                # notification center
+  PUT  /notifications/preferences    # notification settings
+  POST /notifications/mark-read      # mark as read
+env:
+  - DOTMAC_IDENTITY_URL
+  - DOTMAC_BILLING_URL
+  - DOTMAC_SERVICES_URL
+  - DOTMAC_NETWORKING_URL
+  - DOTMAC_COMMUNICATIONS_URL
+  - PAYMENT_GATEWAY
+  - LIVE_CHAT_ENABLED
+  - SELF_SERVICE_ENABLED
+files:
+  - main.py
+  - portal/__init__.py
+  - portal/dashboard.py
+  - portal/billing.py
+  - portal/services.py
+  - portal/support.py
+  - portal/network.py
+  - services/__init__.py
+  - services/customer_service.py
+  - services/billing_service.py
+  - services/support_service.py
+  - models/__init__.py
+  - models/customer_session.py
+  - models/support_ticket.py
+  - models/payment.py
+  - static/css/customer.css
+  - static/js/portal.js
+  - templates/dashboard.html
+  - templates/billing.html
+  - templates/services.html
+  - templates/support.html
+  - requirements.txt
+  - .env.example
+  - docker-compose.yml
+  - Dockerfile

@@ -1,0 +1,223 @@
+components:
+  securitySchemes:
+    apiKey:
+      description: API key for service-to-service communication
+      in: header
+      name: X-API-Key
+      type: apiKey
+    bearerAuth:
+      bearerFormat: JWT
+      description: JWT authentication token
+      scheme: bearer
+      type: http
+info:
+  contact:
+    email: support@dotmac.io
+    name: DotMac Platform Team
+    url: https://dotmac.io
+  description: "\n# DotMac ISP Platform - Unified API Documentation\n\n## Overview\n\
+    The DotMac Platform is a comprehensive microservices-based telecommunications\
+    \ management platform for Internet Service Providers.\n\n## Services\n\n| Service\
+    \ | Port | Description |\n|---------|------|-------------|\n| API Gateway | 8000\
+    \ | Central routing and authentication |\n| Identity | 8001 | User and customer\
+    \ management |\n| Billing | 8002 | Financial services |\n| Services | 8003 | Service\
+    \ provisioning |\n| Networking | 8004 | Network management |\n| Analytics | 8005\
+    \ | Business intelligence |\n| Platform | 8006 | Core utilities |\n| Events |\
+    \ 8007 | Event bus |\n| Core Ops | 8008 | Workflow orchestration |\n\n## Authentication\n\
+    All APIs support JWT Bearer tokens and API keys.\n\n## Rate Limiting\nDefault:\
+    \ 1000 requests per minute per client.\n            "
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  title: DotMac Platform API
+  version: 1.0.0
+openapi: 3.0.0
+paths:
+  /dotmac-analytics/health:
+    get:
+      description: Check Analytics Service health status
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                properties:
+                  service:
+                    type: string
+                  status:
+                    type: string
+                type: object
+          description: Service is healthy
+      servers:
+      - url: http://localhost:8005
+      summary: Analytics Service Health Check
+      tags:
+      - Analytics Service
+  /dotmac-api-gateway/health:
+    get:
+      description: Check API Gateway health status
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                properties:
+                  service:
+                    type: string
+                  status:
+                    type: string
+                type: object
+          description: Service is healthy
+      servers:
+      - url: http://localhost:8000
+      summary: API Gateway Health Check
+      tags:
+      - API Gateway
+  /dotmac-billing/health:
+    get:
+      description: Check Billing Service health status
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                properties:
+                  service:
+                    type: string
+                  status:
+                    type: string
+                type: object
+          description: Service is healthy
+      servers:
+      - url: http://localhost:8002
+      summary: Billing Service Health Check
+      tags:
+      - Billing Service
+  /dotmac-core-events/health:
+    get:
+      description: Check Event Bus health status
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                properties:
+                  service:
+                    type: string
+                  status:
+                    type: string
+                type: object
+          description: Service is healthy
+      servers:
+      - url: http://localhost:8007
+      summary: Event Bus Health Check
+      tags:
+      - Event Bus
+  /dotmac-core-ops/health:
+    get:
+      description: Check Core Ops health status
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                properties:
+                  service:
+                    type: string
+                  status:
+                    type: string
+                type: object
+          description: Service is healthy
+      servers:
+      - url: http://localhost:8008
+      summary: Core Ops Health Check
+      tags:
+      - Core Ops
+  /dotmac-identity/health:
+    get:
+      description: Check Identity Service health status
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                properties:
+                  service:
+                    type: string
+                  status:
+                    type: string
+                type: object
+          description: Service is healthy
+      servers:
+      - url: http://localhost:8001
+      summary: Identity Service Health Check
+      tags:
+      - Identity Service
+  /dotmac-networking/health:
+    get:
+      description: Check Network Management health status
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                properties:
+                  service:
+                    type: string
+                  status:
+                    type: string
+                type: object
+          description: Service is healthy
+      servers:
+      - url: http://localhost:8004
+      summary: Network Management Health Check
+      tags:
+      - Network Management
+  /dotmac-platform/health:
+    get:
+      description: Check Platform Service health status
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                properties:
+                  service:
+                    type: string
+                  status:
+                    type: string
+                type: object
+          description: Service is healthy
+      servers:
+      - url: http://localhost:8006
+      summary: Platform Service Health Check
+      tags:
+      - Platform Service
+  /dotmac-services/health:
+    get:
+      description: Check Services Provisioning health status
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                properties:
+                  service:
+                    type: string
+                  status:
+                    type: string
+                type: object
+          description: Service is healthy
+      servers:
+      - url: http://localhost:8003
+      summary: Services Provisioning Health Check
+      tags:
+      - Services Provisioning
+security:
+- bearerAuth: []
+- apiKey: []
+servers:
+- description: API Gateway (Local)
+  url: http://localhost:8000
+- description: API Gateway (Production)
+  url: https://api.dotmac.io

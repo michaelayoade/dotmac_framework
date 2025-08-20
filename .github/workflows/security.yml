@@ -1,0 +1,131 @@
+name: Security Gates
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        npm ci --prefix frontend
+        pip install safety bandit semgrep
+    
+    - name: Frontend Security Audit
+      run: |
+        cd frontend
+        npm audit --audit-level=high
+        echo "✅ Frontend audit completed"
+    
+    - name: Backend Security Scan
+      run: |
+        # Python security scanning
+        safety check --json --output safety-report.json || true
+        bandit -r . -f json -o bandit-report.json || true
+        
+        # Semgrep security rules
+        semgrep --config=auto --json --output=semgrep-report.json . || true
+        
+        echo "✅ Backend security scan completed"
+    
+    - name: Container Security Scan
+      run: |
+        # Install Trivy
+        sudo apt-get update
+        sudo apt-get install wget apt-transport-https gnupg lsb-release
+        wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+        echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
+        sudo apt-get update
+        sudo apt-get install trivy
+        
+        # Scan filesystem for vulnerabilities
+        trivy fs . --format json --output trivy-report.json
+        
+        echo "✅ Container security scan completed"
+    
+    - name: Secret Scanning
+      run: |
+        # Check for hard-coded secrets
+        echo "Scanning for hard-coded secrets..."
+        
+        # Check for common secret patterns
+        if grep -r "secret123\|password123\|test123" . --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=coverage; then
+          echo "❌ Hard-coded secrets found!"
+          exit 1
+        fi
+        
+        # Check for API keys in wrong places
+        if grep -r "sk_\|pk_\|rk_" . --include="*.js" --include="*.ts" --include="*.py" --exclude-dir=node_modules --exclude-dir=.git; then
+          echo "❌ Potential API keys in source code!"
+          exit 1
+        fi
+        
+        echo "✅ No hard-coded secrets detected"
+    
+    - name: Security Bootstrap Validation
+      run: |
+        cd dotmac_platform
+        python -m dotmac_platform.security.bootstrap
+        echo "✅ Security dependencies validated"
+    
+    # Upload security reports
+    - name: Upload Security Reports
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: security-reports
+        path: |
+          safety-report.json
+          bandit-report.json
+          semgrep-report.json
+          trivy-report.json
+    
+    - name: Security Gate Summary
+      run: |
+        echo "## 🔒 Security Gate Results" >> $GITHUB_STEP_SUMMARY
+        echo "✅ Frontend audit: No high severity vulnerabilities" >> $GITHUB_STEP_SUMMARY
+        echo "✅ Backend security scan: Completed" >> $GITHUB_STEP_SUMMARY
+        echo "✅ Container scan: Completed" >> $GITHUB_STEP_SUMMARY
+        echo "✅ Secret scanning: No hard-coded secrets" >> $GITHUB_STEP_SUMMARY
+        echo "✅ Security bootstrap: Dependencies validated" >> $GITHUB_STEP_SUMMARY
+        
+  dependency-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: OWASP Dependency Check
+      uses: dependency-check/Dependency-Check_Action@main
+      with:
+        project: 'DotMac Platform'
+        path: '.'
+        format: 'ALL'
+        args: >
+          --enableRetired
+          --enableExperimental
+          --nodePackageSkipDevDependencies
+    
+    - name: Upload Dependency Check Results
+      uses: actions/upload-artifact@v3
+      with:
+        name: dependency-check-report
+        path: reports/

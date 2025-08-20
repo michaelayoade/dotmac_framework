@@ -1,0 +1,66 @@
+name: isp-crm
+type: orchestration
+description: CRM business logic orchestrating identity, billing, analytics, communications
+planes:
+  - dotmac_identity        # leads → customers
+  - dotmac_billing         # quotes → orders → invoices  
+  - dotmac_analytics       # funnel / attribution / churn
+  - dotmac_communications  # omni-channel inbox
+  - dotmac_core_events     # workflow orchestration
+entities:
+  - Lead
+  - Opportunity
+  - Quote
+  - Campaign
+  - Interaction
+  - Pipeline
+routes:
+  # Lead Management
+  POST /leads                    # capture from web forms, calls
+  GET  /leads                    # list with filters
+  PUT  /leads/:id/qualify        # lead → opportunity
+  PUT  /leads/:id/convert        # opportunity → customer
+  
+  # Opportunity Pipeline
+  GET  /pipeline                 # visual pipeline view
+  PUT  /opportunities/:id/stage  # move through stages
+  POST /opportunities/:id/quote  # generate quote
+  
+  # Campaign Management
+  POST /campaigns                # create email/SMS campaigns
+  GET  /campaigns/:id/analytics  # open rates, conversions
+  
+  # Customer 360 View
+  GET  /customers/:id/timeline   # all interactions
+  GET  /customers/:id/revenue    # billing history + projections
+  GET  /customers/:id/support    # support tickets
+  
+  # Inbox & Communications
+  GET  /inbox                    # unified inbox (email, SMS, WhatsApp)
+  POST /inbox/:id/reply          # respond via same channel
+  POST /customers/:id/message    # proactive outreach
+env:
+  - DOTMAC_IDENTITY_URL
+  - DOTMAC_BILLING_URL
+  - DOTMAC_ANALYTICS_URL
+  - DOTMAC_COMMUNICATIONS_URL
+  - PIPELINE_STAGES
+  - DEFAULT_EMAIL_TEMPLATE
+files:
+  - main.py
+  - orchestration/__init__.py
+  - orchestration/lead_flow.py
+  - orchestration/sales_pipeline.py
+  - orchestration/customer_journey.py
+  - services/__init__.py
+  - services/lead_service.py
+  - services/opportunity_service.py
+  - services/campaign_service.py
+  - models/__init__.py
+  - models/lead.py
+  - models/opportunity.py
+  - models/campaign.py
+  - requirements.txt
+  - .env.example
+  - docker-compose.yml
+  - Dockerfile

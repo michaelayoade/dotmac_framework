@@ -1,0 +1,185 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dotmac-billing"
+version = "1.0.0"
+description = "Billing services and financial operations for ISP platform"
+readme = "IMPLEMENTATION_SUMMARY.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "DotMac Team", email = "support@dotmac.com"}
+]
+maintainers = [
+    {name = "DotMac Team", email = "support@dotmac.com"}
+]
+keywords = [
+    "billing",
+    "financial",
+    "isp",
+    "telecommunications",
+    "invoicing",
+    "payments",
+    "revenue",
+    "accounting",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Intended Audience :: Telecommunications Industry",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Office/Business :: Financial :: Accounting",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Systems Administration",
+]
+dependencies = [
+    # Core framework
+    "pydantic>=2.0.0",
+    "python-dotenv>=1.0.0",
+    
+    # Database
+    "sqlalchemy>=2.0.0",
+    "alembic>=1.11.0",
+    "asyncpg>=0.28.0",
+    
+    # HTTP clients
+    "httpx>=0.24.0",
+    
+    # Event publishing
+    "structlog>=23.0.0",
+    
+    # Date and time
+    "python-dateutil>=2.8.0",
+    
+    # Utilities
+    "click>=8.1.0",
+]
+
+[project.optional-dependencies]
+cache = [
+    "redis>=4.5.0",
+    "hiredis>=2.2.0",
+]
+notifications = [
+    "jinja2>=3.1.0",
+    "aiosmtplib>=2.0.0",
+]
+all = [
+    "redis>=4.5.0",
+    "hiredis>=2.2.0",
+    "jinja2>=3.1.0",
+    "aiosmtplib>=2.0.0",
+]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.1.0",
+    "black>=23.9.0",
+    "ruff>=0.1.0",
+    "mypy>=1.6.0",
+    "pre-commit>=3.5.0",
+]
+test = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.8.0",
+    "factory-boy>=3.2.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/dotmac/dotmac-billing"
+Documentation = "https://docs.dotmac.com/billing"
+Repository = "https://github.com/dotmac/dotmac-billing.git"
+"Bug Tracker" = "https://github.com/dotmac/dotmac-billing/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["dotmac_billing*"]
+exclude = ["tests*", "docs*", "migrations*"]
+
+[tool.setuptools.package-data]
+dotmac_billing = [
+    "py.typed",
+]
+
+# Black configuration
+[tool.black]
+line-length = 88
+target-version = ['py38', 'py39', 'py310', 'py311', 'py312']
+include = '\.pyi?$'
+
+# Ruff configuration
+[tool.ruff]
+target-version = "py38"
+line-length = 88
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "UP", # pyupgrade
+]
+ignore = [
+    "E501",  # line too long, handled by black
+]
+
+# COMPLEXITY RULES - NO LONGER IGNORED
+
+[tool.ruff.lint]
+select = []
+ignore = []
+[tool.ruff.lint.pylint]
+max-args = 8
+max-branches = 12
+max-returns = 6
+max-statements = 50
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.ruff.lint.isort]
+known-first-party = ["dotmac_billing"]
+
+# MyPy configuration
+[tool.mypy]
+python_version = "3.8"
+ignore_missing_imports = true
+warn_return_any = true
+warn_unused_configs = true
+
+# Pytest configuration
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--cov=dotmac_billing",
+    "--cov-report=term-missing",
+]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+# Coverage configuration
+[tool.coverage.run]
+source = ["dotmac_billing"]
+omit = [
+    "*/tests/*",
+    "*/migrations/*",
+]
+
+# Bandit security linting
+[tool.bandit]
+exclude_dirs = ["tests", "test"]
+skips = ["B101"]  # Allow assert in tests

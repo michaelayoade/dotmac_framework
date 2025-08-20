@@ -1,0 +1,302 @@
+# DotMac Framework - Root Configuration
+# Unified tooling configuration for the entire monorepo
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dotmac-framework"
+version = "1.0.0"
+description = "Complete ISP Management Framework"
+authors = [
+    {name = "DotMac Team", email = "support@dotmac.com"}
+]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Telecommunications Industry",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+[project.urls]
+Homepage = "https://github.com/dotmac/framework"
+Documentation = "https://docs.dotmac.com"
+Repository = "https://github.com/dotmac/framework"
+Issues = "https://github.com/dotmac/framework/issues"
+
+# =============================================================================
+# UNIFIED TOOLING CONFIGURATION
+# All packages should extend from these settings for consistency
+# =============================================================================
+
+[tool.black]
+line-length = 88
+target-version = ['py39', 'py310', 'py311', 'py312']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+  | migrations
+  | __pycache__
+)/
+'''
+
+[tool.ruff]
+# Enable all recommended rules by default
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings  
+    "F",   # pyflakes
+    "I",   # isort
+    "N",   # pep8-naming
+    "D",   # pydocstyle
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "COM", # flake8-commas
+    "DTZ", # flake8-datetimez
+    "ISC", # flake8-implicit-str-concat
+    "PIE", # flake8-pie
+    "T20", # flake8-print
+    "PT",  # flake8-pytest-style
+    "Q",   # flake8-quotes
+    "RSE", # flake8-raise
+    "RET", # flake8-return
+    "SIM", # flake8-simplify
+    "TID", # flake8-tidy-imports
+    "ARG", # flake8-unused-arguments
+    "ERA", # eradicate
+    "PL",  # pylint
+    "TRY", # tryceratops
+    "PERF", # perflint
+    "RUF", # ruff-specific
+]
+
+# COMPLEXITY RULES - NO LONGER IGNORED
+# These were previously disabled but we're now enforcing them
+ignore = [
+    # Documentation requirements (too strict for internal APIs)
+    "D100", "D101", "D102", "D103", "D104", "D105", "D106", "D107",
+    "D200", "D202", "D203", "D205", "D212", "D213", "D400", "D401",
+    "D415", "D417",
+    
+    # Specific rule adjustments (but NOT complexity rules)
+    "COM812",  # trailing comma (conflicts with black)
+    "ISC001",  # implicit string concatenation (single line)
+    "PLR2004", # magic value comparison (too restrictive)
+    "PT009",   # pytest.raises without match
+    "TRY003",  # raise without custom exception class
+    "ARG002",  # unused method arguments (common in overrides)
+]
+
+# Complexity rules are now ENABLED by default
+# C901 - function too complex
+# PLR0913 - too many arguments  
+# PLR0915 - too many statements
+# If you hit these, refactor instead of ignoring!
+
+line-length = 88
+target-version = "py39"
+fix = true
+show-fixes = true
+
+
+[tool.ruff.lint]
+select = []
+ignore = []
+[tool.ruff.lint.per-file-ignores]
+# Tests can be less strict
+"tests/**/*.py" = [
+    "PLR0913",  # tests often need many arguments
+    "PLR0915",  # tests can have many statements
+    "ARG001",   # tests can have unused arguments (fixtures)
+    "D",        # no docstring requirements for tests
+    "F821",     # undefined names (mock objects, fixtures)
+]
+"**/conftest.py" = ["D"]
+"**/test_*.py" = ["D"]
+
+# Migration files and generated code
+"**/migrations/**/*.py" = ["ALL"]
+"**/alembic/versions/*.py" = ["ALL"]
+
+# Scripts and utilities
+"scripts/**/*.py" = ["T20", "D"]  # allow prints, no docstrings
+
+# Template files - suppress undefined names as they are examples
+"templates/**/*.py" = ["F821", "F401", "D"]  # allow undefined names, unused imports, no docstrings
+
+# SDK placeholder files - suppress undefined names until implementation
+"**/sdks/*.py" = ["F821"]  # allow undefined names in SDK placeholders
+"**/api/*.py" = ["F821"]  # allow undefined names in API placeholders
+"**/cli/*.py" = ["F821"]  # allow undefined names in CLI placeholders
+
+[tool.ruff.lint.mccabe]
+# Lower complexity threshold to catch issues earlier
+max-complexity = 10
+
+[tool.ruff.lint.pylint]
+max-args = 8        # Down from default 15
+max-statements = 50 # Down from default 100
+max-returns = 6     # Reasonable return count
+max-branches = 12   # Reasonable branch count
+
+[tool.ruff.lint.isort]
+# Align with black
+force-single-line = false
+force-sort-within-sections = false
+lines-after-imports = 2
+known-first-party = ["dotmac_core_events", "dotmac_core_ops", "dotmac_identity", "dotmac_billing", "dotmac_services", "dotmac_networking", "dotmac_analytics", "dotmac_api_gateway", "dotmac_platform", "dotmac_devtools"]
+known-third-party = ["fastapi", "pydantic", "sqlalchemy", "alembic", "pytest", "httpx"]
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+
+[tool.mypy]
+# Strict type checking for better code quality
+python_version = "3.9"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+warn_unreachable = true
+show_error_codes = true
+show_column_numbers = true
+
+# Per-module overrides for gradual adoption
+[[tool.mypy.overrides]]
+module = [
+    "tests.*",
+    "migrations.*",
+    "alembic.*"
+]
+ignore_errors = true
+
+# Third-party libraries without type stubs
+[[tool.mypy.overrides]]
+module = [
+    "cookiecutter.*",
+    "jinja2.*",
+    "git.*",
+    "sqlalchemy.*",
+    "alembic.*",
+    "celery.*",
+    "redis.*",
+    "elasticsearch.*",
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = [
+    "--strict-markers",
+    "--strict-config", 
+    "--disable-warnings",
+    "--tb=short",
+    "-ra",
+    "--cov=dotmac_core_events",
+    "--cov=dotmac_core_ops", 
+    "--cov=dotmac_identity",
+    "--cov=dotmac_billing",
+    "--cov=dotmac_services",
+    "--cov=dotmac_networking",
+    "--cov=dotmac_analytics",
+    "--cov=dotmac_api_gateway",
+    "--cov=dotmac_platform",
+    "--cov=dotmac_devtools",
+    "--cov-report=term-missing",
+    "--cov-report=html:htmlcov",
+    "--cov-report=xml",
+    "--cov-fail-under=80",
+]
+testpaths = [
+    "tests",
+    "dotmac_core_events/tests",
+    "dotmac_core_ops/tests", 
+    "dotmac_identity/tests",
+    "dotmac_billing/tests",
+    "dotmac_services/tests",
+    "dotmac_networking/tests",
+    "dotmac_analytics/tests",
+    "dotmac_api_gateway/tests",
+    "dotmac_platform/tests",
+    "dotmac_devtools/tests",
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+    "api: marks tests as API tests",
+    "e2e: marks tests as end-to-end tests",
+]
+
+[tool.coverage.run]
+source = [
+    "dotmac_core_events",
+    "dotmac_core_ops",
+    "dotmac_identity", 
+    "dotmac_billing",
+    "dotmac_services",
+    "dotmac_networking",
+    "dotmac_analytics",
+    "dotmac_api_gateway",
+    "dotmac_platform",
+    "dotmac_devtools",
+]
+omit = [
+    "*/tests/*",
+    "*/migrations/*",
+    "*/alembic/*",
+    "*/venv/*",
+    "*/build/*",
+    "*/dist/*",
+    "*/__pycache__/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+
+# =============================================================================
+# PACKAGE MANAGEMENT
+# =============================================================================
+
+[tool.setuptools.packages.find]
+include = [
+    "dotmac_core_events*",
+    "dotmac_core_ops*", 
+    "dotmac_identity*",
+    "dotmac_billing*",
+    "dotmac_services*",
+    "dotmac_networking*",
+    "dotmac_analytics*",
+    "dotmac_api_gateway*",
+    "dotmac_platform*",
+    "dotmac_devtools*",
+]
+
+[tool.setuptools.package-data]
+"*" = ["py.typed"]

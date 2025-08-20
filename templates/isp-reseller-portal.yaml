@@ -1,0 +1,73 @@
+name: isp-reseller-portal
+type: web-portal
+description: Partner/reseller portal for sales, provisioning, white-label
+planes:
+  - dotmac_identity        # reseller auth & hierarchy
+  - dotmac_billing         # commission, white-label pricing
+  - dotmac_services        # provisioning on behalf of customers
+  - dotmac_analytics       # sales metrics, commissions
+  - dotmac_communications  # partner notifications
+entities:
+  - Reseller
+  - ResellerTier
+  - Commission
+  - WhiteLabelConfig
+  - PartnerCustomer
+  - SalesTarget
+routes:
+  # Reseller Management
+  POST /resellers                    # onboard new partner
+  GET  /resellers/me                 # current reseller profile
+  PUT  /resellers/me/branding        # white-label config
+  GET  /resellers/hierarchy          # sub-reseller tree
+  
+  # Customer Management (on behalf)
+  POST /customers                    # create customer for reseller
+  GET  /customers                    # reseller's customer list
+  POST /customers/:id/services       # provision services
+  GET  /customers/:id/billing        # customer billing (reseller view)
+  
+  # Sales & Commissions
+  GET  /dashboard/sales              # sales dashboard
+  GET  /commissions                  # commission history
+  GET  /reports/performance          # reseller metrics
+  POST /leads                        # submit leads for commission
+  
+  # Provisioning Tools
+  POST /provision/broadband          # self-service provisioning
+  GET  /provision/status/:id         # provision status
+  GET  /templates/services           # available service templates
+  
+  # White-label Portal
+  GET  /portal/config                # white-label configuration
+  GET  /portal/customer-facing       # customer portal for reseller
+  PUT  /portal/branding              # update colors, logos
+env:
+  - DOTMAC_IDENTITY_URL
+  - DOTMAC_BILLING_URL
+  - DOTMAC_SERVICES_URL
+  - DOTMAC_ANALYTICS_URL
+  - COMMISSION_RATES
+  - WHITE_LABEL_DOMAIN
+  - RESELLER_TIERS
+files:
+  - main.py
+  - portal/__init__.py
+  - portal/reseller_dashboard.py
+  - portal/customer_management.py
+  - portal/white_label.py
+  - services/__init__.py
+  - services/reseller_service.py
+  - services/commission_service.py
+  - services/provisioning_service.py
+  - models/__init__.py
+  - models/reseller.py
+  - models/commission.py
+  - models/white_label.py
+  - static/css/portal.css
+  - templates/dashboard.html
+  - templates/customer_list.html
+  - requirements.txt
+  - .env.example
+  - docker-compose.yml
+  - Dockerfile

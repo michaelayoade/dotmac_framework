@@ -1,0 +1,46 @@
+# Enhanced requirements for DotMac Networking with advanced capabilities
+
+# SSH Automation (Paramiko)
+paramiko>=3.0.0
+bcrypt>=4.0.0  # For SSH key encryption
+pynacl>=1.5.0  # For SSH key generation
+
+# Network Graph Analysis (NetworkX)
+networkx>=3.0
+scipy>=1.9.0  # For advanced graph algorithms
+matplotlib>=3.7.0  # For network visualization (optional)
+plotly>=5.0.0  # For interactive network graphs (optional)
+
+# VOLTHA Integration
+grpcio>=1.50.0
+grpcio-tools>=1.50.0
+protobuf>=4.21.0
+googleapis-common-protos>=1.56.0
+
+# Enhanced Network Communication
+netmiko>=4.2.0  # Multi-vendor network device library
+scapy>=2.5.0  # Packet manipulation
+pysnmp>=6.0.0  # SNMP for device monitoring
+
+# Advanced Data Processing
+pandas>=2.0.0  # For network data analysis
+numpy>=1.24.0  # Numerical computations
+
+# Performance and Caching
+cachetools>=5.0.0  # Intelligent caching
+aiocache>=0.12.0  # Async caching
+
+# Monitoring and Metrics
+psutil>=5.9.0  # System metrics
+py-cpuinfo>=9.0.0  # CPU information
+
+# Enhanced Validation
+cerberus>=1.3.4  # Schema validation
+jsonschema>=4.17.0  # JSON schema validation
+
+# Time Series Data (for metrics)
+influxdb-client>=1.36.0  # InfluxDB integration (optional)
+
+# Advanced Logging
+structlog>=23.0.0  # Structured logging
+colorama>=0.4.6  # Colored terminal output

@@ -1,0 +1,95 @@
+apiVersion: v1
+kind: ServiceMonitor
+metadata:
+  name: dotmac-platform-monitor
+  namespace: dotmac-monitoring
+  labels:
+    app: dotmac-platform
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: dotmac-platform
+  namespaceSelector:
+    matchNames:
+    - dotmac-production
+  endpoints:
+  - port: http
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: dotmac-platform-alerts
+  namespace: dotmac-monitoring
+  labels:
+    app: dotmac-platform
+    release: prometheus
+spec:
+  groups:
+  - name: dotmac-platform.rules
+    rules:
+    - alert: DotMacPlatformDown
+      expr: up{job="dotmac-platform"} == 0
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: "DotMac Platform is down"
+        description: "DotMac Platform has been down for more than 1 minute"
+    
+    - alert: DotMacPlatformHighErrorRate
+      expr: rate(http_requests_total{job="dotmac-platform",status_code=~"5.."}[5m]) > 0.1
+      for: 2m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High error rate on DotMac Platform"
+        description: "Error rate is {{ $value }} errors per second"
+    
+    - alert: DotMacPlatformHighLatency
+      expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="dotmac-platform"}[5m])) > 1
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High latency on DotMac Platform"
+        description: "95th percentile latency is {{ $value }}s"
+    
+    - alert: DotMacPlatformCircuitBreakerOpen
+      expr: circuit_breaker_state{job="dotmac-platform"} == 1
+      for: 1m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Circuit breaker open"
+        description: "Circuit breaker {{ $labels.service }}/{{ $labels.operation }} is open"
+    
+    - alert: DotMacPlatformDatabaseConnectionFailed
+      expr: database_connections_active{job="dotmac-platform"} == 0
+      for: 30s
+      labels:
+        severity: critical
+      annotations:
+        summary: "Database connection failed"
+        description: "No active database connections"
+    
+    - alert: DotMacPlatformHighMemoryUsage
+      expr: container_memory_usage_bytes{pod=~"dotmac-platform-.*"} / container_spec_memory_limit_bytes > 0.9
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High memory usage"
+        description: "Memory usage is {{ $value | humanizePercentage }}"
+    
+    - alert: DotMacPlatformHighCPUUsage
+      expr: rate(container_cpu_usage_seconds_total{pod=~"dotmac-platform-.*"}[5m]) / container_spec_cpu_quota * 100 > 80
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High CPU usage"
+        description: "CPU usage is {{ $value }}%"

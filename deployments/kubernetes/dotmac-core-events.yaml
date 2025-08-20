@@ -1,0 +1,127 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dotmac-core-events
+  namespace: dotmac-production
+  labels:
+    app: dotmac-core-events
+    plane: core
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: dotmac-core-events
+  template:
+    metadata:
+      labels:
+        app: dotmac-core-events
+        plane: core
+    spec:
+      containers:
+      - name: dotmac-core-events
+        image: dotmac/core-events:latest
+        ports:
+        - containerPort: 8000
+          name: http
+        - containerPort: 9090
+          name: metrics
+        env:
+        - name: DATABASE_URL
+          value: "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@postgres-service:5432/dotmac_events"
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: postgres-user
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: postgres-password
+        - name: REDIS_URL
+          value: "redis://redis-service:6379/0"
+        - name: RABBITMQ_URL
+          value: "amqp://rabbitmq-service:5672/"
+        envFrom:
+        - configMapRef:
+            name: dotmac-config
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dotmac-core-events-service
+  namespace: dotmac-production
+  labels:
+    app: dotmac-core-events
+spec:
+  selector:
+    app: dotmac-core-events
+  ports:
+  - port: 8000
+    targetPort: 8000
+    name: http
+  - port: 9090
+    targetPort: 9090
+    name: metrics
+  type: ClusterIP
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: dotmac-core-events-hpa
+  namespace: dotmac-production
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: dotmac-core-events
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: dotmac-core-events-pdb
+  namespace: dotmac-production
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: dotmac-core-events

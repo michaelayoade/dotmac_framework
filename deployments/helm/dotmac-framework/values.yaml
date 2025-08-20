@@ -1,0 +1,319 @@
+# Default values for dotmac-framework
+global:
+  imageRegistry: "registry.dotmac.com"
+  imageTag: "latest"
+  imagePullPolicy: IfNotPresent
+  storageClass: "ssd"
+  
+# Core Infrastructure
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: "changeme"
+    database: "dotmac_core"
+  primary:
+    persistence:
+      enabled: true
+      size: 100Gi
+    resources:
+      requests:
+        memory: "1Gi"
+        cpu: "500m"
+      limits:
+        memory: "4Gi"
+        cpu: "2"
+
+redis:
+  enabled: true
+  auth:
+    password: "changeme"
+  master:
+    persistence:
+      enabled: true
+      size: 20Gi
+    resources:
+      requests:
+        memory: "512Mi"
+        cpu: "250m"
+      limits:
+        memory: "1Gi"
+        cpu: "500m"
+
+rabbitmq:
+  enabled: true
+  auth:
+    username: "dotmac"
+    password: "changeme"
+  persistence:
+    enabled: true
+    size: 20Gi
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "500m"
+
+elasticsearch:
+  enabled: true
+  master:
+    heapSize: "2g"
+    persistence:
+      enabled: true
+      size: 50Gi
+  data:
+    heapSize: "2g"
+    persistence:
+      enabled: true
+      size: 100Gi
+
+grafana:
+  enabled: true
+  admin:
+    password: "changeme"
+  persistence:
+    enabled: true
+    size: 10Gi
+
+prometheus:
+  enabled: true
+  server:
+    persistentVolume:
+      enabled: true
+      size: 50Gi
+
+# Core Planes
+coreEvents:
+  enabled: true
+  replicaCount: 3
+  image:
+    repository: dotmac/core-events
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "500m"
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+
+coreOps:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: dotmac/core-ops
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "500m"
+
+identity:
+  enabled: true
+  replicaCount: 3
+  image:
+    repository: dotmac/identity
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "500m"
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 8
+
+billing:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: dotmac/billing
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "500m"
+  env:
+    STRIPE_SECRET_KEY: ""
+
+services:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: dotmac/services
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "500m"
+
+networking:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: dotmac/networking
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "500m"
+  env:
+    SNMP_COMMUNITY: "public"
+
+analytics:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: dotmac/analytics
+  resources:
+    requests:
+      memory: "1Gi"
+      cpu: "500m"
+    limits:
+      memory: "2Gi"
+      cpu: "1"
+
+# API Gateway
+apiGateway:
+  enabled: true
+  replicaCount: 3
+  image:
+    repository: dotmac/api-gateway
+  service:
+    type: ClusterIP
+    port: 8000
+  ingress:
+    enabled: true
+    className: "nginx"
+    hosts:
+    - host: api.dotmac.local
+      paths:
+      - path: /
+        pathType: Prefix
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+
+# Microservices
+communications:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: dotmac/communications
+  env:
+    SMTP2GO_API_KEY: ""
+    TWILIO_SID: ""
+    TWILIO_TOKEN: ""
+    ULTRAMSG_INSTANCE_ID: ""
+    ULTRAMSG_TOKEN: ""
+
+crm:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: dotmac/crm
+
+inventoryManagement:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: dotmac/inventory-management
+
+supportDesk:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: dotmac/support-desk
+
+fieldOps:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: dotmac/field-ops
+
+dataImportExport:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: dotmac/data-import-export
+
+# Portals
+customerPortal:
+  enabled: true
+  replicaCount: 3
+  image:
+    repository: dotmac/customer-portal
+  service:
+    type: ClusterIP
+    port: 8000
+  ingress:
+    enabled: true
+    className: "nginx"
+    hosts:
+    - host: portal.dotmac.local
+      paths:
+      - path: /
+        pathType: Prefix
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 8
+
+resellerPortal:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: dotmac/reseller-portal
+  service:
+    type: ClusterIP
+    port: 8000
+  ingress:
+    enabled: true
+    className: "nginx"
+    hosts:
+    - host: partners.dotmac.local
+      paths:
+      - path: /
+        pathType: Prefix
+
+# Security
+networkPolicies:
+  enabled: true
+
+podSecurityPolicy:
+  enabled: true
+
+serviceMonitor:
+  enabled: true
+
+# Backup Configuration
+backup:
+  enabled: true
+  schedule: "0 2 * * *"  # Daily at 2 AM
+  retention: "30d"
+  s3:
+    bucket: "dotmac-backups"
+    region: "us-east-1"

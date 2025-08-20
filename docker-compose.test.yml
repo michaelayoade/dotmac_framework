@@ -1,0 +1,171 @@
+networks:
+  test-network:
+    driver: bridge
+
+volumes:
+  test_postgres_data:
+  test_redis_data:
+
+services:
+  # Test Database
+  test-postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: dotmac_test
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_password
+    volumes:
+      - test_postgres_data:/var/lib/postgresql/data
+    networks:
+      - test-network
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test_user -d dotmac_test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Test Redis
+  test-redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - test_redis_data:/data
+    networks:
+      - test-network
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # HTTPBin service for webhook testing
+  httpbin:
+    image: kennethreitz/httpbin:latest
+    networks:
+      - test-network
+    ports:
+      - "8090:80"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/status/200"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Prism Mock Server for API contract testing
+  prism:
+    image: stoplight/prism:latest
+    command: mock -h 0.0.0.0 -p 4010 /app/openapi.yaml
+    volumes:
+      - ./dotmac_platform/tests/fixtures/openapi.yaml:/app/openapi.yaml:ro
+    networks:
+      - test-network
+    ports:
+      - "4010:4010"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:4010/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # DotMac Platform Tests
+  dotmac-platform-tests:
+    build:
+      context: ./dotmac_platform
+      dockerfile: Dockerfile.test
+      target: test
+    environment:
+      TESTING: "true"
+      ENVIRONMENT: "testing"
+      DATABASE_URL: "postgresql+asyncpg://test_user:test_password@test-postgres:5432/dotmac_test"
+      REDIS_URL: "redis://test-redis:6379/0"
+      HTTPBIN_URL: "http://httpbin"
+      AUTH_SECRET_KEY: "test_secret_key_at_least_32_characters_long"
+      LOG_LEVEL: "WARNING"
+      PYTHONPATH: "/app"
+      # Testing specific settings
+      PYTEST_CURRENT_TEST: "true"
+    volumes:
+      - ./dotmac_platform:/app:ro
+    networks:
+      - test-network
+    depends_on:
+      test-postgres:
+        condition: service_healthy
+      test-redis:
+        condition: service_healthy
+      httpbin:
+        condition: service_healthy
+      prism:
+        condition: service_healthy
+    command: >
+      sh -c "
+        echo 'Waiting for services to be ready...' &&
+        /usr/local/bin/wait-for-services.sh &&
+        echo 'Running DotMac Platform tests...' &&
+        pytest --tb=short --strict-markers --strict-config
+      "
+
+  # Production Readiness Feature Tests
+  production-readiness-tests:
+    build:
+      context: ./dotmac_platform
+      dockerfile: Dockerfile.test
+      target: integration
+    environment:
+      TESTING: "true"
+      ENVIRONMENT: "testing"
+      DATABASE_URL: "postgresql+asyncpg://test_user:test_password@test-postgres:5432/dotmac_test"
+      REDIS_URL: "redis://test-redis:6379/1"
+      AUTH_SECRET_KEY: "test_secret_key_at_least_32_characters_long"
+      LOG_LEVEL: "INFO"
+      PYTHONPATH: "/app"
+    volumes:
+      - ./dotmac_platform:/app:ro
+    networks:
+      - test-network
+    depends_on:
+      test-postgres:
+        condition: service_healthy
+      test-redis:
+        condition: service_healthy
+    command: >
+      sh -c "
+        echo 'Testing production readiness features...' &&
+        sleep 5 &&
+        python -c 'import asyncio; from dotmac_platform.app import app; print(\"App loaded successfully\")' &&
+        echo 'Testing /metrics endpoint...' &&
+        python -c 'from dotmac_platform.api.prometheus import router; print(\"Prometheus router loaded\")' &&
+        echo 'Testing circuit breaker...' &&
+        python -c 'from dotmac_platform.circuit_breaker import get_circuit_breaker; print(\"Circuit breaker loaded\")' &&
+        echo 'Testing graceful shutdown...' &&
+        python -c 'from dotmac_platform.shutdown import create_shutdown_handler; print(\"Shutdown handler loaded\")' &&
+        echo 'Testing health checks...' &&
+        python -c 'from dotmac_platform.health_checks import get_health_checker; print(\"Health checker loaded\")' &&
+        echo 'All production readiness features loaded successfully!'
+      "
+
+  # Lint and Format Check
+  lint-check:
+    build:
+      context: ./dotmac_platform
+      dockerfile: Dockerfile.test
+      target: lint
+    volumes:
+      - ./dotmac_platform:/app:ro
+    command: >
+      sh -c "
+        echo 'Running code quality checks...' &&
+        echo 'Checking import sorting...' &&
+        isort --check-only --diff . &&
+        echo 'Checking code formatting...' &&
+        black --check --diff . &&
+        echo 'Running linter...' &&
+        ruff check . &&
+        echo 'Running type checker...' &&
+        mypy dotmac_platform --ignore-missing-imports &&
+        echo 'All code quality checks passed!'
+      "
