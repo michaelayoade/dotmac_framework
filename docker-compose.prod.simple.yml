@@ -1,0 +1,197 @@
+# Docker Compose v2 - version field is obsolete
+
+# ==============================================================================
+# Simple Production Override Configuration
+# ==============================================================================
+# 
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.simple.yml up -d
+#
+# This simplified version works with regular Docker Compose without swarm mode
+# ==============================================================================
+
+services:
+  # ==============================================================================
+  # Infrastructure Services - Production Settings
+  # ==============================================================================
+  
+  postgres:
+    restart: always
+    environment:
+      # Production tuning
+      POSTGRES_SHARED_BUFFERS: 512MB
+      POSTGRES_EFFECTIVE_CACHE_SIZE: 1536MB
+      POSTGRES_MAINTENANCE_WORK_MEM: 128MB
+
+  redis:
+    restart: always
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD} --maxmemory 256mb --maxmemory-policy allkeys-lru
+
+  rabbitmq:
+    restart: always
+
+  # ==============================================================================
+  # Backend Services - Production Settings
+  # ==============================================================================
+
+  api-gateway:
+    restart: always
+    environment:
+      ENVIRONMENT: production
+      LOG_LEVEL: warning
+      ACCESS_LOG: "false"
+      WORKERS: 4
+      GRACEFUL_TIMEOUT: 30
+      TIMEOUT_KEEP_ALIVE: 5
+      RATE_LIMIT_ENABLED: "true"
+      RATE_LIMIT_REQUESTS: 1000
+      RATE_LIMIT_WINDOW: 60
+    volumes: []
+
+  identity:
+    restart: always
+    environment:
+      ENVIRONMENT: production
+      LOG_LEVEL: warning
+      WORKERS: 2
+      MFA_ENABLED: "true"
+      SESSION_TIMEOUT: 1800
+      MAX_LOGIN_ATTEMPTS: 5
+      PASSWORD_MIN_LENGTH: 12
+    volumes: []
+
+  billing:
+    restart: always
+    environment:
+      ENVIRONMENT: production
+      LOG_LEVEL: warning
+      WORKERS: 2
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      TAX_CALCULATION_ENABLED: "true"
+      PAYMENT_RETRY_ATTEMPTS: 3
+    volumes: []
+
+  services:
+    restart: always
+    environment:
+      ENVIRONMENT: production
+      LOG_LEVEL: warning
+      WORKERS: 2
+    volumes: []
+
+  networking:
+    restart: always
+    environment:
+      ENVIRONMENT: production
+      LOG_LEVEL: warning
+      WORKERS: 2
+      SNMP_ENABLED: "true"
+      SNMP_COMMUNITY: ${SNMP_COMMUNITY}
+    volumes: []
+
+  analytics:
+    restart: always
+    environment:
+      ENVIRONMENT: production
+      LOG_LEVEL: warning
+      WORKERS: 2
+      BATCH_SIZE: 10000
+      RETENTION_DAYS: 90
+    volumes: []
+
+  core-ops:
+    restart: always
+    environment:
+      ENVIRONMENT: production
+      LOG_LEVEL: warning
+      WORKERS: 2
+      JOB_RETENTION_DAYS: 30
+      WORKFLOW_MAX_RETRIES: 3
+    volumes: []
+
+  core-events:
+    restart: always
+    environment:
+      ENVIRONMENT: production
+      LOG_LEVEL: warning
+      WORKERS: 4
+      EVENT_RETENTION_DAYS: 30
+      MAX_EVENT_SIZE: 1048576  # 1MB
+      KAFKA_ENABLED: "true"
+    volumes: []
+
+  # ==============================================================================
+  # Frontend Services - Production Settings
+  # ==============================================================================
+
+  admin-portal:
+    restart: always
+    build:
+      context: ./frontend/apps/admin
+      dockerfile: Dockerfile.production
+    command: npm start
+    environment:
+      NODE_ENV: production
+      NEXT_TELEMETRY_DISABLED: 1
+    volumes: []
+
+  customer-portal:
+    restart: always
+    build:
+      context: ./frontend/apps/customer
+      dockerfile: Dockerfile.production
+    command: npm start
+    environment:
+      NODE_ENV: production
+      NEXT_TELEMETRY_DISABLED: 1
+    volumes: []
+
+  reseller-portal:
+    restart: always
+    build:
+      context: ./frontend/apps/reseller
+      dockerfile: Dockerfile.production
+    command: npm start
+    environment:
+      NODE_ENV: production
+      NEXT_TELEMETRY_DISABLED: 1
+    volumes: []
+
+  # ==============================================================================
+  # Monitoring Stack - Production Settings
+  # ==============================================================================
+
+  clickhouse:
+    restart: always
+    environment:
+      CLICKHOUSE_MAX_MEMORY_USAGE: 3221225472  # 3GB
+      CLICKHOUSE_MAX_MEMORY_USAGE_FOR_USER: 3221225472
+      CLICKHOUSE_MAX_CONCURRENT_QUERIES: 100
+
+  signoz-collector:
+    restart: always
+    environment:
+      GOMEMLIMIT: 900MiB
+
+  signoz-query:
+    restart: always
+
+  signoz-frontend:
+    restart: always
+
+  # ==============================================================================
+  # Security Services - Production Settings
+  # ==============================================================================
+
+  openbao:
+    restart: always
+    command: server  # Production mode, not dev
+    environment:
+      BAO_LOG_LEVEL: warning
+      BAO_CLUSTER_ADDR: "https://$(hostname -i):8201"
+      BAO_API_ADDR: "https://$(hostname -i):8200"
+    volumes:
+      - openbao-data:/openbao/file
+      - ./deployments/openbao/config/production.hcl:/openbao/config/config.hcl:ro
+      - ./deployments/openbao/tls:/openbao/tls:ro

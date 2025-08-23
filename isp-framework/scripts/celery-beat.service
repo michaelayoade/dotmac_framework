@@ -1,0 +1,38 @@
+[Unit]
+Description=DotMac ISP Framework Celery Beat Scheduler
+Documentation=https://docs.dotmac-isp.com
+After=network.target redis.service postgresql.service celery-worker.service
+Wants=redis.service postgresql.service
+Requires=network.target celery-worker.service
+
+[Service]
+Type=forking
+User=dotmac
+Group=dotmac
+WorkingDirectory=/home/dotmac_framework/dotmac_isp_framework
+Environment=PYTHONPATH=/home/dotmac_framework/dotmac_isp_framework/src
+Environment=CELERY_APP=dotmac_isp.core.celery_app
+ExecStart=/usr/local/bin/celery -A dotmac_isp.core.celery_app beat \
+    --loglevel=info \
+    --pidfile=/var/run/celery/beat.pid \
+    --logfile=/var/log/celery/beat.log \
+    --schedule=/var/run/celery/celerybeat-schedule \
+    --detach
+ExecStop=/bin/kill -TERM $MAINPID
+PIDFile=/var/run/celery/beat.pid
+Restart=always
+RestartSec=10
+
+# Security settings
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/log/celery /var/run/celery /tmp
+
+# Resource limits
+LimitNOFILE=4096
+MemoryMax=256M
+
+[Install]
+WantedBy=multi-user.target

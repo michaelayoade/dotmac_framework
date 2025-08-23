@@ -1,157 +1,139 @@
-# Pre-commit hooks for DotMac Framework
-# Ensures code quality before commits
+# Pre-commit hooks configuration for DotMac Framework
+# Ensures code quality and consistency across all developers
+# Run: pre-commit install to enable
 
 repos:
-  # Built-in hooks
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
-    hooks:
-      - id: trailing-whitespace
-      - id: end-of-file-fixer
-      - id: check-yaml
-      - id: check-toml
-      - id: check-json
-      - id: check-merge-conflict
-      - id: check-added-large-files
-        args: ['--maxkb=1000']
-      - id: mixed-line-ending
-        args: ['--fix=lf']
-
-  # Black - code formatting
+  # Python code formatting
   - repo: https://github.com/psf/black
-    rev: 23.12.1
+    rev: 24.4.2
     hooks:
       - id: black
         language_version: python3
-        args: [--line-length=88]
+        args: ["--line-length=88"]
 
-  # Ruff - fast Python linter with complexity checks
+  # Import sorting
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        args: ["--profile", "black", "--line-length=88"]
+
+  # Linting and code quality with Ruff
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.9
+    rev: v0.4.8
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
-        # This will catch complexity violations and fail the commit
-        
       - id: ruff-format
-        # Additional formatting that goes beyond black
-
-  # MyPy - static type checking (gradual adoption)
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.8.0
-    hooks:
-      - id: mypy
-        args: [--no-error-summary, --show-error-codes]
-        additional_dependencies: [
-          types-redis,
-          types-requests,
-          pydantic,
-          sqlalchemy-stubs,
-        ]
-        # Allow failures during gradual adoption
-        verbose: true
-        pass_filenames: false
 
   # Security scanning
   - repo: https://github.com/PyCQA/bandit
     rev: 1.7.5
     hooks:
       - id: bandit
-        args: [--skip, "B101,B601"]  # Skip assert and shell usage in tests
-        exclude: ^tests/
+        args: ["-c", "pyproject.toml"]
+        additional_dependencies: ["bandit[toml]"]
+        exclude: ^(tests/|.*/tests/|migrations/|.*/migrations/).*$
 
-  # Check Python dependencies for known vulnerabilities
-  - repo: https://github.com/gitguardian/ggshield
-    rev: v1.24.0
+  # Type checking
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.10.0
     hooks:
-      - id: ggshield
-        language: python
-        stages: [commit]
+      - id: mypy
+        additional_dependencies: [
+          types-requests,
+          types-PyYAML,
+          types-redis,
+          types-psycopg2,
+          pydantic,
+          fastapi,
+          sqlalchemy,
+          httpx,
+          pytest-asyncio,
+        ]
+        args: [--ignore-missing-imports, --no-error-summary]
+        exclude: ^(tests/|.*/tests/|migrations/|.*/migrations/).*$
+
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-toml
+      - id: check-added-large-files
+        args: ["--maxkb=1000"]
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: check-docstring-first
+      - id: check-executables-have-shebangs
+      - id: mixed-line-ending
+      - id: fix-byte-order-marker
+
+  # Shell script validation
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.9.0.6
+    hooks:
+      - id: shellcheck
+        args: ['-e', 'SC1091']  # Ignore "not following" sourced files
 
   # Dockerfile linting
   - repo: https://github.com/hadolint/hadolint
     rev: v2.12.0
     hooks:
       - id: hadolint-docker
-        args: [--ignore, DL3008, --ignore, DL3009]
+        args: ["--ignore", "DL3008", "--ignore", "DL3009"]
 
-  # Shell script linting
-  - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.9.0.6
+  # YAML formatting
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v4.0.0-alpha.8
     hooks:
-      - id: shellcheck
+      - id: prettier
+        types: [yaml]
+        exclude: ^(.github/workflows/|docker-compose.*\.yml)$
 
-  # Complexity monitoring (informational)
-  - repo: local
+  # Markdown linting
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.39.0
     hooks:
-      - id: complexity-check
-        name: Complexity Check
-        entry: python -c "
-import subprocess
-import sys
+      - id: markdownlint
+        args: ['--fix']
 
-# Run ruff complexity check
-result = subprocess.run([
-    'ruff', 'check', '.', 
-    '--select', 'C901,PLR0913,PLR0915',
-    '--output-format', 'text'
-], capture_output=True, text=True)
-
-if result.stdout:
-    print('🚨 Complexity violations found:')
-    print(result.stdout)
-    print('Please refactor complex functions before committing.')
-    sys.exit(1)
-else:
-    print('✅ No complexity violations found.')
-"
-        language: python
-        pass_filenames: false
-        always_run: true
-
-  # Custom hook to enforce py.typed markers
-  - repo: local
+  # Commit message linting
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v3.2.0
     hooks:
-      - id: check-py-typed
-        name: Check py.typed markers
-        entry: python -c "
-import sys
-from pathlib import Path
-
-errors = []
-for package_dir in Path('.').glob('dotmac_*'):
-    if package_dir.is_dir() and (package_dir / 'pyproject.toml').exists():
-        py_typed_locations = [
-            package_dir / package_dir.name / 'py.typed',
-            package_dir / 'src' / package_dir.name / 'py.typed'
-        ]
-        
-        if not any(loc.exists() for loc in py_typed_locations):
-            errors.append(f'Missing py.typed marker in {package_dir.name}')
-
-if errors:
-    print('❌ py.typed marker issues:')
-    for error in errors:
-        print(f'  {error}')
-    print('Run: touch {package}/py.typed to fix')
-    sys.exit(1)
-else:
-    print('✅ All packages have py.typed markers.')
-"
-        language: python
-        pass_filenames: false
-        always_run: true
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+        args: [optional-scope]
 
 # Configuration
-default_language_version:
-  python: python3.11
+default_install_hook_types: [pre-commit, pre-push, commit-msg]
+default_stages: [pre-commit]
 
-# Skip certain hooks on specific file types
+# Exclude patterns
 exclude: |
   (?x)^(
-    migrations/.*|
-    alembic/versions/.*|
-    .*\.min\.(js|css)|
-    .*-lock\.json|
-    .*\.lock
+      .*/__pycache__/.*|
+      .*/\.git/.*|
+      .*/migrations/.*|
+      .*/alembic/versions/.*|
+      .*/node_modules/.*|
+      .*/venv/.*|
+      .*/\.venv/.*|
+      .*\.pyc|
+      .*\.pyo|
+      .*\.pyd|
+      .*\.egg-info/.*|
+      .*/build/.*|
+      .*/dist/.*|
+      .*/htmlcov/.*|
+      .*/\.coverage.*|
+      .*/coverage\.xml|
+      .*/\.pytest_cache/.*|
+      .*/\.mypy_cache/.*|
+      .*/\.ruff_cache/.*|
+      .*\.lock
   )$

@@ -1,6 +1,7 @@
 /**
  * Unstyled, composable Navigation primitives
  */
+'use client';
 
 import { Slot } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
@@ -73,7 +74,7 @@ interface NavigationContextValue {
   collapsed?: boolean;
 }
 
-const NavigationContext = createContext<NavigationContextValue>(_props);
+const NavigationContext = createContext<NavigationContextValue>({});
 
 const useNavigation = () => useContext(NavigationContext);
 

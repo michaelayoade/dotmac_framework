@@ -1,0 +1,501 @@
+name: Quality Gates & Validation Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run nightly quality checks
+    - cron: '0 2 * * *'
+
+env:
+  NODE_VERSION: '18'
+  PNPM_VERSION: '8'
+
+jobs:
+  # Dependency and Import Validation
+  dependency-validation:
+    name: 🔍 Dependency & Import Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate circular dependencies
+        run: pnpm run validate:circular
+
+      - name: Validate import restrictions
+        run: pnpm run validate:imports
+
+      - name: Check for unused dependencies
+        run: pnpm run validate:unused
+
+      - name: Upload dependency validation results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: dependency-validation-results
+          path: |
+            test-results/dependency-*.json
+            test-results/import-validation.json
+
+  # Code Quality & Standards
+  code-quality:
+    name: 📝 Code Quality & Standards
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run ESLint
+        run: pnpm run lint:ci
+
+      - name: Run Prettier check
+        run: pnpm run format:check
+
+      - name: Run TypeScript check
+        run: pnpm run type-check
+
+      - name: Upload ESLint results
+        uses: github/super-linter/slim@v4
+        if: always()
+        env:
+          DEFAULT_BRANCH: main
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VALIDATE_TYPESCRIPT_ES: true
+          VALIDATE_JAVASCRIPT_ES: true
+
+  # Testing Suite
+  testing:
+    name: 🧪 Testing Suite
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run unit tests
+        run: pnpm run test:ci
+
+      - name: Run integration tests
+        run: pnpm run test:integration
+
+      - name: Run accessibility tests
+        run: pnpm run test:a11y
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: test-results
+          path: |
+            coverage/
+            test-results/
+            junit.xml
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage/lcov.info
+          flags: frontend
+          name: frontend-coverage
+
+  # End-to-End Testing
+  e2e-testing:
+    name: 🎭 End-to-End Testing
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Start mock API server
+        run: |
+          node scripts/mock-api-server.js start &
+          sleep 5
+
+      - name: Build applications
+        run: pnpm run build
+
+      - name: Run Playwright tests
+        run: pnpm run test:e2e
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+
+      - name: Run visual regression tests
+        run: pnpm run test:visual-regression
+
+  # Security & Vulnerability Scanning
+  security-scan:
+    name: 🔒 Security & Vulnerability Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run security scan
+        run: pnpm run test:security
+
+      - name: Run npm audit
+        run: npm audit --audit-level high
+
+      - name: Upload security scan results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: security-scan-results
+          path: test-results/security-report.json
+
+  # Performance & Bundle Analysis
+  performance:
+    name: ⚡ Performance & Bundle Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build applications
+        run: pnpm run build
+
+      - name: Analyze bundle size
+        run: pnpm run bundle:analyze
+
+      - name: Run Lighthouse CI
+        run: |
+          npm install -g @lhci/cli@0.12.x
+          lhci autorun
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+
+      - name: Upload performance results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: performance-results
+          path: |
+            test-results/performance-report.*
+            .lighthouseci/
+
+  # API Contract Validation
+  api-contract-validation:
+    name: 🔗 API Contract Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # Fetch backend specs from backend directory
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate API contracts
+        run: pnpm run test:contract
+
+      - name: Upload contract validation results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: api-contract-results
+          path: test-results/api-contract-validation.json
+
+  # Milestone Validation
+  milestone-validation:
+    name: 🎯 Milestone Validation
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate current milestone
+        run: |
+          # Determine current milestone based on branch and date
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            MILESTONE="M3-completion"
+          else
+            MILESTONE="M2-integration"
+          fi
+          echo "Validating milestone: $MILESTONE"
+          pnpm run validate:milestone $MILESTONE
+
+      - name: Upload milestone validation results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: milestone-validation-results
+          path: test-results/milestone-*-report.json
+
+  # Comprehensive Quality Gate Check
+  quality-gates:
+    name: 🏆 Quality Gates & Final Validation
+    runs-on: ubuntu-latest
+    needs: [dependency-validation, code-quality, testing, e2e-testing, security-scan, performance, api-contract-validation]
+    if: always()
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+
+      - name: Run comprehensive quality gate check
+        run: |
+          # Set quality threshold based on context
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            THRESHOLD=75
+          else
+            THRESHOLD=80
+          fi
+          
+          echo "Running quality gate check with threshold: $THRESHOLD%"
+          pnpm run quality:gate --threshold $THRESHOLD --skip-setup
+
+      - name: Upload quality gate results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: quality-gate-report
+          path: |
+            test-results/quality-gate-report.*
+
+      - name: Deploy quality dashboard (if main branch)
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: test-results
+          destination_dir: quality-dashboard
+          keep_files: false
+
+      - name: Comment PR with quality results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const path = './test-results/quality-gate-report.json';
+            
+            if (fs.existsSync(path)) {
+              const report = JSON.parse(fs.readFileSync(path, 'utf8'));
+              
+              const getScoreEmoji = (score) => {
+                if (score >= 90) return '🌟';
+                if (score >= 80) return '✅';
+                if (score >= 60) return '⚠️';
+                return '❌';
+              };
+              
+              const comment = `## 🏆 Quality Gate Results
+              
+              **Overall Score:** ${getScoreEmoji(report.overall.score)} ${report.overall.score}% (Grade: ${report.overall.grade})
+              
+              ### Quality Gates:
+              ${Object.entries(report.gates).map(([id, gate]) => 
+                `- ${getScoreEmoji(gate.score)} **${gate.name}**: ${gate.score}%`
+              ).join('\\n')}
+              
+              ${report.blockers.length > 0 ? `
+              ### 🚨 Blockers:
+              ${report.blockers.map(blocker => `- ❌ **${blocker.gate}**: ${blocker.message}`).join('\\n')}
+              ` : ''}
+              
+              ${report.recommendations.length > 0 ? `
+              ### 💡 Top Recommendations:
+              ${report.recommendations.slice(0, 3).map(rec => 
+                `- ${rec.priority === 'high' ? '🔴' : '🟡'} **${rec.gate}**: ${rec.message}`
+              ).join('\\n')}
+              ` : ''}
+              
+              [View Full Quality Dashboard](https://dotmac.github.io/quality-dashboard/quality-gate-report.html)
+              `;
+              
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
+            }
+
+  # Notification and Reporting
+  notify:
+    name: 📢 Notification & Reporting
+    runs-on: ubuntu-latest
+    needs: [quality-gates]
+    if: always() && (github.ref == 'refs/heads/main' || github.event_name == 'schedule')
+    steps:
+      - name: Download quality gate results
+        uses: actions/download-artifact@v3
+        with:
+          name: quality-gate-report
+
+      - name: Send Slack notification
+        if: ${{ secrets.SLACK_WEBHOOK_URL }}
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          text: |
+            Quality Gate Results for ${{ github.repository }}
+            Branch: ${{ github.ref_name }}
+            Commit: ${{ github.sha }}
+            View Dashboard: https://dotmac.github.io/quality-dashboard/
+
+      - name: Create GitHub issue for quality failures
+        if: needs.quality-gates.result == 'failure' && github.event_name == 'schedule'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 Quality Gate Failure - ${new Date().toISOString().split('T')[0]}`,
+              body: `Automated quality checks have failed in the nightly scan.
+              
+              **Branch:** ${context.ref}
+              **Workflow:** ${context.workflow}
+              **Run:** ${context.runId}
+              
+              Please review the quality dashboard and address any critical issues.
+              
+              [View Quality Dashboard](https://dotmac.github.io/quality-dashboard/)
+              [View Workflow Run](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
+              `,
+              labels: ['quality', 'automated', 'high-priority']
+            });

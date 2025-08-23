@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  # Core Test Database
+  postgres-test:
+    image: postgres:15-alpine
+    container_name: dotmac-test-postgres
+    environment:
+      POSTGRES_DB: dotmac_test
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_password
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test_user -d dotmac_test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - test-network
+
+  # Redis for Caching and Event Streams
+  redis-test:
+    image: redis:7-alpine
+    container_name: dotmac-test-redis
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - test-network
+
+  # Simple HTTP Mock Service (using httpbin)
+  mock-services:
+    image: kennethreitz/httpbin
+    container_name: dotmac-mock-services
+    ports:
+      - "8080:80"
+    networks:
+      - test-network
+
+volumes:
+  postgres_test_data:
+
+networks:
+  test-network:
+    driver: bridge

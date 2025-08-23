@@ -1,0 +1,3235 @@
+{
+  "project_root": ".",
+  "report_timestamp": "2025-08-22 15:40:44.881681",
+  "overall_status": "QualityGateStatus.FAILED",
+  "gate_results": [
+    {
+      "gate_name": "security_scan",
+      "status": "QualityGateStatus.FAILED",
+      "duration_seconds": 9.775729,
+      "issues": [
+        {
+          "file_path": "tests/unit/core/security/test_security_scanner.py",
+          "line_number": 37,
+          "rule_id": "hardcoded_password",
+          "message": "Potential hardcoded secret detected: hardcoded_password",
+          "severity": "QualitySeverity.CRITICAL",
+          "category": "security",
+          "tool": "basic_security_scan",
+          "fix_suggestion": "Use environment variables or secure secret management"
+        },
+        {
+          "file_path": "tests/unit/core/security/test_security_scanner.py",
+          "line_number": 84,
+          "rule_id": "hardcoded_secret",
+          "message": "Potential hardcoded secret detected: hardcoded_secret",
+          "severity": "QualitySeverity.CRITICAL",
+          "category": "security",
+          "tool": "basic_security_scan",
+          "fix_suggestion": "Use environment variables or secure secret management"
+        },
+        {
+          "file_path": "tests/unit/core/security/test_security_scanner.py",
+          "line_number": 261,
+          "rule_id": "hardcoded_secret",
+          "message": "Potential hardcoded secret detected: hardcoded_secret",
+          "severity": "QualitySeverity.CRITICAL",
+          "category": "security",
+          "tool": "basic_security_scan",
+          "fix_suggestion": "Use environment variables or secure secret management"
+        },
+        {
+          "file_path": "tests/unit/core/security/test_security_scanner.py",
+          "line_number": 264,
+          "rule_id": "hardcoded_password",
+          "message": "Potential hardcoded secret detected: hardcoded_password",
+          "severity": "QualitySeverity.CRITICAL",
+          "category": "security",
+          "tool": "basic_security_scan",
+          "fix_suggestion": "Use environment variables or secure secret management"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/config_encryption.py",
+          "line_number": 34,
+          "rule_id": "hardcoded_password",
+          "message": "Potential hardcoded secret detected: hardcoded_password",
+          "severity": "QualitySeverity.CRITICAL",
+          "category": "security",
+          "tool": "basic_security_scan",
+          "fix_suggestion": "Use environment variables or secure secret management"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/contracts/auth.py",
+          "line_number": 14,
+          "rule_id": "hardcoded_password",
+          "message": "Potential hardcoded secret detected: hardcoded_password",
+          "severity": "QualitySeverity.CRITICAL",
+          "category": "security",
+          "tool": "basic_security_scan",
+          "fix_suggestion": "Use environment variables or secure secret management"
+        }
+      ],
+      "metrics": {
+        "total_files_scanned": 526,
+        "critical_findings": 6,
+        "total_findings": 6
+      },
+      "started_at": "2025-08-22 15:40:03.861990",
+      "completed_at": "2025-08-22 15:40:13.637719"
+    },
+    {
+      "gate_name": "complexity_check",
+      "status": "QualityGateStatus.FAILED",
+      "duration_seconds": 0.000844,
+      "issues": [],
+      "metrics": {
+        "error": "[Errno 2] No such file or directory: 'radon'"
+      },
+      "started_at": "2025-08-22 15:40:13.637810",
+      "completed_at": "2025-08-22 15:40:13.638654"
+    },
+    {
+      "gate_name": "type_check",
+      "status": "QualityGateStatus.FAILED",
+      "duration_seconds": 0.008268,
+      "issues": [],
+      "metrics": {
+        "error": "[Errno 2] No such file or directory: 'mypy'"
+      },
+      "started_at": "2025-08-22 15:40:13.638700",
+      "completed_at": "2025-08-22 15:40:13.646968"
+    },
+    {
+      "gate_name": "test_coverage",
+      "status": "QualityGateStatus.FAILED",
+      "duration_seconds": 28.29293,
+      "issues": [
+        {
+          "file_path": "project",
+          "line_number": null,
+          "rule_id": "low_coverage",
+          "message": "Test coverage 0.0% is below threshold 80%",
+          "severity": "QualitySeverity.CRITICAL",
+          "category": "testing",
+          "tool": "pytest",
+          "fix_suggestion": "Add more comprehensive test cases"
+        }
+      ],
+      "metrics": {
+        "total_coverage": 0,
+        "coverage_threshold": 80,
+        "files_under_threshold": 0,
+        "total_files": 0
+      },
+      "started_at": "2025-08-22 15:40:13.647052",
+      "completed_at": "2025-08-22 15:40:41.939982"
+    },
+    {
+      "gate_name": "code_style",
+      "status": "QualityGateStatus.WARNING",
+      "duration_seconds": 0.001325,
+      "issues": [],
+      "metrics": {
+        "error": "[Errno 2] No such file or directory: 'black'"
+      },
+      "started_at": "2025-08-22 15:40:41.940073",
+      "completed_at": "2025-08-22 15:40:41.941398"
+    },
+    {
+      "gate_name": "documentation_check",
+      "status": "QualityGateStatus.WARNING",
+      "duration_seconds": 2.939983,
+      "issues": [
+        {
+          "file_path": "src/dotmac_isp/shared/models.py",
+          "line_number": 48,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'tenant_id' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/shared/cache.py",
+          "line_number": 249,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'ping' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/shared/cache.py",
+          "line_number": 252,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'setex' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/shared/cache.py",
+          "line_number": 256,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'get' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/shared/cache.py",
+          "line_number": 259,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'delete' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/shared/cache.py",
+          "line_number": 267,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'exists' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/shared/cache.py",
+          "line_number": 270,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'incr' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/shared/cache.py",
+          "line_number": 276,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'hset' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/shared/cache.py",
+          "line_number": 282,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'hget' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/shared/cache.py",
+          "line_number": 285,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'hgetall' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/shared/cache.py",
+          "line_number": 289,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'hdel' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/shared/cache.py",
+          "line_number": 295,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'keys' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/shared/cache.py",
+          "line_number": 299,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'sadd' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/shared/cache.py",
+          "line_number": 309,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'smembers' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/shared/cache.py",
+          "line_number": 312,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'expire' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/shared/cache.py",
+          "line_number": 358,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'decorator' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/shared/cache.py",
+          "line_number": 360,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'wrapper' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/shared/auth.py",
+          "line_number": 159,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'decorator' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/shared/auth.py",
+          "line_number": 184,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'decorator' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/tasks.py",
+          "line_number": 18,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Task' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/cross_platform_events.py",
+          "line_number": 118,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/tracing.py",
+          "line_number": 258,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'decorator' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/tracing.py",
+          "line_number": 260,
+          "rule_id": "missing_docstring",
+          "message": "AsyncFunctionDef 'async_wrapper' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/tracing.py",
+          "line_number": 264,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'sync_wrapper' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/config_hotreload.py",
+          "line_number": 713,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'on_modified' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/service_registry.py",
+          "line_number": 149,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'decorator' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/field_validation_strategies.py",
+          "line_number": 64,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'get_strategy_name' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/field_validation_strategies.py",
+          "line_number": 120,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'get_strategy_name' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/field_validation_strategies.py",
+          "line_number": 158,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'get_strategy_name' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/field_validation_strategies.py",
+          "line_number": 196,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'get_strategy_name' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/field_validation_strategies.py",
+          "line_number": 235,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'get_strategy_name' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/field_validation_strategies.py",
+          "line_number": 296,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'get_strategy_name' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/field_validation_strategies.py",
+          "line_number": 344,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'get_strategy_name' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/secure_config_validator_refactor.py",
+          "line_number": 35,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'measure_complexity' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/monitoring.py",
+          "line_number": 546,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'redis_health_check' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/monitoring.py",
+          "line_number": 553,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'disk_space_check' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/monitoring.py",
+          "line_number": 557,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'memory_check' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/celery_app.py",
+          "line_number": 17,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'MockCelery' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/celery_app.py",
+          "line_number": 40,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'MockInspect' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/celery_app.py",
+          "line_number": 50,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'MockQueue' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/celery_app.py",
+          "line_number": 58,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'MockSignal' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/celery_app.py",
+          "line_number": 23,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'task' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/celery_app.py",
+          "line_number": 30,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'send_task' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/celery_app.py",
+          "line_number": 34,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'inspect' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/celery_app.py",
+          "line_number": 37,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'update' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/celery_app.py",
+          "line_number": 41,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'stats' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/celery_app.py",
+          "line_number": 44,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'active' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/celery_app.py",
+          "line_number": 47,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'scheduled' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/celery_app.py",
+          "line_number": 59,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'connect' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/celery_app.py",
+          "line_number": 24,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'decorator' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/workflows/workflow.py",
+          "line_number": 101,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/workflows/workflow.py",
+          "line_number": 142,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'validate_steps' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/workflows/workflow.py",
+          "line_number": 163,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/workflows/state_machine.py",
+          "line_number": 69,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/workflows/state_machine.py",
+          "line_number": 103,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/workflows/state_machine.py",
+          "line_number": 131,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'validate_states' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/workflows/state_machine.py",
+          "line_number": 151,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'validate_transitions' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/workflows/state_machine.py",
+          "line_number": 165,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/workflows/scheduler.py",
+          "line_number": 93,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'validate_cron_expression' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/workflows/scheduler.py",
+          "line_number": 102,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'validate_end_time' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/workflows/scheduler.py",
+          "line_number": 108,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/workflows/enhanced_scheduler.py",
+          "line_number": 141,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'validate_rrule_expression' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/workflows/enhanced_scheduler.py",
+          "line_number": 150,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'validate_timezone' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/workflows/enhanced_scheduler.py",
+          "line_number": 158,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'validate_end_time' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/workflows/enhanced_scheduler.py",
+          "line_number": 164,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/workflows/saga.py",
+          "line_number": 104,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/workflows/saga.py",
+          "line_number": 131,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'validate_steps' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/workflows/saga.py",
+          "line_number": 147,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/workflows/condition_strategies.py",
+          "line_number": 38,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'get_operator_name' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/workflows/condition_strategies.py",
+          "line_number": 49,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'get_operator_name' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/workflows/condition_strategies.py",
+          "line_number": 65,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'get_operator_name' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/workflows/condition_strategies.py",
+          "line_number": 81,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'get_operator_name' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/workflows/condition_strategies.py",
+          "line_number": 97,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'get_operator_name' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/workflows/condition_strategies.py",
+          "line_number": 113,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'get_operator_name' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/workflows/condition_strategies.py",
+          "line_number": 129,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'get_operator_name' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/workflows/condition_strategies.py",
+          "line_number": 145,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'get_operator_name' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/workflows/condition_strategies.py",
+          "line_number": 161,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'get_operator_name' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/workflows/condition_strategies.py",
+          "line_number": 177,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'get_operator_name' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/workflows/condition_strategies.py",
+          "line_number": 188,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'get_operator_name' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/workflows/condition_strategies.py",
+          "line_number": 199,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'get_operator_name' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/workflows/condition_strategies.py",
+          "line_number": 217,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'get_operator_name' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/workflows/automation.py",
+          "line_number": 94,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/workflows/automation.py",
+          "line_number": 106,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/workflows/automation.py",
+          "line_number": 139,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/workflows/automation.py",
+          "line_number": 173,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/workflows/job_queue.py",
+          "line_number": 90,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/workflows/task.py",
+          "line_number": 67,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/workflows/task.py",
+          "line_number": 85,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/workflows/task.py",
+          "line_number": 131,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/workflows/schedule_strategies.py",
+          "line_number": 71,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'get_strategy_name' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/workflows/schedule_strategies.py",
+          "line_number": 104,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'get_strategy_name' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/workflows/schedule_strategies.py",
+          "line_number": 129,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'get_strategy_name' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/workflows/schedule_strategies.py",
+          "line_number": 175,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'get_strategy_name' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/platform/rbac_sdk.py",
+          "line_number": 297,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'process_role' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/platform/rbac_sdk.py",
+          "line_number": 713,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'has_path' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/platform/policy_sdk.py",
+          "line_number": 302,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'replace_var' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/platform/tables_sdk.py",
+          "line_number": 738,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'sort_key' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/platform/observability_sdk.py",
+          "line_number": 282,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'matches_search' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/platform/authentication_sdk.py",
+          "line_number": 22,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'localize' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/platform/cache_sdk.py",
+          "line_number": 585,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'ExtendedBulkGetResponse' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/platform/cache_sdk.py",
+          "line_number": 609,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'ExtendedCacheStatsResponse' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/networking/graph_topology.py",
+          "line_number": 24,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'add_neighbor' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/networking/graph_topology.py",
+          "line_number": 27,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'remove_neighbor' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/networking/graph_topology.py",
+          "line_number": 185,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'dfs' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/networking/voltha_integration.py",
+          "line_number": 701,
+          "rule_id": "missing_docstring",
+          "message": "AsyncFunctionDef 'provision_single' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/networking/ssh_automation.py",
+          "line_number": 95,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'MockClient' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/networking/ssh_automation.py",
+          "line_number": 301,
+          "rule_id": "missing_docstring",
+          "message": "AsyncFunctionDef 'execute_with_semaphore' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/networking/ssh_automation.py",
+          "line_number": 99,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'connect' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/networking/ssh_automation.py",
+          "line_number": 103,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'exec_command' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/networking/ssh_automation.py",
+          "line_number": 144,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'close' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/networking/ssh_automation.py",
+          "line_number": 128,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'MockStream' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/networking/ssh_automation.py",
+          "line_number": 132,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'read' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/networking/ssh_automation.py",
+          "line_number": 135,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'channel' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/networking/ssh_automation.py",
+          "line_number": 136,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'MockChannel' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/networking/ssh_automation.py",
+          "line_number": 137,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'recv_exit_status' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/core/observability.py",
+          "line_number": 486,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'decorator' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/core/observability.py",
+          "line_number": 228,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'request_hook' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/core/observability.py",
+          "line_number": 248,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'response_hook' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/core/observability.py",
+          "line_number": 346,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'decorator' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/core/observability.py",
+          "line_number": 350,
+          "rule_id": "missing_docstring",
+          "message": "AsyncFunctionDef 'async_wrapper' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/core/observability.py",
+          "line_number": 360,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'sync_wrapper' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/core/observability_signoz.py",
+          "line_number": 691,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'decorator' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/core/observability_signoz.py",
+          "line_number": 414,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'request_hook' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/core/observability_signoz.py",
+          "line_number": 433,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'response_hook' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/core/observability_signoz.py",
+          "line_number": 696,
+          "rule_id": "missing_docstring",
+          "message": "AsyncFunctionDef 'async_wrapper' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/core/observability_signoz.py",
+          "line_number": 701,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'sync_wrapper' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/core/openbao_client.py",
+          "line_number": 170,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'renew_token' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/core/utils.py",
+          "line_number": 104,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'decorator' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/core/utils.py",
+          "line_number": 106,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'wrapper' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/core/retry_strategies.py",
+          "line_number": 344,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'decorator' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/core/retry_strategies.py",
+          "line_number": 375,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'decorator' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/core/retry_strategies.py",
+          "line_number": 194,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'decorator' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/core/retry_strategies.py",
+          "line_number": 350,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'wrapper' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/core/retry_strategies.py",
+          "line_number": 382,
+          "rule_id": "missing_docstring",
+          "message": "AsyncFunctionDef 'wrapper' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/core/retry_strategies.py",
+          "line_number": 200,
+          "rule_id": "missing_docstring",
+          "message": "AsyncFunctionDef 'async_wrapper' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/core/retry_strategies.py",
+          "line_number": 208,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'sync_wrapper' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/platform/feature_flags/strategies/operator_strategy.py",
+          "line_number": 49,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'evaluate' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/platform/feature_flags/strategies/operator_strategy.py",
+          "line_number": 56,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'evaluate' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/platform/feature_flags/strategies/operator_strategy.py",
+          "line_number": 63,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'evaluate' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/platform/feature_flags/strategies/operator_strategy.py",
+          "line_number": 74,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'evaluate' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/platform/feature_flags/strategies/operator_strategy.py",
+          "line_number": 85,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'evaluate' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/platform/feature_flags/strategies/operator_strategy.py",
+          "line_number": 96,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'evaluate' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/platform/feature_flags/strategies/operator_strategy.py",
+          "line_number": 107,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'evaluate' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/platform/feature_flags/strategies/operator_strategy.py",
+          "line_number": 120,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'evaluate' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/platform/feature_flags/strategies/operator_strategy.py",
+          "line_number": 133,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'evaluate' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/platform/feature_flags/strategies/operator_strategy.py",
+          "line_number": 146,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'evaluate' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/platform/feature_flags/strategies/operator_strategy.py",
+          "line_number": 159,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'evaluate' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/platform/feature_flags/strategies/operator_strategy.py",
+          "line_number": 177,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'evaluate' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/platform/feature_flags/strategies/operator_strategy.py",
+          "line_number": 195,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'evaluate' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/platform/feature_flags/strategies/operator_strategy.py",
+          "line_number": 208,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'evaluate' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/sdks/platform/feature_flags/strategies/operator_strategy.py",
+          "line_number": 226,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'evaluate' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/plugins/core/base.py",
+          "line_number": 98,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/omnichannel/schemas.py",
+          "line_number": 28,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/omnichannel/models_v2.py",
+          "line_number": 177,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'full_name' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/omnichannel/models_production.py",
+          "line_number": 213,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'full_name' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/omnichannel/models_production.py",
+          "line_number": 328,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'interaction_count' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/omnichannel/models_production.py",
+          "line_number": 500,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'is_available' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/omnichannel/models_production.py",
+          "line_number": 507,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'utilization_percentage' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/omnichannel/models_production.py",
+          "line_number": 555,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'member_count' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/omnichannel/models_production.py",
+          "line_number": 559,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'available_agents_count' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/billing/schemas.py",
+          "line_number": 74,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/billing/schemas.py",
+          "line_number": 119,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/billing/schemas.py",
+          "line_number": 147,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/billing/schemas.py",
+          "line_number": 176,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/billing/schemas.py",
+          "line_number": 204,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/billing/schemas.py",
+          "line_number": 231,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/billing/schemas.py",
+          "line_number": 264,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/inventory/schemas.py",
+          "line_number": 63,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/inventory/schemas.py",
+          "line_number": 111,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/inventory/schemas.py",
+          "line_number": 131,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/inventory/schemas.py",
+          "line_number": 164,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/inventory/schemas.py",
+          "line_number": 202,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/inventory/schemas.py",
+          "line_number": 233,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/projects/schemas.py",
+          "line_number": 63,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/projects/schemas.py",
+          "line_number": 84,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/projects/schemas.py",
+          "line_number": 116,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/projects/schemas.py",
+          "line_number": 220,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/projects/schemas.py",
+          "line_number": 245,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/projects/schemas.py",
+          "line_number": 258,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/projects/schemas.py",
+          "line_number": 275,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/notifications/schemas.py",
+          "line_number": 96,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/notifications/schemas.py",
+          "line_number": 166,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/notifications/schemas.py",
+          "line_number": 252,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/notifications/schemas.py",
+          "line_number": 295,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/notifications/schemas.py",
+          "line_number": 376,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/analytics/schemas.py",
+          "line_number": 22,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/analytics/schemas.py",
+          "line_number": 95,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/analytics/schemas.py",
+          "line_number": 112,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/analytics/schemas.py",
+          "line_number": 130,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/analytics/schemas.py",
+          "line_number": 145,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/analytics/schemas.py",
+          "line_number": 162,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/analytics/schemas.py",
+          "line_number": 195,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/analytics/schemas.py",
+          "line_number": 221,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/analytics/schemas.py",
+          "line_number": 273,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/analytics/schemas.py",
+          "line_number": 320,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/analytics/schemas.py",
+          "line_number": 371,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/analytics/schemas.py",
+          "line_number": 425,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/analytics/schemas.py",
+          "line_number": 474,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/field_ops/schemas.py",
+          "line_number": 19,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'WorkOrderBase' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/field_ops/schemas.py",
+          "line_number": 28,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'WorkOrderCreate' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/field_ops/schemas.py",
+          "line_number": 32,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'WorkOrderUpdate' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/field_ops/schemas.py",
+          "line_number": 42,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'WorkOrder' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/field_ops/schemas.py",
+          "line_number": 62,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'TechnicianBase' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/field_ops/schemas.py",
+          "line_number": 73,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'TechnicianCreate' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/field_ops/schemas.py",
+          "line_number": 77,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'TechnicianUpdate' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/field_ops/schemas.py",
+          "line_number": 87,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Technician' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/field_ops/schemas.py",
+          "line_number": 101,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'AppointmentBase' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/field_ops/schemas.py",
+          "line_number": 112,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'AppointmentCreate' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/field_ops/schemas.py",
+          "line_number": 116,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'AppointmentUpdate' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/field_ops/schemas.py",
+          "line_number": 127,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Appointment' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/field_ops/schemas.py",
+          "line_number": 143,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'TimeLogBase' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/field_ops/schemas.py",
+          "line_number": 152,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'TimeLogCreate' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/field_ops/schemas.py",
+          "line_number": 156,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'TimeLogUpdate' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/field_ops/schemas.py",
+          "line_number": 162,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'TimeLog' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/field_ops/schemas.py",
+          "line_number": 176,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'FieldEquipmentBase' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/field_ops/schemas.py",
+          "line_number": 187,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'FieldEquipmentCreate' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/field_ops/schemas.py",
+          "line_number": 191,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'FieldEquipmentUpdate' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/field_ops/schemas.py",
+          "line_number": 202,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'FieldEquipment' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/field_ops/schemas.py",
+          "line_number": 217,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'ServiceRouteBase' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/field_ops/schemas.py",
+          "line_number": 225,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'ServiceRouteCreate' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/field_ops/schemas.py",
+          "line_number": 229,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'ServiceRouteUpdate' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/field_ops/schemas.py",
+          "line_number": 238,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'ServiceRoute' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/field_ops/schemas.py",
+          "line_number": 249,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'WorkOrderDashboard' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/field_ops/schemas.py",
+          "line_number": 255,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'TechnicianPerformanceReport' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/sales/scoring_strategies.py",
+          "line_number": 78,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'get_strategy_name' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/sales/scoring_strategies.py",
+          "line_number": 106,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'get_strategy_name' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/sales/scoring_strategies.py",
+          "line_number": 137,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'get_strategy_name' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/sales/scoring_strategies.py",
+          "line_number": 168,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'get_strategy_name' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/sales/scoring_strategies.py",
+          "line_number": 201,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'get_strategy_name' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/sales/scoring_strategies.py",
+          "line_number": 235,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'get_strategy_name' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/portal_management/schemas.py",
+          "line_number": 80,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/portal_management/schemas.py",
+          "line_number": 205,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/portal_management/schemas.py",
+          "line_number": 223,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/portal_management/schemas.py",
+          "line_number": 285,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/portal_management/schemas.py",
+          "line_number": 340,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/portal_management/schemas.py",
+          "line_number": 358,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/portal_management/schemas.py",
+          "line_number": 377,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/identity/schemas.py",
+          "line_number": 60,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'full_name' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/identity/router.py",
+          "line_number": 70,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/omnichannel/channel_plugins/registry.py",
+          "line_number": 164,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'decorator' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/omnichannel/channel_plugins/whatsapp_plugin.py",
+          "line_number": 24,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'channel_id' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/omnichannel/channel_plugins/whatsapp_plugin.py",
+          "line_number": 28,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'channel_name' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/omnichannel/channel_plugins/whatsapp_plugin.py",
+          "line_number": 32,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'capabilities' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/omnichannel/channel_plugins/whatsapp_plugin.py",
+          "line_number": 43,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'required_config_fields' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/omnichannel/channel_plugins/sms_plugin.py",
+          "line_number": 16,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'channel_id' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/omnichannel/channel_plugins/sms_plugin.py",
+          "line_number": 20,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'channel_name' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/omnichannel/channel_plugins/sms_plugin.py",
+          "line_number": 24,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'capabilities' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/omnichannel/channel_plugins/sms_plugin.py",
+          "line_number": 32,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'required_config_fields' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/omnichannel/channel_plugins/email_plugin.py",
+          "line_number": 21,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'channel_id' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/omnichannel/channel_plugins/email_plugin.py",
+          "line_number": 25,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'channel_name' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/omnichannel/channel_plugins/email_plugin.py",
+          "line_number": 29,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'capabilities' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/omnichannel/channel_plugins/email_plugin.py",
+          "line_number": 37,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'required_config_fields' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/omnichannel/query_builders/filter_builders.py",
+          "line_number": 33,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'apply' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/omnichannel/query_builders/filter_builders.py",
+          "line_number": 40,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'apply' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/omnichannel/query_builders/filter_builders.py",
+          "line_number": 47,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'apply' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/omnichannel/query_builders/filter_builders.py",
+          "line_number": 54,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'apply' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/omnichannel/query_builders/filter_builders.py",
+          "line_number": 63,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'apply' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/omnichannel/query_builders/filter_builders.py",
+          "line_number": 72,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'apply' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/omnichannel/query_builders/filter_builders.py",
+          "line_number": 81,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'apply' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/omnichannel/query_builders/filter_builders.py",
+          "line_number": 99,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'apply' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/omnichannel/query_builders/filter_builders.py",
+          "line_number": 108,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'apply' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/omnichannel/query_builders/filter_builders.py",
+          "line_number": 122,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'apply' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/omnichannel/query_builders/filter_builders.py",
+          "line_number": 141,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'apply' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/omnichannel/query_builders/filter_builders.py",
+          "line_number": 148,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'apply' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/omnichannel/query_builders/filter_builders.py",
+          "line_number": 155,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'apply' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/omnichannel/query_builders/filter_builders.py",
+          "line_number": 179,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'apply' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/modules/omnichannel/query_builders/filter_builders.py",
+          "line_number": 188,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'apply' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/config/unified_config_system.py",
+          "line_number": 571,
+          "rule_id": "missing_docstring",
+          "message": "AsyncFunctionDef 'main' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/observability/distributed_tracing.py",
+          "line_number": 449,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'decorator' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/observability/distributed_tracing.py",
+          "line_number": 469,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'decorator' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/observability/distributed_tracing.py",
+          "line_number": 450,
+          "rule_id": "missing_docstring",
+          "message": "AsyncFunctionDef 'wrapper' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/observability/distributed_tracing.py",
+          "line_number": 470,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'wrapper' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/security/security_scanner.py",
+          "line_number": 64,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'critical_findings' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/security/security_scanner.py",
+          "line_number": 68,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'high_findings' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/security/security_scanner.py",
+          "line_number": 72,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'duration_seconds' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/secrets/field_encryption.py",
+          "line_number": 294,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'decorator' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/secrets/field_encryption.py",
+          "line_number": 356,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'decorator' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/secrets/field_encryption.py",
+          "line_number": 254,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'EncryptedModel' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/secrets/field_encryption.py",
+          "line_number": 303,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'new_init' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/secrets/field_encryption.py",
+          "line_number": 363,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'new_init' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/secrets/rbac.py",
+          "line_number": 925,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'decorator' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/secrets/rbac.py",
+          "line_number": 957,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'decorator' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/secrets/rbac.py",
+          "line_number": 848,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'build_hierarchy' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/secrets/rbac.py",
+          "line_number": 926,
+          "rule_id": "missing_docstring",
+          "message": "AsyncFunctionDef 'async_wrapper' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/secrets/rbac.py",
+          "line_number": 946,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'sync_wrapper' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/secrets/rbac.py",
+          "line_number": 958,
+          "rule_id": "missing_docstring",
+          "message": "AsyncFunctionDef 'async_wrapper' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/secrets/rbac.py",
+          "line_number": 971,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'sync_wrapper' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/secrets/vault_client.py",
+          "line_number": 70,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/secrets/secrets.py",
+          "line_number": 55,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/secrets/dependencies.py",
+          "line_number": 109,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'BaseModel' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/secrets/dependencies.py",
+          "line_number": 114,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'Field' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/secrets/dependencies.py",
+          "line_number": 117,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'field_validator' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/secrets/dependencies.py",
+          "line_number": 123,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'ConfigDict' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/secrets/dependencies.py",
+          "line_number": 118,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'decorator' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/secrets/vault_auth_strategies.py",
+          "line_number": 58,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'get_strategy_name' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/secrets/vault_auth_strategies.py",
+          "line_number": 91,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'get_strategy_name' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/secrets/vault_auth_strategies.py",
+          "line_number": 143,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'get_strategy_name' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/secrets/vault_auth_strategies.py",
+          "line_number": 175,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'get_strategy_name' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/secrets/vault_auth_strategies.py",
+          "line_number": 211,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'get_strategy_name' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/secrets/audit.py",
+          "line_number": 723,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'decorator' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/secrets/audit.py",
+          "line_number": 724,
+          "rule_id": "missing_docstring",
+          "message": "AsyncFunctionDef 'async_wrapper' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/secrets/audit.py",
+          "line_number": 767,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'sync_wrapper' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/secrets/encryption.py",
+          "line_number": 585,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'new_init' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/secrets/__init__.py",
+          "line_number": 69,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'SecurityModuleUnavailable' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/events/base.py",
+          "line_number": 26,
+          "rule_id": "missing_docstring",
+          "message": "ClassDef 'Config' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        },
+        {
+          "file_path": "src/dotmac_isp/core/config/handlers/yaml_config_handler.py",
+          "line_number": 130,
+          "rule_id": "missing_docstring",
+          "message": "FunctionDef 'check_keys' lacks docstring",
+          "severity": "QualitySeverity.LOW",
+          "category": "documentation",
+          "tool": "ast_parser",
+          "fix_suggestion": "Add comprehensive docstring with Args, Returns, and Examples"
+        }
+      ],
+      "metrics": {
+        "files_checked": 434,
+        "undocumented_functions": 306,
+        "documentation_score": 92.94930875576037
+      },
+      "started_at": "2025-08-22 15:40:41.941438",
+      "completed_at": "2025-08-22 15:40:44.881421"
+    }
+  ],
+  "summary_metrics": {
+    "total_gates": 6,
+    "passed_gates": 0,
+    "failed_gates": 4,
+    "total_issues": 313,
+    "critical_issues": 7,
+    "total_duration_seconds": 41.019079,
+    "quality_score": 0
+  },
+  "recommendations": [
+    "\ud83d\udd12 Critical: Fix all security vulnerabilities before deployment. Use environment variables for secrets and implement proper access controls.",
+    "\ud83d\udd04 Refactor high-complexity functions using Strategy Pattern or decomposition. Target functions with complexity > 10 for immediate refactoring.",
+    "\ud83e\uddea Increase test coverage by adding unit tests for uncovered code paths. Focus on critical business logic and error handling scenarios.",
+    "\u26a0\ufe0f Address 7 critical issues immediately. These issues block production deployment."
+  ],
+  "trend_analysis": {
+    "trend_analysis": "Historical trend analysis requires multiple report runs",
+    "improvement_areas": [
+      "Implement trend tracking",
+      "Set up historical data storage"
+    ]
+  }
+}

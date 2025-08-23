@@ -1,0 +1,180 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dotmac-isp-framework
+  namespace: dotmac-isp-framework
+  labels:
+    app.kubernetes.io/name: dotmac-isp-framework
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/component: application
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: dotmac-isp-framework
+      app.kubernetes.io/component: application
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: dotmac-isp-framework
+        app.kubernetes.io/component: application
+        app.kubernetes.io/version: "1.0.0"
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: dotmac-isp-service-account
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+      - name: dotmac-isp-framework
+        image: dotmac/isp-framework:latest
+        imagePullPolicy: Always
+        ports:
+        - name: http
+          containerPort: 8000
+          protocol: TCP
+        - name: metrics
+          containerPort: 9090
+          protocol: TCP
+        env:
+        # Load configuration from ConfigMap
+        - name: ENVIRONMENT
+          valueFrom:
+            configMapKeyRef:
+              name: dotmac-isp-config
+              key: ENVIRONMENT
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: dotmac-isp-config
+              key: LOG_LEVEL
+        - name: WORKERS
+          valueFrom:
+            configMapKeyRef:
+              name: dotmac-isp-config
+              key: WORKERS
+        - name: WORKER_CLASS
+          valueFrom:
+            configMapKeyRef:
+              name: dotmac-isp-config
+              key: WORKER_CLASS
+        - name: BIND
+          valueFrom:
+            configMapKeyRef:
+              name: dotmac-isp-config
+              key: BIND
+        - name: TIMEOUT
+          valueFrom:
+            configMapKeyRef:
+              name: dotmac-isp-config
+              key: TIMEOUT
+        # Load secrets
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: dotmac-isp-secrets
+              key: DATABASE_URL
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: dotmac-isp-secrets
+              key: REDIS_URL
+        - name: JWT_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: dotmac-isp-secrets
+              key: JWT_SECRET_KEY
+        # Pod information
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        # Tenant ID (will be overridden in tenant-specific deployments)
+        - name: ISP_TENANT_ID
+          value: "default"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        startupProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 5
+          failureThreshold: 30
+        volumeMounts:
+        - name: app-logs
+          mountPath: /app/logs
+        - name: app-tmp
+          mountPath: /app/tmp
+        - name: config-volume
+          mountPath: /app/config
+          readOnly: true
+      volumes:
+      - name: app-logs
+        emptyDir:
+          sizeLimit: 1Gi
+      - name: app-tmp
+        emptyDir:
+          sizeLimit: 500Mi
+      - name: config-volume
+        configMap:
+          name: dotmac-isp-config
+      nodeSelector:
+        kubernetes.io/os: linux
+      tolerations:
+      - key: "dotmac.io/tenant-dedicated"
+        operator: "Equal"
+        value: "true"
+        effect: "NoSchedule"
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app.kubernetes.io/name
+                  operator: In
+                  values:
+                  - dotmac-isp-framework
+              topologyKey: kubernetes.io/hostname

@@ -1,6 +1,7 @@
 /**
  * Unstyled, composable Feedback primitives (Toast, Alert, Loading)
  */
+'use client';
 
 import { Slot } from '@radix-ui/react-slot';
 import * as ToastPrimitive from '@radix-ui/react-toast';

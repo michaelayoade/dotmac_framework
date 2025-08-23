@@ -67,11 +67,11 @@ export function CustomerLoginForm() {
 
   const getLoginMethodIcon = (method: LoginMethod) => {
     switch (method) {
-      case 'email&apos;:
+      case 'email':
         return <Mail className='h-4 w-4' />;
-      case 'portal_id&apos;:
+      case 'portal_id':
         return <User className='h-4 w-4' />;
-      case 'account_number&apos;:
+      case 'account_number':
         return <CreditCard className='h-4 w-4' />;
     }
   };
@@ -107,7 +107,7 @@ export function CustomerLoginForm() {
       case 'account_number':
         return formData.accountNumber;
       default:
-        return '&apos;;
+        return '';
     }
   };
 
@@ -134,12 +134,12 @@ export function CustomerLoginForm() {
               style={{ backgroundColor: branding?.primaryColor }}
             >
               <span className='font-bold text-sm text-white'>
-                {branding?.companyName?.charAt(0) || 'D&apos;}
+                {branding?.companyName?.charAt(0) || 'D'}
               </span>
             </div>
           )}
           <h1 className='ml-2 font-semibold text-gray-900 text-xl'>
-            {branding?.companyName || 'Customer Portal&apos;}
+            {branding?.companyName || 'Customer Portal'}
           </h1>
         </div>
         <h2 className='font-bold text-2xl text-gray-900'>Welcome Back</h2>
@@ -180,7 +180,7 @@ export function CustomerLoginForm() {
                     'flex items-center rounded-lg border p-3 text-left transition-colors',
                     loginMethod === method
                       ? 'border-blue-500 bg-blue-50 text-blue-700'
-                      : 'border-gray-200 hover:border-gray-300&apos;
+                      : 'border-gray-200 hover:border-gray-300'
                   )}
                 >
                   {getLoginMethodIcon(method as LoginMethod)}
@@ -237,7 +237,7 @@ export function CustomerLoginForm() {
               type='button'
               className='absolute inset-y-0 right-0 flex items-center pr-3'
               onClick={handlePasswordToggle}
-              onKeyDown={(e) => e.key === 'Enter&apos; && handlePasswordToggle}
+              onKeyDown={(e) => e.key === 'Enter' && handlePasswordToggle}
             >
               {showPassword ? (
                 <EyeOff className='h-5 w-5 text-gray-400' />
@@ -267,7 +267,7 @@ export function CustomerLoginForm() {
           <button
             type='button'
             onClick={() => console.log('Forgot password')}
-            className='font-medium text-sm hover:text-blue-500&apos;
+            className='font-medium text-sm hover:text-blue-500'
             style={{ color: branding?.primaryColor }}
           >
             Forgot password?
@@ -282,31 +282,31 @@ export function CustomerLoginForm() {
           size='lg'
           style={{ backgroundColor: branding?.primaryColor }}
         >
-          {isLoading ? 'Signing in...' : 'Sign In&apos;}
+          {isLoading ? 'Signing in...' : 'Sign In'}
         </Button>
       </form>
 
       {/* Help Links */}
       <div className='mt-6 space-y-2 text-center'>
         <p className='text-gray-600 text-sm'>
-          Don&apos;t have an account?{' &apos;}
+          Don't have an account?{' '}
           <button
             type='button'
             onClick={() => console.log('Contact us')}
-            className='font-medium hover:opacity-80&apos;
+            className='font-medium hover:opacity-80'
             style={{ color: branding?.primaryColor }}
           >
             Contact us to get started
           </button>
         </p>
 
-        {loginMethod !== 'email&apos; && (
+        {loginMethod !== 'email' && (
           <p className='text-gray-500 text-xs'>Tip: You can also sign in with your email address</p>
         )}
 
         <div className='border-gray-200 border-t pt-4'>
           <p className='text-gray-500 text-xs'>
-            Need help? Contact support at{' &apos;}
+            Need help? Contact support at{' '}
             <a href='mailto:support@example.com' className='text-blue-600 hover:text-blue-500'>
               support@example.com
             </a>

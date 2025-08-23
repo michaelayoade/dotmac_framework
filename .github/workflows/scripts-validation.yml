@@ -1,0 +1,159 @@
+name: Scripts Validation
+
+on:
+  push:
+    branches: [main, develop, feature/*]
+    paths:
+      - 'scripts/**/*.sh'
+      - '.github/workflows/scripts-validation.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'scripts/**/*.sh'
+      - '.github/workflows/scripts-validation.yml'
+
+jobs:
+  shellcheck:
+    name: ShellCheck Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Run ShellCheck
+        uses: ludeeus/action-shellcheck@master
+        with:
+          scandir: './scripts'
+          format: gcc
+          severity: error
+          additional_files: 'start-backend'
+        env:
+          SHELLCHECK_OPTS: -e SC1091 -e SC2034
+          
+  script-headers:
+    name: Validate Script Headers
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Check script headers and permissions
+        run: |
+          echo "Checking shell script headers and permissions..."
+          
+          # Find all shell scripts
+          scripts=$(find scripts -name "*.sh" -type f)
+          
+          # Track any failures
+          failures=0
+          
+          for script in $scripts; do
+            echo "Checking $script..."
+            
+            # Check if file is executable
+            if [ ! -x "$script" ]; then
+              echo "❌ $script is not executable"
+              ((failures++))
+            fi
+            
+            # Check for proper shebang
+            if ! head -1 "$script" | grep -q '^#!/usr/bin/env bash'; then
+              echo "❌ $script missing proper shebang (#!/usr/bin/env bash)"
+              ((failures++))
+            fi
+            
+            # Check for set -euo pipefail
+            if ! head -5 "$script" | grep -q 'set -euo pipefail'; then
+              echo "❌ $script missing 'set -euo pipefail'"
+              ((failures++))
+            fi
+            
+            # Check for usage function
+            if ! grep -q '^usage()' "$script"; then
+              echo "❌ $script missing usage() function"
+              ((failures++))
+            fi
+            
+            echo "✅ $script passed checks"
+          done
+          
+          if [ $failures -gt 0 ]; then
+            echo "❌ $failures script validation failures found"
+            exit 1
+          fi
+          
+          echo "✅ All scripts passed validation"
+          
+  script-testing:
+    name: Test Script Execution
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Test script help functions
+        run: |
+          echo "Testing script help functions..."
+          
+          # Test that help functions work
+          scripts=$(find scripts -name "*.sh" -type f -executable)
+          
+          for script in $scripts; do
+            echo "Testing help for $script..."
+            
+            # Test --help flag
+            if ! timeout 10s "$script" --help > /dev/null 2>&1; then
+              echo "❌ $script --help failed or timed out"
+              exit 1
+            fi
+            
+            # Test -h flag  
+            if ! timeout 10s "$script" -h > /dev/null 2>&1; then
+              echo "❌ $script -h failed or timed out"
+              exit 1
+            fi
+            
+            echo "✅ $script help functions work"
+          done
+          
+  documentation-sync:
+    name: Check Documentation Sync
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Verify operations guide is updated
+        run: |
+          echo "Checking if operations guide mentions all scripts..."
+          
+          # Get list of scripts
+          scripts=$(find scripts -name "*.sh" -type f | sed 's|scripts/||' | sort)
+          
+          # Check if operations guide exists
+          if [ ! -f "docs/operations/docker-compose-guide.md" ]; then
+            echo "❌ Operations guide not found"
+            exit 1
+          fi
+          
+          # Check if scripts are documented (simplified check)
+          missing_docs=0
+          for script in $scripts; do
+            script_name=$(basename "$script" .sh)
+            if ! grep -q "$script_name" docs/operations/docker-compose-guide.md; then
+              echo "❌ Script $script not documented in operations guide"
+              ((missing_docs++))
+            fi
+          done
+          
+          if [ $missing_docs -gt 0 ]; then
+            echo "❌ $missing_docs scripts missing from documentation"
+            echo "Please update docs/operations/docker-compose-guide.md"
+            exit 1
+          fi
+          
+          echo "✅ All scripts are documented"

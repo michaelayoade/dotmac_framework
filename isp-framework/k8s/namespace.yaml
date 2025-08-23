@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dotmac-isp-framework
+  labels:
+    app.kubernetes.io/name: dotmac-isp-framework
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: dotmac-management-platform
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dotmac-tenants
+  labels:
+    app.kubernetes.io/name: dotmac-tenants
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: dotmac-management-platform
+    dotmac.io/tenant-namespace: "true"

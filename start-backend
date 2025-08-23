@@ -1,5 +1,0 @@
-#!/bin/bash
-# DotMac Framework - Backend Startup Alias
-# Quick access to the full startup script
-
-exec /home/dotmac_framework/scripts/start-backend.sh "$@"

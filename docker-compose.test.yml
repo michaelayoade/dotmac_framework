@@ -1,171 +1,204 @@
+# Docker Compose configuration for isolated testing environment
+# Provides all dependencies needed for running comprehensive tests
+
+version: '3.9'
+
+services:
+  # PostgreSQL database for testing
+  postgres-test:
+    image: postgres:16-alpine
+    container_name: dotmac-postgres-test
+    environment:
+      POSTGRES_DB: dotmac_test
+      POSTGRES_USER: dotmac_test
+      POSTGRES_PASSWORD: test_password_123
+      POSTGRES_MULTIPLE_DATABASES: >
+        dotmac_identity_test,dotmac_billing_test,dotmac_services_test,
+        dotmac_networking_test,dotmac_analytics_test,dotmac_platform_test
+    ports:
+      - "5433:5432"  # Different port to avoid conflicts
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+      - ./scripts/init-test-databases.sh:/docker-entrypoint-initdb.d/init-databases.sh:ro
+    networks:
+      - test-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dotmac_test -d dotmac_test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # Redis for caching and message queues in tests
+  redis-test:
+    image: redis:7-alpine
+    container_name: dotmac-redis-test
+    command: redis-server --requirepass test_redis_password
+    ports:
+      - "6380:6379"  # Different port to avoid conflicts
+    volumes:
+      - redis_test_data:/data
+    networks:
+      - test-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--no-auth-warning", "-a", "test_redis_password", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # TimescaleDB for analytics testing
+  timescaledb-test:
+    image: timescale/timescaledb:2.11.2-pg16
+    container_name: dotmac-timescale-test
+    environment:
+      POSTGRES_DB: dotmac_analytics_test
+      POSTGRES_USER: dotmac_test
+      POSTGRES_PASSWORD: test_password_123
+    ports:
+      - "5434:5432"
+    volumes:
+      - timescale_test_data:/var/lib/postgresql/data
+    networks:
+      - test-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dotmac_test -d dotmac_analytics_test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MinIO for S3-compatible storage testing
+  minio-test:
+    image: minio/minio:latest
+    container_name: dotmac-minio-test
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: test-access-key
+      MINIO_ROOT_PASSWORD: test-secret-key
+    ports:
+      - "9001:9001"
+      - "9002:9000"
+    volumes:
+      - minio_test_data:/data
+    networks:
+      - test-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # Test runner service
+  test-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+      target: test
+    container_name: dotmac-test-runner
+    environment:
+      # Database configuration
+      DATABASE_URL: postgresql://dotmac_test:test_password_123@postgres-test:5432/dotmac_test
+      TEST_DATABASE_URL: postgresql://dotmac_test:test_password_123@postgres-test:5432/dotmac_test
+      
+      # Service-specific database URLs
+      IDENTITY_DATABASE_URL: postgresql://dotmac_test:test_password_123@postgres-test:5432/dotmac_identity_test
+      BILLING_DATABASE_URL: postgresql://dotmac_test:test_password_123@postgres-test:5432/dotmac_billing_test
+      SERVICES_DATABASE_URL: postgresql://dotmac_test:test_password_123@postgres-test:5432/dotmac_services_test
+      NETWORKING_DATABASE_URL: postgresql://dotmac_test:test_password_123@postgres-test:5432/dotmac_networking_test
+      ANALYTICS_DATABASE_URL: postgresql://dotmac_test:test_password_123@timescaledb-test:5432/dotmac_analytics_test
+      PLATFORM_DATABASE_URL: postgresql://dotmac_test:test_password_123@postgres-test:5432/dotmac_platform_test
+      
+      # Redis configuration
+      REDIS_URL: redis://:test_redis_password@redis-test:6379/0
+      REDIS_TEST_URL: redis://:test_redis_password@redis-test:6379/1
+      
+      # S3 configuration for testing
+      S3_ENDPOINT_URL: http://minio-test:9000
+      S3_ACCESS_KEY_ID: test-access-key
+      S3_SECRET_ACCESS_KEY: test-secret-key
+      S3_BUCKET_NAME: test-bucket
+      
+      # Test environment configuration
+      ENVIRONMENT: test
+      LOG_LEVEL: DEBUG
+      TESTING: "true"
+      
+      # JWT configuration
+      JWT_SECRET_KEY: test-jwt-secret-key-for-testing-only
+      JWT_ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 30
+      
+      # Rate limiting (disabled for testing)
+      RATE_LIMIT_ENABLED: "false"
+      
+      # External service mocking
+      MOCK_EXTERNAL_SERVICES: "true"
+      
+    volumes:
+      - .:/app
+      - /app/.pytest_cache
+      - test_coverage:/app/htmlcov
+      - test_reports:/app/test-reports
+    networks:
+      - test-network
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+      timescaledb-test:
+        condition: service_healthy
+      minio-test:
+        condition: service_healthy
+    profiles:
+      - test
+
+  # Performance testing with Locust
+  locust-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+      target: performance
+    container_name: dotmac-locust-test
+    environment:
+      - LOCUST_HOST=http://test-runner:8000
+      - LOCUST_USERS=10
+      - LOCUST_SPAWN_RATE=1
+      - LOCUST_RUN_TIME=60s
+    ports:
+      - "8089:8089"  # Locust web UI
+    volumes:
+      - ./tests/performance:/mnt/locust
+      - test_reports:/app/test-reports
+    networks:
+      - test-network
+    depends_on:
+      - test-runner
+    profiles:
+      - performance
+
+  # Security testing
+  security-test:
+    image: owasp/zap2docker-stable:latest
+    container_name: dotmac-security-test
+    command: zap-baseline.py -t http://test-runner:8000 -J zap-report.json -r zap-report.html
+    volumes:
+      - test_reports:/zap/wrk
+    networks:
+      - test-network
+    depends_on:
+      - test-runner
+    profiles:
+      - security
+
+volumes:
+  postgres_test_data:
+  redis_test_data:
+  timescale_test_data:
+  minio_test_data:
+  test_coverage:
+  test_reports:
+
 networks:
   test-network:
     driver: bridge
-
-volumes:
-  test_postgres_data:
-  test_redis_data:
-
-services:
-  # Test Database
-  test-postgres:
-    image: postgres:15-alpine
-    environment:
-      POSTGRES_DB: dotmac_test
-      POSTGRES_USER: test_user
-      POSTGRES_PASSWORD: test_password
-    volumes:
-      - test_postgres_data:/var/lib/postgresql/data
-    networks:
-      - test-network
-    ports:
-      - "5433:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U test_user -d dotmac_test"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # Test Redis
-  test-redis:
-    image: redis:7-alpine
-    command: redis-server --appendonly yes
-    volumes:
-      - test_redis_data:/data
-    networks:
-      - test-network
-    ports:
-      - "6380:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # HTTPBin service for webhook testing
-  httpbin:
-    image: kennethreitz/httpbin:latest
-    networks:
-      - test-network
-    ports:
-      - "8090:80"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/status/200"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-
-  # Prism Mock Server for API contract testing
-  prism:
-    image: stoplight/prism:latest
-    command: mock -h 0.0.0.0 -p 4010 /app/openapi.yaml
-    volumes:
-      - ./dotmac_platform/tests/fixtures/openapi.yaml:/app/openapi.yaml:ro
-    networks:
-      - test-network
-    ports:
-      - "4010:4010"
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:4010/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-
-  # DotMac Platform Tests
-  dotmac-platform-tests:
-    build:
-      context: ./dotmac_platform
-      dockerfile: Dockerfile.test
-      target: test
-    environment:
-      TESTING: "true"
-      ENVIRONMENT: "testing"
-      DATABASE_URL: "postgresql+asyncpg://test_user:test_password@test-postgres:5432/dotmac_test"
-      REDIS_URL: "redis://test-redis:6379/0"
-      HTTPBIN_URL: "http://httpbin"
-      AUTH_SECRET_KEY: "test_secret_key_at_least_32_characters_long"
-      LOG_LEVEL: "WARNING"
-      PYTHONPATH: "/app"
-      # Testing specific settings
-      PYTEST_CURRENT_TEST: "true"
-    volumes:
-      - ./dotmac_platform:/app:ro
-    networks:
-      - test-network
-    depends_on:
-      test-postgres:
-        condition: service_healthy
-      test-redis:
-        condition: service_healthy
-      httpbin:
-        condition: service_healthy
-      prism:
-        condition: service_healthy
-    command: >
-      sh -c "
-        echo 'Waiting for services to be ready...' &&
-        /usr/local/bin/wait-for-services.sh &&
-        echo 'Running DotMac Platform tests...' &&
-        pytest --tb=short --strict-markers --strict-config
-      "
-
-  # Production Readiness Feature Tests
-  production-readiness-tests:
-    build:
-      context: ./dotmac_platform
-      dockerfile: Dockerfile.test
-      target: integration
-    environment:
-      TESTING: "true"
-      ENVIRONMENT: "testing"
-      DATABASE_URL: "postgresql+asyncpg://test_user:test_password@test-postgres:5432/dotmac_test"
-      REDIS_URL: "redis://test-redis:6379/1"
-      AUTH_SECRET_KEY: "test_secret_key_at_least_32_characters_long"
-      LOG_LEVEL: "INFO"
-      PYTHONPATH: "/app"
-    volumes:
-      - ./dotmac_platform:/app:ro
-    networks:
-      - test-network
-    depends_on:
-      test-postgres:
-        condition: service_healthy
-      test-redis:
-        condition: service_healthy
-    command: >
-      sh -c "
-        echo 'Testing production readiness features...' &&
-        sleep 5 &&
-        python -c 'import asyncio; from dotmac_platform.app import app; print(\"App loaded successfully\")' &&
-        echo 'Testing /metrics endpoint...' &&
-        python -c 'from dotmac_platform.api.prometheus import router; print(\"Prometheus router loaded\")' &&
-        echo 'Testing circuit breaker...' &&
-        python -c 'from dotmac_platform.circuit_breaker import get_circuit_breaker; print(\"Circuit breaker loaded\")' &&
-        echo 'Testing graceful shutdown...' &&
-        python -c 'from dotmac_platform.shutdown import create_shutdown_handler; print(\"Shutdown handler loaded\")' &&
-        echo 'Testing health checks...' &&
-        python -c 'from dotmac_platform.health_checks import get_health_checker; print(\"Health checker loaded\")' &&
-        echo 'All production readiness features loaded successfully!'
-      "
-
-  # Lint and Format Check
-  lint-check:
-    build:
-      context: ./dotmac_platform
-      dockerfile: Dockerfile.test
-      target: lint
-    volumes:
-      - ./dotmac_platform:/app:ro
-    command: >
-      sh -c "
-        echo 'Running code quality checks...' &&
-        echo 'Checking import sorting...' &&
-        isort --check-only --diff . &&
-        echo 'Checking code formatting...' &&
-        black --check --diff . &&
-        echo 'Running linter...' &&
-        ruff check . &&
-        echo 'Running type checker...' &&
-        mypy dotmac_platform --ignore-missing-imports &&
-        echo 'All code quality checks passed!'
-      "
+    name: dotmac-test-network

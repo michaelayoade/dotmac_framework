@@ -1,0 +1,68 @@
+# Branch Protection Configuration
+# This file documents required branch protection rules
+# Apply these settings in GitHub repository settings
+
+branch_protection:
+  branches:
+    main:
+      required_status_checks:
+        strict: true
+        contexts:
+          - "ci/tests"
+          - "ci/security-scan"
+          - "ci/code-quality"
+          - "ci/dependency-scan"
+      enforce_admins: true
+      required_pull_request_reviews:
+        required_approving_review_count: 2
+        dismiss_stale_reviews: true
+        require_code_owner_reviews: true
+        require_last_push_approval: true
+      restrictions:
+        users: []
+        teams: ["security", "senior-developers"]
+      allow_force_pushes: false
+      allow_deletions: false
+      block_creations: false
+      required_linear_history: true
+      required_conversation_resolution: true
+      
+    develop:
+      required_status_checks:
+        strict: true
+        contexts:
+          - "ci/tests"
+          - "ci/security-scan"
+          - "ci/code-quality"
+      enforce_admins: false
+      required_pull_request_reviews:
+        required_approving_review_count: 1
+        dismiss_stale_reviews: true
+        require_code_owner_reviews: true
+      allow_force_pushes: false
+      allow_deletions: false
+      
+    release/*:
+      required_status_checks:
+        strict: true
+        contexts:
+          - "ci/tests"
+          - "ci/security-scan"
+          - "ci/code-quality"
+          - "ci/dependency-scan"
+          - "ci/performance-tests"
+      enforce_admins: true
+      required_pull_request_reviews:
+        required_approving_review_count: 2
+        dismiss_stale_reviews: true
+        require_code_owner_reviews: true
+      allow_force_pushes: false
+      allow_deletions: false
+
+security_settings:
+  vulnerability_alerts: true
+  security_updates: true
+  dependency_graph: true
+  secret_scanning: true
+  secret_scanning_push_protection: true
+  private_vulnerability_reporting: true

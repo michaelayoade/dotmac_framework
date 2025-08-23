@@ -1,0 +1,150 @@
+# Shared base Dockerfile for all DotMac services
+# This provides common layers that all services can build upon
+
+ARG PYTHON_VERSION=3.11
+
+# Stage 1: Base dependencies
+FROM python:${PYTHON_VERSION}-slim AS base-deps
+
+# Install system dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        gcc \
+        libpq-dev \
+        curl \
+        netcat-openbsd \
+        ca-certificates && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Create non-root user early
+RUN groupadd -r -g 1000 appuser && \
+    useradd -r -u 1000 -g appuser \
+        -d /home/appuser \
+        -s /sbin/nologin \
+        -c "Application user" appuser && \
+    mkdir -p /home/appuser && \
+    chown -R appuser:appuser /home/appuser
+
+# Set up Python environment
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_DEFAULT_TIMEOUT=100
+
+# Create virtual environment
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Stage 2: Python dependencies
+FROM base-deps AS python-deps
+
+# Copy requirements
+COPY backend/requirements-secure.txt /tmp/requirements.txt
+
+# Install Python packages
+RUN pip install --upgrade pip && \
+    pip install -r /tmp/requirements.txt && \
+    rm /tmp/requirements.txt
+
+# Stage 3: Security scanning (optional, for CI/CD)
+FROM python-deps AS security-scan
+
+ARG SKIP_SECURITY_SCAN=false
+
+# Install security tools conditionally
+RUN if [ "$SKIP_SECURITY_SCAN" = "false" ]; then \
+        pip install pip-audit safety bandit; \
+    fi
+
+# Copy code for scanning
+COPY backend/ /tmp/scan/
+
+# Run security scans conditionally
+RUN if [ "$SKIP_SECURITY_SCAN" = "false" ]; then \
+        pip-audit || true && \
+        safety check || true && \
+        bandit -r /tmp/scan/ -ll || true; \
+    fi
+
+# Stage 4: Service builder (template for each service)
+FROM python-deps AS service-builder
+
+# Arguments for service customization
+ARG SERVICE_NAME
+ARG SERVICE_PORT=8000
+
+# Validate service name is provided
+RUN test -n "$SERVICE_NAME" || (echo "SERVICE_NAME build arg is required" && exit 1)
+
+# Create app directory
+WORKDIR /app
+
+# Copy SDK core first (shared by all services)
+COPY --chown=appuser:appuser backend/dotmac_sdk_core /app/backend/dotmac_sdk_core
+
+# Copy service-specific code
+COPY --chown=appuser:appuser backend/dotmac_${SERVICE_NAME} /app/backend/dotmac_${SERVICE_NAME}
+
+# Copy secure startup script
+COPY --chown=appuser:appuser backend/start_service_secure.sh /app/start_service.sh
+RUN chmod +x /app/start_service.sh
+
+# Stage 5: Runtime base (minimal, secure)
+FROM python:${PYTHON_VERSION}-slim AS runtime-base
+
+# Install only runtime dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        postgresql-client \
+        curl \
+        netcat-openbsd \
+        ca-certificates && \
+    apt-get clean && \
+    apt-get autoremove -y && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
+           /usr/share/doc/* /usr/share/man/* /usr/share/info/*
+
+# Create non-root user
+RUN groupadd -r -g 1000 appuser && \
+    useradd -r -u 1000 -g appuser \
+        -d /home/appuser \
+        -s /sbin/nologin \
+        -c "Application user" appuser && \
+    mkdir -p /home/appuser && \
+    chown -R appuser:appuser /home/appuser
+
+# Create necessary directories
+RUN mkdir -p /app /run/secrets && \
+    chown -R appuser:appuser /app /run/secrets && \
+    chmod 700 /run/secrets
+
+WORKDIR /app
+
+# Copy virtual environment from deps stage
+COPY --from=python-deps --chown=appuser:appuser /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Set secure Python environment
+ENV PYTHONPATH=/app \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONHASHSEED=random \
+    PYTHONIOENCODING=utf-8
+
+# Switch to non-root user
+USER appuser
+
+# Default health check (services should override)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:${SERVICE_PORT:-8000}/health || exit 1
+
+# Document port (informational)
+EXPOSE ${SERVICE_PORT:-8000}
+
+# Note: Each service Dockerfile should:
+# 1. FROM this stage
+# 2. COPY their specific code
+# 3. Set SERVICE_NAME environment variable
+# 4. Define CMD or ENTRYPOINT

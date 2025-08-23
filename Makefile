@@ -9,6 +9,9 @@ PYTHON := python3
 PIP := pip
 PACKAGES := dotmac_core_events dotmac_core_ops dotmac_identity dotmac_billing dotmac_services dotmac_networking dotmac_analytics dotmac_api_gateway dotmac_platform dotmac_devtools
 
+# Add scripts to PATH
+export PATH := $(CURDIR)/scripts/start:$(CURDIR)/scripts/stop:$(CURDIR)/scripts/deploy:$(CURDIR)/scripts/dev-tools:$(PATH)
+
 # Colors for output
 CYAN := \033[0;36m
 GREEN := \033[0;32m
@@ -428,6 +431,24 @@ run-reseller-portal: ## Start Reseller Portal for development
 # SHORTCUTS
 # =============================================================================
 
-dev: install-dev ## Alias for install-dev
+dev: ## Start development environment (wrapper for docker compose + profiles dev)
+	$(call log_info,"Starting development environment...")
+	@COMPOSE_PROFILES=dev ./scripts/start/backend.sh -d
+	@./scripts/start/monitoring.sh -s signoz -d  
+	@./scripts/start/frontend.sh
+	
+start-backend: ## Start backend services
+	@./scripts/start/backend.sh
+
+start-frontend: ## Start frontend applications  
+	@./scripts/start/frontend.sh
+
+start-monitoring: ## Start monitoring stack
+	@./scripts/start/monitoring.sh
+
+stop: ## Stop all services gracefully
+	@./scripts/stop/all.sh
+
+install-dev-alias: install-dev ## Alias for install-dev
 qa: check ## Alias for check (Quality Assurance)
 build-all: build ## Alias for build

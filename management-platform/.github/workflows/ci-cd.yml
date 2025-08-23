@@ -1,0 +1,577 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop, release/* ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+        - staging
+        - production
+      skip_tests:
+        description: 'Skip tests (emergency deployment only)'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  PYTHON_VERSION: '3.11'
+  POETRY_VERSION: '1.7.1'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: dotmac/management-platform
+
+permissions:
+  contents: read
+  packages: write
+  security-events: write
+  pull-requests: write
+  actions: read
+
+jobs:
+  # Change Detection for Smart Pipeline Execution
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.changes.outputs.backend }}
+      frontend: ${{ steps.changes.outputs.frontend }}
+      infrastructure: ${{ steps.changes.outputs.infrastructure }}
+      docs: ${{ steps.changes.outputs.docs }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changes
+        uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            backend:
+              - 'src/**'
+              - 'tests/**'
+              - 'scripts/**'
+              - 'pyproject.toml'
+              - 'poetry.lock'
+              - 'Dockerfile'
+              - 'docker-compose.yml'
+              - '.env.example'
+            frontend:
+              - 'portals/**'
+              - 'frontend/**'
+            infrastructure:
+              - 'deployment/**'
+              - '.github/workflows/**'
+            docs:
+              - 'docs/**'
+              - '*.md'
+
+  # Code Quality Pipeline
+  code-quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: ${{ env.POETRY_VERSION }}
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('poetry.lock') }}
+          restore-keys: |
+            venv-${{ runner.os }}-${{ env.PYTHON_VERSION }}-
+
+      - name: Install dependencies
+        run: poetry install --with dev,security
+
+      - name: Format check
+        run: |
+          poetry run black --check src/ tests/ scripts/
+          poetry run isort --check-only src/ tests/ scripts/
+
+      - name: Lint
+        run: |
+          poetry run flake8 src/ tests/ scripts/
+          poetry run mypy src/
+
+      - name: Security lint
+        run: poetry run bandit -r src/ -f json -o bandit-report.json
+
+      - name: Upload lint results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: lint-results
+          path: |
+            bandit-report.json
+
+  # Test Pipeline with Matrix Strategy
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    needs: [changes, code-quality]
+    if: needs.changes.outputs.backend == 'true' && !inputs.skip_tests
+    strategy:
+      matrix:
+        test-type: [unit, integration, security]
+        python-version: ['3.11']
+        database: [postgresql]
+    
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: ${{ env.POETRY_VERSION }}
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('poetry.lock') }}
+
+      - name: Install dependencies
+        run: poetry install --with dev,security
+
+      - name: Run ${{ matrix.test-type }} tests
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
+          REDIS_URL: redis://localhost:6379/0
+          SECURITY_JWT_SECRET_KEY: test-secret-key-for-ci-minimum-32-chars
+        run: |
+          case "${{ matrix.test-type }}" in
+            unit)
+              poetry run pytest tests/ -m "unit" --cov=src/mgmt --cov-report=xml --cov-report=term --junitxml=junit-unit.xml
+              ;;
+            integration)
+              poetry run pytest tests/ -m "integration" --cov=src/mgmt --cov-report=xml --cov-report=term --junitxml=junit-integration.xml
+              ;;
+            security)
+              poetry run pytest tests/ -m "security" --cov=src/mgmt --cov-report=xml --cov-report=term --junitxml=junit-security.xml
+              ;;
+          esac
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: test-results-${{ matrix.test-type }}-${{ matrix.python-version }}
+          path: |
+            junit-*.xml
+            coverage.xml
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        if: matrix.test-type == 'unit'
+        with:
+          file: coverage.xml
+          flags: ${{ matrix.test-type }}
+          name: codecov-${{ matrix.test-type }}
+
+  # Performance Testing
+  performance-test:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    needs: [changes, test]
+    if: needs.changes.outputs.backend == 'true' && github.event_name != 'pull_request'
+    
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: perf_user
+          POSTGRES_PASSWORD: perf_password
+          POSTGRES_DB: perf_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+
+      - name: Install dependencies
+        run: |
+          poetry install --with dev
+          poetry run pip install locust
+
+      - name: Start application
+        env:
+          DATABASE_URL: postgresql://perf_user:perf_password@localhost:5432/perf_db
+          REDIS_URL: redis://localhost:6379/0
+          SECURITY_JWT_SECRET_KEY: perf-test-secret-key-minimum-32-chars
+        run: |
+          poetry run uvicorn src.mgmt.main:app --host 0.0.0.0 --port 8000 &
+          sleep 10
+        
+      - name: Run performance tests
+        run: |
+          poetry run locust --headless --users 50 --spawn-rate 5 -H http://localhost:8000 -t 120s --html=performance-report.html
+
+      - name: Upload performance results
+        uses: actions/upload-artifact@v3
+        with:
+          name: performance-results
+          path: performance-report.html
+
+  # Build Pipeline
+  build:
+    name: Build Images
+    runs-on: ubuntu-latest
+    needs: [changes, code-quality]
+    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.infrastructure == 'true'
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            BUILD_DATE=${{ github.event.repository.updated_at }}
+            VCS_REF=${{ github.sha }}
+            VERSION=${{ steps.meta.outputs.version }}
+
+  # Container Security Scanning
+  container-security:
+    name: Container Security
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ needs.build.outputs.image-tag }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  # Infrastructure Validation
+  infrastructure-validation:
+    name: Infrastructure Validation
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.infrastructure == 'true'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup OpenTofu
+        uses: opentofu/setup-opentofu@v1
+
+      - name: Validate OpenTofu configurations
+        run: |
+          cd deployment/opentofu
+          tofu init -backend=false
+          tofu validate
+          tofu fmt -check
+
+      - name: Run TFSec security scan
+        uses: aquasecurity/tfsec-action@v1.0.3
+        with:
+          working_directory: deployment/opentofu
+          format: sarif
+          soft_fail: false
+
+      - name: Upload TFSec results
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: tfsec.sarif
+
+  # Deployment to Staging
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [build, test, container-security]
+    if: github.ref == 'refs/heads/develop' && !inputs.skip_tests
+    environment:
+      name: staging
+      url: https://staging.dotmac.platform
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to staging
+        env:
+          KUBE_CONFIG: ${{ secrets.STAGING_KUBE_CONFIG }}
+          IMAGE_TAG: ${{ needs.build.outputs.image-tag }}
+        run: |
+          echo "Deploying $IMAGE_TAG to staging environment"
+          # kubectl apply -f deployment/kubernetes/staging/
+          echo "Staging deployment completed"
+
+      - name: Run smoke tests
+        run: |
+          echo "Running smoke tests against staging"
+          # Add smoke test commands here
+          sleep 30
+          curl -f https://staging.dotmac.platform/health
+
+      - name: Notify deployment status
+        uses: 8398a7/action-slack@v3
+        if: always()
+        with:
+          status: ${{ job.status }}
+          channel: '#deployments'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+
+  # Deployment to Production
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build, test, container-security, deploy-staging]
+    if: github.ref == 'refs/heads/main' || inputs.environment == 'production'
+    environment:
+      name: production
+      url: https://app.dotmac.platform
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Approval Required
+        uses: trstringer/manual-approval@v1
+        if: github.event_name != 'workflow_dispatch'
+        with:
+          secret: ${{ github.TOKEN }}
+          approvers: ${{ secrets.PRODUCTION_APPROVERS }}
+          minimum-approvals: 2
+          issue-title: "Production Deployment Approval Required"
+
+      - name: Deploy to production
+        env:
+          KUBE_CONFIG: ${{ secrets.PRODUCTION_KUBE_CONFIG }}
+          IMAGE_TAG: ${{ needs.build.outputs.image-tag }}
+        run: |
+          echo "Deploying $IMAGE_TAG to production environment"
+          # kubectl apply -f deployment/kubernetes/production/
+          echo "Production deployment completed"
+
+      - name: Run health checks
+        run: |
+          echo "Running health checks against production"
+          sleep 60
+          curl -f https://app.dotmac.platform/health
+          curl -f https://app.dotmac.platform/api/health
+
+      - name: Create release
+        if: github.ref == 'refs/heads/main'
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ github.run_number }}
+          release_name: Release v${{ github.run_number }}
+          body: |
+            Changes in this release:
+            ${{ github.event.head_commit.message }}
+            
+            Docker Image: ${{ needs.build.outputs.image-tag }}
+          draft: false
+          prerelease: false
+
+      - name: Notify production deployment
+        uses: 8398a7/action-slack@v3
+        if: always()
+        with:
+          status: ${{ job.status }}
+          channel: '#production'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+
+  # Documentation Deployment
+  deploy-docs:
+    name: Deploy Documentation
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.docs == 'true' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          pip install mkdocs-material mkdocs-mermaid2-plugin
+
+      - name: Deploy to GitHub Pages
+        run: |
+          mkdocs gh-deploy --force
+
+  # Cleanup
+  cleanup:
+    name: Cleanup
+    runs-on: ubuntu-latest
+    needs: [deploy-production, deploy-staging]
+    if: always()
+    steps:
+      - name: Clean up old images
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Cleaning up old container images"
+          # Add cleanup logic for old images
+
+  # Notification Summary
+  notification:
+    name: Pipeline Summary
+    runs-on: ubuntu-latest
+    needs: [code-quality, test, build, deploy-staging, deploy-production]
+    if: always() && github.event_name != 'pull_request'
+    steps:
+      - name: Send pipeline summary
+        uses: 8398a7/action-slack@v3
+        with:
+          status: custom
+          channel: '#ci-cd'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+          custom_payload: |
+            {
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": ":rocket: *CI/CD Pipeline Summary*\n*Repository:* ${{ github.repository }}\n*Branch:* ${{ github.ref_name }}\n*Commit:* ${{ github.sha }}"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Code Quality:* ${{ needs.code-quality.result }}"
+                    },
+                    {
+                      "type": "mrkdwn", 
+                      "text": "*Tests:* ${{ needs.test.result }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Build:* ${{ needs.build.result }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Staging:* ${{ needs.deploy-staging.result }}"
+                    }
+                  ]
+                }
+              ]
+            }

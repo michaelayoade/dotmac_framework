@@ -1,0 +1,118 @@
+{
+  "vendor_integrations": {
+    "voltha_integration": {
+      "plugin_id": "voltha_integration",
+      "name": "VOLTHA Integration",
+      "description": "VOLTHA (Virtual OLT Hardware Abstraction) integration for fiber network management",
+      "version": "1.0.0",
+      "category": "network_automation",
+      "module_path": "dotmac_isp.plugins.network_automation.voltha_integration_plugin",
+      "class_name": "VolthaIntegrationPlugin",
+      "enabled": true,
+      "auto_load": false,
+      "dependencies": ["grpc", "protobuf"],
+      "configuration": {
+        "voltha_host": "localhost",
+        "voltha_port": 50057,
+        "voltha_rest_port": 8881,
+        "device_monitoring_interval": 60,
+        "health_check_interval": 300
+      },
+      "security": {
+        "required_permissions": [
+          "network.fiber.manage",
+          "network.olt.configure", 
+          "network.onu.provision"
+        ],
+        "secrets_required": [
+          "voltha-username",
+          "voltha-password"
+        ]
+      },
+      "features": [
+        "olt_provisioning",
+        "onu_management", 
+        "flow_configuration",
+        "device_monitoring",
+        "alarm_handling",
+        "performance_metrics"
+      ]
+    },
+    "analytics_events": {
+      "plugin_id": "analytics_events",
+      "name": "Analytics Events",
+      "description": "Comprehensive event tracking and analytics for business intelligence",
+      "version": "1.0.0",
+      "category": "monitoring",
+      "module_path": "dotmac_isp.plugins.monitoring.analytics_events_plugin",
+      "class_name": "AnalyticsEventsPlugin",
+      "enabled": true,
+      "auto_load": false,
+      "dependencies": ["aiohttp", "sqlalchemy", "pandas"],
+      "configuration": {
+        "analytics_host": "localhost",
+        "analytics_port": 8080,
+        "batch_size": 100,
+        "flush_interval": 30,
+        "metrics_collection_interval": 300
+      },
+      "security": {
+        "required_permissions": [
+          "analytics.events.collect",
+          "analytics.events.query",
+          "analytics.dashboards.view",
+          "analytics.reports.generate"
+        ],
+        "secrets_required": [
+          "analytics-api-key"
+        ],
+        "optional_secrets": [
+          "analytics-db-connection"
+        ]
+      },
+      "features": [
+        "event_tracking",
+        "batch_processing",
+        "real_time_analytics",
+        "custom_dashboards",
+        "automated_reports",
+        "alert_rules",
+        "schema_validation"
+      ]
+    }
+  },
+  "deployment_scenarios": {
+    "development": {
+      "voltha_integration": {
+        "enabled": false,
+        "configuration": {
+          "voltha_host": "localhost",
+          "device_monitoring_interval": 120
+        }
+      },
+      "analytics_events": {
+        "enabled": true,
+        "configuration": {
+          "batch_size": 10,
+          "flush_interval": 5
+        }
+      }
+    },
+    "production": {
+      "voltha_integration": {
+        "enabled": true,
+        "configuration": {
+          "voltha_host": "voltha.fiber.local",
+          "device_monitoring_interval": 30
+        }
+      },
+      "analytics_events": {
+        "enabled": true,
+        "configuration": {
+          "batch_size": 500,
+          "flush_interval": 60
+        }
+      }
+    }
+  }
+}

@@ -19,6 +19,10 @@ export * from './usePerformanceMonitoring';
 // Multi-tenant functionality
 export * from './usePermissions';
 export * from './usePortalAuth';
+export * from './usePortalIdAuth';
+export * from './useISPModules';
+export * from './useISPTenant';
+export * from './useWebSocket';
 // Real-time data and synchronization
 export * from './useRealTimeSync';
 // Route protection and security

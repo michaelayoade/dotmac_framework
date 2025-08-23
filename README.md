@@ -30,9 +30,16 @@ A comprehensive, security-focused telecommunications management framework for In
 - Python 3.9+ 
 - PostgreSQL 12+
 - Redis 6+
+- Docker & Docker Compose
 - Git
 
-### Installation
+### One-Liner Development Start
+
+```bash
+make dev   # Starts backend, frontend, and monitoring stack
+```
+
+### Manual Setup
 
 1. **Clone the repository**
    ```bash
@@ -40,16 +47,57 @@ A comprehensive, security-focused telecommunications management framework for In
    cd dotmac-framework
    ```
 
-2. **Set up development environment**
+2. **Start backend services**
    ```bash
-   make install-dev
+   ./scripts/start/backend.sh -p "backend,database,monitoring" -d
    ```
 
-3. **Configure environment**
+3. **Start frontend applications**
    ```bash
-   cp .env.example .env
-   # Edit .env with your configuration
+   ./scripts/start/frontend.sh -a "admin,customer,reseller"
    ```
+
+4. **Start monitoring (optional)**
+   ```bash
+   ./scripts/start/monitoring.sh -s signoz -d
+   ```
+
+## 🛠️ Operations
+
+### Common Scripts
+
+All scripts are organized by purpose and include comprehensive help:
+
+```bash
+# Start services
+./scripts/start/backend.sh --help     # Backend services
+./scripts/start/frontend.sh --help    # Frontend applications  
+./scripts/start/monitoring.sh --help  # Monitoring stack
+
+# Stop services
+./scripts/stop/all.sh --help          # Graceful shutdown
+
+# Deploy
+./scripts/deploy/helm-deploy.sh --help # Kubernetes deployment
+
+# Development tools
+./scripts/dev-tools/generate-openapi.sh --help # API documentation
+```
+
+### Docker Compose Profiles
+
+Control which services run using profiles:
+
+```bash
+export COMPOSE_PROFILES="backend,database,monitoring"
+./scripts/start/backend.sh
+```
+
+### Operations Guide
+
+See comprehensive documentation: **[docs/operations/docker-compose-guide.md](docs/operations/docker-compose-guide.md)**
+
+## 🧪 Testing
 
 4. **Run tests**
    ```bash

@@ -1,6 +1,7 @@
 /**
  * Advanced notification system with toast notifications, alerts, and notification center
  */
+'use client';
 
 import { cva, type VariantProps } from 'class-variance-authority';
 import { clsx } from 'clsx';
@@ -96,6 +97,10 @@ export function NotificationProvider({
 
   const generateId = () => Math.random().toString(36).substr(2, 9);
 
+  const removeNotification = useCallback((id: string) => {
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+  }, []);
+
   const addNotification = useCallback(
     (notification: Omit<Notification, 'id' | 'timestamp'>) => {
       const id = generateId();
@@ -124,10 +129,6 @@ export function NotificationProvider({
     },
     [defaultDuration, maxNotifications, removeNotification, generateId]
   );
-
-  const removeNotification = useCallback((id: string) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
-  }, []);
 
   const clearNotifications = useCallback(() => {
     setNotifications([]);
@@ -275,7 +276,8 @@ const ToastNotification = forwardRef<HTMLDivElement, ToastNotificationProps>(
           {notification.dismissible ? (
             <button
               type='button'
-              onClick={handleDismiss} onKeyDown={(e) => e.key === "Enter" && handleDismiss}
+              onClick={handleDismiss}
+              onKeyDown={(e) => e.key === 'Enter' && handleDismiss}
               className='toast-dismiss'
               aria-label='Dismiss notification'
             >
@@ -411,11 +413,21 @@ export const NotificationCenter = forwardRef<HTMLDivElement, NotificationCenterP
 
           <div className='notification-center-actions'>
             {getUnreadCount() > 0 && (
-              <button type='button' onClick={markAllAsRead} onKeyDown={(e) => e.key === "Enter" && markAllAsRead} className='action-button'>
+              <button
+                type='button'
+                onClick={markAllAsRead}
+                onKeyDown={(e) => e.key === 'Enter' && markAllAsRead}
+                className='action-button'
+              >
                 Mark all read
               </button>
             )}
-            <button type='button' onClick={clearNotifications} onKeyDown={(e) => e.key === "Enter" && clearNotifications} className='action-button'>
+            <button
+              type='button'
+              onClick={clearNotifications}
+              onKeyDown={(e) => e.key === 'Enter' && clearNotifications}
+              className='action-button'
+            >
               Clear all
             </button>
           </div>
@@ -472,7 +484,7 @@ export const NotificationCenter = forwardRef<HTMLDivElement, NotificationCenterP
                 })}
                 onClick={() => HandleNotificationClick(notification)}
                 onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.click()}
-                role="button"
+                role='button'
                 tabIndex={0}
               >
                 <div className='notification-icon'>
@@ -507,7 +519,7 @@ export const NotificationCenter = forwardRef<HTMLDivElement, NotificationCenterP
                             action.action();
                           }}
                           onKeyDown={(e) => {
-                            if (e.key === "Enter") {
+                            if (e.key === 'Enter') {
                               e.stopPropagation();
                               action.action();
                             }
@@ -528,7 +540,7 @@ export const NotificationCenter = forwardRef<HTMLDivElement, NotificationCenterP
                     removeNotification(notification.id);
                   }}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") {
+                    if (e.key === 'Enter') {
                       e.stopPropagation();
                       removeNotification(notification.id);
                     }

@@ -4,6 +4,7 @@ import { useAuth } from '@dotmac/headless';
 import { Button, Input } from '@dotmac/styled-components';
 import { AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useId, useState } from 'react';
+import Link from 'next/link';
 
 export function LoginForm() {
   const id = useId();
@@ -29,13 +30,24 @@ export function LoginForm() {
   };
 
   const handleForgotPassword = () => {
-    console.log('Forgot password clicked');
-    // TODO: Implement forgot password functionality
+    // Handled by Link component below
   };
 
   const handleContactAdmin = () => {
-    console.log('Contact admin clicked');
-    // TODO: Implement contact admin functionality
+    const subject = encodeURIComponent('Account Access Request - DotMac ISP Platform');
+    const body = encodeURIComponent(
+      'Hello,\n\n' +
+        'I need access to the DotMac ISP Management Platform.\n\n' +
+        'Company/ISP: \n' +
+        'Contact Person: \n' +
+        'Email: \n' +
+        'Phone: \n' +
+        'Role Requested: \n\n' +
+        'Please provide me with login credentials or additional information on how to access the platform.\n\n' +
+        'Thank you'
+    );
+
+    window.open(`mailto:admin@dotmac.com?subject=${subject}&body=${body}`, '_blank');
   };
 
   const _handleTogglePassword = () => {
@@ -47,7 +59,7 @@ export function LoginForm() {
       {error ? (
         <div className='rounded-md border border-red-200 bg-red-50 p-4'>
           <div className='flex'>
-            <AlertCircle className='h-5 w-5 text-red-400' />
+            <AlertCircle className='h-5 w-5 text-red-400' suppressHydrationWarning />
             <div className='ml-3'>
               <h3 className='font-medium text-red-800 text-sm'>Authentication Failed</h3>
               <p className='mt-2 text-red-700 text-sm'>{error}</p>
@@ -97,9 +109,9 @@ export function LoginForm() {
             onClick={() => setShowPassword(!showPassword)}
           >
             {showPassword ? (
-              <EyeOff className='h-5 w-5 text-gray-400' />
+              <EyeOff className='h-5 w-5 text-gray-400' suppressHydrationWarning />
             ) : (
-              <Eye className='h-5 w-5 text-gray-400' />
+              <Eye className='h-5 w-5 text-gray-400' suppressHydrationWarning />
             )}
           </button>
         </div>
@@ -119,31 +131,29 @@ export function LoginForm() {
         </div>
 
         <div className='text-sm'>
-          <button
-            type='button'
-            onClick={handleForgotPassword}
-            onKeyDown={(e) => e.key === 'Enter' && handleForgotPassword}
-            className='text-left font-medium text-primary hover:text-primary/80&apos;
+          <Link
+            href='/forgot-password'
+            className='text-left font-medium text-primary hover:text-primary/80'
           >
             Forgot your password?
-          </button>
+          </Link>
         </div>
       </div>
 
       <div>
         <Button type='submit' disabled={isLoading} className='w-full' size='lg'>
-          {isLoading ? 'Signing in...' : 'Sign in&apos;}
+          {isLoading ? 'Signing in...' : 'Sign in'}
         </Button>
       </div>
 
       <div className='text-center'>
         <p className='text-gray-600 text-sm'>
-          Don&apos;t have an account?{' &apos;}
+          Don't have an account?{' '}
           <button
             type='button'
             onClick={handleContactAdmin}
             onKeyDown={(e) => e.key === 'Enter' && handleContactAdmin}
-            className='font-medium text-primary hover:text-primary/80&apos;
+            className='font-medium text-primary hover:text-primary/80'
           >
             Contact your administrator
           </button>

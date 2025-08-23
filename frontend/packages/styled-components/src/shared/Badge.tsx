@@ -93,7 +93,7 @@ export interface BadgeProps
  * ```
  */
 const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(
-  ({ className, variant, size, icon, pulse = false, portal, ...props }, _ref) => {
+  ({ className, variant, size, icon, pulse = false, portal, ...props }, ref) => {
     const [detectedPortal, setDetectedPortal] = React.useState<string | undefined>(portal);
 
     // Auto-detect portal context from CSS classes

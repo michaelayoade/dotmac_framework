@@ -1,0 +1,220 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mgmt-api-ingress
+  namespace: dotmac-mgmt
+  labels:
+    app.kubernetes.io/name: mgmt-api
+    app.kubernetes.io/component: ingress
+  annotations:
+    # AWS Load Balancer Controller annotations
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: '443'
+    alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:us-east-1:ACCOUNT:certificate/CERT-ID"
+    
+    # Security headers
+    alb.ingress.kubernetes.io/actions.ssl-redirect: |
+      {
+        "type": "redirect",
+        "redirectConfig": {
+          "protocol": "HTTPS",
+          "port": "443",
+          "statusCode": "HTTP_301"
+        }
+      }
+    
+    # Rate limiting
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    
+    # CORS
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://admin.dotmac.app,https://tenant.dotmac.app,https://reseller.dotmac.app"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization"
+    
+    # Security
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/ssl-protocols: "TLSv1.2 TLSv1.3"
+    nginx.ingress.kubernetes.io/ssl-ciphers: "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384"
+    
+    # Request size limits
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    
+    # Timeouts
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    
+    # Health check
+    alb.ingress.kubernetes.io/healthcheck-path: "/api/v1/health"
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: '30'
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '10'
+    alb.ingress.kubernetes.io/healthy-threshold-count: '2'
+    alb.ingress.kubernetes.io/unhealthy-threshold-count: '3'
+
+spec:
+  tls:
+  - hosts:
+    - api.dotmac.app
+    - admin.dotmac.app  
+    - tenant.dotmac.app
+    - reseller.dotmac.app
+    secretName: dotmac-tls-secret
+  rules:
+  # API endpoints
+  - host: api.dotmac.app
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: mgmt-api
+            port:
+              number: 8000
+  
+  # Master Admin Portal API routes
+  - host: admin.dotmac.app
+    http:
+      paths:
+      - path: /api
+        pathType: Prefix  
+        backend:
+          service:
+            name: mgmt-api
+            port:
+              number: 8000
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: master-admin-portal
+            port:
+              number: 3000
+  
+  # Tenant Admin Portal API routes
+  - host: tenant.dotmac.app
+    http:
+      paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: mgmt-api  
+            port:
+              number: 8000
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: tenant-admin-portal
+            port:
+              number: 3000
+  
+  # Reseller Portal API routes
+  - host: reseller.dotmac.app
+    http:
+      paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: mgmt-api
+            port:
+              number: 8000
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: reseller-portal
+            port:
+              number: 3000
+
+---
+# Network Policy for API security
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mgmt-api-network-policy
+  namespace: dotmac-mgmt
+  labels:
+    app.kubernetes.io/name: mgmt-api
+    app.kubernetes.io/component: networkpolicy
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: mgmt-api
+      app.kubernetes.io/component: api
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow ingress from ALB/Ingress controller
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    ports:
+    - protocol: TCP
+      port: 8000
+  # Allow ingress from other pods in namespace (for internal communication)
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: dotmac-mgmt
+    ports:
+    - protocol: TCP
+      port: 8000
+  egress:
+  # Allow egress to DNS
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+  # Allow egress to PostgreSQL  
+  - to:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: postgres
+    ports:
+    - protocol: TCP
+      port: 5432
+  # Allow egress to Redis
+  - to:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: redis
+    ports:
+    - protocol: TCP
+      port: 6379
+  # Allow egress to external services (HTTPS)
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 443
+  # Allow egress to external services (HTTP) - consider restricting in production
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 80
+
+---
+# TLS Secret (Certificate)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: dotmac-tls-secret
+  namespace: dotmac-mgmt
+  labels:
+    app.kubernetes.io/name: mgmt-api
+    app.kubernetes.io/component: tls
+type: kubernetes.io/tls
+data:
+  # Base64 encoded certificate and key
+  # In production, use cert-manager or external certificate management
+  tls.crt: LS0tLS1CRUdJTi... # CHANGE_IN_PRODUCTION
+  tls.key: LS0tLS1CRUdJTi... # CHANGE_IN_PRODUCTION

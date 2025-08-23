@@ -297,6 +297,51 @@ async def test_database():
     # Cleanup would happen here
 
 
+@pytest.fixture
+def redis_socket():
+    """Provide optimized Redis connection using Unix socket for speed."""
+    import tempfile
+    import subprocess
+    import time
+    from pathlib import Path
+    
+    # Create temporary socket file
+    temp_dir = tempfile.mkdtemp()
+    socket_path = Path(temp_dir) / "redis.sock"
+    
+    # Start Redis with Unix socket (for local testing)
+    redis_proc = None
+    try:
+        if os.getenv("TEST_ENV") == "local":
+            redis_proc = subprocess.Popen([
+                "redis-server",
+                "--unixsocket", str(socket_path),
+                "--unixsocketperm", "700",
+                "--port", "0",  # Disable TCP
+                "--save", "",   # Disable persistence
+                "--appendonly", "no"
+            ])
+            
+            # Wait for socket to be available
+            for _ in range(50):  # 5 second timeout
+                if socket_path.exists():
+                    break
+                time.sleep(0.1)
+            
+            yield f"unix://{socket_path}"
+        else:
+            # Fallback to TCP for Docker/CI environments
+            yield "redis://localhost:6380/0"
+    
+    finally:
+        if redis_proc:
+            redis_proc.terminate()
+            redis_proc.wait()
+        # Cleanup temp directory
+        import shutil
+        shutil.rmtree(temp_dir, ignore_errors=True)
+
+
 # Cleanup fixtures
 @pytest.fixture(autouse=True)
 def cleanup_test_artifacts():

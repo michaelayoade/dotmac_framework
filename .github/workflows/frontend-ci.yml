@@ -101,7 +101,7 @@ jobs:
       - name: Run ${{ matrix.test-type }} tests
         run: |
           echo "🧪 Running ${{ matrix.test-type }} tests..."
-          pnpm test:${{ matrix.test-type }} --ci --coverage --watchAll=false
+          pnpm test:ci --selectProjects="${{ matrix.test-type == 'unit' && 'Unit Tests' || matrix.test-type == 'integration' && 'Integration Tests' || 'Accessibility Tests' }}"
         env:
           NODE_ENV: test
           CI: true

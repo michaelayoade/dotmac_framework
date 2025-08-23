@@ -35,7 +35,10 @@ export interface ApiClientConfig {
 }
 
 export class ApiClient {
-  private config: ApiClientConfig & Required<Pick<ApiClientConfig, 'baseUrl' | 'timeout' | 'retryAttempts' | 'onUnauthorized' | 'onError'>>;
+  private config: ApiClientConfig &
+    Required<
+      Pick<ApiClientConfig, 'baseUrl' | 'timeout' | 'retryAttempts' | 'onUnauthorized' | 'onError'>
+    >;
 
   constructor(config: ApiClientConfig) {
     this.config = {
@@ -44,13 +47,23 @@ export class ApiClient {
       tenantId: config.tenantId ?? undefined,
       timeout: config.timeout ?? 10000,
       retryAttempts: config.retryAttempts ?? 3,
-      onUnauthorized: config.onUnauthorized ?? (() => {
-        // Implementation pending
-      }),
-      onError: config.onError ?? (() => {
-        // Implementation pending
-      }),
-    } as ApiClientConfig & Required<Pick<ApiClientConfig, 'baseUrl' | 'timeout' | 'retryAttempts' | 'onUnauthorized' | 'onError'>>;
+      onUnauthorized:
+        config.onUnauthorized ??
+        (() => {
+          // Implementation pending
+        }),
+      onError:
+        config.onError ??
+        (() => {
+          // Implementation pending
+        }),
+    } as ApiClientConfig &
+      Required<
+        Pick<
+          ApiClientConfig,
+          'baseUrl' | 'timeout' | 'retryAttempts' | 'onUnauthorized' | 'onError'
+        >
+      >;
   }
 
   setAuthToken() {
@@ -65,7 +78,7 @@ export class ApiClient {
     if (!body) {
       return null;
     }
-    
+
     if (typeof body === 'string') {
       try {
         const parsed = JSON.parse(body);
@@ -75,12 +88,12 @@ export class ApiClient {
         return inputSanitizer.sanitizeText(body);
       }
     }
-    
+
     // For non-string bodies (FormData, Blob, etc.)
     if (body instanceof FormData || body instanceof Blob || body instanceof ArrayBuffer) {
       return body as BodyInit;
     }
-    
+
     // For objects, stringify them
     return JSON.stringify(body);
   }
@@ -96,7 +109,7 @@ export class ApiClient {
       'X-Requested-With': 'XMLHttpRequest',
       'Cache-Control': 'no-cache',
       Pragma: 'no-cache',
-      ...(options.headers as Record<string, string> || {}),
+      ...((options.headers as Record<string, string>) || {}),
     };
 
     const authToken = tokenManager.getAccessToken();
@@ -149,7 +162,7 @@ export class ApiClient {
       const retryResponse = await fetch(url, { ...requestOptions, headers });
 
       if (retryResponse.ok) {
-        return await retryResponse.json() as T;
+        return (await retryResponse.json()) as T;
       }
       throw new Error('Retry after refresh failed');
     } catch (_error) {
@@ -212,7 +225,7 @@ export class ApiClient {
           await this.handleErrorResponse(response);
         }
 
-        return await response.json() as T;
+        return (await response.json()) as T;
       } catch (error) {
         lastError = error as Error;
 

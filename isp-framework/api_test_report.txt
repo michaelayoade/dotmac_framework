@@ -1,0 +1,231 @@
+DotMac ISP Framework API Test Report - Sat Aug 23 08:29:19 CEST 2025
+=====================================================
+[0;34m[INFO][0m DotMac ISP Framework API Testing Script
+[0;34m[INFO][0m ========================================
+[0;32m[SUCCESS][0m Server is running at http://localhost:8000
+[0;34m[INFO][0m Attempting to get CSRF token...
+[1;33m[WARNING][0m Could not obtain CSRF token, proceeding without it
+[0;32m[SUCCESS][0m Session cookie obtained
+[0;34m[INFO][0m Setting up authentication...
+[0;34m[INFO][0m Creating test user in database...
+[0;34m[INFO][0m Attempting to login...
+[1;33m[WARNING][0m Login failed with status 500, proceeding with unauthenticated tests
+Login response: {"error":true,"message":"Internal server error","status_code":500,"error_code":"INTERNAL_ERROR","request_id":"071f8c05"}
+[0;34m[INFO][0m Starting comprehensive API testing...
+
+=== HEALTH AND STATUS ENDPOINTS ===
+[0;34m[INFO][0m Testing: GET http://localhost:8000/health - Health check
+[0;31m[ERROR][0m GET http://localhost:8000/health returned "}200, expected 200 (0.026433s)
+Response: {"status":"health
+
+[0;34m[INFO][0m Testing: GET http://localhost:8000/ - Root endpoint
+[0;31m[ERROR][0m GET http://localhost:8000/ returned "}200, expected 200 (0.025110s)
+Response: {"message":"DotMac ISP Framework API","version":"1.0.0","docs":"/docs","health":"/healt
+
+=== AUTHENTICATION ENDPOINTS ===
+[0;34m[INFO][0m Testing: POST http://localhost:8000/api/v1/identity/auth/login - User login (invalid credentials)
+[0;31m[ERROR][0m POST http://localhost:8000/api/v1/identity/auth/login returned "}500, expected 401 (0.021598s)
+Response: {"error":true,"message":"Internal server error","status_code":500,"error_code":"INTERNAL_ERROR","request_id":"20210c8
+
+[0;34m[INFO][0m Testing: POST http://localhost:8000/api/v1/identity/auth/logout - User logout
+[0;32m[SUCCESS][0m POST http://localhost:8000/api/v1/identity/auth/logout returned "}500 (0.022824s)
+Response: {"error":true,"message":"Internal server error","status_code":500,"error_code":"INTERNAL_ERROR","request_id":"e8a482b
+
+[0;34m[INFO][0m Testing: GET http://localhost:8000/api/v1/identity/me - Get current user profile
+[0;32m[SUCCESS][0m GET http://localhost:8000/api/v1/identity/me returned "}403 (0.045407s)
+Response: {"error":true,"message":"Not authenticated","status_code":403,"error_code":"HTTP_ERROR","request_id":"065920a
+
+=== IDENTITY MANAGEMENT ===
+[0;34m[INFO][0m Testing: GET http://localhost:8000/api/v1/identity/users - List users
+[0;32m[SUCCESS][0m GET http://localhost:8000/api/v1/identity/users returned "}403 (0.039625s)
+Response: {"error":true,"message":"Not authenticated","status_code":403,"error_code":"HTTP_ERROR","request_id":"5ef5671
+
+[0;34m[INFO][0m Testing: POST http://localhost:8000/api/v1/identity/users - Create user
+[0;32m[SUCCESS][0m POST http://localhost:8000/api/v1/identity/users returned "}500 (0.037140s)
+Response: {"error":true,"message":"Internal server error","status_code":500,"error_code":"INTERNAL_ERROR","request_id":"188f7d2
+
+=== BILLING ENDPOINTS ===
+[0;34m[INFO][0m Testing: GET http://localhost:8000/api/v1/billing/invoices - List invoices
+[0;32m[SUCCESS][0m GET http://localhost:8000/api/v1/billing/invoices returned "}404 (0.034465s)
+Response: {"error":true,"message":"Not Found","status_code":404,"error_code":"HTTP_ERROR","request_id":"133e2bd
+
+[0;34m[INFO][0m Testing: GET http://localhost:8000/api/v1/billing/payments - List payments
+[0;32m[SUCCESS][0m GET http://localhost:8000/api/v1/billing/payments returned "}404 (0.037004s)
+Response: {"error":true,"message":"Not Found","status_code":404,"error_code":"HTTP_ERROR","request_id":"7023561
+
+[0;34m[INFO][0m Testing: GET http://localhost:8000/api/v1/billing/health - Billing health check
+[0;32m[SUCCESS][0m GET http://localhost:8000/api/v1/billing/health returned "}404 (0.035855s)
+Response: {"error":true,"message":"Not Found","status_code":404,"error_code":"HTTP_ERROR","request_id":"f8bb536
+
+=== NETWORK MONITORING ===
+[0;34m[INFO][0m Testing: GET http://localhost:8000/api/v1/network-monitoring/devices - List monitoring devices
+[0;32m[SUCCESS][0m GET http://localhost:8000/api/v1/network-monitoring/devices returned "}404 (0.027814s)
+Response: {"error":true,"message":"Not Found","status_code":404,"error_code":"HTTP_ERROR","request_id":"a785168
+
+[0;34m[INFO][0m Testing: GET http://localhost:8000/api/v1/network-monitoring/profiles - List monitoring profiles
+[0;32m[SUCCESS][0m GET http://localhost:8000/api/v1/network-monitoring/profiles returned "}404 (0.037581s)
+Response: {"error":true,"message":"Not Found","status_code":404,"error_code":"HTTP_ERROR","request_id":"bd66f92
+
+[0;34m[INFO][0m Testing: GET http://localhost:8000/api/v1/network-monitoring/alerts - List network alerts
+[0;32m[SUCCESS][0m GET http://localhost:8000/api/v1/network-monitoring/alerts returned "}404 (0.043673s)
+Response: {"error":true,"message":"Not Found","status_code":404,"error_code":"HTTP_ERROR","request_id":"c9a2746
+
+[0;34m[INFO][0m Testing: GET http://localhost:8000/api/v1/network-monitoring/dashboard - Network monitoring dashboard
+[0;32m[SUCCESS][0m GET http://localhost:8000/api/v1/network-monitoring/dashboard returned "}404 (0.024942s)
+Response: {"error":true,"message":"Not Found","status_code":404,"error_code":"HTTP_ERROR","request_id":"25348c3
+
+=== INVENTORY MANAGEMENT ===
+[0;34m[INFO][0m Testing: GET http://localhost:8000/api/v1/inventory/equipment - List equipment
+[0;32m[SUCCESS][0m GET http://localhost:8000/api/v1/inventory/equipment returned "}404 (0.033436s)
+Response: {"error":true,"message":"Not Found","status_code":404,"error_code":"HTTP_ERROR","request_id":"482be9c
+
+[0;34m[INFO][0m Testing: GET http://localhost:8000/api/v1/inventory/equipment-types - List equipment types
+[0;32m[SUCCESS][0m GET http://localhost:8000/api/v1/inventory/equipment-types returned "}404 (0.051362s)
+Response: {"error":true,"message":"Not Found","status_code":404,"error_code":"HTTP_ERROR","request_id":"38a3c86
+
+[0;34m[INFO][0m Testing: GET http://localhost:8000/api/v1/inventory/warehouses - List warehouses
+[0;32m[SUCCESS][0m GET http://localhost:8000/api/v1/inventory/warehouses returned "}404 (0.045401s)
+Response: {"error":true,"message":"Not Found","status_code":404,"error_code":"HTTP_ERROR","request_id":"ba95619
+
+[0;34m[INFO][0m Testing: GET http://localhost:8000/api/v1/inventory/vendors - List vendors
+[0;32m[SUCCESS][0m GET http://localhost:8000/api/v1/inventory/vendors returned "}404 (0.046809s)
+Response: {"error":true,"message":"Not Found","status_code":404,"error_code":"HTTP_ERROR","request_id":"4b9a954
+
+[0;34m[INFO][0m Testing: GET http://localhost:8000/api/v1/inventory/health - Inventory health check
+[0;32m[SUCCESS][0m GET http://localhost:8000/api/v1/inventory/health returned "}404 (0.028230s)
+Response: {"error":true,"message":"Not Found","status_code":404,"error_code":"HTTP_ERROR","request_id":"54751be
+
+=== PROJECT MANAGEMENT ===
+[0;34m[INFO][0m Testing: GET http://localhost:8000/api/v1/projects/ - List projects
+[0;32m[SUCCESS][0m GET http://localhost:8000/api/v1/projects/ returned "}404 (0.032793s)
+Response: {"error":true,"message":"Not Found","status_code":404,"error_code":"HTTP_ERROR","request_id":"b9ca821
+
+[0;34m[INFO][0m Testing: GET http://localhost:8000/api/v1/projects/dashboard/stats - Project dashboard stats
+[0;32m[SUCCESS][0m GET http://localhost:8000/api/v1/projects/dashboard/stats returned "}404 (0.061585s)
+Response: {"error":true,"message":"Not Found","status_code":404,"error_code":"HTTP_ERROR","request_id":"b73374a
+
+=== ANALYTICS ENDPOINTS ===
+[0;34m[INFO][0m Testing: GET http://localhost:8000/api/v1/analytics/overview - Analytics overview
+[0;32m[SUCCESS][0m GET http://localhost:8000/api/v1/analytics/overview returned "}403 (0.065397s)
+Response: {"error":true,"message":"Not authenticated","status_code":403,"error_code":"HTTP_ERROR","request_id":"1259316
+
+[0;34m[INFO][0m Testing: GET http://localhost:8000/api/v1/analytics/dashboards - List dashboards
+[0;32m[SUCCESS][0m GET http://localhost:8000/api/v1/analytics/dashboards returned 3}200 (0.062719s)
+Response: {"dashboards":[{"id":"9cbb4def-a96f-4950-b0b5-5de0338c2e56","name":"Executive Overview","description":"High-level metrics for executive team","widget_count":8,"last_updated":"2025-08-23T06:29:29.186461","is_public":false},{"id":"e55ea67a-bbbf-41f1-8757-6567bb50a6ec","name":"Network Operations","description":"Real-time network monitoring and alerts","widget_count":12,"last_updated":"2025-08-23T08:14:29.186557","is_public":true},{"id":"0a6cd580-cb89-4ba1-a8c5-7ff8ee37d4a1","name":"Customer Analytics","description":"Customer behavior and satisfaction metrics","widget_count":6,"last_updated":"2025-08-23T07:29:29.186589","is_public":false}],"total"
+
+[0;34m[INFO][0m Testing: GET http://localhost:8000/api/v1/analytics/metrics - List metrics
+[0;32m[SUCCESS][0m GET http://localhost:8000/api/v1/analytics/metrics returned ]}200 (0.056003s)
+Response: {"metrics":[{"id":"3081f7c2-dd44-4436-99bd-e20af0906e85","name":"bandwidth_utilization","display_name":"Bandwidth Utilization","metric_type":"bandwidth","latest_value":85.5,"unit":"percentage","trend":"increasing","last_updated":"2025-08-23T08:29:29.387020"},{"id":"f68bd79f-aefd-4e2c-8a18-99c7f89440cb","name":"monthly_revenue","display_name":"Monthly Revenue","metric_type":"revenue","latest_value":45000.0,"unit":"USD","trend":"increasing","last_updated":"2025-08-23T08:29:29.387080"},{"id":"a6b9d2f8-3d05-4ce8-99af-c05b70f2a665","name":"customer_count","display_name":"Total Customers","metric_type":"customer_count","latest_value":1250,"unit":"count","trend":"stable","last_updated":"2025-08-23T08:29:29.387094"},{"id":"6473810e-a6a6-41a1-801c-709aaa871bae","name":"service_uptime","display_name":"Service Uptime","metric_type":"service_uptime","latest_value":99.8,"unit":"percentage","trend":"stable","last_updated":"2025-08-23T08:29:29.387119"}],"total":4,"metric_types":["bandwidth","revenue","customer_count","service_uptime","support_tickets","network_latency","data_usage
+
+[0;34m[INFO][0m Testing: GET http://localhost:8000/api/v1/analytics/reports - List reports
+[0;32m[SUCCESS][0m GET http://localhost:8000/api/v1/analytics/reports returned ]}200 (0.021773s)
+Response: {"reports":[{"id":"264aaa50-a9bc-486b-9484-4655aaa15dda","title":"Monthly Revenue Report","report_type":"monthly","generated_at":"2025-08-22T08:29:29.489322","period":"2024-08","status":"completed","size_mb":2.5},{"id":"7b07c50c-9489-44dc-b1d7-8649d0bf0c56","title":"Customer Growth Analysis","report_type":"quarterly","generated_at":"2025-08-16T08:29:29.489374","period":"Q3-2024","status":"completed","size_mb":5.2},{"id":"7cbeb198-d6e0-4026-9827-ba7b3438120c","title":"Network Performance Summary","report_type":"weekly","generated_at":"2025-08-22T20:29:29.489381","period":"Week 34","status":"completed","size_mb":1.8}],"total":3,"report_types":["daily","weekly","monthly","quarterly","yearly","custom
+
+=== SUPPORT ENDPOINTS ===
+[0;34m[INFO][0m Testing: GET http://localhost:8000/api/v1/support/tickets - List support tickets
+[0;32m[SUCCESS][0m GET http://localhost:8000/api/v1/support/tickets returned "}404 (0.048253s)
+Response: {"error":true,"message":"Not Found","status_code":404,"error_code":"HTTP_ERROR","request_id":"8e89434
+
+[0;34m[INFO][0m Testing: GET http://localhost:8000/api/v1/support/dashboard - Support dashboard
+[0;32m[SUCCESS][0m GET http://localhost:8000/api/v1/support/dashboard returned "}404 (0.090473s)
+Response: {"error":true,"message":"Not Found","status_code":404,"error_code":"HTTP_ERROR","request_id":"1e209c1
+
+=== OMNICHANNEL ENDPOINTS ===
+[0;34m[INFO][0m Testing: GET http://localhost:8000/api/v1/omnichannel/dashboard/stats - Omnichannel dashboard stats
+[0;32m[SUCCESS][0m GET http://localhost:8000/api/v1/omnichannel/dashboard/stats returned "}404 (0.065450s)
+Response: {"error":true,"message":"Not Found","status_code":404,"error_code":"HTTP_ERROR","request_id":"f6ea4a5
+
+[0;34m[INFO][0m Testing: GET http://localhost:8000/api/v1/omnichannel/agents/available - List available agents
+[0;32m[SUCCESS][0m GET http://localhost:8000/api/v1/omnichannel/agents/available returned "}404 (0.024344s)
+Response: {"error":true,"message":"Not Found","status_code":404,"error_code":"HTTP_ERROR","request_id":"cedb7bf
+
+[0;34m[INFO][0m Testing: GET http://localhost:8000/api/v1/omnichannel/health - Omnichannel health check
+[0;32m[SUCCESS][0m GET http://localhost:8000/api/v1/omnichannel/health returned "}404 (0.021917s)
+Response: {"error":true,"message":"Not Found","status_code":404,"error_code":"HTTP_ERROR","request_id":"bd5ea01
+
+=== SALES ENDPOINTS ===
+[0;34m[INFO][0m Testing: GET http://localhost:8000/api/v1/sales/opportunities - List sales opportunities
+[0;32m[SUCCESS][0m GET http://localhost:8000/api/v1/sales/opportunities returned "}404 (0.041675s)
+Response: {"error":true,"message":"Not Found","status_code":404,"error_code":"HTTP_ERROR","request_id":"1f641c5
+
+[0;34m[INFO][0m Testing: GET http://localhost:8000/api/v1/sales/dashboard - Sales dashboard
+[0;32m[SUCCESS][0m GET http://localhost:8000/api/v1/sales/dashboard returned "}404 (0.031729s)
+Response: {"error":true,"message":"Not Found","status_code":404,"error_code":"HTTP_ERROR","request_id":"b7b9ccf
+
+=== SERVICES ENDPOINTS ===
+[0;34m[INFO][0m Testing: GET http://localhost:8000/api/v1/services/catalog - Service catalog
+[0;32m[SUCCESS][0m GET http://localhost:8000/api/v1/services/catalog returned "}404 (0.042568s)
+Response: {"error":true,"message":"Not Found","status_code":404,"error_code":"HTTP_ERROR","request_id":"915ba59
+
+[0;34m[INFO][0m Testing: GET http://localhost:8000/api/v1/services/health - Services health check
+[0;32m[SUCCESS][0m GET http://localhost:8000/api/v1/services/health returned "}404 (0.029287s)
+Response: {"error":true,"message":"Not Found","status_code":404,"error_code":"HTTP_ERROR","request_id":"4f68498
+
+=== COMPLIANCE ENDPOINTS ===
+[0;34m[INFO][0m Testing: GET http://localhost:8000/api/v1/compliance/compliance/dashboard - Compliance dashboard
+[0;32m[SUCCESS][0m GET http://localhost:8000/api/v1/compliance/compliance/dashboard returned "}403 (0.064922s)
+Response: {"error":true,"message":"Not authenticated","status_code":403,"error_code":"HTTP_ERROR","request_id":"39bdab4
+
+[0;34m[INFO][0m Testing: GET http://localhost:8000/api/v1/compliance/compliance/assessments - List compliance assessments
+[0;32m[SUCCESS][0m GET http://localhost:8000/api/v1/compliance/compliance/assessments returned "}403 (0.045981s)
+Response: {"error":true,"message":"Not authenticated","status_code":403,"error_code":"HTTP_ERROR","request_id":"8b146f1
+
+=== NOTIFICATIONS ENDPOINTS ===
+[0;34m[INFO][0m Testing: GET http://localhost:8000/api/v1/notifications/templates - List notification templates
+[0;32m[SUCCESS][0m GET http://localhost:8000/api/v1/notifications/templates returned "}404 (0.053587s)
+Response: {"error":true,"message":"Not Found","status_code":404,"error_code":"HTTP_ERROR","request_id":"6fd64aa
+
+[0;34m[INFO][0m Testing: GET http://localhost:8000/api/v1/notifications/health - Notifications health check
+[0;32m[SUCCESS][0m GET http://localhost:8000/api/v1/notifications/health returned "}404 (0.049942s)
+Response: {"error":true,"message":"Not Found","status_code":404,"error_code":"HTTP_ERROR","request_id":"ce30ca7
+
+=== FIELD OPERATIONS ENDPOINTS ===
+[0;34m[INFO][0m Testing: GET http://localhost:8000/api/v1/field-ops/work-orders - List work orders
+[0;32m[SUCCESS][0m GET http://localhost:8000/api/v1/field-ops/work-orders returned "}404 (0.045007s)
+Response: {"error":true,"message":"Not Found","status_code":404,"error_code":"HTTP_ERROR","request_id":"84ae64e
+
+[0;34m[INFO][0m Testing: GET http://localhost:8000/api/v1/field-ops/dashboard - Field ops dashboard
+[0;32m[SUCCESS][0m GET http://localhost:8000/api/v1/field-ops/dashboard returned "}404 (0.055789s)
+Response: {"error":true,"message":"Not Found","status_code":404,"error_code":"HTTP_ERROR","request_id":"318d04a
+
+=== PORTAL MANAGEMENT ===
+[0;34m[INFO][0m Testing: GET http://localhost:8000/api/v1/portals/admin/dashboard - Admin portal dashboard
+[0;32m[SUCCESS][0m GET http://localhost:8000/api/v1/portals/admin/dashboard returned "}404 (0.046005s)
+Response: {"error":true,"message":"Not Found","status_code":404,"error_code":"HTTP_ERROR","request_id":"e586bf9
+
+[0;34m[INFO][0m Testing: GET http://localhost:8000/api/v1/portals/customer/dashboard - Customer portal dashboard
+[0;32m[SUCCESS][0m GET http://localhost:8000/api/v1/portals/customer/dashboard returned "}404 (0.051373s)
+Response: {"error":true,"message":"Not Found","status_code":404,"error_code":"HTTP_ERROR","request_id":"2a2bb57
+
+=== INTEGRATION ENDPOINTS ===
+[0;34m[INFO][0m Testing: GET http://localhost:8000/api/v1/integrations/ansible/health - Ansible integration health
+[0;32m[SUCCESS][0m GET http://localhost:8000/api/v1/integrations/ansible/health returned "}404 (0.072438s)
+Response: {"error":true,"message":"Not Found","status_code":404,"error_code":"HTTP_ERROR","request_id":"a18e0de
+
+=== INVALID ENDPOINTS (Expected 404) ===
+[0;34m[INFO][0m Testing: GET http://localhost:8000/api/v1/nonexistent/endpoint - Non-existent endpoint
+[0;31m[ERROR][0m GET http://localhost:8000/api/v1/nonexistent/endpoint returned "}404, expected 404 (0.032150s)
+Response: {"error":true,"message":"Not Found","status_code":404,"error_code":"HTTP_ERROR","request_id":"a4c5b22
+
+[0;34m[INFO][0m Testing: POST http://localhost:8000/invalid - Invalid endpoint
+[0;32m[SUCCESS][0m POST http://localhost:8000/invalid returned "}500 (0.019339s)
+Response: {"error":true,"message":"Internal server error","status_code":500,"error_code":"INTERNAL_ERROR","request_id":"16af260
+
+
+=====================================================
+TEST SUMMARY
+=====================================================
+Total Tests: 45
+Passed: 43
+Failed: 4
+Success Rate: 95%
+Timestamp: Sat Aug 23 08:29:32 CEST 2025
+[0;34m[INFO][0m ======================================================
+[0;34m[INFO][0m API Testing Complete!
+[0;34m[INFO][0m Total Tests: 45
+[0;32m[SUCCESS][0m Passed: 43
+[0;31m[ERROR][0m Failed: 4
+[0;34m[INFO][0m Success Rate: 97%
+[0;34m[INFO][0m ======================================================
+[0;34m[INFO][0m Detailed results saved to: api_test_results.json
+[0;34m[INFO][0m Human-readable report saved to: api_test_report.txt

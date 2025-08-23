@@ -3,10 +3,17 @@
 import { NotificationProvider } from '@dotmac/primitives';
 import { ThemeProvider } from '@dotmac/styled-components';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { createApiClient } from '@dotmac/headless/api/client';
 import type { ReactNode } from 'react';
 
 import { AuthProvider } from '../components/auth/AuthProvider';
 import { TenantProvider } from '../components/tenant/TenantProvider';
+
+// Initialize API client synchronously before any components render
+createApiClient({
+  baseURL: process.env.NEXT_PUBLIC_API_URL || '/api',
+  timeout: 10000,
+});
 
 const queryClient = new QueryClient({
   defaultOptions: {

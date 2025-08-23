@@ -1,307 +1,721 @@
-version: '3.8'
+# Docker Compose v2 - version field is obsolete
+
+# ==============================================================================
+# Consolidated Docker Compose Configuration for DotMac Platform
+# ==============================================================================
+# 
+# Usage:
+#   Development: docker compose up
+#   Production:  docker compose -f docker-compose.yml -f docker-compose.prod.yml up
+#   Monitoring:  docker compose --profile monitoring up
+#   Testing:     docker compose --profile test up
+#   Full Stack:  docker compose --profile all up
+#
+# Profiles:
+#   - core: Essential services (default, always runs)
+#   - monitoring: SignOz observability stack
+#   - legacy-monitoring: Prometheus/Grafana (deprecated)
+#   - test: Test runners and utilities
+#   - dev-tools: Development utilities
+#   - all: Everything
+# ==============================================================================
+
+# Shared configuration using extension fields
+x-common-backend: &common-backend
+  build:
+    context: .
+    dockerfile: backend/Dockerfile.production
+    args:
+      PYTHON_VERSION: "3.11"
+  restart: unless-stopped
+  networks:
+    - dotmac-network
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+  healthcheck:
+    interval: 30s
+    timeout: 10s
+    retries: 3
+    start_period: 40s
+
+x-common-env: &common-env
+  ENVIRONMENT: ${ENVIRONMENT:-development}
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+  DATABASE_URL: postgresql://${POSTGRES_USER:-dotmac}:${POSTGRES_PASSWORD:-dotmac123}@postgres:5432/${POSTGRES_DB:-dotmac}
+  REDIS_URL: redis://:${REDIS_PASSWORD:-}@redis:6379/0
+  SECRET_KEY: ${SECRET_KEY:-change-me-in-production}
+  JWT_SECRET_KEY: ${JWT_SECRET_KEY:-change-me-in-production}
+  CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:3001,http://localhost:3002}
+  # OpenBao integration
+  OPENBAO_ENABLED: ${OPENBAO_ENABLED:-false}
+  BAO_ADDR: ${BAO_ADDR:-http://openbao:8200}
+  # SignOz/OTEL configuration
+  OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://signoz-collector:4317}
+  OTEL_SERVICE_NAMESPACE: dotmac
+  OTEL_RESOURCE_ATTRIBUTES: "deployment.environment=${ENVIRONMENT:-development}"
+  OTEL_METRICS_EXPORTER: otlp
+  OTEL_TRACES_EXPORTER: otlp
+  OTEL_LOGS_EXPORTER: otlp
+
+x-common-healthcheck: &common-healthcheck
+  test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+  interval: 30s
+  timeout: 10s
+  retries: 3
+  start_period: 40s
+
+# Networks
+networks:
+  dotmac-network:
+    driver: bridge
+    name: dotmac-network
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16
+
+# Volumes
+volumes:
+  postgres-data:
+    name: dotmac-postgres-data
+  redis-data:
+    name: dotmac-redis-data
+  rabbitmq-data:
+    name: dotmac-rabbitmq-data
+  clickhouse-data:
+    name: dotmac-clickhouse-data
+  signoz-data:
+    name: dotmac-signoz-data
+  openbao-data:
+    name: dotmac-openbao-data
+  prometheus-data:
+    name: dotmac-prometheus-data
+  grafana-data:
+    name: dotmac-grafana-data
+  pgadmin-data:
+    name: dotmac-pgadmin-data
 
 services:
-  # Database Services (already running, we'll use external)
+  # ==============================================================================
+  # Core Infrastructure Services (Always Running)
+  # ==============================================================================
+  
   postgres:
-    image: postgres:16-alpine
+    image: postgres:15-alpine
     container_name: dotmac-postgres
     environment:
-      POSTGRES_USER: dotmac
-      POSTGRES_PASSWORD: dotmac123
-      POSTGRES_DB: dotmac
-    ports:
-      - "5432:5432"
+      POSTGRES_USER: ${POSTGRES_USER:-dotmac}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dotmac123}
+      POSTGRES_DB: ${POSTGRES_DB:-dotmac}
+      POSTGRES_MULTIPLE_DATABASES: "dotmac_identity,dotmac_billing,dotmac_services,dotmac_networking,dotmac_analytics,dotmac_core_ops,dotmac_core_events"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
+      - ./scripts/init-multiple-databases.sh:/docker-entrypoint-initdb.d/init-multiple-databases.sh:ro
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    networks:
+      - dotmac-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U dotmac"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-dotmac}"]
       interval: 10s
       timeout: 5s
       retries: 5
-    networks:
-      - dotmac-network
+    restart: unless-stopped
 
   redis:
     image: redis:7-alpine
     container_name: dotmac-redis
+    command: redis-server --appendonly yes ${REDIS_PASSWORD:+--requirepass ${REDIS_PASSWORD}}
+    volumes:
+      - redis-data:/data
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
+    networks:
+      - dotmac-network
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: dotmac-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-dotmac}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-rabbitmq123}
+      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST:-dotmac}
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MGMT_PORT:-15672}:15672"
+    networks:
+      - dotmac-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  # ==============================================================================
+  # Backend Services
+  # ==============================================================================
+
+  api-gateway:
+    <<: *common-backend
+    container_name: dotmac-api-gateway
+    build:
+      context: .
+      dockerfile: backend/Dockerfile.production
+      args:
+        PYTHON_VERSION: "3.11"
+        SERVICE_NAME: api_gateway
+        SERVICE_PORT: 8000
+    environment:
+      <<: *common-env
+      SERVICE_NAME: api_gateway
+      PORT: 8000
+      APP_MODULE: backend.dotmac_api_gateway.main:app
+      RATE_LIMIT_ENABLED: ${RATE_LIMIT_ENABLED:-true}
+      RATE_LIMIT_REQUESTS: ${RATE_LIMIT_REQUESTS:-100}
+      RATE_LIMIT_WINDOW: ${RATE_LIMIT_WINDOW:-60}
+    ports:
+      - "${API_GATEWAY_PORT:-8000}:8000"
+    depends_on:
+      - postgres
+      - redis
+    healthcheck:
+      <<: *common-healthcheck
+
+  identity:
+    <<: *common-backend
+    container_name: dotmac-identity
+    build:
+      context: .
+      dockerfile: backend/Dockerfile.production
+      args:
+        PYTHON_VERSION: "3.11"
+        SERVICE_NAME: identity
+        SERVICE_PORT: 8001
+    environment:
+      <<: *common-env
+      SERVICE_NAME: identity
+      PORT: 8001
+      APP_MODULE: backend.dotmac_identity.main:app
+      MFA_ENABLED: ${MFA_ENABLED:-true}
+      SESSION_TIMEOUT: ${SESSION_TIMEOUT:-3600}
+    ports:
+      - "${IDENTITY_PORT:-8001}:8001"
+    depends_on:
+      - postgres
+      - redis
+    healthcheck:
+      <<: *common-healthcheck
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+
+  billing:
+    <<: *common-backend
+    container_name: dotmac-billing
+    build:
+      context: .
+      dockerfile: backend/Dockerfile.production
+      args:
+        PYTHON_VERSION: "3.11"
+        SERVICE_NAME: billing
+        SERVICE_PORT: 8002
+    environment:
+      <<: *common-env
+      SERVICE_NAME: billing
+      PORT: 8002
+      APP_MODULE: backend.dotmac_billing.main:app
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-sk_test_placeholder}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-whsec_placeholder}
+    ports:
+      - "${BILLING_PORT:-8002}:8002"
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    healthcheck:
+      <<: *common-healthcheck
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+
+  services:
+    <<: *common-backend
+    container_name: dotmac-services
+    build:
+      context: .
+      dockerfile: backend/Dockerfile.production
+      args:
+        PYTHON_VERSION: "3.11"
+        SERVICE_NAME: services
+        SERVICE_PORT: 8003
+    environment:
+      <<: *common-env
+      SERVICE_NAME: services
+      PORT: 8003
+      APP_MODULE: backend.dotmac_services.main:app
+    ports:
+      - "${SERVICES_PORT:-8003}:8003"
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    healthcheck:
+      <<: *common-healthcheck
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+
+  networking:
+    <<: *common-backend
+    container_name: dotmac-networking
+    build:
+      context: .
+      dockerfile: backend/Dockerfile.production
+      args:
+        PYTHON_VERSION: "3.11"
+        SERVICE_NAME: networking
+        SERVICE_PORT: 8004
+    environment:
+      <<: *common-env
+      SERVICE_NAME: networking
+      PORT: 8004
+      APP_MODULE: backend.dotmac_networking.main:app
+      SNMP_ENABLED: ${SNMP_ENABLED:-true}
+    ports:
+      - "${NETWORKING_PORT:-8004}:8004"
+    depends_on:
+      - postgres
+      - redis
+    healthcheck:
+      <<: *common-healthcheck
+      test: ["CMD", "curl", "-f", "http://localhost:8004/health"]
+
+  analytics:
+    <<: *common-backend
+    container_name: dotmac-analytics
+    build:
+      context: .
+      dockerfile: backend/Dockerfile.production
+      args:
+        PYTHON_VERSION: "3.11"
+        SERVICE_NAME: analytics
+        SERVICE_PORT: 8005
+    environment:
+      <<: *common-env
+      SERVICE_NAME: analytics
+      PORT: 8005
+      APP_MODULE: backend.dotmac_analytics.main:app
+    ports:
+      - "${ANALYTICS_PORT:-8005}:8005"
+    depends_on:
+      - postgres
+      - redis
+    healthcheck:
+      <<: *common-healthcheck
+      test: ["CMD", "curl", "-f", "http://localhost:8005/health"]
+
+  core-ops:
+    <<: *common-backend
+    container_name: dotmac-core-ops
+    build:
+      context: .
+      dockerfile: backend/Dockerfile.production
+      args:
+        PYTHON_VERSION: "3.11"
+        SERVICE_NAME: core_ops
+        SERVICE_PORT: 8006
+    environment:
+      <<: *common-env
+      SERVICE_NAME: core_ops
+      PORT: 8006
+      APP_MODULE: backend.dotmac_core_ops.main:app
+    ports:
+      - "${CORE_OPS_PORT:-8006}:8006"
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    healthcheck:
+      <<: *common-healthcheck
+      test: ["CMD", "curl", "-f", "http://localhost:8006/health"]
+
+  core-events:
+    <<: *common-backend
+    container_name: dotmac-core-events
+    build:
+      context: .
+      dockerfile: backend/Dockerfile.production
+      args:
+        PYTHON_VERSION: "3.11"
+        SERVICE_NAME: core_events
+        SERVICE_PORT: 8007
+    environment:
+      <<: *common-env
+      SERVICE_NAME: core_events
+      PORT: 8007
+      APP_MODULE: backend.dotmac_core_events.main:app
+      KAFKA_ENABLED: ${KAFKA_ENABLED:-false}
+    ports:
+      - "${CORE_EVENTS_PORT:-8007}:8007"
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    healthcheck:
+      <<: *common-healthcheck
+      test: ["CMD", "curl", "-f", "http://localhost:8007/health"]
+
+  # ==============================================================================
+  # Frontend Services
+  # ==============================================================================
+
+  admin-portal:
+    image: node:20-alpine
+    container_name: dotmac-admin-portal
+    working_dir: /app
+    command: sh -c "npm install && npm run dev"
+    volumes:
+      - ./frontend/apps/admin:/app:delegated
+      - /app/node_modules
+      - /app/.next
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+      NEXT_PUBLIC_PORTAL_TYPE: admin
+    ports:
+      - "${ADMIN_PORTAL_PORT:-3000}:3000"
+    networks:
+      - dotmac-network
+    restart: unless-stopped
+
+  customer-portal:
+    image: node:20-alpine
+    container_name: dotmac-customer-portal
+    working_dir: /app
+    command: sh -c "npm install && npm run dev"
+    volumes:
+      - ./frontend/apps/customer:/app:delegated
+      - /app/node_modules
+      - /app/.next
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+      NEXT_PUBLIC_PORTAL_TYPE: customer
+    ports:
+      - "${CUSTOMER_PORTAL_PORT:-3001}:3000"
+    networks:
+      - dotmac-network
+    restart: unless-stopped
+
+  reseller-portal:
+    image: node:20-alpine
+    container_name: dotmac-reseller-portal
+    working_dir: /app
+    command: sh -c "npm install && npm run dev"
+    volumes:
+      - ./frontend/apps/reseller:/app:delegated
+      - /app/node_modules
+      - /app/.next
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+      NEXT_PUBLIC_PORTAL_TYPE: reseller
+    ports:
+      - "${RESELLER_PORTAL_PORT:-3002}:3000"
+    networks:
+      - dotmac-network
+    restart: unless-stopped
+
+  # ==============================================================================
+  # Monitoring Stack (SignOz) - Profile: monitoring
+  # ==============================================================================
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:23.8-alpine
+    profiles: ["monitoring", "all"]
+    container_name: dotmac-clickhouse
+    environment:
+      CLICKHOUSE_DB: signoz
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-signoz}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-signoz123}
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+      - ./signoz/clickhouse-config.xml:/etc/clickhouse-server/config.d/config.xml:ro
+    ports:
+      - "${CLICKHOUSE_PORT:-9000}:9000"
+      - "${CLICKHOUSE_HTTP_PORT:-8123}:8123"
+    networks:
+      - dotmac-network
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--query", "SELECT 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  signoz-collector:
+    image: signoz/signoz-otel-collector:0.88.11
+    profiles: ["monitoring", "all"]
+    container_name: dotmac-signoz-collector
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./signoz/otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
+    environment:
+      OTEL_RESOURCE_ATTRIBUTES: "service.name=signoz-collector"
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_PORT: 9000
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-signoz}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-signoz123}
+    ports:
+      - "${OTEL_GRPC_PORT:-4317}:4317"     # OTLP gRPC
+      - "${OTEL_HTTP_PORT:-4318}:4318"     # OTLP HTTP
+      - "${ZIPKIN_PORT:-9411}:9411"        # Zipkin
+      - "${JAEGER_PORT:-14268}:14268"      # Jaeger HTTP
+      - "${PROMETHEUS_PORT:-8889}:8889"    # Prometheus metrics
+    networks:
+      - dotmac-network
+    depends_on:
+      - clickhouse
+    restart: unless-stopped
+
+  signoz-query:
+    image: signoz/query-service:0.40.0
+    profiles: ["monitoring", "all"]
+    container_name: dotmac-signoz-query
+    environment:
+      ClickHouseUrl: tcp://clickhouse:9000
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-signoz}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-signoz123}
+      STORAGE: clickhouse
+      GODEBUG: netdns=go
+      TELEMETRY_ENABLED: false
+    ports:
+      - "${SIGNOZ_QUERY_PORT:-8080}:8080"
+    networks:
+      - dotmac-network
+    depends_on:
+      - clickhouse
+      - signoz-collector
+    restart: unless-stopped
+
+  signoz-frontend:
+    image: signoz/frontend:0.40.0
+    profiles: ["monitoring", "all"]
+    container_name: dotmac-signoz-frontend
+    environment:
+      QUERY_SERVICE_URL: http://signoz-query:8080
+    ports:
+      - "${SIGNOZ_UI_PORT:-3301}:3301"
+    networks:
+      - dotmac-network
+    depends_on:
+      - signoz-query
+    restart: unless-stopped
+
+  signoz-alertmanager:
+    image: signoz/alertmanager:0.23.4
+    profiles: ["monitoring", "all"]
+    container_name: dotmac-signoz-alertmanager
+    volumes:
+      - ./signoz/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    ports:
+      - "${ALERTMANAGER_PORT:-9093}:9093"
+    networks:
+      - dotmac-network
+    restart: unless-stopped
+
+  # ==============================================================================
+  # Security Services - Profile: security
+  # ==============================================================================
+
+  openbao:
+    image: quay.io/openbao/openbao:latest
+    profiles: ["security", "all"]
+    container_name: dotmac-openbao
+    cap_add:
+      - IPC_LOCK
+    environment:
+      BAO_DEV_ROOT_TOKEN_ID: ${OPENBAO_ROOT_TOKEN:-root-token-for-dev}
+      BAO_DEV_LISTEN_ADDRESS: "0.0.0.0:8200"
+      BAO_LOG_LEVEL: ${OPENBAO_LOG_LEVEL:-info}
+    ports:
+      - "${OPENBAO_PORT:-8200}:8200"
+    volumes:
+      - openbao-data:/openbao/file
+      - ./deployments/openbao/config:/openbao/config:ro
+      - ./deployments/openbao/policies:/openbao/policies:ro
+    command: server -dev -dev-no-store-token
+    networks:
+      - dotmac-network
+    healthcheck:
+      test: ["CMD", "bao", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # ==============================================================================
+  # Legacy Monitoring (Deprecated) - Profile: legacy-monitoring
+  # ==============================================================================
+
+  prometheus:
+    image: prom/prometheus:latest
+    profiles: ["legacy-monitoring"]
+    container_name: dotmac-prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "${PROMETHEUS_LEGACY_PORT:-9090}:9090"
+    networks:
+      - dotmac-network
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    profiles: ["legacy-monitoring"]
+    container_name: dotmac-grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin123}
+      GF_INSTALL_PLUGINS: grafana-clock-panel,grafana-simple-json-datasource
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./config/grafana/provisioning:/etc/grafana/provisioning:ro
+    ports:
+      - "${GRAFANA_PORT:-3003}:3000"
+    networks:
+      - dotmac-network
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+  # ==============================================================================
+  # Test Runners - Profile: test
+  # ==============================================================================
+
+  test-runner:
+    <<: *common-backend
+    profiles: ["test"]
+    container_name: dotmac-test-runner
+    build:
+      context: .
+      dockerfile: backend/Dockerfile.production
+      target: development
+    entrypoint: []
+    command: ["sh", "-c", "cd /app/backend && python -m pytest -v --cov=. --cov-report=html:/app/htmlcov --cov-report=term"]
+    volumes:
+      - ./backend:/app/backend:ro
+      - ./tests:/app/tests:ro
+      - ./htmlcov:/app/htmlcov
+    environment:
+      <<: *common-env
+      PYTHONPATH: "/app/backend"
+      TESTING: "true"
+      PYTEST_ARGS: ${PYTEST_ARGS:--v}
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
     networks:
       - dotmac-network
 
+  integration-test-runner:
+    <<: *common-backend
+    profiles: ["test"]
+    container_name: dotmac-integration-test-runner
+    build:
+      context: .
+      dockerfile: backend/Dockerfile.production
+      target: development
+    entrypoint: []
+    command: ["sh", "-c", "cd /app/backend && python -m pytest -v -m integration"]
+    volumes:
+      - ./backend:/app/backend:ro
+      - ./tests:/app/tests:ro
+    environment:
+      <<: *common-env
+      PYTHONPATH: "/app/backend"
+      TESTING: "true"
+      TEST_TYPE: "integration"
+    depends_on:
+      - api-gateway
+      - identity
+      - billing
+      - services
+    networks:
+      - dotmac-network
+
+  # ==============================================================================
+  # Development Tools - Profile: dev-tools
+  # ==============================================================================
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    profiles: ["dev-tools", "all"]
+    container_name: dotmac-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@dotmac.local}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin123}
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    networks:
+      - dotmac-network
+    restart: unless-stopped
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    profiles: ["dev-tools", "all"]
+    container_name: dotmac-redis-commander
+    environment:
+      REDIS_HOSTS: "local:redis:6379:0:${REDIS_PASSWORD:-}"
+    ports:
+      - "${REDIS_COMMANDER_PORT:-8081}:8081"
+    networks:
+      - dotmac-network
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    profiles: ["dev-tools", "all"]
+    container_name: dotmac-mailhog
+    ports:
+      - "${MAILHOG_SMTP_PORT:-1025}:1025"
+      - "${MAILHOG_UI_PORT:-8025}:8025"
+    networks:
+      - dotmac-network
+    restart: unless-stopped
+
+  # ==============================================================================
+  # ISP-Specific Services - Profile: isp
+  # ==============================================================================
+
   freeradius:
     image: freeradius/freeradius-server:latest
+    profiles: ["isp", "all"]
     container_name: dotmac-freeradius
     ports:
       - "1812:1812/udp"
       - "1813:1813/udp"
     volumes:
-      - ./config/freeradius:/etc/freeradius
+      - ./config/freeradius:/etc/freeradius:ro
     networks:
       - dotmac-network
-
-  # API Gateway
-  api-gateway:
-    build:
-      context: .
-      dockerfile: Dockerfile.gateway
-    container_name: dotmac-api-gateway
-    ports:
-      - "8000:8000"
-    environment:
-      DATABASE_URL: postgresql://dotmac:dotmac123@postgres:5432/dotmac
-      REDIS_URL: redis://redis:6379
-      SECRET_KEY: ${SECRET_KEY:-development-secret-key}
-      DEBUG: "true"
-      TENANT_ID: default
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    networks:
-      - dotmac-network
-
-  # Identity Service
-  identity:
-    build:
-      context: .
-      dockerfile: Dockerfile.identity
-    container_name: dotmac-identity
-    ports:
-      - "8001:8001"
-    environment:
-      DATABASE_URL: postgresql://dotmac:dotmac123@postgres:5432/dotmac
-      REDIS_URL: redis://redis:6379
-      SECRET_KEY: ${SECRET_KEY:-development-secret-key}
-      DEBUG: "true"
-      TENANT_ID: default
-      SERVICE_NAME: identity
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    networks:
-      - dotmac-network
-
-  # Billing Service
-  billing:
-    build:
-      context: .
-      dockerfile: Dockerfile.billing
-    container_name: dotmac-billing
-    ports:
-      - "8002:8002"
-    environment:
-      DATABASE_URL: postgresql://dotmac:dotmac123@postgres:5432/dotmac
-      REDIS_URL: redis://redis:6379
-      SECRET_KEY: ${SECRET_KEY:-development-secret-key}
-      DEBUG: "true"
-      TENANT_ID: default
-      SERVICE_NAME: billing
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    networks:
-      - dotmac-network
-
-  # Services Platform
-  services:
-    build:
-      context: .
-      dockerfile: Dockerfile.services
-    container_name: dotmac-services
-    ports:
-      - "8003:8003"
-    environment:
-      DATABASE_URL: postgresql://dotmac:dotmac123@postgres:5432/dotmac
-      REDIS_URL: redis://redis:6379
-      SECRET_KEY: ${SECRET_KEY:-development-secret-key}
-      DEBUG: "true"
-      TENANT_ID: default
-      SERVICE_NAME: services
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    networks:
-      - dotmac-network
-
-  # Networking Service
-  networking:
-    build:
-      context: .
-      dockerfile: Dockerfile.networking
-    container_name: dotmac-networking
-    ports:
-      - "8004:8004"
-    environment:
-      DATABASE_URL: postgresql://dotmac:dotmac123@postgres:5432/dotmac
-      REDIS_URL: redis://redis:6379
-      SECRET_KEY: ${SECRET_KEY:-development-secret-key}
-      DEBUG: "true"
-      TENANT_ID: default
-      SERVICE_NAME: networking
-      VOLTHA_ENABLED: "false"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8004/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    networks:
-      - dotmac-network
-
-  # Analytics Service
-  analytics:
-    build:
-      context: .
-      dockerfile: Dockerfile.analytics
-    container_name: dotmac-analytics
-    ports:
-      - "8005:8005"
-    environment:
-      DATABASE_URL: postgresql://dotmac:dotmac123@postgres:5432/dotmac
-      REDIS_URL: redis://redis:6379
-      SECRET_KEY: ${SECRET_KEY:-development-secret-key}
-      DEBUG: "true"
-      TENANT_ID: default
-      SERVICE_NAME: analytics
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8005/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    networks:
-      - dotmac-network
-
-  # Platform Service
-  platform:
-    build:
-      context: .
-      dockerfile: Dockerfile.platform
-    container_name: dotmac-platform
-    ports:
-      - "8006:8006"
-    environment:
-      DATABASE_URL: postgresql://dotmac:dotmac123@postgres:5432/dotmac
-      REDIS_URL: redis://redis:6379
-      SECRET_KEY: ${SECRET_KEY:-development-secret-key}
-      DEBUG: "true"
-      TENANT_ID: default
-      SERVICE_NAME: platform
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8006/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    networks:
-      - dotmac-network
-
-  # Core Events Service
-  core-events:
-    build:
-      context: .
-      dockerfile: Dockerfile.core-events
-    container_name: dotmac-core-events
-    ports:
-      - "8007:8007"
-    environment:
-      DATABASE_URL: postgresql://dotmac:dotmac123@postgres:5432/dotmac
-      REDIS_URL: redis://redis:6379
-      SECRET_KEY: ${SECRET_KEY:-development-secret-key}
-      DEBUG: "true"
-      TENANT_ID: default
-      SERVICE_NAME: core-events
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8007/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    networks:
-      - dotmac-network
-
-  # Core Operations Service
-  core-ops:
-    build:
-      context: .
-      dockerfile: Dockerfile.core-ops
-    container_name: dotmac-core-ops
-    ports:
-      - "8008:8008"
-    environment:
-      DATABASE_URL: postgresql://dotmac:dotmac123@postgres:5432/dotmac
-      REDIS_URL: redis://redis:6379
-      SECRET_KEY: ${SECRET_KEY:-development-secret-key}
-      DEBUG: "true"
-      TENANT_ID: default
-      SERVICE_NAME: core-ops
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8008/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    networks:
-      - dotmac-network
-
-networks:
-  dotmac-network:
-    driver: bridge
-    name: dotmac-network
-
-volumes:
-  postgres_data:
-    name: dotmac-postgres-data
+    restart: unless-stopped

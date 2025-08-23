@@ -1,9 +1,6 @@
 'use client';
 
-import {
-  EnhancedTabNavigation,
-  MobileNavigation,
-} from '@dotmac/primitives/navigation/MobileNavigation';
+import { EnhancedTabNavigation, MobileNavigation } from '@dotmac/primitives';
 import {
   CreditCard,
   FileText,

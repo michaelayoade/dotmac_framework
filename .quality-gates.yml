@@ -1,0 +1,324 @@
+# Quality Gates Configuration for DotMac Framework
+# Defines thresholds and requirements that must be met for code quality
+
+version: "1.0"
+
+# Coverage Requirements
+coverage:
+  minimum_total: 80          # Minimum overall test coverage percentage
+  minimum_unit: 85           # Minimum unit test coverage percentage  
+  minimum_integration: 75    # Minimum integration test coverage percentage
+  minimum_branch: 70         # Minimum branch coverage percentage
+  fail_under: 80            # Fail build if coverage drops below this
+  
+  # Coverage thresholds per service
+  services:
+    dotmac_core_events: 85
+    dotmac_core_ops: 85
+    dotmac_identity: 80
+    dotmac_billing: 80
+    dotmac_services: 75
+    dotmac_networking: 75
+    dotmac_analytics: 75
+    dotmac_api_gateway: 80
+    dotmac_platform: 85
+    dotmac_devtools: 70
+  
+  # Files that can have lower coverage
+  exclusions:
+    - "*/migrations/*"
+    - "*/alembic/versions/*"
+    - "*/tests/*"
+    - "*/conftest.py"
+    - "*/__main__.py"
+    - "*/cli/*"
+
+# Code Quality Requirements  
+code_quality:
+  # Linting (Ruff)
+  ruff:
+    max_violations: 0         # No linting violations allowed
+    allowed_rules_ignore: []  # No rules should be globally ignored
+    
+  # Complexity Limits (STRICTLY ENFORCED)
+  complexity:
+    max_function_complexity: 10    # McCabe complexity limit
+    max_function_arguments: 8      # Maximum arguments per function
+    max_function_statements: 50    # Maximum statements per function
+    max_function_lines: 100        # Maximum lines per function
+    max_class_methods: 20          # Maximum methods per class
+    
+  # Code formatting
+  formatting:
+    line_length: 88
+    enforce_black: true
+    enforce_isort: true
+  
+  # Type checking
+  mypy:
+    strict_mode: true
+    allow_gradual_adoption: true
+    max_errors: 50            # During gradual adoption phase
+
+# Security Requirements
+security:
+  # Bandit security scanning
+  bandit:
+    severity_threshold: "medium"  # Fail on medium+ severity issues
+    confidence_threshold: "medium"
+    max_issues: 0                 # No security issues allowed
+    
+  # Dependency vulnerabilities
+  safety:
+    max_vulnerabilities: 0        # No known vulnerabilities allowed
+    ignore_ids: []               # CVE IDs to ignore (emergency only)
+    
+  # Additional security checks
+  pip_audit:
+    max_vulnerabilities: 0
+    ignore_ids: []
+
+# Performance Requirements
+performance:
+  # Response time thresholds (milliseconds)
+  api_response_times:
+    health_check: 100            # Health endpoints
+    list_endpoints: 500          # List/search endpoints  
+    detail_endpoints: 200        # Single record endpoints
+    create_endpoints: 1000       # Create operations
+    update_endpoints: 800        # Update operations
+    delete_endpoints: 300        # Delete operations
+  
+  # Load testing requirements
+  load_testing:
+    min_requests_per_second: 100
+    max_error_rate: 5.0          # Percentage
+    max_95th_percentile: 2000    # 95th percentile response time
+    
+  # Memory usage limits
+  memory:
+    max_memory_increase: 50      # MB during test execution
+    max_memory_per_request: 10   # MB per request
+
+# Test Requirements
+testing:
+  # Test execution requirements
+  execution:
+    max_test_duration: 300       # Maximum seconds for full test suite
+    max_single_test_duration: 30 # Maximum seconds for single test
+    min_parallel_workers: 2      # Minimum parallel test workers
+    
+  # Test coverage by type
+  test_distribution:
+    unit_tests_min: 70           # Minimum % of tests should be unit tests
+    integration_tests_min: 20    # Minimum % should be integration tests
+    e2e_tests_max: 10           # Maximum % should be e2e tests
+    
+  # Test quality requirements  
+  quality:
+    max_test_flakiness: 2        # Max % of flaky tests allowed
+    min_test_isolation: 95       # % of tests that must be isolated
+    max_test_dependencies: 5     # Max external dependencies per test
+
+# Database Requirements
+database:
+  # Migration requirements
+  migrations:
+    require_backward_compatible: true
+    max_migration_time: 60       # Seconds
+    require_rollback_script: true
+    
+  # Query performance
+  queries:
+    max_query_time: 1000         # Milliseconds
+    max_n_plus_one_queries: 0    # No N+1 query patterns allowed
+    
+  # Data integrity
+  integrity:
+    require_foreign_keys: true
+    require_indexes: true
+    max_table_scan_queries: 0
+
+# API Requirements
+api:
+  # OpenAPI specification
+  openapi:
+    require_spec: true
+    require_examples: true  
+    require_descriptions: true
+    
+  # Response requirements
+  responses:
+    require_consistent_format: true
+    require_error_schemas: true
+    max_response_size: 10        # MB
+    
+  # Versioning requirements
+  versioning:
+    require_version_in_url: true
+    maintain_backward_compatibility: true
+
+# Documentation Requirements
+documentation:
+  # Code documentation
+  code:
+    min_docstring_coverage: 80   # % of functions with docstrings
+    require_module_docstrings: true
+    require_class_docstrings: true
+    
+  # API documentation  
+  api:
+    require_endpoint_docs: true
+    require_schema_docs: true
+    require_example_requests: true
+    
+  # Architecture documentation
+  architecture:
+    require_readme: true
+    require_architecture_docs: true
+    require_deployment_docs: true
+
+# Dependency Management
+dependencies:
+  # Dependency requirements
+  management:
+    require_lockfile: true
+    require_vulnerability_scan: true
+    max_outdated_dependencies: 10
+    
+  # License compliance
+  licenses:
+    allowed_licenses:
+      - "MIT"
+      - "BSD-3-Clause"
+      - "Apache-2.0"
+      - "ISC"
+      - "MPL-2.0"
+    forbidden_licenses:
+      - "GPL-3.0"
+      - "AGPL-3.0"
+      - "CPAL"
+    
+  # Dependency freshness
+  freshness:
+    max_age_critical: 180        # Days for critical dependencies
+    max_age_normal: 365          # Days for normal dependencies
+
+# Git Requirements
+git:
+  # Commit requirements
+  commits:
+    require_conventional_commits: true
+    max_commit_size: 1000        # Lines changed per commit
+    require_signed_commits: false # Set to true for production
+    
+  # Branch protection
+  branches:
+    require_pr_reviews: 2
+    require_status_checks: true
+    require_up_to_date: true
+    restrict_force_push: true
+
+# Monitoring and Alerting
+monitoring:
+  # Metrics requirements
+  metrics:
+    require_health_endpoints: true
+    require_metrics_endpoint: true
+    require_custom_metrics: true
+    
+  # Logging requirements
+  logging:
+    require_structured_logging: true
+    require_log_levels: true
+    max_log_size: 100            # MB per log file
+    
+  # Alerting thresholds
+  alerts:
+    error_rate_threshold: 5      # % error rate
+    response_time_threshold: 2000 # milliseconds
+    availability_threshold: 99.9  # % uptime
+
+# Environment-specific overrides
+environments:
+  development:
+    coverage:
+      minimum_total: 70          # Relaxed for development
+    performance:
+      load_testing:
+        min_requests_per_second: 10
+    
+  staging:
+    coverage:
+      minimum_total: 80
+    performance:
+      load_testing:
+        min_requests_per_second: 50
+        
+  production:
+    security:
+      bandit:
+        max_issues: 0
+      safety:
+        max_vulnerabilities: 0
+    performance:
+      load_testing:
+        min_requests_per_second: 200
+        max_error_rate: 1.0
+
+# Exemptions (use sparingly)
+exemptions:
+  # Temporary exemptions with expiry dates
+  temporary:
+    - rule: "complexity.max_function_complexity"
+      files: ["legacy_module.py"]
+      expiry: "2024-12-31"
+      reason: "Legacy code, scheduled for refactoring"
+      
+  # Permanent exemptions (requires approval)
+  permanent:
+    - rule: "coverage.minimum_total"
+      files: ["*/cli/*"]
+      reason: "CLI scripts, difficult to test"
+      approved_by: "tech-lead"
+
+# Quality Gate Enforcement Levels
+enforcement:
+  # Blocking (must pass)
+  blocking:
+    - "coverage.minimum_total"
+    - "code_quality.complexity"
+    - "security.bandit"
+    - "testing.execution"
+    
+  # Warning (can proceed with warning)
+  warning:
+    - "documentation.code"
+    - "dependencies.freshness"
+    - "performance.memory"
+    
+  # Advisory (informational only)  
+  advisory:
+    - "git.commits"
+    - "monitoring.metrics"
+
+# Reporting Configuration
+reporting:
+  # Report formats
+  formats:
+    - "json"
+    - "junit-xml" 
+    - "html"
+    - "console"
+    
+  # Report destinations
+  destinations:
+    - "file://./quality-reports/"
+    - "console"
+    
+  # Trend tracking
+  trends:
+    track_coverage: true
+    track_complexity: true
+    track_performance: true
+    retention_days: 90

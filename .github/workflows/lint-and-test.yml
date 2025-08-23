@@ -53,50 +53,16 @@ jobs:
           ruff check . --select C901,PLR0913,PLR0915 --output-format=text || true
 
   # =============================================================================
-  # TESTING JOB - Runs tests for all packages
+  # TESTING JOB - Optimized with new test profiles and Docker
   # =============================================================================
   test:
-    name: Test Code
+    name: Test Code  
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
-        package: [
-          "dotmac_core_events",
-          "dotmac_core_ops", 
-          "dotmac_identity",
-          "dotmac_billing",
-          "dotmac_services",
-          "dotmac_networking",
-          "dotmac_analytics",
-          "dotmac_api_gateway",
-          "dotmac_platform",
-          "dotmac_devtools"
-        ]
-
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: test_db
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
-      redis:
-        image: redis:7
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 6379:6379
+        test-type: [unit, integration, security]
+        python-version: ["3.11"]
+      fail-fast: false
 
     steps:
       - name: Checkout code
@@ -108,27 +74,152 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
 
-      - name: Install dependencies
-        working-directory: ${{ matrix.package }}
+      - name: Install test dependencies
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          if [ -f pyproject.toml ]; then pip install -e ".[dev]"; fi
+          pip install pytest pytest-cov pytest-asyncio pytest-timeout
+          pip install safety bandit mutmut
 
-      - name: Run tests
-        working-directory: ${{ matrix.package }}
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
-          REDIS_URL: redis://localhost:6379/0
-          PYTHONPATH: .
+      - name: Run unit tests (fast)
+        if: matrix.test-type == 'unit'
         run: |
-          pytest -v --cov --cov-report=xml --cov-report=term
+          echo "🚀 Running unit tests..."
+          ./scripts/test/backend.sh unit --fast --no-cov
+        env:
+          TEST_ENV: ci
+          PYTHONPATH: .
 
-      - name: Upload coverage to Codecov
-        if: matrix.python-version == '3.11'
+      - name: Run integration tests with optimized containers
+        if: matrix.test-type == 'integration'
+        run: |
+          echo "🔧 Running integration tests..."
+          ./scripts/test/backend.sh integration --docker
+        env:
+          TEST_ENV: docker
+          DOTMAC_TEST_MODE: true
+
+      - name: Run security tests
+        if: matrix.test-type == 'security'
+        run: |
+          echo "🛡️ Running security tests..."
+          ./scripts/test/backend.sh security
+          python ./scripts/test/security_tests.py
+        env:
+          TEST_ENV: ci
+
+      - name: Upload coverage reports
+        if: matrix.test-type == 'integration'
         uses: codecov/codecov-action@v3
         with:
-          file: ${{ matrix.package }}/coverage.xml
+          files: ./coverage.xml
+          flags: backend-integration
+          name: backend-integration-coverage
+
+  # =============================================================================
+  # MUTATION TESTING JOB - Advanced test quality validation  
+  # =============================================================================
+  mutation-testing:
+    name: Mutation Testing
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'mutation-test')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install mutmut pytest pytest-cov
+
+      - name: Run mutation testing
+        run: |
+          echo "🧬 Running mutation testing (this may take 30+ minutes)..."
+          ./scripts/test/backend.sh mutation --mutation
+        env:
+          TEST_ENV: ci
+          MUTATION_TIMEOUT: 3600
+
+      - name: Upload mutation results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: mutation-test-results
+          path: mutation-results-*.xml
+
+  # =============================================================================
+  # PACKAGE-SPECIFIC TESTING - Legacy matrix for specific needs
+  # =============================================================================
+  package-tests:
+    name: Package Tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'package-specific')
+    strategy:
+      matrix:
+        package: [
+          "dotmac_core_events",
+          "dotmac_identity",
+          "dotmac_billing"
+        ]
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: dotmac_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+          --tmpfs /var/lib/postgresql/data:rw,noexec,nosuid,size=512m
+        ports:
+          - 5433:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 3
+          --tmpfs /data:rw,noexec,nosuid,size=256m
+        ports:
+          - 6380:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+          cache: 'pip'
+
+      - name: Install package dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev]
+
+      - name: Run package-specific tests
+        run: |
+          ./scripts/test/backend.sh all --services=${{ matrix.package }}
+        env:
+          DOTMAC_DATABASE_URL: postgresql://test:test@localhost:5433/dotmac_test
+          DOTMAC_REDIS_URL: redis://localhost:6380/0
+          TEST_ENV: ci
+
+      - name: Upload package coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage.xml
           flags: ${{ matrix.package }}
           name: ${{ matrix.package }}-coverage
 

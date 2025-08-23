@@ -59,7 +59,6 @@ const SidebarItemComposers = {
       )}
       aria-current={props.isActive ? 'page' : undefined}
       aria-expanded={props.hasChildren ? props.isExpanded : undefined}
-      type='button'
     />
   ),
 
@@ -144,7 +143,6 @@ function SidebarItem(props: SidebarItemProps) {
         )}
         aria-current={props.isActive ? 'page' : undefined}
         aria-expanded={props.hasChildren ? props.isExpanded : undefined}
-        type='button'
       >
         {buttonContent(_props)}
       </button>
@@ -294,7 +292,8 @@ export function ResponsiveSidebar({
         () => (
           <div
             className='fixed inset-0 z-40 bg-black bg-opacity-50 md:hidden'
-            onClick={() => setIsMobileOpen(false)} role="button"
+            onClick={() => setIsMobileOpen(false)}
+            role='button'
             aria-hidden='true'
           />
         )

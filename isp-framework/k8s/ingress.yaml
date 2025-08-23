@@ -1,0 +1,219 @@
+# Ingress configuration for DotMac ISP Framework
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dotmac-isp-framework-ingress
+  namespace: dotmac-isp-framework
+  labels:
+    app.kubernetes.io/name: dotmac-isp-framework
+    app.kubernetes.io/component: ingress
+  annotations:
+    # NGINX Ingress Controller annotations
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    
+    # Rate limiting
+    nginx.ingress.kubernetes.io/rate-limit-per-second: "10"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    
+    # SSL and security
+    nginx.ingress.kubernetes.io/ssl-protocols: "TLSv1.2 TLSv1.3"
+    nginx.ingress.kubernetes.io/ssl-ciphers: "ECDHE-ECDSA-AES256-GCM-SHA384,ECDHE-RSA-AES256-GCM-SHA384"
+    
+    # CORS settings
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization,X-Tenant-ID"
+    
+    # Load balancer settings
+    nginx.ingress.kubernetes.io/upstream-load-balancing: "round_robin"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "30"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    
+    # Request size limits
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    
+    # Health check configuration
+    nginx.ingress.kubernetes.io/health-check-path: "/health"
+    nginx.ingress.kubernetes.io/health-check-interval: "30s"
+    
+    # Certificate management (cert-manager)
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    acme.cert-manager.io/http01-edit-in-place: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - api.dotmac.app
+    - "*.dotmac.app"
+    secretName: dotmac-tls-certificate
+  rules:
+  - host: api.dotmac.app
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: dotmac-isp-framework
+            port:
+              number: 80
+      - path: /health
+        pathType: Exact
+        backend:
+          service:
+            name: dotmac-isp-framework
+            port:
+              number: 80
+      - path: /metrics
+        pathType: Exact
+        backend:
+          service:
+            name: dotmac-isp-framework
+            port:
+              number: 9090
+
+---
+# Template for tenant-specific ingress
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dotmac-tenant-ingress-template
+  namespace: dotmac-tenants
+  labels:
+    app.kubernetes.io/name: dotmac-tenant
+    app.kubernetes.io/component: ingress
+    dotmac.io/tenant-template: "true"
+  annotations:
+    # This template will be processed by Management Platform
+    dotmac.io/template-version: "1.0"
+    
+    # NGINX configuration for tenant isolation
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    
+    # Tenant-specific rate limiting (configured per tenant)
+    nginx.ingress.kubernetes.io/rate-limit-per-second: "{{TENANT_RATE_LIMIT}}"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    
+    # SSL configuration
+    nginx.ingress.kubernetes.io/ssl-protocols: "TLSv1.2 TLSv1.3"
+    
+    # Custom tenant headers
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_set_headers "X-Tenant-ID: {{TENANT_ID}}";
+      more_set_headers "X-Tenant-Plan: {{TENANT_PLAN}}";
+      
+      # Block requests without proper tenant identification
+      if ($http_host !~* "{{TENANT_DOMAIN}}") {
+        return 403;
+      }
+    
+    # Tenant-specific CORS (if enabled)
+    nginx.ingress.kubernetes.io/enable-cors: "{{CORS_ENABLED}}"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "{{CORS_ORIGINS}}"
+    
+    # Request limits based on tenant plan
+    nginx.ingress.kubernetes.io/proxy-body-size: "{{MAX_REQUEST_SIZE}}"
+    
+    # Certificate management
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - "{{TENANT_DOMAIN}}"
+    secretName: "dotmac-tenant-{{TENANT_ID}}-tls"
+  rules:
+  - host: "{{TENANT_DOMAIN}}"
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: "dotmac-tenant-{{TENANT_ID}}"
+            port:
+              number: 80
+      - path: /health
+        pathType: Exact
+        backend:
+          service:
+            name: "dotmac-tenant-{{TENANT_ID}}"
+            port:
+              number: 80
+
+---
+# NetworkPolicy for tenant isolation
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: dotmac-tenant-isolation
+  namespace: dotmac-tenants
+  labels:
+    app.kubernetes.io/name: dotmac-tenant
+    app.kubernetes.io/component: network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: dotmac-tenant
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow ingress from NGINX ingress controller
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 8000
+  # Allow ingress from monitoring namespace
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    ports:
+    - protocol: TCP
+      port: 8000
+    - protocol: TCP
+      port: 9090
+  egress:
+  # Allow egress to database
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: database
+    ports:
+    - protocol: TCP
+      port: 5432
+  # Allow egress to Redis
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: redis
+    ports:
+    - protocol: TCP
+      port: 6379
+  # Allow egress to external services (HTTPS)
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 443
+    - protocol: TCP
+      port: 80
+  # Allow DNS resolution
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53

@@ -80,7 +80,8 @@ export const validationRules = {
   },
 
   numeric: {
-    validate: (value: unknown) => typeof value === 'string' && !Number.isNaN(Number(value)) && !Number.isNaN(parseFloat(value)),
+    validate: (value: unknown) =>
+      typeof value === 'string' && !Number.isNaN(Number(value)) && !Number.isNaN(parseFloat(value)),
     message: 'Must be a valid number',
   },
 

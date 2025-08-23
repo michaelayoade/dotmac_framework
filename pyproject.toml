@@ -200,48 +200,133 @@ module = [
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
-minversion = "7.0"
+minversion = "8.0"
 addopts = [
+    # Test discovery and execution
     "--strict-markers",
     "--strict-config", 
+    "--tb=short",
+    "-ra",  # Show extra test summary info
+    "--durations=10",  # Show 10 slowest tests
+    
+    # Coverage configuration
+    "--cov=backend/dotmac_core_events",
+    "--cov=backend/dotmac_core_ops", 
+    "--cov=backend/dotmac_identity",
+    "--cov=backend/dotmac_billing",
+    "--cov=backend/dotmac_services",
+    "--cov=backend/dotmac_networking",
+    "--cov=backend/dotmac_analytics",
+    "--cov=backend/dotmac_api_gateway",
+    "--cov=backend/dotmac_platform",
+    "--cov=backend/dotmac_devtools",
+    "--cov=dotmac_isp_framework/src",
+    
+    # Coverage reporting
+    "--cov-report=term-missing:skip-covered",
+    "--cov-report=html:htmlcov",
+    "--cov-report=xml:coverage.xml",
+    "--cov-report=json:coverage.json",
+    "--cov-fail-under=80",
+    "--cov-branch",  # Enable branch coverage
+    
+    # Output control
     "--disable-warnings",
     "--tb=short",
-    "-ra",
-    "--cov=dotmac_core_events",
-    "--cov=dotmac_core_ops", 
-    "--cov=dotmac_identity",
-    "--cov=dotmac_billing",
-    "--cov=dotmac_services",
-    "--cov=dotmac_networking",
-    "--cov=dotmac_analytics",
-    "--cov=dotmac_api_gateway",
-    "--cov=dotmac_platform",
-    "--cov=dotmac_devtools",
-    "--cov-report=term-missing",
-    "--cov-report=html:htmlcov",
-    "--cov-report=xml",
-    "--cov-fail-under=80",
+    "-v",  # Verbose output
+    
+    # Parallel execution support
+    "--numprocesses=auto",  # Auto-detect CPU cores for parallel tests
+    "--dist=loadgroup",  # Distribute tests by group
 ]
+
+# Test timeout (5 minutes max per test)
+timeout = 300
+timeout_method = "thread"
+
+# Async support
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+# Test discovery paths
 testpaths = [
     "tests",
-    "dotmac_core_events/tests",
-    "dotmac_core_ops/tests", 
-    "dotmac_identity/tests",
-    "dotmac_billing/tests",
-    "dotmac_services/tests",
-    "dotmac_networking/tests",
-    "dotmac_analytics/tests",
-    "dotmac_api_gateway/tests",
-    "dotmac_platform/tests",
-    "dotmac_devtools/tests",
+    "backend/dotmac_core_events/tests",
+    "backend/dotmac_core_ops/tests", 
+    "backend/dotmac_identity/tests",
+    "backend/dotmac_billing/tests",
+    "backend/dotmac_services/tests",
+    "backend/dotmac_networking/tests",
+    "backend/dotmac_analytics/tests",
+    "backend/dotmac_api_gateway/tests",
+    "backend/dotmac_platform/tests",
+    "backend/dotmac_devtools/tests",
+    "dotmac_isp_framework/tests",
 ]
+
+# Test discovery patterns
+python_files = ["test_*.py", "*_test.py", "tests.py"]
+python_classes = ["Test*", "*Tests"]
+python_functions = ["test_*"]
+
+# Test markers for categorization
 markers = [
-    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
-    "integration: marks tests as integration tests",
-    "unit: marks tests as unit tests",
-    "api: marks tests as API tests",
-    "e2e: marks tests as end-to-end tests",
+    # Test types by scope
+    "unit: Unit tests - fast, isolated, no external dependencies",
+    "integration: Integration tests - test component interactions", 
+    "e2e: End-to-end tests - full user workflow testing",
+    "contract: API contract tests - schema and interface validation",
+    "performance: Performance and load testing",
+    "security: Security and vulnerability testing",
+    "smoke: Smoke tests - quick health checks",
+    
+    # Test characteristics
+    "slow: Tests that take more than 5 seconds",
+    "fast: Tests that complete in under 1 second",
+    "database: Tests that require database connection",
+    "redis: Tests that require Redis connection",
+    "external: Tests that require external services",
+    "api: API endpoint testing",
+    
+    # Service-specific markers
+    "core_events: Core events service tests",
+    "core_ops: Core operations service tests",
+    "identity: Identity service tests",
+    "billing: Billing service tests",
+    "networking: Networking service tests",
+    "analytics: Analytics service tests",
+    "platform: Platform service tests",
+    "api_gateway: API Gateway tests",
+    
+    # Environment markers
+    "docker: Tests that run in Docker environment",
+    "local: Tests that run in local environment only",
+    "ci: Tests that should run in CI environment",
+    
+    # Test data requirements
+    "fixtures: Tests that require test fixtures",
+    "cleanup: Tests that require cleanup after execution",
+    "isolated: Tests that must run in isolation",
 ]
+
+# Logging configuration for tests
+log_cli = true
+log_cli_level = "INFO"
+log_cli_format = "%(asctime)s [%(levelname)8s] %(name)s: %(message)s"
+log_cli_date_format = "%Y-%m-%d %H:%M:%S"
+
+# Filter warnings
+filterwarnings = [
+    "error",
+    "ignore::UserWarning",
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+    "ignore::pytest.PytestUnraisableExceptionWarning",
+]
+
+# Test data configuration
+tmp_path_retention_policy = "failed"  # Keep temp files for failed tests
+tmp_path_retention_count = 3
 
 [tool.coverage.run]
 source = [
@@ -300,3 +385,65 @@ include = [
 
 [tool.setuptools.package-data]
 "*" = ["py.typed"]
+
+# =============================================================================
+# SECURITY SCANNING (Bandit)
+# =============================================================================
+
+[tool.bandit]
+exclude_dirs = [
+    "tests",
+    "migrations",
+    "alembic",
+    "venv",
+    ".venv",
+    "build",
+    "dist"
+]
+skips = [
+    "B101",  # assert_used (commonly used in tests)
+    "B601",  # paramiko_calls (false positives)
+    "B602",  # subprocess_popen_with_shell_equals_true (managed usage)
+]
+
+[tool.bandit.any_other_function_with_shell_equals_true]
+no_shell = [
+    "os.execl",
+    "os.execle",
+    "os.execlp",
+    "os.execlpe",
+    "os.execv",
+    "os.execve",
+    "os.execvp",
+    "os.execvpe",
+    "os.spawnl",
+    "os.spawnle",
+    "os.spawnlp",
+    "os.spawnlpe",
+    "os.spawnv",
+    "os.spawnve",
+    "os.spawnvp",
+    "os.spawnvpe",
+    "os.startfile"
+]
+shell = [
+    "os.system",
+    "os.popen",
+    "os.popen2",
+    "os.popen3",
+    "os.popen4",
+    "popen2.popen2",
+    "popen2.popen3",
+    "popen2.popen4",
+    "popen2.Popen3",
+    "popen2.Popen4",
+    "commands.getoutput",
+    "commands.getstatusoutput"
+]
+subprocess = [
+    "subprocess.Popen",
+    "subprocess.call",
+    "subprocess.check_call",
+    "subprocess.check_output",
+    "subprocess.run"
+]

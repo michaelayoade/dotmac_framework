@@ -56,7 +56,12 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: {
+        ...devices['Desktop Chrome'],
+        // Uncomment below for always visible browser
+        // headless: false,
+        // slowMo: 1000, // Add delay between actions for visibility
+      },
     },
 
     {

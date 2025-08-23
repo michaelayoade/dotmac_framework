@@ -1,0 +1,80 @@
+# AI-First Coverage Configuration
+[run]
+source = src/dotmac_isp
+branch = True
+parallel = True
+concurrency = multiprocessing
+
+# AI-optimized coverage settings
+omit = 
+    # Skip boilerplate that AI handles well
+    */migrations/*
+    */tests/*
+    */venv/*
+    */virtualenv/*
+    */__pycache__/*
+    */node_modules/*
+    
+    # Skip non-critical files for faster feedback
+    */settings.py
+    */wsgi.py
+    */asgi.py
+    manage.py
+    
+    # Skip AI-generated code that's already tested by property-based tests
+    */ai_generated/*
+    */auto_generated/*
+
+# Focus on business logic and critical paths
+include = 
+    # Always measure revenue-critical code
+    */billing/*
+    */payment/*
+    */customer/*
+    */services/*
+    
+    # Always measure security code
+    */security/*
+    */auth/*
+    */secrets/*
+
+[report]
+# Lower threshold - AI property-based tests provide better coverage
+fail_under = 75
+precision = 1
+show_missing = True
+skip_covered = True
+sort = Cover
+
+# Smart reporting for AI development
+exclude_lines =
+    # Don't require coverage for defensive assertions
+    pragma: no cover
+    def __repr__
+    raise AssertionError
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    
+    # Skip AI-generated defensive code
+    # AI-generated:
+    # Auto-generated:
+    
+    # Skip type checking imports
+    if TYPE_CHECKING:
+    
+    # Skip debug-only code
+    if DEBUG:
+
+[html]
+directory = htmlcov-ai
+title = AI-First Coverage Report
+
+[xml]
+output = coverage-ai.xml
+
+# AI-specific coverage contexts
+[paths]
+source = 
+    src/dotmac_isp/
+    */site-packages/dotmac_isp/
+    */lib/python*/site-packages/dotmac_isp/

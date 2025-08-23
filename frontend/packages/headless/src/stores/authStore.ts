@@ -8,7 +8,6 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import type { User } from '../types';
 import { csrfProtection } from '../utils/csrfProtection';
 import { secureStorage } from '../utils/secureStorage';
-import { type TokenPair, tokenManager } from '../utils/tokenManager';
 
 interface AuthState {
   user: User | null;
@@ -20,18 +19,9 @@ interface AuthState {
 }
 
 interface AuthActions {
-  setAuth: (
-    user: User,
-    tokenPair: TokenPair,
-    sessionId?: string,
-    csrfToken?: string
-  ) => Promise<void>;
+  setAuth: (user: User, sessionId?: string, csrfToken?: string) => Promise<void>;
   clearAuth: () => Promise<void>;
   updateUser: (updates: Partial<User>) => void;
-  refreshTokens: (
-    apiRefreshFunction: (refreshToken: string) => Promise<TokenPair>
-  ) => Promise<boolean>;
-  getValidToken: () => Promise<string | null>;
   requireMFA: () => void;
   completeMFA: () => void;
   updateLastActivity: () => void;
@@ -57,10 +47,7 @@ export const useAuthStore = create<AuthStore>()(
     (set, get) => ({
       ...initialState,
 
-      setAuth: async (user, tokenPair, sessionId, _csrfToken) => {
-        // Store tokens securely
-        tokenManager.setTokens(tokenPair, csrfToken);
-
+      setAuth: async (user, sessionId, csrfToken) => {
         // Initialize CSRF protection if token provided
         if (csrfToken) {
           csrfProtection.storeToken(csrfToken);
@@ -84,12 +71,14 @@ export const useAuthStore = create<AuthStore>()(
 
       clearAuth: async () => {
         try {
-          // Clear all tokens and CSRF protection
-          tokenManager.clearTokens();
+          // Clear CSRF protection
           csrfProtection.clearToken();
 
-          // Clear all secure storage
+          // Clear all secure storage (non-sensitive data only)
           secureStorage.clear();
+
+          // NOTE: Actual token clearing must be done via server actions
+          // Tokens are in httpOnly cookies and cannot be cleared client-side
 
           set(initialState);
         } catch (_error) {
@@ -108,48 +97,6 @@ export const useAuthStore = create<AuthStore>()(
         }
       },
 
-      refreshTokens: async (apiRefreshFunction) => {
-        try {
-          const result = await tokenManager.refreshTokens(apiRefreshFunction);
-          if (result) {
-            set({ lastActivity: Date.now() });
-            return true;
-          }
-
-          // Refresh failed, clear auth
-          await get().clearAuth();
-          return false;
-        } catch (_error) {
-          await get().clearAuth();
-          return false;
-        }
-      },
-
-      getValidToken: async () => {
-        try {
-          const { isSessionValid } = get();
-
-          // Check session validity
-          if (!isSessionValid()) {
-            await get().clearAuth();
-            return null;
-          }
-
-          // Get token from token manager (handles validation and refresh)
-          const token = tokenManager.getAccessToken();
-
-          if (token) {
-            // Update last activity
-            set({ lastActivity: Date.now() });
-            return token;
-          }
-
-          return null;
-        } catch (_error) {
-          return null;
-        }
-      },
-
       requireMFA: () => {
         set({ mfaRequired: true, mfaVerified: false });
       },
@@ -163,7 +110,7 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       isSessionValid: () => {
-        const { lastActivity, _isAuthenticated } = get();
+        const { lastActivity, isAuthenticated } = get();
 
         if (!isAuthenticated || !lastActivity) {
           return false;
@@ -177,7 +124,7 @@ export const useAuthStore = create<AuthStore>()(
       },
     }),
     {
-      name: 'dotmac-auth-session',
+      name: 'dotmac-session-state',
       storage: createJSONStorage(() => {
         // Use secure storage wrapper
         return {

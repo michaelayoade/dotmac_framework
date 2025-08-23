@@ -1,0 +1,267 @@
+# Horizontal Pod Autoscaler configuration for DotMac ISP Framework
+
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: dotmac-isp-framework-hpa
+  namespace: dotmac-isp-framework
+  labels:
+    app.kubernetes.io/name: dotmac-isp-framework
+    app.kubernetes.io/component: autoscaling
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: dotmac-isp-framework
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  # CPU-based scaling
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  # Memory-based scaling
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  # Custom metrics (requests per second)
+  - type: Pods
+    pods:
+      metric:
+        name: requests_per_second
+      target:
+        type: AverageValue
+        averageValue: "100"
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300  # 5 minutes
+      policies:
+      - type: Percent
+        value: 10  # Scale down by max 10% at a time
+        periodSeconds: 60
+      - type: Pods
+        value: 1  # Scale down by max 1 pod at a time
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 60  # 1 minute
+      policies:
+      - type: Percent
+        value: 50  # Scale up by max 50% at a time
+        periodSeconds: 60
+      - type: Pods
+        value: 2  # Scale up by max 2 pods at a time
+        periodSeconds: 60
+
+---
+# Template for tenant-specific HPA
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: dotmac-tenant-hpa-template
+  namespace: dotmac-tenants
+  labels:
+    app.kubernetes.io/name: dotmac-tenant
+    app.kubernetes.io/component: autoscaling
+    dotmac.io/tenant-template: "true"
+  annotations:
+    dotmac.io/template-version: "1.0"
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: "dotmac-tenant-{{TENANT_ID}}"
+  minReplicas: {{MIN_REPLICAS}}  # Based on tenant plan
+  maxReplicas: {{MAX_REPLICAS}}  # Based on tenant plan
+  metrics:
+  # CPU-based scaling (thresholds based on plan)
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: {{CPU_TARGET}}
+  # Memory-based scaling
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: {{MEMORY_TARGET}}
+  # Custom metrics for tenant-specific scaling
+  - type: Pods
+    pods:
+      metric:
+        name: tenant_active_users
+      target:
+        type: AverageValue
+        averageValue: "{{USERS_PER_POD}}"
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: {{SCALE_DOWN_STABILIZATION}}
+      policies:
+      - type: Percent
+        value: {{SCALE_DOWN_PERCENT}}
+        periodSeconds: 60
+      - type: Pods
+        value: {{SCALE_DOWN_PODS}}
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: {{SCALE_UP_STABILIZATION}}
+      policies:
+      - type: Percent
+        value: {{SCALE_UP_PERCENT}}
+        periodSeconds: 60
+      - type: Pods
+        value: {{SCALE_UP_PODS}}
+        periodSeconds: 60
+
+---
+# Vertical Pod Autoscaler for resource optimization
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: dotmac-isp-framework-vpa
+  namespace: dotmac-isp-framework
+  labels:
+    app.kubernetes.io/name: dotmac-isp-framework
+    app.kubernetes.io/component: vpa
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: dotmac-isp-framework
+  updatePolicy:
+    updateMode: "Auto"  # Automatically apply recommendations
+    minReplicas: 2      # Minimum replicas during updates
+  resourcePolicy:
+    containerPolicies:
+    - containerName: dotmac-isp-framework
+      minAllowed:
+        cpu: 100m
+        memory: 256Mi
+      maxAllowed:
+        cpu: 2000m
+        memory: 4Gi
+      controlledResources: ["cpu", "memory"]
+      controlledValues: RequestsAndLimits
+
+---
+# Pod Disruption Budget for high availability
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: dotmac-isp-framework-pdb
+  namespace: dotmac-isp-framework
+  labels:
+    app.kubernetes.io/name: dotmac-isp-framework
+    app.kubernetes.io/component: availability
+spec:
+  minAvailable: 2  # Always keep at least 2 pods running
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: dotmac-isp-framework
+      app.kubernetes.io/component: application
+
+---
+# Template for tenant-specific PDB
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: dotmac-tenant-pdb-template
+  namespace: dotmac-tenants
+  labels:
+    app.kubernetes.io/name: dotmac-tenant
+    app.kubernetes.io/component: availability
+    dotmac.io/tenant-template: "true"
+  annotations:
+    dotmac.io/template-version: "1.0"
+spec:
+  minAvailable: {{MIN_AVAILABLE}}  # Based on tenant SLA
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: dotmac-tenant
+      app.kubernetes.io/instance: "{{TENANT_ID}}"
+
+---
+# Resource Quotas for tenant namespaces
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: dotmac-tenant-quota-template
+  namespace: dotmac-tenants
+  labels:
+    app.kubernetes.io/name: dotmac-tenant
+    app.kubernetes.io/component: resource-quota
+    dotmac.io/tenant-template: "true"
+  annotations:
+    dotmac.io/template-version: "1.0"
+spec:
+  hard:
+    # Compute resources
+    requests.cpu: "{{CPU_REQUESTS_LIMIT}}"
+    requests.memory: "{{MEMORY_REQUESTS_LIMIT}}"
+    limits.cpu: "{{CPU_LIMITS_TOTAL}}"
+    limits.memory: "{{MEMORY_LIMITS_TOTAL}}"
+    
+    # Storage resources
+    requests.storage: "{{STORAGE_REQUESTS_LIMIT}}"
+    persistentvolumeclaims: "{{MAX_PVC_COUNT}}"
+    
+    # Object counts
+    pods: "{{MAX_PODS}}"
+    services: "{{MAX_SERVICES}}"
+    secrets: "{{MAX_SECRETS}}"
+    configmaps: "{{MAX_CONFIGMAPS}}"
+    
+    # Network resources
+    services.loadbalancers: "{{MAX_LOADBALANCERS}}"
+    services.nodeports: "{{MAX_NODEPORTS}}"
+
+---
+# Limit Range for default pod resources
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: dotmac-tenant-limits-template
+  namespace: dotmac-tenants
+  labels:
+    app.kubernetes.io/name: dotmac-tenant
+    app.kubernetes.io/component: limit-range
+    dotmac.io/tenant-template: "true"
+  annotations:
+    dotmac.io/template-version: "1.0"
+spec:
+  limits:
+  # Container limits
+  - type: Container
+    default:
+      cpu: "{{DEFAULT_CPU_LIMIT}}"
+      memory: "{{DEFAULT_MEMORY_LIMIT}}"
+    defaultRequest:
+      cpu: "{{DEFAULT_CPU_REQUEST}}"
+      memory: "{{DEFAULT_MEMORY_REQUEST}}"
+    min:
+      cpu: "50m"
+      memory: "128Mi"
+    max:
+      cpu: "{{MAX_CPU_PER_CONTAINER}}"
+      memory: "{{MAX_MEMORY_PER_CONTAINER}}"
+  
+  # Pod limits
+  - type: Pod
+    max:
+      cpu: "{{MAX_CPU_PER_POD}}"
+      memory: "{{MAX_MEMORY_PER_POD}}"
+  
+  # PVC limits
+  - type: PersistentVolumeClaim
+    min:
+      storage: "1Gi"
+    max:
+      storage: "{{MAX_STORAGE_PER_PVC}}"

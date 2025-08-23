@@ -1,0 +1,283 @@
+[tool.poetry]
+name = "dotmac-isp-framework"
+version = "1.0.0"
+description = "DotMac ISP Framework - Comprehensive modular monolith for Internet Service Provider management"
+authors = ["DotMac Team <info@dotmac.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [{include = "dotmac_isp", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.109.0"
+uvicorn = {extras = ["standard"], version = "^0.27.0"}
+sqlalchemy = "^2.0.25"
+alembic = "^1.13.1"
+aiosqlite = "^0.19.0"
+asyncpg = "^0.29.0"
+pydantic = "^2.5.3"
+pydantic-settings = "^2.1.0"
+psycopg2-binary = "^2.9.9"
+redis = "^5.0.1"
+python-jose = {extras = ["cryptography"], version = "^3.3.0"}
+passlib = {extras = ["bcrypt"], version = "^1.7.4"}
+python-multipart = "^0.0.6"
+jinja2 = "^3.1.3"
+httpx = "^0.26.0"
+celery = "^5.3.4"
+# Core dependencies for full functionality
+reportlab = "^4.0.8"
+pillow = "^10.2.0"
+matplotlib = "^3.8.2"
+plotly = "^5.18.0"
+xlsxwriter = "^3.1.9"
+pysnmp = "^7.1.21"
+paramiko = "^4.0.0"
+ansible-runner = "^2.4.1"
+schedule = "^1.2.1"
+
+# ===== ENTERPRISE BACKEND INTEGRATIONS =====
+
+# Observability & Monitoring (SignOz Integration) - Using only packages that exist
+opentelemetry-api = "^1.21.0"
+opentelemetry-sdk = "^1.21.0"
+opentelemetry-instrumentation-fastapi = "^0.42b0"
+opentelemetry-instrumentation-sqlalchemy = "^0.42b0"
+
+# Secrets Management (OpenBao/Vault)
+hvac = "^2.3.0"
+
+# Enhanced Authentication & Security
+cryptography = "^45.0.6"
+bcrypt = "^4.3.0"
+
+# Event Streaming & Messaging
+aioredis = "^2.0.1"
+
+# Network Management & ISP Features - Core networking only
+netaddr = "^1.3.0"
+
+# Network automation integrations moved to plugin-based installation  
+# Use: make install-plugin PLUGIN=network-automation
+# Includes: pysnmp, paramiko, ansible-runner
+
+# OpenTelemetry Instrumentation (Fixed versions - aligned with 0.42b0)
+opentelemetry-instrumentation = "^0.42b0"
+opentelemetry-instrumentation-redis = "^0.42b0"
+opentelemetry-instrumentation-celery = "^0.42b0"
+opentelemetry-instrumentation-httpx = "^0.42b0"
+
+# Workflow & Task Management
+APScheduler = "^3.10.4"
+
+# File Storage & Management
+aiofiles = "^23.2.0"
+
+# Analytics & Reporting  
+pandas = "^2.3.2"
+
+# Additional Enterprise Features
+prometheus-client = "^0.19.0"
+structlog = "^25.4.0"
+psutil = "^7.0.0"
+
+# Communication integrations moved to plugin-based installation
+# Use: make install-plugin PLUGIN=twilio
+# Use: make install-plugin PLUGIN=stripe
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.4"
+pytest-asyncio = "^0.23.3"
+pytest-cov = "^4.1.0"
+pytest-mock = "^3.11.1"
+pytest-html = "^4.1.1"
+pytest-timeout = "^2.2.0"
+black = "^24.1.1"
+isort = "^5.13.2"
+flake8 = "^7.0.0"
+mypy = "^1.8.0"
+pre-commit = "^3.6.0"
+factory-boy = "^3.3.0"
+faker = "^22.5.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+# Test discovery
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+# Test execution configuration
+addopts = [
+    "-v",  # verbose output
+    "--tb=short",  # shorter tracebacks
+    "--strict-markers",  # ensure all markers are declared
+    "--strict-config",  # strict configuration
+    "--cov=src/dotmac_isp",  # coverage tracking
+    "--cov-report=term-missing",  # show missing lines
+    "--cov-report=html:htmlcov",  # HTML coverage report
+    "--cov-report=xml:coverage.xml",  # XML for CI
+    "--cov-report=json:coverage.json",  # JSON for tooling
+    "--cov-fail-under=80",  # minimum coverage threshold
+    "--cov-branch",  # branch coverage
+    "--durations=10",  # show 10 slowest tests
+    "--html=test-reports/report.html",  # HTML test report
+    "--json-report --json-report-file=test-reports/report.json",  # JSON report
+    # "--alluredir=test-reports/allure-results",  # Allure results (disabled for coverage)
+]
+
+# Async support
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+# Test timeout (5 minutes max per test)
+timeout = 300
+timeout_method = "thread"
+
+# Comprehensive test markers
+markers = [
+    # Test types by scope
+    "unit: Unit tests - fast, isolated, no external dependencies",
+    "integration: Integration tests - test component interactions",
+    "e2e: End-to-end tests - full user workflow testing",
+    "contract: API contract tests - schema and interface validation",
+    "performance: Performance and load testing",
+    "security: Security and vulnerability testing",
+    "smoke: Smoke tests - quick health checks",
+    
+    # Test characteristics
+    "slow: Tests that take more than 5 seconds",
+    "fast: Tests that complete in under 1 second",
+    "database: Tests that require database connection",
+    "redis: Tests that require Redis connection",
+    "external: Tests that require external services",
+    "api: API endpoint testing",
+    
+    # Business logic areas
+    "portal_id: Portal ID system tests",
+    "billing: Billing operations tests",
+    "network: Network integration tests",
+    "services: Service management tests",
+    "support: Support operations tests",
+    "reseller: Reseller operations tests",
+    "identity: Identity and authentication tests",
+    "analytics: Analytics and reporting tests",
+    
+    # Environment markers
+    "docker: Tests that run in Docker environment",
+    "local: Tests that run in local environment only",
+    "ci: Tests that should run in CI environment",
+    
+    # Test data requirements
+    "fixtures: Tests that require test fixtures",
+    "cleanup: Tests that require cleanup after execution",
+    "isolated: Tests that must run in isolation",
+    "tenant_isolation: Tests validating multi-tenant isolation",
+]
+
+# Logging configuration for tests
+log_cli = true
+log_cli_level = "INFO"
+log_cli_format = "%(asctime)s [%(levelname)8s] %(name)s: %(message)s"
+log_cli_date_format = "%Y-%m-%d %H:%M:%S"
+
+# Filter warnings
+filterwarnings = [
+    "error",
+    "ignore::UserWarning",
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+    "ignore::pytest.PytestUnraisableExceptionWarning",
+]
+
+# Test data configuration
+tmp_path_retention_policy = "failed"  # Keep temp files for failed tests
+tmp_path_retention_count = 3
+
+[tool.black]
+line-length = 88
+target-version = ['py311']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+line_length = 88
+skip_gitignore = true
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+plugins = ["sqlalchemy.ext.mypy.plugin", "pydantic.mypy"]
+
+[tool.coverage.run]
+source = ["src/dotmac_isp"]
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "*/__pycache__/*",
+    "*/migrations/*",
+    "*/alembic/*",
+    "*/venv/*",
+    "*/build/*",
+    "*/dist/*",
+]
+branch = true  # Enable branch coverage
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+show_missing = true
+precision = 2
+fail_under = 80  # Minimum coverage threshold
+
+[tool.coverage.html]
+directory = "htmlcov"
+
+[tool.coverage.xml]
+output = "coverage.xml"
+
+[tool.coverage.json]
+output = "coverage.json"
