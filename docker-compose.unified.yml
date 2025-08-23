@@ -15,7 +15,7 @@ services:
       - postgres_shared_data:/var/lib/postgresql/data
       - ./shared/deployments/scripts/init-multiple-databases.sh:/docker-entrypoint-initdb.d/init-multiple-databases.sh:ro
     ports:
-      - "5432:5432"
+      - "5434:5432"
     networks:
       - dotmac-network
     healthcheck:
@@ -32,7 +32,7 @@ services:
     volumes:
       - redis_shared_data:/data
     ports:
-      - "6379:6379"
+      - "6378:6379"
     networks:
       - dotmac-network
     healthcheck:
