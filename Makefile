@@ -1,454 +1,323 @@
-# DotMac Framework - Centralized Development Commands
-# Provides consistent interface for all development tasks across the monorepo
-
-.PHONY: help install install-dev clean test lint format type-check security build docs deps-check deps-update
-.DEFAULT_GOAL := help
-
-# Configuration
-PYTHON := python3
-PIP := pip
-PACKAGES := dotmac_core_events dotmac_core_ops dotmac_identity dotmac_billing dotmac_services dotmac_networking dotmac_analytics dotmac_api_gateway dotmac_platform dotmac_devtools
-
-# Add scripts to PATH
-export PATH := $(CURDIR)/scripts/start:$(CURDIR)/scripts/stop:$(CURDIR)/scripts/deploy:$(CURDIR)/scripts/dev-tools:$(PATH)
+# DotMac Platform Unified Makefile
+# Manages both ISP Framework and Management Platform
 
 # Colors for output
-CYAN := \033[0;36m
-GREEN := \033[0;32m
 YELLOW := \033[1;33m
+GREEN := \033[0;32m
+BLUE := \033[0;34m
 RED := \033[0;31m
-NC := \033[0m
+NC := \033[0m # No Color
 
-define log_info
-	@echo -e "$(GREEN)[INFO]$(NC) $(1)"
-endef
-
-define log_warn
-	@echo -e "$(YELLOW)[WARN]$(NC) $(1)"
-endef
-
-define log_error
-	@echo -e "$(RED)[ERROR]$(NC) $(1)"
-endef
-
-help: ## Show this help message
-	@echo -e "$(CYAN)DotMac Framework - Development Commands$(NC)"
+.PHONY: help
+help:
+	@echo "$(BLUE)DotMac Unified Platform - Development Commands$(NC)"
+	@echo "=============================================="
 	@echo ""
-	@echo "Available commands:"
-	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  $(CYAN)%-20s$(NC) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@echo "$(GREEN)Quick Start Commands:$(NC)"
+	@echo "  $(YELLOW)install-all         $(NC)  Install dependencies for both platforms"
+	@echo "  $(YELLOW)up                  $(NC)  Start complete unified platform"
+	@echo "  $(YELLOW)down                $(NC)  Stop all services"
+	@echo "  $(YELLOW)status              $(NC)  Show status of all services"
+	@echo "  $(YELLOW)logs                $(NC)  Show logs from all services"
 	@echo ""
-	@echo "Examples:"
-	@echo "  make install-dev    # Set up development environment"
-	@echo "  make test          # Run all tests"
-	@echo "  make lint          # Run linting (with complexity checks)"
-	@echo "  make security      # Run security scans"
-
-# =============================================================================
-# ENVIRONMENT SETUP
-# =============================================================================
-
-install: ## Install production dependencies
-	$(call log_info,"Installing production dependencies...")
-	$(PIP) install --require-hashes -r requirements.lock
-
-install-dev: ## Install development dependencies and setup pre-commit
-	$(call log_info,"Setting up development environment...")
-	$(PIP) install pip-tools pre-commit
-	./scripts/manage_dependencies.sh compile
-	$(PIP) install --require-hashes -r requirements-dev.lock
-	pre-commit install
-	$(call log_info,"Development environment ready!")
-
-clean: ## Clean up build artifacts and caches
-	$(call log_info,"Cleaning up...")
-	find . -type f -name "*.pyc" -delete
-	find . -type d -name "__pycache__" -delete -print
-	find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
-	find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
-	find . -type d -name ".mypy_cache" -exec rm -rf {} + 2>/dev/null || true
-	find . -type d -name ".ruff_cache" -exec rm -rf {} + 2>/dev/null || true
-	find . -name "*.coverage" -delete
-	rm -rf htmlcov/
-	rm -rf dist/
-	rm -rf build/
-	$(call log_info,"Cleanup complete!")
-
-# =============================================================================
-# TESTING
-# =============================================================================
-
-test: ## Run all tests with coverage
-	$(call log_info,"Running tests with coverage...")
-	@failed_packages=(); \
-	for package in $(PACKAGES); do \
-		if [ -d "$$package" ] && [ -f "$$package/pyproject.toml" ]; then \
-			echo -e "$(CYAN)Testing $$package...$(NC)"; \
-			cd "$$package" && \
-			$(PYTHON) -m pytest \
-				--cov="$$package" \
-				--cov-report=term-missing \
-				--cov-report=xml \
-				--cov-fail-under=80 \
-				--tb=short \
-				-v || failed_packages+=("$$package"); \
-			cd ..; \
-		fi; \
-	done; \
-	if [ $${#failed_packages[@]} -ne 0 ]; then \
-		$(call log_error,"Tests failed in: $${failed_packages[*]}"); \
-		exit 1; \
-	fi
-	$(call log_info,"All tests passed!")
-
-test-unit: ## Run only unit tests (fast)
-	$(call log_info,"Running unit tests...")
-	@for package in $(PACKAGES); do \
-		if [ -d "$$package" ]; then \
-			echo -e "$(CYAN)Unit testing $$package...$(NC)"; \
-			cd "$$package" && $(PYTHON) -m pytest -m "unit" --tb=short -q && cd ..; \
-		fi; \
-	done
-
-test-integration: ## Run integration tests
-	$(call log_info,"Running integration tests...")
-	@for package in $(PACKAGES); do \
-		if [ -d "$$package" ]; then \
-			echo -e "$(CYAN)Integration testing $$package...$(NC)"; \
-			cd "$$package" && $(PYTHON) -m pytest -m "integration" --tb=short -v && cd ..; \
-		fi; \
-	done
-
-test-package: ## Run tests for specific package (usage: make test-package PACKAGE=dotmac_identity)
-	@if [ -z "$(PACKAGE)" ]; then \
-		$(call log_error,"Please specify PACKAGE, e.g., make test-package PACKAGE=dotmac_identity"); \
-		exit 1; \
-	fi
-	$(call log_info,"Testing $(PACKAGE)...")
-	cd "$(PACKAGE)" && $(PYTHON) -m pytest --cov="$(PACKAGE)" --cov-report=term-missing -v
-
-# =============================================================================
-# DOCKER-BASED TESTING (Recommended)
-# =============================================================================
-
-test-docker: ## Run all tests using Docker (standardized environment)
-	$(call log_info,"Running tests with Docker...")
-	./scripts/test-docker.sh all
-
-test-docker-unit: ## Run unit tests using Docker
-	$(call log_info,"Running unit tests with Docker...")
-	./scripts/test-docker.sh unit
-
-test-docker-integration: ## Run integration tests using Docker  
-	$(call log_info,"Running integration tests with Docker...")
-	./scripts/test-docker.sh integration
-
-test-docker-smoke: ## Run smoke tests using Docker
-	$(call log_info,"Running smoke tests with Docker...")
-	./scripts/test-docker.sh smoke
-
-test-docker-clean: ## Clean Docker test environment
-	$(call log_info,"Cleaning Docker test environment...")
-	./scripts/test-docker.sh clean
-
-# =============================================================================
-# CODE QUALITY
-# =============================================================================
-
-lint: ## Run linting with complexity checks (FAILS on violations)
-	$(call log_info,"Running linting with complexity enforcement...")
-	ruff check . --output-format=github
+	@echo "$(GREEN)Platform Commands:$(NC)"
+	@echo "  $(YELLOW)up-isp              $(NC)  Start only ISP Framework services"
+	@echo "  $(YELLOW)up-mgmt             $(NC)  Start only Management Platform services"
+	@echo "  $(YELLOW)up-frontend         $(NC)  Start only frontend portals"
+	@echo "  $(YELLOW)up-infrastructure   $(NC)  Start only shared infrastructure"
 	@echo ""
-	$(call log_info,"Checking for complexity violations...")
-	@violations=$$(ruff check . --select C901,PLR0913,PLR0915 --output-format=text 2>/dev/null || echo "violations found"); \
-	if [ "$$violations" != "" ] && [ "$$violations" != "All checks passed!" ]; then \
-		$(call log_error,"❌ Complexity violations found:"); \
-		ruff check . --select C901,PLR0913,PLR0915 --output-format=text; \
-		echo ""; \
-		$(call log_error,"Please refactor complex functions before proceeding."); \
-		exit 1; \
-	else \
-		$(call log_info,"✅ No complexity violations found."); \
-	fi
-
-lint-fix: ## Run linting with auto-fixes
-	$(call log_info,"Running linting with auto-fixes...")
-	ruff check . --fix --output-format=github
-	$(call log_info,"Auto-fixes applied!")
-
-format: ## Format code with Black and Ruff
-	$(call log_info,"Formatting code...")
-	black .
-	ruff format .
-	$(call log_info,"Code formatted!")
-
-format-check: ## Check code formatting without making changes
-	$(call log_info,"Checking code formatting...")
-	black --check --diff .
-	ruff format --check .
-
-type-check: ## Run static type checking with MyPy
-	$(call log_info,"Running type checking...")
-	mypy . --show-error-codes --no-error-summary || true
-	$(call log_warn,"Type checking complete (errors allowed during gradual adoption)")
-
-# =============================================================================
-# SECURITY
-# =============================================================================
-
-security: ## Run security scans
-	$(call log_info,"Running security scans...")
-	./scripts/manage_dependencies.sh check
+	@echo "$(GREEN)Development Commands:$(NC)"
+	@echo "  $(YELLOW)install-all         $(NC)  Install dependencies for both platforms"
+	@echo "  $(YELLOW)test-all            $(NC)  Run tests for both platforms"
+	@echo "  $(YELLOW)test-isp            $(NC)  Run ISP Framework tests"
+	@echo "  $(YELLOW)test-mgmt           $(NC)  Run Management Platform tests"
+	@echo "  $(YELLOW)test-integration    $(NC)  Run cross-platform integration tests"
+	@echo "  $(YELLOW)lint-all            $(NC)  Lint both platforms"
+	@echo "  $(YELLOW)format-all          $(NC)  Format code in both platforms"
 	@echo ""
-	$(call log_info,"Scanning code for security issues...")
-	bandit -r . -f text -x "*/tests/*,*/migrations/*" || true
+	@echo "$(GREEN)Database Commands:$(NC)"
+	@echo "  $(YELLOW)db-setup            $(NC)  Set up databases for both platforms"
+	@echo "  $(YELLOW)db-migrate-all      $(NC)  Run migrations for both platforms"
+	@echo "  $(YELLOW)db-migrate-isp      $(NC)  Run ISP Framework migrations"
+	@echo "  $(YELLOW)db-migrate-mgmt     $(NC)  Run Management Platform migrations"
+	@echo "  $(YELLOW)db-reset-all        $(NC)  Reset all databases (DESTRUCTIVE)"
 	@echo ""
-	$(call log_info,"Security scan complete!")
+	@echo "$(GREEN)Build & Deploy:$(NC)"
+	@echo "  $(YELLOW)build-all           $(NC)  Build all Docker images"
+	@echo "  $(YELLOW)build-isp           $(NC)  Build ISP Framework image"
+	@echo "  $(YELLOW)build-mgmt          $(NC)  Build Management Platform image"
+	@echo "  $(YELLOW)deploy-dev          $(NC)  Deploy to development environment"
+	@echo "  $(YELLOW)deploy-prod         $(NC)  Deploy to production environment"
+	@echo ""
+	@echo "$(GREEN)Monitoring & Health:$(NC)"
+	@echo "  $(YELLOW)health-check        $(NC)  Check health of all services"
+	@echo "  $(YELLOW)show-endpoints      $(NC)  Show all service endpoints"
+	@echo "  $(YELLOW)monitoring          $(NC)  Open SignOz monitoring dashboard"
+	@echo ""
 
-security-strict: ## Run security scans with strict mode (fails on issues)
-	$(call log_info,"Running strict security scans...")
-	./scripts/manage_dependencies.sh check
-	bandit -r . -f text -x "*/tests/*,*/migrations/*"
-	$(call log_info,"All security checks passed!")
+# ===== QUICK START COMMANDS =====
 
-# =============================================================================
-# DEPENDENCIES
-# =============================================================================
+.PHONY: install-all
+install-all: install-isp install-mgmt
+	@echo "$(GREEN)✅ All dependencies installed successfully$(NC)"
 
-deps-compile: ## Compile dependency lockfiles
-	$(call log_info,"Compiling dependencies...")
-	./scripts/manage_dependencies.sh compile
+.PHONY: install-isp
+install-isp:
+	@echo "$(YELLOW)Installing ISP Framework dependencies...$(NC)"
+	cd isp-framework && make install-dev
 
-deps-update: ## Update dependencies to latest versions
-	$(call log_info,"Updating dependencies...")
-	./scripts/manage_dependencies.sh update
-	$(call log_warn,"Please test thoroughly and commit the updated lockfiles")
+.PHONY: install-mgmt
+install-mgmt:
+	@echo "$(YELLOW)Installing Management Platform dependencies...$(NC)"
+	cd management-platform && make install-dev
 
-deps-check: ## Check for dependency vulnerabilities
-	$(call log_info,"Checking dependencies for vulnerabilities...")
-	./scripts/manage_dependencies.sh check
+.PHONY: up
+up:
+	@echo "$(GREEN)🚀 Starting complete DotMac Platform...$(NC)"
+	docker-compose -f docker-compose.unified.yml up -d
+	@echo "$(GREEN)✅ Platform started successfully!$(NC)"
+	@echo ""
+	@make show-endpoints
 
-deps-audit: ## Audit dependencies for licenses and compliance
-	$(call log_info,"Auditing dependencies...")
-	./scripts/manage_dependencies.sh audit
+.PHONY: down
+down:
+	@echo "$(YELLOW)🛑 Stopping DotMac Platform...$(NC)"
+	docker-compose -f docker-compose.unified.yml down
+	@echo "$(GREEN)✅ Platform stopped$(NC)"
 
-deps-tree: ## Show dependency tree
-	./scripts/manage_dependencies.sh tree
+.PHONY: status
+status:
+	@echo "$(BLUE)DotMac Platform Status$(NC)"
+	@echo "====================="
+	docker-compose -f docker-compose.unified.yml ps
 
-# =============================================================================
-# BUILD & PACKAGING
-# =============================================================================
+.PHONY: logs
+logs:
+	docker-compose -f docker-compose.unified.yml logs -f
 
-build: ## Build all packages
-	$(call log_info,"Building all packages...")
-	@for package in $(PACKAGES); do \
-		if [ -d "$$package" ] && [ -f "$$package/pyproject.toml" ]; then \
-			echo -e "$(CYAN)Building $$package...$(NC)"; \
-			cd "$$package" && \
-			$(PYTHON) -m build --wheel --no-isolation && \
-			cd ..; \
-		fi; \
-	done
-	$(call log_info,"All packages built successfully!")
+# ===== PLATFORM-SPECIFIC COMMANDS =====
 
-build-package: ## Build specific package (usage: make build-package PACKAGE=dotmac_identity)
-	@if [ -z "$(PACKAGE)" ]; then \
-		$(call log_error,"Please specify PACKAGE, e.g., make build-package PACKAGE=dotmac_identity"); \
-		exit 1; \
-	fi
-	$(call log_info,"Building $(PACKAGE)...")
-	cd "$(PACKAGE)" && $(PYTHON) -m build --wheel --no-isolation
+.PHONY: up-infrastructure
+up-infrastructure:
+	@echo "$(YELLOW)Starting shared infrastructure...$(NC)"
+	docker-compose -f docker-compose.unified.yml up -d postgres-shared redis-shared openbao-shared clickhouse signoz-collector signoz-query signoz-frontend
 
-validate-packages: ## Validate package structure and metadata
-	$(call log_info,"Validating package structure...")
-	@for package in $(PACKAGES); do \
-		if [ -d "$$package" ] && [ -f "$$package/pyproject.toml" ]; then \
-			echo -e "$(CYAN)Validating $$package...$(NC)"; \
-			cd "$$package" && \
-			$(PYTHON) -m build --wheel --no-isolation && \
-			$(PYTHON) -m twine check dist/*.whl && \
-			cd ..; \
-		fi; \
-	done
-	$(call log_info,"All packages validated!")
+.PHONY: up-isp
+up-isp: up-infrastructure
+	@echo "$(YELLOW)Starting ISP Framework services...$(NC)"
+	docker-compose -f docker-compose.unified.yml up -d isp-framework
 
-# =============================================================================
-# DOCUMENTATION
-# =============================================================================
+.PHONY: up-mgmt
+up-mgmt: up-infrastructure
+	@echo "$(YELLOW)Starting Management Platform services...$(NC)"
+	docker-compose -f docker-compose.unified.yml up -d management-platform mgmt-celery-worker mgmt-celery-beat
 
-docs: ## Build documentation
-	$(call log_info,"Building documentation...")
-	mkdocs build
-	$(call log_info,"Documentation built in site/")
+.PHONY: up-frontend
+up-frontend:
+	@echo "$(YELLOW)Starting frontend portals...$(NC)"
+	docker-compose -f docker-compose.unified.yml up -d master-admin-portal customer-portal reseller-portal
 
-docs-serve: ## Serve documentation locally
-	$(call log_info,"Serving documentation at http://localhost:8000")
-	mkdocs serve
+# ===== TESTING COMMANDS =====
 
-docs-deploy: ## Deploy documentation to GitHub Pages
-	$(call log_info,"Deploying documentation...")
-	mkdocs gh-deploy --force
+.PHONY: test-all
+test-all: test-isp test-mgmt test-integration
+	@echo "$(GREEN)✅ All tests completed$(NC)"
 
-# =============================================================================
-# CI/CD HELPERS
-# =============================================================================
+.PHONY: test-isp
+test-isp:
+	@echo "$(YELLOW)Running ISP Framework tests...$(NC)"
+	cd isp-framework && make test
 
-ci-install: ## Install dependencies for CI environment
-	$(call log_info,"Installing CI dependencies...")
-	$(PIP) install pip-tools
-	$(PIP) install --require-hashes -r requirements-dev.lock
+.PHONY: test-mgmt
+test-mgmt:
+	@echo "$(YELLOW)Running Management Platform tests...$(NC)"
+	cd management-platform && make test
 
-ci-test: ## Run CI test suite
-	$(call log_info,"Running CI test suite...")
-	make lint
-	make type-check
-	make security-strict
-	make test
-	make validate-packages
-	$(call log_info,"CI test suite completed successfully!")
+.PHONY: test-integration
+test-integration:
+	@echo "$(YELLOW)Running cross-platform integration tests...$(NC)"
+	@echo "$(BLUE)Testing ISP Framework ↔ Management Platform integration...$(NC)"
+	# Test cross-platform API calls
+	cd shared/scripts && python test-cross-platform-integration.py
 
-ci-quick: ## Run quick CI checks (for fast feedback)
-	$(call log_info,"Running quick CI checks...")
-	make lint
-	make test-unit
-	$(call log_info,"Quick checks completed!")
+.PHONY: test-ai-suite
+test-ai-suite:
+	@echo "$(YELLOW)Running AI-optimized test suite...$(NC)"
+	cd isp-framework && make test-ai-suite
+	cd management-platform && make test-ai-suite
 
-# =============================================================================
-# DEVELOPMENT HELPERS
-# =============================================================================
+# ===== CODE QUALITY COMMANDS =====
 
-check: ## Run all quality checks
-	$(call log_info,"Running all quality checks...")
-	make lint
-	make type-check
-	make test
-	make security
-	$(call log_info,"All checks completed!")
+.PHONY: lint-all
+lint-all:
+	@echo "$(YELLOW)Linting all platforms...$(NC)"
+	cd isp-framework && make lint
+	cd management-platform && make lint
 
-fix: ## Fix all auto-fixable issues
-	$(call log_info,"Fixing auto-fixable issues...")
-	make format
-	make lint-fix
-	$(call log_info,"Auto-fixes applied!")
+.PHONY: format-all
+format-all:
+	@echo "$(YELLOW)Formatting all platforms...$(NC)"
+	cd isp-framework && make format
+	cd management-platform && make format
 
-reset: ## Reset development environment
-	$(call log_info,"Resetting development environment...")
-	make clean
-	make install-dev
-	$(call log_info,"Environment reset complete!")
+.PHONY: security-all
+security-all:
+	@echo "$(YELLOW)Running security scans on all platforms...$(NC)"
+	cd isp-framework && make security
+	cd management-platform && make security
 
-complexity-report: ## Generate detailed complexity report
-	$(call log_info,"Generating complexity report...")
-	@echo "# DotMac Framework - Complexity Report" > complexity-report.md
-	@echo "Generated on $$(date)" >> complexity-report.md
-	@echo "" >> complexity-report.md
-	@echo "## Ruff Complexity Violations" >> complexity-report.md
-	@ruff check . --select C901,PLR0913,PLR0915 --output-format=text >> complexity-report.md 2>/dev/null || echo "No violations found" >> complexity-report.md
-	@echo "" >> complexity-report.md
-	@echo "## Complexity Metrics by Package" >> complexity-report.md
-	@for package in $(PACKAGES); do \
-		if [ -d "$$package" ]; then \
-			echo "### $$package" >> complexity-report.md; \
-			radon cc "$$package" --min=B --show-complexity 2>/dev/null >> complexity-report.md || echo "No complex functions" >> complexity-report.md; \
-			echo "" >> complexity-report.md; \
-		fi; \
-	done
-	$(call log_info,"Complexity report generated: complexity-report.md")
+# ===== DATABASE COMMANDS =====
 
-# =============================================================================
-# DEPLOYMENT & AUTOMATION
-# =============================================================================
+.PHONY: db-setup
+db-setup:
+	@echo "$(YELLOW)Setting up databases for both platforms...$(NC)"
+	docker-compose -f docker-compose.unified.yml up -d postgres-shared
+	@echo "$(GREEN)Waiting for PostgreSQL to be ready...$(NC)"
+	sleep 10
+	@make db-migrate-all
 
-docker-config: ## Generate Docker configurations for all services
-	$(call log_info,"Generating Docker configurations...")
-	$(PYTHON) scripts/generate_docker_configs.py --all
+.PHONY: db-migrate-all
+db-migrate-all: db-migrate-isp db-migrate-mgmt
+	@echo "$(GREEN)✅ All migrations completed$(NC)"
 
-docker-build: docker-config ## Build all Docker images
-	$(call log_info,"Building Docker images...")
-	./scripts/docker/build-all.sh
+.PHONY: db-migrate-isp
+db-migrate-isp:
+	@echo "$(YELLOW)Running ISP Framework migrations...$(NC)"
+	cd isp-framework && make db-migrate
 
-docker-dev: ## Start development environment with Docker
-	$(call log_info,"Starting development environment...")
-	docker-compose -f docker-compose.development.yml up -d
+.PHONY: db-migrate-mgmt
+db-migrate-mgmt:
+	@echo "$(YELLOW)Running Management Platform migrations...$(NC)"
+	cd management-platform && make db-migrate
 
-docker-staging: ## Start staging environment with Docker
-	$(call log_info,"Starting staging environment...")
-	docker-compose -f docker-compose.staging.yml up -d
-
-docker-prod: ## Start production environment with Docker
-	$(call log_info,"Starting production environment...")
-	docker-compose -f docker-compose.production.yml up -d
-
-docker-stop: ## Stop all Docker environments
-	$(call log_info,"Stopping Docker environments...")
-	docker-compose -f docker-compose.development.yml down 2>/dev/null || true
-	docker-compose -f docker-compose.staging.yml down 2>/dev/null || true
-	docker-compose -f docker-compose.production.yml down 2>/dev/null || true
-
-docker-clean: ## Clean Docker resources
-	$(call log_info,"Cleaning Docker resources...")
-	docker system prune -f
+.PHONY: db-reset-all
+db-reset-all:
+	@echo "$(RED)⚠️  WARNING: This will destroy all data!$(NC)"
+	@echo "$(YELLOW)Are you sure? Press Ctrl+C to cancel, Enter to continue...$(NC)"
+	@read
+	docker-compose -f docker-compose.unified.yml down -v
 	docker volume prune -f
+	@make db-setup
 
-deploy-dev: ## Deploy to development environment
-	$(call log_info,"Deploying to development...")
-	$(PYTHON) scripts/automation/deploy.py development
+# ===== BUILD & DEPLOY COMMANDS =====
 
-deploy-staging: ## Deploy to staging environment
-	$(call log_info,"Deploying to staging...")
-	$(PYTHON) scripts/automation/deploy.py staging
+.PHONY: build-all
+build-all: build-isp build-mgmt
+	@echo "$(GREEN)✅ All images built successfully$(NC)"
 
-deploy-prod: ## Deploy to production environment
-	$(call log_info,"Deploying to production...")
-	$(PYTHON) scripts/automation/deploy.py production
+.PHONY: build-isp
+build-isp:
+	@echo "$(YELLOW)Building ISP Framework image...$(NC)"
+	docker-compose -f docker-compose.unified.yml build isp-framework
 
-workflow: ## Run complete development workflow
-	$(call log_info,"Running development workflow...")
-	$(PYTHON) scripts/automation/development_workflow.py workflow
+.PHONY: build-mgmt
+build-mgmt:
+	@echo "$(YELLOW)Building Management Platform image...$(NC)"
+	docker-compose -f docker-compose.unified.yml build management-platform
 
-workflow-setup: ## Set up development environment using automation
-	$(call log_info,"Setting up development environment...")
-	$(PYTHON) scripts/automation/development_workflow.py setup
+.PHONY: deploy-dev
+deploy-dev: build-all
+	@echo "$(YELLOW)Deploying to development environment...$(NC)"
+	docker-compose -f docker-compose.unified.yml up -d
+	@make health-check
 
-workflow-report: ## Generate project health report
-	$(call log_info,"Generating project health report...")
-	$(PYTHON) scripts/automation/development_workflow.py report
+.PHONY: deploy-prod
+deploy-prod:
+	@echo "$(RED)⚠️  Production deployment requires additional security checks$(NC)"
+	@echo "$(YELLOW)Use shared/deployments/kubernetes/ or terraform/ for production$(NC)"
 
-# =============================================================================
-# PACKAGE-SPECIFIC HELPERS
-# =============================================================================
+# ===== MONITORING & HEALTH COMMANDS =====
 
-run-api-gateway: ## Start API Gateway for development
-	$(call log_info,"Starting API Gateway...")
-	cd dotmac_api_gateway && $(PYTHON) -m uvicorn dotmac_api_gateway.runtime.app:app --reload --port 8000
+.PHONY: health-check
+health-check:
+	@echo "$(BLUE)Checking health of all services...$(NC)"
+	@echo ""
+	@echo "$(YELLOW)ISP Framework Health:$(NC)"
+	@curl -sf http://localhost:8001/health || echo "$(RED)❌ ISP Framework not responding$(NC)"
+	@echo ""
+	@echo "$(YELLOW)Management Platform Health:$(NC)"
+	@curl -sf http://localhost:8000/health || echo "$(RED)❌ Management Platform not responding$(NC)"
+	@echo ""
+	@echo "$(YELLOW)SignOz Health:$(NC)"
+	@curl -sf http://localhost:3301/health || echo "$(RED)❌ SignOz not responding$(NC)"
+	@echo ""
 
-run-customer-portal: ## Start Customer Portal for development
-	cd templates/isp-customer-portal && $(PYTHON) -m uvicorn main:app --reload --port 8001
+.PHONY: show-endpoints
+show-endpoints:
+	@echo "$(BLUE)DotMac Platform Service Endpoints$(NC)"
+	@echo "================================="
+	@echo ""
+	@echo "$(GREEN)🏗️  Core Services:$(NC)"
+	@echo "  ISP Framework API:       http://localhost:8001"
+	@echo "  Management Platform API: http://localhost:8000"
+	@echo ""
+	@echo "$(GREEN)🌐 Frontend Portals:$(NC)"
+	@echo "  Master Admin Portal:     http://localhost:3000"
+	@echo "  Customer Portal:         http://localhost:3001"
+	@echo "  Reseller Portal:         http://localhost:3002"
+	@echo ""
+	@echo "$(GREEN)📊 Infrastructure:$(NC)"
+	@echo "  PostgreSQL:              localhost:5434"
+	@echo "  Redis:                   localhost:6378"
+	@echo "  OpenBao (Secrets):       http://localhost:8200"
+	@echo "  SignOz (Monitoring):     http://localhost:3301"
+	@echo "  ClickHouse:              localhost:9000"
+	@echo ""
+	@echo "$(GREEN)📡 Observability:$(NC)"
+	@echo "  OTLP gRPC:               localhost:4317"
+	@echo "  OTLP HTTP:               localhost:4318"
+	@echo "  Prometheus Metrics:      localhost:8889"
+	@echo ""
 
-run-reseller-portal: ## Start Reseller Portal for development
-	cd templates/isp-reseller-portal && $(PYTHON) -m uvicorn main:app --reload --port 8002
+.PHONY: monitoring
+monitoring:
+	@echo "$(YELLOW)Opening SignOz monitoring dashboard...$(NC)"
+	@command -v open >/dev/null 2>&1 && open http://localhost:3301 || echo "Open http://localhost:3301 in your browser"
 
-# =============================================================================
-# SHORTCUTS
-# =============================================================================
+# ===== UTILITY COMMANDS =====
 
-dev: ## Start development environment (wrapper for docker compose + profiles dev)
-	$(call log_info,"Starting development environment...")
-	@COMPOSE_PROFILES=dev ./scripts/start/backend.sh -d
-	@./scripts/start/monitoring.sh -s signoz -d  
-	@./scripts/start/frontend.sh
-	
-start-backend: ## Start backend services
-	@./scripts/start/backend.sh
+.PHONY: clean
+clean:
+	@echo "$(YELLOW)Cleaning up build artifacts...$(NC)"
+	cd isp-framework && make clean
+	cd management-platform && make clean
+	docker system prune -f
 
-start-frontend: ## Start frontend applications  
-	@./scripts/start/frontend.sh
+.PHONY: shell-isp
+shell-isp:
+	@echo "$(YELLOW)Opening shell in ISP Framework container...$(NC)"
+	docker-compose -f docker-compose.unified.yml exec isp-framework bash
 
-start-monitoring: ## Start monitoring stack
-	@./scripts/start/monitoring.sh
+.PHONY: shell-mgmt
+shell-mgmt:
+	@echo "$(YELLOW)Opening shell in Management Platform container...$(NC)"
+	docker-compose -f docker-compose.unified.yml exec management-platform bash
 
-stop: ## Stop all services gracefully
-	@./scripts/stop/all.sh
+.PHONY: logs-isp
+logs-isp:
+	docker-compose -f docker-compose.unified.yml logs -f isp-framework
 
-install-dev-alias: install-dev ## Alias for install-dev
-qa: check ## Alias for check (Quality Assurance)
-build-all: build ## Alias for build
+.PHONY: logs-mgmt
+logs-mgmt:
+	docker-compose -f docker-compose.unified.yml logs -f management-platform
+
+# ===== DEVELOPMENT SHORTCUTS =====
+
+.PHONY: dev
+dev: up
+	@echo "$(GREEN)🚀 Development environment ready!$(NC)"
+	@make show-endpoints
+
+.PHONY: restart
+restart: down up
+	@echo "$(GREEN)✅ Platform restarted$(NC)"
+
+.PHONY: quick-test
+quick-test:
+	@echo "$(YELLOW)Running quick smoke tests...$(NC)"
+	cd isp-framework && make test-smoke-critical
+	cd management-platform && make test-smoke-critical
+
+.PHONY: full-check
+full-check: lint-all test-all security-all health-check
+	@echo "$(GREEN)✅ Full quality check completed$(NC)"

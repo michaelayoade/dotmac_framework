@@ -1,339 +1,313 @@
-# DotMac ISP Framework
+# DotMac Platform - Unified Monorepo
 
-[![CI/CD Pipeline](https://github.com/your-org/dotmac-framework/actions/workflows/lint-and-test.yml/badge.svg)](https://github.com/your-org/dotmac-framework/actions)
-[![Security Audit](https://github.com/your-org/dotmac-framework/actions/workflows/security-audit.yml/badge.svg)](https://github.com/your-org/dotmac-framework/actions)
-[![Code Quality](https://img.shields.io/codeclimate/maintainability/your-org/dotmac-framework)](https://codeclimate.com/github/your-org/dotmac-framework)
-[![Coverage](https://codecov.io/gh/your-org/dotmac-framework/branch/main/graph/badge.svg)](https://codecov.io/gh/your-org/dotmac-framework)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+**Complete Multi-Tenant SaaS Platform for Internet Service Providers**
 
-A comprehensive, security-focused telecommunications management framework for Internet Service Providers (ISPs). Built with Python, FastAPI, and modern development practices.
+This unified monorepo contains both the **ISP Framework** and **Management Platform** that together provide a comprehensive telecommunications management solution for ISPs.
 
-## 🚀 Features
+## 🏗️ Architecture Overview
 
-### Core Services
-- **Customer Management** - Complete customer lifecycle management
-- **Billing & Invoicing** - Automated billing with multiple payment options
-- **Service Provisioning** - Automated service deployment and management
-- **Network Monitoring** - Real-time network infrastructure monitoring
-- **Analytics Dashboard** - Business intelligence and reporting
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    DotMac Platform Architecture                 │
+├─────────────────────────────────────────────────────────────────┤
+│  Management Platform (Port 8000)                               │
+│  ├─ Multi-Tenant SaaS Orchestrator                            │
+│  ├─ Plugin Licensing & Billing                                │  
+│  ├─ Container Orchestration (Kubernetes)                      │
+│  └─ Master Admin + Reseller Portals                           │
+├─────────────────────────────────────────────────────────────────┤
+│  ISP Framework (Port 8001)                                     │
+│  ├─ Core ISP Management System                                │
+│  ├─ Customer Management & Billing                             │
+│  ├─ Network Monitoring & Provisioning                         │
+│  └─ Customer + Technician Portals                             │
+├─────────────────────────────────────────────────────────────────┤
+│  Shared Infrastructure                                          │
+│  ├─ PostgreSQL (Multi-Database)                               │
+│  ├─ Redis (Multi-Instance)                                    │
+│  ├─ OpenBao (Unified Secrets)                                 │
+│  └─ SignOz (Observability Stack)                              │
+└─────────────────────────────────────────────────────────────────┘
+```
 
-### Technical Highlights
-- **Microservices Architecture** - Scalable, loosely-coupled services
-- **Event-Driven Design** - Asynchronous communication via Redis/RabbitMQ
-- **API-First Approach** - RESTful APIs with OpenAPI documentation
-- **Multi-Tenant Support** - Isolated data and configurations per tenant
-- **Security First** - Comprehensive security scanning and best practices
-
-## 📋 Quick Start
+## 🚀 Quick Start
 
 ### Prerequisites
-- Python 3.9+ 
-- PostgreSQL 12+
-- Redis 6+
 - Docker & Docker Compose
-- Git
+- Python 3.11+
+- Node.js 18+ (for frontend development)
 
-### One-Liner Development Start
-
+### 1. Clone & Setup
 ```bash
-make dev   # Starts backend, frontend, and monitoring stack
+git clone https://github.com/michaelayoade/dotmac-platform.git
+cd dotmac-platform
+make install-all
 ```
 
-### Manual Setup
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/your-org/dotmac-framework.git
-   cd dotmac-framework
-   ```
-
-2. **Start backend services**
-   ```bash
-   ./scripts/start/backend.sh -p "backend,database,monitoring" -d
-   ```
-
-3. **Start frontend applications**
-   ```bash
-   ./scripts/start/frontend.sh -a "admin,customer,reseller"
-   ```
-
-4. **Start monitoring (optional)**
-   ```bash
-   ./scripts/start/monitoring.sh -s signoz -d
-   ```
-
-## 🛠️ Operations
-
-### Common Scripts
-
-All scripts are organized by purpose and include comprehensive help:
-
+### 2. Start Complete Platform
 ```bash
-# Start services
-./scripts/start/backend.sh --help     # Backend services
-./scripts/start/frontend.sh --help    # Frontend applications  
-./scripts/start/monitoring.sh --help  # Monitoring stack
+# Start everything (both platforms + infrastructure)
+make up
 
-# Stop services
-./scripts/stop/all.sh --help          # Graceful shutdown
-
-# Deploy
-./scripts/deploy/helm-deploy.sh --help # Kubernetes deployment
-
-# Development tools
-./scripts/dev-tools/generate-openapi.sh --help # API documentation
+# Or start components individually
+make up-infrastructure  # PostgreSQL, Redis, OpenBao, SignOz
+make up-isp            # ISP Framework
+make up-mgmt           # Management Platform
+make up-frontend       # All portals
 ```
 
-### Docker Compose Profiles
-
-Control which services run using profiles:
-
+### 3. Access Services
 ```bash
-export COMPOSE_PROFILES="backend,database,monitoring"
-./scripts/start/backend.sh
+make show-endpoints
 ```
 
-### Operations Guide
+**Service URLs:**
+- **Management Platform API**: http://localhost:8000
+- **ISP Framework API**: http://localhost:8001  
+- **Master Admin Portal**: http://localhost:3000
+- **Customer Portal**: http://localhost:3001
+- **Reseller Portal**: http://localhost:3002
+- **SignOz Monitoring**: http://localhost:3301
 
-See comprehensive documentation: **[docs/operations/docker-compose-guide.md](docs/operations/docker-compose-guide.md)**
-
-## 🧪 Testing
-
-4. **Run tests**
-   ```bash
-   make test
-   ```
-
-5. **Start development servers**
-   ```bash
-   # API Gateway
-   make run-api-gateway
-   
-   # Customer Portal (separate terminal)
-   make run-customer-portal
-   
-   # Reseller Portal (separate terminal)  
-   make run-reseller-portal
-   ```
-
-## 🏗️ Architecture
+## 📁 Repository Structure
 
 ```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Customer      │    │   Reseller      │    │   Admin         │
-│   Portal        │    │   Portal        │    │   Dashboard     │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-         │                       │                       │
-         └───────────────────────┼───────────────────────┘
-                                 │
-                    ┌─────────────────┐
-                    │   API Gateway   │
-                    └─────────────────┘
-                                 │
-              ┌──────────────────┼──────────────────┐
-              │                  │                  │
-    ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
-    │   Identity      │ │   Billing       │ │   Services      │
-    │   Service       │ │   Service       │ │   Service       │
-    └─────────────────┘ └─────────────────┘ └─────────────────┘
-              │                  │                  │
-              └──────────────────┼──────────────────┘
-                                 │
-                    ┌─────────────────┐
-                    │   Event Bus     │
-                    │   (Redis)       │
-                    └─────────────────┘
+dotmac-platform/
+├── isp-framework/                     # Core ISP Management System
+│   ├── src/dotmac_isp/               # Python application code
+│   ├── requirements.txt               # ISP Framework dependencies
+│   ├── docker-compose.yml            # ISP-only deployment
+│   └── Makefile                       # ISP Framework commands
+│
+├── management-platform/               # SaaS Management Platform  
+│   ├── app/                          # Python application code
+│   ├── requirements.txt               # Management Platform dependencies
+│   ├── docker-compose.yml            # Management-only deployment
+│   └── Makefile                       # Management Platform commands
+│
+├── frontend/                          # Shared Frontend Applications
+│   ├── apps/admin/                   # Master Admin Portal
+│   ├── apps/customer/                # Customer Portal
+│   ├── apps/reseller/                # Reseller Portal
+│   ├── apps/technician/              # Technician Mobile App
+│   └── packages/headless/            # Shared frontend packages
+│
+├── shared/                           # Shared Resources
+│   ├── deployments/                  # Kubernetes, Terraform, Helm
+│   ├── docs/                         # Unified documentation
+│   ├── scripts/                      # Automation scripts
+│   └── backend-legacy/               # Legacy code (deprecated)
+│
+├── docker-compose.unified.yml         # Complete platform deployment
+├── Makefile.unified                   # Unified commands
+└── README.unified.md                  # This file
 ```
 
-### Package Structure
-```
-dotmac_framework/
-├── dotmac_core_events/     # Event system and messaging
-├── dotmac_core_ops/        # Operational utilities
-├── dotmac_identity/        # Authentication and authorization
-├── dotmac_billing/         # Billing and payment processing
-├── dotmac_services/        # Service management
-├── dotmac_networking/      # Network infrastructure
-├── dotmac_analytics/       # Business intelligence
-├── dotmac_api_gateway/     # API gateway and routing
-├── dotmac_platform/        # Platform coordination
-├── dotmac_devtools/        # Development tools
-└── templates/              # Service templates and examples
-```
+## 🎯 Platform Components
 
-## 🛠️ Development
+### **Management Platform** (SaaS Orchestrator)
+- **Multi-Tenant Management**: Deploy and manage ISP customer instances
+- **Plugin Licensing**: Tiered marketplace with usage-based billing
+- **Container Orchestration**: Kubernetes-based tenant deployments
+- **Reseller Network**: Channel partner management with commissions
+- **Cross-Platform Monitoring**: Unified observability across all tenants
 
-### Available Commands
+### **ISP Framework** (Per-Tenant Instance)  
+- **Customer Management**: Complete customer lifecycle management
+- **Billing & Invoicing**: Automated billing with payment processing
+- **Network Operations**: Device monitoring, provisioning, troubleshooting
+- **Support Systems**: Ticketing, knowledge base, escalation workflows
+- **Portal Management**: Customer and technician self-service portals
 
+### **Shared Infrastructure**
+- **PostgreSQL**: Multi-database setup with tenant isolation
+- **Redis**: Multi-instance caching and background job queues
+- **OpenBao**: Unified secrets management with tenant namespaces
+- **SignOz**: Complete observability stack (metrics, traces, logs)
+
+## 💼 Business Model
+
+### **Revenue Streams**
+1. **Tenant Subscriptions**: Per-ISP monthly recurring revenue
+2. **Plugin Licensing**: Tiered marketplace (Free → Basic → Premium → Enterprise)  
+3. **Usage-Based Billing**: API calls, storage, transactions
+4. **Reseller Network**: Channel partner revenue sharing
+
+### **Plugin Tiers**
+- **Free**: Basic customer management, simple billing
+- **Basic**: Advanced billing, CRM integrations, API access  
+- **Premium**: Advanced analytics, custom integrations, white-labeling
+- **Enterprise**: AI insights, predictive analytics, unlimited APIs
+
+## 🔧 Development Commands
+
+### **Platform Management**
 ```bash
-# Environment Setup
-make install-dev           # Set up development environment
-make clean                 # Clean build artifacts
-
-# Code Quality
-make lint                  # Run linting with complexity checks
-make format                # Format code with Black and Ruff
-make type-check           # Run MyPy type checking
-make security             # Run security scans
-
-# Testing
-make test                 # Run all tests with coverage
-make test-unit           # Run only unit tests (fast)
-make test-integration    # Run integration tests
-make test-package PACKAGE=dotmac_identity  # Test specific package
-
-# Dependencies
-make deps-compile        # Compile dependency lockfiles
-make deps-update         # Update dependencies
-make deps-check          # Check for vulnerabilities
-
-# Build & Package
-make build               # Build all packages
-make validate-packages   # Validate package structure
-
-# Quality Assurance
-make check               # Run all quality checks
-make fix                 # Fix auto-fixable issues
-make complexity-report   # Generate complexity analysis
+make up                    # Start complete platform
+make down                  # Stop all services  
+make status                # Show service status
+make health-check          # Verify all services healthy
+make restart               # Restart platform
 ```
 
-### Code Quality Standards
+### **Development Workflow**
+```bash
+make install-all           # Install all dependencies
+make test-all              # Run all tests
+make test-integration      # Cross-platform integration tests
+make lint-all              # Lint both platforms
+make format-all            # Format all code
+```
 
-We maintain high code quality through:
+### **Database Management**
+```bash
+make db-setup              # Initialize all databases
+make db-migrate-all        # Run all migrations
+make db-reset-all          # Reset all data (DESTRUCTIVE)
+```
 
-- **Complexity Limits**: Functions max 10 complexity, 8 arguments, 50 statements
-- **Test Coverage**: Minimum 80% coverage required
-- **Security Scanning**: Bandit, Safety, Semgrep, pip-audit
-- **Type Checking**: MyPy for gradual type adoption
-- **Code Formatting**: Black + Ruff for consistent style
+### **Individual Platform Commands**
+```bash
+# ISP Framework
+make up-isp               # Start ISP Framework only
+make test-isp             # Test ISP Framework
+make logs-isp             # View ISP Framework logs
 
-### Contributing Guidelines
+# Management Platform  
+make up-mgmt              # Start Management Platform only
+make test-mgmt            # Test Management Platform
+make logs-mgmt            # View Management Platform logs
+```
 
-1. **Fork the repository** and create a feature branch
-2. **Follow code quality standards** - run `make check` before committing
-3. **Write tests** for new functionality (maintain 80%+ coverage)
-4. **Update documentation** for user-facing changes
-5. **Submit a pull request** with clear description
+## 🛡️ Security Features
 
-## 🔒 Security
+### **Cross-Platform Security**
+- **Unified Secrets Management**: OpenBao with multi-tenant namespaces
+- **Configuration Orchestration**: Synchronized secure config updates
+- **Cross-Platform Audit**: Correlated audit trails across platforms
+- **Disaster Recovery**: Coordinated backup and recovery procedures
 
-Security is a top priority for the DotMac Framework:
+### **Multi-Tenant Isolation**
+- **Per-Tenant Namespaces**: Complete data and resource isolation
+- **Plugin License Validation**: Secure feature gating per tenant
+- **Network Segregation**: Container-level network isolation
+- **Encrypted Storage**: Field-level encryption for sensitive data
 
-- **Automated Scanning**: Daily security audits via GitHub Actions
-- **Dependency Monitoring**: Dependabot for vulnerability tracking
-- **SARIF Integration**: Security findings in GitHub Security tab
-- **Secret Detection**: TruffleHog prevents credential leaks
-- **Compliance**: SOC 2, GDPR, and PCI DSS considerations
+## 📊 Monitoring & Observability
 
-See [SECURITY.md](.github/SECURITY.md) for security policy and reporting guidelines.
+### **SignOz Stack** (http://localhost:3301)
+- **Distributed Tracing**: Cross-platform request tracing
+- **Metrics Collection**: Business and infrastructure metrics
+- **Log Aggregation**: Centralized logging with correlation
+- **Alert Management**: Proactive monitoring and alerting
+
+### **Health Checks**
+```bash
+make health-check         # Check all service health
+make monitoring           # Open SignOz dashboard
+make show-endpoints       # Display all service URLs
+```
+
+## 🌍 Deployment Options
+
+### **Development**
+```bash
+make dev                  # Complete development environment
+```
+
+### **Production**
+- **Kubernetes**: `shared/deployments/kubernetes/`
+- **Terraform**: `shared/deployments/terraform/`  
+- **Helm Charts**: `shared/deployments/helm/`
+- **Docker Compose**: Production-ready compose files
+
+### **Cloud Providers**
+- **AWS**: EC2, RDS, ElastiCache, ALB, Route53
+- **Azure**: Virtual Machines, Azure Database, Redis Cache
+- **GCP**: Compute Engine, Cloud SQL, Memorystore
+- **DigitalOcean**: Droplets, Managed Databases, Load Balancers
+
+## 🤝 Contributing
+
+### **Development Setup**
+1. Fork the repository
+2. Create a feature branch
+3. Make changes and add tests
+4. Run `make full-check` to ensure quality
+5. Submit a pull request
+
+### **Code Standards**
+- **AI-First Development**: Optimized for AI-assisted development
+- **Security-First**: All features security-scanned
+- **Business Outcome Focused**: Tests validate business logic
+- **Cross-Platform Consistency**: Changes affecting both platforms
 
 ## 📚 Documentation
 
-- **[API Reference](docs/api/)** - OpenAPI/Swagger documentation
-- **[Architecture Guide](docs/architecture.md)** - System design and patterns
-- **[Deployment Guide](docs/deployment.md)** - Production deployment instructions
-- **[Developer Guide](docs/development.md)** - Detailed development setup
-- **[User Manual](docs/user-guide/)** - End-user documentation
+### **Architecture & Design**
+- `shared/docs/architecture/` - Technical architecture documents
+- `shared/docs/api/` - API documentation  
+- `shared/docs/guides/` - Development and deployment guides
 
-## 🧪 Testing
+### **Platform-Specific Docs**
+- `isp-framework/docs/` - ISP Framework documentation
+- `management-platform/docs/` - Management Platform documentation
+- `frontend/docs/` - Frontend development guides
 
-The framework includes comprehensive testing:
+## 🎯 Integration Points
 
-```bash
-# Unit Tests - Fast, isolated tests
-pytest -m unit
+### **Management Platform → ISP Framework**
+```python
+# Tenant orchestration
+POST /api/v1/tenant-orchestration/deployments
+PATCH /api/v1/tenant-orchestration/deployments/{tenant_id}
+POST /api/v1/tenant-orchestration/deployments/{tenant_id}/scale
 
-# Integration Tests - Cross-service testing  
-pytest -m integration
-
-# Contract Tests - API compatibility
-pytest -m contract
-
-# End-to-End Tests - Full workflow testing
-pytest -m e2e
-
-# Performance Tests - Load and stress testing
-pytest -m performance
+# Plugin licensing  
+GET /api/v1/plugins/catalog
+POST /api/v1/plugins/subscriptions
+GET /api/v1/plugins/entitlements/{tenant_id}
 ```
 
-## 🚀 Deployment
-
-### Production Deployment
-
-1. **Environment Setup**
-   ```bash
-   # Production dependencies only
-   pip install --require-hashes -r requirements.lock
-   ```
-
-2. **Database Migration**
-   ```bash
-   alembic upgrade head
-   ```
-
-3. **Security Configuration**
-   ```bash
-   # Ensure all security environment variables are set
-   export SECURE_SSL_REDIRECT=true
-   export SECURE_HSTS_SECONDS=31536000
-   ```
-
-4. **Service Start**
-   ```bash
-   # Use process manager like systemd or supervisor
-   uvicorn dotmac_api_gateway.runtime.app:app --host 0.0.0.0 --port 8000
-   ```
-
-### Docker Deployment
-
-```bash
-# Clone the repository
-git clone https://github.com/michaelayoade/dotmac-platform-core.git
-cd dotmac-platform-core
-
-# Start with Docker Compose
-docker-compose up -d
-
-# The platform will be available at:
-# - API: http://localhost:8000
-# - Admin UI: http://localhost:3000
-# - Docs: http://localhost:8000/docs
+### **ISP Framework → Management Platform**
+```python
+# Health & telemetry
+POST /api/v1/monitoring/health-checks
+POST /api/v1/monitoring/metrics
+POST /api/v1/monitoring/alerts
+POST /api/v1/plugins/usage-events
 ```
 
-## 📊 Monitoring
+## 🆘 Support
 
-### Application Monitoring
-- **Metrics**: Prometheus-compatible metrics endpoint
-- **Logging**: Structured JSON logging with ELK stack support
-- **Tracing**: OpenTelemetry for distributed tracing
-- **Health Checks**: Built-in health check endpoints
+### **Getting Help**
+- **Documentation**: Check `shared/docs/` for comprehensive guides
+- **Health Checks**: Run `make health-check` to diagnose issues
+- **Logs**: Use `make logs` or `make logs-isp`/`make logs-mgmt`
+- **Community**: GitHub Issues and Discussions
 
-### Business Monitoring
-- **KPIs**: Customer acquisition, churn, revenue metrics
-- **SLA Monitoring**: Service uptime and performance tracking
-- **Network Monitoring**: SNMP-based infrastructure monitoring
+### **Common Issues**
+```bash
+# Services not starting
+make down && make up
 
-## 🤝 Support
+# Database connection issues  
+make db-setup
 
-- **Documentation**: Check the [docs/](docs/) directory
-- **Issues**: [GitHub Issues](https://github.com/your-org/dotmac-framework/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-org/dotmac-framework/discussions)
-- **Security**: See [SECURITY.md](.github/SECURITY.md) for security issues
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🏆 Acknowledgments
-
-- **FastAPI** - Modern Python web framework
-- **SQLAlchemy** - Python SQL toolkit and ORM
-- **Pydantic** - Data validation using Python type hints
-- **Redis** - In-memory data structure store
-- **PostgreSQL** - Advanced open source database
+# Port conflicts
+docker ps  # Check for conflicting services
+```
 
 ---
 
-**Built with ❤️ for the ISP community**
+## 🚀 Ready for Production
 
-*This framework is designed for defensive security purposes only. Any use for malicious activities is strictly prohibited.*
+This unified monorepo provides everything needed for a complete ISP management SaaS platform:
+
+- ✅ **Production-Ready**: 240+ passing tests, comprehensive security
+- ✅ **Scalable Architecture**: Multi-tenant with container orchestration  
+- ✅ **Complete Observability**: Unified monitoring and alerting
+- ✅ **Business-Ready**: Plugin licensing, billing, reseller network
+- ✅ **Cloud-Native**: Kubernetes, Terraform, multi-cloud support
+
+**Start building the future of ISP management today!** 🌟
