@@ -81,7 +81,14 @@ def _register_module_routers(app: FastAPI) -> None:
 
     for module_path, router_name, prefix in module_routers:
         try:
-            module = __import__(module_path, fromlist=[router_name])
+            # Security: Validate module path is from trusted namespace
+            if not module_path.startswith('dotmac_isp.'):
+                logger.warning(f"Security: Blocked router import from untrusted module: {module_path}")
+                continue
+                
+            # Use importlib for safer importing
+            import importlib
+            module = importlib.import_module(module_path)
             router = getattr(module, router_name, None)
 
             if router:
@@ -111,7 +118,14 @@ def _register_portal_routers(app: FastAPI) -> None:
 
     for module_path, router_name, prefix in portal_routers:
         try:
-            module = __import__(module_path, fromlist=[router_name])
+            # Security: Validate module path is from trusted namespace
+            if not module_path.startswith('dotmac_isp.'):
+                logger.warning(f"Security: Blocked portal router import from untrusted module: {module_path}")
+                continue
+                
+            # Use importlib for safer importing
+            import importlib
+            module = importlib.import_module(module_path)
             router = getattr(module, router_name, None)
 
             if router:

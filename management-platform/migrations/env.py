@@ -12,8 +12,27 @@ from alembic import context
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
-# Import models to ensure they are registered
-from app.models import *
+# Import models to ensure they are registered - explicit imports for security
+from app.models.base import Base as ModelBase
+from app.models.billing import (
+    BillingAccount, Invoice, InvoiceItem, Payment, PaymentMethod,
+    Subscription, SubscriptionItem, UsageRecord, BillingEvent
+)
+from app.models.deployment import (
+    Deployment, DeploymentLog, Infrastructure, Resource
+)
+from app.models.monitoring import (
+    Alert, MetricData, MonitoringRule
+)
+from app.models.plugin import (
+    Plugin, PluginInstance, PluginConfiguration
+)
+from app.models.tenant import (
+    Tenant, TenantConfiguration, TenantResource, TenantUser
+)
+from app.models.user import (
+    User, UserSession, UserRole, Permission
+)
 from app.database import Base
 
 # this is the Alembic Config object

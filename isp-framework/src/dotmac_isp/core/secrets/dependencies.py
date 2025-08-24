@@ -15,7 +15,7 @@ MISSING_DEPENDENCIES = []
 
 def import_optional(module_name: str, package_name: str = None) -> Any | None:
     """
-    Import optional dependency with graceful fallback
+    Securely import optional dependency with graceful fallback
 
     Args:
         module_name: Name of module to import
@@ -23,9 +23,40 @@ def import_optional(module_name: str, package_name: str = None) -> Any | None:
 
     Returns:
         Imported module or None if not available
+    
+    Security:
+        Only allows importing from trusted module prefixes
     """
+    # Security allowlist for module imports
+    ALLOWED_MODULE_PREFIXES = (
+        'dotmac_isp',
+        'structlog', 
+        'pydantic',
+        'cryptography',
+        'jwt',
+        'sqlalchemy',
+        'redis',
+        'celery',
+        'fastapi',
+        'uvicorn',
+        'opentelemetry',
+        'hvac',  # HashiCorp Vault/OpenBao
+        'prometheus_client',
+        'psutil'
+    )
+    
+    # Security validation
+    if not module_name.startswith(ALLOWED_MODULE_PREFIXES):
+        import logging
+        logging.getLogger(__name__).warning(
+            f"Security: Blocked import of untrusted module: {module_name}"
+        )
+        return None
+    
     try:
-        return __import__(module_name)
+        # Use importlib for safer importing
+        import importlib
+        return importlib.import_module(module_name)
     except ImportError:
         pkg_name = package_name or module_name
         if pkg_name not in MISSING_DEPENDENCIES:
