@@ -2,62 +2,177 @@
 
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
-from uuid import uuid4
+from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status, Form
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import and_
 from pydantic import BaseModel, EmailStr
 
 from dotmac_isp.core.database import get_db
+from dotmac_isp.core.middleware import get_tenant_id_dependency
 from dotmac_isp.shared.auth import (
     verify_password,
-    hash_password,
     create_access_token,
     create_refresh_token,
     get_current_user,
-    get_current_tenant,
     verify_token,
 )
-from dotmac_isp.shared.enums import UserStatus
-from .models import User, UserRole
+from dotmac_isp.shared.exceptions import (
+    EntityNotFoundError,
+    ValidationError,
+    BusinessRuleError,
+    ServiceError,
+    AuthenticationError
+)
+from .service import CustomerService, UserService
+from . import schemas
 
 router = APIRouter(tags=["identity"])
+identity_router = router  # Standard export alias
 
 
-# Request/Response schemas
+# Authentication schemas
 class UserLogin(BaseModel):
     """User login request schema."""
-
     email: EmailStr
     password: str
-
-
-class UserRegister(BaseModel):
-    """User registration request schema."""
-
-    email: EmailStr
-    password: str
-    first_name: str
-    last_name: str
-    tenant_id: str = "default-tenant"
 
 
 class TokenResponse(BaseModel):
     """Token response schema."""
-
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
     expires_in: int
 
 
-class UserProfile(BaseModel):
-    """User profile response schema."""
+# Customer endpoints
+@router.post("/customers", response_model=schemas.CustomerResponse)
+async def create_customer(
+    data: schemas.CustomerCreate,
+    tenant_id: str = Depends(get_tenant_id_dependency),
+    db: Session = Depends(get_db),
+):
+    """Create new customer."""
+    try:
+        service = CustomerService(db, tenant_id)
+        return await service.create(data)
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=e.message)
+    except BusinessRuleError as e:
+        raise HTTPException(status_code=422, detail=e.message)
+    except ServiceError as e:
+        raise HTTPException(status_code=500, detail=e.message)
 
-    id: str
-    email: str
-    username: str
+
+@router.get("/customers", response_model=List[schemas.CustomerResponse])
+async def list_customers(
+    customer_type: Optional[str] = Query(None),
+    status: Optional[str] = Query(None),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    tenant_id: str = Depends(get_tenant_id_dependency),
+    db: Session = Depends(get_db),
+):
+    """List customers with optional filtering."""
+    try:
+        service = CustomerService(db, tenant_id)
+        filters = {}
+        if customer_type:
+            filters['customer_type'] = customer_type
+        if status:
+            filters['status'] = status
+        
+        return await service.list(
+            filters=filters,
+            limit=limit,
+            offset=skip
+        )
+    except ServiceError as e:
+        raise HTTPException(status_code=500, detail=e.message)
+
+
+@router.get("/customers/{customer_id}", response_model=schemas.CustomerResponse)
+async def get_customer(
+    customer_id: UUID,
+    tenant_id: str = Depends(get_tenant_id_dependency),
+    db: Session = Depends(get_db),
+):
+    """Get customer by ID."""
+    try:
+        service = CustomerService(db, tenant_id)
+        return await service.get_by_id_or_raise(customer_id)
+    except EntityNotFoundError as e:
+        raise HTTPException(status_code=404, detail=e.message)
+    except ServiceError as e:
+        raise HTTPException(status_code=500, detail=e.message)
+
+
+@router.put("/customers/{customer_id}", response_model=schemas.CustomerResponse)
+async def update_customer(
+    customer_id: UUID,
+    data: schemas.CustomerUpdate,
+    tenant_id: str = Depends(get_tenant_id_dependency),
+    db: Session = Depends(get_db),
+):
+    """Update customer."""
+    try:
+        service = CustomerService(db, tenant_id)
+        return await service.update(customer_id, data)
+    except EntityNotFoundError as e:
+        raise HTTPException(status_code=404, detail=e.message)
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=e.message)
+    except BusinessRuleError as e:
+        raise HTTPException(status_code=422, detail=e.message)
+    except ServiceError as e:
+        raise HTTPException(status_code=500, detail=e.message)
+
+
+# User endpoints
+@router.post("/users", response_model=schemas.UserResponse)
+async def create_user(
+    data: schemas.UserCreate,
+    tenant_id: str = Depends(get_tenant_id_dependency),
+    db: Session = Depends(get_db),
+):
+    """Create new user."""
+    try:
+        service = UserService(db, tenant_id)
+        return await service.create(data)
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=e.message)
+    except BusinessRuleError as e:
+        raise HTTPException(status_code=422, detail=e.message)
+    except ServiceError as e:
+        raise HTTPException(status_code=500, detail=e.message)
+
+
+@router.get("/users", response_model=List[schemas.UserResponse])
+async def list_users(
+    role: Optional[str] = Query(None),
+    is_active: Optional[bool] = Query(None),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    tenant_id: str = Depends(get_tenant_id_dependency),
+    db: Session = Depends(get_db),
+):
+    """List users with optional filtering."""
+    try:
+        service = UserService(db, tenant_id)
+        filters = {}
+        if role:
+            filters['role'] = role
+        if is_active is not None:
+            filters['is_active'] = is_active
+        
+        return await service.list(
+            filters=filters,
+            limit=limit,
+            offset=skip
+        )
+    except ServiceError as e:
+        raise HTTPException(status_code=500, detail=e.message)
     first_name: str
     last_name: str
     full_name: str

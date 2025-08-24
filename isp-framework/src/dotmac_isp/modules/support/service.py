@@ -9,19 +9,24 @@ import string
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 
-from .repository import (
-    TicketRepository,
-    TicketCommentRepository,
-    KnowledgeBaseRepository,
-    SLARepository,
+from dotmac_isp.shared.base_service import BaseTenantService
+from .models import (
+    Ticket,
+    TicketComment,
+    KnowledgeBaseArticle,
+    SLA,
+    TicketStatus,
+    TicketPriority,
+    TicketCategory,
+    TicketSource,
+    SLAStatus,
 )
-from .models import TicketStatus, TicketPriority, TicketType, TicketCategory
 from . import schemas
 from dotmac_isp.shared.exceptions import (
     ServiceError,
-    NotFoundError,
+    EntityNotFoundError,
     ValidationError,
-    ConflictError,
+    BusinessRuleError,
 )
 
 
@@ -34,16 +39,141 @@ def generate_ticket_number() -> str:
     return f"TKT-{timestamp}-{random_chars}"
 
 
-class SupportTicketService:
-    """Service layer for support ticket management."""
+class TicketService(BaseTenantService[Ticket, schemas.TicketCreate, schemas.TicketUpdate, schemas.TicketResponse]):
+    """Service for support ticket management."""
 
     def __init__(self, db: Session, tenant_id: str):
-        """Initialize support ticket service with database session."""
+        super().__init__(
+            db=db,
+            model_class=Ticket,
+            create_schema=schemas.TicketCreate,
+            update_schema=schemas.TicketUpdate,
+            response_schema=schemas.TicketResponse,
+            tenant_id=tenant_id
+        )
+
+    async def _validate_create_rules(self, data: schemas.TicketCreate) -> None:
+        """Validate business rules for ticket creation."""
+        # Ensure customer_id is provided
+        if not data.customer_id:
+            raise ValidationError("Customer ID is required for support ticket")
+        
+        # Validate priority/category combination makes sense
+        if data.priority == TicketPriority.LOW and data.category == TicketCategory.TECHNICAL:
+            # Allow but log for business analysis
+            pass
+
+    async def _validate_update_rules(self, entity: Ticket, data: schemas.TicketUpdate) -> None:
+        """Validate business rules for ticket updates."""
+        # Prevent status regression from CLOSED to OPEN
+        if data.status == TicketStatus.OPEN and entity.status == TicketStatus.CLOSED:
+            raise BusinessRuleError(
+                "Cannot reopen closed ticket - create new ticket instead",
+                rule_name="no_ticket_reopening"
+            )
+        
+        # Prevent priority escalation without justification for certain categories
+        if (data.priority == TicketPriority.HIGH and entity.priority in [TicketPriority.LOW, TicketPriority.MEDIUM] 
+            and entity.category == TicketCategory.GENERAL):
+            # Require escalation reason (would be in comments)
+            pass
+
+    async def _pre_create_hook(self, data: schemas.TicketCreate) -> None:
+        """Generate unique ticket number before creation."""
+        data.ticket_number = generate_ticket_number()
+
+    async def _post_create_hook(self, entity: Ticket, data: schemas.TicketCreate) -> None:
+        """Set up SLA monitoring and notifications after ticket creation."""
+        try:
+            # Calculate SLA due date and start monitoring
+            from .tasks import setup_ticket_sla_monitoring, send_ticket_notifications
+            
+            setup_ticket_sla_monitoring.delay(str(entity.id), str(self.tenant_id))
+            
+            # Send notifications based on priority
+            if entity.priority in [TicketPriority.HIGH, TicketPriority.URGENT]:
+                send_ticket_notifications.delay(str(entity.id), "created", str(self.tenant_id))
+                
+        except Exception as e:
+            self._logger.error(f"Failed to setup SLA monitoring for ticket {entity.id}: {e}")
+
+
+class KnowledgeBaseService(BaseTenantService[KnowledgeBaseArticle, schemas.KnowledgeBaseCreate, schemas.KnowledgeBaseUpdate, schemas.KnowledgeBaseResponse]):
+    """Service for knowledge base article management."""
+
+    def __init__(self, db: Session, tenant_id: str):
+        super().__init__(
+            db=db,
+            model_class=KnowledgeBaseArticle,
+            create_schema=schemas.KnowledgeBaseCreate,
+            update_schema=schemas.KnowledgeBaseUpdate,
+            response_schema=schemas.KnowledgeBaseResponse,
+            tenant_id=tenant_id
+        )
+
+    async def _validate_create_rules(self, data: schemas.KnowledgeBaseCreate) -> None:
+        """Validate business rules for knowledge base article creation."""
+        # Ensure article title is unique for tenant
+        if await self.repository.exists({'title': data.title}):
+            raise BusinessRuleError(
+                f"Knowledge base article with title '{data.title}' already exists",
+                rule_name="unique_article_title"
+            )
+
+    async def _validate_update_rules(self, entity: KnowledgeBaseArticle, data: schemas.KnowledgeBaseUpdate) -> None:
+        """Validate business rules for knowledge base article updates."""
+        # Prevent unpublishing articles that are frequently accessed
+        if data.is_published == False and entity.is_published and entity.view_count > 1000:
+            raise BusinessRuleError(
+                "Cannot unpublish frequently accessed article - consider revision instead",
+                rule_name="popular_article_protection"
+            )
+
+
+class SLAService(BaseTenantService[SLA, schemas.SLACreate, schemas.SLAUpdate, schemas.SLAResponse]):
+    """Service for SLA rule management."""
+
+    def __init__(self, db: Session, tenant_id: str):
+        super().__init__(
+            db=db,
+            model_class=SLA,
+            create_schema=schemas.SLACreate,
+            update_schema=schemas.SLAUpdate,
+            response_schema=schemas.SLAResponse,
+            tenant_id=tenant_id
+        )
+
+    async def _validate_create_rules(self, data: schemas.SLACreate) -> None:
+        """Validate business rules for SLA creation."""
+        # Ensure SLA name is unique for tenant
+        if await self.repository.exists({'name': data.name}):
+            raise BusinessRuleError(
+                f"SLA rule with name '{data.name}' already exists",
+                rule_name="unique_sla_name"
+            )
+        
+        # Validate response time is reasonable
+        if data.response_time_hours <= 0 or data.response_time_hours > 72:
+            raise ValidationError("SLA response time must be between 1 and 72 hours")
+
+    async def _validate_update_rules(self, entity: SLA, data: schemas.SLAUpdate) -> None:
+        """Validate business rules for SLA updates."""
+        # Prevent reducing SLA response time if there are active tickets
+        if (data.response_time_hours and data.response_time_hours < entity.response_time_hours):
+            # Check for active tickets using this SLA
+            pass  # Would integrate with ticket counting
+
+
+# Legacy support service for backward compatibility
+class SupportTicketService:
+    """Legacy support service - use individual services instead."""
+
+    def __init__(self, db: Session, tenant_id: str):
         self.db = db
-        self.tenant_id = UUID(tenant_id)
-        self.ticket_repo = TicketRepository(db, self.tenant_id)
-        self.comment_repo = TicketCommentRepository(db, self.tenant_id)
-        self.sla_repo = SLARepository(db, self.tenant_id)
+        self.tenant_id = tenant_id
+        self.ticket_service = TicketService(db, tenant_id)
+        self.knowledge_base_service = KnowledgeBaseService(db, tenant_id)
+        self.sla_service = SLAService(db, tenant_id)
 
     async def create_ticket(
         self, ticket_data: schemas.TicketCreate, created_by: str

@@ -8,15 +8,7 @@ from uuid import UUID, uuid4
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 
-from .repository import (
-    NetworkDeviceRepository,
-    NetworkInterfaceRepository,
-    NetworkLocationRepository,
-    NetworkMetricRepository,
-    NetworkAlertRepository,
-    DeviceConfigurationRepository,
-    NetworkTopologyRepository,
-)
+from dotmac_isp.shared.base_service import BaseTenantService
 from .models import (
     NetworkDevice,
     NetworkInterface,
@@ -32,19 +24,177 @@ from .models import (
     AlertType,
 )
 from . import schemas
-from dotmac_isp.shared.exceptions import NotFoundError, ValidationError, ServiceError
+from dotmac_isp.shared.exceptions import (
+    EntityNotFoundError,
+    ValidationError,
+    BusinessRuleError,
+    ServiceError
+)
 
 
-class NetworkDeviceService:
+class NetworkDeviceService(BaseTenantService[NetworkDevice, schemas.NetworkDeviceCreate, schemas.NetworkDeviceUpdate, schemas.NetworkDeviceResponse]):
     """Service for network device management."""
 
     def __init__(self, db: Session, tenant_id: str):
+        super().__init__(
+            db=db,
+            model_class=NetworkDevice,
+            create_schema=schemas.NetworkDeviceCreate,
+            update_schema=schemas.NetworkDeviceUpdate,
+            response_schema=schemas.NetworkDeviceResponse,
+            tenant_id=tenant_id
+        )
+
+    async def _validate_create_rules(self, data: schemas.NetworkDeviceCreate) -> None:
+        """Validate business rules for network device creation."""
+        # Validate IP address format
+        if data.management_ip:
+            try:
+                ipaddress.ip_address(data.management_ip)
+            except ValueError:
+                raise ValidationError("Invalid management IP address format")
+        
+        # Check for duplicate management IP
+        if data.management_ip and await self.repository.exists({'management_ip': data.management_ip}):
+            raise BusinessRuleError(
+                f"Device with management IP {data.management_ip} already exists",
+                rule_name="unique_management_ip"
+            )
+        
+        # Validate SNMP configuration
+        if data.snmp_enabled and not data.snmp_community:
+            raise ValidationError("SNMP community is required when SNMP is enabled")
+
+    async def _validate_update_rules(self, entity: NetworkDevice, data: schemas.NetworkDeviceUpdate) -> None:
+        """Validate business rules for network device updates."""
+        # Validate IP address if being changed
+        if data.management_ip and data.management_ip != entity.management_ip:
+            try:
+                ipaddress.ip_address(data.management_ip)
+            except ValueError:
+                raise ValidationError("Invalid management IP address format")
+            
+            # Check for duplicate
+            if await self.repository.exists({'management_ip': data.management_ip}):
+                raise BusinessRuleError(
+                    f"Device with management IP {data.management_ip} already exists",
+                    rule_name="unique_management_ip"
+                )
+
+    async def _post_create_hook(self, entity: NetworkDevice, data: schemas.NetworkDeviceCreate) -> None:
+        """Initialize device monitoring after creation."""
+        try:
+            # Start SNMP monitoring if enabled
+            if entity.snmp_enabled:
+                from .tasks import start_device_monitoring
+                start_device_monitoring.delay(str(entity.id), str(self.tenant_id))
+                
+        except Exception as e:
+            self._logger.error(f"Failed to start monitoring for device {entity.id}: {e}")
+
+
+class NetworkInterfaceService(BaseTenantService[NetworkInterface, schemas.NetworkInterfaceCreate, schemas.NetworkInterfaceUpdate, schemas.NetworkInterfaceResponse]):
+    """Service for network interface management."""
+
+    def __init__(self, db: Session, tenant_id: str):
+        super().__init__(
+            db=db,
+            model_class=NetworkInterface,
+            create_schema=schemas.NetworkInterfaceCreate,
+            update_schema=schemas.NetworkInterfaceUpdate,
+            response_schema=schemas.NetworkInterfaceResponse,
+            tenant_id=tenant_id
+        )
+
+    async def _validate_create_rules(self, data: schemas.NetworkInterfaceCreate) -> None:
+        """Validate business rules for network interface creation."""
+        # Ensure device exists
+        if not data.device_id:
+            raise ValidationError("Device ID is required for network interface")
+        
+        # Check for duplicate interface name on same device
+        if await self.repository.exists({'device_id': data.device_id, 'name': data.name}):
+            raise BusinessRuleError(
+                f"Interface '{data.name}' already exists on device",
+                rule_name="unique_interface_name_per_device"
+            )
+
+    async def _validate_update_rules(self, entity: NetworkInterface, data: schemas.NetworkInterfaceUpdate) -> None:
+        """Validate business rules for network interface updates."""
+        # Prevent changes to critical interfaces
+        if entity.is_critical and data.status == InterfaceStatus.DOWN:
+            raise BusinessRuleError(
+                "Cannot disable critical network interface",
+                rule_name="critical_interface_protection"
+            )
+
+
+class NetworkMetricService(BaseTenantService[NetworkMetric, schemas.NetworkMetricCreate, schemas.NetworkMetricUpdate, schemas.NetworkMetricResponse]):
+    """Service for network metrics management."""
+
+    def __init__(self, db: Session, tenant_id: str):
+        super().__init__(
+            db=db,
+            model_class=NetworkMetric,
+            create_schema=schemas.NetworkMetricCreate,
+            update_schema=schemas.NetworkMetricUpdate,
+            response_schema=schemas.NetworkMetricResponse,
+            tenant_id=tenant_id
+        )
+
+    async def _validate_create_rules(self, data: schemas.NetworkMetricCreate) -> None:
+        """Validate business rules for network metric creation."""
+        if not data.device_id:
+            raise ValidationError("Device ID is required for network metric")
+        
+        # Validate metric value ranges
+        if data.cpu_usage and (data.cpu_usage < 0 or data.cpu_usage > 100):
+            raise ValidationError("CPU usage must be between 0 and 100")
+        
+        if data.memory_usage and (data.memory_usage < 0 or data.memory_usage > 100):
+            raise ValidationError("Memory usage must be between 0 and 100")
+
+
+class NetworkAlertService(BaseTenantService[NetworkAlert, schemas.NetworkAlertCreate, schemas.NetworkAlertUpdate, schemas.NetworkAlertResponse]):
+    """Service for network alert management."""
+
+    def __init__(self, db: Session, tenant_id: str):
+        super().__init__(
+            db=db,
+            model_class=NetworkAlert,
+            create_schema=schemas.NetworkAlertCreate,
+            update_schema=schemas.NetworkAlertUpdate,
+            response_schema=schemas.NetworkAlertResponse,
+            tenant_id=tenant_id
+        )
+
+    async def _validate_create_rules(self, data: schemas.NetworkAlertCreate) -> None:
+        """Validate business rules for network alert creation."""
+        if not data.device_id:
+            raise ValidationError("Device ID is required for network alert")
+
+    async def _post_create_hook(self, entity: NetworkAlert, data: schemas.NetworkAlertCreate) -> None:
+        """Send alert notifications after creation."""
+        try:
+            if entity.severity in [AlertSeverity.HIGH, AlertSeverity.CRITICAL]:
+                from .tasks import send_alert_notification
+                send_alert_notification.delay(str(entity.id), str(self.tenant_id))
+                
+        except Exception as e:
+            self._logger.error(f"Failed to send notification for alert {entity.id}: {e}")
+
+
+# Legacy service for backward compatibility
+class NetworkIntegrationService:
+    """Legacy network integration service - use individual services instead."""
+
+    def __init__(self, db: Session, tenant_id: str):
         self.db = db
-        self.tenant_id = UUID(tenant_id)
-        self.device_repo = NetworkDeviceRepository(db, self.tenant_id)
-        self.interface_repo = NetworkInterfaceRepository(db, self.tenant_id)
-        self.metric_repo = NetworkMetricRepository(db, self.tenant_id)
-        self.alert_repo = NetworkAlertRepository(db, self.tenant_id)
+        self.tenant_id = tenant_id
+        self.device_service = NetworkDeviceService(db, tenant_id)
+        self.interface_service = NetworkInterfaceService(db, tenant_id)
+        self.metric_service = NetworkMetricService(db, tenant_id)
+        self.alert_service = NetworkAlertService(db, tenant_id)
 
     async def create_device(self, device_data: Dict[str, Any]) -> NetworkDevice:
         """Create a new network device."""

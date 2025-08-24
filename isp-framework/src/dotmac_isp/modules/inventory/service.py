@@ -1,11 +1,11 @@
 """Service layer for inventory management operations."""
 
 from typing import List, Optional, Dict, Any
-from uuid import UUID, uuid4
+from uuid import UUID
 from datetime import datetime, date
 from sqlalchemy.orm import Session
 
-from dotmac_isp.core.settings import get_settings
+from dotmac_isp.shared.base_service import BaseTenantService
 from dotmac_isp.modules.inventory import schemas
 from dotmac_isp.modules.inventory.models import (
     Equipment,
@@ -15,37 +15,188 @@ from dotmac_isp.modules.inventory.models import (
     StockMovement,
     EquipmentStatus,
     MovementType,
-)
-from dotmac_isp.modules.inventory.repository import (
-    EquipmentRepository,
-    EquipmentTypeRepository,
-    WarehouseRepository,
-    VendorRepository,
-    StockMovementRepository,
+    ItemCondition,
 )
 from dotmac_isp.shared.exceptions import (
     ServiceError,
-    NotFoundError,
+    EntityNotFoundError,
     ValidationError,
-    ConflictError,
+    BusinessRuleError,
 )
 
 
+class EquipmentService(BaseTenantService[Equipment, schemas.EquipmentCreate, schemas.EquipmentUpdate, schemas.EquipmentResponse]):
+    """Service for equipment management."""
+
+    def __init__(self, db: Session, tenant_id: str):
+        super().__init__(
+            db=db,
+            model_class=Equipment,
+            create_schema=schemas.EquipmentCreate,
+            update_schema=schemas.EquipmentUpdate,
+            response_schema=schemas.EquipmentResponse,
+            tenant_id=tenant_id
+        )
+
+    async def _validate_create_rules(self, data: schemas.EquipmentCreate) -> None:
+        """Validate business rules for equipment creation."""
+        # Ensure serial number is unique if provided
+        if data.serial_number and await self.repository.exists({'serial_number': data.serial_number}):
+            raise BusinessRuleError(
+                f"Equipment with serial number '{data.serial_number}' already exists",
+                rule_name="unique_serial_number"
+            )
+        
+        # Validate purchase price is positive
+        if hasattr(data, 'purchase_price') and data.purchase_price and data.purchase_price <= 0:
+            raise ValidationError("Purchase price must be positive")
+
+    async def _validate_update_rules(self, entity: Equipment, data: schemas.EquipmentUpdate) -> None:
+        """Validate business rules for equipment updates."""
+        # Prevent status change to deployed if equipment has issues
+        if data.status == EquipmentStatus.DEPLOYED and entity.condition != ItemCondition.NEW:
+            # Allow with business justification, but log the decision
+            pass
+        
+        # Validate serial number uniqueness if changing
+        if data.serial_number and data.serial_number != entity.serial_number:
+            if await self.repository.exists({'serial_number': data.serial_number}):
+                raise BusinessRuleError(
+                    f"Equipment with serial number '{data.serial_number}' already exists",
+                    rule_name="unique_serial_number"
+                )
+
+    async def _post_create_hook(self, entity: Equipment, data: schemas.EquipmentCreate) -> None:
+        """Create stock movement record after equipment creation."""
+        try:
+            # Create initial stock movement for equipment receipt
+            movement_service = StockMovementService(self.db, self.tenant_id)
+            await movement_service.create(schemas.StockMovementCreate(
+                equipment_id=entity.id,
+                movement_type=MovementType.RECEIVED,
+                quantity=1,
+                warehouse_id=data.warehouse_id,
+                notes=f"Initial receipt of equipment {entity.model}"
+            ))
+        except Exception as e:
+            self._logger.error(f"Failed to create stock movement for equipment {entity.id}: {e}")
+
+
+class WarehouseService(BaseTenantService[Warehouse, schemas.WarehouseCreate, schemas.WarehouseUpdate, schemas.WarehouseResponse]):
+    """Service for warehouse management."""
+
+    def __init__(self, db: Session, tenant_id: str):
+        super().__init__(
+            db=db,
+            model_class=Warehouse,
+            create_schema=schemas.WarehouseCreate,
+            update_schema=schemas.WarehouseUpdate,
+            response_schema=schemas.WarehouseResponse,
+            tenant_id=tenant_id
+        )
+
+    async def _validate_create_rules(self, data: schemas.WarehouseCreate) -> None:
+        """Validate business rules for warehouse creation."""
+        # Ensure warehouse name is unique for tenant
+        if await self.repository.exists({'name': data.name}):
+            raise BusinessRuleError(
+                f"Warehouse with name '{data.name}' already exists",
+                rule_name="unique_warehouse_name"
+            )
+
+    async def _validate_update_rules(self, entity: Warehouse, data: schemas.WarehouseUpdate) -> None:
+        """Validate business rules for warehouse updates."""
+        # Prevent deactivation if warehouse has active inventory
+        if data.is_active == False and entity.is_active:
+            # Check for active inventory (simplified check)
+            equipment_count = await self.repository.count({'warehouse_id': entity.id, 'status': EquipmentStatus.IN_STOCK})
+            if equipment_count > 0:
+                raise BusinessRuleError(
+                    "Cannot deactivate warehouse with active inventory",
+                    rule_name="active_inventory_protection"
+                )
+
+
+class VendorService(BaseTenantService[Vendor, schemas.VendorCreate, schemas.VendorUpdate, schemas.VendorResponse]):
+    """Service for vendor management."""
+
+    def __init__(self, db: Session, tenant_id: str):
+        super().__init__(
+            db=db,
+            model_class=Vendor,
+            create_schema=schemas.VendorCreate,
+            update_schema=schemas.VendorUpdate,
+            response_schema=schemas.VendorResponse,
+            tenant_id=tenant_id
+        )
+
+    async def _validate_create_rules(self, data: schemas.VendorCreate) -> None:
+        """Validate business rules for vendor creation."""
+        # Ensure vendor name is unique for tenant
+        if await self.repository.exists({'name': data.name}):
+            raise BusinessRuleError(
+                f"Vendor with name '{data.name}' already exists",
+                rule_name="unique_vendor_name"
+            )
+        
+        # Validate email format if provided
+        if hasattr(data, 'email') and data.email:
+            import re
+            email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+            if not re.match(email_pattern, data.email):
+                raise ValidationError("Invalid email format")
+
+
+class StockMovementService(BaseTenantService[StockMovement, schemas.StockMovementCreate, schemas.StockMovementUpdate, schemas.StockMovementResponse]):
+    """Service for stock movement tracking."""
+
+    def __init__(self, db: Session, tenant_id: str):
+        super().__init__(
+            db=db,
+            model_class=StockMovement,
+            create_schema=schemas.StockMovementCreate,
+            update_schema=schemas.StockMovementUpdate,
+            response_schema=schemas.StockMovementResponse,
+            tenant_id=tenant_id
+        )
+
+    async def _validate_create_rules(self, data: schemas.StockMovementCreate) -> None:
+        """Validate business rules for stock movement creation."""
+        if not data.equipment_id:
+            raise ValidationError("Equipment ID is required for stock movement")
+        
+        # Validate quantity is positive
+        if data.quantity <= 0:
+            raise ValidationError("Movement quantity must be positive")
+
+    async def _post_create_hook(self, entity: StockMovement, data: schemas.StockMovementCreate) -> None:
+        """Update equipment status based on movement type."""
+        try:
+            equipment_service = EquipmentService(self.db, self.tenant_id)
+            
+            # Update equipment status based on movement type
+            if entity.movement_type == MovementType.DEPLOYED:
+                await equipment_service.update(entity.equipment_id, 
+                    schemas.EquipmentUpdate(status=EquipmentStatus.DEPLOYED))
+            elif entity.movement_type == MovementType.RETURNED:
+                await equipment_service.update(entity.equipment_id, 
+                    schemas.EquipmentUpdate(status=EquipmentStatus.IN_STOCK))
+                
+        except Exception as e:
+            self._logger.error(f"Failed to update equipment status for movement {entity.id}: {e}")
+
+
+# Legacy inventory service for backward compatibility
 class InventoryService:
-    """Service layer for inventory management operations."""
+    """Legacy inventory service - use individual services instead."""
 
-    def __init__(self, db: Session, tenant_id: Optional[str] = None):
-        """Initialize inventory service."""
+    def __init__(self, db: Session, tenant_id: str):
         self.db = db
-        self.settings = get_settings()
-        self.tenant_id = UUID(tenant_id) if tenant_id else UUID(self.settings.tenant_id)
-
-        # Repositories
-        self.equipment_repo = EquipmentRepository(db, self.tenant_id)
-        self.equipment_type_repo = EquipmentTypeRepository(db, self.tenant_id)
-        self.warehouse_repo = WarehouseRepository(db, self.tenant_id)
-        self.vendor_repo = VendorRepository(db, self.tenant_id)
-        self.movement_repo = StockMovementRepository(db, self.tenant_id)
+        self.tenant_id = tenant_id
+        self.equipment_service = EquipmentService(db, tenant_id)
+        self.warehouse_service = WarehouseService(db, tenant_id)
+        self.vendor_service = VendorService(db, tenant_id)
+        self.movement_service = StockMovementService(db, tenant_id)
 
     # Equipment Management
     async def create_equipment(

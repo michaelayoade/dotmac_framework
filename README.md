@@ -1,73 +1,112 @@
-# DotMac Platform - Unified Monorepo
+# 🚀 DotMac SaaS Platform - ISP Management at Scale
 
-**Complete Multi-Tenant SaaS Platform for Internet Service Providers**
+**Complete SaaS Platform for Internet Service Providers - Usage-Based Pricing**
 
-This unified monorepo contains both the **ISP Framework** and **Management Platform** that together provide a comprehensive telecommunications management solution for ISPs.
+**DotMac is a container-per-tenant SaaS platform** where ISPs get dedicated, isolated instances for managing their operations. ISPs pay per-customer pricing plus optional premium feature bundles. Each ISP gets their own secure container with complete operational independence.
 
-## 🏗️ Architecture Overview
+**Perfect for ISPs with 50-10,000 customers** - from rural WISPs to regional cable providers.
+
+## 🏗️ SaaS Container-per-Tenant Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    DotMac Platform Architecture                 │
+│                 DotMac SaaS Platform Architecture              │
 ├─────────────────────────────────────────────────────────────────┤
-│  Management Platform (Port 8000)                               │
-│  ├─ Multi-Tenant SaaS Orchestrator                            │
-│  ├─ Plugin Licensing & Billing                                │  
-│  ├─ Container Orchestration (Kubernetes)                      │
-│  └─ Master Admin + Reseller Portals                           │
+│  🎛️  Management Platform (You Operate)                        │
+│  ├─ Tenant Management & Usage-Based Customer Billing         │
+│  ├─ Container-per-ISP Provisioning (4min setup)              │  
+│  ├─ Vendor/Reseller Partner Network                           │
+│  └─ Premium Bundle Marketplace                                │
 ├─────────────────────────────────────────────────────────────────┤
-│  ISP Framework (Port 8001)                                     │
-│  ├─ Core ISP Management System                                │
-│  ├─ Customer Management & Billing                             │
-│  ├─ Network Monitoring & Provisioning                         │
-│  └─ Customer + Technician Portals                             │
+│  📦 Per-ISP Containers (Auto-Scaled)                          │
+│  ├─ 🏢 ISP Alpha: 500 customers → Competitive monthly rate   │
+│  ├─ 🏢 ISP Beta: 1,500 customers → Scaled pricing            │
+│  ├─ 🏢 ISP Gamma: 3,000 customers → Enterprise pricing       │
+│  └─ ⚡ Auto-scaling based on customer count                   │
 ├─────────────────────────────────────────────────────────────────┤
-│  Shared Infrastructure                                          │
-│  ├─ PostgreSQL (Multi-Database)                               │
-│  ├─ Redis (Multi-Instance)                                    │
-│  ├─ OpenBao (Unified Secrets)                                 │
-│  └─ SignOz (Observability Stack)                              │
+│  🔧 Shared SaaS Infrastructure                                │
+│  ├─ Container Management (Docker, not K8s for ISPs)          │
+│  ├─ Centralized Monitoring (SignOz)                          │
+│  ├─ Multi-Tenant Database Isolation                          │
+│  └─ Automated Backup & Recovery                               │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
+### 💰 **Business Model**
+- **Usage-Based Pricing**: Per-customer monthly fee (competitive rates)
+- **Premium Bundles**: $50-300/month (CRM, Project Management, AI Chatbot)
+- **Partner Network**: Commission-based vendor/reseller program
+- **Target Market**: ISPs with 50-10,000 customers
+
 ## 🚀 Quick Start
 
-### Prerequisites
-- Docker & Docker Compose
-- Python 3.11+
-- Node.js 18+ (for frontend development)
+### Prerequisites (SaaS Platform Owner)
+- Docker & Docker Compose (for container-per-tenant management)
+- Python 3.11+ (Management Platform)
+- Node.js 18+ (Partner & Admin Portals)
+- PostgreSQL 15+ (Multi-tenant database)
+- Redis 7+ (Shared caching layer)
 
-### 1. Clone & Setup
+### 1. SaaS Platform Setup (For You - Platform Owner)
 ```bash
-git clone https://github.com/michaelayoade/dotmac-platform.git
-cd dotmac-platform
-make install-all
+git clone https://github.com/your-org/dotmac-saas-platform.git
+cd dotmac-saas-platform
+
+# Setup SaaS platform infrastructure
+make setup-saas-platform
+
+# Start Management Platform + Infrastructure
+make start-platform
 ```
 
-### 2. Start Complete Platform
-```bash
-# Start everything (both platforms + infrastructure)
-make up
+**Platform Owner Setup** includes:
+- Management Platform API for tenant provisioning
+- Container orchestration for ISP tenants
+- Usage-based billing system with accurate customer tracking
+- Partner portal for vendor/reseller network
+- Monitoring dashboard for all ISP tenants
 
-# Or start components individually
-make up-infrastructure  # PostgreSQL, Redis, OpenBao, SignOz
-make up-isp            # ISP Framework
-make up-mgmt           # Management Platform
-make up-frontend       # All portals
+### 2. Alternative Setup Methods
+
+#### For Backend Development Only
+```bash
+make dev-backend    # ISP + Management Platform only
 ```
 
-### 3. Access Services
+#### For Frontend Development Only  
 ```bash
+make dev-frontend   # Portals + minimal backend
+```
+
+#### For Lightweight Development
+```bash
+make dev-simple     # ISP Framework + infrastructure only
+```
+
+### 3. Verify Setup
+```bash
+# Check all services are healthy
+make health-check
+
+# View service URLs
 make show-endpoints
 ```
 
-**Service URLs:**
-- **Management Platform API**: http://localhost:8000
-- **ISP Framework API**: http://localhost:8001  
-- **Master Admin Portal**: http://localhost:3000
-- **Customer Portal**: http://localhost:3001
-- **Reseller Portal**: http://localhost:3002
-- **SignOz Monitoring**: http://localhost:3301
+### 🆘 If Something Goes Wrong
+- Check `OPERATIONAL_RUNBOOKS.md` for troubleshooting
+- Run `make restart` to restart everything
+- Run `make health-check` to diagnose issues
+
+**SaaS Platform URLs (Platform Owner):**
+- **🎛️ Management API**: http://localhost:8000 (tenant provisioning, billing)
+- **👨‍💼 Platform Admin**: http://localhost:3000 (manage all ISP tenants)
+- **🤝 Partner Portal**: http://localhost:3002 (vendor/reseller dashboard)
+- **📊 Fleet Monitoring**: http://localhost:3301 (monitor all ISP containers)
+
+**ISP Tenant URLs (Each ISP gets their own):**
+- **ISP-Alpha Container**: https://isp-alpha.dotmac.io
+- **ISP-Beta Container**: https://isp-beta.dotmac.io
+- **ISP-Gamma Container**: https://isp-gamma.dotmac.io
 
 ## 📁 Repository Structure
 
@@ -244,15 +283,25 @@ make dev                  # Complete development environment
 
 ## 📚 Documentation
 
+### **🎯 Start Here**
+- **[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)** - Complete deployment guide with decision matrix
+- **[OPERATIONAL_RUNBOOKS.md](OPERATIONAL_RUNBOOKS.md)** - Common scenarios and troubleshooting
+- **[README.md](README.md)** - This file (overview and quick start)
+
 ### **Architecture & Design**
-- `shared/docs/architecture/` - Technical architecture documents
-- `shared/docs/api/` - API documentation  
+- `shared/docs/ARCHITECTURE.md` - Technical architecture documentation
+- `shared/docs/api/` - API documentation and OpenAPI specs
 - `shared/docs/guides/` - Development and deployment guides
 
 ### **Platform-Specific Docs**
-- `isp-framework/docs/` - ISP Framework documentation
-- `management-platform/docs/` - Management Platform documentation
-- `frontend/docs/` - Frontend development guides
+- `isp-framework/README.md` - ISP Framework specific documentation
+- `management-platform/README.md` - Management Platform specific documentation  
+- `frontend/README.md` - Frontend development guides
+
+### **Configuration**
+- `.env.example` - Complete environment configuration template
+- `.env.development` - Development-specific configuration
+- `env-setup.sh` - Interactive environment setup script
 
 ## 🎯 Integration Points
 

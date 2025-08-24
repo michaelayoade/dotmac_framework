@@ -8,8 +8,8 @@ services:
     image: postgres:15-alpine
     container_name: dotmac-postgres-shared
     environment:
-      POSTGRES_USER: dotmac_admin
-      POSTGRES_PASSWORD: dotmac_admin_password
+      POSTGRES_USER: ${POSTGRES_USER:-dotmac_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_MULTIPLE_DATABASES: "dotmac_isp,mgmt_platform,dotmac_tenants,dotmac_analytics"
     volumes:
       - postgres_shared_data:/var/lib/postgresql/data
@@ -28,7 +28,7 @@ services:
   redis-shared:
     image: redis:7-alpine
     container_name: dotmac-redis-shared
-    command: redis-server --appendonly yes --requirepass dotmac_redis_password --databases 16
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD} --databases 16
     volumes:
       - redis_shared_data:/data
     ports:
@@ -48,7 +48,7 @@ services:
     cap_add:
       - IPC_LOCK
     environment:
-      BAO_DEV_ROOT_TOKEN_ID: dotmac-root-token-change-in-production
+      BAO_DEV_ROOT_TOKEN_ID: ${VAULT_TOKEN}
       BAO_DEV_LISTEN_ADDRESS: "0.0.0.0:8200"
       BAO_LOG_LEVEL: info
     ports:
@@ -74,7 +74,7 @@ services:
     environment:
       CLICKHOUSE_DB: signoz_metrics
       CLICKHOUSE_USER: signoz
-      CLICKHOUSE_PASSWORD: signoz_password
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
       CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
     volumes:
       - clickhouse_data:/var/lib/clickhouse
@@ -98,7 +98,7 @@ services:
       - ./shared/deployments/signoz/otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
     environment:
       CLICKHOUSE_HOST: clickhouse
-      CLICKHOUSE_PASSWORD: signoz_password
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
     ports:
       - "4317:4317"   # OTLP gRPC
       - "4318:4318"   # OTLP HTTP
@@ -115,7 +115,7 @@ services:
     environment:
       ClickHouseUrl: tcp://clickhouse:9000
       CLICKHOUSE_USER: signoz
-      CLICKHOUSE_PASSWORD: signoz_password
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
       STORAGE: clickhouse
       TELEMETRY_ENABLED: "false"
     ports:
@@ -149,15 +149,15 @@ services:
     container_name: dotmac-isp-framework
     environment:
       # Database
-      DATABASE_URL: postgresql+asyncpg://dotmac_admin:dotmac_admin_password@postgres-shared:5432/dotmac_isp
+      DATABASE_URL: postgresql+asyncpg://dotmac_admin:${POSTGRES_PASSWORD}@postgres-shared:5432/dotmac_isp
       # Redis
-      REDIS_URL: redis://:dotmac_redis_password@redis-shared:6379/0
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis-shared:6379/0
       # Celery
-      CELERY_BROKER_URL: redis://:dotmac_redis_password@redis-shared:6379/1
-      CELERY_RESULT_BACKEND: redis://:dotmac_redis_password@redis-shared:6379/2
+      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD}@redis-shared:6379/1
+      CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD}@redis-shared:6379/2
       # OpenBao
       VAULT_URL: http://openbao-shared:8200
-      VAULT_TOKEN: dotmac-root-token-change-in-production
+      VAULT_TOKEN: ${VAULT_TOKEN}
       # SignOz
       SIGNOZ_ENDPOINT: signoz-collector:4317
       # Application
@@ -188,23 +188,23 @@ services:
     container_name: dotmac-management-platform
     environment:
       # Database
-      DATABASE_URL: postgresql+asyncpg://dotmac_admin:dotmac_admin_password@postgres-shared:5432/mgmt_platform
+      DATABASE_URL: postgresql+asyncpg://dotmac_admin:${POSTGRES_PASSWORD}@postgres-shared:5432/mgmt_platform
       # Redis
-      REDIS_URL: redis://:dotmac_redis_password@redis-shared:6379/3
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis-shared:6379/3
       # Celery
-      CELERY_BROKER_URL: redis://:dotmac_redis_password@redis-shared:6379/4
-      CELERY_RESULT_BACKEND: redis://:dotmac_redis_password@redis-shared:6379/5
+      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD}@redis-shared:6379/4
+      CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD}@redis-shared:6379/5
       # OpenBao
       VAULT_URL: http://openbao-shared:8200
-      VAULT_TOKEN: dotmac-root-token-change-in-production
+      VAULT_TOKEN: ${VAULT_TOKEN}
       # SignOz
       SIGNOZ_ENDPOINT: signoz-collector:4317
       SIGNOZ_ACCESS_TOKEN: ${SIGNOZ_ACCESS_TOKEN:-}
       # Application
       ENVIRONMENT: development
       LOG_LEVEL: INFO
-      SECRET_KEY: mgmt-secret-key-change-in-production
-      JWT_SECRET_KEY: mgmt-jwt-secret-change-in-production
+      SECRET_KEY: ${MGMT_SECRET_KEY}
+      JWT_SECRET_KEY: ${MGMT_JWT_SECRET_KEY}
       # External services
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-sk_test_placeholder}
       SENDGRID_API_KEY: ${SENDGRID_API_KEY:-sg_placeholder}
@@ -238,12 +238,12 @@ services:
       target: development
     container_name: dotmac-mgmt-celery-worker
     environment:
-      DATABASE_URL: postgresql+asyncpg://dotmac_admin:dotmac_admin_password@postgres-shared:5432/mgmt_platform
-      REDIS_URL: redis://:dotmac_redis_password@redis-shared:6379/3
-      CELERY_BROKER_URL: redis://:dotmac_redis_password@redis-shared:6379/4
-      CELERY_RESULT_BACKEND: redis://:dotmac_redis_password@redis-shared:6379/5
+      DATABASE_URL: postgresql+asyncpg://dotmac_admin:${POSTGRES_PASSWORD}@postgres-shared:5432/mgmt_platform
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis-shared:6379/3
+      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD}@redis-shared:6379/4
+      CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD}@redis-shared:6379/5
       VAULT_URL: http://openbao-shared:8200
-      VAULT_TOKEN: dotmac-root-token-change-in-production
+      VAULT_TOKEN: ${VAULT_TOKEN}
       ENVIRONMENT: development
       LOG_LEVEL: INFO
     volumes:
@@ -265,10 +265,10 @@ services:
       target: development
     container_name: dotmac-mgmt-celery-beat
     environment:
-      DATABASE_URL: postgresql+asyncpg://dotmac_admin:dotmac_admin_password@postgres-shared:5432/mgmt_platform
-      REDIS_URL: redis://:dotmac_redis_password@redis-shared:6379/3
-      CELERY_BROKER_URL: redis://:dotmac_redis_password@redis-shared:6379/4
-      CELERY_RESULT_BACKEND: redis://:dotmac_redis_password@redis-shared:6379/5
+      DATABASE_URL: postgresql+asyncpg://dotmac_admin:${POSTGRES_PASSWORD}@postgres-shared:5432/mgmt_platform
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis-shared:6379/3
+      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD}@redis-shared:6379/4
+      CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD}@redis-shared:6379/5
       ENVIRONMENT: development
       LOG_LEVEL: INFO
     volumes:

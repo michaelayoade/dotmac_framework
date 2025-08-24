@@ -1,5 +1,13 @@
-"""Customer domain service implementation."""
+"""DEPRECATED: Customer domain service - use main service instead.
 
+This file has been consolidated into modules/identity/service.py.
+Use: from dotmac_isp.modules.identity.service import CustomerService
+
+This domain-driven approach has been merged into the standardized service pattern.
+This implementation will be removed in a future version.
+"""
+
+import warnings
 from typing import List, Optional, Dict, Any
 from uuid import UUID, uuid4
 from datetime import datetime
@@ -18,9 +26,15 @@ from dotmac_isp.shared.exceptions import (
 
 logger = logging.getLogger(__name__)
 
+warnings.warn(
+    "This domain CustomerService is deprecated. Use dotmac_isp.modules.identity.service.CustomerService instead.",
+    DeprecationWarning,
+    stacklevel=2
+)
+
 
 class CustomerService(ICustomerService):
-    """Domain service for customer operations."""
+    """DEPRECATED: Domain service - use main CustomerService instead."""
 
     def __init__(
         self,
@@ -29,6 +43,11 @@ class CustomerService(ICustomerService):
         event_service: IIdentityEventService,
         tenant_id: UUID,
     ):
+        warnings.warn(
+            "This domain CustomerService is deprecated. Use dotmac_isp.modules.identity.service.CustomerService instead.",
+            DeprecationWarning,
+            stacklevel=2
+        )
         self.customer_repo = customer_repo
         self.validation_service = validation_service
         self.event_service = event_service
@@ -37,17 +56,17 @@ class CustomerService(ICustomerService):
     async def create_customer(
         self, customer_data: schemas.CustomerCreate
     ) -> schemas.CustomerResponse:
-        """Create a new customer with comprehensive validation."""
-        try:
-            logger.info(f"Creating customer: {customer_data.email_primary}")
-
-            # Validate customer data
-            await self.validate_customer_data(customer_data)
-
-            # Generate customer number if not provided
-            customer_number = (
-                customer_data.customer_number or await self.generate_customer_number()
-            )
+        """DEPRECATED: Use main CustomerService instead."""
+        warnings.warn(
+            "This method is deprecated. Use dotmac_isp.modules.identity.service.CustomerService.create_customer instead.",
+            DeprecationWarning,
+            stacklevel=2
+        )
+        
+        # Redirect to main service
+        raise NotImplementedError(
+            "Use dotmac_isp.modules.identity.service.CustomerService instead"
+        )
 
             # Prepare customer data
             customer_dict = {

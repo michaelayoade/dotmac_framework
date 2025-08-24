@@ -4,9 +4,7 @@ const nextConfig = {
     '@dotmac/headless',
     '@dotmac/primitives',
     '@dotmac/styled-components',
-    '@dotmac/registry',
     '@dotmac/mapping',
-    '@dotmac/testing',
     '@dotmac/security',
   ],
   experimental: {
@@ -36,26 +34,6 @@ const nextConfig = {
   // Output configuration for deployment
   output: 'standalone',
 
-  // Allow cross-origin requests from the domain
-  experimental: {
-    allowedDevOrigins: ['marketing.dotmac.ng'],
-    // Partial Prerendering is only available in canary versions
-    // ppr: true,
-    // Server Actions configuration
-    serverActions: {
-      bodySizeLimit: '2mb',
-    },
-    // Instrumentation for monitoring
-    instrumentationHook: true,
-    turbo: {
-      rules: {
-        '*.svg': {
-          loaders: ['@svgr/webpack'],
-          as: '*.js',
-        },
-      },
-    },
-  },
   // Optimize CSS
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
@@ -81,22 +59,6 @@ const nextConfig = {
         source: '/(.*)',
         headers: [
           {
-            key: 'Content-Security-Policy',
-            value: [
-              "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com",
-              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com",
-              "img-src 'self' data: https: blob:",
-              "font-src 'self' https://fonts.gstatic.com",
-              "connect-src 'self' https://api.dotmac.dev wss://api.dotmac.dev http://localhost:* ws://localhost:*",
-              "frame-src 'self'",
-              "object-src 'none' data:",
-              "base-uri 'self'",
-              "form-action 'self'",
-              "frame-ancestors 'none'",
-            ].join('; '),
-          },
-          {
             key: 'X-Frame-Options',
             value: 'DENY',
           },
@@ -115,6 +77,10 @@ const nextConfig = {
           {
             key: 'Permissions-Policy',
             value: 'geolocation=(self), microphone=(), camera=(), payment=()',
+          },
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=31536000; includeSubDomains; preload',
           },
         ],
       },

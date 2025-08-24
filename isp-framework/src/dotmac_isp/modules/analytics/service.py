@@ -8,19 +8,174 @@ from decimal import Decimal
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 
-from .repository import AnalyticsRepository
+from dotmac_isp.shared.base_service import BaseTenantService
+from .models import (
+    Metric,
+    Report,
+    Dashboard,
+    Alert,
+    MetricType,
+    ReportType,
+    AlertSeverity,
+)
 from . import schemas
-from dotmac_isp.shared.exceptions import ServiceError, NotFoundError, ValidationError
+from dotmac_isp.shared.exceptions import (
+    ServiceError,
+    EntityNotFoundError,
+    ValidationError,
+    BusinessRuleError
+)
 
 
-class AnalyticsService:
-    """Service layer for analytics and business intelligence."""
+class MetricService(BaseTenantService[Metric, schemas.MetricCreate, schemas.MetricUpdate, schemas.MetricResponse]):
+    """Service for metrics management."""
 
     def __init__(self, db: Session, tenant_id: str):
-        """Initialize analytics service with database session."""
+        super().__init__(
+            db=db,
+            model_class=Metric,
+            create_schema=schemas.MetricCreate,
+            update_schema=schemas.MetricUpdate,
+            response_schema=schemas.MetricResponse,
+            tenant_id=tenant_id
+        )
+
+    async def _validate_create_rules(self, data: schemas.MetricCreate) -> None:
+        """Validate business rules for metric creation."""
+        # Ensure metric name is unique for tenant
+        if await self.repository.exists({'name': data.name}):
+            raise BusinessRuleError(
+                f"Metric with name '{data.name}' already exists",
+                rule_name="unique_metric_name"
+            )
+        
+        # Validate metric value constraints
+        if hasattr(data, 'min_value') and hasattr(data, 'max_value'):
+            if data.min_value and data.max_value and data.min_value >= data.max_value:
+                raise ValidationError("Minimum value must be less than maximum value")
+
+    async def _validate_update_rules(self, entity: Metric, data: schemas.MetricUpdate) -> None:
+        """Validate business rules for metric updates."""
+        # Prevent changing metric type if there's historical data
+        if data.metric_type and data.metric_type != entity.metric_type:
+            # Check if metric has historical data (simplified check)
+            pass  # Would integrate with metric data service
+
+
+class ReportService(BaseTenantService[Report, schemas.ReportCreate, schemas.ReportUpdate, schemas.ReportResponse]):
+    """Service for report management."""
+
+    def __init__(self, db: Session, tenant_id: str):
+        super().__init__(
+            db=db,
+            model_class=Report,
+            create_schema=schemas.ReportCreate,
+            update_schema=schemas.ReportUpdate,
+            response_schema=schemas.ReportResponse,
+            tenant_id=tenant_id
+        )
+
+    async def _validate_create_rules(self, data: schemas.ReportCreate) -> None:
+        """Validate business rules for report creation."""
+        # Ensure report name is unique for tenant
+        if await self.repository.exists({'name': data.name}):
+            raise BusinessRuleError(
+                f"Report with name '{data.name}' already exists",
+                rule_name="unique_report_name"
+            )
+        
+        # Validate date range for scheduled reports
+        if data.report_type != ReportType.CUSTOM and hasattr(data, 'start_date') and hasattr(data, 'end_date'):
+            if data.start_date and data.end_date and data.start_date >= data.end_date:
+                raise ValidationError("Start date must be before end date")
+
+    async def _post_create_hook(self, entity: Report, data: schemas.ReportCreate) -> None:
+        """Schedule report generation after creation."""
+        try:
+            if entity.is_scheduled:
+                from .tasks import schedule_report_generation
+                schedule_report_generation.delay(str(entity.id), str(self.tenant_id))
+                
+        except Exception as e:
+            self._logger.error(f"Failed to schedule report generation for {entity.id}: {e}")
+
+
+class DashboardService(BaseTenantService[Dashboard, schemas.DashboardCreate, schemas.DashboardUpdate, schemas.DashboardResponse]):
+    """Service for dashboard management."""
+
+    def __init__(self, db: Session, tenant_id: str):
+        super().__init__(
+            db=db,
+            model_class=Dashboard,
+            create_schema=schemas.DashboardCreate,
+            update_schema=schemas.DashboardUpdate,
+            response_schema=schemas.DashboardResponse,
+            tenant_id=tenant_id
+        )
+
+    async def _validate_create_rules(self, data: schemas.DashboardCreate) -> None:
+        """Validate business rules for dashboard creation."""
+        # Ensure dashboard name is unique for tenant
+        if await self.repository.exists({'name': data.name}):
+            raise BusinessRuleError(
+                f"Dashboard with name '{data.name}' already exists",
+                rule_name="unique_dashboard_name"
+            )
+
+    async def _validate_update_rules(self, entity: Dashboard, data: schemas.DashboardUpdate) -> None:
+        """Validate business rules for dashboard updates."""
+        # Validate widget configuration if provided
+        if data.widgets:
+            for widget in data.widgets:
+                if not widget.get('metric_id'):
+                    raise ValidationError("Each widget must have a metric_id")
+
+
+class AlertService(BaseTenantService[Alert, schemas.AlertCreate, schemas.AlertUpdate, schemas.AlertResponse]):
+    """Service for analytics alert management."""
+
+    def __init__(self, db: Session, tenant_id: str):
+        super().__init__(
+            db=db,
+            model_class=Alert,
+            create_schema=schemas.AlertCreate,
+            update_schema=schemas.AlertUpdate,
+            response_schema=schemas.AlertResponse,
+            tenant_id=tenant_id
+        )
+
+    async def _validate_create_rules(self, data: schemas.AlertCreate) -> None:
+        """Validate business rules for alert creation."""
+        if not data.metric_id:
+            raise ValidationError("Metric ID is required for alert")
+        
+        # Validate threshold values
+        if hasattr(data, 'threshold_value') and data.threshold_value is not None:
+            if data.threshold_value < 0:
+                raise ValidationError("Threshold value cannot be negative")
+
+    async def _post_create_hook(self, entity: Alert, data: schemas.AlertCreate) -> None:
+        """Set up alert monitoring after creation."""
+        try:
+            if entity.is_active:
+                from .tasks import setup_alert_monitoring
+                setup_alert_monitoring.delay(str(entity.id), str(self.tenant_id))
+                
+        except Exception as e:
+            self._logger.error(f"Failed to setup monitoring for alert {entity.id}: {e}")
+
+
+# Legacy analytics service for backward compatibility
+class AnalyticsService:
+    """Legacy analytics service - use individual services instead."""
+
+    def __init__(self, db: Session, tenant_id: str):
         self.db = db
-        self.tenant_id = UUID(tenant_id)
-        self.analytics_repo = AnalyticsRepository(db, self.tenant_id)
+        self.tenant_id = tenant_id
+        self.metric_service = MetricService(db, tenant_id)
+        self.report_service = ReportService(db, tenant_id)
+        self.dashboard_service = DashboardService(db, tenant_id)
+        self.alert_service = AlertService(db, tenant_id)
 
     async def get_dashboard_overview(
         self, start_date: Optional[date] = None, end_date: Optional[date] = None

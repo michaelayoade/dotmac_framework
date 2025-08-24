@@ -7,50 +7,134 @@ from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 
-from dotmac_isp.core.settings import get_settings
-from dotmac_isp.sdks import create_sdk_registry
-from dotmac_isp.sdks.identity import (
-    CustomerCreate,
-    CustomerUpdate,
-    CustomerResponse,
-    CustomerListFilters,
-)
+from dotmac_isp.shared.base_service import BaseTenantService
 from dotmac_isp.modules.identity import models, schemas
-from dotmac_isp.modules.identity.repository import (
-    CustomerRepository,
-    UserRepository,
-    RoleRepository,
-    AuthTokenRepository,
-    LoginAttemptRepository,
-)
 from dotmac_isp.modules.identity.portal_id_generator import get_portal_id_generator
 from dotmac_isp.modules.identity.portal_service import PortalAccountService
-from dotmac_isp.modules.portal_management.models import PortalAccountType
 from dotmac_isp.shared.exceptions import (
     ServiceError,
-    NotFoundError,
+    EntityNotFoundError,
     ValidationError,
+    BusinessRuleError,
     ConflictError,
 )
 
-# from dotmac_isp.modules.portal_management.services import PortalAccountService
-# from dotmac_isp.modules.portal_management.schemas import PortalAccountCreate
+
+class CustomerService(BaseTenantService[models.Customer, schemas.CustomerCreate, schemas.CustomerUpdate, schemas.CustomerResponse]):
+    """Service for customer management operations."""
+
+    def __init__(self, db: Session, tenant_id: str):
+        super().__init__(
+            db=db,
+            model_class=models.Customer,
+            create_schema=schemas.CustomerCreate,
+            update_schema=schemas.CustomerUpdate,
+            response_schema=schemas.CustomerResponse,
+            tenant_id=tenant_id
+        )
+        self.portal_service = PortalAccountService(db, tenant_id)
+
+    async def _validate_create_rules(self, data: schemas.CustomerCreate) -> None:
+        """Validate business rules for customer creation."""
+        # Check for duplicate email
+        if await self.repository.exists({'email': data.email}):
+            raise BusinessRuleError(
+                f"Customer with email {data.email} already exists",
+                rule_name="unique_customer_email"
+            )
+        
+        # Validate customer type and plan compatibility
+        if data.customer_type == models.CustomerType.ENTERPRISE and not data.plan_id:
+            raise ValidationError("Enterprise customers must have a plan assigned")
+
+    async def _validate_update_rules(self, entity: models.Customer, data: schemas.CustomerUpdate) -> None:
+        """Validate business rules for customer updates."""
+        # Prevent status changes if customer has active services
+        if data.status == models.AccountStatus.CANCELLED:
+            # Check for active services (would need services module integration)
+            pass
+
+    async def _post_create_hook(self, entity: models.Customer, data: schemas.CustomerCreate) -> None:
+        """Generate portal ID and create portal account after customer creation."""
+        try:
+            # Generate unique portal ID
+            existing_portal_ids = await self._get_existing_portal_ids()
+            portal_id = get_portal_id_generator().generate_portal_id(existing_portal_ids)
+            
+            # Update customer with portal ID
+            await self.repository.update(entity.id, {'portal_id': portal_id}, commit=True)
+            
+            # Create portal account
+            await self.portal_service.create_customer_portal_account(entity.id, portal_id)
+            
+        except Exception as e:
+            self._logger.error(f"Failed to create portal account for customer {entity.id}: {e}")
+            # Don't fail the entire customer creation, but log the issue
+            pass
+
+    async def _get_existing_portal_ids(self) -> List[str]:
+        """Get all existing portal IDs to ensure uniqueness."""
+        customers = await self.list(filters={})
+        return [c.portal_id for c in customers if c.portal_id]
 
 
-class CustomerService:
-    """Service layer for customer management operations."""
+class UserService(BaseTenantService[models.User, schemas.UserCreate, schemas.UserUpdate, schemas.UserResponse]):
+    """Service for user management operations."""
 
-    def __init__(self, db: Session, tenant_id: Optional[str] = None):
-        """Initialize customer service with database session."""
+    def __init__(self, db: Session, tenant_id: str):
+        super().__init__(
+            db=db,
+            model_class=models.User,
+            create_schema=schemas.UserCreate,
+            update_schema=schemas.UserUpdate,
+            response_schema=schemas.UserResponse,
+            tenant_id=tenant_id
+        )
+
+    async def _validate_create_rules(self, data: schemas.UserCreate) -> None:
+        """Validate business rules for user creation."""
+        # Check for duplicate username
+        if await self.repository.exists({'username': data.username}):
+            raise BusinessRuleError(
+                f"Username {data.username} already exists",
+                rule_name="unique_username"
+            )
+        
+        # Check for duplicate email
+        if await self.repository.exists({'email': data.email}):
+            raise BusinessRuleError(
+                f"Email {data.email} already exists", 
+                rule_name="unique_user_email"
+            )
+
+    async def _validate_update_rules(self, entity: models.User, data: schemas.UserUpdate) -> None:
+        """Validate business rules for user updates."""
+        # Validate email uniqueness if being changed
+        if data.email and data.email != entity.email:
+            if await self.repository.exists({'email': data.email}):
+                raise BusinessRuleError(
+                    f"Email {data.email} already exists",
+                    rule_name="unique_user_email"
+                )
+
+    async def _pre_create_hook(self, data: schemas.UserCreate) -> None:
+        """Hash password before user creation."""
+        if hasattr(data, 'password'):
+            from dotmac_isp.shared.auth import hash_password
+            data.password_hash = hash_password(data.password)
+            # Remove plain password from data
+            delattr(data, 'password')
+
+
+# Legacy service for backward compatibility
+class IdentityService:
+    """Legacy identity service - use CustomerService and UserService instead."""
+
+    def __init__(self, db: Session, tenant_id: str):
         self.db = db
-        self.settings = get_settings()
-        self.tenant_id = UUID(tenant_id) if tenant_id else UUID(self.settings.tenant_id)
-        self.customer_repo = CustomerRepository(db, self.tenant_id)
-        self.user_repo = UserRepository(db, self.tenant_id)
-        self.role_repo = RoleRepository(db, self.tenant_id)
-        self.portal_service = PortalAccountService(db, str(self.tenant_id))
-        # Keep SDK as fallback for now
-        self.sdk_registry = create_sdk_registry(str(self.tenant_id))
+        self.tenant_id = tenant_id
+        self.customer_service = CustomerService(db, tenant_id)
+        self.user_service = UserService(db, tenant_id)
 
     async def create_customer(
         self, customer_data: schemas.CustomerCreate

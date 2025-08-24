@@ -70,6 +70,14 @@ factory-boy = "^3.3.0"
 faker = "^20.1.0"
 httpx = "^0.25.2"
 
+# Contract and Behavior Testing
+pytest-bdd = "^7.0.0"  # Behavior-driven testing
+pact-python = "^2.0.0"  # Contract testing
+respx = "^0.20.2"  # HTTP mocking for contracts
+
+# Chaos Engineering
+chaos-toolkit = "^1.16.0"  # Chaos engineering framework
+
 # Code quality and formatting
 black = "^23.11.0"
 isort = "^5.12.0"

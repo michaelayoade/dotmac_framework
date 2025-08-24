@@ -1,5 +1,12 @@
-"""Customer management service."""
+"""DEPRECATED: Customer management service - use main service instead.
 
+This file has been consolidated into modules/identity/service.py.
+Use: from dotmac_isp.modules.identity.service import CustomerService
+
+This implementation will be removed in a future version.
+"""
+
+import warnings
 import logging
 import secrets
 import string
@@ -26,12 +33,23 @@ from .base_service import BaseIdentityService
 
 logger = logging.getLogger(__name__)
 
+warnings.warn(
+    "This CustomerService is deprecated. Use dotmac_isp.modules.identity.service.CustomerService instead.",
+    DeprecationWarning,
+    stacklevel=2
+)
+
 
 class CustomerService(BaseIdentityService):
-    """Service for customer management operations."""
+    """DEPRECATED: Use main CustomerService instead."""
 
     def __init__(self, db: Session, tenant_id: Optional[str] = None):
         """Initialize customer service."""
+        warnings.warn(
+            "This CustomerService is deprecated. Use dotmac_isp.modules.identity.service.CustomerService instead.",
+            DeprecationWarning,
+            stacklevel=2
+        )
         super().__init__(db, tenant_id)
         self.customer_repo = CustomerRepository(db, self.tenant_id)
         self.user_repo = UserRepository(db, self.tenant_id)
@@ -41,13 +59,17 @@ class CustomerService(BaseIdentityService):
     async def create_customer(
         self, customer_data: schemas.CustomerCreate
     ) -> schemas.CustomerResponse:
-        """Create a new customer with full data validation and business rules."""
-        try:
-            # Validate business rules
-            self._validate_customer_creation_sync(customer_data)
-
-            # Generate portal ID for the customer using configurable generator
-            existing_portal_ids = self._get_existing_portal_ids()
+        """DEPRECATED: Use main CustomerService instead."""
+        warnings.warn(
+            "This method is deprecated. Use dotmac_isp.modules.identity.service.CustomerService.create_customer instead.",
+            DeprecationWarning,
+            stacklevel=2
+        )
+        
+        # Redirect to main service
+        raise NotImplementedError(
+            "Use dotmac_isp.modules.identity.service.CustomerService instead"
+        )
             portal_id = get_portal_id_generator().generate_portal_id(
                 existing_portal_ids
             )

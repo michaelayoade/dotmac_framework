@@ -87,29 +87,51 @@ lint: ## Run all linting checks (flake8, mypy, bandit)
 	$(POETRY) run bandit -r src/ -f json -o bandit-report.json
 	@echo "$(GREEN)Linting complete!$(NC)"
 
-# AI-First Testing Strategy
-test-ai-suite: ## Run AI-optimized test suite (property-based + behavior + contract)
-	@echo "$(GREEN)Running AI-first test suite...$(NC)"
+# AI-First Testing Strategy  
+test-ai-first: ## Run AI-optimized test suite (property-based + behavior + contract)
+	@echo "$(GREEN)🤖 Running AI-first test suite...$(NC)"
 	@mkdir -p test-reports
 	$(POETRY) run pytest tests/ -m "property_based or behavior or contract" \
 		--cov=app --cov=src/mgmt \
 		--cov-report=term-missing --cov-report=html --cov-report=xml \
 		--html=test-reports/ai-suite-report.html --json-report --json-report-file=test-reports/ai-suite.json \
 		-v --tb=short
-	@echo "$(GREEN)AI-first test suite complete! Reports in test-reports/$(NC)"
+	@echo "$(GREEN)✅ AI-first test suite complete! Reports in test-reports/$(NC)"
 
-test-property-based: ## Run property-based tests (AI generates test cases)
-	@echo "$(GREEN)Running property-based tests with Hypothesis...$(NC)"
-	$(POETRY) run pytest tests/ -m "property_based" -v --tb=short \
-		--hypothesis-show-statistics
+test-ai-suite: test-ai-first ## Alias for test-ai-first
+
+test-property-based: ## Run property-based tests (AI generates test cases)  
+	@echo "$(GREEN)🎲 Running property-based tests with Hypothesis...$(NC)"
+	@echo "$(BLUE)Testing: tests/property/test_saas_property_tests.py$(NC)"
+	@if command -v poetry >/dev/null 2>&1; then \
+		$(POETRY) run python -m pytest tests/property/ -m "property_based" -v --tb=short \
+			--hypothesis-show-statistics --hypothesis-verbosity=verbose; \
+	else \
+		python3 -m pytest tests/property/ -m "property_based" -v --tb=short; \
+	fi
+	@echo "$(GREEN)✅ Property-based tests complete!$(NC)"
 
 test-behavior: ## Run business behavior tests (outcome focused)
-	@echo "$(GREEN)Running business behavior tests...$(NC)"
-	$(POETRY) run pytest tests/ -m "behavior" -v --tb=short
+	@echo "$(GREEN)👥 Running business behavior tests...$(NC)"
+	@echo "$(BLUE)Testing: tests/behavior/test_saas_tenant_workflows.py$(NC)"
+	@if command -v poetry >/dev/null 2>&1; then \
+		$(POETRY) run python -m pytest tests/behavior/ -m "behavior" -v --tb=short; \
+	else \
+		python3 -m pytest tests/behavior/ -m "behavior" -v --tb=short; \
+	fi
+	@echo "$(GREEN)✅ Behavior tests complete!$(NC)"
 
-test-contract: ## Run API contract tests (schema validation)
-	@echo "$(GREEN)Running API contract tests...$(NC)"
-	$(POETRY) run pytest tests/ -m "contract" -v --tb=short
+test-contracts: ## Run API contract tests (schema validation)
+	@echo "$(GREEN)📋 Running API contract tests...$(NC)"
+	@echo "$(BLUE)Testing: tests/contracts/test_saas_api_contracts.py$(NC)"
+	@if command -v poetry >/dev/null 2>&1; then \
+		$(POETRY) run python -m pytest tests/contracts/ -m "contract" -v --tb=short; \
+	else \
+		python3 -m pytest tests/contracts/ -m "contract" -v --tb=short; \
+	fi
+	@echo "$(GREEN)✅ Contract tests complete!$(NC)"
+
+test-contract: test-contracts ## Alias for test-contracts
 
 test-smoke-critical: ## Run only revenue-critical smoke tests
 	@echo "$(GREEN)Running revenue-critical smoke tests...$(NC)"

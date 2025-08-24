@@ -62,8 +62,8 @@ export function useFormValidation(
   } = options;
 
   const [formData, setFormData] = useState<Record<string, unknown>>(initialValues);
-  const [errors, setErrors] = useState<Record<string, string>>(_props);
-  const [touched, setTouchedState] = useState<Record<string, boolean>>(_props);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [touched, setTouchedState] = useState<Record<string, boolean>>({});
   const [isValidating, setIsValidating] = useState(false);
 
   const validatorRef = useRef(new FormValidator(validationConfig));
@@ -115,7 +115,7 @@ export function useFormValidation(
   }, []);
 
   const clearAllErrors = useCallback(() => {
-    setErrors(_props);
+    setErrors({});
   }, []);
 
   const setTouched = useCallback((field: string, isTouched: boolean = true) => {
@@ -161,8 +161,8 @@ export function useFormValidation(
     (newInitialValues?: Record<string, unknown>) => {
       const resetValues = newInitialValues || initialValues;
       setFormData(resetValues);
-      setErrors(_props);
-      setTouchedState(_props);
+      setErrors({});
+      setTouchedState({});
     },
     [initialValues]
   );
@@ -203,9 +203,7 @@ export function useFormValidation(
         // Mark all fields as touched
         const allTouched = Object.keys(validationConfig).reduce(
           (acc, field) => ({ ...acc, [field]: true }),
-          {
-            // Implementation pending
-          }
+          {} as Record<string, boolean>
         );
         setTouchedState(allTouched);
 
@@ -256,9 +254,7 @@ export interface UseFormSubmissionResult {
 }
 
 export function useFormSubmission(
-  options: UseFormSubmissionOptions = {
-    // Implementation pending
-  }
+  options: UseFormSubmissionOptions = {}
 ): UseFormSubmissionResult {
   const { onSuccess, onError, resetOnSuccess = false } = options;
 
@@ -284,7 +280,7 @@ export function useFormSubmission(
           // Reset will be handled by the calling component
         }
       } catch (error: unknown) {
-        const errorMessage = error?.message || 'An error occurred during submission';
+        const errorMessage = error instanceof Error ? error.message : 'An error occurred during submission';
         setSubmitError(errorMessage);
 
         if (onError) {
@@ -324,7 +320,7 @@ export function useAsyncValidation(
   value: unknown,
   options: UseAsyncValidationOptions
 ) {
-  const { validator, debounceTime = 500, _dependencies = [] } = options;
+  const { validator, debounceTime = 500, dependencies = [] } = options;
 
   const [isValidating, setIsValidating] = useState(false);
   const [errors, setErrors] = useState<ValidationError[]>([]);
@@ -355,7 +351,7 @@ export function useAsyncValidation(
   useEffect(() => {
     const timeoutId = setTimeout(validateAsync, debounceTime);
     return () => clearTimeout(timeoutId);
-  }, [validateAsync, debounceTime]);
+  }, [validateAsync, debounceTime, ...dependencies]);
 
   return {
     isValidating,

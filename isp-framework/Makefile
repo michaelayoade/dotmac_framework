@@ -46,26 +46,42 @@ ai-generate-tests: ## Generate property-based and contract tests using AI
 	@echo "$(GREEN)AI test generation completed!$(NC)"
 
 test-ai-first: ## Run AI-optimized test suite (fast feedback)
-	@echo "$(BLUE)Running AI-first test suite...$(NC)"
-	pytest -m "property_based or behavior or contract or smoke_critical" \
+	@echo "$(BLUE)🤖 Running AI-first test suite...$(NC)"
+	@echo "$(YELLOW)Testing: Property-based, Behavior, and Contract tests$(NC)"
+	$(PYTHON) -m pytest tests/ -m "property_based or behavior or contract or smoke_critical" \
 		--maxfail=5 --tb=short --durations=10 -q
-	@echo "$(GREEN)AI-first testing completed!$(NC)"
+	@echo "$(GREEN)✅ AI-first testing completed!$(NC)"
 
 test-property-based: ## Run property-based tests (AI-generated test cases)
-	@echo "$(BLUE)Running property-based tests...$(NC)"
-	pytest -m "property_based" --hypothesis-show-statistics --tb=short -v
+	@echo "$(BLUE)🎲 Running property-based tests...$(NC)"
+	@echo "$(YELLOW)Testing: tests/property/test_working_property_tests.py$(NC)"
+	$(PYTHON) -m pytest tests/property/ -m "property_based" --hypothesis-show-statistics --tb=short -v
+	@echo "$(GREEN)✅ Property-based tests completed!$(NC)"
 
 test-contracts: ## Run API contract validation tests
-	@echo "$(BLUE)Running contract tests...$(NC)"  
-	pytest -m "contract" --tb=short -v
+	@echo "$(BLUE)📋 Running contract tests...$(NC)"
+	@echo "$(YELLOW)Testing: tests/contracts/test_working_api_contracts.py$(NC)"  
+	$(PYTHON) -m pytest tests/contracts/ -m "contract" --tb=short -v
+	@echo "$(GREEN)✅ Contract tests completed!$(NC)"
 
 test-behaviors: ## Run business behavior and outcome tests
-	@echo "$(BLUE)Running behavior tests...$(NC)"
-	pytest -m "behavior" --tb=short -v
+	@echo "$(BLUE)👥 Running behavior tests...$(NC)"
+	@echo "$(YELLOW)Testing: tests/behavior/test_working_customer_workflows.py$(NC)"
+	$(PYTHON) -m pytest tests/behavior/ -m "behavior" --tb=short -v
+	@echo "$(GREEN)✅ Behavior tests completed!$(NC)"
 
 test-smoke-critical: ## Run only revenue-critical smoke tests
-	@echo "$(BLUE)Running critical path smoke tests...$(NC)"
-	pytest -m "smoke_critical or revenue_critical" --maxfail=1 --tb=line -q
+	@echo "$(BLUE)💰 Running critical path smoke tests...$(NC)"
+	$(PYTHON) -m pytest tests/ -m "smoke_critical or revenue_critical" --maxfail=1 --tb=line -q
+	@echo "$(GREEN)✅ Critical smoke tests completed!$(NC)"
+
+test-revenue-critical: ## Run all revenue-critical tests (billing, subscriptions, payments)
+	@echo "$(BLUE)💰 Running revenue-critical tests...$(NC)"
+	@echo "$(YELLOW)Testing: tests/revenue_protection/test_working_billing_accuracy.py$(NC)"
+	$(PYTHON) -m pytest tests/revenue_protection/ -m "revenue_critical or billing or deployment_blocker" \
+		--cov=src/dotmac_isp/modules/billing --cov=src/dotmac_isp/modules/services \
+		--cov-report=term-missing --tb=short -v
+	@echo "$(GREEN)✅ Revenue-critical tests completed!$(NC)"
 
 test-ai-suite: ## Run complete AI test suite with reporting
 	@echo "$(BLUE)Running complete AI test suite...$(NC)"

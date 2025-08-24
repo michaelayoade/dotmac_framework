@@ -10,6 +10,7 @@ export { Slot } from '@radix-ui/react-slot';
 export { cva, type VariantProps } from 'class-variance-authority';
 export { clsx } from 'clsx';
 // Export what's actually implemented
+export * from './composition';
 export * from './data-display';
 export * from './error';
 export * from './feedback';

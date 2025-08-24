@@ -13,6 +13,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...src.mgmt.shared.database.connections import get_db
 from ...src.mgmt.shared.auth.permissions import require_reseller, get_current_reseller
+from ...src.mgmt.services.reseller_network.reseller_service import ResellerService
+from ...src.mgmt.services.reseller_network import schemas as reseller_schemas
+from ...src.mgmt.services.reseller_network.models import ResellerStatus, OpportunityStage
 from .schemas import (
     ResellerDashboardOverview,
     SalesOpportunity,
@@ -25,7 +28,6 @@ from .schemas import (
     TerritoryPerformance,
     CertificationProgress,
     TrainingModule,
-    OpportunityStage,
     CustomerHealthStatus,
 )
 
@@ -42,6 +44,7 @@ reseller_router = APIRouter(
 # Dashboard and Performance Overview
 @reseller_router.get("/dashboard/overview", response_model=ResellerDashboardOverview)
 async def get_reseller_dashboard(
+    db: AsyncSession = Depends(get_db),
     current_reseller: dict = Depends(get_current_reseller),
     current_user: dict = Depends(require_reseller),
 ) -> ResellerDashboardOverview:
@@ -58,7 +61,19 @@ async def get_reseller_dashboard(
     reseller_id = current_reseller["reseller_id"]
     
     try:
-        # Mock data (would integrate with actual sales and commission services)
+        reseller_service = ResellerService(db)
+        
+        # Get performance metrics using the service
+        end_date = datetime.utcnow()
+        start_date = end_date - timedelta(days=365)
+        
+        performance = await reseller_service.get_reseller_performance(
+            reseller_id=reseller_id,
+            start_date=start_date,
+            end_date=end_date
+        )
+        
+        # Build comprehensive dashboard
         return ResellerDashboardOverview(
             reseller_id=reseller_id,
             reseller_name=current_reseller.get("name", "Partner Sales Corp"),
@@ -217,6 +232,7 @@ async def list_sales_opportunities(
 @reseller_router.post("/pipeline/opportunities", response_model=SalesOpportunity)
 async def create_sales_opportunity(
     opportunity_data: SalesOpportunityCreate,
+    db: AsyncSession = Depends(get_db),
     current_reseller: dict = Depends(get_current_reseller),
     current_user: dict = Depends(require_reseller),
 ) -> SalesOpportunity:
@@ -224,10 +240,31 @@ async def create_sales_opportunity(
     reseller_id = current_reseller["reseller_id"]
     
     try:
-        # Generate opportunity ID
-        opportunity_id = f"opp_{reseller_id}_{int(datetime.utcnow().timestamp())}"
+        reseller_service = ResellerService(db)
         
-        # Create opportunity record (would integrate with CRM)
+        # Convert to service schema
+        service_data = reseller_schemas.SalesOpportunityCreate(
+            customer_name=opportunity_data.prospect_company,
+            customer_contact=opportunity_data.contact_first_name + " " + opportunity_data.contact_last_name,
+            customer_email=opportunity_data.contact_email,
+            customer_phone=getattr(opportunity_data, 'contact_phone', None),
+            customer_location=getattr(opportunity_data, 'location', 'Unknown'),
+            opportunity_name=opportunity_data.opportunity_name,
+            estimated_value=opportunity_data.estimated_value,
+            estimated_close_date=opportunity_data.expected_close_date,
+            probability=20,  # Initial probability
+            product_interest=opportunity_data.initial_requirements,
+            notes=getattr(opportunity_data, 'description', '')
+        )
+        
+        # Create opportunity using service
+        db_opportunity = await reseller_service.create_opportunity(
+            opportunity_data=service_data,
+            reseller_id=reseller_id,
+            created_by=current_user.get("user_id")
+        )
+        
+        # Convert back to portal response format
         opportunity = SalesOpportunity(
             opportunity_id=opportunity_id,
             prospect_company=opportunity_data.prospect_company,

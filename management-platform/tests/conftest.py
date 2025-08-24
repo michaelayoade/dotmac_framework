@@ -1,345 +1,228 @@
 """
-Test configuration and fixtures for the DotMac Management Platform.
+AI-First Testing Configuration and Fixtures
+===========================================
+
+This module provides testing infrastructure optimized for AI-written software,
+focusing on business outcomes and system behavior rather than implementation details.
 """
 
 import asyncio
+import logging
 import os
+import uuid
+from datetime import datetime, timedelta
+from decimal import Decimal
+from typing import AsyncGenerator, Generator, Dict, Any, List
+
 import pytest
 import pytest_asyncio
-from typing import AsyncGenerator
-from uuid import uuid4
-
-from fastapi.testclient import TestClient
+from hypothesis import settings, HealthCheck
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from sqlalchemy.pool import NullPool
+from sqlalchemy.pool import StaticPool
+from fastapi.testclient import TestClient
+from httpx import AsyncClient
 
-from app.main import app
-from app.database import get_db
-from app.models.base import BaseModel as Base
-# Import all models to register them with SQLAlchemy metadata
-from app.models.tenant import Tenant
-from app.models.user import User
-from app.models.billing import Subscription, Invoice, Payment, PricingPlan, UsageRecord
+# Configure logging for tests
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-
-# Test database URL - use PostgreSQL for production parity
-# Defaults can be overridden with environment variables
-TEST_DATABASE_URL = os.getenv(
-    "TEST_DATABASE_URL",
-    "postgresql+asyncpg://test_user:test_password@localhost:5432/test_dotmac_platform"
+# AI-First Testing Configuration
+# ==============================
+# Configure Hypothesis for AI-appropriate property-based testing
+settings.register_profile(
+    "ai_first",
+    max_examples=50,  # Reasonable number of examples for AI-generated edge cases
+    deadline=10000,   # 10 second deadline for complex business logic
+    suppress_health_check=[
+        HealthCheck.too_slow,  # AI-generated tests may be complex
+        HealthCheck.data_too_large,  # Business scenarios can be large
+    ]
 )
+settings.load_profile("ai_first")
 
-# Fallback to SQLite if PostgreSQL is not available (for CI/local dev)
-SQLITE_TEST_URL = "sqlite+aiosqlite:///./test_platform.db"
 
+# Test Database Setup
+# ===================
+
+@pytest_asyncio.fixture(scope="session")
+async def test_engine():
+    """Create test database engine for AI-first testing."""
+    # Use in-memory SQLite for fast AI test execution
+    engine = create_async_engine(
+        "sqlite+aiosqlite:///:memory:",
+        poolclass=StaticPool,
+        connect_args={"check_same_thread": False},
+        echo=False,  # Reduce noise in AI test output
+    )
+    
+    yield engine
+    
+    await engine.dispose()
+
+
+@pytest_asyncio.fixture
+async def db_session(test_engine) -> AsyncGenerator[AsyncSession, None]:
+    """Provide clean database session for each test."""
+    async_session = async_sessionmaker(test_engine, expire_on_commit=False)
+    
+    async with async_session() as session:
+        # Begin transaction
+        await session.begin()
+        
+        try:
+            yield session
+        finally:
+            # Always rollback to ensure test isolation
+            await session.rollback()
+
+
+# AI-First Test Data Factories
+# =============================
+
+class AITestDataFactory:
+    """Factory for generating AI-appropriate test data with business realism."""
+    
+    @staticmethod
+    def create_tenant_id() -> str:
+        """Generate realistic tenant ID."""
+        return f"tenant-{uuid.uuid4().hex[:8]}"
+    
+    @staticmethod
+    def create_plugin_catalog_data(**overrides) -> Dict[str, Any]:
+        """Generate realistic plugin catalog data."""
+        base_data = {
+            "plugin_id": f"plugin-{uuid.uuid4().hex[:8]}",
+            "plugin_name": "Advanced Analytics Suite",
+            "plugin_version": "1.0.0",
+            "plugin_description": "Comprehensive analytics and reporting tools",
+            "category": "analytics",
+            "monthly_price": Decimal("49.99"),
+            "annual_price": Decimal("499.99"),
+            "has_usage_billing": True,
+            "usage_metrics": ["api_calls", "reports_generated", "data_exports"],
+            "usage_rates": {
+                "api_calls": 0.001,
+                "reports_generated": 1.99,
+                "data_exports": 0.50
+            },
+            "trial_days": 14,
+            "is_active": True,
+            "is_public": True
+        }
+        base_data.update(overrides)
+        return base_data
+    
+    @staticmethod
+    def create_subscription_data(tenant_id: str, plugin_id: str, **overrides) -> Dict[str, Any]:
+        """Generate realistic plugin subscription data."""
+        base_data = {
+            "tenant_id": tenant_id,
+            "plugin_id": plugin_id,
+            "starts_at": datetime.utcnow(),
+            "expires_at": datetime.utcnow() + timedelta(days=30),
+            "is_trial": False,
+            "monthly_price": Decimal("49.99"),
+            "billing_cycle": "monthly",
+            "usage_limits": {
+                "api_calls": 10000,
+                "reports_generated": 100,
+                "data_exports": 50
+            },
+            "current_usage": {
+                "api_calls": 0,
+                "reports_generated": 0,
+                "data_exports": 0
+            }
+        }
+        base_data.update(overrides)
+        return base_data
+
+
+@pytest.fixture
+def ai_test_factory():
+    """Provide AI test data factory."""
+    return AITestDataFactory()
+
+
+# Performance Test Configuration
+# ==============================
+
+@pytest.fixture
+def performance_config():
+    """Configuration for performance invariant tests."""
+    return {
+        "max_response_time": 1.0,  # 1 second max for API responses
+        "max_average_response_time": 0.2,  # 200ms average
+        "concurrent_requests": 10,  # Test concurrency level
+        "load_duration": 30,  # 30 seconds load test
+    }
+
+
+# Contract Testing Setup
+# ======================
+
+@pytest.fixture
+def api_contract_base_url():
+    """Base URL for API contract testing."""
+    return "http://test"
+
+
+@pytest.fixture
+def licensing_api_endpoints():
+    """Plugin licensing API endpoints for contract testing."""
+    return {
+        "validate_license": "/api/v1/plugin-licensing/validate/{tenant_id}",
+        "report_usage": "/api/v1/plugin-licensing/usage",
+        "health_status": "/api/v1/plugin-licensing/health-status",
+        "tenant_subscriptions": "/api/v1/plugin-licensing/tenant/{tenant_id}/subscriptions",
+        "usage_summary": "/api/v1/plugin-licensing/usage-summary/{tenant_id}/{plugin_id}"
+    }
+
+
+# Event Loop Configuration
+# =========================
 
 @pytest.fixture(scope="session")
 def event_loop():
     """Create event loop for async tests."""
-    policy = asyncio.get_event_loop_policy()
-    loop = policy.new_event_loop()
+    loop = asyncio.new_event_loop()
     yield loop
     loop.close()
 
 
-@pytest_asyncio.fixture(scope="session")
-async def test_engine():
-    """Create test database engine with PostgreSQL preference and SQLite fallback."""
-    database_url = TEST_DATABASE_URL
-    
-    # Try PostgreSQL first, fall back to SQLite if connection fails
-    try:
-        engine = create_async_engine(
-            database_url,
-            poolclass=NullPool,
-            echo=False,
-            pool_pre_ping=True  # Verify connections before use
-        )
-        
-        # Test connection
-        async with engine.begin() as conn:
-            await conn.execute("SELECT 1")
-        
-        print(f"✅ Using PostgreSQL test database: {database_url}")
-        
-    except Exception as e:
-        print(f"⚠️  PostgreSQL not available ({e}), falling back to SQLite")
-        database_url = SQLITE_TEST_URL
-        engine = create_async_engine(
-            database_url,
-            poolclass=NullPool,
-            echo=False
-        )
-    
-    try:
-        # Create all tables
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-        
-        yield engine
-        
-    finally:
-        # Clean up
-        try:
-            async with engine.begin() as conn:
-                await conn.run_sync(Base.metadata.drop_all)
-        except Exception as e:
-            print(f"⚠️  Database cleanup error: {e}")
-        
-        await engine.dispose()
+# Test Environment Markers
+# =========================
 
-
-@pytest_asyncio.fixture
-async def db_session(test_engine):
-    """Provide database session for tests."""
-    async_session_maker = async_sessionmaker(
-        bind=test_engine,
-        class_=AsyncSession,
-        expire_on_commit=False
-    )
-    
-    async with async_session_maker() as session:
-        yield session
-
-
-@pytest.fixture
-def client(db_session):
-    """Create test client with database override."""
-    from unittest.mock import patch
-    
-    def override_get_db():
-        try:
-            yield db_session
-        finally:
-            pass
-    
-    # Create a test app without the problematic lifespan
-    from fastapi import FastAPI
-    from fastapi.middleware.cors import CORSMiddleware
-    from fastapi.middleware.trustedhost import TrustedHostMiddleware
-    from app.api.portals import portals_router
-    from app.api.v1 import api_router
-    from app.core.exceptions import add_exception_handlers
-    from app.core.middleware import (
-        LoggingMiddleware,
-        RateLimitMiddleware,
-        RequestValidationMiddleware,
-        SecurityHeadersMiddleware,
-        TenantIsolationMiddleware,
-    )
-    from app.config import settings
-    
-    test_app = FastAPI(
-        title="DotMac Management Platform API",
-        description="Test version without database initialization",
-        version="1.0.0",
-        docs_url="/docs",
-        redoc_url="/redoc",
-        openapi_url="/openapi.json"
-    )
-    
-    # Add middleware (same as main app)
-    test_app.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.cors_origins,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
-
-    trusted_hosts = (
-        ["localhost", "127.0.0.1", "testserver", "*.dotmac.app"]
-        if not settings.is_production
-        else ["*.dotmac.app"]
-    )
-    test_app.add_middleware(
-        TrustedHostMiddleware,
-        allowed_hosts=trusted_hosts,
-    )
-
-    test_app.add_middleware(LoggingMiddleware)
-    test_app.add_middleware(RateLimitMiddleware, calls_per_minute=settings.rate_limit_per_minute)
-    test_app.add_middleware(RequestValidationMiddleware)
-    test_app.add_middleware(SecurityHeadersMiddleware)
-    test_app.add_middleware(TenantIsolationMiddleware)
-    
-    # Add metrics endpoint for testing
-    @test_app.get("/metrics")
-    async def metrics_endpoint():
-        """Prometheus-style metrics endpoint for testing."""
-        from fastapi.responses import PlainTextResponse
-        
-        metrics_text = """# HELP app_info Application information
-# TYPE app_info gauge
-app_info{version="1.0.0",environment="test"} 1
-
-# HELP app_requests_total Total number of requests
-# TYPE app_requests_total counter
-app_requests_total 100
-"""
-        return PlainTextResponse(content=metrics_text, media_type="text/plain; charset=utf-8")
-    
-    # Add routers
-    test_app.include_router(api_router, prefix="/api/v1")
-    test_app.include_router(portals_router, prefix="/portals")
-    
-    # Add exception handlers
-    add_exception_handlers(test_app)
-    
-    # Override database dependency
-    test_app.dependency_overrides[get_db] = override_get_db
-    
-    with TestClient(test_app) as test_client:
-        yield test_client
-    
-    # Clean up
-    test_app.dependency_overrides.clear()
-
-
-@pytest_asyncio.fixture
-async def master_admin_token(db_session, test_tenant):
-    """Create master admin JWT token for testing with real user."""
-    from app.core.security import create_access_token
-    from app.repositories.user import UserRepository
-    from app.core.security import get_password_hash
-    
-    # Create a master admin user in the database
-    user_repo = UserRepository(db_session)
-    admin_user_data = {
-        "email": "master@example.com",
-        "password_hash": get_password_hash("admin123"),
-        "full_name": "Master Admin",
-        "role": "master_admin",
-        "tenant_id": None,  # Master admin has no tenant
-        "is_active": True,
-        "is_verified": True
-    }
-    
-    admin_user = await user_repo.create(admin_user_data, "test-system")
-    
-    token_data = {
-        "sub": str(admin_user.id),
-        "email": admin_user.email,
-        "role": admin_user.role,
-        "tenant_id": None
-    }
-    return create_access_token(token_data)
-
-
-@pytest_asyncio.fixture  
-async def tenant_admin_token(db_session, test_tenant):
-    """Create tenant admin JWT token for testing with real user."""
-    from app.core.security import create_access_token
-    from app.repositories.user import UserRepository
-    from app.core.security import get_password_hash
-    
-    # Create a tenant admin in the database
-    user_repo = UserRepository(db_session)
-    tenant_admin_data = {
-        "email": "tenantadmin@example.com",
-        "password_hash": get_password_hash("admin123"),
-        "full_name": "Tenant Admin",
-        "role": "tenant_admin",
-        "tenant_id": test_tenant.id,
-        "is_active": True,
-        "is_verified": True
-    }
-    
-    tenant_admin = await user_repo.create(tenant_admin_data, "test-system")
-    
-    token_data = {
-        "sub": str(tenant_admin.id),
-        "email": tenant_admin.email,
-        "role": tenant_admin.role,
-        "tenant_id": str(test_tenant.id)
-    }
-    return create_access_token(token_data)
-
-
-@pytest_asyncio.fixture
-async def tenant_user_token(db_session, test_tenant):
-    """Create tenant user JWT token for testing with real user."""
-    from app.core.security import create_access_token
-    from app.repositories.user import UserRepository
-    from app.core.security import get_password_hash
-    
-    # Create a tenant user in the database
-    user_repo = UserRepository(db_session)
-    tenant_user_data = {
-        "email": "tenantuser@example.com",
-        "password_hash": get_password_hash("user123"),
-        "full_name": "Tenant User",
-        "role": "tenant_user",
-        "tenant_id": test_tenant.id,
-        "is_active": True,
-        "is_verified": True
-    }
-    
-    tenant_user = await user_repo.create(tenant_user_data, "test-system")
-    
-    token_data = {
-        "sub": str(tenant_user.id),
-        "email": tenant_user.email,
-        "role": tenant_user.role,
-        "tenant_id": str(test_tenant.id)
-    }
-    return create_access_token(token_data)
-
-
-@pytest_asyncio.fixture
-async def test_tenant(db_session: AsyncSession):
-    """Create a test tenant."""
-    from app.repositories.tenant import TenantRepository
-    from app.models.tenant import Tenant
-    
-    tenant_repo = TenantRepository(db_session)
-    
-    tenant_data = {
-        "name": "test-tenant",
-        "display_name": "Test Tenant",
-        "description": "Test tenant for unit tests",
-        "slug": "test-tenant-slug",
-        "primary_contact_email": "test@example.com",
-        "primary_contact_name": "Test Admin",
-        "status": "active",
-        "tier": "small"
-    }
-    
-    tenant = await tenant_repo.create(tenant_data, "test-system")
-    return tenant
-
-
-@pytest_asyncio.fixture
-async def test_user(db_session: AsyncSession, test_tenant):
-    """Create a test user."""
-    from app.repositories.user import UserRepository
-    from app.core.security import get_password_hash
-    
-    user_repo = UserRepository(db_session)
-    
-    user_data = {
-        "email": "test@example.com",
-        "password_hash": get_password_hash("testpassword123"),
-        "full_name": "Test User",
-        "role": "tenant_user",
-        "tenant_id": test_tenant.id,
-        "is_active": True,
-        "is_verified": True
-    }
-    
-    user = await user_repo.create(user_data, "test-system")
-    return user
-
-
-# Test markers
 def pytest_configure(config):
-    """Configure pytest markers."""
+    """Configure pytest with AI-first testing markers."""
+    # Add AI-first testing markers
     config.addinivalue_line(
-        "markers", "unit: marks tests as unit tests (fast, isolated)"
+        "markers", 
+        "ai_validation: AI-safe tests that validate business behavior and outcomes"
     )
     config.addinivalue_line(
-        "markers", "integration: marks tests as integration tests"
+        "markers",
+        "revenue_protection: Tests that protect revenue-generating functionality"
     )
     config.addinivalue_line(
-        "markers", "e2e: marks tests as end-to-end tests"
+        "markers",
+        "tenant_isolation: Tests that validate multi-tenant data isolation"
     )
+    config.addinivalue_line(
+        "markers",
+        "business_invariants: Tests that validate business rules and constraints"
+    )
+
+
+def pytest_collection_modifyitems(config, items):
+    """Modify test collection for AI-first testing approach."""
+    for item in items:
+        # Add default markers based on test path and name
+        if "revenue" in str(item.fspath) or "billing" in item.name:
+            item.add_marker(pytest.mark.revenue_protection)
+        
+        if "tenant" in str(item.fspath) or "isolation" in item.name:
+            item.add_marker(pytest.mark.tenant_isolation)
+        
+        if "property" in item.name or "invariant" in item.name:
+            item.add_marker(pytest.mark.ai_validation)

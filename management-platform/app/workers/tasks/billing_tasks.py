@@ -3,9 +3,11 @@ Background tasks for billing operations.
 """
 
 import logging
+import asyncio
+import aiohttp
 from datetime import date, timedelta
 from decimal import Decimal
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from uuid import UUID
 
 from celery import current_task
@@ -16,6 +18,89 @@ from ...services.billing_service import BillingService
 from ...workers.celery_app import celery_app
 
 logger = logging.getLogger(__name__)
+
+# Payment provider configuration
+STRIPE_API_URL = "https://api.stripe.com/v1"
+STRIPE_API_KEY = settings.get("STRIPE_SECRET_KEY", "sk_test_...")
+
+async def sync_payment_with_provider(payment) -> str:
+    """Sync payment status with external payment provider."""
+    try:
+        if not payment.external_payment_id:
+            return "unknown"
+            
+        # Stripe API integration
+        headers = {
+            "Authorization": f"Bearer {STRIPE_API_KEY}",
+            "Content-Type": "application/x-www-form-urlencoded"
+        }
+        
+        async with aiohttp.ClientSession() as session:
+            # Get payment intent status from Stripe
+            url = f"{STRIPE_API_URL}/payment_intents/{payment.external_payment_id}"
+            
+            async with session.get(url, headers=headers) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    stripe_status = data.get("status", "unknown")
+                    
+                    # Map Stripe statuses to our internal statuses
+                    status_mapping = {
+                        "succeeded": "completed",
+                        "processing": "pending", 
+                        "requires_payment_method": "failed",
+                        "requires_confirmation": "pending",
+                        "requires_action": "pending",
+                        "canceled": "failed",
+                        "requires_capture": "pending"
+                    }
+                    
+                    return status_mapping.get(stripe_status, "unknown")
+                else:
+                    logger.error(f"Failed to sync payment {payment.id} with Stripe: {response.status}")
+                    return "unknown"
+                    
+    except Exception as e:
+        logger.error(f"Error syncing payment {payment.id} with provider: {e}")
+        return "unknown"
+
+async def send_tenant_notification(
+    tenant_id: UUID, 
+    notification_type: str, 
+    subject: str, 
+    message: str, 
+    metadata: Optional[Dict[str, Any]] = None
+):
+    """Send notification to tenant via multiple channels."""
+    try:
+        notification_data = {
+            "tenant_id": str(tenant_id),
+            "type": notification_type,
+            "subject": subject,
+            "message": message,
+            "metadata": metadata or {},
+            "channels": ["email", "dashboard"],  # Multi-channel notification
+            "priority": "high" if "overdue" in notification_type else "normal",
+            "created_at": date.today().isoformat()
+        }
+        
+        # In a real implementation, this would integrate with:
+        # 1. Email service (SendGrid, AWS SES, etc.)
+        # 2. Dashboard notification system
+        # 3. SMS service for critical notifications
+        # 4. Slack/Teams integration for admin notifications
+        
+        # For now, we'll use the notification service
+        from ...services.notification_service import NotificationService
+        
+        async with async_session() as session:
+            notification_service = NotificationService(session)
+            await notification_service.create_notification(notification_data)
+        
+        logger.info(f"Notification sent to tenant {tenant_id}: {notification_type}")
+        
+    except Exception as e:
+        logger.error(f"Failed to send notification to tenant {tenant_id}: {e}")
 
 # Create async database session for workers
 engine = create_async_engine(settings.database_url)
@@ -85,7 +170,20 @@ def process_overdue_invoices(self):
                             )
                             suspended += 1
                         
-                        # TODO: Send notification to tenant
+                        # Send notification to tenant
+                        await send_tenant_notification(
+                            tenant_id=invoice.tenant_id,
+                            notification_type="overdue_payment",
+                            subject="Payment Overdue - Action Required",
+                            message=f"Your invoice #{invoice.id} for ${invoice.amount} is overdue. "
+                                   f"Please update your payment method to avoid service interruption.",
+                            metadata={
+                                "invoice_id": str(invoice.id),
+                                "amount": str(invoice.amount),
+                                "due_date": invoice.due_date.isoformat() if invoice.due_date else None,
+                                "days_overdue": days_overdue
+                            }
+                        )
                         notified += 1
                         
                     except Exception as e:
@@ -221,9 +319,8 @@ def sync_payment_provider(self, provider: str):
                 
                 for payment in pending_payments:
                     try:
-                        # TODO: Integrate with actual payment provider API
-                        # For now, simulate sync
-                        external_status = "completed"  # Would come from provider API
+                        # Integrate with payment provider API
+                        external_status = await sync_payment_with_provider(payment)
                         
                         if external_status == "completed":
                             await service.payment_repo.update_status(

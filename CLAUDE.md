@@ -4,21 +4,53 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-This is the **DotMac ISP Framework** - a comprehensive telecommunications management platform for Internet Service Providers. The repository is a monorepo containing the ISP Framework and the Management Platform that orchestrates it, with a unified configuration management system ensuring security parity across both platforms.
+This is the **DotMac Unified Platform** - a comprehensive telecommunications management ecosystem. The repository contains two distinct but coordinated platforms:
+
+1. **ISP Framework** (`isp-framework/`) - Monolithic ISP management application
+2. **Management Platform** (`management-platform/`) - SaaS orchestration platform for multi-tenant deployments
+
+Both platforms share unified configuration management, security policies, and deployment infrastructure.
 
 ## Architecture
 
-**Microservices Architecture**: Event-driven design with 10 core Python services:
-- `dotmac_core_events` - Event bus and messaging system (Redis/Kafka)
-- `dotmac_core_ops` - Operational utilities (workflows, sagas, job queues)
-- `dotmac_identity` - Authentication and authorization service
-- `dotmac_billing` - Billing, invoicing, and payment processing
-- `dotmac_services` - Service provisioning and lifecycle management  
-- `dotmac_networking` - Network infrastructure management (SNMP, device monitoring)
-- `dotmac_analytics` - Business intelligence and reporting
-- `dotmac_api_gateway` - API routing, rate limiting, load balancing
-- `dotmac_platform` - Platform coordination and shared services
-- `dotmac_devtools` - Development tools and service generators
+### **Two-Platform Structure**
+
+#### **ISP Framework** (`isp-framework/`)
+**Monolithic FastAPI Application**: Single integrated application with modular architecture:
+
+**Core Modules:**
+- `modules/identity/` - Customer and user management
+- `modules/billing/` - Billing, invoicing, and payment processing
+- `modules/services/` - Service provisioning and lifecycle management
+- `modules/networking/` - Network infrastructure management (SNMP, device monitoring)
+- `modules/analytics/` - Business intelligence and reporting
+- `modules/support/` - Ticketing and customer support
+- `modules/inventory/` - Equipment and asset management
+- `modules/field_ops/` - Field operations and work orders
+- `modules/compliance/` - Regulatory compliance and reporting
+- `modules/omnichannel/` - Multi-channel customer communication
+
+**Platform Infrastructure:**
+- `core/` - Shared utilities, database, security, configuration
+- `integrations/` - External system integrations (FreeRADIUS, Ansible, VOLTHA)
+- `plugins/` - Vendor plugin system for extensibility
+- `portals/` - Portal-specific APIs (admin, customer, reseller, technician)
+- `sdks/` - Internal SDK library for cross-module communication
+
+#### **Management Platform** (`management-platform/`)
+**SaaS Orchestration Platform**: Multi-tenant platform for managing ISP Framework deployments:
+
+**Core Services:**
+- `app/services/tenant_service.py` - Tenant lifecycle management
+- `app/services/billing_service.py` - SaaS subscription billing
+- `app/services/deployment_service.py` - Kubernetes orchestration
+- `app/services/plugin_service.py` - Plugin marketplace and licensing
+- `app/services/monitoring_service.py` - Platform health monitoring
+
+**Multi-Tenant Portals:**
+- `portals/master_admin/` - Platform operator interface
+- `portals/tenant_admin/` - ISP customer management
+- `portals/reseller/` - Partner and reseller portal
 
 **Frontend**: React/Next.js applications in `frontend/` using pnpm workspaces and Turbo for monorepo management.
 
@@ -26,39 +58,49 @@ This is the **DotMac ISP Framework** - a comprehensive telecommunications manage
 
 ### Quick Start
 ```bash
-# Show all available commands
+# Root level - manages both platforms
 make help
 
-# Check version and environment
-make version && make env-check
+# Platform-specific commands
+cd isp-framework && make help           # ISP Framework commands
+cd management-platform && make help    # Management Platform commands
 ```
 
 ### Development Setup
 ```bash
-# Set up development environment
+# Set up both platforms
 make install-dev
 
-# Clean and reset environment
-make clean && make install-dev
+# Platform-specific setup
+cd isp-framework && make install-dev
+cd management-platform && make install-dev
 ```
 
-### Docker Development Environment (✅ WORKING)
+### Docker Development Environment
 ```bash
-# Build Docker image (all dependencies resolved)
-make docker-build
+# Start unified development environment (both platforms)
+docker-compose -f docker-compose.unified.yml up -d
 
-# Start complete containerized environment
-make docker-run
+# Start ISP Framework only
+cd isp-framework && make docker-run
 
-# Alternative: Start individual services
-docker-compose up -d postgres redis  # Infrastructure only
-docker-compose up -d app             # Add main application
+# Start Management Platform only  
+cd management-platform && make up
 
-# Health check
-curl http://localhost:8001/health
+# Health checks
+curl http://localhost:8001/health      # ISP Framework
+curl http://localhost:8000/health      # Management Platform
 ```
-**Status**: Docker environment fully configured with OpenTelemetry stack working.
-**See**: `DOCKER_DEPLOYMENT_STATUS.md` for complete setup details.
+
+### Platform Access Points
+- **ISP Framework API**: http://localhost:8001
+- **Management Platform API**: http://localhost:8000
+- **Admin Portal**: http://localhost:3000
+- **Customer Portal**: http://localhost:3001  
+- **Reseller Portal**: http://localhost:3002
+- **Technician Portal**: http://localhost:3003
+- **Management Admin**: http://localhost:3004
+- **Tenant Portal**: http://localhost:3005
 
 ### AI-First Development Workflow
 ```bash
@@ -116,29 +158,24 @@ make security-strict
 
 ### Development Servers
 ```bash
-# Start development server with auto-reload
-make run-dev
+# ISP Framework
+cd isp-framework && make run-dev       # Development server
+cd isp-framework && make run           # Production server
 
-# Start production server
-make run
-
-# Start API Gateway for development
-make run-api-gateway
-
-# Serve using main entry point
-make serve
+# Management Platform  
+cd management-platform && make run-api # API server
+cd management-platform && make run-worker # Background workers
 ```
 
 ### Database Management
 ```bash
-# Set up database and run migrations
-make setup-db
+# ISP Framework
+cd isp-framework && make setup-db      # Setup and migrate
+cd isp-framework && make alembic-upgrade
 
-# Run Alembic migrations
-make alembic-upgrade
-
-# Reset database (WARNING: destroys data)
-make reset-db
+# Management Platform
+cd management-platform && make db-migrate
+cd management-platform && make db-reset
 ```
 
 ### Docker Operations
@@ -196,33 +233,58 @@ make requirements-update
 - `@pytest.mark.smoke_critical` - Revenue-critical paths only (10%)  
 - `@pytest.mark.e2e` - Full workflow tests
 
-## Service Dependencies
+## Platform Dependencies
 
-**Database**: PostgreSQL primary, Redis cache, TimescaleDB for metrics
-**Message Bus**: Redis Pub/Sub + message queues
-**Auth**: JWT-based authentication with RBAC
-**Multi-tenant**: All services support tenant isolation via tenant_id
+### **ISP Framework**
+- **Database**: PostgreSQL primary, Redis cache
+- **Auth**: Portal-based authentication (Portal ID system)  
+- **Architecture**: Modular monolith with plugin system
+- **Communication**: Internal module communication via SDKs
+
+### **Management Platform**  
+- **Database**: PostgreSQL with multi-tenant isolation
+- **Auth**: JWT-based authentication with RBAC
+- **Architecture**: Multi-tenant SaaS application
+- **Message Queue**: Celery with Redis for background tasks
+
+### **Shared Infrastructure**
+- **Configuration**: Unified OpenBao-based secrets management
+- **Monitoring**: SignOz observability stack
+- **Networking**: Nginx reverse proxy with SSL termination
 
 ## Key Patterns
 
-**Repository Pattern**: Each service uses repository pattern for data access
-**Dependency Injection**: FastAPI Depends() for dependency management
-**Event Sourcing**: Critical business entities use event sourcing
-**CQRS**: Command Query Responsibility Separation for complex operations
+### **ISP Framework Patterns**
+- **Modular Architecture**: Domain-driven modules with clear boundaries
+- **Repository Pattern**: Data access abstraction layer
+- **Plugin System**: Extensible vendor integration architecture  
+- **Portal Authentication**: Multi-portal access with Portal ID system
+
+### **Management Platform Patterns**
+- **Multi-Tenant**: Complete tenant isolation at database and application level
+- **SaaS Orchestration**: Kubernetes-based tenant deployment automation
+- **Event-Driven**: Async processing for tenant provisioning and billing
+- **API-First**: RESTful APIs with OpenAPI documentation
 
 ## Development Workflow
 
-1. Always run `make install-dev` for initial setup
-2. Run `make check` before committing (includes lint, type-check, test, security)
-3. Use `make test-package PACKAGE=service_name` for focused testing
-4. Each service has its own `pyproject.toml` with service-specific dependencies
-5. Root `pyproject.toml` contains unified tooling configuration
+1. **Platform Selection**: Choose ISP Framework or Management Platform for your work
+2. **Environment Setup**: Run platform-specific `make install-dev` 
+3. **Development**: Use platform-specific commands and testing approaches
+4. **Cross-Platform**: Use unified config system for shared resources
+5. **Testing**: Each platform has its own test suite and CI/CD pipeline
 
 ## Deployment
 
-**Docker**: Each service has a Dockerfile
-**Kubernetes**: Deployment manifests in `deployments/kubernetes/`
-**Environments**: development, staging, production docker-compose files available
+### **ISP Framework**
+- **Single Application**: Deployed as unified FastAPI application
+- **Database**: Single PostgreSQL instance per deployment
+- **Scaling**: Vertical scaling with horizontal read replicas
+
+### **Management Platform**
+- **Multi-Tenant SaaS**: Kubernetes-orchestrated deployments
+- **Database**: Shared PostgreSQL with tenant isolation
+- **Scaling**: Horizontal auto-scaling based on tenant load
 
 ## Security Notes
 
@@ -239,16 +301,39 @@ make requirements-update
 
 ## Common Issues
 
-- **Import errors**: Ensure you're in the correct service directory when running tests
-- **Complexity violations**: Refactor functions instead of ignoring rules
-- **Test failures**: Check that services are using proper test markers
-- **Docker builds**: Use `make docker-config` to generate configurations
+### **ISP Framework Issues**
+- **Module imports**: Ensure you're in `isp-framework/` directory when running commands
+- **Portal routing**: Check portal detection logic for authentication issues
+- **Plugin loading**: Verify plugin registration and dependency resolution
+- **Database migrations**: Run `make alembic-upgrade` after model changes
 
-## Service Interaction
+### **Management Platform Issues**
+- **Tenant isolation**: Verify all queries include tenant context
+- **Multi-tenancy**: Check tenant detection in middleware
+- **Background tasks**: Ensure Celery workers are running for async operations
+- **Kubernetes integration**: Verify kubectl access and cluster connectivity
 
-Services communicate via:
-1. **HTTP APIs** for synchronous operations
-2. **Events** via Redis Pub/Sub for asynchronous operations
-3. **Shared database** for some cross-cutting concerns (carefully managed)
+### **Cross-Platform Issues**
+- **Configuration sync**: Check OpenBao connectivity for shared secrets
+- **Database connections**: Verify platform-specific database credentials
+- **Port conflicts**: Ensure different ports for each platform service
 
-All services follow the same patterns for consistency across the platform.
+## Platform Communication
+
+### **ISP Framework Internal**
+- **Module-to-Module**: SDK-based internal APIs
+- **Database**: Shared PostgreSQL with cross-module relationships
+- **Caching**: Redis for session and application cache
+- **Events**: Internal event system for workflow orchestration
+
+### **Management Platform Internal**
+- **Multi-Tenant**: Row-level security and tenant-aware queries
+- **Background Processing**: Celery for tenant provisioning and billing
+- **External APIs**: REST APIs for tenant and resource management
+- **Kubernetes**: Direct cluster interaction for tenant deployments
+
+### **Cross-Platform Integration**
+- **Configuration**: Shared OpenBao secrets management
+- **Monitoring**: Unified SignOz observability
+- **Deployment**: Coordinated Docker Compose for development
+- **Authentication**: Cross-platform session sharing (where applicable)

@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import type { ReactNode } from 'react';
 
 import { useFormSubmission, useFormValidation } from '../hooks/useFormValidation';
@@ -33,14 +34,20 @@ export interface ValidatedFormChildProps {
   validateField: (field: string) => Promise<void>;
   validateForm: () => Promise<unknown>;
   resetForm: (initialValues?: Record<string, unknown>) => void;
-  getFieldProps: (field: string) => any;
+  getFieldProps: (field: string) => {
+    value: unknown;
+    onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
+    onBlur: (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
+    error?: string;
+    required?: boolean;
+    'aria-invalid'?: boolean;
+    'aria-describedby'?: string;
+  };
   setTouched: (field: string, isTouched?: boolean) => void;
 }
 
 export function ValidatedForm({
-  initialValues = {
-    // Implementation pending
-  },
+  initialValues = {},
   validationConfig,
   onSubmit,
   onSuccess,
@@ -52,7 +59,6 @@ export function ValidatedForm({
   children,
   className,
 }: ValidatedFormProps) {
-  const id = useId();
   const formValidation = useFormValidation(initialValues, {
     validationConfig,
     validateOnChange,
@@ -96,7 +102,6 @@ export interface ValidationMessageProps {
 }
 
 export function ValidationMessage({ error, fieldId, className = '' }: ValidationMessageProps) {
-  const id = useId();
   if (!error) {
     return null;
   }
@@ -132,23 +137,22 @@ export function FormField({
   children,
   className = '',
 }: FormFieldProps) {
-  const id = useId();
   return (
     <div className={`space-y-1 ${className}`}>
       <label htmlFor={fieldId} className='block font-medium text-gray-700 text-sm'>
         {label}
-        {required ? (
+        {required && (
           <span className='ml-1 text-red-500' aria-label='required'>
             *
           </span>
-        ) : null}
+        )}
       </label>
 
       {children}
 
-      {error ? <ValidationMessage error={error} fieldId={fieldId} /> : null}
+      {error && <ValidationMessage error={error} fieldId={fieldId} />}
 
-      {helpText && !error ? <p className='text-gray-500 text-sm'>{helpText}</p> : null}
+      {helpText && !error && <p className='text-gray-500 text-sm'>{helpText}</p>}
     </div>
   );
 }
@@ -161,13 +165,12 @@ export interface SuccessMessageProps {
 }
 
 export function SuccessMessage({ message, onDismiss, className = '' }: SuccessMessageProps) {
-  const id = useId();
   return (
     <div className={`rounded-md border border-green-200 bg-green-50 p-4 ${className}`}>
       <div className='flex'>
         <div className='flex-shrink-0'>
           <svg
-            aria-label='icon'
+            aria-hidden='true'
             className='h-5 w-5 text-green-400'
             viewBox='0 0 20 20'
             fill='currentColor'
@@ -183,17 +186,17 @@ export function SuccessMessage({ message, onDismiss, className = '' }: SuccessMe
         <div className='ml-3'>
           <p className='font-medium text-green-800 text-sm'>{message}</p>
         </div>
-        {onDismiss ? (
+        {onDismiss && (
           <div className='ml-auto pl-3'>
             <div className='-mx-1.5 -my-1.5'>
               <button
                 type='button'
                 onClick={onDismiss}
-                onKeyDown={(e) => e.key === 'Enter' && onDismiss}
+                onKeyDown={(e) => e.key === 'Enter' && onDismiss()}
                 className='inline-flex rounded-md bg-green-50 p-1.5 text-green-500 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 focus:ring-offset-green-50'
               >
                 <span className='sr-only'>Dismiss</span>
-                <svg aria-label='icon' className='h-3 w-3' viewBox='0 0 20 20' fill='currentColor'>
+                <svg aria-hidden='true' className='h-3 w-3' viewBox='0 0 20 20' fill='currentColor'>
                   <title>Icon</title>
                   <path
                     fillRule='evenodd'
@@ -204,7 +207,7 @@ export function SuccessMessage({ message, onDismiss, className = '' }: SuccessMe
               </button>
             </div>
           </div>
-        ) : null}
+        )}
       </div>
     </div>
   );
@@ -226,13 +229,12 @@ export function ErrorMessage({
   onDismiss,
   className = '',
 }: ErrorMessageProps) {
-  const id = useId();
   return (
     <div className={`rounded-md border border-red-200 bg-red-50 p-4 ${className}`}>
       <div className='flex'>
         <div className='flex-shrink-0'>
           <svg
-            aria-label='icon'
+            aria-hidden='true'
             className='h-5 w-5 text-red-400'
             viewBox='0 0 20 20'
             fill='currentColor'
@@ -248,30 +250,30 @@ export function ErrorMessage({
         <div className='ml-3 flex-1'>
           <h3 className='font-medium text-red-800 text-sm'>{title}</h3>
           <p className='mt-2 text-red-700 text-sm'>{message}</p>
-          {onRetry ? (
+          {onRetry && (
             <div className='mt-4'>
               <button
                 type='button'
                 onClick={onRetry}
-                onKeyDown={(e) => e.key === 'Enter' && onRetry}
+                onKeyDown={(e) => e.key === 'Enter' && onRetry()}
                 className='rounded-md bg-red-100 px-2 py-1 font-medium text-red-800 text-sm hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2'
               >
                 Try Again
               </button>
             </div>
-          ) : null}
+          )}
         </div>
-        {onDismiss ? (
+        {onDismiss && (
           <div className='ml-auto pl-3'>
             <div className='-mx-1.5 -my-1.5'>
               <button
                 type='button'
                 onClick={onDismiss}
-                onKeyDown={(e) => e.key === 'Enter' && onDismiss}
+                onKeyDown={(e) => e.key === 'Enter' && onDismiss()}
                 className='inline-flex rounded-md bg-red-50 p-1.5 text-red-500 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2 focus:ring-offset-red-50'
               >
                 <span className='sr-only'>Dismiss</span>
-                <svg aria-label='icon' className='h-3 w-3' viewBox='0 0 20 20' fill='currentColor'>
+                <svg aria-hidden='true' className='h-3 w-3' viewBox='0 0 20 20' fill='currentColor'>
                   <title>Icon</title>
                   <path
                     fillRule='evenodd'
@@ -282,7 +284,7 @@ export function ErrorMessage({
               </button>
             </div>
           </div>
-        ) : null}
+        )}
       </div>
     </div>
   );

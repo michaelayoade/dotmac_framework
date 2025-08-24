@@ -1,12 +1,12 @@
 """Service layer for billing operations."""
 
 from typing import List, Optional, Dict, Any
-from uuid import UUID, uuid4
+from uuid import UUID
 from datetime import datetime, date, timedelta
 from decimal import Decimal
 from sqlalchemy.orm import Session
 
-from dotmac_isp.core.settings import get_settings
+from dotmac_isp.shared.base_service import BaseTenantService
 from dotmac_isp.modules.billing import schemas
 from dotmac_isp.modules.billing.models import (
     Invoice,
@@ -20,111 +20,104 @@ from dotmac_isp.modules.billing.models import (
     PaymentMethod,
     BillingCycle,
 )
-from dotmac_isp.modules.billing.repository import (
-    InvoiceRepository,
-    InvoiceLineItemRepository,
-    PaymentRepository,
-    SubscriptionRepository,
-    CreditNoteRepository,
-)
 from dotmac_isp.shared.exceptions import (
     ServiceError,
-    NotFoundError,
+    EntityNotFoundError,
     ValidationError,
-    ConflictError,
+    BusinessRuleError,
 )
 
 
-class BillingService:
-    """Service layer for billing operations."""
+class InvoiceService(BaseTenantService[Invoice, schemas.InvoiceCreate, schemas.InvoiceUpdate, schemas.InvoiceResponse]):
+    """Service for invoice operations."""
+    
+    def __init__(self, db: Session, tenant_id: str):
+        super().__init__(
+            db=db,
+            model_class=Invoice,
+            create_schema=schemas.InvoiceCreate,
+            update_schema=schemas.InvoiceUpdate,
+            response_schema=schemas.InvoiceResponse,
+            tenant_id=tenant_id
+        )
+    
+    async def _validate_create_rules(self, data: schemas.InvoiceCreate) -> None:
+        """Validate business rules for invoice creation."""
+        # Ensure invoice number is unique for tenant
+        if await self.repository.exists({'invoice_number': data.invoice_number}):
+            raise BusinessRuleError(
+                f"Invoice number {data.invoice_number} already exists",
+                rule_name="unique_invoice_number"
+            )
+    
+    async def _validate_update_rules(self, entity: Invoice, data: schemas.InvoiceUpdate) -> None:
+        """Validate business rules for invoice updates."""
+        # Prevent updating paid invoices
+        if entity.status == InvoiceStatus.PAID and data.status != InvoiceStatus.PAID:
+            raise BusinessRuleError(
+                "Cannot modify status of paid invoice",
+                rule_name="immutable_paid_invoice"
+            )
 
-    def __init__(self, db: Session, tenant_id: Optional[str] = None):
+
+class PaymentService(BaseTenantService[Payment, schemas.PaymentCreate, schemas.PaymentUpdate, schemas.PaymentResponse]):
+    """Service for payment operations."""
+    
+    def __init__(self, db: Session, tenant_id: str):
+        super().__init__(
+            db=db,
+            model_class=Payment,
+            create_schema=schemas.PaymentCreate,
+            update_schema=schemas.PaymentUpdate,
+            response_schema=schemas.PaymentResponse,
+            tenant_id=tenant_id
+        )
+    
+    async def _validate_create_rules(self, data: schemas.PaymentCreate) -> None:
+        """Validate business rules for payment creation."""
+        # Ensure payment amount is positive
+        if data.amount <= 0:
+            raise ValidationError("Payment amount must be positive")
+    
+    async def _post_create_hook(self, entity: Payment, data: schemas.PaymentCreate) -> None:
+        """Update invoice status after payment creation."""
+        if entity.invoice_id:
+            # Update invoice status based on payment
+            await self._update_invoice_payment_status(entity.invoice_id)
+    
+    async def _update_invoice_payment_status(self, invoice_id: UUID) -> None:
+        """Update invoice payment status based on total payments."""
+        # This would implement the business logic for updating invoice status
+        # based on total payments received
+        pass
+
+
+class BillingService(BaseTenantService[Invoice, schemas.InvoiceCreate, schemas.InvoiceUpdate, schemas.InvoiceResponse]):
+    """Consolidated billing service with standardized patterns."""
+
+    def __init__(self, db: Session, tenant_id: str):
         """Initialize billing service."""
-        self.db = db
-        self.settings = get_settings()
-        self.tenant_id = UUID(tenant_id) if tenant_id else UUID(self.settings.tenant_id)
+        super().__init__(
+            db=db,
+            model_class=Invoice,
+            create_schema=schemas.InvoiceCreate,
+            update_schema=schemas.InvoiceUpdate,
+            response_schema=schemas.InvoiceResponse,
+            tenant_id=tenant_id
+        )
+        
+        # Initialize sub-services for complex operations
+        self.invoice_service = InvoiceService(db, tenant_id)
+        self.payment_service = PaymentService(db, tenant_id)
 
-        # Repositories
-        self.invoice_repo = InvoiceRepository(db, self.tenant_id)
-        self.line_item_repo = InvoiceLineItemRepository(db, self.tenant_id)
-        self.payment_repo = PaymentRepository(db, self.tenant_id)
-        self.subscription_repo = SubscriptionRepository(db, self.tenant_id)
-        self.credit_note_repo = CreditNoteRepository(db, self.tenant_id)
+    # Consolidated invoice operations
+    async def create_invoice(self, invoice_data: schemas.InvoiceCreate) -> schemas.InvoiceResponse:
+        """Create a new invoice with standardized patterns."""
+        return await self.invoice_service.create(invoice_data)
 
-    # Invoice Management
-    async def create_invoice(self, invoice_data: schemas.InvoiceCreate) -> Invoice:
-        """Create a new invoice."""
-        try:
-            # Calculate totals from line items
-            subtotal = sum(
-                item.quantity * item.unit_price for item in invoice_data.line_items
-            )
-
-            # Calculate tax
-            tax_total = self._calculate_tax(
-                subtotal, invoice_data.tax_rate or Decimal("0")
-            )
-
-            # Calculate discounts
-            discount_total = self._calculate_discount(
-                subtotal, invoice_data.discount_rate or Decimal("0")
-            )
-
-            # Calculate final total
-            total_amount = subtotal + tax_total - discount_total
-
-            # Prepare invoice data
-            invoice_dict = {
-                "customer_id": invoice_data.customer_id,
-                "issue_date": invoice_data.issue_date or date.today(),
-                "due_date": invoice_data.due_date
-                or (date.today() + timedelta(days=30)),
-                "status": InvoiceStatus.DRAFT,
-                "subtotal": subtotal,
-                "tax_total": tax_total,
-                "discount_total": discount_total,
-                "total_amount": total_amount,
-                "amount_paid": Decimal("0"),
-                "amount_due": total_amount,
-                "currency": invoice_data.currency or "USD",
-                "tax_rate": invoice_data.tax_rate,
-                "discount_rate": invoice_data.discount_rate,
-                "notes": invoice_data.notes,
-                "terms": invoice_data.terms,
-                "billing_address": invoice_data.billing_address,
-                "custom_fields": invoice_data.custom_fields,
-            }
-
-            # Create invoice
-            invoice = self.invoice_repo.create(invoice_dict)
-
-            # Create line items
-            for item_data in invoice_data.line_items:
-                line_item_dict = {
-                    "invoice_id": invoice.id,
-                    "line_number": item_data.line_number,
-                    "description": item_data.description,
-                    "quantity": item_data.quantity,
-                    "unit_price": item_data.unit_price,
-                    "total_price": item_data.quantity * item_data.unit_price,
-                    "service_instance_id": item_data.service_instance_id,
-                    "billing_period_start": item_data.billing_period_start,
-                    "billing_period_end": item_data.billing_period_end,
-                    "custom_fields": item_data.custom_fields,
-                }
-                self.line_item_repo.create(line_item_dict)
-
-            return invoice
-
-        except Exception as e:
-            raise ServiceError(f"Failed to create invoice: {str(e)}")
-
-    async def get_invoice(self, invoice_id: UUID) -> Invoice:
+    async def get_invoice(self, invoice_id: UUID) -> Optional[schemas.InvoiceResponse]:
         """Get invoice by ID."""
-        invoice = self.invoice_repo.get_by_id(invoice_id)
-        if not invoice:
-            raise NotFoundError(f"Invoice not found: {invoice_id}")
-        return invoice
+        return await self.invoice_service.get_by_id(invoice_id)
 
     async def get_invoice_by_number(self, invoice_number: str) -> Invoice:
         """Get invoice by invoice number."""

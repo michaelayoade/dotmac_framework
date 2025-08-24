@@ -1,0 +1,98 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply antialiased;
+  }
+  
+  body {
+    @apply bg-gray-50 text-gray-900;
+  }
+}
+
+@layer components {
+  .tenant-card {
+    @apply bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow;
+  }
+  
+  .tenant-button-primary {
+    @apply bg-tenant-600 text-white hover:bg-tenant-700 focus:ring-2 focus:ring-tenant-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-lg font-medium transition-colors;
+  }
+  
+  .tenant-button-secondary {
+    @apply bg-white text-tenant-600 border border-tenant-600 hover:bg-tenant-50 focus:ring-2 focus:ring-tenant-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-lg font-medium transition-colors;
+  }
+  
+  .tenant-input {
+    @apply block w-full rounded-lg border border-gray-300 px-3 py-2 placeholder-gray-400 focus:border-tenant-500 focus:ring-1 focus:ring-tenant-500 sm:text-sm;
+  }
+  
+  .tenant-nav-item {
+    @apply flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-md hover:text-gray-900 hover:bg-gray-100 transition-colors;
+  }
+  
+  .tenant-nav-item.active {
+    @apply bg-tenant-50 text-tenant-700 border-r-2 border-tenant-600;
+  }
+  
+  .status-badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+  
+  .status-active {
+    @apply status-badge bg-success-100 text-success-800;
+  }
+  
+  .status-pending {
+    @apply status-badge bg-warning-100 text-warning-800;
+  }
+  
+  .status-suspended {
+    @apply status-badge bg-danger-100 text-danger-800;
+  }
+  
+  .metric-card {
+    @apply tenant-card p-6;
+  }
+  
+  .metric-value {
+    @apply text-2xl font-bold text-gray-900;
+  }
+  
+  .metric-label {
+    @apply text-sm font-medium text-gray-500 mt-1;
+  }
+  
+  .metric-trend {
+    @apply flex items-center text-sm font-medium mt-2;
+  }
+  
+  .metric-trend.positive {
+    @apply text-success-600;
+  }
+  
+  .metric-trend.negative {
+    @apply text-danger-600;
+  }
+  
+  .metric-trend.neutral {
+    @apply text-gray-500;
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .animate-pulse-slow {
+    animation: pulse 3s infinite;
+  }
+}

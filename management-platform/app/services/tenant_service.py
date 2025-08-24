@@ -164,8 +164,27 @@ class TenantService:
                 created_by
             )
             
-            # TODO: Trigger infrastructure deployment workflow
-            # This would integrate with deployment service
+            # Trigger infrastructure deployment workflow
+            from .deployment_service import DeploymentService
+            deployment_service = DeploymentService(self.db)
+            
+            # Create deployment for the new tenant
+            deployment_config = {
+                "tier": onboarding_request.get("tier", "micro"),
+                "region": onboarding_request.get("region", "us-east-1"),
+                "features": onboarding_request.get("features", []),
+                "scaling_config": {
+                    "min_replicas": 1,
+                    "max_replicas": 3,
+                    "auto_scaling_enabled": True
+                }
+            }
+            
+            await deployment_service.create_tenant_deployment(
+                tenant.id, 
+                deployment_config, 
+                created_by
+            )
             
             logger.info(f"Tenant onboarding initiated: {tenant.name}")
             return tenant
@@ -272,8 +291,8 @@ class TenantService:
                         tenant_id=str(tenant_id)
                     )
                 
-                # TODO: Trigger status-specific workflows
-                # e.g., send notifications, update billing, etc.
+                # Trigger status-specific workflows
+                await self._trigger_status_workflows(tenant_id, new_status, updated_by, reason)
                 
                 logger.info("Tenant status updated", 
                            tenant_id=str(tenant_id),
@@ -456,3 +475,108 @@ class TenantService:
     async def check_slug_availability(self, slug: str, exclude_id: Optional[UUID] = None) -> bool:
         """Check if tenant slug is available."""
         return await self.tenant_repo.check_slug_availability(slug, exclude_id)
+
+    async def _trigger_status_workflows(self, tenant_id: UUID, new_status, updated_by: str, reason: str):
+        """Trigger status-specific workflows based on tenant status changes."""
+        try:
+            # Import services and plugin integration
+            from .billing_service import BillingService
+            from ..core.plugins.service_integration import service_integration
+            
+            billing_service = BillingService(self.db)
+            
+            # Get tenant info for notifications
+            tenant = await self.tenant_repo.get_by_id(tenant_id)
+            if not tenant:
+                logger.warning(f"Tenant {tenant_id} not found for status workflow")
+                return
+            
+            # Handle status-specific workflows
+            if hasattr(new_status, 'value'):
+                status_value = new_status.value
+            else:
+                status_value = str(new_status)
+            
+            # Activation workflows
+            if status_value == "active":
+                # Send welcome notification via plugins
+                await service_integration.send_notification(
+                    channel_type="email",
+                    message=f"Welcome! Your tenant '{tenant.name}' is now active and ready to use.",
+                    recipients=[tenant.admin_email] if tenant.admin_email else [],
+                    options={
+                        "subject": f"Welcome to DotMac Platform - {tenant.name}",
+                        "tenant_id": str(tenant_id),
+                        "notification_type": "tenant_activated"
+                    }
+                )
+                
+                # Start billing if not already started
+                active_subscription = await billing_service.subscription_repo.get_active_subscription(tenant_id)
+                if active_subscription:
+                    await billing_service._start_billing_period(active_subscription.id)
+            
+            # Suspension workflows
+            elif status_value == "suspended":
+                # Send suspension notification via plugins
+                await service_integration.send_notification(
+                    channel_type="email",
+                    message=f"Your tenant '{tenant.name}' has been suspended. Reason: {reason}",
+                    recipients=[tenant.admin_email] if tenant.admin_email else [],
+                    options={
+                        "subject": f"Tenant Suspended - {tenant.name}",
+                        "tenant_id": str(tenant_id),
+                        "notification_type": "tenant_suspended",
+                        "priority": "high"
+                    }
+                )
+                
+                # Pause billing
+                active_subscription = await billing_service.subscription_repo.get_active_subscription(tenant_id)
+                if active_subscription:
+                    await billing_service._pause_billing(active_subscription.id, reason)
+            
+            # Cancellation workflows
+            elif status_value == "cancelled":
+                # Send cancellation notification via plugins
+                await service_integration.send_notification(
+                    channel_type="email",
+                    message=f"Your tenant '{tenant.name}' has been cancelled. Thank you for using our service.",
+                    recipients=[tenant.admin_email] if tenant.admin_email else [],
+                    options={
+                        "subject": f"Tenant Cancelled - {tenant.name}",
+                        "tenant_id": str(tenant_id),
+                        "notification_type": "tenant_cancelled",
+                        "priority": "high"
+                    }
+                )
+                
+                # Cancel subscription and handle refunds
+                active_subscription = await billing_service.subscription_repo.get_active_subscription(tenant_id)
+                if active_subscription:
+                    await billing_service.cancel_subscription(
+                        active_subscription.id, 
+                        reason, 
+                        updated_by
+                    )
+            
+            # Deactivation workflows
+            elif status_value == "inactive":
+                # Send deactivation notification via plugins
+                await service_integration.send_notification(
+                    channel_type="email",
+                    message=f"Your tenant '{tenant.name}' has been deactivated.",
+                    recipients=[tenant.admin_email] if tenant.admin_email else [],
+                    options={
+                        "subject": f"Tenant Deactivated - {tenant.name}",
+                        "tenant_id": str(tenant_id),
+                        "notification_type": "tenant_deactivated",
+                        "priority": "normal"
+                    }
+                )
+            
+            logger.info(f"Status workflow completed for tenant {tenant_id} -> {status_value}")
+            
+        except Exception as e:
+            logger.error(f"Failed to trigger status workflows for tenant {tenant_id}: {e}")
+            # Don't raise exception to avoid breaking the main status update

@@ -3,7 +3,8 @@ Background tasks for plugin operations.
 """
 
 import logging
-from typing import Dict, Any, List
+import re
+from typing import Dict, Any, List, Tuple
 from uuid import UUID
 
 from celery import current_task
@@ -14,6 +15,38 @@ from ...services.plugin_service import PluginService
 from ...workers.celery_app import celery_app
 
 logger = logging.getLogger(__name__)
+
+
+def parse_semantic_version(version: str) -> Tuple[int, int, int]:
+    """Parse semantic version string into tuple of integers."""
+    # Handle semver format: major.minor.patch[-prerelease][+build]
+    version = version.split('-')[0].split('+')[0]  # Remove prerelease and build
+    parts = version.split('.')
+    
+    # Ensure we have at least 3 parts
+    while len(parts) < 3:
+        parts.append('0')
+    
+    try:
+        return (int(parts[0]), int(parts[1]), int(parts[2]))
+    except (ValueError, IndexError):
+        # Fallback for non-standard versions
+        return (0, 0, 0)
+
+
+async def is_newer_version(version1: str, version2: str) -> bool:
+    """Compare two semantic versions, return True if version1 is newer than version2."""
+    try:
+        v1_tuple = parse_semantic_version(version1)
+        v2_tuple = parse_semantic_version(version2)
+        
+        # Compare major, minor, patch in order
+        return v1_tuple > v2_tuple
+        
+    except Exception as e:
+        logger.warning(f"Version comparison failed for {version1} vs {version2}: {e}")
+        # Fallback to string comparison
+        return version1 > version2
 
 # Create async database session for workers
 engine = create_async_engine(settings.database_url)
@@ -356,8 +389,8 @@ def process_plugin_updates(self):
                         latest_version = installation.plugin.version
                         
                         if current_version != latest_version:
-                            # TODO: Implement proper version comparison
-                            if latest_version > current_version:  # Simplified version check
+                            # Implement proper semantic version comparison
+                            if await is_newer_version(latest_version, current_version):
                                 # Trigger update
                                 update_plugin.delay(
                                     str(installation.id),

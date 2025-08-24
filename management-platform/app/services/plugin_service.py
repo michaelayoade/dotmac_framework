@@ -194,13 +194,37 @@ class PluginService:
             {"message": "Plugin installation started"}, user_id
         )
         
-        # TODO: Implement actual installation logic
-        # This would typically involve:
-        # 1. Downloading plugin artifacts
-        # 2. Validating plugin security
-        # 3. Setting up plugin environment
-        # 4. Registering plugin hooks
-        # 5. Running plugin initialization
+        # Implement plugin installation workflow
+        try:
+            # 1. Download and validate plugin artifacts
+            plugin_artifact = await self._download_plugin_artifact(installation_id, user_id)
+            
+            # 2. Validate plugin security and compatibility
+            security_check = await self._validate_plugin_security(plugin_artifact, installation_id)
+            if not security_check["valid"]:
+                raise Exception(f"Security validation failed: {security_check['reason']}")
+            
+            # 3. Set up plugin environment and dependencies
+            environment = await self._setup_plugin_environment(installation_id, plugin_artifact)
+            
+            # 4. Register plugin hooks and integrate with platform
+            await self._register_plugin_hooks(installation_id, plugin_artifact, environment)
+            
+            # 5. Run plugin initialization and health checks
+            await self._initialize_plugin(installation_id, plugin_artifact, environment)
+            
+            # Mark installation as successful
+            await self._create_plugin_event(
+                installation_id, "installation_completed",
+                {"message": "Plugin installed successfully"}, user_id
+            )
+            
+        except Exception as e:
+            await self._create_plugin_event(
+                installation_id, "installation_failed",
+                {"error": str(e), "message": "Plugin installation failed"}, user_id
+            )
+            raise
         
         # For now, simulate installation
         import asyncio
@@ -309,10 +333,50 @@ class PluginService:
             {"message": f"Plugin update to version {target_version} started"}, user_id
         )
         
-        # TODO: Implement actual update logic
-        # Simulate update
-        import asyncio
-        asyncio.create_task(self._simulate_update(installation_id, target_version, user_id))
+        # Implement plugin update workflow
+        try:
+            # 1. Create backup of current plugin version
+            backup_id = await self._backup_current_plugin(installation_id)
+            
+            # 2. Download new plugin version
+            new_plugin_artifact = await self._download_plugin_version(installation_id, target_version, user_id)
+            
+            # 3. Validate compatibility and security of new version
+            compatibility_check = await self._validate_plugin_compatibility(
+                installation_id, new_plugin_artifact, target_version
+            )
+            if not compatibility_check["compatible"]:
+                raise Exception(f"Compatibility check failed: {compatibility_check['reason']}")
+            
+            # 4. Stop current plugin safely
+            await self._stop_plugin_safely(installation_id)
+            
+            # 5. Update plugin environment and dependencies
+            await self._update_plugin_environment(installation_id, new_plugin_artifact)
+            
+            # 6. Deploy new plugin version
+            await self._deploy_plugin_update(installation_id, new_plugin_artifact, target_version)
+            
+            # 7. Run migration scripts if needed
+            await self._run_plugin_migrations(installation_id, target_version)
+            
+            # 8. Start updated plugin and verify health
+            await self._start_updated_plugin(installation_id)
+            
+            # Mark update as successful
+            await self._create_plugin_event(
+                installation_id, "update_completed",
+                {"message": f"Plugin updated to version {target_version} successfully"}, user_id
+            )
+            
+        except Exception as e:
+            # Rollback on failure
+            await self._rollback_plugin_update(installation_id, backup_id)
+            await self._create_plugin_event(
+                installation_id, "update_failed",
+                {"error": str(e), "message": "Plugin update failed, rolled back"}, user_id
+            )
+            raise
     
     async def _simulate_update(self, installation_id: UUID, target_version: str, user_id: str):
         """Simulate plugin update."""
@@ -392,9 +456,37 @@ class PluginService:
     
     async def _start_uninstall_workflow(self, installation_id: UUID, user_id: str):
         """Start plugin uninstall workflow."""
-        # TODO: Implement actual uninstall logic
-        import asyncio
-        asyncio.create_task(self._simulate_uninstall(installation_id, user_id))
+        try:
+            # 1. Create backup before uninstall (for potential rollback)
+            backup_id = await self._backup_current_plugin(installation_id)
+            
+            # 2. Stop plugin safely and gracefully
+            await self._stop_plugin_safely(installation_id)
+            
+            # 3. Remove plugin hooks and integrations
+            await self._remove_plugin_hooks(installation_id)
+            
+            # 4. Clean up plugin data and configurations
+            await self._cleanup_plugin_data(installation_id)
+            
+            # 5. Remove plugin files and environment
+            await self._remove_plugin_environment(installation_id)
+            
+            # 6. Update database records
+            await self._finalize_plugin_removal(installation_id)
+            
+            # Mark uninstall as successful
+            await self._create_plugin_event(
+                installation_id, "uninstall_completed",
+                {"message": "Plugin uninstalled successfully"}, user_id
+            )
+            
+        except Exception as e:
+            await self._create_plugin_event(
+                installation_id, "uninstall_failed",
+                {"error": str(e), "message": "Plugin uninstall failed"}, user_id
+            )
+            raise
     
     async def _simulate_uninstall(self, installation_id: UUID, user_id: str):
         """Simulate plugin uninstall."""

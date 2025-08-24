@@ -2,59 +2,202 @@
 
 from datetime import datetime, timedelta, date
 from typing import List, Dict, Any, Optional
-from uuid import uuid4
+from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from decimal import Decimal
-from enum import Enum
 
 from dotmac_isp.core.database import get_db
-from dotmac_isp.shared.auth import get_current_tenant
+from dotmac_isp.core.middleware import get_tenant_id_dependency
 from sqlalchemy.orm import Session
-from .service import AnalyticsService
-from dotmac_isp.shared.exceptions import NotFoundError, ValidationError, ServiceError
+from .service import MetricService, ReportService, DashboardService, AlertService, AnalyticsService
+from . import schemas
+from dotmac_isp.shared.exceptions import (
+    EntityNotFoundError,
+    ValidationError,
+    BusinessRuleError,
+    ServiceError
+)
 
 router = APIRouter(tags=["analytics"])
-analytics_router = router  # Export with expected name
+analytics_router = router  # Standard export alias
 
 
-class MetricType(str, Enum):
-    """Available metric types for analytics."""
-
-    BANDWIDTH = "bandwidth"
-    REVENUE = "revenue"
-    CUSTOMER_COUNT = "customer_count"
-    SERVICE_UPTIME = "service_uptime"
-    SUPPORT_TICKETS = "support_tickets"
-    NETWORK_LATENCY = "network_latency"
-    DATA_USAGE = "data_usage"
-
-
-class ReportType(str, Enum):
-    """Available report types."""
-
-    DAILY = "daily"
-    WEEKLY = "weekly"
-    MONTHLY = "monthly"
-    QUARTERLY = "quarterly"
-    YEARLY = "yearly"
-    CUSTOM = "custom"
+# Metric endpoints
+@router.post("/metrics", response_model=schemas.MetricResponse)
+async def create_metric(
+    data: schemas.MetricCreate,
+    tenant_id: str = Depends(get_tenant_id_dependency),
+    db: Session = Depends(get_db),
+):
+    """Create new metric."""
+    try:
+        service = MetricService(db, tenant_id)
+        return await service.create(data)
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=e.message)
+    except BusinessRuleError as e:
+        raise HTTPException(status_code=422, detail=e.message)
+    except ServiceError as e:
+        raise HTTPException(status_code=500, detail=e.message)
 
 
-class AlertSeverity(str, Enum):
-    """Alert severity levels."""
+@router.get("/metrics", response_model=List[schemas.MetricResponse])
+async def list_metrics(
+    metric_type: Optional[str] = Query(None),
+    is_active: Optional[bool] = Query(None),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    tenant_id: str = Depends(get_tenant_id_dependency),
+    db: Session = Depends(get_db),
+):
+    """List metrics with optional filtering."""
+    try:
+        service = MetricService(db, tenant_id)
+        filters = {}
+        if metric_type:
+            filters['metric_type'] = metric_type
+        if is_active is not None:
+            filters['is_active'] = is_active
+        
+        return await service.list(
+            filters=filters,
+            limit=limit,
+            offset=skip
+        )
+    except ServiceError as e:
+        raise HTTPException(status_code=500, detail=e.message)
 
-    LOW = "low"
-    MEDIUM = "medium"
-    HIGH = "high"
-    CRITICAL = "critical"
+
+@router.get("/metrics/{metric_id}", response_model=schemas.MetricResponse)
+async def get_metric(
+    metric_id: UUID,
+    tenant_id: str = Depends(get_tenant_id_dependency),
+    db: Session = Depends(get_db),
+):
+    """Get metric by ID."""
+    try:
+        service = MetricService(db, tenant_id)
+        return await service.get_by_id_or_raise(metric_id)
+    except EntityNotFoundError as e:
+        raise HTTPException(status_code=404, detail=e.message)
+    except ServiceError as e:
+        raise HTTPException(status_code=500, detail=e.message)
 
 
-# Analytics Overview
+# Report endpoints
+@router.post("/reports", response_model=schemas.ReportResponse)
+async def create_report(
+    data: schemas.ReportCreate,
+    tenant_id: str = Depends(get_tenant_id_dependency),
+    db: Session = Depends(get_db),
+):
+    """Create new report."""
+    try:
+        service = ReportService(db, tenant_id)
+        return await service.create(data)
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=e.message)
+    except BusinessRuleError as e:
+        raise HTTPException(status_code=422, detail=e.message)
+    except ServiceError as e:
+        raise HTTPException(status_code=500, detail=e.message)
+
+
+@router.get("/reports", response_model=List[schemas.ReportResponse])
+async def list_reports(
+    report_type: Optional[str] = Query(None),
+    is_scheduled: Optional[bool] = Query(None),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    tenant_id: str = Depends(get_tenant_id_dependency),
+    db: Session = Depends(get_db),
+):
+    """List reports with optional filtering."""
+    try:
+        service = ReportService(db, tenant_id)
+        filters = {}
+        if report_type:
+            filters['report_type'] = report_type
+        if is_scheduled is not None:
+            filters['is_scheduled'] = is_scheduled
+        
+        return await service.list(
+            filters=filters,
+            limit=limit,
+            offset=skip
+        )
+    except ServiceError as e:
+        raise HTTPException(status_code=500, detail=e.message)
+
+
+# Dashboard endpoints
+@router.post("/dashboards", response_model=schemas.DashboardResponse)
+async def create_dashboard(
+    data: schemas.DashboardCreate,
+    tenant_id: str = Depends(get_tenant_id_dependency),
+    db: Session = Depends(get_db),
+):
+    """Create new dashboard."""
+    try:
+        service = DashboardService(db, tenant_id)
+        return await service.create(data)
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=e.message)
+    except BusinessRuleError as e:
+        raise HTTPException(status_code=422, detail=e.message)
+    except ServiceError as e:
+        raise HTTPException(status_code=500, detail=e.message)
+
+
+@router.get("/dashboards", response_model=List[schemas.DashboardResponse])
+async def list_dashboards(
+    is_default: Optional[bool] = Query(None),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    tenant_id: str = Depends(get_tenant_id_dependency),
+    db: Session = Depends(get_db),
+):
+    """List dashboards with optional filtering."""
+    try:
+        service = DashboardService(db, tenant_id)
+        filters = {}
+        if is_default is not None:
+            filters['is_default'] = is_default
+        
+        return await service.list(
+            filters=filters,
+            limit=limit,
+            offset=skip
+        )
+    except ServiceError as e:
+        raise HTTPException(status_code=500, detail=e.message)
+
+
+# Alert endpoints
+@router.post("/alerts", response_model=schemas.AlertResponse)
+async def create_alert(
+    data: schemas.AlertCreate,
+    tenant_id: str = Depends(get_tenant_id_dependency),
+    db: Session = Depends(get_db),
+):
+    """Create new alert."""
+    try:
+        service = AlertService(db, tenant_id)
+        return await service.create(data)
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=e.message)
+    except BusinessRuleError as e:
+        raise HTTPException(status_code=422, detail=e.message)
+    except ServiceError as e:
+        raise HTTPException(status_code=500, detail=e.message)
+
+
+# Legacy overview endpoint
 @router.get("/overview")
 async def get_analytics_overview(
     start_date: Optional[date] = Query(None),
     end_date: Optional[date] = Query(None),
-    tenant_id: str = Depends(get_current_tenant),
+    tenant_id: str = Depends(get_tenant_id_dependency),
     db: Session = Depends(get_db),
 ):
     """Get analytics overview with key metrics and stats."""

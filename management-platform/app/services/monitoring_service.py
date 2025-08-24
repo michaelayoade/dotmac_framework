@@ -19,6 +19,7 @@ from ..schemas.monitoring import (
     SyntheticCheckCreate, MetricQuery, LogQuery
 )
 from ..models.monitoring import Alert, Metric, HealthCheck, SLARecord
+from ..core.plugins.service_integration import service_integration
 
 logger = logging.getLogger(__name__)
 
@@ -213,19 +214,83 @@ class MonitoringService:
             )
     
     async def _send_email_notification(self, channel: NotificationChannel, alert: Alert):
-        """Send email notification."""
-        # TODO: Integrate with email service
-        logger.info(f"Sending email notification for alert {alert.id}")
+        """Send email notification via plugin."""
+        try:
+            alert_data = {
+                "type": alert.alert_type,
+                "severity": alert.severity,
+                "message": alert.message,
+                "timestamp": alert.timestamp.isoformat(),
+                "tenant_id": alert.tenant_id,
+                "details": alert.metadata or {}
+            }
+            
+            recipients = channel.configuration.get('recipients', [])
+            success = await service_integration.send_notification(
+                'email', alert.message, recipients, {'subject': f'Alert: {alert.alert_type}'}
+            )
+            
+            if success:
+                logger.info(f"Email notification sent for alert {alert.id}")
+            else:
+                logger.error(f"Failed to send email notification for alert {alert.id}")
+                
+        except Exception as e:
+            logger.error(f"Email notification error for alert {alert.id}: {e}")
     
     async def _send_slack_notification(self, channel: NotificationChannel, alert: Alert):
-        """Send Slack notification."""
-        # TODO: Integrate with Slack API
-        logger.info(f"Sending Slack notification for alert {alert.id}")
+        """Send Slack notification via plugin."""
+        try:
+            alert_data = {
+                "type": alert.alert_type,
+                "severity": alert.severity, 
+                "message": alert.message,
+                "timestamp": alert.timestamp.isoformat(),
+                "tenant_id": alert.tenant_id,
+                "details": alert.metadata or {},
+                "channel": channel.configuration.get('channel', '#alerts')
+            }
+            
+            recipients = channel.configuration.get('recipients', [])
+            success = await service_integration.send_alert_via_plugins(alert_data, ['slack'])
+            
+            if success.get('slack', False):
+                logger.info(f"Slack notification sent for alert {alert.id}")
+            else:
+                logger.error(f"Failed to send Slack notification for alert {alert.id}")
+                
+        except Exception as e:
+            logger.error(f"Slack notification error for alert {alert.id}: {e}")
     
     async def _send_webhook_notification(self, channel: NotificationChannel, alert: Alert):
         """Send webhook notification."""
-        # TODO: Implement webhook delivery
-        logger.info(f"Sending webhook notification for alert {alert.id}")
+        try:
+            import aiohttp
+            
+            webhook_url = channel.configuration.get('webhook_url')
+            if not webhook_url:
+                logger.error(f"No webhook URL configured for channel {channel.id}")
+                return
+            
+            alert_payload = {
+                "alert_id": str(alert.id),
+                "type": alert.alert_type,
+                "severity": alert.severity,
+                "message": alert.message,
+                "timestamp": alert.timestamp.isoformat(),
+                "tenant_id": str(alert.tenant_id),
+                "metadata": alert.metadata or {}
+            }
+            
+            async with aiohttp.ClientSession() as session:
+                async with session.post(webhook_url, json=alert_payload) as response:
+                    if response.status == 200:
+                        logger.info(f"Webhook notification sent for alert {alert.id}")
+                    else:
+                        logger.error(f"Webhook notification failed for alert {alert.id}: {response.status}")
+                        
+        except Exception as e:
+            logger.error(f"Webhook notification error for alert {alert.id}: {e}")
     
     async def create_alert_rule(
         self,

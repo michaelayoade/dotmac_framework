@@ -22,15 +22,96 @@ from .models import (
     CommissionRecord,
     PricingTier
 )
+from .schemas import (
+    SubscriptionCreate, 
+    SubscriptionUpdate, 
+    SubscriptionResponse,
+    UsageRecordCreate,
+    InvoiceCreate
+)
+from ...app.shared.base_service import BaseManagementService
+from ...app.core.exceptions import BusinessRuleError, ValidationError
 
 logger = logging.getLogger(__name__)
 
 
+class SubscriptionService(BaseManagementService[Subscription, SubscriptionCreate, SubscriptionUpdate, SubscriptionResponse]):
+    """Service for managing subscriptions with standardized patterns."""
+    
+    def __init__(self, db: AsyncSession, tenant_id: Optional[str] = None):
+        super().__init__(
+            db=db,
+            model_class=Subscription,
+            create_schema=SubscriptionCreate,
+            update_schema=SubscriptionUpdate,
+            response_schema=SubscriptionResponse,
+            tenant_id=tenant_id
+        )
+    
+    async def _validate_create_rules(self, data: SubscriptionCreate) -> None:
+        """Validate subscription creation rules."""
+        # Check for existing active subscription for tenant
+        existing = await self.repository.get_by_field('tenant_id', data.tenant_id)
+        if existing and existing.status == SubscriptionStatus.ACTIVE:
+            raise BusinessRuleError(f"Tenant {data.tenant_id} already has an active subscription")
+        
+        # Validate pricing tier
+        if data.pricing_tier not in ['micro', 'small', 'medium', 'large', 'enterprise']:
+            raise ValidationError(f"Invalid pricing tier: {data.pricing_tier}")
+        
+        # Validate billing cycle
+        if data.billing_cycle not in ['monthly', 'yearly']:
+            raise ValidationError(f"Invalid billing cycle: {data.billing_cycle}")
+    
+    async def _validate_update_rules(self, entity: Subscription, data: SubscriptionUpdate) -> None:
+        """Validate subscription update rules."""
+        # Prevent downgrade if tenant is over new limits
+        if data.pricing_tier and data.pricing_tier != entity.pricing_tier:
+            # Would check tenant usage vs new tier limits here
+            pass
+    
+    async def _post_create_hook(self, entity: Subscription, data: SubscriptionCreate) -> None:
+        """Post-creation workflows for subscription."""
+        # Generate first invoice
+        await self._generate_initial_invoice(entity)
+        logger.info(f"Created subscription {entity.id} for tenant {entity.tenant_id}")
+    
+    async def _generate_initial_invoice(self, subscription: Subscription) -> None:
+        """Generate the initial invoice for a subscription."""
+        # Basic invoice generation logic
+        base_amount = self._get_tier_pricing(subscription.pricing_tier)
+        
+        invoice_data = {
+            'tenant_id': subscription.tenant_id,
+            'subscription_id': subscription.id,
+            'total_amount': base_amount,
+            'due_date': datetime.utcnow() + timedelta(days=30),
+            'status': 'pending',
+            'invoice_number': f"INV-{subscription.id}"[:20]
+        }
+        
+        invoice = Invoice(**invoice_data)
+        self.db.add(invoice)
+        await self.db.flush()
+    
+    def _get_tier_pricing(self, tier: str) -> Decimal:
+        """Get base pricing for tier."""
+        pricing = {
+            'micro': Decimal('29.00'),
+            'small': Decimal('99.00'),
+            'medium': Decimal('299.00'),
+            'large': Decimal('799.00'),
+            'enterprise': Decimal('2499.00')
+        }
+        return pricing.get(tier, Decimal('99.00'))
+
+
 class BillingSaasService:
-    """Service for managing SaaS billing operations."""
+    """Legacy billing service - kept for backward compatibility."""
     
     def __init__(self, db: AsyncSession):
         self.db = db
+        self.subscription_service = SubscriptionService(db)
     
     async def create_subscription(
         self, 

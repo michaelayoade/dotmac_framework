@@ -11,11 +11,12 @@ import io
 from dotmac_isp.core.database import get_db
 from dotmac_isp.core.middleware import get_tenant_id_dependency
 from .schemas import (
-    Invoice,
+    InvoiceResponse,
     InvoiceCreate,
     InvoiceUpdate,
-    Payment,
+    PaymentResponse,
     PaymentCreate,
+    PaymentUpdate,
     CreditNote,
     CreditNoteCreate,
     Receipt,
@@ -27,27 +28,41 @@ from .schemas import (
     BillingReport,
 )
 from .models import InvoiceStatus, PaymentStatus, PaymentMethod
-from .service import BillingService, SubscriptionBillingService
-from .websocket_manager import event_publisher
-from .pdf_generator import generate_invoice_pdf, generate_receipt_pdf
-from .csv_exporter import (
-    export_invoices_csv, export_payments_csv, export_financial_report_csv,
-    BillingCSVExporter, FinancialReportExporter
+from .service import InvoiceService, PaymentService, BillingService
+from dotmac_isp.shared.exceptions import (
+    EntityNotFoundError,
+    ValidationError,
+    BusinessRuleError,
+    ServiceError
 )
-from .file_handler import file_upload_service
-from dotmac_isp.shared.exceptions import NotFoundError, ValidationError, ServiceError
 
 router = APIRouter(tags=["billing"])
-billing_router = router  # Export with expected name
+billing_router = router  # Standard export alias
 
 
 # Invoice endpoints
-@router.get("/invoices", response_model=List[Invoice])
+@router.post("/invoices", response_model=InvoiceResponse)
+async def create_invoice(
+    data: InvoiceCreate,
+    tenant_id: str = Depends(get_tenant_id_dependency),
+    db: Session = Depends(get_db),
+):
+    """Create new invoice."""
+    try:
+        service = InvoiceService(db, tenant_id)
+        return await service.create(data)
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=e.message)
+    except BusinessRuleError as e:
+        raise HTTPException(status_code=422, detail=e.message)
+    except ServiceError as e:
+        raise HTTPException(status_code=500, detail=e.message)
+
+
+@router.get("/invoices", response_model=List[InvoiceResponse])
 async def list_invoices(
     customer_id: Optional[UUID] = Query(None),
     status: Optional[InvoiceStatus] = Query(None),
-    due_date_from: Optional[date] = Query(None),
-    due_date_to: Optional[date] = Query(None),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     tenant_id: str = Depends(get_tenant_id_dependency),
@@ -55,9 +70,103 @@ async def list_invoices(
 ):
     """List invoices with optional filtering."""
     try:
-        service = BillingService(db, tenant_id)
-        invoices = await service.list_invoices(
-            customer_id=customer_id,
+        service = InvoiceService(db, tenant_id)
+        filters = {}
+        if customer_id:
+            filters['customer_id'] = customer_id
+        if status:
+            filters['status'] = status
+        
+        return await service.list(
+            filters=filters,
+            limit=limit,
+            offset=skip
+        )
+    except ServiceError as e:
+        raise HTTPException(status_code=500, detail=e.message)
+
+
+@router.get("/invoices/{invoice_id}", response_model=InvoiceResponse)
+async def get_invoice(
+    invoice_id: UUID,
+    tenant_id: str = Depends(get_tenant_id_dependency),
+    db: Session = Depends(get_db),
+):
+    """Get invoice by ID."""
+    try:
+        service = InvoiceService(db, tenant_id)
+        return await service.get_by_id_or_raise(invoice_id)
+    except EntityNotFoundError as e:
+        raise HTTPException(status_code=404, detail=e.message)
+    except ServiceError as e:
+        raise HTTPException(status_code=500, detail=e.message)
+
+
+@router.put("/invoices/{invoice_id}", response_model=InvoiceResponse)
+async def update_invoice(
+    invoice_id: UUID,
+    data: InvoiceUpdate,
+    tenant_id: str = Depends(get_tenant_id_dependency),
+    db: Session = Depends(get_db),
+):
+    """Update invoice."""
+    try:
+        service = InvoiceService(db, tenant_id)
+        return await service.update(invoice_id, data)
+    except EntityNotFoundError as e:
+        raise HTTPException(status_code=404, detail=e.message)
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=e.message)
+    except BusinessRuleError as e:
+        raise HTTPException(status_code=422, detail=e.message)
+    except ServiceError as e:
+        raise HTTPException(status_code=500, detail=e.message)
+
+
+# Payment endpoints
+@router.post("/payments", response_model=PaymentResponse)
+async def create_payment(
+    data: PaymentCreate,
+    tenant_id: str = Depends(get_tenant_id_dependency),
+    db: Session = Depends(get_db),
+):
+    """Create new payment."""
+    try:
+        service = PaymentService(db, tenant_id)
+        return await service.create(data)
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=e.message)
+    except BusinessRuleError as e:
+        raise HTTPException(status_code=422, detail=e.message)
+    except ServiceError as e:
+        raise HTTPException(status_code=500, detail=e.message)
+
+
+@router.get("/payments", response_model=List[PaymentResponse])
+async def list_payments(
+    invoice_id: Optional[UUID] = Query(None),
+    status: Optional[PaymentStatus] = Query(None),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    tenant_id: str = Depends(get_tenant_id_dependency),
+    db: Session = Depends(get_db),
+):
+    """List payments with optional filtering."""
+    try:
+        service = PaymentService(db, tenant_id)
+        filters = {}
+        if invoice_id:
+            filters['invoice_id'] = invoice_id
+        if status:
+            filters['status'] = status
+        
+        return await service.list(
+            filters=filters,
+            limit=limit,
+            offset=skip
+        )
+    except ServiceError as e:
+        raise HTTPException(status_code=500, detail=e.message)
             status=status,
             due_date_from=due_date_from,
             due_date_to=due_date_to,

@@ -1,12 +1,12 @@
 """Service layer for ISP service provisioning and management."""
 
 from typing import List, Optional, Dict, Any
-from uuid import UUID, uuid4
+from uuid import UUID
 from datetime import datetime, date
 from decimal import Decimal
 from sqlalchemy.orm import Session
 
-from dotmac_isp.core.settings import get_settings
+from dotmac_isp.shared.base_service import BaseTenantService
 from dotmac_isp.core.celery_app import celery_app
 from dotmac_isp.modules.services import schemas
 from dotmac_isp.modules.services.models import (
@@ -18,38 +18,153 @@ from dotmac_isp.modules.services.models import (
     ServiceStatus,
     ProvisioningStatus,
 )
-from dotmac_isp.modules.services.repository import (
-    ServicePlanRepository,
-    ServiceInstanceRepository,
-    ProvisioningTaskRepository,
-)
 from dotmac_isp.shared.exceptions import (
     ServiceError,
-    NotFoundError,
+    EntityNotFoundError,
     ValidationError,
-    ConflictError,
+    BusinessRuleError,
 )
 from dotmac_isp.sdks.networking.device_provisioning import DeviceProvisioningSDK
 from dotmac_isp.sdks.services.provisioning_bindings import ProvisioningBindingsSDK
 
 
-class ServiceProvisioningService:
-    """Service layer for ISP service provisioning operations."""
+class ServicePlanService(BaseTenantService[ServicePlan, schemas.ServicePlanCreate, schemas.ServicePlanUpdate, schemas.ServicePlanResponse]):
+    """Service for service plan management."""
 
-    def __init__(self, db: Session, tenant_id: Optional[str] = None):
-        """Initialize service provisioning service."""
-        self.db = db
-        self.settings = get_settings()
-        self.tenant_id = UUID(tenant_id) if tenant_id else UUID(self.settings.tenant_id)
+    def __init__(self, db: Session, tenant_id: str):
+        super().__init__(
+            db=db,
+            model_class=ServicePlan,
+            create_schema=schemas.ServicePlanCreate,
+            update_schema=schemas.ServicePlanUpdate,
+            response_schema=schemas.ServicePlanResponse,
+            tenant_id=tenant_id
+        )
 
-        # Repositories
-        self.plan_repo = ServicePlanRepository(db, self.tenant_id)
-        self.instance_repo = ServiceInstanceRepository(db, self.tenant_id)
-        self.task_repo = ProvisioningTaskRepository(db, self.tenant_id)
+    async def _validate_create_rules(self, data: schemas.ServicePlanCreate) -> None:
+        """Validate business rules for service plan creation."""
+        # Ensure plan name is unique for tenant
+        if await self.repository.exists({'name': data.name}):
+            raise BusinessRuleError(
+                f"Service plan with name '{data.name}' already exists",
+                rule_name="unique_plan_name"
+            )
+        
+        # Validate pricing is positive
+        if data.price <= 0:
+            raise ValidationError("Service plan price must be positive")
 
+    async def _validate_update_rules(self, entity: ServicePlan, data: schemas.ServicePlanUpdate) -> None:
+        """Validate business rules for service plan updates."""
+        # Prevent price reduction if there are active subscriptions
+        if data.price and data.price < entity.price:
+            # Check for active service instances (simplified check)
+            active_instances = await self.repository.count({'service_plan_id': entity.id, 'status': ServiceStatus.ACTIVE})
+            if active_instances > 0:
+                raise BusinessRuleError(
+                    "Cannot reduce price of service plan with active instances",
+                    rule_name="active_instances_price_protection"
+                )
+
+
+class ServiceInstanceService(BaseTenantService[ServiceInstance, schemas.ServiceInstanceCreate, schemas.ServiceInstanceUpdate, schemas.ServiceInstanceResponse]):
+    """Service for service instance management."""
+
+    def __init__(self, db: Session, tenant_id: str):
+        super().__init__(
+            db=db,
+            model_class=ServiceInstance,
+            create_schema=schemas.ServiceInstanceCreate,
+            update_schema=schemas.ServiceInstanceUpdate,
+            response_schema=schemas.ServiceInstanceResponse,
+            tenant_id=tenant_id
+        )
+        
         # SDKs for network integration
-        self.device_provisioning_sdk = DeviceProvisioningSDK(str(self.tenant_id))
-        self.provisioning_bindings_sdk = ProvisioningBindingsSDK(str(self.tenant_id))
+        self.device_provisioning_sdk = DeviceProvisioningSDK(tenant_id)
+        self.provisioning_bindings_sdk = ProvisioningBindingsSDK(tenant_id)
+
+    async def _validate_create_rules(self, data: schemas.ServiceInstanceCreate) -> None:
+        """Validate business rules for service instance creation."""
+        # Ensure customer exists (would need identity module integration)
+        # For now, just validate required fields
+        if not data.customer_id:
+            raise ValidationError("Customer ID is required for service instance")
+        
+        if not data.service_plan_id:
+            raise ValidationError("Service plan ID is required")
+
+    async def _post_create_hook(self, entity: ServiceInstance, data: schemas.ServiceInstanceCreate) -> None:
+        """Start provisioning process after service instance creation."""
+        try:
+            # Create provisioning task
+            from .tasks import start_service_provisioning
+            task_result = start_service_provisioning.delay(str(entity.id), str(self.tenant_id))
+            
+            # Update instance with task ID
+            await self.repository.update(entity.id, {'provisioning_task_id': task_result.id}, commit=True)
+            
+        except Exception as e:
+            self._logger.error(f"Failed to start provisioning for service instance {entity.id}: {e}")
+            # Update status to indicate provisioning failed
+            await self.repository.update(entity.id, {'status': ServiceStatus.SUSPENDED}, commit=True)
+
+    async def _validate_update_rules(self, entity: ServiceInstance, data: schemas.ServiceInstanceUpdate) -> None:
+        """Validate business rules for service instance updates."""
+        # Prevent status changes if provisioning is in progress
+        if data.status and entity.provisioning_status == ProvisioningStatus.IN_PROGRESS:
+            raise BusinessRuleError(
+                "Cannot change service status while provisioning is in progress",
+                rule_name="provisioning_in_progress_protection"
+            )
+
+
+class ProvisioningTaskService(BaseTenantService[ProvisioningTask, schemas.ProvisioningTaskCreate, schemas.ProvisioningTaskUpdate, schemas.ProvisioningTaskResponse]):
+    """Service for provisioning task management."""
+
+    def __init__(self, db: Session, tenant_id: str):
+        super().__init__(
+            db=db,
+            model_class=ProvisioningTask,
+            create_schema=schemas.ProvisioningTaskCreate,
+            update_schema=schemas.ProvisioningTaskUpdate,
+            response_schema=schemas.ProvisioningTaskResponse,
+            tenant_id=tenant_id
+        )
+
+    async def _validate_create_rules(self, data: schemas.ProvisioningTaskCreate) -> None:
+        """Validate business rules for provisioning task creation."""
+        if not data.service_instance_id:
+            raise ValidationError("Service instance ID is required for provisioning task")
+
+    async def _post_update_hook(self, entity: ProvisioningTask, data: schemas.ProvisioningTaskUpdate) -> None:
+        """Update service instance status when task completes."""
+        if data.status == ProvisioningStatus.COMPLETED:
+            # Update service instance status to active
+            service_instance_service = ServiceInstanceService(self.db, self.tenant_id)
+            await service_instance_service.update(
+                entity.service_instance_id,
+                schemas.ServiceInstanceUpdate(status=ServiceStatus.ACTIVE, provisioning_status=ProvisioningStatus.COMPLETED)
+            )
+        elif data.status == ProvisioningStatus.FAILED:
+            # Update service instance status to suspended
+            service_instance_service = ServiceInstanceService(self.db, self.tenant_id)
+            await service_instance_service.update(
+                entity.service_instance_id,
+                schemas.ServiceInstanceUpdate(status=ServiceStatus.SUSPENDED, provisioning_status=ProvisioningStatus.FAILED)
+            )
+
+
+# Legacy service for backward compatibility
+class ServiceProvisioningService:
+    """Legacy service provisioning service - use individual services instead."""
+
+    def __init__(self, db: Session, tenant_id: str):
+        self.db = db
+        self.tenant_id = tenant_id
+        self.plan_service = ServicePlanService(db, tenant_id)
+        self.instance_service = ServiceInstanceService(db, tenant_id)
+        self.task_service = ProvisioningTaskService(db, tenant_id)
 
     # Service Plan Management
     async def create_service_plan(

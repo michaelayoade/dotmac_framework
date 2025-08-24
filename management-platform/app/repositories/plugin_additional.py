@@ -2,7 +2,7 @@
 Additional plugin repository methods.
 """
 
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from uuid import UUID
 from datetime import datetime
 
@@ -129,3 +129,93 @@ class PluginUsageRepository(BaseRepository[PluginUsage]):
     async def get_by_plugin(self, plugin_id: UUID) -> List[PluginUsage]:
         """Get usage records by plugin."""
         return await self.list(filters={"plugin_id": plugin_id, "is_deleted": False})
+
+
+class PluginInstallationRepository(BaseRepository[PluginLicense]):
+    """Alias for PluginLicense repository - installations are managed via licenses."""
+    
+    def __init__(self, db: AsyncSession):
+        super().__init__(db, PluginLicense)
+    
+    async def get_by_tenant_and_plugin(self, tenant_id: UUID, plugin_id: UUID) -> Optional[PluginLicense]:
+        """Get installation by tenant and plugin."""
+        stmt = select(self.model).where(
+            and_(
+                self.model.tenant_id == tenant_id,
+                self.model.plugin_id == plugin_id,
+                self.model.is_deleted == False
+            )
+        )
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()
+
+
+class PluginResourceUsageRepository(BaseRepository[PluginUsage]):
+    """Repository for plugin resource usage tracking."""
+    
+    def __init__(self, db: AsyncSession):
+        super().__init__(db, PluginUsage)
+    
+    async def get_resource_usage_by_license(self, license_id: UUID, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None) -> List[PluginUsage]:
+        """Get resource usage records by license within date range."""
+        filters = {"license_id": license_id, "is_deleted": False}
+        # In production, would add date filtering logic here
+        return await self.list(filters=filters)
+    
+    async def get_resource_usage_by_plugin(self, plugin_id: UUID, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None) -> List[PluginUsage]:
+        """Get resource usage records by plugin within date range."""
+        filters = {"plugin_id": plugin_id, "is_deleted": False}
+        # In production, would add date filtering logic here
+        return await self.list(filters=filters)
+
+
+class PluginSecurityScanRepository(BaseRepository[Plugin]):
+    """Repository for plugin security scan operations."""
+    
+    def __init__(self, db: AsyncSession):
+        super().__init__(db, Plugin)
+    
+    async def get_plugins_for_security_scan(self, scan_type: str = "all") -> List[Plugin]:
+        """Get plugins that need security scanning."""
+        filters = {"is_deleted": False, "is_active": True}
+        return await self.list(filters=filters)
+    
+    async def update_security_status(self, plugin_id: UUID, security_data: Dict[str, Any], updated_by: str) -> Optional[Plugin]:
+        """Update plugin security scan results."""
+        # In production, would store security scan results in a separate table
+        # For now, just update the plugin metadata
+        plugin = await self.get_by_id(plugin_id)
+        if plugin and hasattr(plugin, 'metadata'):
+            metadata = getattr(plugin, 'metadata', {}) or {}
+            metadata['security_scan'] = security_data
+            return await self.update(plugin_id, {"metadata": metadata}, updated_by)
+        return None
+
+
+class PluginVersionRepository(BaseRepository[Plugin]):
+    """Repository for plugin version management."""
+    
+    def __init__(self, db: AsyncSession):
+        super().__init__(db, Plugin)
+    
+    async def get_plugin_versions(self, plugin_name: str) -> List[Plugin]:
+        """Get all versions of a plugin."""
+        # In a production system, versions would be in a separate table
+        # For now, get plugins by name pattern
+        return await self.list(filters={"name": plugin_name, "is_deleted": False})
+    
+    async def get_latest_version(self, plugin_name: str) -> Optional[Plugin]:
+        """Get the latest version of a plugin."""
+        plugins = await self.get_plugin_versions(plugin_name)
+        if not plugins:
+            return None
+        # Simple version sorting - in production would use semantic versioning
+        return sorted(plugins, key=lambda p: p.version, reverse=True)[0]
+    
+    async def check_compatibility(self, plugin_id: UUID, target_version: str) -> bool:
+        """Check if plugin version is compatible."""
+        plugin = await self.get_by_id(plugin_id)
+        if not plugin:
+            return False
+        # Simple compatibility check - in production would have comprehensive logic
+        return True

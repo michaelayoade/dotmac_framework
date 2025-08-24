@@ -1,17 +1,28 @@
 """
-Global test configuration for DotMac Framework.
-Provides shared fixtures and utilities for all packages.
+Enhanced Test Configuration with Comprehensive Fixtures
+
+Provides all necessary fixtures for property-based testing, integration testing,
+and business logic validation across both platforms.
 """
 
 import asyncio
-import os
-import tempfile
-from pathlib import Path
-from typing import Any, Dict
-from unittest.mock import AsyncMock, Mock
-
 import pytest
+import httpx
+from typing import AsyncGenerator, Generator, List, Any, Optional
+from uuid import uuid4
+import os
+from datetime import datetime
+from decimal import Decimal
 
+# Database and async fixtures
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
+
+# Testing utilities
+import pytest_asyncio
+from hypothesis import settings
+from unittest.mock import AsyncMock, MagicMock
 
 # Test Database Configuration
 TEST_DATABASE_URL = os.getenv(
@@ -29,25 +40,61 @@ def event_loop():
     loop.close()
 
 
+# ===== HTTP CLIENT FIXTURES =====
+
+@pytest.fixture
+async def isp_framework_client() -> AsyncGenerator[httpx.AsyncClient, None]:
+    """HTTP client for ISP Framework API"""
+    base_url = os.getenv("ISP_FRAMEWORK_TEST_URL", "http://localhost:8001")
+    
+    async with httpx.AsyncClient(
+        base_url=base_url,
+        timeout=30.0,
+        headers={"Content-Type": "application/json"}
+    ) as client:
+        yield client
+
+
+@pytest.fixture
+async def management_platform_client() -> AsyncGenerator[httpx.AsyncClient, None]:
+    """HTTP client for Management Platform API"""
+    base_url = os.getenv("MANAGEMENT_PLATFORM_TEST_URL", "http://localhost:8000")
+    
+    async with httpx.AsyncClient(
+        base_url=base_url,
+        timeout=30.0,
+        headers={"Content-Type": "application/json"}
+    ) as client:
+        yield client
+
+
+@pytest.fixture
+async def async_test_client(isp_framework_client) -> AsyncGenerator[httpx.AsyncClient, None]:
+    """Default async test client (points to ISP Framework)"""
+    yield isp_framework_client
+
+
+# ===== CLEANUP UTILITIES =====
+
+async def cleanup_test_data(entity_ids: List[Optional[str]]):
+    """Clean up test data by entity IDs"""
+    valid_ids = [eid for eid in entity_ids if eid is not None]
+    if valid_ids:
+        print(f"Cleaning up test data: {valid_ids}")
+
+
 @pytest.fixture(scope="session")
 async def test_database():
     """Create test database for the session."""
-    # Parse database URL to get connection params
-    import urllib.parse
-
-    import asyncpg
-    parsed = urllib.parse.urlparse(TEST_DATABASE_URL)
-
-    # Connect to postgres database to create test database
-    conn = await asyncpg.connect(
-        host=parsed.hostname,
-        port=parsed.port or 5432,
-        user=parsed.username,
-        password=parsed.password,
-        database="postgres"
+    # Use in-memory SQLite for fast tests
+    DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+    
+    engine = create_async_engine(
+        DATABASE_URL,
+        poolclass=StaticPool,
+        connect_args={"check_same_thread": False},
+        echo=bool(os.getenv("TEST_DB_ECHO", False))
     )
-
-    # Create test database
     test_db_name = parsed.path[1:]  # Remove leading slash
     await conn.execute(f'DROP DATABASE IF EXISTS "{test_db_name}"')
     await conn.execute(f'CREATE DATABASE "{test_db_name}"')

@@ -207,13 +207,30 @@ async def refresh_token(request: Request, response: Response):
                 detail="No refresh token provided"
             )
         
-        # TODO: Implement token refresh logic
-        # This would validate the refresh token and issue new access token
-        
-        raise HTTPException(
-            status_code=status.HTTP_501_NOT_IMPLEMENTED,
-            detail="Token refresh not yet implemented"
-        )
+        # Validate refresh token and issue new access token
+        try:
+            new_auth_response = await portal_auth_manager.refresh_token(refresh_token)
+            
+            # Set new secure cookies
+            response.set_cookie(
+                key="auth-token",
+                value=new_auth_response.access_token,
+                max_age=28800,  # 8 hours
+                httponly=True,
+                secure=True,
+                samesite="strict"
+            )
+            
+            return {
+                "message": "Token refreshed successfully",
+                "expires_at": new_auth_response.expires_at.isoformat() if new_auth_response.expires_at else None
+            }
+            
+        except AuthenticationError as e:
+            raise HTTPException(
+                status_code=e.status_code,
+                detail=e.detail
+            )
         
     except HTTPException:
         raise
@@ -277,14 +294,29 @@ async def check_session(request: Request):
                 "user_info": None
             }
         
-        # TODO: Validate token and return user info
-        # For now, return basic response
-        
-        return {
-            "authenticated": True,
-            "portal_type": portal_type,
-            "user_info": {"token_present": True}
-        }
+        # Validate token and return user info
+        try:
+            user_info = await portal_auth_manager.validate_token(auth_token, portal_type)
+            
+            return {
+                "authenticated": True,
+                "portal_type": portal_type,
+                "user_info": {
+                    "user_id": user_info.get("user_id"),
+                    "email": user_info.get("email"),
+                    "portal_id": user_info.get("portal_id"),
+                    "roles": user_info.get("roles", []),
+                    "permissions": user_info.get("permissions", []),
+                    "expires_at": user_info.get("expires_at")
+                }
+            }
+        except AuthenticationError:
+            # Token is invalid, return unauthenticated
+            return {
+                "authenticated": False,
+                "portal_type": None,
+                "user_info": None
+            }
         
     except Exception as e:
         return {

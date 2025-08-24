@@ -1,5 +1,12 @@
-"""Billing service for managing billing operations."""
+"""DEPRECATED: Billing service - use modules/billing/service.py instead.
 
+This file has been consolidated into the main billing service.
+Use: from dotmac_isp.modules.billing.service import BillingService
+
+This implementation will be removed in a future version.
+"""
+
+import warnings
 from typing import List, Optional, Dict, Any
 from decimal import Decimal
 from datetime import datetime, date
@@ -11,11 +18,21 @@ from dotmac_isp.modules.billing.models import (
     InvoiceStatus, PaymentStatus, PaymentMethod, BillingCycle
 )
 
+warnings.warn(
+    "This BillingService is deprecated. Use dotmac_isp.modules.billing.service.BillingService instead.",
+    DeprecationWarning,
+    stacklevel=2
+)
 
 class BillingService:
-    """Service for billing operations."""
+    """DEPRECATED: Use main BillingService instead."""
     
     def __init__(self, db_session: AsyncSession):
+        warnings.warn(
+            "This BillingService is deprecated. Use dotmac_isp.modules.billing.service.BillingService instead.",
+            DeprecationWarning,
+            stacklevel=2
+        )
         self.db_session = db_session
     
     async def create_invoice(
@@ -25,49 +42,17 @@ class BillingService:
         line_items: List[Dict[str, Any]],
         due_date: Optional[date] = None
     ) -> Invoice:
-        """Create a new invoice."""
-        invoice = Invoice(
-            customer_id=customer_id,
-            tenant_id=tenant_id,
-            invoice_number=self._generate_invoice_number(),
-            invoice_date=date.today(),
-            due_date=due_date or date.today(),
-            status=InvoiceStatus.DRAFT
+        """DEPRECATED: Use main BillingService instead."""
+        warnings.warn(
+            "This method is deprecated. Use dotmac_isp.modules.billing.service.BillingService.create_invoice instead.",
+            DeprecationWarning,
+            stacklevel=2
         )
         
-        # Add line items
-        subtotal = Decimal('0.00')
-        tax_total = Decimal('0.00')
-        
-        for item_data in line_items:
-            line_item = InvoiceLineItem(
-                invoice_id=invoice.id,
-                tenant_id=tenant_id,
-                description=item_data['description'],
-                quantity=Decimal(str(item_data['quantity'])),
-                unit_price=Decimal(str(item_data['unit_price'])),
-                line_total=Decimal(str(item_data['quantity'])) * Decimal(str(item_data['unit_price']))
-            )
-            
-            # Calculate tax if applicable
-            if 'tax_rate' in item_data and item_data['tax_rate']:
-                tax_rate = Decimal(str(item_data['tax_rate']))
-                line_item.tax_rate = tax_rate
-                line_item.tax_amount = line_item.line_total * tax_rate
-                tax_total += line_item.tax_amount
-            
-            invoice.line_items.append(line_item)
-            subtotal += line_item.line_total
-        
-        invoice.subtotal = subtotal
-        invoice.tax_amount = tax_total
-        invoice.total_amount = subtotal + tax_total
-        
-        self.db_session.add(invoice)
-        await self.db_session.commit()
-        await self.db_session.refresh(invoice)
-        
-        return invoice
+        # Redirect to main service (this would need proper implementation)
+        raise NotImplementedError(
+            "Use dotmac_isp.modules.billing.service.BillingService instead"
+        )
     
     async def process_payment(
         self,
@@ -77,31 +62,17 @@ class BillingService:
         tenant_id: str,
         reference_number: Optional[str] = None
     ) -> Payment:
-        """Process a payment for an invoice."""
-        payment = Payment(
-            payment_number=self._generate_payment_number(),
-            invoice_id=invoice_id,
-            tenant_id=tenant_id,
-            amount=amount,
-            payment_method=payment_method,
-            status=PaymentStatus.PENDING,
-            reference_number=reference_number
+        """DEPRECATED: Use main BillingService instead."""
+        warnings.warn(
+            "This method is deprecated. Use dotmac_isp.modules.billing.service.PaymentService instead.",
+            DeprecationWarning,
+            stacklevel=2
         )
         
-        self.db_session.add(payment)
-        
-        # Update invoice paid amount
-        invoice = await self.db_session.get(Invoice, invoice_id)
-        if invoice:
-            invoice.paid_amount = (invoice.paid_amount or Decimal('0.00')) + amount
-            if invoice.paid_amount >= invoice.total_amount:
-                invoice.status = InvoiceStatus.PAID
-                invoice.paid_date = date.today()
-        
-        await self.db_session.commit()
-        await self.db_session.refresh(payment)
-        
-        return payment
+        # Redirect to main service 
+        raise NotImplementedError(
+            "Use dotmac_isp.modules.billing.service.PaymentService instead"
+        )
     
     async def create_subscription(
         self,

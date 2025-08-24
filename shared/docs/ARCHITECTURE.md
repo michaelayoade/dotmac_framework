@@ -1,110 +1,93 @@
-# DotMac Framework Architecture
+# DotMac SaaS Platform Architecture
 
 ## Overview
 
-The DotMac ISP Framework is built using a microservices architecture with event-driven communication, designed for scalability, maintainability, and security. This document provides a comprehensive overview of the system architecture, design patterns, and technical decisions.
+The DotMac SaaS Platform is built using a **container-per-tenant architecture** where each ISP receives a dedicated, isolated container managed by the platform owner. This document provides a comprehensive overview of the SaaS platform architecture, multi-tenant design patterns, and container orchestration decisions.
 
-## Architecture Principles
+## SaaS Architecture Principles
 
-### 1. Microservices Architecture
-- **Service Autonomy**: Each service owns its data and business logic
-- **Technology Diversity**: Services can use different technologies when appropriate
-- **Independent Deployment**: Services can be deployed independently
-- **Failure Isolation**: Failures in one service don't cascade to others
+### 1. Container-per-Tenant Isolation
+- **Complete Tenant Isolation**: Each ISP gets a dedicated container with isolated resources
+- **Platform Owner Management**: All infrastructure managed centrally by platform owner
+- **Automatic Scaling**: Containers scale based on ISP customer count and usage
+- **Zero ISP Infrastructure**: ISPs never manage servers, databases, or Kubernetes
 
-### 2. Event-Driven Design
-- **Asynchronous Communication**: Services communicate via events
-- **Loose Coupling**: Services are decoupled through event contracts
-- **Scalability**: Event-driven systems scale better under load
-- **Auditability**: Events provide a natural audit trail
+### 2. Usage-Based SaaS Model
+- **Per-Customer Pricing**: Revenue based on ISP customer count with usage-based billing
+- **Premium Bundle Marketplace**: Additional features as monthly bundles (CRM, Project Management, AI)
+- **Vendor/Reseller Network**: Commission-based partner program for sales channels
+- **Automated Billing**: Precise customer counting and automated invoice generation
 
-### 3. API-First Approach
-- **Contract-First Development**: APIs defined before implementation
-- **Documentation**: Auto-generated OpenAPI specifications
-- **Versioning**: Proper API versioning strategy
-- **Testing**: Contract testing ensures compatibility
+### 3. Multi-Tenant Platform Management
+- **Centralized Orchestration**: Single management platform controls all tenant containers
+- **Unified Monitoring**: Fleet-wide observability across all ISP tenant containers
+- **Shared Infrastructure**: Efficient resource utilization with tenant isolation
+- **Container Lifecycle**: Automated provisioning, scaling, backup, and recovery
 
-### 4. Security by Design
-- **Defense in Depth**: Multiple security layers
-- **Zero Trust**: Never trust, always verify
-- **Principle of Least Privilege**: Minimal required permissions
-- **Security as Code**: Automated security scanning and policies
+### 4. Security & Compliance for SaaS
+- **Tenant Data Isolation**: Complete separation of ISP data with encrypted boundaries
+- **Multi-Tenant Secrets**: OpenBao with per-tenant namespaces and automatic rotation
+- **Compliance Ready**: SOC2, GDPR, PCI DSS compliance built into platform
+- **Platform-Level Security**: Centralized security policies across all tenant containers
 
-## System Architecture
+## SaaS Platform Architecture
 
 ```
-                                    ┌─────────────────┐
-                                    │   Load Balancer │
-                                    │   (nginx/ALB)   │
-                                    └─────────────────┘
-                                             │
-                              ┌──────────────┼──────────────┐
-                              │              │              │
-                    ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
-                    │   Customer      │ │   Reseller      │ │   Admin         │
-                    │   Portal        │ │   Portal        │ │   Dashboard     │
-                    │   (React/Next)  │ │   (React/Next)  │ │   (React/Next)  │
-                    └─────────────────┘ └─────────────────┘ └─────────────────┘
-                              │              │              │
-                              └──────────────┼──────────────┘
-                                             │
-                                ┌─────────────────┐
-                                │   API Gateway   │
-                                │   (FastAPI)     │
-                                │   Rate Limiting │
-                                │   Authentication│
-                                │   Load Balancing│
-                                └─────────────────┘
-                                         │
-              ┌──────────────────────────┼──────────────────────────┐
-              │                          │                          │
-    ┌─────────────────┐        ┌─────────────────┐        ┌─────────────────┐
-    │   Identity      │        │   Billing       │        │   Services      │
-    │   Service       │        │   Service       │        │   Service       │
-    │                 │        │                 │        │                 │
-    │ • Authentication│        │ • Invoicing     │        │ • Provisioning  │
-    │ • Authorization │        │ • Payments      │        │ • Configuration │
-    │ • User Mgmt     │        │ • Subscriptions │        │ • Monitoring    │
-    └─────────────────┘        └─────────────────┘        └─────────────────┘
-              │                          │                          │
-              └──────────────────────────┼──────────────────────────┘
-                                         │
-                            ┌─────────────────┐
-                            │   Event Bus     │
-                            │   (Redis Pub/Sub│
-                            │   + Message     │
-                            │   Queues)       │
-                            └─────────────────┘
-                                         │
-              ┌──────────────────────────┼──────────────────────────┐
-              │                          │                          │
-    ┌─────────────────┐        ┌─────────────────┐        ┌─────────────────┐
-    │   Networking    │        │   Analytics     │        │   Platform      │
-    │   Service       │        │   Service       │        │   Service       │
-    │                 │        │                 │        │                 │
-    │ • Device Mgmt   │        │ • Reporting     │        │ • Orchestration │
-    │ • Monitoring    │        │ • Dashboards    │        │ • Health Checks │
-    │ • SNMP          │        │ • Metrics       │        │ • Configuration │
-    └─────────────────┘        └─────────────────┘        └─────────────────┘
-              │                          │                          │
-              └──────────────────────────┼──────────────────────────┘
-                                         │
-                                ┌─────────────────┐
-                                │   Data Layer    │
-                                │                 │
-                                │ ┌─────────────┐ │
-                                │ │ PostgreSQL  │ │
-                                │ │ (Primary)   │ │
-                                │ └─────────────┘ │
-                                │ ┌─────────────┐ │
-                                │ │ Redis       │ │
-                                │ │ (Cache)     │ │
-                                │ └─────────────┘ │
-                                │ ┌─────────────┐ │
-                                │ │ TimescaleDB │ │
-                                │ │ (Metrics)   │ │
-                                │ └─────────────┘ │
-                                └─────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                          DotMac SaaS Platform Owner                            │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                    Platform Management & Orchestration                         │
+│                                                                                 │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────────────────────┐ │
+│  │ Platform Admin  │  │ Vendor/Reseller │  │    Fleet Monitoring             │ │
+│  │ Portal          │  │ Partner Portal  │  │    (SignOz)                     │ │
+│  │ (Port 3000)     │  │ (Port 3002)     │  │    (Port 3301)                  │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────────────────────┘ │
+│                                     │                                         │
+│                        ┌─────────────────────────────────┐                    │
+│                        │    Management Platform API     │                    │
+│                        │    • Tenant Provisioning       │                    │
+│                        │    • Usage-Based Billing       │                    │
+│                        │    • Container Orchestration   │                    │
+│                        │    • Premium Bundle Licensing  │                    │
+│                        │    (Port 8000)                 │                    │
+│                        └─────────────────────────────────┘                    │
+│                                     │                                         │
+├─────────────────────────────────────┼─────────────────────────────────────────┤
+│                  Shared SaaS Infrastructure                                    │
+│                                     │                                         │
+│ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────────────────┐   │
+│ │ PostgreSQL  │ │   Redis     │ │  OpenBao    │ │   Container Registry    │   │
+│ │ (Platform)  │ │ (Shared)    │ │(Multi-Tenant│ │   (Platform Images)     │   │
+│ │(Port 5434)  │ │(Port 6378)  │ │Secrets)     │ │                         │   │
+│ └─────────────┘ └─────────────┘ │(Port 8200)  │ └─────────────────────────┘   │
+│                                 └─────────────┘                               │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                           Container-per-Tenant Isolation                       │
+│                                                                                 │
+│ ┌─────────────────────┐ ┌─────────────────────┐ ┌─────────────────────────┐   │
+│ │   ISP-Alpha         │ │   ISP-Beta          │ │   ISP-Gamma             │   │
+│ │   Container         │ │   Container         │ │   Container             │   │
+│ │                     │ │                     │ │                         │   │
+│ │ ┌─────────────────┐ │ │ ┌─────────────────┐ │ │ ┌─────────────────────┐ │   │
+│ │ │ ISP Framework   │ │ │ │ ISP Framework   │ │ │ │ ISP Framework       │ │   │
+│ │ │ Application     │ │ │ │ Application     │ │ │ │ Application         │ │   │
+│ │ │ (Port 8101)     │ │ │ │ (Port 8102)     │ │ │ │ (Port 8103)         │ │   │
+│ │ └─────────────────┘ │ │ └─────────────────┘ │ │ └─────────────────────┘ │   │
+│ │                     │ │                     │ │                         │   │
+│ │ ┌─────────────────┐ │ │ ┌─────────────────┐ │ │ ┌─────────────────────┐ │   │
+│ │ │ PostgreSQL      │ │ │ │ PostgreSQL      │ │ │ │ PostgreSQL          │ │   │
+│ │ │ (Isolated DB)   │ │ │ │ (Isolated DB)   │ │ │ │ (Isolated DB)       │ │   │
+│ │ └─────────────────┘ │ │ └─────────────────┘ │ │ └─────────────────────┘ │   │
+│ │                     │ │                     │ │                         │   │
+│ │ ┌─────────────────┐ │ │ ┌─────────────────┐ │ │ ┌─────────────────────┐ │   │
+│ │ │Customer Portals │ │ │ │Customer Portals │ │ │ │Customer Portals     │ │   │
+│ │ │& APIs           │ │ │ │& APIs           │ │ │ │& APIs               │ │   │
+│ │ └─────────────────┘ │ │ └─────────────────┘ │ │ └─────────────────────┘ │   │
+│ └─────────────────────┘ └─────────────────────┘ └─────────────────────────┘   │
+│        500 customers        1,200 customers         3,000 customers           │
+│    Usage-based pricing     Scaled pricing      Enterprise pricing             │
+└─────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ## Service Breakdown

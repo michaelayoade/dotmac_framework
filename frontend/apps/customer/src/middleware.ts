@@ -1,35 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-
-// Simple CSP utilities
-function generateNonce(): string {
-  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
-    const array = new Uint8Array(16);
-    crypto.getRandomValues(array);
-    return btoa(String.fromCharCode(...array));
-  }
-  return 'fallback-nonce';
-}
-
-function generateCSP(nonce: string, isDev = false): string {
-  const baseCSP = {
-    'default-src': "'self'",
-    'script-src': `'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ''}`,
-    'style-src': "'self' 'unsafe-inline' fonts.googleapis.com",
-    'font-src': "'self' fonts.gstatic.com data:",
-    'img-src': "'self' data: blob: https:",
-    'connect-src': "'self' ws: wss: https:",
-    'frame-ancestors': "'none'",
-    'base-uri': "'self'",
-    'form-action': "'self'",
-    'object-src': "'none'",
-    'upgrade-insecure-requests': '',
-  };
-
-  return Object.entries(baseCSP)
-    .map(([key, value]) => `${key} ${value}`)
-    .join('; ');
-}
+import { generateNonce, generateCSP } from '@dotmac/headless/utils/csp';
 
 // Public routes that don't require authentication
 const publicRoutes = ['/', '/login', '/register', '/forgot-password', '/reset-password'];
@@ -80,7 +51,10 @@ export function middleware(request: NextRequest) {
   response.headers.set('X-Content-Type-Options', 'nosniff');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   response.headers.set('X-XSS-Protection', '1; mode=block');
-  response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  // Only set HSTS in production
+  if (process.env.NODE_ENV === 'production') {
+    response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  }
   response.headers.set(
     'Permissions-Policy',
     'camera=(), microphone=(), geolocation=(), payment=()'

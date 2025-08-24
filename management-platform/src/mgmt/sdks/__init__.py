@@ -62,10 +62,27 @@ class PlatformSDKRegistry:
         # Tenant Management
         self.tenants = TenantManagementSDK(self.platform_context)
         
-        # TODO: Add additional platform SDKs as they are implemented
-        # self.deployment = DeploymentSDK(self.platform_context)
-        # self.billing_saas = BillingSaaSSDK(self.platform_context)
-        # self.analytics = PlatformAnalyticsSDK(self.platform_context)
+        # Initialize additional platform SDKs
+        try:
+            from .deployment import DeploymentSDK
+            self.deployment = DeploymentSDK(self.platform_context)
+        except ImportError:
+            self.deployment = None
+            logger.warning("DeploymentSDK not available")
+            
+        try:
+            from .billing import BillingSaaSSDK
+            self.billing_saas = BillingSaaSSDK(self.platform_context)
+        except ImportError:
+            self.billing_saas = None
+            logger.warning("BillingSaaSSDK not available")
+            
+        try:
+            from .analytics import PlatformAnalyticsSDK
+            self.analytics = PlatformAnalyticsSDK(self.platform_context)
+        except ImportError:
+            self.analytics = None
+            logger.warning("PlatformAnalyticsSDK not available")
         
         logger.debug("All platform SDKs initialized")
     

@@ -9,14 +9,13 @@ import string
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 
-from .repository import (
-    WorkOrderRepository,
-    TechnicianRepository,
-    AppointmentRepository,
-    TimeLogRepository,
-    FieldEquipmentRepository,
-)
+from dotmac_isp.shared.base_service import BaseTenantService
 from .models import (
+    WorkOrder,
+    Technician,
+    Appointment,
+    TimeLog,
+    FieldEquipment,
     WorkOrderStatus,
     WorkOrderPriority,
     WorkOrderType,
@@ -27,9 +26,9 @@ from .models import (
 from . import schemas
 from dotmac_isp.shared.exceptions import (
     ServiceError,
-    NotFoundError,
+    EntityNotFoundError,
     ValidationError,
-    ConflictError,
+    BusinessRuleError,
 )
 
 

@@ -55,9 +55,9 @@ class Settings(BaseSettings):
 
     # Security settings - MUST be set via environment variables in production
     jwt_secret_key: str = Field(
-        default="CHANGE_ME_IN_PRODUCTION_OR_SET_JWT_SECRET_KEY_ENV_VAR",
+        ...,
         min_length=32,
-        description="JWT secret key - MUST be set via JWT_SECRET_KEY environment variable in production",
+        description="JWT secret key - MUST be set via JWT_SECRET_KEY environment variable",
     )
     jwt_algorithm: str = Field(default="HS256", description="JWT signing algorithm")
     jwt_access_token_expire_minutes: int = Field(
@@ -70,13 +70,13 @@ class Settings(BaseSettings):
 
     # CORS settings - restrictive by default
     cors_origins: str = Field(
-        default="http://localhost:3000,http://127.0.0.1:3000",  # Only localhost for development
-        description="Allowed CORS origins (comma-separated) - MUST be configured for production",
+        default="",  # No default origins - must be explicitly set
+        description="Allowed CORS origins (comma-separated) - MUST be configured per environment",
     )
 
     # Trusted hosts - restrictive by default
     allowed_hosts: str = Field(
-        default="localhost,127.0.0.1",  # Removed wildcard and public IPs
+        default="localhost,127.0.0.1",  # Only localhost by default
         description="Allowed host headers (comma-separated) - MUST be configured for production",
     )
 
@@ -170,9 +170,13 @@ class Settings(BaseSettings):
     minio_endpoint: str = Field(
         default="localhost:9002", description="MinIO S3 API endpoint"
     )
-    minio_access_key: str = Field(default="dotmacadmin", description="MinIO access key")
+    minio_access_key: str = Field(
+        default="dotmacadmin", 
+        description="MinIO access key - CHANGE in production via MINIO_ACCESS_KEY env var"
+    )
     minio_secret_key: str = Field(
-        default="dotmacpassword", description="MinIO secret key"
+        default="", 
+        description="MinIO secret key - MUST be set via MINIO_SECRET_KEY env var in production"
     )
     minio_secure: bool = Field(
         default=False, description="Use HTTPS for MinIO connection"
@@ -263,9 +267,10 @@ class Settings(BaseSettings):
             if self.cors_origins in [
                 "http://localhost:3000",
                 "http://localhost:3000,http://127.0.0.1:3000",
+                "",
             ]:
                 errors.append(
-                    "CORS_ORIGINS must be explicitly configured for production (not localhost)"
+                    "CORS_ORIGINS must be explicitly configured for production (not localhost or empty)"
                 )
 
             # Allowed hosts must be explicitly set (not defaults)
@@ -274,10 +279,46 @@ class Settings(BaseSettings):
                     "ALLOWED_HOSTS must be explicitly configured for production (not localhost)"
                 )
 
+            # MinIO secret key must be set in production
+            if not self.minio_secret_key or self.minio_secret_key == "dotmacpassword":
+                errors.append(
+                    "MINIO_SECRET_KEY must be set to a secure value in production"
+                )
+
+            # MinIO access key should not use default in production
+            if self.minio_access_key == "dotmacadmin":
+                logger.warning(
+                    "Using default MinIO access key in production - consider changing via MINIO_ACCESS_KEY"
+                )
+
+            # Database URLs should use SSL in production
+            if "sslmode=require" not in self.database_url and "sslmode=require" not in self.async_database_url:
+                logger.warning(
+                    "Database connections should use SSL in production (add ?sslmode=require)"
+                )
+
+            # Redis should use password in production
+            if "redis://:" not in self.redis_url and "redis://localhost" in self.redis_url:
+                errors.append(
+                    "Redis connection must use authentication in production (REDIS_URL with password)"
+                )
+
+            # OpenBao token should be set if secrets management is enabled
+            if self.enable_secrets_management and not self.openbao_token:
+                errors.append(
+                    "OPENBAO_TOKEN must be set when secrets management is enabled in production"
+                )
+
             # SSL should be enabled in production
             if not self.ssl_enabled:
                 logger.warning(
                     "SSL is not enabled in production - consider enabling HTTPS"
+                )
+
+            # Warn about insecure MinIO connection in production
+            if not self.minio_secure:
+                logger.warning(
+                    "MinIO connection is not using HTTPS in production - consider enabling MINIO_SECURE"
                 )
 
             if errors:
@@ -286,6 +327,12 @@ class Settings(BaseSettings):
                 )
                 logger.critical(error_msg)
                 raise ValueError(error_msg)
+
+        # General security warnings for all environments
+        if self.jwt_secret_key == "CHANGE_ME_IN_PRODUCTION_OR_SET_JWT_SECRET_KEY_ENV_VAR":
+            logger.warning(
+                "Using placeholder JWT secret - change JWT_SECRET_KEY environment variable"
+            )
 
         return self
 
