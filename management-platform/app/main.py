@@ -22,6 +22,7 @@ from .core.middleware import (
     SecurityHeadersMiddleware,
     TenantIsolationMiddleware,
 )
+from .core.observability import init_observability, get_observability
 from .database import close_database, init_database
 
 # Configure comprehensive logging
@@ -46,6 +47,13 @@ async def lifespan(app: FastAPI):
     await init_database()
     logger.info("Database initialized")
     
+    # Initialize observability (SignOz integration)
+    try:
+        observability = init_observability()
+        logger.info("SignOz observability initialized")
+    except Exception as e:
+        logger.warning("Failed to initialize observability", error=str(e))
+    
     # Initialize cache manager
     try:
         from .core.cache import get_cache_manager
@@ -54,13 +62,50 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning("Failed to initialize cache manager", error=str(e))
     
-    # Initialize metrics collection
+    # Initialize plugins
     try:
-        from .core.monitoring import metrics_collector
-        metrics_collector.collect_system_metrics()
-        logger.info("Monitoring system initialized")
+        from .core.plugins.registry import plugin_registry
+        from .plugins.deployment import AWSDeploymentPlugin, SSHDeploymentPlugin
+        from .plugins.notifications import EmailPlugin, SlackPlugin, WebhookPlugin
+        from .plugins.monitoring import PrometheusPlugin
+        
+        # Register deployment plugins
+        aws_plugin = AWSDeploymentPlugin()
+        ssh_plugin = SSHDeploymentPlugin()
+        
+        # Register notification plugins
+        email_plugin = EmailPlugin()
+        slack_plugin = SlackPlugin()
+        webhook_plugin = WebhookPlugin()
+        
+        # Register monitoring plugins
+        prometheus_plugin = PrometheusPlugin()
+        
+        # Register all plugins
+        plugins_to_register = [
+            aws_plugin,
+            ssh_plugin,
+            email_plugin,
+            slack_plugin,
+            webhook_plugin,
+            prometheus_plugin
+        ]
+        
+        registered_count = 0
+        for plugin in plugins_to_register:
+            try:
+                if await plugin_registry.register_plugin(plugin):
+                    registered_count += 1
+                    logger.info(f"Registered plugin: {plugin.meta.name}")
+                else:
+                    logger.warning(f"Failed to register plugin: {plugin.meta.name}")
+            except Exception as e:
+                logger.warning(f"Plugin registration error for {plugin.meta.name}: {e}")
+        
+        logger.info(f"Plugins initialized: {registered_count} plugins registered")
+        
     except Exception as e:
-        logger.warning("Failed to initialize monitoring", error=str(e))
+        logger.warning("Failed to initialize plugins", error=str(e))
     
     logger.info("DotMac Management Platform startup complete")
     
@@ -68,6 +113,14 @@ async def lifespan(app: FastAPI):
     
     # Shutdown
     logger.info("Shutting down DotMac Management Platform...")
+    
+    # Shutdown observability
+    try:
+        observability = get_observability()
+        observability.shutdown()
+        logger.info("Observability shutdown")
+    except Exception as e:
+        logger.warning("Error shutting down observability", error=str(e))
     
     # Close cache connections
     try:
@@ -127,6 +180,18 @@ add_exception_handlers(app)
 # Include routers
 app.include_router(api_router, prefix=settings.api_v1_prefix)
 app.include_router(portals_router, prefix="/portals")
+
+# Include dashboard router (web UI)
+from .api.dashboard import router as dashboard_router
+app.include_router(dashboard_router)
+
+# Instrument FastAPI with observability
+try:
+    observability = get_observability()
+    observability.instrument_fastapi(app)
+    logger.info("FastAPI instrumented with SignOz observability")
+except Exception as e:
+    logger.warning("Failed to instrument FastAPI", error=str(e))
 
 
 @app.get("/")

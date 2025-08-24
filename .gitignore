@@ -457,6 +457,20 @@ mprofile_*.dat
 .directory
 
 # =============================================================================
+# TEMPORARY DEVELOPMENT FILES
+# =============================================================================
+
+# Development documentation (temporary)
+*DEMO*.md
+*QUICK*.md
+*IMPLEMENTATION*.md
+*FRONTEND_BACKEND*.md
+
+# AI/Development assistant artifacts
+*claude*
+*CLAUDE*
+
+# =============================================================================
 # WHITELIST (files to explicitly include despite patterns above)
 # =============================================================================
 

@@ -167,13 +167,6 @@ async def list_payments(
         )
     except ServiceError as e:
         raise HTTPException(status_code=500, detail=e.message)
-            status=status,
-            due_date_from=due_date_from,
-            due_date_to=due_date_to,
-            skip=skip,
-            limit=limit,
-        )
-        return invoices
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

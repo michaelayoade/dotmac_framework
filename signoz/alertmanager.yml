@@ -1,0 +1,213 @@
+global:
+  smtp_smarthost: 'localhost:587'
+  smtp_from: 'alerts@dotmac.app'
+  smtp_auth_username: 'alerts@dotmac.app'
+  smtp_auth_password: 'your-smtp-password'
+
+# Route configuration for different alert types
+route:
+  group_by: ['alertname', 'severity', 'business_impact']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 12h
+  receiver: 'default'
+  routes:
+    # Revenue-critical alerts - immediate notification
+    - match:
+        business_impact: revenue_loss
+      receiver: 'revenue-critical'
+      group_wait: 10s
+      repeat_interval: 1h
+      
+    - match:
+        business_impact: revenue_halt
+      receiver: 'revenue-emergency'
+      group_wait: 0s
+      repeat_interval: 15m
+      
+    # Security alerts - immediate notification
+    - match:
+        business_impact: data_breach
+      receiver: 'security-emergency'
+      group_wait: 0s
+      repeat_interval: 30m
+      
+    # Customer-facing issues
+    - match:
+        business_impact: customer_onboarding
+      receiver: 'customer-operations'
+      group_wait: 1m
+      repeat_interval: 2h
+      
+    # Platform infrastructure
+    - match:
+        component: database
+      receiver: 'infrastructure-team'
+      
+    - match:
+        component: network_infrastructure
+      receiver: 'network-operations'
+      
+    # General warnings
+    - match:
+        severity: warning
+      receiver: 'general-alerts'
+      group_wait: 2m
+      repeat_interval: 6h
+
+# Notification receivers
+receivers:
+  - name: 'default'
+    email_configs:
+      - to: 'ops@dotmac.app'
+        subject: '[DotMac Alert] {{ .GroupLabels.alertname }}'
+        body: |
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Severity: {{ .Labels.severity }}
+          Component: {{ .Labels.component }}
+          Business Impact: {{ .Labels.business_impact }}
+          
+          {{ if .Labels.runbook_url }}
+          Runbook: {{ .Labels.runbook_url }}
+          {{ end }}
+          {{ end }}
+
+  - name: 'revenue-critical'
+    email_configs:
+      - to: 'cfo@dotmac.app,ceo@dotmac.app,ops@dotmac.app'
+        subject: '[REVENUE CRITICAL] {{ .GroupLabels.alertname }}'
+        body: |
+          🚨 REVENUE CRITICAL ALERT 🚨
+          
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Business Impact: Revenue Loss Detected
+          
+          Immediate action required to prevent revenue loss.
+          {{ if .Labels.runbook_url }}
+          Runbook: {{ .Labels.runbook_url }}
+          {{ end }}
+          {{ end }}
+    slack_configs:
+      - api_url: 'YOUR_SLACK_WEBHOOK_URL'
+        channel: '#revenue-alerts'
+        title: 'Revenue Critical Alert'
+        text: '{{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+
+  - name: 'revenue-emergency'
+    email_configs:
+      - to: 'cfo@dotmac.app,ceo@dotmac.app,ops@dotmac.app,engineering@dotmac.app'
+        subject: '[REVENUE EMERGENCY] Complete Revenue Halt - {{ .GroupLabels.alertname }}'
+        body: |
+          🔥 REVENUE EMERGENCY 🔥
+          COMPLETE REVENUE GENERATION STOPPED
+          
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          
+          ALL HANDS ON DECK - Revenue generation has completely stopped.
+          {{ if .Labels.runbook_url }}
+          Emergency Runbook: {{ .Labels.runbook_url }}
+          {{ end }}
+          {{ end }}
+    slack_configs:
+      - api_url: 'YOUR_SLACK_WEBHOOK_URL'
+        channel: '#emergency'
+        title: 'REVENUE EMERGENCY - All Hands'
+        text: '@channel Revenue generation has stopped completely'
+
+  - name: 'security-emergency'
+    email_configs:
+      - to: 'security@dotmac.app,cto@dotmac.app,ceo@dotmac.app'
+        subject: '[SECURITY EMERGENCY] {{ .GroupLabels.alertname }}'
+        body: |
+          🔒 SECURITY EMERGENCY 🔒
+          POTENTIAL DATA BREACH DETECTED
+          
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          
+          Immediate security investigation required.
+          {{ if .Labels.runbook_url }}
+          Security Runbook: {{ .Labels.runbook_url }}
+          {{ end }}
+          {{ end }}
+
+  - name: 'customer-operations'
+    email_configs:
+      - to: 'customer-success@dotmac.app,ops@dotmac.app'
+        subject: '[Customer Impact] {{ .GroupLabels.alertname }}'
+        body: |
+          Customer-facing service impact detected:
+          
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          
+          Customer onboarding or service delivery may be affected.
+          {{ end }}
+
+  - name: 'infrastructure-team'
+    email_configs:
+      - to: 'infrastructure@dotmac.app,ops@dotmac.app'
+        subject: '[Infrastructure] {{ .GroupLabels.alertname }}'
+        body: |
+          Infrastructure issue detected:
+          
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Component: {{ .Labels.component }}
+          {{ end }}
+
+  - name: 'network-operations'
+    email_configs:
+      - to: 'network-ops@dotmac.app,ops@dotmac.app'
+        subject: '[Network] {{ .GroupLabels.alertname }}'
+        body: |
+          Network infrastructure issue:
+          
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          {{ end }}
+
+  - name: 'general-alerts'
+    email_configs:
+      - to: 'ops@dotmac.app'
+        subject: '[Alert] {{ .GroupLabels.alertname }}'
+        body: |
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Severity: {{ .Labels.severity }}
+          {{ end }}
+
+# Inhibition rules to reduce alert noise
+inhibit_rules:
+  # If revenue emergency is firing, inhibit revenue critical alerts
+  - source_match:
+      business_impact: 'revenue_halt'
+    target_match:
+      business_impact: 'revenue_loss'
+    equal: ['alertname']
+
+  # If security emergency is firing, inhibit other security warnings  
+  - source_match:
+      business_impact: 'data_breach'
+    target_match:
+      component: 'security'
+    equal: ['component']
+
+  # If platform is completely down, inhibit component-specific alerts
+  - source_match:
+      severity: 'critical'
+      alertname: 'PlatformUptimeBreach'
+    target_match:
+      severity: 'warning'
+    equal: ['component']

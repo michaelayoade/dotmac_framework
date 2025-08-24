@@ -1,0 +1,266 @@
+# SignOz Alert Rules for DotMac ISP Framework
+# ISP operations, customer service, and network monitoring alerts
+
+groups:
+  - name: customer_operations
+    rules:
+      - alert: CustomerOnboardingFailures
+        expr: sum(rate(dotmac_customer_operations_total{operation="create",success="false"}[10m])) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          component: customer_management
+          business_impact: customer_acquisition
+        annotations:
+          summary: "High customer onboarding failure rate"
+          description: "Customer creation failing at {{ $value }} failures/second. New customer acquisition is impacted."
+
+      - alert: CustomerChurnSpike
+        expr: sum(rate(dotmac_customer_operations_total{operation="deactivate"}[1h])) > sum(rate(dotmac_customer_operations_total{operation="deactivate"}[1h] offset 24h)) * 2
+        for: 10m
+        labels:
+          severity: warning
+          component: customer_retention
+          business_impact: revenue_loss
+        annotations:
+          summary: "Customer churn spike detected"
+          description: "Customer deactivation rate is 2x higher than yesterday. Investigating cause of churn."
+
+      - alert: PaymentProcessingFailures
+        expr: sum(rate(dotmac_payment_operations_total{status="failed"}[5m])) / sum(rate(dotmac_payment_operations_total[5m])) > 0.1
+        for: 3m
+        labels:
+          severity: critical
+          component: billing
+          business_impact: revenue_collection
+        annotations:
+          summary: "High payment processing failure rate"
+          description: "Payment failure rate is {{ $value | humanizePercentage }}, exceeding 10% threshold."
+
+  - name: service_provisioning
+    rules:
+      - alert: ServiceProvisioningDelays
+        expr: histogram_quantile(0.95, sum(rate(dotmac_service_provisioning_duration_seconds_bucket[10m])) by (le)) > 300
+        for: 5m
+        labels:
+          severity: warning
+          component: provisioning
+        annotations:
+          summary: "Service provisioning delays detected"
+          description: "95th percentile service provisioning time is {{ $value }}s, exceeding 5-minute threshold."
+
+      - alert: ServiceActivationFailures
+        expr: sum(rate(dotmac_service_operations_total{operation="activate",success="false"}[10m])) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+          component: service_management
+        annotations:
+          summary: "Service activation failures"
+          description: "Service activation failing at {{ $value }} failures/second."
+
+      - alert: NetworkServiceOutages
+        expr: sum by (service_type) (dotmac_services_total{status="down"}) > 0
+        for: 2m
+        labels:
+          severity: critical
+          component: network_services
+        annotations:
+          summary: "Network service outage detected"
+          description: "{{ $value }} {{ $labels.service_type }} services are down."
+
+  - name: network_monitoring
+    rules:
+      - alert: NetworkDeviceOffline
+        expr: count(dotmac_network_devices{status="offline"}) > count(dotmac_network_devices) * 0.05
+        for: 3m
+        labels:
+          severity: critical
+          component: network_infrastructure
+        annotations:
+          summary: "Multiple network devices offline"
+          description: "{{ $value }} network devices are offline (>5% of total infrastructure)."
+
+      - alert: BandwidthUtilizationHigh
+        expr: avg(dotmac_network_bandwidth_utilization_percent) > 85
+        for: 10m
+        labels:
+          severity: warning
+          component: network_capacity
+        annotations:
+          summary: "High network bandwidth utilization"
+          description: "Network bandwidth utilization is {{ $value }}%, approaching capacity limits."
+
+      - alert: NetworkLatencyHigh
+        expr: avg(dotmac_network_latency_ms) > 100
+        for: 5m
+        labels:
+          severity: warning
+          component: network_performance
+        annotations:
+          summary: "High network latency detected"
+          description: "Average network latency is {{ $value }}ms, exceeding 100ms threshold."
+
+      - alert: NetworkDeviceHealthDegraded
+        expr: avg(dotmac_network_device_health_score) < 0.8
+        for: 10m
+        labels:
+          severity: warning
+          component: network_health
+        annotations:
+          summary: "Network health degraded"
+          description: "Average network device health score is {{ $value | humanizePercentage }}, below 80%."
+
+  - name: support_operations
+    rules:
+      - alert: HighPrioritySupportTicketsBacklog
+        expr: sum(dotmac_support_tickets_open{priority="high"}) + sum(dotmac_support_tickets_open{priority="critical"}) > 10
+        for: 5m
+        labels:
+          severity: warning
+          component: customer_support
+        annotations:
+          summary: "High priority support tickets backlog"
+          description: "{{ $value }} high/critical priority tickets are open, exceeding acceptable backlog."
+
+      - alert: SupportResponseTimeSLABreach
+        expr: avg(dotmac_support_response_time_hours{priority="critical"}) > 1
+        for: 1m
+        labels:
+          severity: critical
+          component: customer_support
+          business_impact: customer_satisfaction
+        annotations:
+          summary: "Critical ticket response time SLA breach"
+          description: "Average response time for critical tickets is {{ $value }} hours, exceeding 1-hour SLA."
+
+      - alert: CustomerSatisfactionLow
+        expr: avg(dotmac_customer_satisfaction_score) < 4.0
+        for: 30m
+        labels:
+          severity: warning
+          component: customer_experience
+        annotations:
+          summary: "Customer satisfaction scores declining"
+          description: "Average customer satisfaction is {{ $value }}/5, below acceptable threshold of 4.0."
+
+  - name: field_operations
+    rules:
+      - alert: TechnicianResponseTimeHigh
+        expr: avg(dotmac_technician_response_time_hours) > 4
+        for: 15m
+        labels:
+          severity: warning
+          component: field_operations
+        annotations:
+          summary: "High technician response times"
+          description: "Average technician response time is {{ $value }} hours, exceeding 4-hour target."
+
+      - alert: WorkOrderBacklogHigh
+        expr: sum(dotmac_work_orders_total{status="pending"}) > 20
+        for: 10m
+        labels:
+          severity: warning
+          component: field_operations
+        annotations:
+          summary: "Work order backlog is high"
+          description: "{{ $value }} work orders are pending, exceeding acceptable backlog of 20."
+
+      - alert: InstallationFailureRate
+        expr: sum(rate(dotmac_work_orders_total{type="installation",status="failed"}[24h])) / sum(rate(dotmac_work_orders_total{type="installation"}[24h])) > 0.1
+        for: 1h
+        labels:
+          severity: warning
+          component: installations
+        annotations:
+          summary: "High installation failure rate"
+          description: "Installation failure rate is {{ $value | humanizePercentage }} over last 24h, exceeding 10%."
+
+  - name: billing_operations
+    rules:
+      - alert: InvoiceGenerationFailures
+        expr: sum(rate(dotmac_billing_operations_total{billing_type="invoice_generation",success="false"}[1h])) > 0.01
+        for: 10m
+        labels:
+          severity: critical
+          component: billing
+          business_impact: revenue_collection
+        annotations:
+          summary: "Invoice generation failures detected"
+          description: "Invoice generation failing at {{ $value }} failures/second."
+
+      - alert: RevenueCollectionDecline
+        expr: sum(increase(dotmac_revenue_total[24h])) < sum(increase(dotmac_revenue_total[24h] offset 24h)) * 0.9
+        for: 2h
+        labels:
+          severity: warning
+          component: revenue
+          business_impact: financial_performance
+        annotations:
+          summary: "Daily revenue collection decline"
+          description: "Today's revenue is 10% lower than yesterday. Current: ${{ $value }}"
+
+      - alert: PaymentMethodFailures
+        expr: sum by (payment_method) (rate(dotmac_payment_operations_total{status="failed"}[1h])) > 0.05
+        for: 15m
+        labels:
+          severity: warning
+          component: payments
+        annotations:
+          summary: "Payment method {{ $labels.payment_method }} experiencing failures"
+          description: "{{ $labels.payment_method }} payments failing at {{ $value }} failures/second."
+
+  - name: system_health
+    rules:
+      - alert: ModuleHealthDegraded
+        expr: sum by (module) (rate(dotmac_module_operations_total{status="success"}[10m])) / sum by (module) (rate(dotmac_module_operations_total[10m])) < 0.95
+        for: 5m
+        labels:
+          severity: warning
+          component: "{{ $labels.module }}"
+        annotations:
+          summary: "Module {{ $labels.module }} health degraded"
+          description: "{{ $labels.module }} success rate is {{ $value | humanizePercentage }}, below 95%."
+
+      - alert: PortalResponseTimeHigh
+        expr: histogram_quantile(0.95, sum(rate(dotmac_portal_request_duration_seconds_bucket[5m])) by (portal_type, le)) > 3
+        for: 5m
+        labels:
+          severity: warning
+          component: portal
+        annotations:
+          summary: "{{ $labels.portal_type }} portal response time high"
+          description: "95th percentile response time for {{ $labels.portal_type }} portal is {{ $value }}s."
+
+      - alert: DatabasePerformanceDegraded
+        expr: histogram_quantile(0.95, sum(rate(dotmac_database_query_duration_seconds_bucket[5m])) by (le)) > 1
+        for: 10m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "Database query performance degraded"
+          description: "95th percentile database query time is {{ $value }}s, exceeding 1s threshold."
+
+  - name: compliance_monitoring
+    rules:
+      - alert: DataRetentionViolation
+        expr: sum(dotmac_data_retention_violations_total) > 0
+        for: 1m
+        labels:
+          severity: critical
+          component: compliance
+          business_impact: regulatory_violation
+        annotations:
+          summary: "Data retention policy violation detected"
+          description: "{{ $value }} data retention violations detected. Immediate compliance review required."
+
+      - alert: AuditLogGaps
+        expr: rate(dotmac_audit_log_entries_total[1h]) == 0
+        for: 10m
+        labels:
+          severity: critical
+          component: audit
+        annotations:
+          summary: "Audit logging has stopped"
+          description: "No audit log entries for 1 hour. Compliance and security monitoring compromised."

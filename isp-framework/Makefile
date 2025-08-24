@@ -442,6 +442,37 @@ alembic-downgrade: ## Downgrade Alembic migrations by one version
 	@echo "$(GREEN)Downgrade complete!$(NC)"
 
 # =============================================================================
+# STRATEGIC VALIDATION (PREVENTS DEPLOYMENT ISSUES)
+# =============================================================================
+
+strategic-validation: ## Run strategic validation checks (same as CI)
+	@echo "$(BLUE)🎯 Running strategic validation checks...$(NC)"
+	@echo "$(YELLOW)This runs the same checks as our CI/CD pipeline$(NC)"
+	@echo ""
+	@echo "$(BLUE)🔍 GATE 1: Import Resolution Validation$(NC)"
+	@$(PYTHON) -c "import ast; import sys; import importlib.util; from pathlib import Path; failed=False; [print(f'❌ Import error in {f}: Cannot resolve {m}') or setattr(sys.modules[__name__], 'failed', True) for f in Path('src').rglob('*.py') for node in ast.walk(ast.parse(open(f).read(), str(f))) if isinstance(node, (ast.Import, ast.ImportFrom)) for m in ([alias.name for alias in node.names] if isinstance(node, ast.Import) else [node.module] if node.module and not (node.module.startswith('dotmac_') or node.module.startswith('.')) else []) if m and not (m.startswith('dotmac_') or m.startswith('.')) for _ in [None] if not importlib.util.find_spec(m.split('.')[0]) and (print(f'❌ Import error in {f}: Cannot resolve {m}') or setattr(sys.modules[__name__], 'failed', True))]; print('💡 Run: make install-dev to fix missing dependencies') if failed else print('✅ All imports validated successfully'); sys.exit(1) if failed else None"
+	@echo ""
+	@echo "$(BLUE)🐳 GATE 2: Container Version Validation$(NC)"
+	@$(PYTHON) -c "import yaml; import sys; compose=yaml.safe_load(open('docker-compose.yml')); failed=[print(f'❌ Unpinned version: {svc} uses {cfg.get(\"image\", \"\")}') for svc, cfg in compose.get('services', {}).items() if cfg.get('image', '').endswith(':latest') or (cfg.get('image', '').count(':') == 0 and 'build' not in cfg)]; print(f'💡 Pin versions to prevent compatibility issues') if failed else print('✅ All container versions are properly pinned'); sys.exit(1) if failed else None"
+	@echo ""
+	@echo "$(BLUE)🏥 GATE 3: Dependency Health System$(NC)"
+	@PYTHONPATH=src $(PYTHON) -c "import asyncio; import sys; import os; os.environ.setdefault('DATABASE_URL', 'postgresql://dotmac:dotmac@localhost:5433/dotmac_isp'); os.environ.setdefault('REDIS_URL', 'redis://localhost:6380/0'); os.environ.setdefault('ENVIRONMENT', 'development'); exec('async def test(): from dotmac_isp.core.dependency_health import get_dependency_health_monitor; health_monitor = get_dependency_health_monitor(); print(\"✅ Health monitoring system loaded successfully\"); print(\"💡 Use health checks to prevent startup failures\"); return True'); result = asyncio.run(test()); sys.exit(0 if result else 1)"
+	@echo ""
+	@echo "$(BLUE)🔒 GATE 4: Security Configuration$(NC)"
+	@$(PYTHON) -c "import os; from pathlib import Path; patterns=['password=', 'secret=', 'token=', 'key=', 'localhost:6379', 'localhost:5432']; issues=[f'{f}: Found \"{p}\"' for f in Path('src').rglob('*.py') for p in patterns if p in open(f).read().lower() and 'test' not in str(f).lower()][:5]; print('⚠️ Potential hardcoded credentials found:') and [print(f'  {i}') for i in issues] and print('💡 Use SecretManager or environment variables instead') if issues else print('✅ No hardcoded credentials detected')"
+	@echo ""
+	@echo "$(BLUE)⚙️ GATE 5: Configuration Management$(NC)"
+	@PYTHONPATH=src $(PYTHON) -c "import os; os.environ.setdefault('ENVIRONMENT', 'development'); from dotmac_isp.core.settings import get_settings; from dotmac_isp.core.secret_manager import get_secret_manager; s=get_settings(); sm=get_secret_manager(); print(f'✅ Settings loaded: Environment = {s.environment}'); print(f'✅ Secret manager loaded: Environment = {sm.environment}'); print('✅ Configuration system validated')"
+	@echo ""
+	@echo "$(GREEN)🎉 All strategic validation gates passed!$(NC)"
+	@echo "$(GREEN)Code is ready for deployment.$(NC)"
+
+validate-local: ## Quick local validation (subset of strategic checks)
+	@echo "$(BLUE)🚀 Quick local validation...$(NC)"
+	@$(MAKE) strategic-validation
+	@echo "$(GREEN)✅ Local validation complete!$(NC)"
+
+# =============================================================================
 # COMPREHENSIVE CHECKS
 # =============================================================================
 

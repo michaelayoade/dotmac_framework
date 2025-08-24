@@ -1,6 +1,6 @@
-# CLAUDE.md - DotMac Management Platform
+# Developer Guide - DotMac Management Platform
 
-This file provides guidance to Claude Code (claude.ai/code) when working with the **DotMac Management Platform** codebase.
+This file provides guidance for developers working with the **DotMac Management Platform** codebase.
 
 ## Repository Overview
 

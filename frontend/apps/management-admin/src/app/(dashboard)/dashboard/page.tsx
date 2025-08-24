@@ -10,6 +10,7 @@ import {
   CheckCircleIcon,
 } from '@heroicons/react/24/outline';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { TenantManagement } from '@/components/tenant/TenantManagement';
 import { tenantApi, billingApi, monitoringApi } from '@/lib/api';
 
 export default function DashboardPage() {
@@ -219,6 +220,9 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Tenant Management Overview */}
+      <TenantManagement showStats={false} compact={true} />
 
       {/* Recent Activity */}
       <div className="card">

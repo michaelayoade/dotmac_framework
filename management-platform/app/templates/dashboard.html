@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DotMac Management Platform</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .card h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e1e1;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s ease;
+        }
+        
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s ease;
+            width: 100%;
+        }
+        
+        .btn:hover {
+            opacity: 0.9;
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .status-card {
+            background: #f8f9fa;
+            border-left: 4px solid #28a745;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .status-error {
+            border-left-color: #dc3545;
+            background: #fff5f5;
+        }
+        
+        .status-warning {
+            border-left-color: #ffc107;
+            background: #fffbf0;
+        }
+        
+        .tenant-list {
+            margin-top: 20px;
+        }
+        
+        .tenant-item {
+            background: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .tenant-info h4 {
+            margin-bottom: 5px;
+            color: #2c3e50;
+        }
+        
+        .tenant-info p {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .tenant-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .tenant-status.active {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .tenant-status.deploying {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .tenant-status.failed {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .deployment-log {
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            height: 300px;
+            overflow-y: scroll;
+            margin-top: 20px;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .metric-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        
+        .metric-label {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        .hidden { display: none; }
+        
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 DotMac Management Platform</h1>
+            <p>Multi-Tenant ISP Framework Orchestration</p>
+        </div>
+        
+        <!-- Platform Metrics -->
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-value" id="active-tenants">{{ metrics.active_tenants }}</div>
+                <div class="metric-label">Active Tenants</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="deployments-today">{{ metrics.deployments_today }}</div>
+                <div class="metric-label">Deployments Today</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="system-health">{{ metrics.system_health }}%</div>
+                <div class="metric-label">System Health</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="plugin-count">{{ metrics.plugin_count }}</div>
+                <div class="metric-label">Active Plugins</div>
+            </div>
+        </div>
+        
+        <div class="dashboard-grid">
+            <!-- Create New Tenant -->
+            <div class="card">
+                <h2>🏢 Create New Tenant</h2>
+                <form id="tenant-form" onsubmit="createTenant(event)">
+                    <div class="form-group">
+                        <label for="tenant-name">Company Name</label>
+                        <input type="text" id="tenant-name" name="tenant_name" required placeholder="Acme ISP Corporation">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="target-host">Target Server IP</label>
+                        <input type="text" id="target-host" name="target_host" required placeholder="192.168.1.100">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="ssh-user">SSH Username</label>
+                        <input type="text" id="ssh-user" name="ssh_user" value="ubuntu" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="ssh-key">SSH Private Key Path</label>
+                        <input type="text" id="ssh-key" name="ssh_key_path" placeholder="/path/to/private/key">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="deployment-type">Deployment Provider</label>
+                        <select id="deployment-type" name="deployment_provider" required>
+                            <option value="ssh_deployment">SSH Deployment</option>
+                            <option value="aws_deployment">AWS Deployment</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn" id="deploy-btn">
+                        Deploy ISP Framework
+                    </button>
+                </form>
+            </div>
+            
+            <!-- Deployment Status -->
+            <div class="card">
+                <h2>📊 Deployment Status</h2>
+                <div id="deployment-status">
+                    <div class="loading">Ready to deploy</div>
+                </div>
+                
+                <div id="deployment-log" class="deployment-log hidden">
+                    <div id="log-content">Deployment logs will appear here...</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Active Tenants -->
+        <div class="card">
+            <h2>🏢 Active Tenants</h2>
+            <div id="tenant-list" class="tenant-list">
+                {% for tenant in tenants %}
+                <div class="tenant-item">
+                    <div class="tenant-info">
+                        <h4>{{ tenant.company_name }}</h4>
+                        <p>ID: {{ tenant.id }} | Deployed: {{ tenant.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                        <p>Host: {{ tenant.deployment_config.get('target_host', 'N/A') }}</p>
+                    </div>
+                    <span class="tenant-status {{ tenant.status.lower() }}">{{ tenant.status }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let deploymentInProgress = false;
+        
+        async function createTenant(event) {
+            event.preventDefault();
+            
+            if (deploymentInProgress) {
+                alert('Deployment already in progress');
+                return;
+            }
+            
+            const form = document.getElementById('tenant-form');
+            const formData = new FormData(form);
+            const deployBtn = document.getElementById('deploy-btn');
+            const statusDiv = document.getElementById('deployment-status');
+            const logDiv = document.getElementById('deployment-log');
+            const logContent = document.getElementById('log-content');
+            
+            // Disable form and show progress
+            deployBtn.disabled = true;
+            deployBtn.textContent = 'Deploying...';
+            deploymentInProgress = true;
+            
+            // Show deployment log
+            logDiv.classList.remove('hidden');
+            logContent.innerHTML = 'Starting deployment...\n';
+            
+            // Update status
+            statusDiv.innerHTML = '<div class="status-card status-warning">🚀 Deployment in progress...</div>';
+            
+            try {
+                // Create tenant via API
+                const response = await fetch('/dashboard/create-tenant', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    // Start polling for deployment status
+                    const deploymentId = result.deployment_id;
+                    pollDeploymentStatus(deploymentId);
+                    
+                    statusDiv.innerHTML = `
+                        <div class="status-card">
+                            ✅ Tenant created successfully!<br>
+                            <strong>Tenant ID:</strong> ${result.tenant_id}<br>
+                            <strong>Deployment ID:</strong> ${deploymentId}
+                        </div>
+                    `;
+                    
+                    // Add to tenant list
+                    addTenantToList(result);
+                    
+                } else {
+                    throw new Error(result.detail || 'Deployment failed');
+                }
+                
+            } catch (error) {
+                console.error('Deployment error:', error);
+                statusDiv.innerHTML = `<div class="status-card status-error">❌ Deployment failed: ${error.message}</div>`;
+                logContent.innerHTML += `ERROR: ${error.message}\n`;
+            } finally {
+                deployBtn.disabled = false;
+                deployBtn.textContent = 'Deploy ISP Framework';
+                deploymentInProgress = false;
+            }
+        }
+        
+        async function pollDeploymentStatus(deploymentId) {
+            const logContent = document.getElementById('log-content');
+            let attempts = 0;
+            const maxAttempts = 60; // 5 minutes max
+            
+            const poll = async () => {
+                try {
+                    const response = await fetch(`/dashboard/deployment-status/${deploymentId}`);
+                    const status = await response.json();
+                    
+                    // Update log
+                    if (status.logs) {
+                        logContent.innerHTML += status.logs + '\n';
+                        logContent.scrollTop = logContent.scrollHeight;
+                    }
+                    
+                    // Check if deployment is complete
+                    if (status.status === 'completed') {
+                        logContent.innerHTML += '✅ Deployment completed successfully!\n';
+                        updateTenantStatus(deploymentId, 'active');
+                        return;
+                    } else if (status.status === 'failed') {
+                        logContent.innerHTML += '❌ Deployment failed!\n';
+                        updateTenantStatus(deploymentId, 'failed');
+                        return;
+                    }
+                    
+                    // Continue polling
+                    attempts++;
+                    if (attempts < maxAttempts) {
+                        setTimeout(poll, 5000); // Poll every 5 seconds
+                    } else {
+                        logContent.innerHTML += 'Deployment monitoring timeout\n';
+                    }
+                    
+                } catch (error) {
+                    console.error('Status polling error:', error);
+                    logContent.innerHTML += `Status check error: ${error.message}\n`;
+                }
+            };
+            
+            // Start polling
+            setTimeout(poll, 2000);
+        }
+        
+        function addTenantToList(tenantData) {
+            const tenantList = document.getElementById('tenant-list');
+            const tenantItem = document.createElement('div');
+            tenantItem.className = 'tenant-item';
+            tenantItem.innerHTML = `
+                <div class="tenant-info">
+                    <h4>${tenantData.company_name}</h4>
+                    <p>ID: ${tenantData.tenant_id} | Deployed: ${new Date().toLocaleString()}</p>
+                    <p>Host: ${tenantData.target_host}</p>
+                </div>
+                <span class="tenant-status deploying">DEPLOYING</span>
+            `;
+            tenantList.prepend(tenantItem);
+        }
+        
+        function updateTenantStatus(deploymentId, status) {
+            const tenantItems = document.querySelectorAll('.tenant-item');
+            tenantItems.forEach(item => {
+                const statusSpan = item.querySelector('.tenant-status');
+                if (statusSpan && statusSpan.textContent === 'DEPLOYING') {
+                    statusSpan.textContent = status.toUpperCase();
+                    statusSpan.className = `tenant-status ${status}`;
+                }
+            });
+        }
+        
+        // Auto-refresh metrics every 30 seconds
+        setInterval(async () => {
+            try {
+                const response = await fetch('/dashboard/metrics');
+                const metrics = await response.json();
+                
+                document.getElementById('active-tenants').textContent = metrics.active_tenants;
+                document.getElementById('deployments-today').textContent = metrics.deployments_today;
+                document.getElementById('system-health').textContent = metrics.system_health + '%';
+                document.getElementById('plugin-count').textContent = metrics.plugin_count;
+            } catch (error) {
+                console.error('Failed to update metrics:', error);
+            }
+        }, 30000);
+        
+        // Show deployment provider specific fields
+        document.getElementById('deployment-type').addEventListener('change', function(e) {
+            const sshFields = ['ssh-user', 'ssh-key'];
+            const awsFields = []; // Add AWS specific fields later
+            
+            if (e.target.value === 'ssh_deployment') {
+                sshFields.forEach(field => {
+                    document.getElementById(field).closest('.form-group').style.display = 'block';
+                });
+            } else {
+                sshFields.forEach(field => {
+                    document.getElementById(field).closest('.form-group').style.display = 'none';
+                });
+            }
+        });
+    </script>
+</body>
+</html>

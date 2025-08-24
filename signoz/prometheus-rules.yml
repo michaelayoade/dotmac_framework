@@ -1,0 +1,67 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+# Rule files for alerting
+rule_files:
+  - "/etc/prometheus/rules/*.yaml"
+  - "/etc/prometheus/rules/*.yml"
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - signoz-alert-manager:9093
+
+# Scrape configuration for SignOz metrics
+scrape_configs:
+  # SignOz collector metrics
+  - job_name: 'signoz-collector'
+    static_configs:
+      - targets: ['signoz-collector:8888']
+    
+  # Management Platform metrics via OTEL
+  - job_name: 'management-platform'
+    static_configs:
+      - targets: ['management-platform:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    
+  # ISP Framework metrics via OTEL  
+  - job_name: 'isp-framework'
+    static_configs:
+      - targets: ['isp-framework:8001']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    
+  # ClickHouse metrics for SignOz storage
+  - job_name: 'clickhouse'
+    static_configs:
+      - targets: ['signoz-clickhouse:8123']
+    metrics_path: '/metrics'
+    scrape_interval: 60s
+    
+  # Redis metrics
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-shared:6379']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    
+  # PostgreSQL metrics
+  - job_name: 'postgresql'
+    static_configs:
+      - targets: ['postgres-shared:5432']
+    metrics_path: '/metrics'
+    scrape_interval: 60s
+
+# Remote write to SignOz for long-term storage
+remote_write:
+  - url: "http://signoz-collector:4318/v1/metrics"
+    headers:
+      "Content-Type": "application/x-protobuf"
+    queue_config:
+      max_samples_per_send: 1000
+      max_shards: 200
+      capacity: 2500

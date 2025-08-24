@@ -1,0 +1,187 @@
+# SignOz Alert Rules for DotMac Management Platform
+# Revenue-critical and SaaS operational alerts
+
+groups:
+  - name: revenue_critical
+    rules:
+      - alert: BillingFailureRate
+        expr: sum(rate(dotmac_billing_events_total{success="false"}[5m])) / sum(rate(dotmac_billing_events_total[5m])) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+          component: billing
+          business_impact: revenue_loss
+        annotations:
+          summary: "High billing failure rate detected"
+          description: "Billing failure rate is {{ $value | humanizePercentage }} over the last 5 minutes. This directly impacts revenue."
+          runbook_url: "https://wiki.dotmac.app/runbooks/billing-failures"
+
+      - alert: ZeroRevenueGeneration
+        expr: sum(rate(dotmac_revenue_total[10m])) == 0
+        for: 5m
+        labels:
+          severity: critical
+          component: billing
+          business_impact: revenue_halt
+        annotations:
+          summary: "No revenue generation detected"
+          description: "No revenue has been recorded for 10 minutes. This indicates a complete billing system failure."
+          runbook_url: "https://wiki.dotmac.app/runbooks/revenue-halt"
+
+      - alert: RevenueDropSignificant
+        expr: sum(rate(dotmac_revenue_total[1h])) < sum(rate(dotmac_revenue_total[1h] offset 24h)) * 0.5
+        for: 10m
+        labels:
+          severity: warning
+          component: billing
+          business_impact: revenue_decline
+        annotations:
+          summary: "Significant revenue drop detected"
+          description: "Revenue is 50% lower than the same hour yesterday. Current rate: ${{ $value }}/hour"
+
+  - name: tenant_operations
+    rules:
+      - alert: TenantProvisioningFailures
+        expr: sum(rate(dotmac_tenant_operations_total{operation="create",success="false"}[10m])) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+          component: provisioning
+          business_impact: customer_onboarding
+        annotations:
+          summary: "High tenant provisioning failure rate"
+          description: "Tenant creation is failing at {{ $value }} failures per second. New customers cannot be onboarded."
+
+      - alert: TenantIsolationBreach
+        expr: sum(rate(dotmac_tenant_operations_total{error_type="isolation_breach"}[5m])) > 0
+        for: 1m
+        labels:
+          severity: critical
+          component: security
+          business_impact: data_breach
+        annotations:
+          summary: "SECURITY: Tenant isolation breach detected"
+          description: "A potential tenant isolation breach has been detected. Immediate investigation required."
+          runbook_url: "https://wiki.dotmac.app/runbooks/security-breach"
+
+      - alert: TenantHealthDegraded
+        expr: sum by (tenant_id) (rate(dotmac_tenant_operations_total{success="true"}[10m])) / sum by (tenant_id) (rate(dotmac_tenant_operations_total[10m])) < 0.95
+        for: 5m
+        labels:
+          severity: warning
+          component: tenant_health
+        annotations:
+          summary: "Tenant {{ $labels.tenant_id }} health degraded"
+          description: "Tenant {{ $labels.tenant_id }} success rate is {{ $value | humanizePercentage }}. SLA at risk."
+
+  - name: platform_infrastructure
+    rules:
+      - alert: HighAPILatency
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) > 2
+        for: 5m
+        labels:
+          severity: warning
+          component: api
+        annotations:
+          summary: "High API latency detected"
+          description: "95th percentile API latency is {{ $value }}s, exceeding 2s threshold."
+
+      - alert: DatabaseConnectionsExhausted
+        expr: dotmac_db_connections_active / (dotmac_db_connections_active + dotmac_db_connections_idle) > 0.9
+        for: 3m
+        labels:
+          severity: critical
+          component: database
+        annotations:
+          summary: "Database connection pool near exhaustion"
+          description: "{{ $value | humanizePercentage }} of database connections are active. Risk of connection exhaustion."
+
+      - alert: CacheHitRateLow
+        expr: rate(dotmac_cache_hits_total[5m]) / (rate(dotmac_cache_hits_total[5m]) + rate(dotmac_cache_misses_total[5m])) < 0.8
+        for: 10m
+        labels:
+          severity: warning
+          component: cache
+        annotations:
+          summary: "Redis cache hit rate is low"
+          description: "Cache hit rate is {{ $value | humanizePercentage }}, below 80% threshold. Performance may be degraded."
+
+      - alert: HighErrorRate
+        expr: sum(rate(http_requests_total{status=~"5.."}[5m])) / sum(rate(http_requests_total[5m])) > 0.05
+        for: 3m
+        labels:
+          severity: critical
+          component: api
+        annotations:
+          summary: "High HTTP error rate"
+          description: "HTTP 5xx error rate is {{ $value | humanizePercentage }}, exceeding 5% threshold."
+
+  - name: business_sla
+    rules:
+      - alert: TenantSLABreach
+        expr: sum by (tenant_id) (rate(http_requests_total{status=~"2.."}[5m])) / sum by (tenant_id) (rate(http_requests_total[5m])) < 0.995
+        for: 10m
+        labels:
+          severity: warning
+          component: sla
+          business_impact: customer_satisfaction
+        annotations:
+          summary: "SLA breach for tenant {{ $labels.tenant_id }}"
+          description: "Tenant {{ $labels.tenant_id }} success rate {{ $value | humanizePercentage }} is below 99.5% SLA."
+
+      - alert: PlatformUptimeBreach
+        expr: sum(rate(http_requests_total{status=~"2.."}[5m])) / sum(rate(http_requests_total[5m])) < 0.999
+        for: 5m
+        labels:
+          severity: critical
+          component: platform
+          business_impact: platform_reputation
+        annotations:
+          summary: "Platform uptime SLA breach"
+          description: "Platform uptime {{ $value | humanizePercentage }} is below 99.9% SLA commitment."
+
+  - name: resource_management
+    rules:
+      - alert: MemoryUsageHigh
+        expr: process_resident_memory_bytes / 1024 / 1024 / 1024 > 4
+        for: 10m
+        labels:
+          severity: warning
+          component: resources
+        annotations:
+          summary: "High memory usage detected"
+          description: "Application memory usage is {{ $value }}GB, approaching limits."
+
+      - alert: CPUUsageHigh
+        expr: rate(process_cpu_seconds_total[5m]) * 100 > 80
+        for: 10m
+        labels:
+          severity: warning
+          component: resources
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage is {{ $value }}%, approaching limits."
+
+  - name: plugin_marketplace
+    rules:
+      - alert: PluginLicensingFailures
+        expr: sum(rate(dotmac_plugin_operations_total{operation="license_check",success="false"}[10m])) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+          component: licensing
+          business_impact: feature_access
+        annotations:
+          summary: "High plugin licensing failure rate"
+          description: "Plugin license validation failing at {{ $value }} failures/second. Features may be inaccessible."
+
+      - alert: PluginRevenueImpact
+        expr: sum(rate(dotmac_plugin_usage_revenue[1h])) < sum(rate(dotmac_plugin_usage_revenue[1h] offset 24h)) * 0.8
+        for: 15m
+        labels:
+          severity: warning
+          component: plugins
+          business_impact: revenue_decline
+        annotations:
+          summary: "Plugin revenue decline detected"
+          description: "Plugin usage revenue is 20% lower than yesterday at the same time."

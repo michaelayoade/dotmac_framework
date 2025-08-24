@@ -1,0 +1,201 @@
+{
+  "title": "DotMac Management Platform - SaaS Metrics",
+  "description": "Business metrics, tenant operations, and revenue tracking for the Management Platform",
+  "tags": ["saas", "business", "revenue", "tenants"],
+  "version": 1,
+  "panels": [
+    {
+      "id": "revenue-metrics",
+      "title": "Revenue Metrics",
+      "type": "stat",
+      "targets": [
+        {
+          "queryName": "A",
+          "query": "sum(rate(dotmac_revenue_total[5m])) * 60 * 60 * 24 * 30",
+          "legend": "Monthly Recurring Revenue (MRR)"
+        },
+        {
+          "queryName": "B", 
+          "query": "sum(dotmac_revenue_total)",
+          "legend": "Total Revenue"
+        },
+        {
+          "queryName": "C",
+          "query": "sum(rate(dotmac_revenue_total[1h])) * 3600",
+          "legend": "Revenue per Hour"
+        }
+      ],
+      "gridPos": {"x": 0, "y": 0, "w": 8, "h": 4}
+    },
+    {
+      "id": "tenant-operations",
+      "title": "Tenant Operations",
+      "type": "graph",
+      "targets": [
+        {
+          "queryName": "A",
+          "query": "sum by (operation) (rate(dotmac_tenant_operations_total[5m]))",
+          "legend": "{{operation}}"
+        }
+      ],
+      "gridPos": {"x": 8, "y": 0, "w": 8, "h": 4}
+    },
+    {
+      "id": "active-tenants",
+      "title": "Active Tenants",
+      "type": "stat",
+      "targets": [
+        {
+          "queryName": "A",
+          "query": "count(count by (tenant_id) (dotmac_tenant_operations_total))",
+          "legend": "Total Active Tenants"
+        },
+        {
+          "queryName": "B",
+          "query": "sum(rate(dotmac_tenant_operations_total{operation='create'}[1h]))",
+          "legend": "New Tenants/Hour"
+        }
+      ],
+      "gridPos": {"x": 16, "y": 0, "w": 8, "h": 4}
+    },
+    {
+      "id": "billing-events",
+      "title": "Billing Events",
+      "type": "graph",
+      "targets": [
+        {
+          "queryName": "A",
+          "query": "sum by (event_type) (rate(dotmac_billing_events_total[5m]))",
+          "legend": "{{event_type}}"
+        }
+      ],
+      "gridPos": {"x": 0, "y": 4, "w": 12, "h": 4}
+    },
+    {
+      "id": "billing-success-rate",
+      "title": "Billing Success Rate",
+      "type": "stat",
+      "targets": [
+        {
+          "queryName": "A",
+          "query": "sum(rate(dotmac_billing_events_total{success='true'}[5m])) / sum(rate(dotmac_billing_events_total[5m])) * 100",
+          "legend": "Billing Success Rate %"
+        }
+      ],
+      "gridPos": {"x": 12, "y": 4, "w": 6, "h": 4}
+    },
+    {
+      "id": "error-rate",
+      "title": "Error Rate",
+      "type": "stat",
+      "targets": [
+        {
+          "queryName": "A",
+          "query": "sum(rate(dotmac_tenant_operations_total{success='false'}[5m])) / sum(rate(dotmac_tenant_operations_total[5m])) * 100",
+          "legend": "Operation Error Rate %"
+        }
+      ],
+      "gridPos": {"x": 18, "y": 4, "w": 6, "h": 4}
+    },
+    {
+      "id": "request-latency",
+      "title": "Request Latency",
+      "type": "graph",
+      "targets": [
+        {
+          "queryName": "A",
+          "query": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))",
+          "legend": "p50"
+        },
+        {
+          "queryName": "B",
+          "query": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))",
+          "legend": "p95"
+        },
+        {
+          "queryName": "C",
+          "query": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))",
+          "legend": "p99"
+        }
+      ],
+      "gridPos": {"x": 0, "y": 8, "w": 12, "h": 4}
+    },
+    {
+      "id": "tenant-health",
+      "title": "Tenant Health Score",
+      "type": "heatmap",
+      "targets": [
+        {
+          "queryName": "A",
+          "query": "sum by (tenant_id) (rate(dotmac_tenant_operations_total{success='true'}[5m])) / sum by (tenant_id) (rate(dotmac_tenant_operations_total[5m]))",
+          "legend": "Health Score by Tenant"
+        }
+      ],
+      "gridPos": {"x": 12, "y": 8, "w": 12, "h": 4}
+    },
+    {
+      "id": "database-connections",
+      "title": "Database Connections",
+      "type": "graph",
+      "targets": [
+        {
+          "queryName": "A",
+          "query": "dotmac_db_connections_active",
+          "legend": "Active Connections"
+        },
+        {
+          "queryName": "B",
+          "query": "dotmac_db_connections_idle",
+          "legend": "Idle Connections"
+        }
+      ],
+      "gridPos": {"x": 0, "y": 12, "w": 8, "h": 4}
+    },
+    {
+      "id": "cache-performance",
+      "title": "Redis Cache Performance",
+      "type": "graph",
+      "targets": [
+        {
+          "queryName": "A",
+          "query": "rate(dotmac_cache_hits_total[5m])",
+          "legend": "Cache Hits/sec"
+        },
+        {
+          "queryName": "B",
+          "query": "rate(dotmac_cache_misses_total[5m])",
+          "legend": "Cache Misses/sec"
+        },
+        {
+          "queryName": "C",
+          "query": "rate(dotmac_cache_hits_total[5m]) / (rate(dotmac_cache_hits_total[5m]) + rate(dotmac_cache_misses_total[5m])) * 100",
+          "legend": "Hit Rate %"
+        }
+      ],
+      "gridPos": {"x": 8, "y": 12, "w": 8, "h": 4}
+    },
+    {
+      "id": "system-resources",
+      "title": "System Resources",
+      "type": "graph",
+      "targets": [
+        {
+          "queryName": "A",
+          "query": "process_resident_memory_bytes / 1024 / 1024",
+          "legend": "Memory Usage (MB)"
+        },
+        {
+          "queryName": "B",
+          "query": "rate(process_cpu_seconds_total[5m]) * 100",
+          "legend": "CPU Usage %"
+        }
+      ],
+      "gridPos": {"x": 16, "y": 12, "w": 8, "h": 4}
+    }
+  ],
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "refresh": "30s"
+}

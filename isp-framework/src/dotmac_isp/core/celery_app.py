@@ -18,7 +18,9 @@ except ImportError:
         def __init__(self, *args, **kwargs):
             self.conf = self
             self.control = self
-            self.broker_url = "redis://localhost:6379/1"
+            # Use environment variable or default to container name
+            import os
+            self.broker_url = os.getenv("CELERY_BROKER_URL", "redis://redis-shared:6379/1")
 
         def task(self, *args, **kwargs):
             def decorator(func):

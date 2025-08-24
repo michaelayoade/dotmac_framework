@@ -3,9 +3,9 @@ version: '3.8'
 services:
   # ===== CORE DATABASE & CACHE =====
   
-  # PostgreSQL Database
+  # PostgreSQL Database - Pinned to specific version for stability
   postgres:
-    image: postgres:15-alpine
+    image: postgres:15.8-alpine
     container_name: dotmac_isp_postgres
     environment:
       POSTGRES_DB: dotmac_isp
@@ -24,9 +24,9 @@ services:
     networks:
       - dotmac_network
 
-  # Redis Cache & Event Bus
+  # Redis Cache & Event Bus - Pinned to specific version for stability
   redis:
-    image: redis:7-alpine
+    image: redis:7.4-alpine
     container_name: dotmac_isp_redis
     ports:
       - "6380:6379"
@@ -45,8 +45,9 @@ services:
 
   # ===== FILE STORAGE (MinIO S3) =====
   
+  # MinIO S3-compatible storage - Pinned to specific version for stability
   minio:
-    image: minio/minio:latest
+    image: minio/minio:RELEASE.2024-08-17T01-24-54Z
     container_name: dotmac_minio
     ports:
       - "9002:9000"      # API (avoid ClickHouse port 9000)
@@ -87,8 +88,9 @@ services:
 
   # ===== RADIUS SERVER =====
   
+  # FreeRADIUS Authentication Server - Pinned to specific version for stability
   freeradius:
-    image: freeradius/freeradius-server:latest
+    image: freeradius/freeradius-server:3.2.5
     container_name: dotmac_freeradius
     ports:
       - "1812:1812/udp"  # Authentication
@@ -109,9 +111,9 @@ services:
 
   # ===== NETWORK MANAGEMENT =====
   
-  # SNMP Simulator for testing
+  # SNMP Simulator for testing - Pinned to specific version for stability  
   snmpsim:
-    image: tandrup/snmpsim
+    image: tandrup/snmpsim:4.0.18
     container_name: dotmac_snmpsim
     ports:
       - "1161:161/udp"
@@ -134,6 +136,7 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - CELERY_BROKER_URL=redis://redis:6379/1
       - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - JWT_SECRET_KEY=dev-secret-key-change-in-production
       - DEBUG=false
       - ENVIRONMENT=development
     depends_on:
@@ -161,6 +164,7 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - CELERY_BROKER_URL=redis://redis:6379/1
       - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - JWT_SECRET_KEY=dev-secret-key-change-in-production
     depends_on:
       postgres:
         condition: service_healthy
@@ -186,6 +190,7 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - CELERY_BROKER_URL=redis://redis:6379/1
       - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - JWT_SECRET_KEY=dev-secret-key-change-in-production
     depends_on:
       postgres:
         condition: service_healthy
@@ -198,9 +203,9 @@ services:
     networks:
       - dotmac_network
 
-  # Nginx Reverse Proxy
+  # Nginx Reverse Proxy - Pinned to specific version for stability  
   nginx:
-    image: nginx:alpine
+    image: nginx:1.27-alpine
     container_name: dotmac_isp_nginx
     ports:
       - "80:80"

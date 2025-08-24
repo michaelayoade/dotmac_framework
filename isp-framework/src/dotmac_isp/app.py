@@ -30,9 +30,15 @@ from dotmac_isp.core.settings import get_settings
 from dotmac_isp.core.ssl_manager import get_ssl_manager, initialize_ssl
 from dotmac_isp.shared.cache import get_cache_manager
 
-# Enterprise SDK components (simplified)
-init_signoz = None
-get_signoz = None
+# SignOz observability integration
+try:
+    from dotmac_isp.sdks.core.observability_signoz import init_signoz, get_signoz
+    SIGNOZ_AVAILABLE = True
+except ImportError as e:
+    logging.warning(f"SignOz SDK not available: {e}")
+    init_signoz = None
+    get_signoz = None
+    SIGNOZ_AVAILABLE = False
 
 
 @asynccontextmanager
@@ -48,6 +54,24 @@ async def lifespan(app: FastAPI):
         # Initialize Redis cache
         cache_manager = get_cache_manager()
         logging.info("✅ Redis cache connection established")
+
+        # Initialize SignOz observability
+        if SIGNOZ_AVAILABLE and init_signoz:
+            try:
+                signoz_telemetry = init_signoz(
+                    service_name="dotmac-isp-framework",
+                    service_version="1.0.0",
+                    environment=settings.environment,
+                    signoz_endpoint=settings.signoz_endpoint if hasattr(settings, 'signoz_endpoint') else None,
+                    custom_attributes={
+                        "platform": "isp_framework",
+                        "deployment": "monolithic",
+                        "business_model": "b2b_saas"
+                    }
+                )
+                logging.info("✅ SignOz observability initialized")
+            except Exception as e:
+                logging.warning(f"⚠️  SignOz initialization failed: {e}")
 
         # Initialize infrastructure (monitoring, metrics, tracing)
         await startup_infrastructure()
@@ -174,6 +198,16 @@ def create_app() -> FastAPI:
 
     # Register API routes
     register_routers(app)
+    
+    # Instrument FastAPI with SignOz
+    if SIGNOZ_AVAILABLE and get_signoz:
+        try:
+            signoz_telemetry = get_signoz()
+            if signoz_telemetry:
+                signoz_telemetry.instrument_fastapi(app)
+                logging.info("✅ FastAPI instrumented with SignOz observability")
+        except Exception as e:
+            logging.warning(f"⚠️  SignOz FastAPI instrumentation failed: {e}")
 
     return app
 

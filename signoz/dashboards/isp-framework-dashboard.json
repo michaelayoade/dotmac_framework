@@ -1,0 +1,232 @@
+{
+  "title": "DotMac ISP Framework - Operations Dashboard",
+  "description": "Operational metrics for ISP business operations, customer management, and network monitoring",
+  "tags": ["isp", "operations", "network", "customers"],
+  "version": 1,
+  "panels": [
+    {
+      "id": "customer-metrics",
+      "title": "Customer Metrics",
+      "type": "stat",
+      "targets": [
+        {
+          "queryName": "A",
+          "query": "dotmac_customers_total",
+          "legend": "Total Customers"
+        },
+        {
+          "queryName": "B",
+          "query": "sum(rate(dotmac_customer_operations_total{operation='create'}[1h]))",
+          "legend": "New Customers/Hour"
+        },
+        {
+          "queryName": "C",
+          "query": "sum(dotmac_customers_active)",
+          "legend": "Active Customers"
+        }
+      ],
+      "gridPos": {"x": 0, "y": 0, "w": 8, "h": 4}
+    },
+    {
+      "id": "service-provisioning",
+      "title": "Service Provisioning",
+      "type": "graph",
+      "targets": [
+        {
+          "queryName": "A",
+          "query": "sum by (service_type) (rate(dotmac_service_operations_total[5m]))",
+          "legend": "{{service_type}}"
+        }
+      ],
+      "gridPos": {"x": 8, "y": 0, "w": 8, "h": 4}
+    },
+    {
+      "id": "network-health",
+      "title": "Network Health Score",
+      "type": "stat",
+      "targets": [
+        {
+          "queryName": "A",
+          "query": "avg(dotmac_network_device_health_score)",
+          "legend": "Network Health %"
+        },
+        {
+          "queryName": "B",
+          "query": "count(dotmac_network_devices_online)",
+          "legend": "Online Devices"
+        }
+      ],
+      "gridPos": {"x": 16, "y": 0, "w": 8, "h": 4}
+    },
+    {
+      "id": "billing-operations",
+      "title": "Billing Operations",
+      "type": "graph",
+      "targets": [
+        {
+          "queryName": "A",
+          "query": "sum by (billing_type) (rate(dotmac_billing_operations_total[5m]))",
+          "legend": "{{billing_type}}"
+        }
+      ],
+      "gridPos": {"x": 0, "y": 4, "w": 12, "h": 4}
+    },
+    {
+      "id": "payment-success-rate",
+      "title": "Payment Success Rate",
+      "type": "stat",
+      "targets": [
+        {
+          "queryName": "A",
+          "query": "sum(rate(dotmac_payment_operations_total{status='success'}[5m])) / sum(rate(dotmac_payment_operations_total[5m])) * 100",
+          "legend": "Payment Success Rate %"
+        }
+      ],
+      "gridPos": {"x": 12, "y": 4, "w": 6, "h": 4}
+    },
+    {
+      "id": "revenue-today",
+      "title": "Daily Revenue",
+      "type": "stat",
+      "targets": [
+        {
+          "queryName": "A",
+          "query": "sum(increase(dotmac_revenue_total[24h]))",
+          "legend": "Today's Revenue"
+        }
+      ],
+      "gridPos": {"x": 18, "y": 4, "w": 6, "h": 4}
+    },
+    {
+      "id": "support-tickets",
+      "title": "Support Ticket Metrics",
+      "type": "graph",
+      "targets": [
+        {
+          "queryName": "A",
+          "query": "sum by (priority) (dotmac_support_tickets_open)",
+          "legend": "Open {{priority}}"
+        },
+        {
+          "queryName": "B",
+          "query": "sum(rate(dotmac_support_tickets_resolved[1h]))",
+          "legend": "Resolved/Hour"
+        }
+      ],
+      "gridPos": {"x": 0, "y": 8, "w": 12, "h": 4}
+    },
+    {
+      "id": "field-operations",
+      "title": "Field Operations",
+      "type": "graph",
+      "targets": [
+        {
+          "queryName": "A",
+          "query": "sum by (status) (dotmac_work_orders_total)",
+          "legend": "Work Orders {{status}}"
+        },
+        {
+          "queryName": "B",
+          "query": "avg(dotmac_technician_response_time_hours)",
+          "legend": "Avg Response Time (hrs)"
+        }
+      ],
+      "gridPos": {"x": 12, "y": 8, "w": 12, "h": 4}
+    },
+    {
+      "id": "network-utilization",
+      "title": "Network Utilization",
+      "type": "graph",
+      "targets": [
+        {
+          "queryName": "A",
+          "query": "avg(dotmac_network_bandwidth_utilization_percent)",
+          "legend": "Bandwidth Utilization %"
+        },
+        {
+          "queryName": "B",
+          "query": "sum(rate(dotmac_network_traffic_bytes[5m])) * 8",
+          "legend": "Traffic (bps)"
+        }
+      ],
+      "gridPos": {"x": 0, "y": 12, "w": 8, "h": 4}
+    },
+    {
+      "id": "device-monitoring",
+      "title": "Device Status",
+      "type": "stat",
+      "targets": [
+        {
+          "queryName": "A",
+          "query": "count(dotmac_network_devices{status='online'})",
+          "legend": "Online Devices"
+        },
+        {
+          "queryName": "B",
+          "query": "count(dotmac_network_devices{status='offline'})",
+          "legend": "Offline Devices"
+        },
+        {
+          "queryName": "C",
+          "query": "count(dotmac_network_devices{status='degraded'})",
+          "legend": "Degraded Devices"
+        }
+      ],
+      "gridPos": {"x": 8, "y": 12, "w": 8, "h": 4}
+    },
+    {
+      "id": "api-performance",
+      "title": "API Performance",
+      "type": "graph",
+      "targets": [
+        {
+          "queryName": "A",
+          "query": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket{service='dotmac-isp-framework'}[5m])) by (le))",
+          "legend": "p50 Latency"
+        },
+        {
+          "queryName": "B",
+          "query": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{service='dotmac-isp-framework'}[5m])) by (le))",
+          "legend": "p95 Latency"
+        },
+        {
+          "queryName": "C",
+          "query": "sum(rate(http_requests_total{service='dotmac-isp-framework'}[5m]))",
+          "legend": "Request Rate"
+        }
+      ],
+      "gridPos": {"x": 16, "y": 12, "w": 8, "h": 4}
+    },
+    {
+      "id": "module-health",
+      "title": "Module Health Status",
+      "type": "heatmap",
+      "targets": [
+        {
+          "queryName": "A",
+          "query": "sum by (module) (rate(dotmac_module_operations_total{status='success'}[5m])) / sum by (module) (rate(dotmac_module_operations_total[5m]))",
+          "legend": "{{module}} Health"
+        }
+      ],
+      "gridPos": {"x": 0, "y": 16, "w": 12, "h": 4}
+    },
+    {
+      "id": "portal-usage",
+      "title": "Portal Usage",
+      "type": "graph",
+      "targets": [
+        {
+          "queryName": "A",
+          "query": "sum by (portal_type) (rate(dotmac_portal_requests_total[5m]))",
+          "legend": "{{portal_type}} Requests/sec"
+        }
+      ],
+      "gridPos": {"x": 12, "y": 16, "w": 12, "h": 4}
+    }
+  ],
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "refresh": "30s"
+}

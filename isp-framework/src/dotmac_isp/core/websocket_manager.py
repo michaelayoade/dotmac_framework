@@ -88,15 +88,18 @@ class WebSocketManager:
     - Automatic reconnection handling
     """
     
-    def __init__(self, redis_url: str = "redis://localhost:6379/0"):
+    def __init__(self, redis_url: str = None):
         """Initialize WebSocket manager."""
+        from dotmac_isp.core.settings import get_settings
+        
         self.connections: Dict[str, ConnectionInfo] = {}
         self.tenant_connections: Dict[str, Set[str]] = {}
         self.user_connections: Dict[str, Set[str]] = {}
         self.subscription_connections: Dict[str, Set[str]] = {}
         
-        # Redis for pub/sub across multiple instances
-        self.redis_url = redis_url
+        # Redis for pub/sub across multiple instances - use centralized settings
+        settings = get_settings()
+        self.redis_url = redis_url or settings.redis_url
         self.redis_client: Optional[redis.Redis] = None
         self.pubsub = None
         

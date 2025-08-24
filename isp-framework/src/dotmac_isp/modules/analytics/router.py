@@ -11,6 +11,7 @@ from dotmac_isp.core.middleware import get_tenant_id_dependency
 from sqlalchemy.orm import Session
 from .service import MetricService, ReportService, DashboardService, AlertService, AnalyticsService
 from . import schemas
+from .schemas import MetricType
 from dotmac_isp.shared.exceptions import (
     EntityNotFoundError,
     ValidationError,

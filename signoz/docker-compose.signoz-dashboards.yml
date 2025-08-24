@@ -1,0 +1,113 @@
+version: '3.8'
+
+# SignOz Dashboard and Alert Configuration Service
+# Automatically imports dashboards and configures alerts
+
+services:
+  # Dashboard Provisioner - Imports dashboard configurations
+  signoz-dashboard-provisioner:
+    image: curlimages/curl:latest
+    depends_on:
+      - signoz-frontend
+    volumes:
+      - ./dashboards:/dashboards:ro
+      - ./scripts:/scripts:ro
+    environment:
+      - SIGNOZ_ENDPOINT=http://signoz-frontend:3301
+      - DASHBOARD_PATH=/dashboards
+    command: >
+      sh -c '
+        echo "Waiting for SignOz to be ready..."
+        until curl -s http://signoz-frontend:3301/api/v1/health > /dev/null 2>&1; do
+          echo "SignOz not ready, waiting..."
+          sleep 10
+        done
+        
+        echo "SignOz is ready, importing dashboards..."
+        
+        # Import Management Platform dashboard
+        if [ -f /dashboards/management-platform-dashboard.json ]; then
+          echo "Importing Management Platform dashboard..."
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -d @/dashboards/management-platform-dashboard.json \
+            http://signoz-frontend:3301/api/v1/dashboards/import
+        fi
+        
+        # Import ISP Framework dashboard  
+        if [ -f /dashboards/isp-framework-dashboard.json ]; then
+          echo "Importing ISP Framework dashboard..."
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -d @/dashboards/isp-framework-dashboard.json \
+            http://signoz-frontend:3301/api/v1/dashboards/import
+        fi
+        
+        echo "Dashboard import complete"
+        
+        # Keep container running for potential re-imports
+        while true; do
+          echo "Dashboard provisioner running. Checking for updates every 5 minutes..."
+          sleep 300
+          
+          # Re-import dashboards if they have changed
+          for dashboard in /dashboards/*.json; do
+            if [ -f "$dashboard" ]; then
+              echo "Re-importing $(basename $dashboard)..."
+              curl -X POST \
+                -H "Content-Type: application/json" \
+                -d @"$dashboard" \
+                http://signoz-frontend:3301/api/v1/dashboards/import
+            fi
+          done
+        done
+      '
+    networks:
+      - dotmac-network
+    restart: unless-stopped
+
+  # Alert Rule Manager - Configures alerting rules
+  signoz-alert-manager:
+    image: prom/alertmanager:v0.25.0
+    volumes:
+      - ./alerts:/etc/alertmanager/rules:ro
+      - ./alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+      - '--web.external-url=http://localhost:9093'
+      - '--cluster.listen-address=0.0.0.0:9094'
+    ports:
+      - "9093:9093"
+    depends_on:
+      - signoz-collector
+    networks:
+      - dotmac-network
+    restart: unless-stopped
+
+  # Prometheus Rule Evaluator for SignOz alerts
+  prometheus-rule-evaluator:
+    image: prom/prometheus:v2.40.0
+    volumes:
+      - ./alerts:/etc/prometheus/rules:ro
+      - ./prometheus-rules.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=7d'
+      - '--web.enable-lifecycle'
+      - '--storage.tsdb.wal-compression'
+      - '--web.external-url=http://localhost:9090'
+    ports:
+      - "9090:9090"
+    depends_on:
+      - signoz-collector
+    networks:
+      - dotmac-network
+    restart: unless-stopped
+
+networks:
+  dotmac-network:
+    external: true

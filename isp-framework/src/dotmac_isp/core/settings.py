@@ -10,6 +10,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 logger = logging.getLogger(__name__)
 
+# Strategic imports (lazy loaded to avoid circular imports)
+_secret_manager = None
+
 
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
@@ -49,7 +52,7 @@ class Settings(BaseSettings):
 
     # Redis settings
     redis_url: str = Field(
-        default="redis://localhost:6379/0",
+        default="redis://:dotmac_redis_password@redis-shared:6379/0",
         description="Redis connection URL for caching and sessions",
     )
 
@@ -360,6 +363,33 @@ class Settings(BaseSettings):
                 "Environment must be one of: development, staging, production"
             )
         return v
+
+    def get_strategic_database_url(self, async_driver: bool = False) -> str:
+        """Get database URL using strategic secret management."""
+        global _secret_manager
+        if _secret_manager is None:
+            from .secret_manager import get_secret_manager
+            _secret_manager = get_secret_manager()
+        
+        return _secret_manager.build_database_url(async_driver)
+
+    def get_strategic_redis_url(self, database: str = "0") -> str:
+        """Get Redis URL using strategic secret management."""
+        global _secret_manager
+        if _secret_manager is None:
+            from .secret_manager import get_secret_manager
+            _secret_manager = get_secret_manager()
+        
+        return _secret_manager.build_redis_url(database)
+
+    def get_strategic_jwt_secret(self) -> str:
+        """Get JWT secret using strategic secret management."""
+        global _secret_manager
+        if _secret_manager is None:
+            from .secret_manager import get_secret_manager
+            _secret_manager = get_secret_manager()
+        
+        return _secret_manager.get_jwt_secret()
 
 
 @lru_cache()
