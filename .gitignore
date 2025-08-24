@@ -470,6 +470,10 @@ mprofile_*.dat
 *claude*
 *CLAUDE*
 
+# Virtual environments for documentation
+docs/doc-env/
+**/quality_test_env*/
+
 # =============================================================================
 # WHITELIST (files to explicitly include despite patterns above)
 # =============================================================================
