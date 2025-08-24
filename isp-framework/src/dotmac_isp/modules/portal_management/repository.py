@@ -23,6 +23,7 @@ class PortalAccountRepository:
     """Repository for portal account database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 
@@ -196,6 +197,7 @@ class PortalSessionRepository:
     """Repository for portal session database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 
@@ -312,6 +314,7 @@ class PortalLoginAttemptRepository:
     """Repository for portal login attempt database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 
@@ -383,6 +386,7 @@ class PortalPreferencesRepository:
     """Repository for portal preferences database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 

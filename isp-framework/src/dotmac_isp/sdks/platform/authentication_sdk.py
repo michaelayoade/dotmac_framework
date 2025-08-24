@@ -20,6 +20,7 @@ class UTC:
 
     @staticmethod
     def localize(dt):
+        """Localize operation."""
         return dt.replace(tzinfo=utc_now().tzinfo)
 
 
@@ -74,6 +75,7 @@ class AuthSDK:
     """
 
     def __init__(
+        """  Init   operation."""
         self,
         secret_key: str,
         db_session: AsyncSession,

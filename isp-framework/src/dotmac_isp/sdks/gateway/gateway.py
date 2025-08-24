@@ -22,6 +22,7 @@ class GatewayService:
     """In-memory service for gateway operations."""
 
     def __init__(self):
+        """  Init   operation."""
         self._gateways: Dict[str, Dict[str, Any]] = {}
         self._routes: Dict[str, Dict[str, Any]] = {}
         self._load_balancers: Dict[str, Dict[str, Any]] = {}
@@ -226,6 +227,7 @@ class GatewaySDK:
     """SDK for API Gateway management."""
 
     def __init__(self, tenant_id: str):
+        """  Init   operation."""
         self.tenant_id = tenant_id
         self._service = GatewayService()
 

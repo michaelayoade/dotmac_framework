@@ -192,12 +192,14 @@ class RetryDecoratorFactory:
             policy = RetryPolicy()
         
         def decorator(func):
+            """Decorator operation."""
             # Step 1: Select appropriate retry strategy (Complexity: 1)
             if asyncio.iscoroutinefunction(func):
                 executor = AsyncRetryExecutor(policy, on_retry)
                 
                 @wraps(func)
                 async def async_wrapper(*args, **kwargs):
+                    """Async Wrapper operation."""
                     return await executor.execute_with_retry(func, *args, **kwargs)
                 
                 return async_wrapper
@@ -206,6 +208,7 @@ class RetryDecoratorFactory:
                 
                 @wraps(func)
                 def sync_wrapper(*args, **kwargs):
+                    """Sync Wrapper operation."""
                     return executor.execute_with_retry(func, *args, **kwargs)
                 
                 return sync_wrapper
@@ -342,12 +345,14 @@ def with_circuit_breaker_retry(policy=None, on_retry: Optional[Callable] = None,
         policy = RetryPolicy()
     
     def decorator(func):
+        """Decorator operation."""
         executor = CircuitBreakerRetryExecutor(
             policy, on_retry, failure_threshold, recovery_timeout
         )
         
         @wraps(func)
         def wrapper(*args, **kwargs):
+            """Wrapper operation."""
             return executor.execute_with_retry(func, *args, **kwargs)
         
         return wrapper
@@ -373,6 +378,7 @@ def with_bulkhead_retry(policy=None, on_retry: Optional[Callable] = None,
         policy = RetryPolicy()
     
     def decorator(func):
+        """Decorator operation."""
         if not asyncio.iscoroutinefunction(func):
             raise ValueError("Bulkhead retry only supports async functions")
         
@@ -380,6 +386,7 @@ def with_bulkhead_retry(policy=None, on_retry: Optional[Callable] = None,
         
         @wraps(func)
         async def wrapper(*args, **kwargs):
+            """Wrapper operation."""
             return await executor.execute_with_retry(func, *args, **kwargs)
         
         return wrapper

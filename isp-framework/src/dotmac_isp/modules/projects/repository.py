@@ -23,6 +23,7 @@ class InstallationProjectRepository:
     """Repository for installation project data operations."""
 
     def __init__(self, db: Session):
+        """  Init   operation."""
         self.db = db
 
     def create(self, project_data: Dict[str, Any]) -> InstallationProject:
@@ -235,6 +236,7 @@ class ProjectPhaseRepository:
     """Repository for project phase data operations."""
 
     def __init__(self, db: Session):
+        """  Init   operation."""
         self.db = db
 
     def create(self, phase_data: Dict[str, Any]) -> ProjectPhase:
@@ -335,6 +337,7 @@ class ProjectMilestoneRepository:
     """Repository for project milestone data operations."""
 
     def __init__(self, db: Session):
+        """  Init   operation."""
         self.db = db
 
     def create(self, milestone_data: Dict[str, Any]) -> ProjectMilestone:
@@ -448,6 +451,7 @@ class ProjectUpdateRepository:
     """Repository for project update data operations."""
 
     def __init__(self, db: Session):
+        """  Init   operation."""
         self.db = db
 
     def create(self, update_data: Dict[str, Any]) -> ProjectUpdate:

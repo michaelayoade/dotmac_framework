@@ -16,6 +16,7 @@ class DotMacISPException(Exception):
     """Base exception for DotMac ISP Framework."""
 
     def __init__(self, message: str, error_code: str = None, status_code: int = 500):
+        """  Init   operation."""
         self.message = message
         self.error_code = error_code or "INTERNAL_ERROR"
         self.status_code = status_code
@@ -26,6 +27,7 @@ class TenantNotFoundError(DotMacISPException):
     """Exception raised when tenant is not found."""
 
     def __init__(self, tenant_id: str):
+        """  Init   operation."""
         super().__init__(
             message=f"Tenant {tenant_id} not found",
             error_code="TENANT_NOT_FOUND",
@@ -37,6 +39,7 @@ class InsufficientPermissionsError(DotMacISPException):
     """Exception raised when user has insufficient permissions."""
 
     def __init__(self, required_permission: str = None):
+        """  Init   operation."""
         message = "Insufficient permissions"
         if required_permission:
             message += f" (required: {required_permission})"
@@ -50,6 +53,7 @@ class ResourceNotFoundError(DotMacISPException):
     """Exception raised when a resource is not found."""
 
     def __init__(self, resource_type: str, resource_id: str):
+        """  Init   operation."""
         super().__init__(
             message=f"{resource_type} with ID {resource_id} not found",
             error_code="RESOURCE_NOT_FOUND",
@@ -61,6 +65,7 @@ class ValidationError(DotMacISPException):
     """Exception raised for validation errors."""
 
     def __init__(self, message: str, field: str = None):
+        """  Init   operation."""
         error_code = "VALIDATION_ERROR"
         if field:
             error_code = f"VALIDATION_ERROR_{field.upper()}"
@@ -72,6 +77,7 @@ class AuthenticationError(DotMacISPException):
     """Exception raised for authentication failures."""
 
     def __init__(self, message: str = "Authentication failed"):
+        """  Init   operation."""
         super().__init__(
             message=message,
             error_code="AUTHENTICATION_ERROR",
@@ -83,6 +89,7 @@ class AuthorizationError(DotMacISPException):
     """Exception raised for authorization failures."""
 
     def __init__(self, message: str = "Authorization failed"):
+        """  Init   operation."""
         super().__init__(
             message=message,
             error_code="AUTHORIZATION_ERROR",
@@ -94,6 +101,7 @@ class SecurityViolationError(DotMacISPException):
     """Exception raised for security violations."""
 
     def __init__(self, message: str = "Security violation detected"):
+        """  Init   operation."""
         super().__init__(
             message=message,
             error_code="SECURITY_VIOLATION",
@@ -105,6 +113,7 @@ class RateLimitExceededError(DotMacISPException):
     """Exception raised when rate limit is exceeded."""
 
     def __init__(self, message: str = "Rate limit exceeded"):
+        """  Init   operation."""
         super().__init__(
             message=message,
             error_code="RATE_LIMIT_EXCEEDED",
@@ -116,6 +125,7 @@ class BillingError(DotMacISPException):
     """Exception raised for billing-related errors."""
 
     def __init__(self, message: str = "Billing error occurred"):
+        """  Init   operation."""
         super().__init__(
             message=message,
             error_code="BILLING_ERROR",
@@ -127,6 +137,7 @@ class InsufficientCreditError(BillingError):
     """Exception raised when customer has insufficient credit."""
 
     def __init__(self, message: str = "Insufficient credit"):
+        """  Init   operation."""
         super().__init__(
             message=message,
             error_code="INSUFFICIENT_CREDIT",
@@ -138,6 +149,7 @@ class PaymentFailedError(BillingError):
     """Exception raised when payment processing fails."""
 
     def __init__(self, message: str = "Payment failed"):
+        """  Init   operation."""
         super().__init__(
             message=message,
             error_code="PAYMENT_FAILED",
@@ -149,6 +161,7 @@ class IPAMError(DotMacISPException):
     """Exception raised for IPAM (IP Address Management) related errors."""
 
     def __init__(self, message: str = "IPAM operation failed"):
+        """  Init   operation."""
         super().__init__(
             message=message,
             error_code="IPAM_ERROR",

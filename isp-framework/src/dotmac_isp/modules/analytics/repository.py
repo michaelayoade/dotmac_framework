@@ -16,6 +16,7 @@ class AnalyticsRepository:
     """Repository for analytics and reporting operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 

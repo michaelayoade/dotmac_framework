@@ -239,6 +239,7 @@ class WorkOrder(TenantModel, StatusMixin, AuditMixin, AddressMixin):
         return None
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<WorkOrder(number='{self.work_order_number}', type='{self.work_order_type}', status='{self.work_order_status}')>"
 
 
@@ -324,6 +325,7 @@ class Technician(TenantModel, StatusMixin, AuditMixin, ContactMixin):
         return self.employee_status == TechnicianStatus.ACTIVE
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<Technician(id='{self.employee_id}', name='{self.full_name}', status='{self.employee_status}')>"
 
 
@@ -408,6 +410,7 @@ class Appointment(TenantModel, AuditMixin, ContactMixin, AddressMixin):
         return int((end_dt - start_dt).total_seconds() / 60)
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<Appointment(id='{self.appointment_id}', date='{self.appointment_date}', status='{self.appointment_status}')>"
 
 
@@ -481,6 +484,7 @@ class TimeLog(TenantModel, AuditMixin):
         return None
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<TimeLog(technician_id='{self.technician_id}', date='{self.log_date}', activity='{self.activity_type}')>"
 
 
@@ -557,6 +561,7 @@ class FieldEquipment(TenantModel, StatusMixin, AuditMixin):
         return self.next_calibration_date and date.today() >= self.next_calibration_date
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<FieldEquipment(id='{self.equipment_id}', name='{self.name}', condition='{self.condition}')>"
 
 
@@ -623,12 +628,14 @@ class ServiceRoute(TenantModel, AuditMixin):
         return round((completed_orders / total_orders) * 100, 2)
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<ServiceRoute(id='{self.route_id}', technician_id='{self.technician_id}', date='{self.route_date}')>"
 
 
 # Register cross-module relationships that will be configured after all models are loaded
 @register_cross_module_relationship(WorkOrder, 'project')
 def create_work_order_project_relationship():
+    """Create Work Order Project Relationship operation."""
     return relationship(
         "InstallationProject",
         foreign_keys=[WorkOrder.project_id],

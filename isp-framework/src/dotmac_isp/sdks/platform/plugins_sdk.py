@@ -36,6 +36,7 @@ class PluginsSDKConfig:
     """Plugins SDK configuration."""
 
     def __init__(  # noqa: PLR0913
+        """  Init   operation."""
         self,
         max_plugins_per_tenant: int = 50,
         max_concurrent_executions: int = 100,

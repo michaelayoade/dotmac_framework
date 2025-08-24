@@ -30,6 +30,7 @@ class AnalyticsCoreSDK:
     """Core analytics SDK for basic analytics operations."""
 
     def __init__(self, tenant_id: str):
+        """  Init   operation."""
         self.tenant_id = tenant_id
 
     async def record_metric(self, metric: MetricData) -> bool:

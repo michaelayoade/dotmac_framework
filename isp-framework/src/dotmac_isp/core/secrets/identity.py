@@ -136,6 +136,7 @@ class TokenValidator:
     """JWT token validation service"""
 
     def __init__(
+        """  Init   operation."""
         self,
         public_key: bytes | None = None,
         issuer: str = "dotmac-platform",
@@ -197,6 +198,7 @@ class SessionManager:
     """User session management"""
 
     def __init__(
+        """  Init   operation."""
         self, session_timeout_minutes: int = 60, max_sessions_per_user: int = 5
     ):
         self.sessions: dict[str, Session] = {}
@@ -334,6 +336,7 @@ class IdentityProvider:
     """Main identity provider service"""
 
     def __init__(
+        """  Init   operation."""
         self,
         private_key: bytes | None = None,
         session_manager: SessionManager | None = None,

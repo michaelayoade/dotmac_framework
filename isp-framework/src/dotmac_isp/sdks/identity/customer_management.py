@@ -16,6 +16,7 @@ class CustomerManagementSDK:
     """Small, composable SDK for customer lifecycle management."""
 
     def __init__(self, tenant_id: str):
+        """  Init   operation."""
         self.tenant_id = tenant_id
         self._service = None
         self._event_bus = EventBusSDK(tenant_id=tenant_id)

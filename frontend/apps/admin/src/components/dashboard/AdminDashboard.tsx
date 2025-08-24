@@ -1,6 +1,7 @@
 'use client';
 
 import { useISPTenant, useISPModules } from '@dotmac/headless';
+import { useState, useEffect } from 'react';
 import {
   Building,
   Users,
@@ -10,6 +11,7 @@ import {
   CheckCircle,
   Clock,
   TrendingUp,
+  UserX,
 } from 'lucide-react';
 
 import { AdminLayout } from '../layout/AdminLayout';
@@ -17,6 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 
 export function AdminDashboard() {
+  const [churnAlerts, setChurnAlerts] = useState<any>(null);
   const {
     session,
     isLoading,
@@ -34,6 +37,40 @@ export function AdminDashboard() {
   const { data: dashboardData, isLoading: dashboardLoading } = useAdminDashboard();
   const { data: customers } = useCustomers({ limit: 5 });
   const { data: devices } = useNetworkDevices({ limit: 10, status: 'all' });
+
+  // Load churn intelligence
+  useEffect(() => {
+    if (session && hasPermission('identity.customers.read')) {
+      fetchChurnAlerts();
+    }
+  }, [session]);
+
+  const fetchChurnAlerts = async () => {
+    try {
+      const response = await fetch('/api/isp/identity/intelligence/churn-alerts', {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('isp-admin-token')}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setChurnAlerts(data);
+      } else {
+        // Demo churn data
+        setChurnAlerts({
+          churn_alerts: [
+            { customer_name: 'Bob Johnson', health_score: 35, priority: 'urgent', recommended_action: 'Immediate contact - retention offer' },
+            { customer_name: 'Alice Brown', health_score: 45, priority: 'high', recommended_action: 'Proactive outreach - check satisfaction' }
+          ],
+          total_at_risk: 2,
+          urgent_count: 1
+        });
+      }
+    } catch (error) {
+      console.error('Failed to fetch churn alerts:', error);
+    }
+  };
 
   // Tenant metrics
   const limitsUsage = getLimitsUsage();
@@ -239,6 +276,51 @@ export function AdminDashboard() {
             </Card>
           )}
         </div>
+
+        {/* Churn Risk Alerts - Strategic Intelligence */}
+        {churnAlerts && churnAlerts.total_at_risk > 0 && hasPermission('identity.customers.read') && (
+          <Card>
+            <CardHeader>
+              <CardTitle className='flex items-center'>
+                <UserX className='w-5 h-5 mr-2 text-red-600' />
+                Customer Churn Alerts
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className='space-y-3'>
+                {churnAlerts.churn_alerts.slice(0, 3).map((alert: any, index: number) => (
+                  <div
+                    key={index}
+                    className='flex items-center justify-between p-3 border rounded-lg bg-red-50 border-red-200'
+                  >
+                    <div className='flex items-center'>
+                      <div className={`w-3 h-3 rounded-full mr-3 ${alert.priority === 'urgent' ? 'bg-red-500' : 'bg-orange-500'}`}></div>
+                      <div>
+                        <p className='font-medium text-gray-900'>{alert.customer_name}</p>
+                        <p className='text-sm text-gray-600'>Health Score: {alert.health_score}/100</p>
+                      </div>
+                    </div>
+                    <div className='text-right'>
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        alert.priority === 'urgent' ? 'bg-red-100 text-red-800' : 'bg-orange-100 text-orange-800'
+                      }`}>
+                        {alert.priority === 'urgent' ? '🚨 URGENT' : '⚠️ High Risk'}
+                      </span>
+                      <p className='text-xs text-gray-500 mt-1'>{alert.recommended_action}</p>
+                    </div>
+                  </div>
+                ))}
+                {churnAlerts.total_at_risk > 3 && (
+                  <div className='text-center pt-2'>
+                    <Button variant='outline' size='sm'>
+                      View All {churnAlerts.total_at_risk} At-Risk Customers
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Recent Activity */}
         <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>

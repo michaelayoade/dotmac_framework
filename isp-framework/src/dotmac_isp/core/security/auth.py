@@ -16,6 +16,7 @@ class AuthenticationService:
     """Authentication service for handling user authentication."""
     
     def __init__(self, db_session: AsyncSession, secret_key: str = "default_secret"):
+        """  Init   operation."""
         self.db_session = db_session
         self.secret_key = secret_key
         self.algorithm = "HS256"
@@ -69,6 +70,7 @@ class AuthorizationService:
     """Authorization service for handling user permissions."""
     
     def __init__(self, db_session: AsyncSession):
+        """  Init   operation."""
         self.db_session = db_session
     
     def check_permission(self, user_permissions: List[str], required_permission: str) -> bool:
@@ -90,6 +92,7 @@ class SecurityManager:
     """Central security manager coordinating all security services."""
     
     def __init__(self, db_session: AsyncSession):
+        """  Init   operation."""
         self.db_session = db_session
         self.auth_service = AuthenticationService(db_session)
         self.authz_service = AuthorizationService(db_session)

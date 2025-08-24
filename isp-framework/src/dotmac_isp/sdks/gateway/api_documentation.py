@@ -20,6 +20,7 @@ class APIDocumentationService:
     """In-memory service for API documentation operations."""
 
     def __init__(self):
+        """  Init   operation."""
         self._openapi_specs: Dict[str, Dict[str, Any]] = {}
         self._developer_portals: Dict[str, Dict[str, Any]] = {}
         self._api_explorers: Dict[str, Dict[str, Any]] = {}
@@ -342,6 +343,7 @@ class APIDocumentationSDK:
     """SDK for API documentation and developer portal."""
 
     def __init__(self, tenant_id: str):
+        """  Init   operation."""
         self.tenant_id = tenant_id
         self._service = APIDocumentationService()
 

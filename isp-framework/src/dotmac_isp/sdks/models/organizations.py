@@ -61,6 +61,7 @@ class Organization:
     metadata: Optional[Dict[str, Any]] = None
     
     def __init__(self, **kwargs):
+        """  Init   operation."""
         self.id = kwargs.get('id', uuid4())
         self.name = kwargs.get('name')
         self.display_name = kwargs.get('display_name') or self.name
@@ -107,6 +108,7 @@ class OrganizationMember:
     metadata: Optional[Dict[str, Any]] = None
     
     def __init__(self, **kwargs):
+        """  Init   operation."""
         self.id = kwargs.get('id', uuid4())
         self.organization_id = kwargs.get('organization_id')
         self.user_id = kwargs.get('user_id')

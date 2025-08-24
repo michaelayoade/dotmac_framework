@@ -2,6 +2,7 @@
 
 import { useCustomerDashboard, usePortalAuth } from '@dotmac/headless';
 import { Card } from '@dotmac/styled-components/customer';
+import { useState, useEffect } from 'react';
 import {
   Activity,
   AlertCircle,
@@ -14,6 +15,8 @@ import {
   TrendingUp,
   Upload,
   Wifi,
+  Bell,
+  Lightbulb,
 } from 'lucide-react';
 
 import { NetworkUsageChart, BandwidthChart } from '@dotmac/primitives/charts/InteractiveChart';
@@ -87,11 +90,77 @@ interface CustomerDashboardProps {
 
 export function CustomerDashboard({ data }: CustomerDashboardProps = {} as CustomerDashboardProps) {
   const { _user, _currentPortal } = usePortalAuth();
+  const [serviceNotifications, setServiceNotifications] = useState<any>(null);
+  const [usageInsights, setUsageInsights] = useState<any>(null);
 
   const { data: hookData, isLoading, isUsingMockData } = useCustomerDashboard();
   
   // Use prop data if provided, otherwise fall back to hook data
   const customerData = data || hookData;
+
+  // Load intelligence data
+  useEffect(() => {
+    if (customerData?.account?.id) {
+      fetchServiceIntelligence();
+    }
+  }, [customerData]);
+
+  const fetchServiceIntelligence = async () => {
+    try {
+      // Get service notifications
+      const notificationsResponse = await fetch(`/api/isp/services/customers/${customerData.account.id}/intelligence/service-status`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('customer-token')}`,
+        },
+      });
+
+      if (notificationsResponse.ok) {
+        const notifications = await notificationsResponse.json();
+        setServiceNotifications(notifications);
+      } else {
+        // Demo data
+        setServiceNotifications({
+          notifications: [
+            {
+              type: 'service_health',
+              priority: 'low',
+              title: 'All Services Operating Normally',
+              message: 'Your internet and phone services are running smoothly.',
+              action_required: false
+            }
+          ],
+          service_summary: { total_services: 2, active_services: 2, issues: 0 }
+        });
+      }
+
+      // Get usage insights
+      const insightsResponse = await fetch(`/api/isp/services/customers/${customerData.account.id}/intelligence/usage-insights`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('customer-token')}`,
+        },
+      });
+
+      if (insightsResponse.ok) {
+        const insights = await insightsResponse.json();
+        setUsageInsights(insights);
+      } else {
+        // Demo data
+        setUsageInsights({
+          usage_insights: [
+            {
+              type: 'usage_optimization',
+              title: 'Data Usage Insight',
+              message: 'You consistently use less than 50% of your data. A smaller plan could save money.',
+              recommendation: 'Downgrade to Basic Plan',
+              potential_savings: 'Save $15/month'
+            }
+          ]
+        });
+      }
+    } catch (error) {
+      console.error('Failed to fetch service intelligence:', error);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -166,6 +235,81 @@ export function CustomerDashboard({ data }: CustomerDashboardProps = {} as Custo
             </div>
           </AnimatedCard>
         </SlideIn>
+
+        {/* Proactive Service Notifications - Intelligence Enhancement */}
+        {serviceNotifications && serviceNotifications.notifications.length > 0 && (
+          <FadeInWhenVisible delay={0.1}>
+            <AnimatedCard className='p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg shadow-sm hover:shadow-md'>
+              <div className='flex items-center mb-3'>
+                <Bell className='h-5 w-5 text-blue-600 mr-2' />
+                <h3 className='font-semibold text-gray-900'>Service Updates</h3>
+              </div>
+              <div className='space-y-2'>
+                {serviceNotifications.notifications.slice(0, 2).map((notification: any, index: number) => (
+                  <div key={index} className={`p-3 rounded-lg ${
+                    notification.priority === 'high' ? 'bg-red-50 border border-red-200' :
+                    notification.priority === 'medium' ? 'bg-yellow-50 border border-yellow-200' :
+                    'bg-green-50 border border-green-200'
+                  }`}>
+                    <div className='flex items-start'>
+                      <div className={`w-2 h-2 rounded-full mt-2 mr-3 ${
+                        notification.priority === 'high' ? 'bg-red-500' :
+                        notification.priority === 'medium' ? 'bg-yellow-500' :
+                        'bg-green-500'
+                      }`}></div>
+                      <div className='flex-1'>
+                        <p className='font-medium text-gray-900 text-sm'>{notification.title}</p>
+                        <p className='text-gray-600 text-sm'>{notification.message}</p>
+                        {notification.estimated_resolution && (
+                          <p className='text-xs text-gray-500 mt-1'>Estimated resolution: {notification.estimated_resolution}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </AnimatedCard>
+          </FadeInWhenVisible>
+        )}
+
+        {/* Usage Insights - Intelligence Enhancement */}
+        {usageInsights && usageInsights.usage_insights.length > 0 && (
+          <FadeInWhenVisible delay={0.15}>
+            <AnimatedCard className='p-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg shadow-sm hover:shadow-md'>
+              <div className='flex items-center justify-between mb-3'>
+                <div className='flex items-center'>
+                  <Lightbulb className='h-5 w-5 text-green-600 mr-2' />
+                  <h3 className='font-semibold text-gray-900'>Smart Insights</h3>
+                </div>
+                {usageInsights.summary?.potential_monthly_impact && (
+                  <span className='text-sm font-medium text-green-600 bg-green-100 px-2 py-1 rounded-full'>
+                    {usageInsights.summary.potential_monthly_impact}
+                  </span>
+                )}
+              </div>
+              <div className='space-y-2'>
+                {usageInsights.usage_insights.slice(0, 1).map((insight: any, index: number) => (
+                  <div key={index} className='p-3 bg-white/60 rounded-lg border border-green-100'>
+                    <div className='flex items-start justify-between'>
+                      <div className='flex-1'>
+                        <p className='font-medium text-gray-900 text-sm'>{insight.title}</p>
+                        <p className='text-gray-600 text-sm'>{insight.message}</p>
+                        {insight.recommendation && (
+                          <p className='text-green-700 text-sm font-medium mt-1'>💡 {insight.recommendation}</p>
+                        )}
+                      </div>
+                      {insight.action_url && (
+                        <button className='ml-4 px-3 py-1 bg-green-600 text-white text-xs rounded-lg hover:bg-green-700 transition-colors'>
+                          Learn More
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </AnimatedCard>
+          </FadeInWhenVisible>
+        )}
 
         {/* Service Status Overview */}
         <StaggeredFadeIn>

@@ -16,6 +16,7 @@ class NetworkXTopologyManager:
     """NetworkX-powered network topology with advanced graph algorithms"""
 
     def __init__(self, directed: bool = False):
+        """  Init   operation."""
         self.graph = nx.DiGraph() if directed else nx.Graph()
         self.device_attributes: Dict[str, Dict[str, Any]] = {}
         self.link_attributes: Dict[Tuple[str, str], Dict[str, Any]] = {}
@@ -616,6 +617,7 @@ class NetworkXTopologySDK:
     """Main SDK for NetworkX-based network topology management"""
 
     def __init__(self, tenant_id: str):
+        """  Init   operation."""
         self.tenant_id = tenant_id
         self.topology = NetworkXTopologyManager()
 

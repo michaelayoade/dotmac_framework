@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 """Email communication channel plugin."""
 
 import smtplib
@@ -63,7 +67,7 @@ class EmailChannelPlugin(BaseChannelPlugin):
             return True
 
         except Exception as e:
-            print(f"Email plugin initialization failed: {e}")
+logger.info(f"Email plugin initialization failed: {e}")
             return False
 
     async def send_message(self, message: ChannelMessage) -> Dict[str, Any]:

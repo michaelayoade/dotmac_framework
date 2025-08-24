@@ -168,6 +168,7 @@ class OpenBaoClient:
             return
 
         def renew_token():
+            """Renew Token operation."""
             while not self._stop_renewal:
                 try:
                     # Renew token

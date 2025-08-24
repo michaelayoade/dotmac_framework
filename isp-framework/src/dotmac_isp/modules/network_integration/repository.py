@@ -30,6 +30,7 @@ class NetworkDeviceRepository:
     """Repository for network device database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 
@@ -167,6 +168,7 @@ class NetworkInterfaceRepository:
     """Repository for network interface database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 
@@ -261,6 +263,7 @@ class NetworkLocationRepository:
     """Repository for network location database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 
@@ -328,6 +331,7 @@ class NetworkMetricRepository:
     """Repository for network metric database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 
@@ -385,6 +389,7 @@ class NetworkAlertRepository:
     """Repository for network alert database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 
@@ -468,6 +473,7 @@ class DeviceConfigurationRepository:
     """Repository for device configuration database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 
@@ -552,6 +558,7 @@ class NetworkTopologyRepository:
     """Repository for network topology database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 

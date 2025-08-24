@@ -312,6 +312,7 @@ class PluginEvent(TenantModel):
     parent_event_id = Column(UUID(as_uuid=True), nullable=True)  # For event hierarchies
 
     def __repr__(self) -> str:
+        """  Repr   operation."""
         return f"<PluginEvent(plugin={self.plugin_id}, type={self.event_type}, level={self.event_level})>"
 
 
@@ -346,4 +347,5 @@ class PluginMetrics(TenantModel):
     labels = Column(JSONB, nullable=True)  # Key-value pairs for metric dimensions
 
     def __repr__(self) -> str:
+        """  Repr   operation."""
         return f"<PluginMetrics(plugin={self.plugin_id}, name={self.metric_name}, value={self.metric_value})>"

@@ -25,6 +25,7 @@ class CustomerJourneyValidator:
     """
     
     def __init__(self):
+        """  Init   operation."""
         self.data_factory = AITestDataFactory()
     
     def simulate_customer_signup(self, customer_tier: CustomerTier = None) -> Dict[str, Any]:

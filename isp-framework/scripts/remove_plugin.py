@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+import logging
+
+logger = logging.getLogger(__name__)
+
 """
 Plugin Removal Script
 
@@ -41,7 +45,7 @@ def get_installed_plugins():
             metadata = json.load(f)
         return metadata.get("plugins", {})
     except Exception as e:
-        print(f"Warning: Could not read plugin metadata: {e}")
+logger.warning(f"Warning: Could not read plugin metadata: {e}")
         return {}
 
 def check_dependency_conflicts(plugin_name, plugin_definitions, installed_plugins):
@@ -70,20 +74,20 @@ def check_dependency_conflicts(plugin_name, plugin_definitions, installed_plugin
 def uninstall_dependencies(dependencies, conflicts):
     """Uninstall plugin dependencies, considering conflicts."""
     if conflicts:
-        print("⚠️  Dependency conflicts detected:")
+logger.info("⚠️  Dependency conflicts detected:")
         for conflict in conflicts:
-            print(f"   - {conflict['plugin']} also uses: {', '.join(conflict['shared_dependencies'])}")
+logger.info(f"   - {conflict['plugin']} also uses: {', '.join(conflict['shared_dependencies'])}")
         
         response = input("\nProceed with removal anyway? Dependencies will remain installed. (y/N): ")
         if response.lower() not in ['y', 'yes']:
-            print("Removal cancelled.")
+logger.info("Removal cancelled.")
             return False
         
-        print("Keeping shared dependencies installed due to conflicts.")
+logger.info("Keeping shared dependencies installed due to conflicts.")
         return True
     
     # No conflicts, safe to uninstall
-    print(f"Uninstalling dependencies: {', '.join(dependencies)}")
+logger.info(f"Uninstalling dependencies: {', '.join(dependencies)}")
     try:
         # Extract package names without version specifiers
         package_names = []
@@ -96,8 +100,8 @@ def uninstall_dependencies(dependencies, conflicts):
         ] + package_names)
         return True
     except subprocess.CalledProcessError as e:
-        print(f"Warning: Could not uninstall some dependencies: {e}")
-        print("You may need to manually uninstall them.")
+logger.warning(f"Warning: Could not uninstall some dependencies: {e}")
+logger.info("You may need to manually uninstall them.")
         return True  # Don't fail removal for this
 
 def remove_plugin_config(plugin_name):
@@ -112,10 +116,10 @@ def remove_plugin_config(plugin_name):
                 config_file.unlink()
                 files_removed.append(str(config_file))
             except Exception as e:
-                print(f"Warning: Could not remove {config_file}: {e}")
+logger.warning(f"Warning: Could not remove {config_file}: {e}")
     
     if files_removed:
-        print(f"Removed configuration files: {', '.join(files_removed)}")
+logger.info(f"Removed configuration files: {', '.join(files_removed)}")
 
 def unregister_plugin_metadata(plugin_name):
     """Unregister plugin metadata."""
@@ -136,10 +140,10 @@ def unregister_plugin_metadata(plugin_name):
             with open(metadata_file, 'w') as f:
                 json.dump(metadata, f, indent=2)
             
-            print(f"Plugin metadata unregistered from: {metadata_file}")
+logger.info(f"Plugin metadata unregistered from: {metadata_file}")
         
     except Exception as e:
-        print(f"Warning: Could not update plugin metadata: {e}")
+logger.warning(f"Warning: Could not update plugin metadata: {e}")
 
 def remove_plugin(plugin_name):
     """Remove a specific plugin."""
@@ -147,17 +151,17 @@ def remove_plugin(plugin_name):
     installed_plugins = get_installed_plugins()
     
     if plugin_name not in installed_plugins:
-        print(f"Plugin '{plugin_name}' is not installed.")
+logger.info(f"Plugin '{plugin_name}' is not installed.")
         if plugin_name in plugin_definitions:
-            print(f"Plugin '{plugin_name}' is available but not installed.")
-            print("Use 'make list-plugins' to see installed plugins.")
+logger.info(f"Plugin '{plugin_name}' is available but not installed.")
+logger.info("Use 'make list-plugins' to see installed plugins.")
         else:
-            print(f"Unknown plugin: {plugin_name}")
-            print(f"Available plugins: {', '.join(plugin_definitions.keys())}")
+logger.info(f"Unknown plugin: {plugin_name}")
+logger.info(f"Available plugins: {', '.join(plugin_definitions.keys())}")
         return False
     
     plugin_info = plugin_definitions.get(plugin_name, {})
-    print(f"\nRemoving {plugin_info.get('name', plugin_name)}...")
+logger.info(f"\nRemoving {plugin_info.get('name', plugin_name)}...")
     
     # Check for dependency conflicts
     conflicts = check_dependency_conflicts(plugin_name, plugin_definitions, installed_plugins)
@@ -174,17 +178,17 @@ def remove_plugin(plugin_name):
     # Unregister plugin metadata
     unregister_plugin_metadata(plugin_name)
     
-    print(f"\n✅ {plugin_info.get('name', plugin_name)} removed successfully!")
+logger.info(f"\n✅ {plugin_info.get('name', plugin_name)} removed successfully!")
     
     if conflicts:
-        print(f"\nNote: Some dependencies were kept due to conflicts with:")
+logger.info(f"\nNote: Some dependencies were kept due to conflicts with:")
         for conflict in conflicts:
-            print(f"  - {conflict['plugin']}")
+logger.info(f"  - {conflict['plugin']}")
     
-    print(f"\nNext steps:")
-    print(f"1. Restart any running services that were using this plugin")
-    print(f"2. Remove any plugin-specific configuration from your secrets/vault")
-    print(f"3. Update any code that was directly calling this plugin")
+logger.info(f"\nNext steps:")
+logger.info(f"1. Restart any running services that were using this plugin")
+logger.info(f"2. Remove any plugin-specific configuration from your secrets/vault")
+logger.info(f"3. Update any code that was directly calling this plugin")
     
     return True
 
@@ -194,14 +198,14 @@ def main():
         plugin_definitions = get_plugin_definitions()
         installed_plugins = get_installed_plugins()
         
-        print("Usage: python remove_plugin.py <plugin_name>")
+logger.info("Usage: python remove_plugin.py <plugin_name>")
         
         if installed_plugins:
-            print(f"\nInstalled plugins: {', '.join(installed_plugins.keys())}")
+logger.info(f"\nInstalled plugins: {', '.join(installed_plugins.keys())}")
         else:
-            print("\nNo plugins are currently installed.")
+logger.info("\nNo plugins are currently installed.")
         
-        print(f"Available plugins: {', '.join(plugin_definitions.keys())}")
+logger.info(f"Available plugins: {', '.join(plugin_definitions.keys())}")
         sys.exit(1)
     
     plugin_name = sys.argv[1].lower()
@@ -209,7 +213,7 @@ def main():
     # Check if we're in the right directory
     project_root = get_project_root()
     if not (project_root / "pyproject.toml").exists():
-        print("Error: Must be run from the project root directory")
+logger.error("Error: Must be run from the project root directory")
         sys.exit(1)
     
     success = remove_plugin(plugin_name)

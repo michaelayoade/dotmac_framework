@@ -128,6 +128,7 @@ class YamlConfigHandler(ConfigurationHandler):
         dangerous_keys = ['eval', 'exec', 'import', '__import__', 'compile']
         
         def check_keys(data, path=""):
+            """Check Keys operation."""
             if isinstance(data, dict):
                 for key, value in data.items():
                     current_path = f"{path}.{key}" if path else key

@@ -34,6 +34,7 @@ class AuditSDKConfig:
     """Audit SDK configuration."""
 
     def __init__(  # noqa: PLR0913
+        """  Init   operation."""
         self,
         enable_async_processing: bool = True,
         batch_size: int = 100,

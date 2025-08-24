@@ -19,6 +19,7 @@ class InvoiceService(IInvoiceService):
     """Domain service for invoice operations."""
 
     def __init__(
+        """  Init   operation."""
         self,
         invoice_repo: InvoiceRepository,
         line_item_repo: InvoiceLineItemRepository,

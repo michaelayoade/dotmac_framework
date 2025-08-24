@@ -61,6 +61,7 @@ class ProjectPhaseResponse(ProjectPhaseBase):
     updated_at: datetime
 
     class Config:
+        """Class for Config operations."""
         from_attributes = True
 
 
@@ -82,6 +83,7 @@ class ProjectMilestoneResponse(BaseModel):
     created_at: datetime
 
     class Config:
+        """Class for Config operations."""
         from_attributes = True
 
 
@@ -114,6 +116,7 @@ class ProjectUpdateResponse(ProjectUpdateCreate):
     updated_at: datetime
 
     class Config:
+        """Class for Config operations."""
         from_attributes = True
 
 
@@ -218,6 +221,7 @@ class InstallationProjectResponse(InstallationProjectBase):
     updated_at: datetime
 
     class Config:
+        """Class for Config operations."""
         from_attributes = True
 
 
@@ -243,6 +247,7 @@ class CustomerProjectSummary(BaseModel):
     can_reschedule: bool = False
 
     class Config:
+        """Class for Config operations."""
         from_attributes = True
 
 
@@ -256,6 +261,7 @@ class ProjectTimelineResponse(BaseModel):
     upcoming_appointments: List[Dict[str, Any]] = Field(default_factory=list)
 
     class Config:
+        """Class for Config operations."""
         from_attributes = True
 
 
@@ -273,6 +279,7 @@ class ProjectDashboardResponse(BaseModel):
     upcoming_milestones: List[ProjectMilestoneResponse]
 
     class Config:
+        """Class for Config operations."""
         from_attributes = True
 
 

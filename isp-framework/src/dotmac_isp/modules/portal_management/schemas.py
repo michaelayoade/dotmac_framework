@@ -79,6 +79,7 @@ class PortalAccountResponse(PortalAccountBase):
     updated_at: datetime
 
     class Config:
+        """Class for Config operations."""
         from_attributes = True
 
 
@@ -206,6 +207,7 @@ class PortalSessionResponse(BaseModel):
     duration_minutes: int
 
     class Config:
+        """Class for Config operations."""
         from_attributes = True
 
 
@@ -224,6 +226,7 @@ class PortalSecurityEventResponse(BaseModel):
     created_at: datetime
 
     class Config:
+        """Class for Config operations."""
         from_attributes = True
 
 
@@ -286,6 +289,7 @@ class PortalAnalyticsResponse(BaseModel):
     security_alerts_count: int
 
     class Config:
+        """Class for Config operations."""
         from_attributes = True
 
 
@@ -341,6 +345,7 @@ class PortalPreferences(PortalPreferencesBase):
     updated_at: Optional[datetime] = None
 
     class Config:
+        """Class for Config operations."""
         from_attributes = True
 
 
@@ -359,6 +364,7 @@ class PortalSession(BaseModel):
     updated_at: Optional[datetime] = None
 
     class Config:
+        """Class for Config operations."""
         from_attributes = True
 
 
@@ -378,4 +384,5 @@ class PortalAccount(PortalAccountBase):
     updated_at: Optional[datetime] = None
 
     class Config:
+        """Class for Config operations."""
         from_attributes = True

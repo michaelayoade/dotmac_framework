@@ -138,20 +138,26 @@ try:
 except ImportError:
     # Create mock classes for development
     class BaseModel:
+        """Class for BaseModel operations."""
         def __init__(self, **kwargs):
+            """  Init   operation."""
             for k, v in kwargs.items():
                 setattr(self, k, v)
 
     def Field(*args, **kwargs):
+        """Field operation."""
         return None
 
     def field_validator(*args, **kwargs):
+        """Field Validator operation."""
         def decorator(func):
+            """Decorator operation."""
             return func
 
         return decorator
 
     def ConfigDict(*args, **kwargs):
+        """Configdict operation."""
         return {}
 
 

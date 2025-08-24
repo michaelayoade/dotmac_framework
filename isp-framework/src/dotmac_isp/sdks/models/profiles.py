@@ -49,6 +49,7 @@ class UserProfile:
     last_active_at: Optional[datetime] = None
     
     def __init__(self, **kwargs):
+        """  Init   operation."""
         self.id = kwargs.get('id', uuid4())
         self.user_id = kwargs.get('user_id')
         self.display_name = kwargs.get('display_name')

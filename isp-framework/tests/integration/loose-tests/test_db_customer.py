@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 """Test customer functionality with real database."""
 
 import asyncio
@@ -11,7 +15,7 @@ from src.dotmac_isp.modules.identity.models import CustomerType
 
 def test_customer_database_creation():
     """Test customer creation with database persistence."""
-    print("🧪 Testing customer creation with database...")
+logger.info("🧪 Testing customer creation with database...")
     
     # Create database session
     db = SessionLocal()
@@ -33,18 +37,18 @@ def test_customer_database_creation():
             phone="+1234567890"
         )
         
-        print(f"Creating customer: {customer_data.customer_number}")
+logger.info(f"Creating customer: {customer_data.customer_number}")
         
         # Test customer creation
         result = asyncio.run(service.create_customer(customer_data))
         
-        print("✅ Customer created successfully!")
-        print(f"   Portal ID: {result.portal_id}")
-        print(f"   Portal Password: {result.portal_password}")
-        print(f"   Customer Number: {result.customer_number}")
-        print(f"   Display Name: {result.display_name}")
-        print(f"   Customer Type: {result.customer_type}")
-        print(f"   Database ID: {result.id}")
+logger.info("✅ Customer created successfully!")
+logger.info(f"   Portal ID: {result.portal_id}")
+logger.info(f"   Portal Password: {result.portal_password}")
+logger.info(f"   Customer Number: {result.customer_number}")
+logger.info(f"   Display Name: {result.display_name}")
+logger.info(f"   Customer Type: {result.customer_type}")
+logger.info(f"   Database ID: {result.id}")
         
         # Verify in database
         from src.dotmac_isp.modules.identity.repository import CustomerRepository
@@ -52,17 +56,17 @@ def test_customer_database_creation():
         
         db_customer = repo.get_by_customer_number(unique_number)
         if db_customer:
-            print("✅ Customer verified in database!")
-            print(f"   DB Portal ID: {db_customer.portal_id}")
-            print(f"   DB Customer Number: {db_customer.customer_number}")
-            print(f"   DB Display Name: {db_customer.display_name}")
+logger.info("✅ Customer verified in database!")
+logger.info(f"   DB Portal ID: {db_customer.portal_id}")
+logger.info(f"   DB Customer Number: {db_customer.customer_number}")
+logger.info(f"   DB Display Name: {db_customer.display_name}")
         else:
-            print("❌ Customer not found in database!")
+logger.info("❌ Customer not found in database!")
             
         return True
         
     except Exception as e:
-        print(f"❌ Test failed: {e}")
+logger.info(f"❌ Test failed: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -72,7 +76,7 @@ def test_customer_database_creation():
 
 def test_customer_retrieval():
     """Test customer retrieval from database."""
-    print("\n🧪 Testing customer retrieval from database...")
+logger.info("\n🧪 Testing customer retrieval from database...")
     
     # Create database session
     db = SessionLocal()
@@ -88,23 +92,23 @@ def test_customer_retrieval():
         # Get the first customer from the database
         customers = repo.list(limit=1)
         if not customers:
-            print("❌ No customers found in database!")
+logger.info("❌ No customers found in database!")
             return False
         
         db_customer = customers[0]
         if db_customer:
-            print("✅ Customer found in database!")
-            print(f"   Portal ID: {db_customer.portal_id}")
-            print(f"   Customer Number: {db_customer.customer_number}")
-            print(f"   Display Name: {db_customer.display_name}")
-            print(f"   Created At: {db_customer.created_at}")
+logger.info("✅ Customer found in database!")
+logger.info(f"   Portal ID: {db_customer.portal_id}")
+logger.info(f"   Customer Number: {db_customer.customer_number}")
+logger.info(f"   Display Name: {db_customer.display_name}")
+logger.info(f"   Created At: {db_customer.created_at}")
             return True
         else:
-            print("❌ Customer not found in database!")
+logger.info("❌ Customer not found in database!")
             return False
             
     except Exception as e:
-        print(f"❌ Test failed: {e}")
+logger.info(f"❌ Test failed: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -113,7 +117,7 @@ def test_customer_retrieval():
 
 
 if __name__ == "__main__":
-    print("🗄️ Testing Customer Module with Real Database\n")
+logger.info("🗄️ Testing Customer Module with Real Database\n")
     
     success_count = 0
     total_tests = 0
@@ -128,9 +132,9 @@ if __name__ == "__main__":
     if test_customer_retrieval():
         success_count += 1
     
-    print(f"\n📊 Test Results: {success_count}/{total_tests} tests passed")
+logger.info(f"\n📊 Test Results: {success_count}/{total_tests} tests passed")
     
     if success_count == total_tests:
-        print("🎉 ALL TESTS PASSED - Database integration working!")
+logger.info("🎉 ALL TESTS PASSED - Database integration working!")
     else:
-        print("⚠️  Some tests failed - check database integration")
+logger.info("⚠️  Some tests failed - check database integration")

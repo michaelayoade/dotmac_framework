@@ -14,6 +14,7 @@ class TR069CWMPService:
     """In-memory service for TR-069 CWMP operations."""
 
     def __init__(self):
+        """  Init   operation."""
         self._devices: Dict[str, Dict[str, Any]] = {}
         self._sessions: Dict[str, Dict[str, Any]] = {}
         self._parameters: Dict[str, Dict[str, Any]] = {}  # device_id -> parameters
@@ -179,6 +180,7 @@ class TR069CWMPSDK:
     """Minimal, reusable SDK for TR-069 CWMP device management."""
 
     def __init__(self, tenant_id: str):
+        """  Init   operation."""
         self.tenant_id = tenant_id
         self._service = TR069CWMPService()
 

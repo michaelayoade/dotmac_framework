@@ -27,6 +27,7 @@ class CacheSDKConfig:
     """Configuration for Cache SDK."""
 
     def __init__(
+        """  Init   operation."""
         self,
         redis_url: str | None = None,
         default_namespace: str = "default",
@@ -65,6 +66,7 @@ class CacheSDK:
     """
 
     def __init__(
+        """  Init   operation."""
         self,
         config: CacheSDKConfig | None = None,
         redis_client=None,
@@ -583,6 +585,7 @@ class CacheSDK:
         # Add 'values' as an alias for 'results' for test compatibility
         # Use a custom subclass that includes the values attribute
         class ExtendedBulkGetResponse(CacheBulkGetResponse):
+            """Class for ExtendedBulkGetResponse operations."""
             values: dict = {}
 
         extended_response = ExtendedBulkGetResponse(
@@ -607,6 +610,7 @@ class CacheSDK:
 
         # Create a custom response class with the expected attributes
         class ExtendedCacheStatsResponse(BaseModel):
+            """Class for ExtendedCacheStatsResponse operations."""
             backend: str
             namespace: str
             total_keys: int

@@ -57,6 +57,7 @@ class WebSocketConnectionManager:
     """Manages WebSocket connections for billing events."""
     
     def __init__(self):
+        """  Init   operation."""
         self.connections: Dict[str, List[websockets.WebSocketServerProtocol]] = {}
         self.redis_client: Optional[redis.Redis] = None
         self.retry_counts: Dict[str, int] = {}
@@ -224,6 +225,7 @@ class BillingEventPublisher:
     """Service for publishing billing events."""
     
     def __init__(self, manager: WebSocketConnectionManager):
+        """  Init   operation."""
         self.manager = manager
     
     async def publish_invoice_created(self, tenant_id: str, customer_id: str, 

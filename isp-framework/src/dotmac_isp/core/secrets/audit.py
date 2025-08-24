@@ -219,6 +219,7 @@ class AuditTrail:
     """Tamper-proof audit trail implementation"""
 
     def __init__(self, signing_key: bytes | None = None):
+        """  Init   operation."""
         self.events: list[AuditEvent] = []
         self.event_index: dict[str, int] = {}
         self.hash_chain: list[str] = []
@@ -403,6 +404,7 @@ class AuditLogger:
     """High-level audit logging service"""
 
     def __init__(self, audit_trail: AuditTrail | None = None):
+        """  Init   operation."""
         self.audit_trail = audit_trail or AuditTrail()
         self.context_stack: list[AuditContext] = []
         self._performance_metrics: dict[str, list[float]] = {}
@@ -721,7 +723,9 @@ def audit_operation(
     """Decorator to automatically audit function calls"""
 
     def decorator(func):
+        """Decorator operation."""
         async def async_wrapper(*args, **kwargs):
+            """Async Wrapper operation."""
             audit_logger = kwargs.pop("audit_logger", None)
             if not audit_logger:
                 return await func(*args, **kwargs)
@@ -765,6 +769,7 @@ def audit_operation(
                 )
 
         def sync_wrapper(*args, **kwargs):
+            """Sync Wrapper operation."""
             # For sync functions, create async wrapper
             return asyncio.run(async_wrapper(*args, **kwargs))
 

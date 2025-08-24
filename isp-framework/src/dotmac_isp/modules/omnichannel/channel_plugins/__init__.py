@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 """Plugin-based communication channel system."""
 
 from typing import Dict, Type
@@ -23,7 +27,7 @@ def discover_and_register_plugins():
             try:
                 importlib.import_module(module_name)
             except ImportError as e:
-                print(f"Failed to load plugin {filename}: {e}")
+logger.info(f"Failed to load plugin {filename}: {e}")
 
 
 # Auto-discover plugins on import

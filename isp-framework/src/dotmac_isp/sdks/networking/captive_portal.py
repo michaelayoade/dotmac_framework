@@ -14,6 +14,7 @@ class CaptivePortalService:
     """In-memory service for captive portal operations."""
 
     def __init__(self):
+        """  Init   operation."""
         self._hotspots: Dict[str, Dict[str, Any]] = {}
         self._portal_users: Dict[str, Dict[str, Any]] = {}
         self._user_sessions: Dict[str, Dict[str, Any]] = {}
@@ -196,6 +197,7 @@ class CaptivePortalSDK:
     """Minimal SDK for captive portal and WiFi hotspot management."""
 
     def __init__(self, tenant_id: str):
+        """  Init   operation."""
         self.tenant_id = tenant_id
         self._service = CaptivePortalService()
 

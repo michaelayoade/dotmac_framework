@@ -63,6 +63,7 @@ class TestRegisterModuleRouters:
         mock_module.identity_router = self.mock_router
         
         def mock_import_func(name, fromlist=None, *args, **kwargs):
+            """Mock Import Func operation."""
             if "dotmac_isp.modules." in name:
                 return mock_module
             return __import__(name, fromlist, *args, **kwargs)
@@ -220,6 +221,7 @@ class TestIntegrationScenarios:
         app = FastAPI()
         
         def import_side_effect(module_name, fromlist=None):
+            """Import Side Effect operation."""
             if "identity" in module_name:
                 # Success case - return mock module with router
                 mock_module = MagicMock()

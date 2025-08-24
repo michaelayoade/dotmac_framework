@@ -78,6 +78,7 @@ class LineItem(LineItemBase):
     created_at: datetime
 
     class Config:
+        """Class for Config operations."""
         from_attributes = True
 
 
@@ -123,6 +124,7 @@ class Invoice(InvoiceBase):
     updated_at: datetime
 
     class Config:
+        """Class for Config operations."""
         from_attributes = True
 
 
@@ -151,6 +153,7 @@ class CreditNote(CreditNoteBase):
     applied_at: Optional[datetime] = None
 
     class Config:
+        """Class for Config operations."""
         from_attributes = True
 
 
@@ -180,6 +183,7 @@ class Payment(PaymentBase):
     created_at: datetime
 
     class Config:
+        """Class for Config operations."""
         from_attributes = True
 
 
@@ -208,6 +212,7 @@ class Receipt(ReceiptBase):
     invoice_number: str
 
     class Config:
+        """Class for Config operations."""
         from_attributes = True
 
 
@@ -235,6 +240,7 @@ class TaxRate(TaxRateBase):
     updated_at: datetime
 
     class Config:
+        """Class for Config operations."""
         from_attributes = True
 
 
@@ -279,6 +285,7 @@ class Subscription(SubscriptionBase):
     updated_at: datetime
 
     class Config:
+        """Class for Config operations."""
         from_attributes = True
 
 
@@ -344,4 +351,5 @@ class InvoiceCalculationResult(BaseModel):
     line_items: List[LineItem]
     
     class Config:
+        """Class for Config operations."""
         from_attributes = True

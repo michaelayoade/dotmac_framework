@@ -25,6 +25,7 @@ from .models import (
 )
 from .service import ServiceProvisioningService, ServicePlanService
 from dotmac_isp.shared.exceptions import NotFoundError, ValidationError, ServiceError
+from .customer_intelligence_service import CustomerServiceIntelligenceService
 
 router = APIRouter(tags=["services"])
 services_router = router  # Export with expected name
@@ -342,6 +343,35 @@ async def get_customer_services(
         service = ServiceProvisioningService(db, tenant_id)
         services = await service.list_customer_services(customer_id, skip, limit)
         return services
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# Customer Intelligence Endpoints
+@router.get("/customers/{customer_id}/intelligence/service-status")
+async def get_proactive_service_notifications(
+    customer_id: UUID,
+    tenant_id: str = Depends(get_tenant_id_dependency),
+    db: Session = Depends(get_db),
+):
+    """Get proactive service status notifications for customer portal."""
+    try:
+        intelligence_service = CustomerServiceIntelligenceService(db, tenant_id)
+        return await intelligence_service.get_proactive_notifications(customer_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/customers/{customer_id}/intelligence/usage-insights")
+async def get_customer_usage_insights(
+    customer_id: UUID,
+    tenant_id: str = Depends(get_tenant_id_dependency),
+    db: Session = Depends(get_db),
+):
+    """Get usage insights for customer optimization."""
+    try:
+        intelligence_service = CustomerServiceIntelligenceService(db, tenant_id)
+        return await intelligence_service.get_usage_insights(customer_id)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

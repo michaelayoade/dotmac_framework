@@ -706,11 +706,13 @@ class ConfigFileHandler(FileSystemEventHandler):
     """File system event handler for configuration files."""
 
     def __init__(self, hot_reload: ConfigurationHotReload):
+        """  Init   operation."""
         self.hot_reload = hot_reload
         self.last_reload_time = {}
         self.reload_debounce = 1.0  # 1 second debounce
 
     def on_modified(self, event):
+        """On Modified operation."""
         if event.is_directory:
             return
 

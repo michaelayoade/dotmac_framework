@@ -412,6 +412,7 @@ class SignOzTelemetry:
 
         # Custom request hook for SignOz attributes
         def request_hook(span, scope):
+            """Request Hook operation."""
             if span and span.is_recording():
                 # Add SignOz-specific attributes
                 headers = dict(scope.get("headers", []))
@@ -431,6 +432,7 @@ class SignOzTelemetry:
 
         # Custom response hook for SignOz metrics
         def response_hook(span, message):
+            """Response Hook operation."""
             if span and span.is_recording():
                 status_code = message.get("status", 0)
 
@@ -689,16 +691,19 @@ def trace(name: Optional[str] = None):
     """Decorator for tracing functions with SignOz."""
 
     def decorator(func):
+        """Decorator operation."""
         if _signoz_telemetry:
             span_name = name or f"{_signoz_telemetry.service_name}.{func.__name__}"
 
             @wraps(func)
             async def async_wrapper(*args, **kwargs):
+                """Async Wrapper operation."""
                 with _signoz_telemetry.trace_operation(span_name):
                     return await func(*args, **kwargs)
 
             @wraps(func)
             def sync_wrapper(*args, **kwargs):
+                """Sync Wrapper operation."""
                 with _signoz_telemetry.trace_operation(span_name):
                     return func(*args, **kwargs)
 

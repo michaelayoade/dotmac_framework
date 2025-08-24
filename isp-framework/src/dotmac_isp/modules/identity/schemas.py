@@ -58,6 +58,7 @@ class UserResponse(TenantModelSchema, UserBase):
 
     @property
     def full_name(self) -> str:
+        """Full Name operation."""
         return f"{self.first_name} {self.last_name}"
 
 

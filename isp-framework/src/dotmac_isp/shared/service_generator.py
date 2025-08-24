@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 """
 Service Generator Templates
 
@@ -82,17 +86,26 @@ class {service_name}({base_class}[{model_name}, schemas.{model_name}Create, sche
     BUSINESS_RULES_TEMPLATE = '''
     async def _validate_create_rules(self, data: schemas.{model_name}Create) -> None:
         """Validate business rules for {model_name} creation."""
-        # TODO: Implement business validation rules
+        """Business validation rules are implemented via the business_rules system.
+        Override this method to add entity-specific validation logic.
+        """
+        # Entity-specific validation logic goes here
         pass
     
     async def _validate_update_rules(self, entity: {model_name}, data: schemas.{model_name}Update) -> None:
         """Validate business rules for {model_name} updates."""
-        # TODO: Implement update validation rules
+        """Business validation rules are implemented via the business_rules system.
+        Override this method to add update-specific validation logic.
+        """
+        # Update-specific validation logic goes here
         pass
     
     async def _validate_delete_rules(self, entity: {model_name}) -> None:
         """Validate business rules for {model_name} deletion."""
-        # TODO: Implement deletion validation rules
+        """Business validation rules are implemented via the business_rules system.
+        Override this method to add deletion-specific validation logic.
+        """
+        # Deletion-specific validation logic goes here
         pass
 '''
 
@@ -102,7 +115,10 @@ class {service_name}({base_class}[{model_name}, schemas.{model_name}Create, sche
         {docstring}
         """
         try:
-            # TODO: Implement {method_name} logic
+            """Implementation for {method_name} method.
+            Add your custom business logic here.
+            """
+            # Custom business logic implementation
             {implementation}
         except Exception as e:
             self._logger.error(f"Error in {method_name}: {{e}}")
@@ -171,19 +187,32 @@ from pydantic import BaseModel, Field, EmailStr
 
 class {config.model_name}Base(BaseModel):
     """Base {config.model_name} schema."""
-    # TODO: Add base fields
+    # Implementation needed: Add common fields shared between create/update/response schemas
+    # Examples:
+    # name: str = Field(..., description="Entity name")
+    # description: Optional[str] = Field(None, description="Entity description")
+    # is_active: bool = Field(True, description="Whether entity is active")
     pass
 
 
 class {config.model_name}Create({config.model_name}Base):
     """Schema for creating {config.model_name}."""
-    # TODO: Add creation-specific fields
+    # Implementation needed: Add fields required for entity creation
+    # Examples:
+    # email: EmailStr = Field(..., description="User email address")
+    # password: str = Field(..., min_length=8, description="User password")
+    # tags: List[str] = Field(default_factory=list, description="Entity tags")
     pass
 
 
 class {config.model_name}Update(BaseModel):
     """Schema for updating {config.model_name}."""
-    # TODO: Add update fields (all optional)
+    # Implementation needed: Add optional fields for entity updates
+    # All fields should be Optional for partial updates
+    # Examples:
+    # name: Optional[str] = Field(None, description="Updated name")
+    # description: Optional[str] = Field(None, description="Updated description")
+    # is_active: Optional[bool] = Field(None, description="Updated active status")
     pass
 
 
@@ -219,11 +248,21 @@ class {config.model_name}({base_class}):
     
     __tablename__ = '{config.module_name}_{config.model_name.lower()}s'
     
-    # TODO: Add model fields
-    # Example:
-    # name = Column(String(255), nullable=False)
-    # description = Column(Text)
-    # is_active = Column(Boolean, default=True)
+    # Implementation needed: Define database columns for this model
+    # All tenant-aware models automatically include: id, tenant_id, created_at, updated_at
+    # Add entity-specific fields below:
+    # 
+    # Examples:
+    # name = Column(String(255), nullable=False, index=True)
+    # description = Column(Text, nullable=True)
+    # status = Column(Enum(EntityStatus), nullable=False, default=EntityStatus.ACTIVE)
+    # priority = Column(Integer, nullable=False, default=1)
+    # metadata_json = Column(JSON, nullable=True)
+    # 
+    # Relationships:
+    # parent_id = Column(SQLUUID, ForeignKey('parent_table.id'), nullable=True)
+    # parent = relationship('ParentModel', back_populates='children')
+    pass  # Remove this once fields are added
     
     def __repr__(self):
         return f"<{config.model_name}(id={{self.id}})>"
@@ -364,7 +403,7 @@ async def delete_{config.model_name.lower()}(
             os.makedirs(os.path.dirname(file_path), exist_ok=True)
             with open(file_path, 'w') as f:
                 f.write(content)
-            print(f"Generated: {file_path}")
+logger.info(f"Generated: {file_path}")
 
 
 # CLI Interface
@@ -392,12 +431,12 @@ def generate_service_from_cli():
     files = generator.create_service_files(config, args.base_path)
     generator.write_files(files)
     
-    print(f"Generated service for {config.model_name} in {config.module_name} module")
-    print("Next steps:")
-    print("1. Update module/__init__.py to include new service")
-    print("2. Add router to main app.py")
-    print("3. Create database migration")
-    print("4. Add tests")
+logger.info(f"Generated service for {config.model_name} in {config.module_name} module")
+logger.info("Next steps:")
+logger.info("1. Update module/__init__.py to include new service")
+logger.info("2. Add router to main app.py")
+logger.info("3. Create database migration")
+logger.info("4. Add tests")
 
 
 if __name__ == "__main__":

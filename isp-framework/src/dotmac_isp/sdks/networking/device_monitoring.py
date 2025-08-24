@@ -16,6 +16,7 @@ class DeviceMonitoringService:
     """In-memory service for device monitoring operations."""
 
     def __init__(self):
+        """  Init   operation."""
         self._monitors: Dict[str, Dict[str, Any]] = {}
         self._metrics: Dict[str, List[Dict[str, Any]]] = {}
         self._health_checks: Dict[str, Dict[str, Any]] = {}
@@ -157,6 +158,7 @@ class DeviceMonitoringSDK:
     """Minimal, reusable SDK for device monitoring."""
 
     def __init__(self, tenant_id: str):
+        """  Init   operation."""
         self.tenant_id = tenant_id
         self._service = DeviceMonitoringService()
 

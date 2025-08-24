@@ -164,6 +164,7 @@ class InMemorySchemaStore(SchemaStore):
     """In-memory schema store for development and testing."""
 
     def __init__(self):
+        """  Init   operation."""
         self._schemas: Dict[str, Dict[str, SchemaVersion]] = {}
         self._latest_versions: Dict[str, str] = {}
 
@@ -236,6 +237,7 @@ class SchemaCache:
     """In-memory cache for schemas."""
 
     def __init__(self, max_size: int = 1000):
+        """  Init   operation."""
         self.max_size = max_size
         self._cache: Dict[str, SchemaVersion] = {}
         self._access_order: List[str] = []

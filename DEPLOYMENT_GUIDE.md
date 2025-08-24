@@ -1,223 +1,125 @@
-# DotMac SaaS Platform Deployment Guide
+# Deployment Guide
 
-**Complete guide for SaaS Platform Owners deploying the DotMac container-per-tenant platform**
+**Complete deployment guide for the DotMac Platform - choose your deployment method based on your needs**
 
-## 🎯 Deployment Decision Matrix
+⚠️ **Status**: This is a DEVELOPMENT platform (47% complete). Production deployment is not yet supported. See [Production Readiness Checklist](PRODUCTION_READINESS_CHECKLIST.md) for current status.
 
-| Your Goal | Command | Environment | When to Use |
-|-----------|---------|-------------|-------------|
-| **Platform development** | `make quick-start` | Development | Developing the SaaS platform |
-| **Backend development** | `make dev-backend` | Development | Working on tenant management/billing |
-| **Frontend development** | `make dev-frontend` | Development | Working on platform portals |
-| **Full-stack development** | `make dev` | Development | Working across platform components |
-| **Production testing** | `make staging` | Staging | Testing production SaaS platform |
-| **SaaS deployment** | `make deploy-saas` | Production | Deploying your SaaS platform |
+## 🎯 Quick Start (Choose Your Path)
+
+| Goal | Command | When to Use |
+|------|---------|-------------|
+| **Full platform development** | `make install-dev && make dev` | Complete development environment |
+| **Backend API development** | `make dev-backend` | Working on ISP Framework or Management Platform APIs |
+| **Frontend portal development** | `make dev-frontend` | Working on customer/admin/reseller portals |
+| **Testing environment** | `make staging` | Testing with production-like configuration |
 
 ## 🚀 Getting Started (Choose Your Path)
 
-### Path 1: SaaS Platform Owner (First Setup)
+### Quick Development Setup
 ```bash
-# 1. Clone and enter directory
-git clone https://github.com/your-org/dotmac-saas-platform.git
-cd dotmac-saas-platform
+# 1. Clone and setup
+git clone <repository-url>
+cd dotmac-framework
 
-# 2. Setup complete SaaS platform
-make setup-saas-platform
+# 2. Complete setup
+make install-dev
 
-# 3. Access platform management services
-make show-platform-endpoints
+# 3. Start development environment
+make dev
+
+# 4. Access services
+make show-endpoints
 ```
 
-### Path 2: Management Platform Developer
+### Platform-Specific Development
 ```bash
-# 1. Start SaaS orchestration services
-make dev-management
+# ISP Framework only
+cd isp-framework && make run-dev
 
-# 2. Run platform tests
-make test-saas-platform
+# Management Platform only
+cd management-platform && make run-api
 
-# 3. Work on platform features
-cd management-platform    # For tenant management, billing, container orchestration
-cd isp-framework         # For ISP application features
+# Frontend portals only
+cd frontend && pnpm dev
 ```
 
-### Path 3: Frontend Developer  
+## 🐳 Docker Deployment Methods
+
+### Development (Recommended)
 ```bash
-# 1. Start platform infrastructure only
-make up-platform-infrastructure
-
-# 2. Start frontend development
-make dev-frontend
-
-# 3. Work on platform portals
-cd frontend/apps/admin     # Platform owner admin portal
-cd frontend/apps/reseller  # Vendor/reseller partner portal
-cd frontend/packages/      # Shared tenant portal components
+# Complete unified environment
+docker-compose -f docker-compose.unified.yml up -d
+# Includes: Both platforms + databases + monitoring
+# Resources: ~8GB RAM, 16GB disk
 ```
 
-## 📋 Deployment Methods Comparison
-
-### Docker Compose (Recommended for Development)
-
-#### **docker-compose.unified.yml** - Complete Platform
-- **Use Case**: Complete development environment
-- **Command**: `make up` or `docker-compose -f docker-compose.unified.yml up -d`
-- **Includes**: Both platforms + infrastructure + frontend
-- **Resources**: ~8GB RAM, 16GB disk
-- **Startup Time**: ~2 minutes
-
-#### **docker-compose.yml** - Basic Development
-- **Use Case**: Lightweight development
-- **Command**: `docker-compose up -d`
-- **Includes**: Core services only
-- **Resources**: ~4GB RAM, 8GB disk
-- **Startup Time**: ~1 minute
-
-#### **docker-compose.production.yml** - Production Simulation
-- **Use Case**: Testing production configs locally
-- **Command**: `docker-compose -f docker-compose.production.yml up -d`
-- **Includes**: Production-optimized containers with security
-- **Resources**: ~12GB RAM, 32GB disk
-- **Startup Time**: ~3 minutes
-
-### Kubernetes (SaaS Platform Production)
-
-#### **Container-per-Tenant Orchestration** (Platform Owner Only)
+### Basic Development
 ```bash
-# Deploy SaaS Management Platform with Kubernetes orchestration
-make deploy-saas-platform
-
-# Platform owner manages all tenant containers
-kubectl get pods -n tenant-containers
+# Lightweight setup
+docker-compose up -d
+# Includes: Core services only
+# Resources: ~4GB RAM, 8GB disk
 ```
 
-#### **Cloud SaaS Platform** (EKS/GKE/AKS)
+### Staging/Testing
 ```bash
-# Deploy SaaS platform using Helm
-helm install dotmac-saas shared/deployments/helm/saas-platform/
-
-# Or use Infrastructure as Code
-cd management-platform/deployment/opentofu/
-tofu apply
-```
-
-### Infrastructure as Code
-
-#### **OpenTofu/Terraform** (AWS)
-```bash
-cd management-platform/deployment/opentofu/
-tofu init
-tofu plan -var-file="production.tfvars"
-tofu apply
-```
-
-## 🔧 Environment Configuration
-
-### Environment Progression
-
-```mermaid
-graph LR
-    A[Local Development] --> B[Docker Compose]
-    B --> C[Local Kubernetes]
-    C --> D[Staging Kubernetes]
-    D --> E[Production Kubernetes]
-```
-
-### Configuration Files Hierarchy
-
-```
-Configuration Priority (highest to lowest):
-1. Environment variables
-2. .env.local (git-ignored)
-3. .env.development / .env.production
-4. shared/deployments/{env}-config.yml
-5. Default values in docker-compose files
-```
-
-### Setting Up Environments
-
-#### Development Environment
-```bash
-# Option 1: Complete setup (recommended)
-make quick-start
-
-# Option 2: Step by step
-make install-all       # Install dependencies
-make up-infrastructure # Start databases, monitoring
-make up                # Start applications
-```
-
-#### Staging Environment
-```bash
-# Use production-like setup
-make staging
-
-# Or manually
+# Production-like configuration
 docker-compose -f docker-compose.production.yml up -d
+# Includes: Security hardening, SSL, monitoring
+# Resources: ~12GB RAM, 32GB disk
+```
+
+### ⚠️ Production Deployment (NOT READY)
+
+Production deployment is **not yet supported**. The platform is at 47% completion.
+
+**Missing for Production:**
+- Auto-scaling infrastructure
+- Load balancing
+- SSL certificate management  
+- Backup/recovery procedures
+- Security hardening
+- Multi-region deployment
+
+See [Production Readiness Checklist](PRODUCTION_READINESS_CHECKLIST.md) for full status.
+
+## ⚙️ Configuration
+
+### Environment Files
+```
+.env.local          # Local overrides (git-ignored)
+.env.development    # Development defaults
+.env.production     # Production settings (when available)
+```
+
+### Setup Process
+```bash
+# 1. Install dependencies
+make install-dev
+
+# 2. Start infrastructure (databases, monitoring)
+make up-infrastructure
+
+# 3. Start applications
+make up
+
+# 4. Verify health
 make health-check
 ```
 
-#### Production Environment
-```bash
-# Use Infrastructure as Code
-cd shared/deployments/kubernetes/
-kubectl apply -f namespace.yaml
-kubectl apply -f .
+## 🌐 Service Ports
 
-# Or use Terraform
-cd shared/deployments/terraform/
-terraform init
-terraform plan
-terraform apply
-```
-
-## 🌐 SaaS Platform Architecture
-
-### Platform Owner Service Ports
-
-| Service | Development Port | Production Port | Purpose |
-|---------|------------------|-----------------|---------|
-| Management Platform API | 8000 | 8000 | Tenant orchestration & billing |
-| Platform Admin Portal | 3000 | 80/443 | SaaS platform administration |
-| Vendor/Reseller Portal | 3002 | 80/443 | Partner management |
-| Fleet Monitoring | 3301 | 3301 | Monitor all tenant containers |
-| PostgreSQL (Platform) | 5434 | 5432 | Platform database |
-| Redis (Shared) | 6378 | 6379 | Platform cache and queues |
-| OpenBao | 8200 | 8200 | Multi-tenant secrets |
-
-### ISP Tenant Container Ports (Per-Tenant)
-
-| Service | Development Port | Production Port | Purpose |
-|---------|------------------|-----------------|---------|
-| ISP-Alpha Container | 8101 | Dynamic | ISP Alpha's dedicated instance |
-| ISP-Beta Container | 8102 | Dynamic | ISP Beta's dedicated instance |
-| ISP-Gamma Container | 8103 | Dynamic | ISP Gamma's dedicated instance |
-| Tenant PostgreSQL | Dynamic | Dynamic | Per-tenant isolated database |
-
-### SaaS Platform Dependencies
-
-```mermaid
-graph TD
-    A[Platform PostgreSQL] --> B[Management Platform]
-    C[Shared Redis] --> B
-    D[OpenBao Multi-Tenant] --> B
-    E[SignOz Fleet Monitoring] --> B
-    
-    B --> F[ISP-Alpha Container]
-    B --> G[ISP-Beta Container]  
-    B --> H[ISP-Gamma Container]
-    
-    F --> I[Alpha Customer Portal]
-    G --> J[Beta Customer Portal]
-    H --> K[Gamma Customer Portal]
-    
-    B --> L[Platform Admin Portal]
-    B --> M[Vendor/Reseller Portal]
-    
-    N[Alpha PostgreSQL] --> F
-    O[Beta PostgreSQL] --> G
-    P[Gamma PostgreSQL] --> H
-```
+| Service | Port | Purpose |
+|---------|------|----------|
+| ISP Framework API | 8001 | Main ISP operations API |
+| Management Platform API | 8000 | Multi-tenant management |
+| Admin Portal | 3000 | Platform administration |
+| Customer Portal | 3001 | Customer self-service |
+| Reseller Portal | 3002 | Partner management |
+| Technician Portal | 3003 | Field operations |
+| PostgreSQL | 5432 | Main database |
+| Redis | 6379 | Cache and sessions |
+| SignOz | 3301 | Monitoring dashboard |
 
 ## 🔍 Troubleshooting Guide
 
@@ -306,156 +208,66 @@ curl http://localhost:3301/health  # SignOz
 make health-check-detailed
 ```
 
-## 📊 Monitoring and Observability
+## 📊 Monitoring
 
-### SignOz Dashboard (http://localhost:3301)
-
-**Key Metrics to Monitor:**
-- API response times
-- Database query performance
-- Memory and CPU usage
-- Error rates and exceptions
-- Cross-platform communication
-
-### Useful Monitoring Commands
+**SignOz Dashboard:** http://localhost:3301
 
 ```bash
-# Open monitoring dashboard
-make monitoring
-
-# View real-time logs
-make logs
-
-# Check specific service logs
-make logs-isp     # ISP Framework
-make logs-mgmt    # Management Platform
-
-# Export metrics
-curl http://localhost:8889/metrics  # Prometheus format
+make monitoring          # Open dashboard
+make logs                # View all logs
+make logs-isp            # ISP Framework logs only
+make logs-mgmt           # Management Platform logs only
 ```
 
-## 🔐 Security Configuration
+## 🔐 Security
 
-### Development Security (Relaxed)
-- Default development tokens
-- HTTP allowed
-- CORS enabled for all origins
-- Debug mode enabled
-
-### Production Security (Strict)
-- Vault-managed secrets rotation
-- HTTPS only
-- Restricted CORS origins
-- Debug mode disabled
-- Security headers enabled
-
-### Security Checklist
+**Development:** Relaxed security for easier development  
+**Production:** Not yet implemented (47% platform completion)
 
 ```bash
-# Run security scans
-make security-all
-
-# Check for secrets in code
-make secrets-scan
-
-# Validate security configuration
-make security-validate
-
-# Update security dependencies
-make security-update
+make security            # Run security scans
+make secrets-scan        # Check for exposed secrets
 ```
 
-## 🚀 Deployment Workflows
+## 🚀 Development Workflow
 
-### Development Deployment
 ```bash
-# Daily development workflow
-make install-all      # First time only
-make up               # Start platform
-make test-all         # Run tests
-make dev              # Start development
+# Setup (first time only)
+make install-dev
+
+# Daily development
+make up                  # Start services
+make test                # Run tests  
+make dev                 # Start development mode
+
+# Testing
+make staging             # Start staging environment
+make health-check        # Verify all services
 ```
 
-### Staging Deployment
-```bash
-# Deploy to staging
-make build-all
-make deploy-staging
-make smoke-test-staging
-```
-
-### Production Deployment
-```bash
-# Use Infrastructure as Code
-make deploy-prod
-
-# Or step by step
-make build-prod
-make security-validate
-make backup-prod-data
-make deploy-prod
-make health-check-prod
-make smoke-test-prod
-```
-
-### Rollback Procedures
-```bash
-# Quick rollback (Docker)
-make rollback-previous
-
-# Kubernetes rollback
-kubectl rollout undo deployment/dotmac-isp-framework
-kubectl rollout undo deployment/dotmac-management-platform
-
-# Full rollback with data restore
-make rollback-full --version=v1.2.3
-```
-
-## 🔄 Updates and Maintenance
-
-### Regular Maintenance Tasks
+## 🔄 Maintenance
 
 ```bash
-# Weekly maintenance
+# Update dependencies
 make update-dependencies
-make security-update
-make backup-data
-make cleanup-logs
 
-# Monthly maintenance
-make full-backup
-make performance-audit
-make security-audit
-```
-
-### Version Updates
-
-```bash
 # Update to latest version
 git pull origin main
 make update-all
-make migrate-data
 make test-all
-make deploy
 ```
 
-## 📚 Additional Resources
+## 📚 Resources
 
-- **Architecture Documentation**: `shared/docs/ARCHITECTURE.md`
-- **API Documentation**: `shared/docs/api/`
-- **Development Guides**: `shared/docs/guides/`
-- **OpenAPI Specs**: `shared/docs/api/openapi.yaml`
-- **Deployment Runbook**: `shared/docs/DEPLOYMENT_RUNBOOK.md`
-
----
+- [Developer Guide](DEVELOPER_GUIDE.md) - Development setup and workflows
+- [Production Readiness](PRODUCTION_READINESS_CHECKLIST.md) - Current completion status
+- [API Documentation](docs/api/) - Generated OpenAPI specs
 
 ## 🆘 Getting Help
 
-1. **Check this guide** for common issues
-2. **Run health checks**: `make health-check`
-3. **View logs**: `make logs` or `make logs-{service}`
-4. **Check documentation**: `shared/docs/`
-5. **GitHub Issues**: Report bugs and request features
-6. **Community Support**: GitHub Discussions
+1. Check this guide for common issues
+2. Run `make health-check`
+3. View logs with `make logs`
+4. Check [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) for detailed setup
 
-**Remember**: Start simple with `make quick-start`, then graduate to more specific deployment methods as needed!
+**Start simple**: `make install-dev && make dev`

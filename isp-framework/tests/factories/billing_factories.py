@@ -22,6 +22,7 @@ class InvoiceFactory(BaseFactory, TenantMixin, TimestampMixin):
     """Factory for Invoice test data."""
     
     class Meta:
+        """Class for Meta operations."""
         model = None  # Will be set during testing
     
     # Invoice identification
@@ -80,6 +81,7 @@ class InvoiceLineItemFactory(BaseFactory, TenantMixin, TimestampMixin):
     """Factory for InvoiceLineItem test data."""
     
     class Meta:
+        """Class for Meta operations."""
         model = None
     
     invoice_id = factory.LazyFunction(lambda: str(uuid4()))
@@ -102,6 +104,7 @@ class PaymentFactory(BaseFactory, TenantMixin, TimestampMixin):
     """Factory for Payment test data."""
     
     class Meta:
+        """Class for Meta operations."""
         model = None
     
     # Payment identification
@@ -148,6 +151,7 @@ class SubscriptionFactory(BaseFactory, TenantMixin, TimestampMixin):
     """Factory for Subscription test data."""
     
     class Meta:
+        """Class for Meta operations."""
         model = None
     
     customer_id = factory.LazyFunction(lambda: str(uuid4()))
@@ -192,6 +196,7 @@ class BillingAccountFactory(BaseFactory, TenantMixin, TimestampMixin):
     """Factory for BillingAccount test data."""
     
     class Meta:
+        """Class for Meta operations."""
         model = None
     
     customer_id = factory.LazyFunction(lambda: str(uuid4()))
@@ -220,6 +225,7 @@ class TaxRateFactory(BaseFactory, TenantMixin, TimestampMixin):
     """Factory for TaxRate test data."""
     
     class Meta:
+        """Class for Meta operations."""
         model = None
     
     name = factory.LazyAttribute(lambda obj: f"{fake.state()} Sales Tax")
@@ -243,6 +249,7 @@ class CreditNoteFactory(BaseFactory, TenantMixin, TimestampMixin):
     """Factory for CreditNote test data."""
     
     class Meta:
+        """Class for Meta operations."""
         model = None
     
     # Credit note identification
@@ -264,6 +271,7 @@ class ReceiptFactory(BaseFactory, TenantMixin, TimestampMixin):
     """Factory for Receipt test data."""
     
     class Meta:
+        """Class for Meta operations."""
         model = None
     
     # Receipt identification
@@ -284,6 +292,7 @@ class LateFeeFactory(BaseFactory, TenantMixin, TimestampMixin):
     """Factory for LateFee test data."""
     
     class Meta:
+        """Class for Meta operations."""
         model = None
     
     # Late fee identification

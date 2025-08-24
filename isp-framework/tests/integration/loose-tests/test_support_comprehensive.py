@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+import logging
+
+logger = logging.getLogger(__name__)
+
 """Comprehensive Support module test (pure mock-based)."""
 
 import sys
@@ -7,14 +11,14 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
 def test_support_comprehensive():
     """Comprehensive test of support module for coverage."""
-    print("🚀 Support Module Comprehensive Test")
-    print("=" * 60)
+logger.info("🚀 Support Module Comprehensive Test")
+logger.info("=" * 60)
     
     success_count = 0
     total_tests = 0
     
     # Test 1: Support Enums (File-based test to avoid SQLAlchemy issues)
-    print("\n🎫 Testing Support Enums...")
+logger.info("\n🎫 Testing Support Enums...")
     total_tests += 1
     try:
         # Read the models file to test enum definitions
@@ -59,21 +63,21 @@ def test_support_comprehensive():
         assert 'AT_RISK = "at_risk"' in content
         assert 'BREACHED = "breached"' in content
         
-        print("  ✅ TicketPriority enum (5 values)")
-        print("  ✅ TicketStatus enum (7 values)")
-        print("  ✅ TicketCategory enum (6 values)")
-        print("  ✅ TicketSource enum (7 values)")
-        print("  ✅ SLAStatus enum (3 values)")
-        print("  ✅ Support enums: PASSED")
+logger.info("  ✅ TicketPriority enum (5 values)")
+logger.info("  ✅ TicketStatus enum (7 values)")
+logger.info("  ✅ TicketCategory enum (6 values)")
+logger.info("  ✅ TicketSource enum (7 values)")
+logger.info("  ✅ SLAStatus enum (3 values)")
+logger.info("  ✅ Support enums: PASSED")
         success_count += 1
         
     except Exception as e:
-        print(f"  ❌ Support enums: FAILED - {e}")
+logger.info(f"  ❌ Support enums: FAILED - {e}")
         import traceback
         traceback.print_exc()
     
     # Test 2: Ticket Model Logic
-    print("\n🎫 Testing Ticket Model Logic...")
+logger.info("\n🎫 Testing Ticket Model Logic...")
     total_tests += 1
     try:
         from datetime import datetime, timedelta
@@ -163,66 +167,66 @@ def test_support_comprehensive():
         assert ticket.priority == "high"
         assert ticket.status == "open"
         assert ticket.source == "phone"
-        print("  ✅ Ticket basic properties")
+logger.info("  ✅ Ticket basic properties")
         
         # Test contact information
         assert ticket.contact_name == "John Doe"
         assert ticket.contact_email == "john@example.com"
         assert ticket.contact_phone == "+1-555-0123"
-        print("  ✅ Contact information")
+logger.info("  ✅ Contact information")
         
         # Test assignment information
         assert ticket.assigned_to == "tech-456"
         assert ticket.assigned_team == "Network Team"
-        print("  ✅ Assignment information")
+logger.info("  ✅ Assignment information")
         
         # Test SLA and timing
         assert ticket.is_overdue is False  # SLA due in future
         age_hours = ticket.get_age_hours()
         assert age_hours >= 1  # Should be around 2 hours
-        print("  ✅ SLA and timing checks")
+logger.info("  ✅ SLA and timing checks")
         
         # Test first response
         ticket.first_response()
         assert ticket.first_response_at is not None
         response_time = ticket.get_response_time_hours()
         assert response_time is not None and response_time >= 1
-        print("  ✅ First response tracking")
+logger.info("  ✅ First response tracking")
         
         # Test ticket resolution
         ticket.resolve_ticket()
         assert ticket.status == "resolved"
         assert ticket.resolved_at is not None
-        print("  ✅ Ticket resolution")
+logger.info("  ✅ Ticket resolution")
         
         # Test ticket closure
         ticket.close_ticket()
         assert ticket.status == "closed"
         assert ticket.closed_at is not None
-        print("  ✅ Ticket closure")
+logger.info("  ✅ Ticket closure")
         
         # Test SLA status updates
         overdue_ticket = MockTicket()
         overdue_ticket.sla_due_date = datetime.utcnow() - timedelta(hours=1)
         overdue_ticket.update_sla_status()
         assert overdue_ticket.sla_status == "breached"
-        print("  ✅ SLA status updates")
+logger.info("  ✅ SLA status updates")
         
         # Test tags and custom fields
         assert "connectivity" in ticket.tags
         assert ticket.custom_fields["customer_tier"] == "gold"
-        print("  ✅ Tags and custom fields")
+logger.info("  ✅ Tags and custom fields")
         
-        print("  ✅ Ticket model logic: PASSED")
+logger.info("  ✅ Ticket model logic: PASSED")
         success_count += 1
         
     except Exception as e:
-        print(f"  ❌ Ticket model logic: FAILED - {e}")
+logger.info(f"  ❌ Ticket model logic: FAILED - {e}")
         import traceback
         traceback.print_exc()
     
     # Test 3: Ticket Comment Model Logic
-    print("\n💬 Testing Ticket Comment Model Logic...")
+logger.info("\n💬 Testing Ticket Comment Model Logic...")
     total_tests += 1
     try:
         from datetime import datetime
@@ -274,12 +278,12 @@ def test_support_comprehensive():
         assert comment.is_internal is False
         assert comment.is_system_generated is False
         assert comment.author_name == "Support Agent"
-        print("  ✅ Comment basic properties")
+logger.info("  ✅ Comment basic properties")
         
         # Test visibility checks
         assert comment.is_customer_facing() is True
         assert comment.is_automated() is False
-        print("  ✅ Comment visibility checks")
+logger.info("  ✅ Comment visibility checks")
         
         # Test author display name
         display_name = comment.get_author_display_name()
@@ -290,13 +294,13 @@ def test_support_comprehensive():
         comment_no_name.author_name = None
         comment_no_name.author_email = "john.doe@company.com"
         assert comment_no_name.get_author_display_name() == "john.doe"
-        print("  ✅ Author display name logic")
+logger.info("  ✅ Author display name logic")
         
         # Test marking as internal
         comment.mark_as_internal()
         assert comment.is_internal is True
         assert comment.is_customer_facing() is False
-        print("  ✅ Internal comment marking")
+logger.info("  ✅ Internal comment marking")
         
         # Test content preview
         preview = comment.get_content_preview(30)
@@ -307,23 +311,23 @@ def test_support_comprehensive():
         short_comment.content = "Short message"
         short_preview = short_comment.get_content_preview(30)
         assert short_preview == "Short message"
-        print("  ✅ Content preview generation")
+logger.info("  ✅ Content preview generation")
         
         # Test comment metadata
         assert comment.comment_data["response_time_minutes"] == 15
         assert comment.comment_data["category"] == "troubleshooting"
-        print("  ✅ Comment metadata")
+logger.info("  ✅ Comment metadata")
         
-        print("  ✅ Ticket comment model logic: PASSED")
+logger.info("  ✅ Ticket comment model logic: PASSED")
         success_count += 1
         
     except Exception as e:
-        print(f"  ❌ Ticket comment model logic: FAILED - {e}")
+logger.info(f"  ❌ Ticket comment model logic: FAILED - {e}")
         import traceback
         traceback.print_exc()
     
     # Test 4: Knowledge Base Article Model Logic
-    print("\n📚 Testing Knowledge Base Article Logic...")
+logger.info("\n📚 Testing Knowledge Base Article Logic...")
     total_tests += 1
     try:
         from datetime import datetime, timedelta
@@ -399,24 +403,24 @@ def test_support_comprehensive():
         assert article.slug == "troubleshoot-internet-connectivity"
         assert article.is_published is True
         assert article.is_featured is False
-        print("  ✅ Article basic properties")
+logger.info("  ✅ Article basic properties")
         
         # Test helpfulness ratio calculation
         helpfulness = article.get_helpfulness_ratio()
         expected_ratio = (95 / (95 + 8)) * 100  # ~92.2%
         assert abs(helpfulness - expected_ratio) < 0.1
-        print("  ✅ Helpfulness ratio calculation")
+logger.info("  ✅ Helpfulness ratio calculation")
         
         # Test popularity check
         assert article.is_popular() is True  # 1250 views > 1000 threshold
         assert article.is_popular(2000) is False  # 1250 views < 2000 threshold
-        print("  ✅ Popularity assessment")
+logger.info("  ✅ Popularity assessment")
         
         # Test publication age
         days_published = article.days_since_published()
         assert days_published is not None and days_published >= 29  # ~30 days
         assert article.needs_review() is False  # < 365 days old
-        print("  ✅ Publication age calculations")
+logger.info("  ✅ Publication age calculations")
         
         # Test interaction methods
         initial_views = article.view_count
@@ -430,33 +434,33 @@ def test_support_comprehensive():
         initial_unhelpful = article.unhelpful_votes
         article.vote_unhelpful()
         assert article.unhelpful_votes == initial_unhelpful + 1
-        print("  ✅ User interaction tracking")
+logger.info("  ✅ User interaction tracking")
         
         # Test reading time estimation
         reading_time = article.get_reading_time_minutes()
         assert reading_time >= 1  # At least 1 minute
-        print("  ✅ Reading time estimation")
+logger.info("  ✅ Reading time estimation")
         
         # Test tag functionality
         assert article.has_tag("troubleshooting") is True
         assert article.has_tag("billing") is False
-        print("  ✅ Tag functionality")
+logger.info("  ✅ Tag functionality")
         
         # Test SEO fields
         assert "troubleshoot" in article.meta_description.lower()
         assert "internet" in article.meta_keywords
-        print("  ✅ SEO metadata")
+logger.info("  ✅ SEO metadata")
         
-        print("  ✅ Knowledge base article logic: PASSED")
+logger.info("  ✅ Knowledge base article logic: PASSED")
         success_count += 1
         
     except Exception as e:
-        print(f"  ❌ Knowledge base article logic: FAILED - {e}")
+logger.info(f"  ❌ Knowledge base article logic: FAILED - {e}")
         import traceback
         traceback.print_exc()
     
     # Test 5: SLA Policy Model Logic
-    print("\n📋 Testing SLA Policy Model Logic...")
+logger.info("\n📋 Testing SLA Policy Model Logic...")
     total_tests += 1
     try:
         from datetime import datetime, timedelta
@@ -538,12 +542,12 @@ def test_support_comprehensive():
         assert sla.is_active is True
         assert sla.first_response_time == 240  # 4 hours
         assert sla.resolution_time == 1440     # 24 hours
-        print("  ✅ SLA policy basic properties")
+logger.info("  ✅ SLA policy basic properties")
         
         # Test business hours
         business_duration = sla.get_business_hours_duration()
         assert business_duration == 8.0  # 9:00 to 17:00 = 8 hours
-        print("  ✅ Business hours calculation")
+logger.info("  ✅ Business hours calculation")
         
         # Test SLA due date calculations
         created_time = datetime.utcnow()
@@ -554,13 +558,13 @@ def test_support_comprehensive():
         assert response_due > created_time
         assert resolution_due > response_due
         assert escalation_due is not None and escalation_due > created_time
-        print("  ✅ SLA due date calculations")
+logger.info("  ✅ SLA due date calculations")
         
         # Test ticket applicability
         assert sla.applies_to_ticket("normal", "billing") is True
         assert sla.applies_to_ticket("urgent", "technical") is False  # urgent not in conditions
         assert sla.applies_to_ticket("low", "general") is True
-        print("  ✅ Ticket applicability rules")
+logger.info("  ✅ Ticket applicability rules")
         
         # Test business hours checking
         business_time = datetime.strptime("14:30", "%H:%M").time()
@@ -570,24 +574,24 @@ def test_support_comprehensive():
         after_hours_time = datetime.strptime("19:30", "%H:%M").time()
         after_hours_datetime = datetime.combine(datetime.today(), after_hours_time)
         assert sla.is_within_business_hours(after_hours_datetime) is False
-        print("  ✅ Business hours validation")
+logger.info("  ✅ Business hours validation")
         
         # Test escalation configuration
         assert sla.escalation_enabled is True
         assert sla.escalation_time == 480  # 8 hours
         assert sla.escalation_target == "manager@company.com"
-        print("  ✅ Escalation configuration")
+logger.info("  ✅ Escalation configuration")
         
-        print("  ✅ SLA policy model logic: PASSED")
+logger.info("  ✅ SLA policy model logic: PASSED")
         success_count += 1
         
     except Exception as e:
-        print(f"  ❌ SLA policy model logic: FAILED - {e}")
+logger.info(f"  ❌ SLA policy model logic: FAILED - {e}")
         import traceback
         traceback.print_exc()
     
     # Test 6: Ticket Attachment Model Logic
-    print("\n📎 Testing Ticket Attachment Logic...")
+logger.info("\n📎 Testing Ticket Attachment Logic...")
     total_tests += 1
     try:
         from datetime import datetime
@@ -651,23 +655,23 @@ def test_support_comprehensive():
         assert attachment.original_filename == "Network Diagnostics Report.pdf"
         assert attachment.content_type == "application/pdf"
         assert attachment.uploaded_by == "tech-456"
-        print("  ✅ Attachment basic properties")
+logger.info("  ✅ Attachment basic properties")
         
         # Test file size calculation
         file_size_mb = attachment.get_file_size_mb()
         assert file_size_mb == 1.95  # 2048576 bytes = 1.95MB exactly
-        print("  ✅ File size calculation")
+logger.info("  ✅ File size calculation")
         
         # Test file extension extraction
         extension = attachment.get_file_extension()
         assert extension == "pdf"
-        print("  ✅ File extension extraction")
+logger.info("  ✅ File extension extraction")
         
         # Test file type detection
         assert attachment.is_image() is False
         assert attachment.is_document() is True
         assert attachment.is_safe_to_view() is True
-        print("  ✅ File type detection")
+logger.info("  ✅ File type detection")
         
         # Test image attachment
         image_attachment = MockTicketAttachment()
@@ -676,7 +680,7 @@ def test_support_comprehensive():
         assert image_attachment.is_image() is True
         assert image_attachment.is_document() is False
         assert image_attachment.get_file_extension() == "png"
-        print("  ✅ Image attachment handling")
+logger.info("  ✅ Image attachment handling")
         
         # Test display name
         display_name = attachment.get_display_name()
@@ -686,47 +690,47 @@ def test_support_comprehensive():
         attachment_no_original = MockTicketAttachment()
         attachment_no_original.original_filename = None
         assert attachment_no_original.get_display_name() == attachment_no_original.filename
-        print("  ✅ Display name logic")
+logger.info("  ✅ Display name logic")
         
         # Test size limits
         assert attachment.is_oversized() is False  # 2MB < 10MB default
         assert attachment.is_oversized(1) is True  # 2MB > 1MB limit
-        print("  ✅ Size limit checking")
+logger.info("  ✅ Size limit checking")
         
         # Test unsafe file type
         unsafe_attachment = MockTicketAttachment()
         unsafe_attachment.content_type = "application/x-executable"
         assert unsafe_attachment.is_safe_to_view() is False
-        print("  ✅ Unsafe file type detection")
+logger.info("  ✅ Unsafe file type detection")
         
-        print("  ✅ Ticket attachment logic: PASSED")
+logger.info("  ✅ Ticket attachment logic: PASSED")
         success_count += 1
         
     except Exception as e:
-        print(f"  ❌ Ticket attachment logic: FAILED - {e}")
+logger.info(f"  ❌ Ticket attachment logic: FAILED - {e}")
         import traceback
         traceback.print_exc()
     
     # Final Results
-    print("\n" + "=" * 60)
-    print("🎯 SUPPORT MODULE COMPREHENSIVE TEST RESULTS")
-    print("=" * 60)
-    print(f"✅ Tests Passed: {success_count}/{total_tests}")
-    print(f"📊 Success Rate: {(success_count/total_tests)*100:.1f}%")
+logger.info("\n" + "=" * 60)
+logger.info("🎯 SUPPORT MODULE COMPREHENSIVE TEST RESULTS")
+logger.info("=" * 60)
+logger.info(f"✅ Tests Passed: {success_count}/{total_tests}")
+logger.info(f"📊 Success Rate: {(success_count/total_tests)*100:.1f}%")
     
     if success_count == total_tests:
-        print("\n🎉 EXCELLENT! Support module comprehensively tested!")
-        print("\n📋 Coverage Summary:")
-        print("  ✅ Support Enums: 100% (Priority, Status, Category, Source, SLA)")
-        print("  ✅ Ticket Logic: 100% (SLA tracking, status management, timing)")
-        print("  ✅ Comment Logic: 100% (visibility, authoring, content management)")
-        print("  ✅ Knowledge Base Logic: 100% (articles, voting, popularity)")
-        print("  ✅ SLA Policy Logic: 100% (business hours, escalation, conditions)")
-        print("  ✅ Attachment Logic: 100% (file types, safety, size validation)")
-        print("\n🏆 SUPPORT MODULE: 90%+ COVERAGE ACHIEVED!")
+logger.info("\n🎉 EXCELLENT! Support module comprehensively tested!")
+logger.info("\n📋 Coverage Summary:")
+logger.info("  ✅ Support Enums: 100% (Priority, Status, Category, Source, SLA)")
+logger.info("  ✅ Ticket Logic: 100% (SLA tracking, status management, timing)")
+logger.info("  ✅ Comment Logic: 100% (visibility, authoring, content management)")
+logger.info("  ✅ Knowledge Base Logic: 100% (articles, voting, popularity)")
+logger.info("  ✅ SLA Policy Logic: 100% (business hours, escalation, conditions)")
+logger.info("  ✅ Attachment Logic: 100% (file types, safety, size validation)")
+logger.info("\n🏆 SUPPORT MODULE: 90%+ COVERAGE ACHIEVED!")
         return True
     else:
-        print(f"\n❌ {total_tests - success_count} test(s) failed.")
+logger.info(f"\n❌ {total_tests - success_count} test(s) failed.")
         return False
 
 def main():

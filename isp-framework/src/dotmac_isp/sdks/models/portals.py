@@ -43,6 +43,7 @@ class CustomerPortalBinding:
     last_login: Optional[datetime] = None
     
     def __init__(self, **kwargs):
+        """  Init   operation."""
         self.id = kwargs.get('id', uuid4())
         self.customer_id = kwargs.get('customer_id')
         self.portal_id = kwargs.get('portal_id')
@@ -91,6 +92,7 @@ class PortalSettings:
     custom_footer: Optional[str] = None
     
     def __init__(self, **kwargs):
+        """  Init   operation."""
         self.theme = kwargs.get('theme', 'default')
         self.branding_logo_url = kwargs.get('branding_logo_url')
         self.branding_color = kwargs.get('branding_color', '#007bff')
@@ -120,6 +122,7 @@ class Portal:
     access_count: int = 0
     
     def __init__(self, **kwargs):
+        """  Init   operation."""
         self.id = kwargs.get('id', uuid4())
         self.name = kwargs.get('name')
         self.portal_type = kwargs.get('portal_type', PortalType.CUSTOMER)
@@ -179,6 +182,7 @@ class ResellerPortalAccess:
     access_count: int = 0
     
     def __init__(self, **kwargs):
+        """  Init   operation."""
         self.id = kwargs.get('id', uuid4())
         self.reseller_id = kwargs.get('reseller_id')
         self.portal_id = kwargs.get('portal_id')

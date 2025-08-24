@@ -20,6 +20,7 @@ class MetricDataPoint(BaseModel):
     metadata: Optional[Dict[str, Any]] = Field(None, description="Additional metadata")
 
     class Config:
+        """Class for Config operations."""
         json_encoders = {datetime: lambda v: v.isoformat()}
 
 
@@ -93,6 +94,7 @@ class ServiceAnalyticsResponse(BaseModel):
     )
 
     class Config:
+        """Class for Config operations."""
         json_encoders = {datetime: lambda v: v.isoformat()}
 
 
@@ -110,6 +112,7 @@ class ServiceMetricsRequest(BaseModel):
     )
 
     class Config:
+        """Class for Config operations."""
         json_encoders = {datetime: lambda v: v.isoformat()}
 
 
@@ -128,6 +131,7 @@ class CustomReportRequest(BaseModel):
     include_charts: bool = Field(True, description="Include charts in report")
 
     class Config:
+        """Class for Config operations."""
         json_encoders = {datetime: lambda v: v.isoformat()}
 
 
@@ -143,6 +147,7 @@ class CustomReportResponse(BaseModel):
     download_url: Optional[str] = Field(None, description="Download URL for report")
 
     class Config:
+        """Class for Config operations."""
         json_encoders = {datetime: lambda v: v.isoformat()}
 
 
@@ -160,6 +165,7 @@ class RealTimeMetricsResponse(BaseModel):
     )
 
     class Config:
+        """Class for Config operations."""
         json_encoders = {datetime: lambda v: v.isoformat()}
 
 
@@ -193,6 +199,7 @@ class MetricResponse(MetricBase):
     updated_at: Optional[datetime] = Field(None, description="Last update timestamp")
 
     class Config:
+        """Class for Config operations."""
         from_attributes = True
 
 
@@ -219,6 +226,7 @@ class MetricValueResponse(MetricValueBase):
     tenant_id: str = Field(..., description="Tenant ID")
 
     class Config:
+        """Class for Config operations."""
         from_attributes = True
 
 
@@ -271,6 +279,7 @@ class ReportResponse(ReportBase):
     updated_at: Optional[datetime] = Field(None, description="Last update timestamp")
 
     class Config:
+        """Class for Config operations."""
         from_attributes = True
 
 
@@ -318,6 +327,7 @@ class DashboardResponse(DashboardBase):
     updated_at: Optional[datetime] = Field(None, description="Last update timestamp")
 
     class Config:
+        """Class for Config operations."""
         from_attributes = True
 
 
@@ -369,6 +379,7 @@ class WidgetResponse(WidgetBase):
     updated_at: Optional[datetime] = Field(None, description="Last update timestamp")
 
     class Config:
+        """Class for Config operations."""
         from_attributes = True
 
 
@@ -423,6 +434,7 @@ class AlertResponse(AlertBase):
     updated_at: Optional[datetime] = Field(None, description="Last update timestamp")
 
     class Config:
+        """Class for Config operations."""
         from_attributes = True
 
 
@@ -472,6 +484,7 @@ class DataSourceResponse(DataSourceBase):
     updated_at: Optional[datetime] = Field(None, description="Last update timestamp")
 
     class Config:
+        """Class for Config operations."""
         from_attributes = True
 
 

@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 """Plugin Registry - Central registry for all plugins."""
 
 import asyncio
@@ -339,7 +343,7 @@ class PluginRegistry:
                     live_listeners.append(ref)
                 except Exception as e:
                     # Log error but continue with other listeners
-                    print(f"Error in plugin registry event listener: {e}")
+logger.error(f"Error in plugin registry event listener: {e}")
 
         self._event_listeners[event_type] = live_listeners
 

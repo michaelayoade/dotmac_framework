@@ -14,6 +14,7 @@ class DeviceInventoryService:
     """In-memory service for device inventory operations."""
 
     def __init__(self):
+        """  Init   operation."""
         self._devices: Dict[str, Dict[str, Any]] = {}
         self._modules: Dict[str, List[Dict[str, Any]]] = {}
         self._interfaces: Dict[str, List[Dict[str, Any]]] = {}
@@ -114,6 +115,7 @@ class DeviceInventorySDK:
     """Minimal, reusable SDK for device inventory management."""
 
     def __init__(self, tenant_id: str):
+        """  Init   operation."""
         self.tenant_id = tenant_id
         self._service = DeviceInventoryService()
 

@@ -16,6 +16,7 @@ class IdentityAccountSDK:
     """Small, composable SDK for identity account management."""
 
     def __init__(self, tenant_id: str):
+        """  Init   operation."""
         self.tenant_id = tenant_id
         self._service = AccountService()
 

@@ -60,6 +60,7 @@ class MetricConfig:
     buckets: list[float] = None  # For histograms
 
     def __post_init__(self):
+        """  Post Init   operation."""
         if self.labels is None:
             self.labels = []
 
@@ -68,6 +69,7 @@ class PrometheusMetrics:
     """Prometheus metrics manager for DotMac services."""
 
     def __init__(self, service_name: str, registry: CollectorRegistry | None = None):
+        """  Init   operation."""
         self.service_name = service_name
         self.registry = registry or CollectorRegistry()
         self._metrics: dict[str, Any] = {}

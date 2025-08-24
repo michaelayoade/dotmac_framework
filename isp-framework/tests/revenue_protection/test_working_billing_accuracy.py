@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 """
 REVENUE-CRITICAL TESTS - DEPLOYMENT BLOCKER
 ===========================================
@@ -384,13 +388,13 @@ if __name__ == "__main__":
     
     # Test basic calculation
     result = calculator.calculate_usage_charge(Decimal('100.0'), Decimal('0.10'))
-    print(f"Usage charge test: {result}")
+logger.info(f"Usage charge test: {result}")
     assert result == Decimal('10.000000')
     
     # Test proration
     result = calculator.calculate_monthly_service_charge(
         Decimal('79.99'), 15, 30, Decimal('0.08')
     )
-    print(f"Proration test: {result}")
+logger.info(f"Proration test: {result}")
     
-    print("✅ All basic tests passed!")
+logger.info("✅ All basic tests passed!")

@@ -16,6 +16,7 @@ class OmnichannelCache:
     """Omnichannel-specific caching layer."""
 
     def __init__(self):
+        """  Init   operation."""
         self.cache = CacheManager()
         self.namespace = "omnichannel"
 

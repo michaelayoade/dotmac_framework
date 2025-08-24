@@ -115,6 +115,7 @@ class AnsiblePlaybook(TenantModel, StatusMixin, AuditMixin):
     templates = relationship("ConfigurationTemplate", back_populates="playbook")
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<AnsiblePlaybook(name='{self.name}', type='{self.playbook_type}')>"
 
 
@@ -180,6 +181,7 @@ class PlaybookExecution(TenantModel, AuditMixin):
     playbook = relationship("AnsiblePlaybook", back_populates="executions")
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<PlaybookExecution(id='{self.execution_id}', status='{self.status}', playbook='{self.playbook.name if self.playbook else 'Unknown'}')>"
 
 
@@ -217,6 +219,7 @@ class DeviceInventory(TenantModel, StatusMixin, AuditMixin):
     custom_fields = Column(JSON, nullable=True)
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<DeviceInventory(name='{self.name}', type='{self.inventory_type}', hosts={self.host_count})>"
 
 
@@ -265,6 +268,7 @@ class ConfigurationTemplate(TenantModel, StatusMixin, AuditMixin):
     playbook = relationship("AnsiblePlaybook", back_populates="templates")
 
     def __repr__(self):
+        """  Repr   operation."""
         return (
             f"<ConfigurationTemplate(name='{self.name}', type='{self.template_type}')>"
         )
@@ -331,4 +335,5 @@ class AutomationTask(TenantModel, StatusMixin, AuditMixin):
     inventory = relationship("DeviceInventory")
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<AutomationTask(name='{self.name}', type='{self.task_type}', status='{self.status}')>"

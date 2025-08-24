@@ -859,6 +859,7 @@ class TestBillingTenantIsolation:
         with patch.object(billing_service, '_get_tenant_billing_config') as mock_config:
             # Mock different configs per tenant
             def config_side_effect(tenant_id):
+                """Config Side Effect operation."""
                 if tenant_id == 'tenant_001':
                     return tenant1_config
                 else:

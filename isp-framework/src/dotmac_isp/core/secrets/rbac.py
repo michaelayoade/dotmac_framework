@@ -85,6 +85,7 @@ class Permission:
     conditions: dict[str, Any] | None = None
 
     def __str__(self) -> str:
+        """  Str   operation."""
         return f"{self.resource_type.value}:{self.action.value}"
 
     def matches(self, resource_type: str, action: str) -> bool:
@@ -162,6 +163,7 @@ class AccessRequest:
     context: dict[str, Any] | None = None
 
     def __str__(self) -> str:
+        """  Str   operation."""
         resource_ref = (
             f"{self.resource_type}:{self.resource_id}"
             if self.resource_id
@@ -242,6 +244,7 @@ class PolicyEngine:
     """Policy evaluation engine"""
 
     def __init__(self):
+        """  Init   operation."""
         self.rules: dict[str, PolicyRule] = {}
         self.rule_cache: dict[str, tuple[bool, datetime]] = {}
         self.cache_ttl = timedelta(minutes=5)
@@ -291,6 +294,7 @@ class RBACManager:
     """Main RBAC management system"""
 
     def __init__(self):
+        """  Init   operation."""
         self.permissions: dict[str, Permission] = {}
         self.roles: dict[str, Role] = {}
         self.subjects: dict[str, Subject] = {}
@@ -846,6 +850,7 @@ class RBACManager:
         """Get role hierarchy visualization"""
 
         def build_hierarchy(
+            """Build Hierarchy operation."""
             role_id: str, visited: set[str] | None = None
         ) -> dict[str, Any]:
             if visited is None:
@@ -923,7 +928,9 @@ def require_permission(
     """Decorator to enforce RBAC permissions on functions"""
 
     def decorator(func):
+        """Decorator operation."""
         async def async_wrapper(*args, **kwargs):
+            """Async Wrapper operation."""
             # Extract RBAC manager and subject from kwargs
             rbac_manager = kwargs.get(rbac_manager_key)
             subject_id = kwargs.get("subject_id") or kwargs.get("user_id")
@@ -944,6 +951,7 @@ def require_permission(
                 return await func(*args, **kwargs)
 
         def sync_wrapper(*args, **kwargs):
+            """Sync Wrapper operation."""
             return asyncio.run(async_wrapper(*args, **kwargs))
 
         return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper
@@ -955,7 +963,9 @@ def require_role(role_id: str, rbac_manager_key: str = "rbac_manager"):
     """Decorator to require specific role"""
 
     def decorator(func):
+        """Decorator operation."""
         async def async_wrapper(*args, **kwargs):
+            """Async Wrapper operation."""
             rbac_manager = kwargs.get(rbac_manager_key)
             subject_id = kwargs.get("subject_id") or kwargs.get("user_id")
 
@@ -969,6 +979,7 @@ def require_role(role_id: str, rbac_manager_key: str = "rbac_manager"):
             return await func(*args, **kwargs)
 
         def sync_wrapper(*args, **kwargs):
+            """Sync Wrapper operation."""
             return asyncio.run(async_wrapper(*args, **kwargs))
 
         return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper

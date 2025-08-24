@@ -36,6 +36,7 @@ class EqualsStrategy(ConditionStrategy):
         return field_value == expected_value
     
     def get_operator_name(self) -> str:
+        """Get Operator Name operation."""
         return "equals"
 
 
@@ -47,6 +48,7 @@ class NotEqualsStrategy(ConditionStrategy):
         return field_value != expected_value
     
     def get_operator_name(self) -> str:
+        """Get Operator Name operation."""
         return "not_equals"
 
 
@@ -63,6 +65,7 @@ class GreaterThanStrategy(ConditionStrategy):
             return False
     
     def get_operator_name(self) -> str:
+        """Get Operator Name operation."""
         return "greater_than"
 
 
@@ -79,6 +82,7 @@ class LessThanStrategy(ConditionStrategy):
             return False
     
     def get_operator_name(self) -> str:
+        """Get Operator Name operation."""
         return "less_than"
 
 
@@ -95,6 +99,7 @@ class GreaterEqualStrategy(ConditionStrategy):
             return False
     
     def get_operator_name(self) -> str:
+        """Get Operator Name operation."""
         return "greater_equal"
 
 
@@ -111,6 +116,7 @@ class LessEqualStrategy(ConditionStrategy):
             return False
     
     def get_operator_name(self) -> str:
+        """Get Operator Name operation."""
         return "less_equal"
 
 
@@ -127,6 +133,7 @@ class ContainsStrategy(ConditionStrategy):
             return False
     
     def get_operator_name(self) -> str:
+        """Get Operator Name operation."""
         return "contains"
 
 
@@ -143,6 +150,7 @@ class NotContainsStrategy(ConditionStrategy):
             return False
     
     def get_operator_name(self) -> str:
+        """Get Operator Name operation."""
         return "not_contains"
 
 
@@ -159,6 +167,7 @@ class InStrategy(ConditionStrategy):
             return False
     
     def get_operator_name(self) -> str:
+        """Get Operator Name operation."""
         return "in"
 
 
@@ -175,6 +184,7 @@ class NotInStrategy(ConditionStrategy):
             return False
     
     def get_operator_name(self) -> str:
+        """Get Operator Name operation."""
         return "not_in"
 
 
@@ -186,6 +196,7 @@ class ExistsStrategy(ConditionStrategy):
         return field_value is not None
     
     def get_operator_name(self) -> str:
+        """Get Operator Name operation."""
         return "exists"
 
 
@@ -197,6 +208,7 @@ class NotExistsStrategy(ConditionStrategy):
         return field_value is None
     
     def get_operator_name(self) -> str:
+        """Get Operator Name operation."""
         return "not_exists"
 
 
@@ -215,6 +227,7 @@ class RegexStrategy(ConditionStrategy):
             return False
     
     def get_operator_name(self) -> str:
+        """Get Operator Name operation."""
         return "regex"
 
 

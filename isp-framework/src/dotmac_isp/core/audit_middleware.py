@@ -38,6 +38,7 @@ class AuditMiddleware(BaseHTTPMiddleware):
     """Middleware for comprehensive audit logging of HTTP requests."""
 
     def __init__(
+        """  Init   operation."""
         self, app, exclude_paths: list = None, sensitive_endpoints: list = None
     ):
         super().__init__(app)
@@ -334,6 +335,7 @@ class DatabaseAuditListener:
     """SQLAlchemy event listener for automatic database change auditing."""
 
     def __init__(self):
+        """  Init   operation."""
         self.tracked_tables = {
             "users",
             "customers",
@@ -487,6 +489,7 @@ class SecurityAuditMiddleware(BaseHTTPMiddleware):
     """Specialized middleware for security event auditing."""
 
     def __init__(self, app):
+        """  Init   operation."""
         super().__init__(app)
         self.failed_login_cache = {}
         self.rate_limit_cache = {}

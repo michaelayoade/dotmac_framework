@@ -326,10 +326,13 @@ class TestLeadScoringEngine:
     def test_add_custom_strategy(self):
         """Test adding custom scoring strategy."""
         class CustomStrategy:
+            """Class for CustomStrategy operations."""
             def calculate_score(self, lead_data):
+                """Calculate Score operation."""
                 return 42 if lead_data.get("custom_field") else 0
             
             def get_strategy_name(self):
+                """Get Strategy Name operation."""
                 return "Custom Test Strategy"
         
         original_count = len(self.engine.strategies)
@@ -359,10 +362,13 @@ class TestLeadScoringEngine:
     def test_strategy_error_handling(self):
         """Test error handling in scoring strategies."""
         class FailingStrategy:
+            """Class for FailingStrategy operations."""
             def calculate_score(self, lead_data):
+                """Calculate Score operation."""
                 raise ValueError("Strategy failed")
             
             def get_strategy_name(self):
+                """Get Strategy Name operation."""
                 return "Failing Strategy"
         
         self.engine.add_scoring_strategy(FailingStrategy())
@@ -440,10 +446,13 @@ class TestFactoryFunction:
     def test_create_engine_with_custom_strategies(self):
         """Test creating engine with custom strategies."""
         class CustomStrategy:
+            """Class for CustomStrategy operations."""
             def calculate_score(self, lead_data):
+                """Calculate Score operation."""
                 return 10
             
             def get_strategy_name(self):
+                """Get Strategy Name operation."""
                 return "Custom Strategy"
         
         custom_strategies = [CustomStrategy()]

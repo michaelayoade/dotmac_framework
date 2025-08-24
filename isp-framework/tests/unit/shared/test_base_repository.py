@@ -30,6 +30,7 @@ from sqlalchemy.ext.declarative import declarative_base
 TestBase = declarative_base()
 
 class TestModel(TestBase):
+    """Class for TestModel operations."""
     __tablename__ = 'test_model'
     
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -38,6 +39,7 @@ class TestModel(TestBase):
 
 
 class TestTenantModel(TestBase, TenantMixin):
+    """Class for TestTenantModel operations."""
     __tablename__ = 'test_tenant_model'
     
     id: Mapped[int] = mapped_column(Integer, primary_key=True)

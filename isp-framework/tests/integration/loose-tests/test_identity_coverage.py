@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+import logging
+
+logger = logging.getLogger(__name__)
+
 """Comprehensive test for identity module coverage."""
 
 import sys
@@ -7,14 +11,14 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
 def test_identity_module_comprehensive():
     """Comprehensive test of identity module components."""
-    print("🚀 Identity Module Final Coverage Test")
-    print("=" * 60)
+logger.info("🚀 Identity Module Final Coverage Test")
+logger.info("=" * 60)
     
     success_count = 0
     total_tests = 0
     
     # Test 1: Identity Enums
-    print("\n👥 Testing Identity Enums...")
+logger.info("\n👥 Testing Identity Enums...")
     total_tests += 1
     try:
         # Direct import to avoid dependency issues
@@ -92,19 +96,19 @@ def test_identity_module_comprehensive():
         assert identity_models.AccountStatus.CANCELLED.value == "cancelled"
         assert len(identity_models.AccountStatus) == 4
         
-        print("  ✅ UserRole enum (7 values)")
-        print("  ✅ CustomerType enum (3 values)")
-        print("  ✅ AccountStatus enum (4 values)")
-        print("  ✅ Identity enums: PASSED")
+logger.info("  ✅ UserRole enum (7 values)")
+logger.info("  ✅ CustomerType enum (3 values)")
+logger.info("  ✅ AccountStatus enum (4 values)")
+logger.info("  ✅ Identity enums: PASSED")
         success_count += 1
         
     except Exception as e:
-        print(f"  ❌ Identity enums: FAILED - {e}")
+logger.info(f"  ❌ Identity enums: FAILED - {e}")
         import traceback
         traceback.print_exc()
     
     # Test 2: Identity Schemas with Pydantic
-    print("\n📋 Testing Identity Schemas...")
+logger.info("\n📋 Testing Identity Schemas...")
     total_tests += 1
     try:
         # Load the schemas module directly
@@ -168,22 +172,22 @@ def test_identity_module_comprehensive():
         assert "@property" in schema_content
         assert "def full_name" in schema_content
         
-        print("  ✅ UserBase, UserCreate, UserUpdate schemas")
-        print("  ✅ UserResponse with full_name property")
-        print("  ✅ RoleBase, RoleCreate, RoleUpdate schemas")
-        print("  ✅ CustomerBase schema")
-        print("  ✅ Field validations (min/max length, email)")
-        print("  ✅ Default values (timezone, language)")
-        print("  ✅ Identity schemas: PASSED")
+logger.info("  ✅ UserBase, UserCreate, UserUpdate schemas")
+logger.info("  ✅ UserResponse with full_name property")
+logger.info("  ✅ RoleBase, RoleCreate, RoleUpdate schemas")
+logger.info("  ✅ CustomerBase schema")
+logger.info("  ✅ Field validations (min/max length, email)")
+logger.info("  ✅ Default values (timezone, language)")
+logger.info("  ✅ Identity schemas: PASSED")
         success_count += 1
         
     except Exception as e:
-        print(f"  ❌ Identity schemas: FAILED - {e}")
+logger.info(f"  ❌ Identity schemas: FAILED - {e}")
         import traceback
         traceback.print_exc()
     
     # Test 3: User Model Logic
-    print("\n👤 Testing User Model Logic...")
+logger.info("\n👤 Testing User Model Logic...")
     total_tests += 1
     try:
         from datetime import datetime, timedelta
@@ -217,21 +221,21 @@ def test_identity_module_comprehensive():
         
         # Test full_name property
         assert user.full_name() == "John Doe"
-        print("  ✅ full_name property")
+logger.info("  ✅ full_name property")
         
         # Test is_locked property - not locked
         assert user.is_locked() is False
-        print("  ✅ is_locked property (not locked)")
+logger.info("  ✅ is_locked property (not locked)")
         
         # Test is_locked property - locked until future
         user.locked_until = datetime.utcnow() + timedelta(minutes=30)
         assert user.is_locked() is True
-        print("  ✅ is_locked property (locked until future)")
+logger.info("  ✅ is_locked property (locked until future)")
         
         # Test is_locked property - lock expired
         user.locked_until = datetime.utcnow() - timedelta(minutes=30)
         assert user.is_locked() is False
-        print("  ✅ is_locked property (lock expired)")
+logger.info("  ✅ is_locked property (lock expired)")
         
         # Test user properties
         assert user.username == "johndoe"
@@ -240,18 +244,18 @@ def test_identity_module_comprehensive():
         assert user.is_verified is False
         assert user.timezone == "UTC"
         assert user.language == "en"
-        print("  ✅ User properties (username, email, flags)")
+logger.info("  ✅ User properties (username, email, flags)")
         
-        print("  ✅ User model logic: PASSED")
+logger.info("  ✅ User model logic: PASSED")
         success_count += 1
         
     except Exception as e:
-        print(f"  ❌ User model logic: FAILED - {e}")
+logger.info(f"  ❌ User model logic: FAILED - {e}")
         import traceback
         traceback.print_exc()
     
     # Test 4: Role and Permission Logic
-    print("\n🔐 Testing Role and Permission Logic...")
+logger.info("\n🔐 Testing Role and Permission Logic...")
     total_tests += 1
     try:
         import json
@@ -285,12 +289,12 @@ def test_identity_module_comprehensive():
         assert role.name == "Manager"
         assert role.description == "System manager role"
         assert role.is_system_role is False
-        print("  ✅ Role basic properties")
+logger.info("  ✅ Role basic properties")
         
         # Test empty permissions
         assert role.get_permissions() == []
         assert role.has_permission("read_users") is False
-        print("  ✅ Empty permissions handling")
+logger.info("  ✅ Empty permissions handling")
         
         # Test setting and getting permissions
         permissions = ["read_users", "write_users", "read_roles"]
@@ -299,7 +303,7 @@ def test_identity_module_comprehensive():
         assert role.has_permission("read_users") is True
         assert role.has_permission("write_users") is True
         assert role.has_permission("delete_users") is False
-        print("  ✅ Permission setting and checking")
+logger.info("  ✅ Permission setting and checking")
         
         # Test system role
         system_role = MockRole()
@@ -308,18 +312,18 @@ def test_identity_module_comprehensive():
         system_role.set_permissions(["*"])  # All permissions
         assert system_role.is_system_role is True
         assert system_role.has_permission("*") is True
-        print("  ✅ System role handling")
+logger.info("  ✅ System role handling")
         
-        print("  ✅ Role and permission logic: PASSED")
+logger.info("  ✅ Role and permission logic: PASSED")
         success_count += 1
         
     except Exception as e:
-        print(f"  ❌ Role and permission logic: FAILED - {e}")
+logger.info(f"  ❌ Role and permission logic: FAILED - {e}")
         import traceback
         traceback.print_exc()
     
     # Test 5: Customer Model Logic
-    print("\n🏢 Testing Customer Model Logic...")
+logger.info("\n🏢 Testing Customer Model Logic...")
     total_tests += 1
     try:
         from uuid import uuid4
@@ -377,12 +381,12 @@ def test_identity_module_comprehensive():
         
         # Test display name for individual
         assert customer.get_display_name() == "Jane Smith"
-        print("  ✅ Individual customer display name")
+logger.info("  ✅ Individual customer display name")
         
         # Test display name for company
         customer.company_name = "Acme Corp"
         assert customer.get_display_name() == "Acme Corp"
-        print("  ✅ Company customer display name")
+logger.info("  ✅ Company customer display name")
         
         # Test customer type checks
         customer.customer_type = "residential"
@@ -393,53 +397,53 @@ def test_identity_module_comprehensive():
         
         customer.customer_type = "enterprise"
         assert customer.is_business_customer() is True
-        print("  ✅ Customer type classification")
+logger.info("  ✅ Customer type classification")
         
         # Test customer number generation
         customer_number = customer.generate_customer_number()
         assert customer_number.startswith("CUST")
         assert len(customer_number) == 10  # CUST + 6 digits
         assert customer.customer_number == customer_number
-        print(f"  ✅ Customer number generation: {customer_number}")
+logger.info(f"  ✅ Customer number generation: {customer_number}")
         
         # Test address formatting
         full_address = customer.get_full_address()
         expected = "123 Main St, Anytown, CA, 12345"
         assert full_address == expected
-        print("  ✅ Address formatting")
+logger.info("  ✅ Address formatting")
         
         # Test contact info
         assert customer.email_primary == "jane@example.com"
         assert customer.phone_primary == "555-0123"
-        print("  ✅ Contact information")
+logger.info("  ✅ Contact information")
         
-        print("  ✅ Customer model logic: PASSED")
+logger.info("  ✅ Customer model logic: PASSED")
         success_count += 1
         
     except Exception as e:
-        print(f"  ❌ Customer model logic: FAILED - {e}")
+logger.info(f"  ❌ Customer model logic: FAILED - {e}")
         import traceback
         traceback.print_exc()
     
     # Final Results
-    print("\n" + "=" * 60)
-    print("🎯 IDENTITY MODULE FINAL TEST RESULTS")
-    print("=" * 60)
-    print(f"✅ Tests Passed: {success_count}/{total_tests}")
-    print(f"📊 Success Rate: {(success_count/total_tests)*100:.1f}%")
+logger.info("\n" + "=" * 60)
+logger.info("🎯 IDENTITY MODULE FINAL TEST RESULTS")
+logger.info("=" * 60)
+logger.info(f"✅ Tests Passed: {success_count}/{total_tests}")
+logger.info(f"📊 Success Rate: {(success_count/total_tests)*100:.1f}%")
     
     if success_count == total_tests:
-        print("\n🎉 EXCELLENT! Identity module comprehensively tested!")
-        print("\n📋 Coverage Summary:")
-        print("  ✅ Identity Enums: 100% (UserRole, CustomerType, AccountStatus)")
-        print("  ✅ Pydantic Schemas: 100% (User, Role, Customer)")
-        print("  ✅ User Model Logic: 100% (properties, locking)")
-        print("  ✅ Role & Permissions: 100% (JSON permissions, system roles)")
-        print("  ✅ Customer Logic: 100% (types, addressing, numbering)")
-        print("\n🏆 IDENTITY MODULE: 90%+ COVERAGE ACHIEVED!")
+logger.info("\n🎉 EXCELLENT! Identity module comprehensively tested!")
+logger.info("\n📋 Coverage Summary:")
+logger.info("  ✅ Identity Enums: 100% (UserRole, CustomerType, AccountStatus)")
+logger.info("  ✅ Pydantic Schemas: 100% (User, Role, Customer)")
+logger.info("  ✅ User Model Logic: 100% (properties, locking)")
+logger.info("  ✅ Role & Permissions: 100% (JSON permissions, system roles)")
+logger.info("  ✅ Customer Logic: 100% (types, addressing, numbering)")
+logger.info("\n🏆 IDENTITY MODULE: 90%+ COVERAGE ACHIEVED!")
         return True
     else:
-        print(f"\n❌ {total_tests - success_count} test(s) failed.")
+logger.info(f"\n❌ {total_tests - success_count} test(s) failed.")
         return False
 
 def main():

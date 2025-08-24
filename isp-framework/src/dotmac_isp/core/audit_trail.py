@@ -218,6 +218,7 @@ class AuditTrailManager:
     """Central manager for audit trail operations."""
 
     def __init__(self):
+        """  Init   operation."""
         self.cache_manager = get_cache_manager()
         self.current_context: Optional[AuditContext] = None
         self.sensitive_fields = {

@@ -569,6 +569,7 @@ if __name__ == "__main__":
     import asyncio
     
     async def main():
+        """Main operation."""
         parser = argparse.ArgumentParser(description="Unified Configuration System Management")
         parser.add_argument("--service", default="dotmac_framework", help="Service name")
         parser.add_argument("--status", action="store_true", help="Show system status")

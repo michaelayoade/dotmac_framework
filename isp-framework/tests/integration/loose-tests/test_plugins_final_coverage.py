@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+import logging
+
+logger = logging.getLogger(__name__)
+
 """Final comprehensive test for plugins module coverage."""
 
 import sys
@@ -7,14 +11,14 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
 def test_all_plugin_components():
     """Test all plugin system components for comprehensive coverage."""
-    print("🚀 Final Plugins Module Coverage Test")
-    print("=" * 60)
+logger.info("🚀 Final Plugins Module Coverage Test")
+logger.info("=" * 60)
     
     success_count = 0
     total_tests = 0
     
     # Test 1: Base Classes and Enums
-    print("\n📋 Testing Base Classes and Enums...")
+logger.info("\n📋 Testing Base Classes and Enums...")
     total_tests += 1
     try:
         from dotmac_isp.plugins.core.base import (
@@ -44,14 +48,14 @@ def test_all_plugin_components():
         assert context.get_metadata("test_key") == {"complex": "data"}
         assert context.get_metadata("missing", "default") == "default"
         
-        print("  ✅ Base classes and enums: PASSED")
+logger.info("  ✅ Base classes and enums: PASSED")
         success_count += 1
         
     except Exception as e:
-        print(f"  ❌ Base classes and enums: FAILED - {e}")
+logger.info(f"  ❌ Base classes and enums: FAILED - {e}")
     
     # Test 2: Plugin Exceptions
-    print("\n🚨 Testing Plugin Exceptions...")
+logger.info("\n🚨 Testing Plugin Exceptions...")
     total_tests += 1
     try:
         from dotmac_isp.plugins.core.exceptions import (
@@ -83,14 +87,14 @@ def test_all_plugin_components():
             exc = exc_class("test")
             assert isinstance(exc, PluginError)
         
-        print("  ✅ Plugin exceptions: PASSED")
+logger.info("  ✅ Plugin exceptions: PASSED")
         success_count += 1
         
     except Exception as e:
-        print(f"  ❌ Plugin exceptions: FAILED - {e}")
+logger.info(f"  ❌ Plugin exceptions: FAILED - {e}")
     
     # Test 3: Plugin Registry
-    print("\n📚 Testing Plugin Registry...")
+logger.info("\n📚 Testing Plugin Registry...")
     total_tests += 1
     try:
         from dotmac_isp.plugins.core.registry import PluginRegistry, plugin_registry
@@ -123,14 +127,14 @@ def test_all_plugin_components():
         assert plugin_registry is not None
         assert isinstance(plugin_registry, PluginRegistry)
         
-        print("  ✅ Plugin registry: PASSED")
+logger.info("  ✅ Plugin registry: PASSED")
         success_count += 1
         
     except Exception as e:
-        print(f"  ❌ Plugin registry: FAILED - {e}")
+logger.info(f"  ❌ Plugin registry: FAILED - {e}")
     
     # Test 4: Database Models
-    print("\n💾 Testing Database Models...")
+logger.info("\n💾 Testing Database Models...")
     total_tests += 1
     try:
         from dotmac_isp.plugins.core.models import (
@@ -266,16 +270,16 @@ def test_all_plugin_components():
         assert "PluginMetrics" in repr_str
         assert "name=cpu_usage" in repr_str
         
-        print("  ✅ Database models: PASSED")
+logger.info("  ✅ Database models: PASSED")
         success_count += 1
         
     except Exception as e:
-        print(f"  ❌ Database models: FAILED - {e}")
+logger.info(f"  ❌ Database models: FAILED - {e}")
         import traceback
         traceback.print_exc()
     
     # Test 5: Abstract Plugin Classes
-    print("\n🔗 Testing Abstract Plugin Classes...")
+logger.info("\n🔗 Testing Abstract Plugin Classes...")
     total_tests += 1
     try:
         # Test that abstract classes have correct abstract methods
@@ -294,37 +298,37 @@ def test_all_plugin_components():
         assert 'create_invoice' in billing_methods
         assert 'process_payment' in billing_methods
         
-        print("  ✅ Abstract plugin classes: PASSED")
+logger.info("  ✅ Abstract plugin classes: PASSED")
         success_count += 1
         
     except Exception as e:
-        print(f"  ❌ Abstract plugin classes: FAILED - {e}")
+logger.info(f"  ❌ Abstract plugin classes: FAILED - {e}")
     
     # Final Results
-    print("\n" + "=" * 60)
-    print(f"🎯 PLUGINS MODULE COVERAGE RESULTS")
-    print("=" * 60)
-    print(f"✅ Tests Passed: {success_count}/{total_tests}")
-    print(f"📊 Success Rate: {(success_count/total_tests)*100:.1f}%")
+logger.info("\n" + "=" * 60)
+logger.info(f"🎯 PLUGINS MODULE COVERAGE RESULTS")
+logger.info("=" * 60)
+logger.info(f"✅ Tests Passed: {success_count}/{total_tests}")
+logger.info(f"📊 Success Rate: {(success_count/total_tests)*100:.1f}%")
     
     if success_count == total_tests:
-        print("\n🎉 EXCELLENT! All plugin components tested successfully!")
-        print("\n📋 Coverage Summary:")
-        print("  ✅ Base Classes & Enums: 100%")
-        print("  ✅ Exception Hierarchy: 100%") 
-        print("  ✅ Plugin Registry: 100%")
-        print("  ✅ Database Models: 100%")
-        print("  ✅ Abstract Classes: 100%")
-        print("\n🏆 PLUGINS MODULE: 90%+ COVERAGE ACHIEVED!")
+logger.info("\n🎉 EXCELLENT! All plugin components tested successfully!")
+logger.info("\n📋 Coverage Summary:")
+logger.info("  ✅ Base Classes & Enums: 100%")
+logger.info("  ✅ Exception Hierarchy: 100%")
+logger.info("  ✅ Plugin Registry: 100%")
+logger.info("  ✅ Database Models: 100%")
+logger.info("  ✅ Abstract Classes: 100%")
+logger.info("\n🏆 PLUGINS MODULE: 90%+ COVERAGE ACHIEVED!")
         return True
     else:
-        print(f"\n❌ {total_tests - success_count} test(s) failed. Please review errors above.")
+logger.error(f"\n❌ {total_tests - success_count} test(s) failed. Please review errors above.")
         return False
 
 def run_direct_unit_tests():
     """Run unit tests directly to verify test files work."""
-    print("\n🧪 Running Direct Unit Tests...")
-    print("-" * 40)
+logger.info("\n🧪 Running Direct Unit Tests...")
+logger.info("-" * 40)
     
     try:
         # Test exceptions
@@ -339,7 +343,7 @@ def run_direct_unit_tests():
         test_dep.test_plugin_dependency_error_basic()
         test_dep.test_plugin_dependency_error_with_missing_deps()
         
-        print("  ✅ Exception tests executed successfully")
+logger.info("  ✅ Exception tests executed successfully")
         
         # Test base classes
         from unit.plugins.core.test_base import TestPluginStatus, TestPluginInfo, TestPluginContext
@@ -355,7 +359,7 @@ def run_direct_unit_tests():
         test_context.test_plugin_context_creation()
         test_context.test_plugin_context_metadata_operations()
         
-        print("  ✅ Base class tests executed successfully")
+logger.info("  ✅ Base class tests executed successfully")
         
         # Test models
         from unit.plugins.core.test_models import TestPluginStatusDB, TestPluginRegistryModel
@@ -366,12 +370,12 @@ def run_direct_unit_tests():
         test_registry_model = TestPluginRegistryModel()
         test_registry_model.test_plugin_registry_creation()
         
-        print("  ✅ Model tests executed successfully")
+logger.info("  ✅ Model tests executed successfully")
         
         return True
         
     except Exception as e:
-        print(f"  ❌ Direct unit tests failed: {e}")
+logger.info(f"  ❌ Direct unit tests failed: {e}")
         return False
 
 def main():
@@ -380,13 +384,13 @@ def main():
     test2_success = run_direct_unit_tests()
     
     if test1_success and test2_success:
-        print("\n" + "🎊" * 20)
-        print("🏆 PLUGINS MODULE TESTING COMPLETE!")
-        print("🎊" * 20)
-        print("\n✨ Ready to move to next module!")
+logger.info("\n" + "🎊" * 20)
+logger.info("🏆 PLUGINS MODULE TESTING COMPLETE!")
+logger.info("🎊" * 20)
+logger.info("\n✨ Ready to move to next module!")
         return True
     else:
-        print("\n❌ Some tests failed")
+logger.info("\n❌ Some tests failed")
         return False
 
 if __name__ == "__main__":

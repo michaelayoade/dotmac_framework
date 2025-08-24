@@ -292,7 +292,9 @@ class TestConfigQueryMatcher:
     def test_add_custom_filter_strategy(self):
         """Test adding custom filter strategy."""
         class CustomFilterStrategy:
+            """Class for CustomFilterStrategy operations."""
             def matches(self, config, query):
+                """Matches operation."""
                 return True
         
         original_count = len(self.matcher.strategies)

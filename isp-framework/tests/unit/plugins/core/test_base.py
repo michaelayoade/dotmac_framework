@@ -312,6 +312,7 @@ class TestPluginImplementation(BasePlugin):
     
     @property
     def plugin_info(self):
+        """Plugin Info operation."""
         return PluginInfo(
             id="test_plugin",
             name="Test Plugin",

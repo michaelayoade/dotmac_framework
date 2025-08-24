@@ -25,6 +25,7 @@ class MockVaultConfig:
     """Mock Vault configuration for testing."""
     
     def __init__(self, **kwargs):
+        """  Init   operation."""
         self.auth_method = kwargs.get('auth_method', 'token')
         self.token = SecretStr(kwargs.get('token', '')) if kwargs.get('token') else None
         self.role_id = SecretStr(kwargs.get('role_id', '')) if kwargs.get('role_id') else None

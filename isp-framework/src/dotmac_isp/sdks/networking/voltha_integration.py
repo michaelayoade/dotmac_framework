@@ -16,6 +16,7 @@ class VOLTHAClient:
     """Client for VOLTHA gRPC API (mock implementation)"""
 
     def __init__(self, voltha_endpoint: str):
+        """  Init   operation."""
         self.endpoint = voltha_endpoint
         self.connected = False
 
@@ -375,6 +376,7 @@ class VOLTHAIntegrationSDK:
     """Main SDK for VOLTHA integration with DotMac"""
 
     def __init__(self, voltha_endpoint: str, tenant_id: str):
+        """  Init   operation."""
         self.voltha_client = VOLTHAClient(voltha_endpoint)
         self.tenant_id = tenant_id
         self.device_cache: Dict[str, Dict[str, Any]] = {}
@@ -699,6 +701,7 @@ class VOLTHAIntegrationSDK:
         semaphore = asyncio.Semaphore(5)  # Max 5 concurrent provisions
 
         async def provision_single(request):
+            """Provision Single operation."""
             async with semaphore:
                 return await self.provision_subscriber_service(
                     olt_id=request["olt_id"],

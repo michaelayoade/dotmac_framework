@@ -32,6 +32,7 @@ class PartnerRepository:
     """Repository for partner database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 
@@ -262,6 +263,7 @@ class PartnerContactRepository:
     """Repository for partner contact database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 
@@ -351,6 +353,7 @@ class DealRegistrationRepository:
     """Repository for deal registration database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 
@@ -588,6 +591,7 @@ class CommissionRepository:
     """Repository for commission database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 
@@ -751,6 +755,7 @@ class PartnerAnalyticsRepository:
     """Repository for partner analytics and reporting."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 

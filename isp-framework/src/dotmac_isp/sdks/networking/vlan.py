@@ -14,6 +14,7 @@ class VLANService:
     """In-memory service for VLAN operations."""
 
     def __init__(self):
+        """  Init   operation."""
         self._vlans: Dict[int, Dict[str, Any]] = {}
         self._assignments: Dict[str, Dict[str, Any]] = {}
         self._site_vlans: Dict[str, List[int]] = {}
@@ -98,6 +99,7 @@ class VLANSDK:
     """Minimal, reusable SDK for VLAN management."""
 
     def __init__(self, tenant_id: str):
+        """  Init   operation."""
         self.tenant_id = tenant_id
         self._service = VLANService()
 

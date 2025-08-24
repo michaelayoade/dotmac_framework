@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+import logging
+
+logger = logging.getLogger(__name__)
+
 """Create initial admin user for DotMac ISP Framework."""
 
 import asyncio
@@ -15,36 +19,36 @@ try:
     from dotmac_isp.modules.identity.schemas import UserCreateSchema
     from dotmac_isp.shared.enums import UserRole
 except ImportError as e:
-    print(f"❌ Import error: {e}")
-    print("💡 Make sure you're in the project root and have installed dependencies:")
-    print("   pip install -e .")
+logger.error(f"❌ Import error: {e}")
+logger.info("💡 Make sure you're in the project root and have installed dependencies:")
+logger.info("   pip install -e .")
     sys.exit(1)
 
 
 async def create_admin_user():
     """Create the first admin user."""
-    print("🚀 DotMac ISP Framework - Create Admin User")
-    print("=" * 50)
+logger.info("🚀 DotMac ISP Framework - Create Admin User")
+logger.info("=" * 50)
     
     # Get user input with defaults
-    print("📝 Enter admin user details (press Enter for defaults)")
+logger.info("📝 Enter admin user details (press Enter for defaults)")
     tenant_id = input("Tenant ID [default]: ").strip() or "default"
     email = input("Admin email [admin@dotmac.local]: ").strip() or "admin@dotmac.local"
     
-    print(f"\n🔐 Password (or press Enter for default: 'admin123!')")
+logger.info(f"\n🔐 Password (or press Enter for default: 'admin123!')")
     password = getpass("Admin password: ").strip() or "admin123!"
     
     if len(password) < 8:
-        print("❌ Password must be at least 8 characters!")
+logger.info("❌ Password must be at least 8 characters!")
         sys.exit(1)
         
     first_name = input("First name [Admin]: ").strip() or "Admin"
     last_name = input("Last name [User]: ").strip() or "User"
     
-    print(f"\n📋 Creating user with:")
-    print(f"   Email: {email}")
-    print(f"   Tenant: {tenant_id}")
-    print(f"   Name: {first_name} {last_name}")
+logger.info(f"\n📋 Creating user with:")
+logger.info(f"   Email: {email}")
+logger.info(f"   Tenant: {tenant_id}")
+logger.info(f"   Name: {first_name} {last_name}")
     
     try:
         # Get database session
@@ -64,18 +68,18 @@ async def create_admin_user():
             
             user = await user_service.create_user(user_data.dict())
             
-            print(f"\n✅ Admin user created successfully!")
-            print(f"   📧 Email: {user.email}")
-            print(f"   👤 Role: {user.role}")
-            print(f"   🏢 Tenant: {tenant_id}")
-            print(f"   🆔 User ID: {user.id}")
+logger.info(f"\n✅ Admin user created successfully!")
+logger.info(f"   📧 Email: {user.email}")
+logger.info(f"   👤 Role: {user.role}")
+logger.info(f"   🏢 Tenant: {tenant_id}")
+logger.info(f"   🆔 User ID: {user.id}")
             
             # Create login instructions
-            print(f"\n🔐 Login Information:")
-            print(f"   📧 Email: {email}")
-            print(f"   🔑 Password: {password}")
-            print(f"   🌐 Login URL: http://localhost:8000/api/v1/auth/login")
-            print(f"   🎛️  Admin Portal: http://localhost:3000")
+logger.info(f"\n🔐 Login Information:")
+logger.info(f"   📧 Email: {email}")
+logger.info(f"   🔑 Password: {password}")
+logger.info(f"   🌐 Login URL: http://localhost:8000/api/v1/auth/login")
+logger.info(f"   🎛️  Admin Portal: http://localhost:3000")
             
             # Save credentials to file
             cred_file = "admin_credentials.txt"
@@ -89,16 +93,16 @@ async def create_admin_user():
                 f.write(f"Login URL: http://localhost:8000/api/v1/auth/login\n")
                 f.write(f"Admin Portal: http://localhost:3000\n")
             
-            print(f"\n💾 Credentials saved to: {cred_file}")
-            print(f"   ⚠️  Keep this file secure and delete after use!")
+logger.info(f"\n💾 Credentials saved to: {cred_file}")
+logger.info(f"   ⚠️  Keep this file secure and delete after use!")
             
             break
             
     except Exception as e:
-        print(f"❌ Failed to create admin user: {e}")
-        print(f"💡 Make sure PostgreSQL is running and database is initialized:")
-        print(f"   docker-compose up -d postgres")
-        print(f"   make setup-db")
+logger.info(f"❌ Failed to create admin user: {e}")
+logger.info(f"💡 Make sure PostgreSQL is running and database is initialized:")
+logger.info(f"   docker-compose up -d postgres")
+logger.info(f"   make setup-db")
         sys.exit(1)
 
 

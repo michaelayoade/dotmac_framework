@@ -14,6 +14,7 @@ class CustomerPortalService:
     """In-memory service for customer portal operations."""
 
     def __init__(self):
+        """  Init   operation."""
         self._bindings: Dict[UUID, CustomerPortalBinding] = {}
         self._portal_bindings: Dict[UUID, List[UUID]] = {}
         self._customer_bindings: Dict[UUID, List[UUID]] = {}
@@ -81,6 +82,7 @@ class CustomerPortalSDK:
     """Small, composable SDK for customer portal binding and login policies."""
 
     def __init__(self, tenant_id: str):
+        """  Init   operation."""
         self.tenant_id = tenant_id
         self._service = CustomerPortalService()
 

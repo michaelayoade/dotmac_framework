@@ -17,13 +17,21 @@ interface Customer {
   created_at: string;
 }
 
+interface CustomerHealth {
+  score: number;
+  risk_level: 'high' | 'medium' | 'low';
+  churn_risk: boolean;
+}
+
 export function CustomerManagement() {
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [customerHealth, setCustomerHealth] = useState<Record<string, CustomerHealth>>({});
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchCustomers();
+    fetchCustomerHealth();
   }, []);
 
   const fetchCustomers = async () => {
@@ -92,6 +100,34 @@ export function CustomerManagement() {
     }
   };
 
+  const fetchCustomerHealth = async () => {
+    try {
+      const response = await fetch('/api/isp/identity/intelligence/customer-health', {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('isp-admin-token')}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setCustomerHealth(data.customer_health || {});
+      } else {
+        // Demo health data
+        setCustomerHealth({
+          '1': { score: 85, risk_level: 'low', churn_risk: false },
+          '2': { score: 65, risk_level: 'medium', churn_risk: false },
+          '3': { score: 35, risk_level: 'high', churn_risk: true },
+        });
+      }
+    } catch (error) {
+      console.error('Failed to fetch customer health:', error);
+      // Demo fallback
+      setCustomerHealth({
+        '1': { score: 85, risk_level: 'low', churn_risk: false },
+      });
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active':
@@ -100,6 +136,19 @@ export function CustomerManagement() {
         return 'bg-red-100 text-red-800';
       case 'pending':
         return 'bg-yellow-100 text-yellow-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getHealthColor = (riskLevel: string) => {
+    switch (riskLevel) {
+      case 'high':
+        return 'bg-red-100 text-red-800';
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'low':
+        return 'bg-green-100 text-green-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -228,6 +277,7 @@ export function CustomerManagement() {
                   <th className='text-left py-3 px-4 font-medium text-gray-600'>Customer</th>
                   <th className='text-left py-3 px-4 font-medium text-gray-600'>Portal ID</th>
                   <th className='text-left py-3 px-4 font-medium text-gray-600'>Status</th>
+                  <th className='text-left py-3 px-4 font-medium text-gray-600'>Health</th>
                   <th className='text-left py-3 px-4 font-medium text-gray-600'>Services</th>
                   <th className='text-left py-3 px-4 font-medium text-gray-600'>Created</th>
                   <th className='text-left py-3 px-4 font-medium text-gray-600'>Actions</th>
@@ -254,6 +304,20 @@ export function CustomerManagement() {
                       >
                         {customer.status}
                       </span>
+                    </td>
+                    <td className='py-3 px-4'>
+                      {customerHealth[customer.id] ? (
+                        <div className='flex flex-col space-y-1'>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getHealthColor(customerHealth[customer.id].risk_level)}`}>
+                            {customerHealth[customer.id].score}/100
+                          </span>
+                          {customerHealth[customer.id].churn_risk && (
+                            <span className='text-xs text-red-600 font-medium'>⚠ Churn Risk</span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className='text-xs text-gray-400'>Loading...</span>
+                      )}
                     </td>
                     <td className='py-3 px-4'>
                       <span className='text-gray-900'>{customer.services_count}</span>

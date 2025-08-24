@@ -73,6 +73,7 @@ class ManagementPlatformClient:
     """Client for communicating with DotMac Management Platform."""
 
     def __init__(self):
+        """  Init   operation."""
         self.settings = get_settings()
         self.base_url = os.getenv(
             "MANAGEMENT_PLATFORM_URL", "http://management-platform:8000"

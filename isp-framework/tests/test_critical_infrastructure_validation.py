@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 """
 Critical infrastructure validation tests.
 
@@ -295,4 +299,4 @@ class TestComprehensiveTestCoverageValidation:
             assert metrics["exists"], f"Critical area '{area}' has no test coverage"
             assert metrics["size"] > 10000, f"Critical area '{area}' has insufficient test coverage"
         
-        print(f"ISP Platform Test Coverage Report: {coverage_report}")
+logger.info(f"ISP Platform Test Coverage Report: {coverage_report}")

@@ -147,6 +147,7 @@ class ComplianceRequirement(TenantModel, StatusMixin, AuditMixin):
     )
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<ComplianceRequirement(code='{self.requirement_code}', framework='{self.framework}')>"
 
 
@@ -217,6 +218,7 @@ class ComplianceAssessment(TenantModel, AuditMixin):
         ]
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<ComplianceAssessment(id='{self.assessment_id}', status='{self.result_status}')>"
 
 
@@ -303,6 +305,7 @@ class ComplianceFinding(TenantModel, AuditMixin):
         )
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<ComplianceFinding(id='{self.finding_id}', severity='{self.severity}', status='{self.status}')>"
 
 
@@ -389,6 +392,7 @@ class ComplianceAudit(TenantModel, AuditMixin):
         return date.today() > self.planned_end_date
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<ComplianceAudit(id='{self.audit_id}', type='{self.audit_type}', status='{self.status}')>"
 
 
@@ -460,6 +464,7 @@ class CompliancePolicy(TenantModel, StatusMixin, AuditMixin):
         return self.expiry_date and date.today() > self.expiry_date
 
     def __repr__(self):
+        """  Repr   operation."""
         return (
             f"<CompliancePolicy(number='{self.policy_number}', title='{self.title}')>"
         )
@@ -529,4 +534,5 @@ class ComplianceReport(TenantModel, AuditMixin):
         )
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<ComplianceReport(id='{self.report_id}', type='{self.report_type}')>"

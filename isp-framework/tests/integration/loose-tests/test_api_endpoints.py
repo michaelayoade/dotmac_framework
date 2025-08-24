@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 """Test API endpoints with database backend."""
 
 import requests
@@ -8,45 +12,45 @@ BASE_URL = "http://localhost:8001"
 
 def test_health_endpoint():
     """Test the health endpoint."""
-    print("🔍 Testing health endpoint...")
+logger.info("🔍 Testing health endpoint...")
     
     try:
         response = requests.get(f"{BASE_URL}/health")
         if response.status_code == 200:
             data = response.json()
-            print("✅ Health endpoint working")
-            print(f"   Status: {data.get('status')}")
-            print(f"   Service: {data.get('service')}")
+logger.info("✅ Health endpoint working")
+logger.info(f"   Status: {data.get('status')}")
+logger.info(f"   Service: {data.get('service')}")
             return True
         else:
-            print(f"❌ Health endpoint failed: {response.status_code}")
+logger.info(f"❌ Health endpoint failed: {response.status_code}")
             return False
     except Exception as e:
-        print(f"❌ Health endpoint error: {e}")
+logger.error(f"❌ Health endpoint error: {e}")
         return False
 
 def test_openapi_docs():
     """Test OpenAPI documentation endpoint."""
-    print("\n🔍 Testing OpenAPI docs...")
+logger.info("\n🔍 Testing OpenAPI docs...")
     
     try:
         response = requests.get(f"{BASE_URL}/openapi.json")
         if response.status_code == 200:
             data = response.json()
-            print("✅ OpenAPI docs accessible")
-            print(f"   Title: {data.get('info', {}).get('title')}")
-            print(f"   Paths: {len(data.get('paths', {}))}")
+logger.info("✅ OpenAPI docs accessible")
+logger.info(f"   Title: {data.get('info', {}).get('title')}")
+logger.info(f"   Paths: {len(data.get('paths', {}))}")
             return True
         else:
-            print(f"❌ OpenAPI docs failed: {response.status_code}")
+logger.info(f"❌ OpenAPI docs failed: {response.status_code}")
             return False
     except Exception as e:
-        print(f"❌ OpenAPI docs error: {e}")
+logger.error(f"❌ OpenAPI docs error: {e}")
         return False
 
 def test_customer_endpoints_direct():
     """Test customer endpoints using direct database calls."""
-    print("\n🔍 Testing customer endpoints with database backend...")
+logger.info("\n🔍 Testing customer endpoints with database backend...")
     
     # Use our proven database-backed service directly
     import sys
@@ -74,29 +78,29 @@ def test_customer_endpoints_direct():
             phone="+1999888777"
         )
         
-        print("Creating customer directly via service...")
+logger.info("Creating customer directly via service...")
         result = asyncio.run(service.create_customer(customer_data))
         
-        print("✅ Customer created successfully via database backend!")
-        print(f"   Portal ID: {result.portal_id}")
-        print(f"   Portal Password: {result.portal_password}")
-        print(f"   Customer Number: {result.customer_number}")
-        print(f"   Customer Type: {result.customer_type}")
+logger.info("✅ Customer created successfully via database backend!")
+logger.info(f"   Portal ID: {result.portal_id}")
+logger.info(f"   Portal Password: {result.portal_password}")
+logger.info(f"   Customer Number: {result.customer_number}")
+logger.info(f"   Customer Type: {result.customer_type}")
         
         # Test customer retrieval
         from dotmac_isp.modules.identity.repository import CustomerRepository
         repo = CustomerRepository(db, service.tenant_id)
         
         customers = repo.list(limit=5)
-        print(f"✅ Found {len(customers)} customers in database")
+logger.info(f"✅ Found {len(customers)} customers in database")
         for customer in customers[:3]:  # Show first 3
-            print(f"   - {customer.customer_number}: {customer.display_name} (Portal: {customer.portal_id})")
+logger.info(f"   - {customer.customer_number}: {customer.display_name} (Portal: {customer.portal_id})")
         
         db.close()
         return True
         
     except Exception as e:
-        print(f"❌ Direct database test failed: {e}")
+logger.info(f"❌ Direct database test failed: {e}")
         import traceback
         traceback.print_exc()
         if 'db' in locals():
@@ -105,7 +109,7 @@ def test_customer_endpoints_direct():
 
 def main():
     """Run all API tests."""
-    print("🧪 Testing API Endpoints with Database Backend\n")
+logger.info("🧪 Testing API Endpoints with Database Backend\n")
     
     success_count = 0
     total_tests = 0
@@ -125,20 +129,20 @@ def main():
     if test_customer_endpoints_direct():
         success_count += 1
     
-    print(f"\n📊 Test Results: {success_count}/{total_tests} tests passed")
+logger.info(f"\n📊 Test Results: {success_count}/{total_tests} tests passed")
     
     if success_count == total_tests:
-        print("🎉 ALL TESTS PASSED - API and Database Integration Working!")
-        print("\n✨ Summary:")
-        print("   ✅ Server is running and accessible")
-        print("   ✅ Health endpoint operational")
-        print("   ✅ Swagger documentation available")
-        print("   ✅ Customer creation with database persistence")
-        print("   ✅ Portal ID and password generation")
-        print("   ✅ Database retrieval and listing")
-        print("\n🚀 Ready for production use!")
+logger.info("🎉 ALL TESTS PASSED - API and Database Integration Working!")
+logger.info("\n✨ Summary:")
+logger.info("   ✅ Server is running and accessible")
+logger.info("   ✅ Health endpoint operational")
+logger.info("   ✅ Swagger documentation available")
+logger.info("   ✅ Customer creation with database persistence")
+logger.info("   ✅ Portal ID and password generation")
+logger.info("   ✅ Database retrieval and listing")
+logger.info("\n🚀 Ready for production use!")
     else:
-        print("⚠️  Some tests failed - check configuration")
+logger.info("⚠️  Some tests failed - check configuration")
 
 if __name__ == "__main__":
     main()

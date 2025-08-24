@@ -20,6 +20,7 @@ class GatewayAnalyticsService:
     """In-memory service for gateway analytics operations."""
 
     def __init__(self):
+        """  Init   operation."""
         self._metrics: Dict[str, List[Dict[str, Any]]] = {}
         self._usage_stats: Dict[str, Dict[str, Any]] = {}
         self._error_logs: Dict[str, List[Dict[str, Any]]] = {}
@@ -207,6 +208,7 @@ class GatewayAnalyticsSDK:
     """SDK for gateway analytics and monitoring."""
 
     def __init__(self, tenant_id: str):
+        """  Init   operation."""
         self.tenant_id = tenant_id
         self._service = GatewayAnalyticsService()
 

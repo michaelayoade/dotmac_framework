@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+import logging
+
+logger = logging.getLogger(__name__)
+
 """
 Quality Assurance Automation Suite
 
@@ -155,7 +159,7 @@ class QualityAssuranceAutomation:
                     file_config = yaml.safe_load(f)
                 default_config.update(file_config)
             except Exception as e:
-                print(f"Warning: Could not load config file {config_file}: {e}")
+logger.warning(f"Warning: Could not load config file {config_file}: {e}")
         
         return default_config
     
@@ -171,8 +175,8 @@ class QualityAssuranceAutomation:
         if fail_fast is None:
             fail_fast = self.config.get('fail_fast', True)
         
-        print("🚀 Starting Comprehensive Quality Assurance Analysis")
-        print("=" * 60)
+logger.info("🚀 Starting Comprehensive Quality Assurance Analysis")
+logger.info("=" * 60)
         
         report_start = datetime.utcnow()
         gate_results = []
@@ -181,11 +185,11 @@ class QualityAssuranceAutomation:
         # Execute all enabled quality gates
         for gate_name, gate_config in self.quality_gates.items():
             if not gate_config['enabled']:
-                print(f"⏭️  Skipping {gate_name} (disabled)")
+logger.info(f"⏭️  Skipping {gate_name} (disabled)")
                 continue
             
-            print(f"\n🔍 Running {gate_name.replace('_', ' ').title()}")
-            print("-" * 40)
+logger.info(f"\n🔍 Running {gate_name.replace('_', ' ').title()}")
+logger.info("-" * 40)
             
             gate_result = self._run_quality_gate(gate_name, gate_config)
             gate_results.append(gate_result)
@@ -198,7 +202,7 @@ class QualityAssuranceAutomation:
                 QualityGateStatus.SKIPPED: "⏭️"
             }[gate_result.status]
             
-            print(f"{status_icon} {gate_name}: {gate_result.status.value.upper()} "
+logger.info(f"{status_icon} {gate_name}: {gate_result.status.value.upper()
                   f"({gate_result.duration_seconds:.1f}s)")
             
             if gate_result.issues:
@@ -208,14 +212,14 @@ class QualityAssuranceAutomation:
                                if issue.severity == QualitySeverity.HIGH)
                 
                 if critical_count > 0:
-                    print(f"  🔴 {critical_count} critical issues")
+logger.info(f"  🔴 {critical_count} critical issues")
                 if high_count > 0:
-                    print(f"  🟡 {high_count} high priority issues")
+logger.info(f"  🟡 {high_count} high priority issues")
             
             # Check if we should fail fast
             if (gate_result.status == QualityGateStatus.FAILED and 
                 gate_config['blocking'] and fail_fast):
-                print(f"\n❌ QUALITY GATE FAILURE: {gate_name} failed (blocking)")
+logger.info(f"\n❌ QUALITY GATE FAILURE: {gate_name} failed (blocking)")
                 overall_status = QualityGateStatus.FAILED
                 break
             
@@ -274,7 +278,7 @@ class QualityAssuranceAutomation:
             status, issues, metrics = gate_method()
             
         except Exception as e:
-            print(f"Error executing {gate_name}: {e}")
+logger.error(f"Error executing {gate_name}: {e}")
             status = QualityGateStatus.FAILED
             issues = [QualityIssue(
                 file_path="system",
@@ -399,7 +403,7 @@ class QualityAssuranceAutomation:
                                 fix_suggestion="Use environment variables or secure secret management"
                             ))
             except Exception as e:
-                print(f"Warning: Could not scan file {py_file}: {e}")
+logger.warning(f"Warning: Could not scan file {py_file}: {e}")
         
         critical_issues = [i for i in issues if i.severity == QualitySeverity.CRITICAL]
         
@@ -567,7 +571,7 @@ class QualityAssuranceAutomation:
                     with open(coverage_file, 'r') as f:
                         coverage_data = json.load(f)
                 except Exception as e:
-                    print(f"Warning: Could not read coverage data: {e}")
+logger.warning(f"Warning: Could not read coverage data: {e}")
             
             total_coverage = coverage_data.get('totals', {}).get('percent_covered', 0)
             
@@ -878,7 +882,7 @@ class QualityAssuranceAutomation:
         latest_json.symlink_to(json_file.name)
         latest_text.symlink_to(text_file.name)
         
-        print(f"\n📊 Quality report saved to {json_file}")
+logger.info(f"\n📊 Quality report saved to {json_file}")
     
     def _format_text_report(self, report: QualityReport) -> str:
         """Format report as human-readable text."""
@@ -940,9 +944,9 @@ class QualityAssuranceAutomation:
     
     def _display_summary(self, report: QualityReport) -> None:
         """Display summary of quality assessment."""
-        print("\n" + "=" * 60)
-        print("QUALITY ASSURANCE SUMMARY")
-        print("=" * 60)
+logger.info("\n" + "=" * 60)
+logger.info("QUALITY ASSURANCE SUMMARY")
+logger.info("=" * 60)
         
         # Overall status
         status_icons = {
@@ -951,27 +955,27 @@ class QualityAssuranceAutomation:
             QualityGateStatus.WARNING: "⚠️"
         }
         
-        print(f"Overall Status: {status_icons[report.overall_status]} {report.overall_status.value.upper()}")
+logger.info(f"Overall Status: {status_icons[report.overall_status]} {report.overall_status.value.upper()}")
         
         # Metrics
         metrics = report.summary_metrics
-        print(f"Quality Score: {metrics.get('quality_score', 0):.1f}/100")
-        print(f"Gates Passed: {metrics.get('passed_gates', 0)}/{metrics.get('total_gates', 0)}")
+logger.info(f"Quality Score: {metrics.get('quality_score', 0):.1f}/100")
+logger.info(f"Gates Passed: {metrics.get('passed_gates', 0)}/{metrics.get('total_gates', 0)}")
         
         if metrics.get('critical_issues', 0) > 0:
-            print(f"🔴 Critical Issues: {metrics['critical_issues']} (MUST FIX)")
+logger.info(f"🔴 Critical Issues: {metrics['critical_issues']} (MUST FIX)")
         
         if metrics.get('total_issues', 0) > 0:
-            print(f"📋 Total Issues: {metrics['total_issues']}")
+logger.info(f"📋 Total Issues: {metrics['total_issues']}")
         
-        print(f"⏱️  Total Duration: {metrics.get('total_duration_seconds', 0):.1f}s")
+logger.info(f"⏱️  Total Duration: {metrics.get('total_duration_seconds', 0):.1f}s")
         
         # Top recommendations
-        print("\nTOP RECOMMENDATIONS:")
+logger.info("\nTOP RECOMMENDATIONS:")
         for i, rec in enumerate(report.recommendations[:3], 1):
-            print(f"{i}. {rec}")
+logger.info(f"{i}. {rec}")
         
-        print("=" * 60)
+logger.info("=" * 60)
 
 
 def main():
@@ -1019,23 +1023,23 @@ def main():
         
         # Exit with appropriate code
         if report.overall_status == QualityGateStatus.FAILED:
-            print("\n❌ QUALITY ASSURANCE FAILED")
-            print("Code does not meet quality standards and cannot be deployed.")
+logger.info("\n❌ QUALITY ASSURANCE FAILED")
+logger.info("Code does not meet quality standards and cannot be deployed.")
             sys.exit(1)
         elif report.overall_status == QualityGateStatus.WARNING:
-            print("\n⚠️  QUALITY ASSURANCE PASSED WITH WARNINGS")
-            print("Consider addressing warnings before deployment.")
+logger.warning("\n⚠️  QUALITY ASSURANCE PASSED WITH WARNINGS")
+logger.warning("Consider addressing warnings before deployment.")
             sys.exit(0)
         else:
-            print("\n✅ QUALITY ASSURANCE PASSED")
-            print("Code meets all quality standards.")
+logger.info("\n✅ QUALITY ASSURANCE PASSED")
+logger.info("Code meets all quality standards.")
             sys.exit(0)
             
     except KeyboardInterrupt:
-        print("\n⏹️  Quality assurance interrupted by user")
+logger.info("\n⏹️  Quality assurance interrupted by user")
         sys.exit(130)
     except Exception as e:
-        print(f"\n💥 Quality assurance system error: {e}")
+logger.error(f"\n💥 Quality assurance system error: {e}")
         sys.exit(1)
 
 

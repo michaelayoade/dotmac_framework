@@ -157,6 +157,7 @@ def require_permissions(required_permissions: List[str]):
     """Decorator factory to require specific permissions."""
 
     def decorator(current_user: dict = Depends(get_current_user_from_token)):
+        """Decorator operation."""
         user_permissions = current_user.permissions or []
 
         # Super admin has all permissions
@@ -182,6 +183,7 @@ def require_role(required_roles: Union[str, List[str]]):
         required_roles = [required_roles]
 
     def decorator(current_user: dict = Depends(get_current_user_from_token)):
+        """Decorator operation."""
         if current_user.role not in required_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -197,6 +199,7 @@ class AuthenticationError(HTTPException):
     """Authentication error exception."""
 
     def __init__(self, detail: str = "Could not validate credentials"):
+        """  Init   operation."""
         super().__init__(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=detail,
@@ -208,6 +211,7 @@ class AuthorizationError(HTTPException):
     """Authorization error exception."""
 
     def __init__(self, detail: str = "Insufficient permissions"):
+        """  Init   operation."""
         super().__init__(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=detail,

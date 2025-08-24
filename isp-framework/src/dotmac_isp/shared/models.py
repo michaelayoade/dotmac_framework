@@ -46,6 +46,7 @@ class TenantMixin:
 
     @declared_attr
     def tenant_id(cls):
+        """Tenant Id operation."""
         return Column(UUID(as_uuid=True), nullable=False, index=True)
 
 
@@ -57,6 +58,7 @@ class BaseModel(Base, TimestampMixin, SoftDeleteMixin):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4, index=True)
 
     def __repr__(self) -> str:
+        """  Repr   operation."""
         return f"<{self.__class__.__name__}(id={self.id})>"
 
 

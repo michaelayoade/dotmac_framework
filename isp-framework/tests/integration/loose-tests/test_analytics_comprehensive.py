@@ -53,6 +53,7 @@ class MockMetric:
     metadata: Dict[str, Any]
     
     def to_dict(self) -> Dict[str, Any]:
+        """To Dict operation."""
         return {
             "id": self.id,
             "tenant_id": self.tenant_id,

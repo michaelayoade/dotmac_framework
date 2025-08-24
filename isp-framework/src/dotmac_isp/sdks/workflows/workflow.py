@@ -99,6 +99,7 @@ class StepDefinition(BaseModel):
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Step metadata")
 
     class Config:
+        """Class for Config operations."""
         extra = "allow"
 
 
@@ -141,6 +142,7 @@ class WorkflowDefinition(BaseModel):
     @field_validator("steps")
     @classmethod
     def validate_steps(cls, v):
+        """Validate Steps operation."""
         if not v:
             raise ValueError("Workflow must have at least one step")
 
@@ -162,6 +164,7 @@ class WorkflowDefinition(BaseModel):
         return v
 
     class Config:
+        """Class for Config operations."""
         extra = "allow"
 
 
@@ -243,6 +246,7 @@ class WorkflowEngine:
     """Workflow execution engine."""
 
     def __init__(self):
+        """  Init   operation."""
         self.step_handlers: Dict[str, Callable] = {}
         self.condition_evaluator: Optional[Callable] = None
 
@@ -414,6 +418,7 @@ class WorkflowSDK:
     """SDK for workflow management and execution."""
 
     def __init__(self, tenant_id: str, storage_adapter=None):
+        """  Init   operation."""
         self.tenant_id = tenant_id
         self.storage_adapter = storage_adapter
         self.engine = WorkflowEngine()

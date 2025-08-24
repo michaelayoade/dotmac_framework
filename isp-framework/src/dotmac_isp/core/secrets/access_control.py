@@ -34,6 +34,7 @@ class AccessCacheManager:
     """Manages access control caching for performance optimization."""
 
     def __init__(self, cache_ttl: timedelta = timedelta(minutes=5)):
+        """  Init   operation."""
         self.cache: dict[str, tuple[AccessResponse, datetime]] = {}
         self.cache_ttl = cache_ttl
 
@@ -67,6 +68,7 @@ class PermissionMatcher:
     """Handles permission matching logic."""
 
     def __init__(self, permissions: dict[str, Permission]):
+        """  Init   operation."""
         self.permissions = permissions
 
     def find_matching_permission(
@@ -166,6 +168,7 @@ class AccessControlEvaluator:
     """Main access control evaluation orchestrator."""
 
     def __init__(
+        """  Init   operation."""
         self,
         subjects: dict[str, Subject],
         permissions: dict[str, Permission],

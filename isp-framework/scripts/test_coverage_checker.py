@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+import logging
+
+logger = logging.getLogger(__name__)
+
 """
 Test Coverage Checker
 
@@ -181,19 +185,19 @@ def main():
         project_root = Path.cwd()
     
     if not project_root.exists():
-        print(f"Error: Project root {project_root} does not exist")
+logger.error(f"Error: Project root {project_root} does not exist")
         sys.exit(1)
     
-    print(f"Analyzing test coverage for: {project_root}")
-    print()
+logger.info(f"Analyzing test coverage for: {project_root}")
+logger.info()
     
     report = generate_coverage_report(project_root)
-    print(report)
+logger.info(report)
     
     # Also save to file
     report_file = project_root / "test_coverage_report.txt"
     report_file.write_text(report)
-    print(f"\nReport saved to: {report_file}")
+logger.info(f"\nReport saved to: {report_file}")
 
 
 if __name__ == "__main__":

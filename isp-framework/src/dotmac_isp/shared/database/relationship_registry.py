@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 """Relationship registry for handling cross-module SQLAlchemy relationships.
 
 This module provides a way to register and configure cross-module relationships
@@ -38,7 +42,7 @@ class RelationshipRegistry:
             try:
                 configure_fn()
             except Exception as e:
-                print(f"Warning: Failed to configure relationship: {e}")
+logger.warning(f"Warning: Failed to configure relationship: {e}")
         
         self._configured = True
     

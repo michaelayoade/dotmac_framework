@@ -14,6 +14,7 @@ class UserProfileService:
     """In-memory service for user profile operations."""
 
     def __init__(self):
+        """  Init   operation."""
         self._profiles: Dict[UUID, UserProfile] = {}
         self._account_profiles: Dict[UUID, UUID] = {}
 
@@ -56,6 +57,7 @@ class UserProfileSDK:
     """Small, composable SDK for user profile management."""
 
     def __init__(self, tenant_id: str):
+        """  Init   operation."""
         self.tenant_id = tenant_id
         self._service = UserProfileService()
 

@@ -15,6 +15,7 @@ class IPAMService:
     """In-memory service for IPAM operations."""
 
     def __init__(self):
+        """  Init   operation."""
         self._networks: Dict[str, Dict[str, Any]] = {}
         self._allocations: Dict[str, Dict[str, Any]] = {}
         self._reservations: Dict[str, Dict[str, Any]] = {}
@@ -146,6 +147,7 @@ class IPAMSDK:
     """Minimal, reusable SDK for IP Address Management."""
 
     def __init__(self, tenant_id: str):
+        """  Init   operation."""
         self.tenant_id = tenant_id
         self._service = IPAMService()
 

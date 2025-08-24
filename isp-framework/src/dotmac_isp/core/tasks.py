@@ -16,7 +16,9 @@ if CELERY_AVAILABLE:
 else:
 
     class Task:
+        """Class for Task operations."""
         def __call__(self, *args, **kwargs):
+            """  Call   operation."""
             pass
 
 
@@ -176,48 +178,151 @@ async def renew_ssl_certificates(self):
         raise
 
 
+# ============================================================================
+# STRATEGIC PLUGIN-DRIVEN COMMUNICATION TASKS
+# Replaces hardcoded send_email_notification and send_sms_notification
+# with unified plugin-driven communication system
+# ============================================================================
+
+from dotmac_isp.core.communication_bridge import (
+    send_notification,
+    send_customer_notification, 
+    initialize_isp_communication_system
+)
+
+@celery_app.task(bind=True)
+async def send_channel_notification(
+    self, 
+    channel_type: str, 
+    recipient: str, 
+    content: str, 
+    metadata: Dict[str, Any] = None
+):
+    """
+    Send notification via strategic plugin system.
+    
+    Universal replacement for send_email_notification and send_sms_notification.
+    Supports ANY communication channel via plugins - no hardcoding.
+    """
+    try:
+        logger.info(f"Sending {channel_type} notification to {recipient}")
+
+        # Send via strategic plugin system - NO HARDCODED CHANNELS
+        result = await send_notification(
+            channel_type=channel_type,
+            recipient=recipient, 
+            content=content,
+            metadata=metadata or {}
+        )
+
+        if result.get("success"):
+            return {
+                "channel_type": channel_type,
+                "recipient": recipient,
+                "status": "sent",
+                "message_id": result.get("message_id"),
+                "provider": result.get("provider"),
+                "timestamp": datetime.utcnow().isoformat(),
+            }
+        else:
+            logger.error(f"Plugin system failed: {result.get('error')}")
+            raise Exception(f"Notification failed: {result.get('error')}")
+
+    except Exception as e:
+        logger.error(f"Failed to send {channel_type} notification to {recipient}: {e}")
+        raise
+
+
+@celery_app.task(bind=True) 
+async def send_customer_channel_notification(
+    self,
+    customer_id: str,
+    channel_type: str, 
+    template: str,
+    context: Dict[str, Any] = None
+):
+    """
+    Send notification to customer via strategic plugin system.
+    
+    ISP-specific task that integrates customer management with plugin system.
+    """
+    try:
+        logger.info(f"Sending {channel_type} notification to customer {customer_id} using template {template}")
+
+        result = await send_customer_notification(
+            customer_id=customer_id,
+            channel_type=channel_type,
+            template=template,
+            context=context or {}
+        )
+
+        if result.get("success"):
+            return {
+                "customer_id": customer_id,
+                "channel_type": channel_type,
+                "template": template,
+                "status": "sent",
+                "message_id": result.get("message_id"),
+                "provider": result.get("provider"),
+                "timestamp": datetime.utcnow().isoformat(),
+            }
+        else:
+            logger.error(f"Customer notification failed: {result.get('error')}")
+            raise Exception(f"Customer notification failed: {result.get('error')}")
+
+    except Exception as e:
+        logger.error(f"Failed to send {channel_type} notification to customer {customer_id}: {e}")
+        raise
+
+
+# ============================================================================  
+# BACKWARD COMPATIBILITY LAYER
+# Maintains existing API while migrating to plugin system
+# ============================================================================
+
 @celery_app.task(bind=True)
 def send_email_notification(
     self, recipient: str, subject: str, template: str, context: Dict[str, Any] = None
 ):
-    """Send email notification."""
-    try:
-        # This would integrate with an email service
-        logger.info(f"Sending email to {recipient}: {subject}")
-
-        # Placeholder for email sending logic
-        # In a real implementation, this would use SMTP or a service like SendGrid
-
-        return {
-            "recipient": recipient,
-            "subject": subject,
-            "status": "sent",
-            "timestamp": datetime.utcnow().isoformat(),
-        }
-
-    except Exception as e:
-        logger.error(f"Failed to send email to {recipient}: {e}")
-        raise
+    """
+    LEGACY COMPATIBILITY: Send email notification.
+    
+    ⚠️  DEPRECATED: Use send_channel_notification with channel_type="email" instead.
+    This method provides backward compatibility during migration.
+    """
+    logger.warning("DEPRECATED: send_email_notification is deprecated. Use send_channel_notification.")
+    
+    # Convert to plugin-driven call
+    content = f"Subject: {subject}\nTemplate: {template}"
+    if context:
+        content += f"\nContext: {context}"
+    
+    # Call the new plugin-driven method
+    return send_channel_notification.delay(
+        channel_type="email",
+        recipient=recipient,
+        content=content,
+        metadata={"subject": subject, "template": template, "context": context}
+    )
 
 
 @celery_app.task(bind=True)
 def send_sms_notification(self, phone_number: str, message: str):
-    """Send SMS notification."""
-    try:
-        # This would integrate with Twilio or similar service
-        logger.info(f"Sending SMS to {phone_number}")
-
-        # Placeholder for SMS sending logic
-
-        return {
-            "phone_number": phone_number,
-            "status": "sent",
-            "timestamp": datetime.utcnow().isoformat(),
-        }
-
-    except Exception as e:
-        logger.error(f"Failed to send SMS to {phone_number}: {e}")
-        raise
+    """
+    LEGACY COMPATIBILITY: Send SMS notification.
+    
+    ⚠️  DEPRECATED: Use send_channel_notification with channel_type="sms" instead.
+    This method provides backward compatibility during migration.
+    """
+    logger.warning("DEPRECATED: send_sms_notification is deprecated. Use send_channel_notification.")
+    
+    # Call the new plugin-driven method
+    return send_channel_notification.delay(
+        channel_type="sms",
+        recipient=phone_number,
+        content=message,
+        metadata={"legacy_method": "send_sms_notification"}
+    )
 
 
 @celery_app.task(bind=True, base=AsyncTask)

@@ -23,6 +23,7 @@ class SecretManager:
     """
 
     def __init__(self):
+        """  Init   operation."""
         self.vault_client: Optional[Any] = None
         self.use_vault = os.getenv("USE_VAULT", "false").lower() == "true"
         self.vault_url = os.getenv("VAULT_URL", "http://openbao:8200")

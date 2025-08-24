@@ -49,6 +49,7 @@ class BaseChannelPlugin(ABC):
     """Base class for all communication channel plugins."""
 
     def __init__(self, config: ChannelConfig, skip_validation: bool = False):
+        """  Init   operation."""
         self.config = config
         self.is_initialized = False
         self._skip_validation = skip_validation

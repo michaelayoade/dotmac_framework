@@ -11,6 +11,7 @@ class ChannelPluginRegistry:
     """Registry for managing communication channel plugins."""
 
     def __init__(self):
+        """  Init   operation."""
         self._plugins: Dict[str, Type[BaseChannelPlugin]] = {}
         self._initialized_plugins: Dict[str, BaseChannelPlugin] = {}
         self._plugin_configs: Dict[str, ChannelConfig] = {}
@@ -162,6 +163,7 @@ def register_channel_plugin(registry: ChannelPluginRegistry):
     """Decorator to automatically register channel plugins."""
 
     def decorator(plugin_class: Type[BaseChannelPlugin]):
+        """Decorator operation."""
         registry.register_plugin(plugin_class)
         return plugin_class
 

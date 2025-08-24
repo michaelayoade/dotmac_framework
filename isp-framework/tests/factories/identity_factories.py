@@ -21,6 +21,7 @@ class CustomerFactory(BaseFactory, TenantMixin, TimestampMixin, AuditMixin):
     """Factory for Customer test data."""
     
     class Meta:
+        """Class for Meta operations."""
         model = None
     
     # Customer identification
@@ -79,6 +80,7 @@ class CustomerAddressFactory(BaseFactory, TenantMixin, TimestampMixin):
     """Factory for CustomerAddress test data."""
     
     class Meta:
+        """Class for Meta operations."""
         model = None
     
     customer_id = factory.LazyFunction(lambda: str(uuid4()))
@@ -119,6 +121,7 @@ class UserFactory(BaseFactory, TenantMixin, TimestampMixin):
     """Factory for User test data."""
     
     class Meta:
+        """Class for Meta operations."""
         model = None
     
     # User identification
@@ -177,6 +180,7 @@ class OrganizationFactory(BaseFactory, TenantMixin, TimestampMixin, AuditMixin):
     """Factory for Organization test data."""
     
     class Meta:
+        """Class for Meta operations."""
         model = None
     
     # Organization identification
@@ -233,6 +237,7 @@ class ContactFactory(BaseFactory, TenantMixin, TimestampMixin):
     """Factory for Contact test data."""
     
     class Meta:
+        """Class for Meta operations."""
         model = None
     
     # Contact identification

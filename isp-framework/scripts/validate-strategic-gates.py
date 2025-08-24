@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+import logging
+
+logger = logging.getLogger(__name__)
+
 """
 Strategic Validation Gates Script
 
@@ -38,22 +42,22 @@ class ValidationGate:
     def log_success(self, message: str):
         """Log successful validation."""
         self.messages.append(f"✅ {message}")
-        print(f"✅ {message}")
+logger.info(f"✅ {message}")
     
     def log_error(self, message: str):
         """Log validation error."""
         self.messages.append(f"❌ {message}")
-        print(f"❌ {message}")
+logger.info(f"❌ {message}")
     
     def log_warning(self, message: str):
         """Log validation warning."""
         self.messages.append(f"⚠️ {message}")
-        print(f"⚠️ {message}")
+logger.info(f"⚠️ {message}")
     
     def log_info(self, message: str):
         """Log validation info."""
         self.messages.append(f"💡 {message}")
-        print(f"💡 {message}")
+logger.info(f"💡 {message}")
 
 
 class ImportResolutionGate(ValidationGate):
@@ -67,7 +71,7 @@ class ImportResolutionGate(ValidationGate):
     
     def run(self) -> bool:
         """Check that all imports in Python files can be resolved."""
-        print(f"\n🔍 {self.name}: {self.description}")
+logger.info(f"\n🔍 {self.name}: {self.description}")
         
         failed_files = []
         src_path = Path('src')
@@ -131,7 +135,7 @@ class ContainerVersionGate(ValidationGate):
     
     def run(self) -> bool:
         """Check that Docker Compose services use pinned versions."""
-        print(f"\n🐳 {self.name}: {self.description}")
+logger.info(f"\n🐳 {self.name}: {self.description}")
         
         compose_file = Path('docker-compose.yml')
         if not compose_file.exists():
@@ -177,7 +181,7 @@ class DependencyHealthGate(ValidationGate):
     
     def run(self) -> bool:
         """Test that health monitoring system loads correctly."""
-        print(f"\n🏥 {self.name}: {self.description}")
+logger.info(f"\n🏥 {self.name}: {self.description}")
         
         # Set up test environment
         os.environ.setdefault('DATABASE_URL', 'postgresql://dotmac:dotmac@localhost:5433/dotmac_isp')
@@ -212,7 +216,7 @@ class SecurityConfigurationGate(ValidationGate):
     
     def run(self) -> bool:
         """Check for hardcoded credentials and security issues."""
-        print(f"\n🔒 {self.name}: {self.description}")
+logger.info(f"\n🔒 {self.name}: {self.description}")
         
         # Patterns that indicate potential security issues
         danger_patterns = [
@@ -250,7 +254,7 @@ class SecurityConfigurationGate(ValidationGate):
         if found_issues:
             self.log_warning("Potential hardcoded credentials found:")
             for issue in found_issues[:5]:  # Show first 5
-                print(f"  {issue}")
+logger.info(f"  {issue}")
             self.log_info("Use SecretManager or environment variables instead")
             # Note: This is a warning, not a failure
             
@@ -270,7 +274,7 @@ class ConfigurationManagementGate(ValidationGate):
     
     def run(self) -> bool:
         """Test that configuration systems load correctly."""
-        print(f"\n⚙️ {self.name}: {self.description}")
+logger.info(f"\n⚙️ {self.name}: {self.description}")
         
         # Set up test environment (use development for validation)
         os.environ.setdefault('ENVIRONMENT', 'development')
@@ -311,9 +315,9 @@ class StrategicValidator:
     
     def run_all_gates(self) -> bool:
         """Run all validation gates."""
-        print("🎯 Running Strategic Validation Checks")
-        print("=" * 50)
-        print("This runs the same checks as our CI/CD pipeline")
+logger.info("🎯 Running Strategic Validation Checks")
+logger.info("=" * 50)
+logger.info("This runs the same checks as our CI/CD pipeline")
         
         all_passed = True
         
@@ -323,26 +327,26 @@ class StrategicValidator:
                 if not gate_passed:
                     all_passed = False
             except Exception as e:
-                print(f"\n❌ Gate '{gate.name}' failed with exception: {e}")
+logger.info(f"\n❌ Gate '{gate.name}' failed with exception: {e}")
                 gate.passed = False
                 all_passed = False
         
         # Print summary
-        print("\n" + "=" * 50)
-        print("📋 VALIDATION SUMMARY")
-        print("=" * 50)
+logger.info("\n" + "=" * 50)
+logger.info("📋 VALIDATION SUMMARY")
+logger.info("=" * 50)
         
         for gate in self.gates:
             status = "✅ PASSED" if gate.passed else "❌ FAILED"
-            print(f"{status}: {gate.name}")
+logger.info(f"{status}: {gate.name}")
         
         if all_passed:
-            print("\n🎉 All strategic validation gates passed!")
-            print("Code is ready for deployment.")
+logger.info("\n🎉 All strategic validation gates passed!")
+logger.info("Code is ready for deployment.")
             return True
         else:
-            print("\n❌ Strategic validation failed")
-            print("Review and fix issues before deployment.")
+logger.info("\n❌ Strategic validation failed")
+logger.info("Review and fix issues before deployment.")
             return False
 
 

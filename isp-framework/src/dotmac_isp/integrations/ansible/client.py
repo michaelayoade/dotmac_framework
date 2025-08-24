@@ -28,6 +28,7 @@ class AnsibleExecutionError(Exception):
     """Exception raised when Ansible execution fails."""
 
     def __init__(self, message: str, return_code: int = None, stderr: str = None):
+        """  Init   operation."""
         super().__init__(message)
         self.return_code = return_code
         self.stderr = stderr

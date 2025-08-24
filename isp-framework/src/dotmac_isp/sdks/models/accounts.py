@@ -45,6 +45,7 @@ class MFAFactor:
     metadata: Optional[Dict[str, Any]] = None
     
     def __init__(self, **kwargs):
+        """  Init   operation."""
         self.id = kwargs.get('id', uuid4())
         self.account_id = kwargs.get('account_id')
         self.factor_type = kwargs.get('factor_type')
@@ -72,6 +73,7 @@ class Account:
     locked_until: Optional[datetime] = None
     
     def __init__(self, **kwargs):
+        """  Init   operation."""
         self.id = kwargs.get('id', uuid4())
         self.username = kwargs.get('username')
         self.email = kwargs.get('email')

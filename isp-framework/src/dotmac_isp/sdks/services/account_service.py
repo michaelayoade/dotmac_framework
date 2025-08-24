@@ -15,6 +15,7 @@ class AccountService:
     """Simple in-memory account service for SDK operations."""
     
     def __init__(self):
+        """  Init   operation."""
         self._accounts: Dict[UUID, Account] = {}
         self._mfa_factors: Dict[UUID, List[MFAFactor]] = {}
     

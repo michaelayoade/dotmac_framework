@@ -23,6 +23,7 @@ class ChannelPluginService:
     """Service for managing channel plugins and their configurations."""
 
     def __init__(self, db: Session, tenant_id: str):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
         self.registry = channel_registry

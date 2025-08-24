@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 """
 PROPERTY-BASED TESTING - AI-GENERATED EDGE CASES
 ===============================================
@@ -88,6 +92,7 @@ def billing_periods():
 def service_tiers():
     """Generate realistic service tier configurations."""
     def create_tiers(tier_count):
+        """Create Tiers operation."""
         tiers = []
         current_limit = 0
         
@@ -280,6 +285,7 @@ class CustomerLifecycleStateMachine(RuleBasedStateMachine):
     """
     
     def __init__(self):
+        """  Init   operation."""
         super().__init__()
         self.customers = {}  # customer_id -> customer_data
         self.services = {}   # service_id -> service_data
@@ -396,4 +402,4 @@ if __name__ == "__main__":
         charge = calculator.calculate_usage_charge(usage, rate)
         assert charge >= 0, f"Negative charge found: {charge}"
     
-    print("✅ Property-based tests validation passed!")
+logger.info("✅ Property-based tests validation passed!")

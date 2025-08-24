@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+import logging
+
+logger = logging.getLogger(__name__)
+
 """
 AI Code Detector - Identify AI-generated code patterns and flag risky changes.
 
@@ -248,56 +252,56 @@ def main():
     directory = Path(args.directory)
     
     if not directory.exists():
-        print(f"Error: Directory {directory} does not exist", file=sys.stderr)
+logger.error(f"Error: Directory {directory} does not exist", file=sys.stderr)
         sys.exit(1)
     
-    print(f"Scanning {directory} for AI-generated code patterns...")
+logger.info(f"Scanning {directory} for AI-generated code patterns...")
     results = detector.scan_directory(directory)
     
     if not results:
-        print("No AI-generated code patterns detected.")
+logger.info("No AI-generated code patterns detected.")
         sys.exit(0)
     
     report = detector.generate_report(results, args.output)
     
     # Print summary
     summary = report['summary']
-    print(f"\n📊 AI Code Detection Summary:")
-    print(f"   Files scanned: {summary['total_files_scanned']}")
-    print(f"   AI-generated files: {summary['ai_generated_files']}")
-    print(f"   Potentially AI files: {summary['potentially_ai_files']}")
-    print(f"   Business-critical changes: {summary['business_critical_changes']}")
-    print(f"   Total risky changes: {summary['total_risky_changes']}")
+logger.info(f"\n📊 AI Code Detection Summary:")
+logger.info(f"   Files scanned: {summary['total_files_scanned']}")
+logger.info(f"   AI-generated files: {summary['ai_generated_files']}")
+logger.info(f"   Potentially AI files: {summary['potentially_ai_files']}")
+logger.info(f"   Business-critical changes: {summary['business_critical_changes']}")
+logger.info(f"   Total risky changes: {summary['total_risky_changes']}")
     
     # Flag high-risk files
     if args.flag_risky and report['high_risk_files']:
-        print(f"\n⚠️  HIGH RISK FILES DETECTED:")
+logger.info(f"\n⚠️  HIGH RISK FILES DETECTED:")
         for file_info in report['high_risk_files']:
-            print(f"   📄 {file_info['file']}")
-            print(f"      AI Confidence: {file_info['ai_confidence']:.2f}")
+logger.info(f"   📄 {file_info['file']}")
+logger.info(f"      AI Confidence: {file_info['ai_confidence']:.2f}")
             if file_info.get('risky_changes'):
-                print(f"      Risky Changes: {len(file_info['risky_changes'])}")
+logger.info(f"      Risky Changes: {len(file_info['risky_changes'])}")
                 for change in file_info['risky_changes']:
-                    print(f"        - {change['pattern']} (severity: {change['severity']})")
+logger.info(f"        - {change['pattern']} (severity: {change['severity']})")
     
     if args.verbose:
-        print(f"\n🔍 Detailed Results:")
+logger.info(f"\n🔍 Detailed Results:")
         for result in results:
-            print(f"\n📄 {result['file']}")
-            print(f"   AI Confidence: {result['ai_confidence']:.2f}")
-            print(f"   Business Critical: {result['business_critical']}")
+logger.info(f"\n📄 {result['file']}")
+logger.info(f"   AI Confidence: {result['ai_confidence']:.2f}")
+logger.info(f"   Business Critical: {result['business_critical']}")
             if result['ai_indicators']:
-                print(f"   AI Indicators:")
+logger.info(f"   AI Indicators:")
                 for indicator in result['ai_indicators']:
-                    print(f"     - {indicator['type']}: {indicator.get('matches', indicator.get('count', 1'))}")
+logger.info(f"     - {indicator['type']}: {indicator.get('matches', indicator.get('count', 1'))}")
     
     # Exit with error if risky changes found and flag is set
     if args.fail_on_risk and summary['business_critical_changes'] > 0:
-        print(f"\n❌ Exiting with error due to {summary['business_critical_changes']} business-critical changes")
+logger.error(f"\n❌ Exiting with error due to {summary['business_critical_changes']} business-critical changes")
         sys.exit(1)
     
     if args.output:
-        print(f"\n📝 Detailed report saved to: {args.output}")
+logger.info(f"\n📝 Detailed report saved to: {args.output}")
 
 
 if __name__ == '__main__':

@@ -23,6 +23,7 @@ class KafkaConnectionManager:
     """Manages Kafka connections and client lifecycle."""
 
     def __init__(self, config):
+        """  Init   operation."""
         self.config = config
         self._producer: Optional[AIOKafkaProducer] = None
         self._admin_client: Optional[AIOKafkaAdminClient] = None
@@ -117,6 +118,7 @@ class KafkaProducerService:
     """Handles Kafka message production."""
 
     def __init__(self, connection_manager: KafkaConnectionManager):
+        """  Init   operation."""
         self.connection_manager = connection_manager
 
     async def publish_event(self, event: EventRecord) -> PublishResult:
@@ -173,6 +175,7 @@ class KafkaConsumerService:
     """Handles Kafka message consumption."""
 
     def __init__(self, connection_manager: KafkaConnectionManager):
+        """  Init   operation."""
         self.connection_manager = connection_manager
 
     async def consume_events(
@@ -263,6 +266,7 @@ class KafkaTopicManager:
     """Handles Kafka topic management operations."""
 
     def __init__(self, connection_manager: KafkaConnectionManager):
+        """  Init   operation."""
         self.connection_manager = connection_manager
 
     async def create_topic(
@@ -334,6 +338,7 @@ class KafkaOffsetManager:
     """Handles Kafka offset management operations."""
 
     def __init__(self, connection_manager: KafkaConnectionManager):
+        """  Init   operation."""
         self.connection_manager = connection_manager
 
     async def get_latest_offset(self, topic: str, partition: int) -> str:
@@ -401,6 +406,7 @@ class KafkaMonitoringService:
     """Handles Kafka monitoring and health checks."""
 
     def __init__(self, connection_manager: KafkaConnectionManager):
+        """  Init   operation."""
         self.connection_manager = connection_manager
 
     async def get_consumer_group_info(self, group_id: str) -> Dict[str, Any]:

@@ -19,6 +19,7 @@ class PaymentService(IPaymentService):
     """Domain service for payment operations."""
 
     def __init__(
+        """  Init   operation."""
         self,
         payment_repo: PaymentRepository,
         invoice_repo: InvoiceRepository,

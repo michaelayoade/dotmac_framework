@@ -10,6 +10,7 @@ class DatabaseConnection:
     """Mock database connection for SDK operations."""
 
     def __init__(self, connection_string: str):
+        """  Init   operation."""
         self.connection_string = connection_string
         self.connected = False
 

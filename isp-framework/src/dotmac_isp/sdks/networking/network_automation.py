@@ -14,6 +14,7 @@ class NetworkAutomationService:
     """In-memory service for network automation operations."""
 
     def __init__(self):
+        """  Init   operation."""
         self._jobs: Dict[str, Dict[str, Any]] = {}
         self._playbooks: Dict[str, Dict[str, Any]] = {}
         self._inventories: Dict[str, Dict[str, Any]] = {}
@@ -191,6 +192,7 @@ class NetworkAutomationSDK:
     """Minimal, reusable SDK for network automation."""
 
     def __init__(self, tenant_id: str):
+        """  Init   operation."""
         self.tenant_id = tenant_id
         self._service = NetworkAutomationService()
 

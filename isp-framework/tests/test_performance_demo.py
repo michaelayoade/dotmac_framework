@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 """
 Performance Testing Demo - Standalone Version
 
@@ -72,8 +76,8 @@ class TestRadiusPerformanceDemo:
         assert auth_per_second >= 25, f"Only {auth_per_second:.1f} auth/sec, expected >= 25"
         assert duration < 8.0, f"Authentication took {duration:.2f}s, expected < 8s"
         
-        print(f"✅ Performance: {success_count} authentications in {duration:.2f}s ({auth_per_second:.1f}/sec)")
-        print(f"✅ Performance: Success rate {success_rate:.1%}")
+logger.info(f"✅ Performance: {success_count} authentications in {duration:.2f}s ({auth_per_second:.1f}/sec)")
+logger.info(f"✅ Performance: Success rate {success_rate:.1%}")
 
 
 @pytest.mark.performance_baseline
@@ -160,7 +164,7 @@ class TestBillingPerformanceDemo:
             assert invoice["amount"] > Decimal('0'), "Invalid invoice amount"
             assert invoice["status"] == "generated", "Wrong invoice status"
         
-        print(f"✅ Performance: Generated {len(all_invoices)} invoices in {duration:.2f}s ({invoices_per_second:.1f}/sec)")
+logger.info(f"✅ Performance: Generated {len(all_invoices)} invoices in {duration:.2f}s ({invoices_per_second:.1f}/sec)")
     
     def test_payment_processing_performance(self):
         """Demo: Test payment processing performance."""
@@ -233,8 +237,8 @@ class TestBillingPerformanceDemo:
         assert payments_per_second >= 4, f"Only {payments_per_second:.1f} payments/sec, expected >= 4"
         assert duration < 15.0, f"Payment processing took {duration:.2f}s, expected < 15s"
         
-        print(f"✅ Performance: Processed {successful_payments} payments in {duration:.2f}s ({payments_per_second:.1f}/sec)")
-        print(f"✅ Performance: Payment success rate {success_rate:.1%}")
+logger.info(f"✅ Performance: Processed {successful_payments} payments in {duration:.2f}s ({payments_per_second:.1f}/sec)")
+logger.info(f"✅ Performance: Payment success rate {success_rate:.1%}")
 
 
 @pytest.mark.performance_baseline
@@ -310,8 +314,8 @@ class TestNetworkMonitoringPerformanceDemo:
                 assert "memory_usage" in result, "Missing memory usage data"
                 assert result["interfaces"], "Missing interface data"
         
-        print(f"✅ Performance: Polled {successful_polls} devices in {duration:.2f}s ({polls_per_second:.1f}/sec)")
-        print(f"✅ Performance: SNMP polling success rate {success_rate:.1%}")
+logger.info(f"✅ Performance: Polled {successful_polls} devices in {duration:.2f}s ({polls_per_second:.1f}/sec)")
+logger.info(f"✅ Performance: SNMP polling success rate {success_rate:.1%}")
 
 
 @pytest.mark.regression_detection
@@ -388,9 +392,9 @@ class TestPerformanceRegressionDemo:
         total_query_time = sum(r["duration"] for r in performance_results.values())
         assert total_query_time < 0.05, f"Total query time {total_query_time:.3f}s too high"
         
-        print("✅ Performance: Query performance baselines met")
+logger.info("✅ Performance: Query performance baselines met")
         for query_name, metrics in performance_results.items():
-            print(f"  {query_name}: {metrics['duration']:.3f}s ({metrics['result_count']} results)")
+logger.info(f"  {query_name}: {metrics['duration']:.3f}s ({metrics['result_count']} results)")
     
     def test_memory_usage_performance(self):
         """Demo: Test memory usage performance patterns."""
@@ -453,9 +457,9 @@ class TestPerformanceRegressionDemo:
             f"indicates scaling problems"
         )
         
-        print("✅ Performance: Memory usage and batch processing performance acceptable")
+logger.info("✅ Performance: Memory usage and batch processing performance acceptable")
         for result in results:
-            print(f"  Batch {result['batch_size']}: {result['customers_per_second']:.1f} customers/sec")
+logger.info(f"  Batch {result['batch_size']}: {result['customers_per_second']:.1f} customers/sec")
 
 
 if __name__ == "__main__":

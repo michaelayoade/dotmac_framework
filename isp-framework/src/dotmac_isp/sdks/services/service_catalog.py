@@ -20,6 +20,7 @@ class ServiceCatalogService:
     """In-memory service for service catalog operations."""
 
     def __init__(self):
+        """  Init   operation."""
         self._service_definitions: Dict[str, Dict[str, Any]] = {}
         self._service_plans: Dict[str, Dict[str, Any]] = {}
         self._bundles: Dict[str, Dict[str, Any]] = {}
@@ -310,6 +311,7 @@ class ServiceCatalogSDK:
     """Minimal, reusable SDK for service catalog management."""
 
     def __init__(self, tenant_id: str):
+        """  Init   operation."""
         self.tenant_id = tenant_id
         self._service = ServiceCatalogService()
 

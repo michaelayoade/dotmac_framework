@@ -27,6 +27,7 @@ class InvoiceRepository:
     """Repository for invoice database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 
@@ -159,6 +160,7 @@ class InvoiceLineItemRepository:
     """Repository for invoice line item database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 
@@ -192,6 +194,7 @@ class PaymentRepository:
     """Repository for payment database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 
@@ -308,6 +311,7 @@ class SubscriptionRepository:
     """Repository for subscription database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 
@@ -384,6 +388,7 @@ class CreditNoteRepository:
     """Repository for credit note database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 

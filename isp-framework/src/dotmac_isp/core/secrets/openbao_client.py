@@ -25,6 +25,7 @@ class OpenBaoConfig(VaultConfig):
     """OpenBao-specific configuration settings"""
 
     def __init__(self, **kwargs):
+        """  Init   operation."""
         # Set OpenBao-specific defaults
         kwargs.setdefault("url", os.getenv("OPENBAO_ADDR", "http://localhost:8200"))
         kwargs.setdefault("token", os.getenv("OPENBAO_TOKEN", os.getenv("BAO_TOKEN")))

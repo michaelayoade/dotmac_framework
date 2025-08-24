@@ -19,6 +19,7 @@ class MetricsSDK:
     """SDK for analytics metrics operations."""
 
     def __init__(self, tenant_id: str, db: Session):
+        """  Init   operation."""
         self.tenant_id = tenant_id
         self.db = db
         self.service = MetricService(db)

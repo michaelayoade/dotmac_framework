@@ -22,6 +22,7 @@ class TraceContext:
     """Thread-local trace context for correlation."""
 
     def __init__(self):
+        """  Init   operation."""
         self._context = {}
 
     def set_trace_id(self, trace_id: str):
@@ -73,6 +74,7 @@ class TracingMiddleware(BaseHTTPMiddleware):
     """Middleware for distributed tracing."""
 
     def __init__(self, app, service_name: str = "dotmac-isp"):
+        """  Init   operation."""
         super().__init__(app)
         self.service_name = service_name
         self.cache_manager = get_cache_manager()
@@ -256,12 +258,15 @@ def trace_function(operation_name: str = None, tags: Dict[str, Any] = None):
     """Decorator to trace function execution."""
 
     def decorator(func: Callable) -> Callable:
+        """Decorator operation."""
         @functools.wraps(func)
         async def async_wrapper(*args, **kwargs):
+            """Async Wrapper operation."""
             return await _trace_execution(func, operation_name, tags, args, kwargs)
 
         @functools.wraps(func)
         def sync_wrapper(*args, **kwargs):
+            """Sync Wrapper operation."""
             import asyncio
 
             if asyncio.iscoroutinefunction(func):
@@ -484,6 +489,7 @@ class TracingService:
     """Service for trace analytics and monitoring."""
 
     def __init__(self):
+        """  Init   operation."""
         self.cache_manager = get_cache_manager()
 
     def get_trace(self, trace_id: str) -> Optional[List[Dict[str, Any]]]:

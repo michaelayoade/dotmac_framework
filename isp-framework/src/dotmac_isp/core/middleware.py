@@ -85,6 +85,7 @@ class RateLimitingMiddleware(BaseHTTPMiddleware):
     """Middleware to implement rate limiting per IP address."""
 
     def __init__(self, app, requests_per_minute: int = 60):
+        """  Init   operation."""
         super().__init__(app)
         self.requests_per_minute = requests_per_minute
         self.request_times: Dict[str, deque] = defaultdict(deque)

@@ -21,6 +21,7 @@ class CustomerRepository:
     """Repository for customer database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 
@@ -262,6 +263,7 @@ class UserRepository:
     """Repository for user database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 
@@ -383,6 +385,7 @@ class RoleRepository:
     """Repository for role database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 
@@ -482,6 +485,7 @@ class AuthTokenRepository:
     """Repository for authentication token database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 
@@ -574,6 +578,7 @@ class LoginAttemptRepository:
     """Repository for login attempt database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 

@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+import logging
+
+logger = logging.getLogger(__name__)
+
 """
 Business Rules Verification - Ensure AI hasn't modified critical business logic.
 
@@ -202,7 +206,7 @@ class BusinessRuleVerifier:
             (r'amount\s*\*=?\s*-', 'Negative amount calculation'),
             (r'if\s+False:', 'Dead code branch'),
             (r'pass\s*#.*skip', 'Intentional skip comment'),
-            (r'TODO.*bypass', 'Bypass TODO comment'),
+            (r'TODO.*bypass', 'Security bypass implementation'),
             (r'\.99\s*\*', 'Suspicious percentage calculation'),
         ]
         
@@ -328,67 +332,67 @@ def main():
     directory = Path(args.directory)
     
     if not directory.exists():
-        print(f"Error: Directory {directory} does not exist", file=sys.stderr)
+logger.error(f"Error: Directory {directory} does not exist", file=sys.stderr)
         sys.exit(1)
     
-    print(f"Verifying business rules in {directory}...")
+logger.info(f"Verifying business rules in {directory}...")
     results = verifier.verify_directory(directory)
     
     report = verifier.generate_report(results)
     
     # Print summary
     summary = report['summary']
-    print(f"\n📋 Business Rules Verification Summary:")
-    print(f"   Files checked: {summary['files_checked']}")
-    print(f"   Total violations: {summary['total_violations']}")
-    print(f"   Critical violations: {summary['critical_violations']}")
-    print(f"   Warnings: {summary['total_warnings']}")
-    print(f"   Status: {summary['status']}")
+logger.info(f"\n📋 Business Rules Verification Summary:")
+logger.info(f"   Files checked: {summary['files_checked']}")
+logger.info(f"   Total violations: {summary['total_violations']}")
+logger.info(f"   Critical violations: {summary['critical_violations']}")
+logger.warning(f"   Warnings: {summary['total_warnings']}")
+logger.info(f"   Status: {summary['status']}")
     
     if report['critical_files']:
-        print(f"\n🚨 CRITICAL VIOLATIONS DETECTED:")
+logger.info(f"\n🚨 CRITICAL VIOLATIONS DETECTED:")
         for file_info in report['critical_files']:
-            print(f"   📄 {file_info['file']}")
+logger.info(f"   📄 {file_info['file']}")
             for violation in file_info['violations']:
                 if violation.get('severity') == 'critical':
-                    print(f"      ❌ {violation['description']}")
-                    print(f"         Pattern: {violation['pattern']}")
+logger.info(f"      ❌ {violation['description']}")
+logger.info(f"         Pattern: {violation['pattern']}")
     
     if args.verbose and results:
-        print(f"\n🔍 Detailed Results:")
+logger.info(f"\n🔍 Detailed Results:")
         for result in results:
-            print(f"\n📄 {result['file']}")
-            print(f"   Category: {result['business_rule_category']}")
+logger.info(f"\n📄 {result['file']}")
+logger.info(f"   Category: {result['business_rule_category']}")
             
             if result.get('violations'):
-                print(f"   Violations:")
+logger.info(f"   Violations:")
                 for violation in result['violations']:
-                    print(f"     ❌ {violation['description']} (severity: {violation['severity']})")
+logger.info(f"     ❌ {violation['description']} (severity: {violation['severity']})")
             
             if result.get('warnings'):
-                print(f"   Warnings:")
+logger.warning(f"   Warnings:")
                 for warning in result['warnings']:
-                    print(f"     ⚠️  {warning['description']}")
+logger.warning(f"     ⚠️  {warning['description']}")
             
             if result.get('revenue_critical_functions'):
-                print(f"   Revenue-Critical Functions:")
+logger.info(f"   Revenue-Critical Functions:")
                 for func in result['revenue_critical_functions']:
-                    print(f"     💰 {func['name']} (line {func['line']}, complexity: {func['complexity']})")
+logger.info(f"     💰 {func['name']} (line {func['line']}, complexity: {func['complexity']})")
     
     if args.output:
         with open(args.output, 'w') as f:
             json.dump(report, f, indent=2)
-        print(f"\n📝 Report saved to: {args.output}")
+logger.info(f"\n📝 Report saved to: {args.output}")
     
     # Exit with appropriate code
     if args.strict and summary['total_violations'] > 0:
-        print(f"\n❌ Strict mode: Exiting with error due to violations")
+logger.error(f"\n❌ Strict mode: Exiting with error due to violations")
         sys.exit(1)
     elif summary['critical_violations'] > 0:
-        print(f"\n❌ Critical violations detected - business rules may be compromised")
+logger.info(f"\n❌ Critical violations detected - business rules may be compromised")
         sys.exit(1)
     
-    print(f"\n✅ Business rules verification completed successfully")
+logger.info(f"\n✅ Business rules verification completed successfully")
 
 
 if __name__ == '__main__':

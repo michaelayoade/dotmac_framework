@@ -455,7 +455,9 @@ class TestFileFilterMatcher:
     def test_add_custom_filter_strategy(self):
         """Test adding custom filter strategy."""
         class CustomFilterStrategy:
+            """Class for CustomFilterStrategy operations."""
             def matches(self, metadata, request):
+                """Matches operation."""
                 # Only allow files smaller than 1KB
                 return metadata.size_bytes < 1024
         

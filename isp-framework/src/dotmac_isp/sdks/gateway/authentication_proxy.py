@@ -27,6 +27,7 @@ class AuthenticationProxyService:
     """In-memory service for authentication proxy operations."""
 
     def __init__(self):
+        """  Init   operation."""
         self._auth_policies: Dict[str, Dict[str, Any]] = {}
         self._auth_providers: Dict[str, Dict[str, Any]] = {}
         self._api_keys: Dict[str, Dict[str, Any]] = {}
@@ -403,6 +404,7 @@ class AuthenticationProxySDK:
     """SDK for API Gateway authentication and authorization."""
 
     def __init__(self, tenant_id: str):
+        """  Init   operation."""
         self.tenant_id = tenant_id
         self._service = AuthenticationProxyService()
 

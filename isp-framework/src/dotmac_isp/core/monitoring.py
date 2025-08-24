@@ -77,6 +77,7 @@ class MetricsCollector:
     """Centralized metrics collection."""
 
     def __init__(self):
+        """  Init   operation."""
         self.cache_manager = get_cache_manager()
         self.metrics = {}
 
@@ -154,6 +155,7 @@ class SystemMonitor:
     """System-level monitoring."""
 
     def __init__(self, metrics_collector: MetricsCollector):
+        """  Init   operation."""
         self.metrics = metrics_collector
 
     def collect_system_metrics(self):
@@ -210,6 +212,7 @@ class ApplicationMonitor:
     """Application-level monitoring."""
 
     def __init__(self, metrics_collector: MetricsCollector):
+        """  Init   operation."""
         self.metrics = metrics_collector
         self.cache_manager = get_cache_manager()
 
@@ -287,6 +290,7 @@ class AlertManager:
     """Alert management and notification."""
 
     def __init__(self, metrics_collector: MetricsCollector):
+        """  Init   operation."""
         self.metrics = metrics_collector
         self.cache_manager = get_cache_manager()
         self.alert_rules = []
@@ -415,6 +419,7 @@ class HealthChecker:
     """Health check service."""
 
     def __init__(self, metrics_collector: MetricsCollector):
+        """  Init   operation."""
         self.metrics = metrics_collector
         self.cache_manager = get_cache_manager()
         self.checks = []
@@ -544,6 +549,7 @@ def setup_default_health_checks():
     """Set up default health checks."""
 
     def redis_health_check():
+        """Redis Health Check operation."""
         try:
             metrics_collector.cache_manager.redis_client.ping()
             return True
@@ -551,10 +557,12 @@ def setup_default_health_checks():
             return False
 
     def disk_space_check():
+        """Disk Space Check operation."""
         disk = psutil.disk_usage("/")
         return disk.percent < 95  # Critical if over 95%
 
     def memory_check():
+        """Memory Check operation."""
         memory = psutil.virtual_memory()
         return memory.percent < 95  # Critical if over 95%
 

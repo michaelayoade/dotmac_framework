@@ -31,6 +31,7 @@ class MonitoringProfileRepository:
     """Repository for monitoring profile database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 
@@ -128,6 +129,7 @@ class SnmpDeviceRepository:
     """Repository for SNMP device database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 
@@ -297,6 +299,7 @@ class SnmpMetricRepository:
     """Repository for SNMP metric database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 
@@ -441,6 +444,7 @@ class MonitoringAlertRepository:
     """Repository for network alert database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 
@@ -574,6 +578,7 @@ class AlertRuleRepository:
     """Repository for alert rule database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 
@@ -671,6 +676,7 @@ class MonitoringScheduleRepository:
     """Repository for monitoring schedule database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 

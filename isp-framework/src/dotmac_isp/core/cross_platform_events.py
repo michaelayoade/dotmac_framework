@@ -116,6 +116,7 @@ class CrossPlatformEvent(BaseModel):
     response_code: Optional[int] = None
 
     class Config:
+        """Class for Config operations."""
         use_enum_values = True
 
 
@@ -123,6 +124,7 @@ class EventEmitter:
     """Cross-platform event emitter."""
 
     def __init__(self):
+        """  Init   operation."""
         self.tenant_id = os.getenv("ISP_TENANT_ID")
         self.source = EventSource.ISP_FRAMEWORK
         self.component_name = os.getenv("SERVICE_NAME", "isp-framework")

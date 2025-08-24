@@ -30,6 +30,7 @@ class PortalManagementService:
     """Service for portal account and session management."""
 
     def __init__(self, db: Session, tenant_id: str):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = UUID(tenant_id)
         self.account_repo = PortalAccountRepository(db, self.tenant_id)

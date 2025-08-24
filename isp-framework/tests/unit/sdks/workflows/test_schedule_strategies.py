@@ -25,6 +25,7 @@ class MockSchedule:
     """Mock schedule for testing."""
     
     def __init__(self, **kwargs):
+        """  Init   operation."""
         self.id = kwargs.get('id', 'test_schedule')
         self.schedule_type = kwargs.get('schedule_type')
         self.cron_expression = kwargs.get('cron_expression')

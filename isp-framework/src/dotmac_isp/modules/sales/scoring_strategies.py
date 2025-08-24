@@ -76,6 +76,7 @@ class BudgetScoringStrategy(LeadScoringStrategy):
         return 0
     
     def get_strategy_name(self) -> str:
+        """Get Strategy Name operation."""
         return "Budget Scoring"
 
 
@@ -104,6 +105,7 @@ class CustomerTypeScoringStrategy(LeadScoringStrategy):
         return self.type_scores.get(customer_type, 0)
     
     def get_strategy_name(self) -> str:
+        """Get Strategy Name operation."""
         return "Customer Type Scoring"
 
 
@@ -135,6 +137,7 @@ class LeadSourceScoringStrategy(LeadScoringStrategy):
         return self.source_scores.get(source, 0)
     
     def get_strategy_name(self) -> str:
+        """Get Strategy Name operation."""
         return "Lead Source Scoring"
 
 
@@ -166,6 +169,7 @@ class BANTScoringStrategy(LeadScoringStrategy):
         return score
     
     def get_strategy_name(self) -> str:
+        """Get Strategy Name operation."""
         return "BANT Criteria Scoring"
 
 
@@ -199,6 +203,7 @@ class CompanySizeScoringStrategy(LeadScoringStrategy):
         return score
     
     def get_strategy_name(self) -> str:
+        """Get Strategy Name operation."""
         return "Company Size Scoring"
 
 
@@ -233,6 +238,7 @@ class EngagementScoringStrategy(LeadScoringStrategy):
         return score
     
     def get_strategy_name(self) -> str:
+        """Get Strategy Name operation."""
         return "Engagement Scoring"
 
 

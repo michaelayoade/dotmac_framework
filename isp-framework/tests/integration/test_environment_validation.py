@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 """
 Environment Validation Tests
 
@@ -239,7 +243,7 @@ def test_environment_performance_baseline():
     assert response.status_code == 200
     
     # Log performance metrics for monitoring
-    print(f"\n📊 Environment Performance Baseline:")
-    print(f"  Database connection: {db_connection_time:.3f}s")
-    print(f"  Redis connection: {redis_connection_time:.3f}s") 
-    print(f"  HTTP response: {http_response_time:.3f}s")
+logger.info(f"\n📊 Environment Performance Baseline:")
+logger.info(f"  Database connection: {db_connection_time:.3f}s")
+logger.info(f"  Redis connection: {redis_connection_time:.3f}s")
+logger.info(f"  HTTP response: {http_response_time:.3f}s")

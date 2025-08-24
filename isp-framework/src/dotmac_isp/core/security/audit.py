@@ -27,6 +27,7 @@ class AuditLogger:
     """Audit logger for security events."""
     
     def __init__(self, db_session: Optional[AsyncSession] = None):
+        """  Init   operation."""
         self.db_session = db_session
         self.logger = logging.getLogger("security_audit")
         

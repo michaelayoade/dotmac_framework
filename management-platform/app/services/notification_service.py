@@ -32,6 +32,13 @@ from ..schemas.notifications import (
     NotificationStatus
 )
 
+# Import plugin system
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parents[4]))
+
+from shared.communication.plugin_system import global_plugin_registry, initialize_plugin_system
+
 logger = get_logger(__name__)
 
 
@@ -62,6 +69,18 @@ class NotificationService:
         self.jinja_env = Environment(
             loader=DictLoader({})
         )
+        self._plugin_system_initialized = False
+    
+    async def _ensure_plugin_system_ready(self):
+        """Ensure plugin system is initialized."""
+        if not self._plugin_system_initialized:
+            try:
+                await initialize_plugin_system("config/communication_plugins.yml")
+                self._plugin_system_initialized = True
+                logger.info("✅ Communication plugin system initialized")
+            except Exception as e:
+                logger.error(f"❌ Plugin system initialization failed: {e}")
+                raise NotificationError(f"Communication system unavailable: {e}")
     
     async def send_notification(
         self,
@@ -93,6 +112,9 @@ class NotificationService:
         try:
             logger.info(f"Sending {channel} notification to {len(recipients)} recipients")
             
+            # 0. Ensure plugin system is ready
+            await self._ensure_plugin_system_ready()
+            
             # 1. Load and render template
             rendered_content = await self._render_notification_template(
                 template_id, notification_type, template_data or {}
@@ -104,29 +126,33 @@ class NotificationService:
                 rendered_content, priority, user_id
             )
             
-            # 3. Send notifications based on channel
+            # 3. Send notifications via plugin system - NO HARDCODED CHANNELS
             delivery_results = []
             
-            if channel == DeliveryChannel.EMAIL:
-                delivery_results = await self._send_email_notifications(
-                    recipients, rendered_content, notification_logs
-                )
-            elif channel == DeliveryChannel.SMS:
-                delivery_results = await self._send_sms_notifications(
-                    recipients, rendered_content, notification_logs
-                )
-            elif channel == DeliveryChannel.PUSH:
-                delivery_results = await self._send_push_notifications(
-                    recipients, rendered_content, notification_logs
-                )
-            elif channel == DeliveryChannel.SLACK:
-                delivery_results = await self._send_slack_notifications(
-                    recipients, rendered_content, notification_logs
-                )
-            elif channel == DeliveryChannel.WEBHOOK:
-                delivery_results = await self._send_webhook_notifications(
-                    recipients, rendered_content, notification_logs
-                )
+            # Use plugin system for all channels - zero hardcoding
+            for i, recipient in enumerate(recipients):
+                try:
+                    # Send via plugin system
+                    result = await global_plugin_registry.send_message(
+                        channel_type=channel.value,
+                        recipient=recipient,
+                        content=rendered_content,
+                        metadata={
+                            "notification_id": str(notification_logs[i].id) if i < len(notification_logs) else None,
+                            "tenant_id": str(tenant_id),
+                            "notification_type": notification_type.value,
+                            "priority": priority.value
+                        }
+                    )
+                    delivery_results.append(result)
+                    
+                except Exception as e:
+                    logger.error(f"Plugin system failed for {channel.value} to {recipient}: {e}")
+                    delivery_results.append({
+                        "success": False,
+                        "error": str(e),
+                        "recipient": recipient
+                    })
             
             # 4. Update notification logs with delivery status
             await self._update_notification_logs(notification_logs, delivery_results)
@@ -170,6 +196,9 @@ class NotificationService:
         try:
             logger.info(f"Sending {len(notifications)} bulk notifications for tenant {tenant_id}")
             
+            # 0. Ensure plugin system is ready
+            await self._ensure_plugin_system_ready()
+            
             # Group notifications by channel for optimization
             grouped_notifications = {}
             for notification in notifications:
@@ -182,17 +211,27 @@ class NotificationService:
             all_results = []
             
             for channel, channel_notifications in grouped_notifications.items():
-                if channel == DeliveryChannel.EMAIL:
-                    channel_results = await self._send_bulk_emails(
-                        tenant_id, channel_notifications, user_id
-                    )
-                elif channel == DeliveryChannel.SMS:
-                    channel_results = await self._send_bulk_sms(
-                        tenant_id, channel_notifications, user_id
-                    )
-                else:
-                    # Send individual notifications for other channels
-                    channel_results = []
+                # Use plugin system for ALL channels - zero hardcoding
+                channel_results = []
+                
+                # Check if plugin supports bulk sending
+                plugins = global_plugin_registry.get_plugins_by_channel_type(channel.value)
+                bulk_capable = any(hasattr(plugin, 'send_bulk_message') for plugin in plugins)
+                
+                if bulk_capable and len(channel_notifications) > 1:
+                    # Try bulk sending via plugin system
+                    try:
+                        bulk_result = await global_plugin_registry.send_bulk_message(
+                            channel_type=channel.value,
+                            notifications=channel_notifications
+                        )
+                        channel_results.append(bulk_result)
+                    except Exception as e:
+                        logger.warning(f"Bulk sending failed for {channel.value}, falling back to individual: {e}")
+                        bulk_capable = False
+                
+                if not bulk_capable:
+                    # Send individual notifications via plugin system
                     for notification in channel_notifications:
                         result = await self.send_notification(
                             tenant_id=tenant_id,

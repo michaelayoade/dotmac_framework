@@ -28,6 +28,7 @@ class WorkOrderRepository:
     """Repository for work order database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 
@@ -224,6 +225,7 @@ class TechnicianRepository:
     """Repository for technician database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 
@@ -344,6 +346,7 @@ class AppointmentRepository:
     """Repository for appointment database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 
@@ -473,6 +476,7 @@ class TimeLogRepository:
     """Repository for time log database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 
@@ -557,6 +561,7 @@ class FieldEquipmentRepository:
     """Repository for field equipment database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 

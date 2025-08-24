@@ -19,6 +19,7 @@ class ResponseCacheMiddleware(BaseHTTPMiddleware):
     """Middleware for automatic HTTP response caching."""
 
     def __init__(
+        """  Init   operation."""
         self,
         app,
         default_ttl: int = 300,  # 5 minutes
@@ -170,6 +171,7 @@ class CacheWarmupService:
     """Service for warming up critical caches."""
 
     def __init__(self):
+        """  Init   operation."""
         self.cache_manager = get_cache_manager()
 
     async def warm_customer_data(self, tenant_id: str):
@@ -252,6 +254,7 @@ class CacheInvalidator:
     """Helper class for intelligent cache invalidation."""
 
     def __init__(self):
+        """  Init   operation."""
         self.cache_manager = get_cache_manager()
 
     def invalidate_customer_caches(self, tenant_id: str, customer_id: str = None):

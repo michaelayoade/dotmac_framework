@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+import logging
+
+logger = logging.getLogger(__name__)
+
 """Final comprehensive test for portal management module coverage."""
 
 import sys
@@ -7,14 +11,14 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
 def test_portal_management_comprehensive():
     """Comprehensive test of portal management components."""
-    print("🚀 Portal Management Final Coverage Test")
-    print("=" * 60)
+logger.info("🚀 Portal Management Final Coverage Test")
+logger.info("=" * 60)
     
     success_count = 0
     total_tests = 0
     
     # Test 1: Enums and Constants
-    print("\n📋 Testing Portal Management Enums...")
+logger.info("\n📋 Testing Portal Management Enums...")
     total_tests += 1
     try:
         # Direct import to avoid dependency issues
@@ -85,16 +89,16 @@ def test_portal_management_comprehensive():
         assert portal_models.PortalAccountType.RESELLER.value == "reseller"
         assert len(portal_models.PortalAccountType) == 3
         
-        print("  ✅ Portal management enums: PASSED")
+logger.info("  ✅ Portal management enums: PASSED")
         success_count += 1
         
     except Exception as e:
-        print(f"  ❌ Portal management enums: FAILED - {e}")
+logger.info(f"  ❌ Portal management enums: FAILED - {e}")
         import traceback
         traceback.print_exc()
     
     # Test 2: Portal ID Generation
-    print("\n🔑 Testing Portal ID Generation Algorithm...")
+logger.info("\n🔑 Testing Portal ID Generation Algorithm...")
     total_tests += 1
     try:
         # Test the portal ID generation algorithm directly
@@ -130,18 +134,18 @@ def test_portal_management_comprehensive():
         # Test uniqueness
         assert len(ids_generated) >= 95, "Not enough unique IDs generated"  # Allow for small collision chance
         
-        print(f"  ✅ Generated {len(ids_generated)} unique Portal IDs")
-        print(f"  ✅ Sample IDs: {list(ids_generated)[:5]}")
-        print("  ✅ Portal ID generation algorithm: PASSED")
+logger.info(f"  ✅ Generated {len(ids_generated)} unique Portal IDs")
+logger.info(f"  ✅ Sample IDs: {list(ids_generated)[:5]}")
+logger.info("  ✅ Portal ID generation algorithm: PASSED")
         success_count += 1
         
     except Exception as e:
-        print(f"  ❌ Portal ID generation algorithm: FAILED - {e}")
+logger.info(f"  ❌ Portal ID generation algorithm: FAILED - {e}")
         import traceback
         traceback.print_exc()
     
     # Test 3: Account Security Logic
-    print("\n🔐 Testing Account Security Logic...")
+logger.info("\n🔐 Testing Account Security Logic...")
     total_tests += 1
     try:
         from datetime import datetime, timedelta
@@ -264,20 +268,20 @@ def test_portal_management_comprehensive():
         assert account.failed_login_attempts == 0
         assert account.locked_until is None
         
-        print("  ✅ Account locking/unlocking logic")
-        print("  ✅ Password expiry logic") 
-        print("  ✅ Failed login tracking")
-        print("  ✅ Auto-lock on too many failures")
-        print("  ✅ Account security logic: PASSED")
+logger.info("  ✅ Account locking/unlocking logic")
+logger.info("  ✅ Password expiry logic")
+logger.info("  ✅ Failed login tracking")
+logger.info("  ✅ Auto-lock on too many failures")
+logger.info("  ✅ Account security logic: PASSED")
         success_count += 1
         
     except Exception as e:
-        print(f"  ❌ Account security logic: FAILED - {e}")
+logger.info(f"  ❌ Account security logic: FAILED - {e}")
         import traceback
         traceback.print_exc()
     
     # Test 4: Session Management Logic
-    print("\n🕐 Testing Session Management Logic...")
+logger.info("\n🕐 Testing Session Management Logic...")
     total_tests += 1
     try:
         from datetime import datetime, timedelta
@@ -343,20 +347,20 @@ def test_portal_management_comprehensive():
         duration = session.duration_minutes()
         assert duration >= 0
         
-        print("  ✅ Session validity checks")
-        print("  ✅ Session extension")
-        print("  ✅ Session termination")
-        print("  ✅ Duration calculation")
-        print("  ✅ Session management logic: PASSED")
+logger.info("  ✅ Session validity checks")
+logger.info("  ✅ Session extension")
+logger.info("  ✅ Session termination")
+logger.info("  ✅ Duration calculation")
+logger.info("  ✅ Session management logic: PASSED")
         success_count += 1
         
     except Exception as e:
-        print(f"  ❌ Session management logic: FAILED - {e}")
+logger.info(f"  ❌ Session management logic: FAILED - {e}")
         import traceback
         traceback.print_exc()
     
     # Test 5: Risk Assessment Algorithm
-    print("\n🚨 Testing Risk Assessment Algorithm...")
+logger.info("\n🚨 Testing Risk Assessment Algorithm...")
     total_tests += 1
     try:
         from unittest.mock import MagicMock
@@ -482,39 +486,39 @@ def test_portal_management_comprehensive():
         attempt.flagged_as_suspicious = True
         assert attempt.is_high_risk() is True
         
-        print("  ✅ Basic risk scoring")
-        print("  ✅ Failed attempt penalty")
-        print("  ✅ Multiple IP detection")
-        print("  ✅ Geographic anomaly detection")
-        print("  ✅ 2FA requirement check")
-        print("  ✅ High risk detection")
-        print("  ✅ Risk assessment algorithm: PASSED")
+logger.info("  ✅ Basic risk scoring")
+logger.info("  ✅ Failed attempt penalty")
+logger.info("  ✅ Multiple IP detection")
+logger.info("  ✅ Geographic anomaly detection")
+logger.info("  ✅ 2FA requirement check")
+logger.info("  ✅ High risk detection")
+logger.info("  ✅ Risk assessment algorithm: PASSED")
         success_count += 1
         
     except Exception as e:
-        print(f"  ❌ Risk assessment algorithm: FAILED - {e}")
+logger.info(f"  ❌ Risk assessment algorithm: FAILED - {e}")
         import traceback
         traceback.print_exc()
     
     # Final Results
-    print("\n" + "=" * 60)
-    print("🎯 PORTAL MANAGEMENT FINAL TEST RESULTS")
-    print("=" * 60)
-    print(f"✅ Tests Passed: {success_count}/{total_tests}")
-    print(f"📊 Success Rate: {(success_count/total_tests)*100:.1f}%")
+logger.info("\n" + "=" * 60)
+logger.info("🎯 PORTAL MANAGEMENT FINAL TEST RESULTS")
+logger.info("=" * 60)
+logger.info(f"✅ Tests Passed: {success_count}/{total_tests}")
+logger.info(f"📊 Success Rate: {(success_count/total_tests)*100:.1f}%")
     
     if success_count == total_tests:
-        print("\n🎉 EXCELLENT! Portal Management module comprehensively tested!")
-        print("\n📋 Coverage Summary:")
-        print("  ✅ Enums & Constants: 100%")
-        print("  ✅ Portal ID Generation: 100%")
-        print("  ✅ Account Security Logic: 100%")
-        print("  ✅ Session Management: 100%")
-        print("  ✅ Risk Assessment: 100%")
-        print("\n🏆 PORTAL MANAGEMENT MODULE: 90%+ COVERAGE ACHIEVED!")
+logger.info("\n🎉 EXCELLENT! Portal Management module comprehensively tested!")
+logger.info("\n📋 Coverage Summary:")
+logger.info("  ✅ Enums & Constants: 100%")
+logger.info("  ✅ Portal ID Generation: 100%")
+logger.info("  ✅ Account Security Logic: 100%")
+logger.info("  ✅ Session Management: 100%")
+logger.info("  ✅ Risk Assessment: 100%")
+logger.info("\n🏆 PORTAL MANAGEMENT MODULE: 90%+ COVERAGE ACHIEVED!")
         return True
     else:
-        print(f"\n❌ {total_tests - success_count} test(s) failed.")
+logger.info(f"\n❌ {total_tests - success_count} test(s) failed.")
         return False
 
 def main():

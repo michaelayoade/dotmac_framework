@@ -45,6 +45,7 @@ class EnhancedOmnichannelService:
     """Enhanced omnichannel service with full monolith integration."""
 
     def __init__(self, db: Session, tenant_id: str):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
         self.cache = omnichannel_cache

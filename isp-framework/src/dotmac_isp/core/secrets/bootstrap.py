@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 """
 Security Bootstrap Module
 
@@ -59,4 +63,4 @@ def validate_production_ready():
 if __name__ == "__main__":
     validate_deps()
     validate_production_ready()
-    print("✅ Security dependencies validated successfully")
+logger.info("✅ Security dependencies validated successfully")

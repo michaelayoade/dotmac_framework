@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 """
 Performance testing for ISP scale operations.
 
@@ -95,7 +99,7 @@ class TestConcurrentAuthentication:
             auth_per_second = success_count / duration
             assert auth_per_second >= 33, f"Only {auth_per_second:.1f} auth/sec, expected >= 33"
             
-            print(f"Performance: {success_count} authentications in {duration:.2f}s ({auth_per_second:.1f}/sec)")
+logger.info(f"Performance: {success_count} authentications in {duration:.2f}s ({auth_per_second:.1f}/sec)")
     
     async def test_radius_authentication_under_load_with_failures(self, db_session):
         """Test RADIUS performance with some authentication failures."""
@@ -277,7 +281,7 @@ class TestBulkBillingOperations:
         invoices_per_second = total_invoices / duration
         assert invoices_per_second >= 166, f"Only {invoices_per_second:.1f} invoices/sec, expected >= 166"
         
-        print(f"Performance: Generated {total_invoices} invoices in {duration:.2f}s ({invoices_per_second:.1f}/sec)")
+logger.info(f"Performance: Generated {total_invoices} invoices in {duration:.2f}s ({invoices_per_second:.1f}/sec)")
     
     async def test_payment_processing_performance(self, db_session):
         """Test concurrent payment processing performance."""
@@ -448,7 +452,7 @@ class TestNetworkMonitoringScale:
             polls_per_second = successful_polls / duration
             assert polls_per_second >= 31, f"Only {polls_per_second:.1f} polls/sec, expected >= 31"
             
-            print(f"Performance: Polled {successful_polls} devices in {duration:.2f}s ({polls_per_second:.1f}/sec)")
+logger.info(f"Performance: Polled {successful_polls} devices in {duration:.2f}s ({polls_per_second:.1f}/sec)")
     
     async def test_real_time_alerting_performance(self, db_session):
         """Test real-time network alerting at scale."""
@@ -584,7 +588,7 @@ class TestServiceProvisioningPerformance:
             activations_per_second = success_count / duration
             assert activations_per_second >= 7.6, f"Only {activations_per_second:.1f} activations/sec, expected >= 7.6"
             
-            print(f"Performance: Activated {success_count} services in {duration:.2f}s ({activations_per_second:.1f}/sec)")
+logger.info(f"Performance: Activated {success_count} services in {duration:.2f}s ({activations_per_second:.1f}/sec)")
 
 
 @pytest.mark.regression_detection
@@ -637,6 +641,6 @@ class TestPerformanceRegression:
         assert performance_results["Date range"]["duration"] < 0.3, "Date range query too slow"
         assert performance_results["Count query"]["duration"] < 0.05, "Count query too slow"
         
-        print("Query Performance Results:")
+logger.info("Query Performance Results:")
         for query_name, metrics in performance_results.items():
-            print(f"  {query_name}: {metrics['duration']:.3f}s ({metrics['result_count']} results)")
+logger.info(f"  {query_name}: {metrics['duration']:.3f}s ({metrics['result_count']} results)")

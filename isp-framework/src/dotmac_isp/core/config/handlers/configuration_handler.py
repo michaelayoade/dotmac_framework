@@ -68,6 +68,7 @@ class ConfigurationHandler(ABC):
     """
     
     def __init__(self, next_handler: Optional['ConfigurationHandler'] = None):
+        """  Init   operation."""
         self._next_handler = next_handler
     
     def set_next(self, handler: 'ConfigurationHandler') -> 'ConfigurationHandler':

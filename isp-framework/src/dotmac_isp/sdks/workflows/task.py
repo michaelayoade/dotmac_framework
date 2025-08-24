@@ -65,6 +65,7 @@ class TaskDependency(BaseModel):
     timeout_seconds: Optional[float] = Field(None, description="Dependency timeout")
 
     class Config:
+        """Class for Config operations."""
         extra = "forbid"
 
 
@@ -83,6 +84,7 @@ class ResourceRequirement(BaseModel):
     )
 
     class Config:
+        """Class for Config operations."""
         extra = "allow"
 
 
@@ -129,6 +131,7 @@ class TaskDefinition(BaseModel):
     metadata: OperationMetadata = Field(default_factory=OperationMetadata)
 
     class Config:
+        """Class for Config operations."""
         extra = "allow"
 
 
@@ -175,6 +178,7 @@ class TaskQueue:
     """Task queue for managing task execution order."""
 
     def __init__(self, name: str, max_concurrent: int = 10):
+        """  Init   operation."""
         self.name = name
         self.max_concurrent = max_concurrent
         self.pending_tasks: List[TaskExecution] = []
@@ -235,6 +239,7 @@ class TaskEngine:
     """Task execution engine."""
 
     def __init__(self):
+        """  Init   operation."""
         self.task_handlers: Dict[str, Callable] = {}
         self.condition_evaluator: Optional[Callable] = None
 
@@ -333,6 +338,7 @@ class DependencyResolver:
     """Resolves task dependencies."""
 
     def __init__(self):
+        """  Init   operation."""
         self.completed_tasks: Set[str] = set()
         self.failed_tasks: Set[str] = set()
         self.task_results: Dict[str, Dict[str, Any]] = {}
@@ -390,6 +396,7 @@ class TaskSDK:
     """SDK for task management and execution."""
 
     def __init__(self, tenant_id: str, storage_adapter=None):
+        """  Init   operation."""
         self.tenant_id = tenant_id
         self.storage_adapter = storage_adapter
         self.engine = TaskEngine()

@@ -46,6 +46,7 @@ class OLTDevice(VolthaDevice):
     flows: List[Dict[str, Any]] = None
     
     def __post_init__(self):
+        """  Post Init   operation."""
         if self.pon_ports is None:
             self.pon_ports = []
         if self.flows is None:
@@ -62,6 +63,7 @@ class ONUDevice(VolthaDevice):
     uni_ports: List[Dict[str, Any]] = None
     
     def __post_init__(self):
+        """  Post Init   operation."""
         if self.uni_ports is None:
             self.uni_ports = []
 

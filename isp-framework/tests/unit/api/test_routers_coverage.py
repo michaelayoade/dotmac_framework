@@ -94,6 +94,7 @@ class TestRouterRegistrationEdgeCases:
         call_count = 0
         
         def mock_import_side_effect(name, fromlist=None, **kwargs):
+            """Mock Import Side Effect operation."""
             nonlocal call_count
             call_count += 1
             
@@ -110,6 +111,7 @@ class TestRouterRegistrationEdgeCases:
                 raise RuntimeError("General error")
         
         def mock_getattr_side_effect(obj, name, default=None):
+            """Mock Getattr Side Effect operation."""
             if hasattr(obj, name):
                 return getattr(obj, name)
             return default
@@ -136,6 +138,7 @@ class TestRouterRegistrationEdgeCases:
         call_count = 0
         
         def mock_import_side_effect(name, fromlist=None, **kwargs):
+            """Mock Import Side Effect operation."""
             nonlocal call_count
             call_count += 1
             
@@ -152,6 +155,7 @@ class TestRouterRegistrationEdgeCases:
                 raise RuntimeError("General error")
         
         def mock_getattr_side_effect(obj, name, default=None):
+            """Mock Getattr Side Effect operation."""
             if hasattr(obj, name):
                 return getattr(obj, name)
             return default

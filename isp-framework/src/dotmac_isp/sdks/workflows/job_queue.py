@@ -88,6 +88,7 @@ class JobDefinition(BaseModel):
     metadata: OperationMetadata = Field(default_factory=OperationMetadata)
 
     class Config:
+        """Class for Config operations."""
         extra = "allow"
 
 
@@ -142,6 +143,7 @@ class JobQueue:
     """Job queue implementation with priority and delay support."""
 
     def __init__(
+        """  Init   operation."""
         self,
         name: str,
         queue_type: QueueType = QueueType.PRIORITY,
@@ -261,6 +263,7 @@ class JobWorker:
     """Job worker for processing jobs from queues."""
 
     def __init__(self, worker_id: str, concurrency: int = 5):
+        """  Init   operation."""
         self.worker_id = worker_id
         self.concurrency = concurrency
         self.job_handlers: Dict[str, Callable] = {}
@@ -360,6 +363,7 @@ class DeadLetterQueue:
     """Dead letter queue for failed jobs."""
 
     def __init__(self, name: str = "dead_letter"):
+        """  Init   operation."""
         self.name = name
         self.failed_jobs: List[JobExecution] = []
         self._lock = asyncio.Lock()
@@ -401,6 +405,7 @@ class JobQueueSDK:
     """SDK for job queue management and execution."""
 
     def __init__(self, tenant_id: str, storage_adapter=None):
+        """  Init   operation."""
         self.tenant_id = tenant_id
         self.storage_adapter = storage_adapter
         self.job_definitions: Dict[str, JobDefinition] = {}

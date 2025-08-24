@@ -31,6 +31,7 @@ class EnhancedSecurityHeadersMiddleware(BaseHTTPMiddleware):
     """Enhanced security headers middleware with production-ready settings."""
 
     def __init__(self, app):
+        """  Init   operation."""
         super().__init__(app)
         self.settings = get_settings()
 
@@ -143,6 +144,7 @@ class InputValidationMiddleware(BaseHTTPMiddleware):
     """Comprehensive input validation and sanitization middleware."""
 
     def __init__(self, app, max_request_size: int = 10 * 1024 * 1024):  # 10MB default
+        """  Init   operation."""
         super().__init__(app)
         self.max_request_size = max_request_size
         self.xss_patterns = [
@@ -302,6 +304,7 @@ class CSRFProtectionMiddleware(BaseHTTPMiddleware):
     """CSRF protection middleware with token validation."""
 
     def __init__(self, app, exempt_paths: Optional[List[str]] = None):
+        """  Init   operation."""
         super().__init__(app)
         self.exempt_paths = exempt_paths or [
             "/health",
@@ -420,6 +423,7 @@ class RequestSizeLimitMiddleware(BaseHTTPMiddleware):
     """Middleware to limit request sizes and prevent DoS attacks."""
 
     def __init__(self, app, max_request_size: int = 10 * 1024 * 1024):  # 10MB default
+        """  Init   operation."""
         super().__init__(app)
         self.max_request_size = max_request_size
 
@@ -451,6 +455,7 @@ class ProductionSecurityEnforcementMiddleware(BaseHTTPMiddleware):
     """Enforce production security requirements."""
 
     def __init__(self, app):
+        """  Init   operation."""
         super().__init__(app)
         self.settings = get_settings()
 

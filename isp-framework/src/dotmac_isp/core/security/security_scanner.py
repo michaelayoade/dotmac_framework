@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 """
 Security Scanning System
 
@@ -421,25 +425,25 @@ def main():
         result = scanner.scan_hardcoded_secrets(python_files)
         
         if result.critical_findings:
-            print("❌ COMMIT BLOCKED: Critical security issues found!")
+logger.info("❌ COMMIT BLOCKED: Critical security issues found!")
             for finding in result.critical_findings:
-                print(f"  🚨 {finding.file_path}:{finding.line_number or '?'} - {finding.message}")
-                print(f"     💡 {finding.remediation}")
-            print()
-            print("Fix these security issues before committing.")
+logger.info(f"  🚨 {finding.file_path}:{finding.line_number or '?'} - {finding.message}")
+logger.info(f"     💡 {finding.remediation}")
+logger.info()
+logger.info("Fix these security issues before committing.")
             return 1
         
         if result.high_findings:
-            print("⚠️  Warning: High-priority security issues found:")
+logger.warning("⚠️  Warning: High-priority security issues found:")
             for finding in result.high_findings[:3]:  # Show first 3
-                print(f"  ⚠️  {finding.file_path}:{finding.line_number or '?'} - {finding.message}")
-            print()
+logger.info(f"  ⚠️  {finding.file_path}:{finding.line_number or '?'} - {finding.message}")
+logger.info()
         
-        print(f"✅ Security scan passed ({len(python_files)} files checked)")
+logger.info(f"✅ Security scan passed ({len(python_files)} files checked)")
         return 0
         
     except Exception as e:
-        print(f"❌ Security scan failed: {e}")
+logger.info(f"❌ Security scan failed: {e}")
         return 1
 
 if __name__ == "__main__":
@@ -748,14 +752,14 @@ def create_pre_commit_hook(project_root: Optional[Path] = None) -> bool:
             hook_file.write_text(hook_content)
             hook_file.chmod(0o755)  # Make executable
             
-            print(f"✅ Pre-commit security hook installed at {hook_file}")
+logger.info(f"✅ Pre-commit security hook installed at {hook_file}")
             return True
         else:
-            print("⚠️ Not a git repository - hook not installed")
+logger.info("⚠️ Not a git repository - hook not installed")
             return False
             
     except Exception as e:
-        print(f"❌ Failed to create pre-commit hook: {e}")
+logger.info(f"❌ Failed to create pre-commit hook: {e}")
         return False
 
 
@@ -795,9 +799,9 @@ def main():
     
     if args.output:
         args.output.write_text(json.dumps(report, indent=2))
-        print(f"📄 Security report saved to {args.output}")
+logger.info(f"📄 Security report saved to {args.output}")
     else:
-        print(json.dumps(report, indent=2))
+logger.info(json.dumps(report, indent=2))
 
 
 if __name__ == "__main__":

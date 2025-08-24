@@ -33,6 +33,7 @@ class Segment:
     updated_at: Optional[datetime] = None
 
     def __post_init__(self):
+        """  Post Init   operation."""
         if self.rules is None:
             self.rules = []
 

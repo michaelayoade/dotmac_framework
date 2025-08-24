@@ -17,6 +17,7 @@ class DashboardsSDK:
     """SDK for analytics dashboards operations."""
 
     def __init__(self, tenant_id: str, db: Session):
+        """  Init   operation."""
         self.tenant_id = tenant_id
         self.db = db
 

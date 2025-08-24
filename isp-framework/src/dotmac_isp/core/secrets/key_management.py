@@ -81,6 +81,7 @@ class KeyManager:
     """Encryption key management service"""
 
     def __init__(self, master_key: bytes | None = None):
+        """  Init   operation."""
         if not CRYPTOGRAPHY_AVAILABLE:
             raise ImportError("Cryptography library not available")
 

@@ -102,6 +102,7 @@ class TransportCoreSDK:
     # tests.
 
     def __init__(self, default_tenant_id: str | None = None):
+        """  Init   operation."""
         self.default_tenant_id = default_tenant_id
 
     async def generate_golden_headers(

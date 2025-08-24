@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 """
 Refactored version of the _validate_field method from secure_config_validator.py
 Complexity reduced from 23 to 2 using Strategy pattern.
@@ -51,7 +55,7 @@ def refactored_validate_field(self, field_path, field_value, rule, environment=N
                 elif isinstance(child, ast.BoolOp):
                     complexity += len(child.values) - 1
             
-            print(f"Method complexity: {complexity}")
+logger.info(f"Method complexity: {complexity}")
             return complexity
 
 if __name__ == "__main__":

@@ -26,6 +26,7 @@ from dotmac_isp.shared.exceptions import (
 )
 from .service import CustomerService, UserService
 from . import schemas
+from .intelligence_service import CustomerIntelligenceService
 
 router = APIRouter(tags=["identity"])
 identity_router = router  # Standard export alias
@@ -183,6 +184,7 @@ async def list_users(
     created_at: datetime
 
     class Config:
+        """Class for Config operations."""
         from_attributes = True
 
 
@@ -585,3 +587,30 @@ async def update_user_status(
     return {
         "message": f"User {'activated' if is_active else 'deactivated'} successfully"
     }
+
+
+# Intelligence endpoints
+@router.get("/intelligence/customer-health", response_model=Dict[str, Any])
+async def get_customer_health_scores(
+    tenant_id: str = Depends(get_tenant_id_dependency),
+    db: Session = Depends(get_db),
+):
+    """Get customer health scores for admin portal intelligence."""
+    try:
+        intelligence_service = CustomerIntelligenceService(db, tenant_id)
+        return await intelligence_service.get_customer_health_scores()
+    except ServiceError as e:
+        raise HTTPException(status_code=500, detail=e.message)
+
+
+@router.get("/intelligence/churn-alerts", response_model=Dict[str, Any])
+async def get_churn_alerts(
+    tenant_id: str = Depends(get_tenant_id_dependency),
+    db: Session = Depends(get_db),
+):
+    """Get customers at risk of churning for admin portal alerts."""
+    try:
+        intelligence_service = CustomerIntelligenceService(db, tenant_id)
+        return await intelligence_service.get_churn_alerts()
+    except ServiceError as e:
+        raise HTTPException(status_code=500, detail=e.message)

@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 """
 Enhanced RADIUS SDK with PostgreSQL persistence and OpenWISP integration.
 Replaces the in-memory RADIUS SDK with proper database storage and real RADIUS server.
@@ -91,7 +95,7 @@ class EnhancedRADIUSSDK:
                     local_user["openwisp_id"] = openwisp_user.get("id")
                 except OpenWISPRadiusError as e:
                     # Log warning but don't fail - local user still created
-                    print(f"Warning: Failed to create user in OpenWISP: {e}")
+logger.warning(f"Warning: Failed to create user in OpenWISP: {e}")
 
             return {
                 "username": local_user["username"],
@@ -222,7 +226,7 @@ class EnhancedRADIUSSDK:
                 }
             )
         except OpenWISPRadiusError as e:
-            print(f"Warning: OpenWISP accounting failed: {e}")
+logger.warning(f"Warning: OpenWISP accounting failed: {e}")
 
         return {
             "record_id": record["record_id"],
@@ -283,7 +287,7 @@ class EnhancedRADIUSSDK:
                 }
             )
         except OpenWISPRadiusError as e:
-            print(f"Warning: OpenWISP accounting update failed: {e}")
+logger.warning(f"Warning: OpenWISP accounting update failed: {e}")
 
         return {
             "record_id": record["record_id"],
@@ -334,7 +338,7 @@ class EnhancedRADIUSSDK:
                 }
             )
         except OpenWISPRadiusError as e:
-            print(f"Warning: OpenWISP accounting stop failed: {e}")
+logger.warning(f"Warning: OpenWISP accounting stop failed: {e}")
 
         return {
             "record_id": record["record_id"],
@@ -468,7 +472,7 @@ class EnhancedRADIUSSDK:
         try:
             await self.openwisp.disconnect_user(username, reason)
         except OpenWISPRadiusError as e:
-            print(f"Warning: OpenWISP disconnect failed: {e}")
+logger.warning(f"Warning: OpenWISP disconnect failed: {e}")
 
         return {
             "username": username,

@@ -20,6 +20,7 @@ class InfrastructureMiddleware(BaseHTTPMiddleware):
     """Combined infrastructure middleware for monitoring and metrics."""
 
     def __init__(self, app, service_name: str = "dotmac-isp"):
+        """  Init   operation."""
         super().__init__(app)
         self.service_name = service_name
 
@@ -96,6 +97,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     """Security headers middleware."""
 
     def __init__(self, app):
+        """  Init   operation."""
         super().__init__(app)
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:

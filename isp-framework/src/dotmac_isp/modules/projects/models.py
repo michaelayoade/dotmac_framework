@@ -414,6 +414,7 @@ Index(
 # Register cross-module relationships that will be configured after all models are loaded
 @register_cross_module_relationship(InstallationProject, 'work_orders')
 def create_installation_project_work_orders_relationship():
+    """Create Installation Project Work Orders Relationship operation."""
     return relationship(
         "WorkOrder",
         foreign_keys="[WorkOrder.project_id]",

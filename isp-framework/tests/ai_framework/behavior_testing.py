@@ -39,6 +39,7 @@ class BehaviorValidator:
     """
     
     def __init__(self):
+        """  Init   operation."""
         self.test_context: Optional[BehaviorTestContext] = None
     
     def given_customer_wants_service(self, customer_data: Dict[str, Any], service_type: str):
@@ -144,8 +145,10 @@ def behavior_test(
             # Then they should have working service
     """
     def decorator(func):
+        """Decorator operation."""
         @wraps(func)
         def wrapper(*args, **kwargs):
+            """Wrapper operation."""
             return func(*args, **kwargs)
         
         # Add appropriate pytest markers

@@ -18,6 +18,7 @@ from hypothesis import strategies as st
 
 
 class CustomerTier(Enum):
+    """Class for CustomerTier operations."""
     RESIDENTIAL = "residential"
     BUSINESS_SMALL = "business_small"
     BUSINESS_ENTERPRISE = "business_enterprise"
@@ -25,6 +26,7 @@ class CustomerTier(Enum):
 
 
 class ServiceStatus(Enum):
+    """Class for ServiceStatus operations."""
     ACTIVE = "active"
     SUSPENDED = "suspended" 
     PENDING = "pending"
@@ -84,6 +86,7 @@ class AITestDataFactory:
     """
     
     def __init__(self, seed: int = None):
+        """  Init   operation."""
         self.fake = Faker()
         if seed:
             Faker.seed(seed)

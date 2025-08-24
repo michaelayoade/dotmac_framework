@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 """WhatsApp Business API communication channel plugin."""
 
 import asyncio
@@ -72,7 +76,7 @@ class WhatsAppChannelPlugin(BaseChannelPlugin):
             return True
 
         except Exception as e:
-            print(f"WhatsApp plugin initialization failed: {e}")
+logger.info(f"WhatsApp plugin initialization failed: {e}")
             return False
 
     async def send_message(self, message: ChannelMessage) -> Dict[str, Any]:

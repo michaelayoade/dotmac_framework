@@ -48,6 +48,7 @@ class FeatureFlagsSDKConfig:
     """Configuration for Feature Flags SDK."""
 
     def __init__(
+        """  Init   operation."""
         self,
         cache_ttl: int = 300,
         evaluation_timeout: float = 1.0,

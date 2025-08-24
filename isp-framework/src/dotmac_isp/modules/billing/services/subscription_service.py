@@ -13,6 +13,7 @@ class SubscriptionService:
     """Service for subscription operations."""
     
     def __init__(self, db_session: AsyncSession):
+        """  Init   operation."""
         self.db_session = db_session
     
     async def get_subscription_by_id(self, subscription_id: str) -> Optional[Subscription]:

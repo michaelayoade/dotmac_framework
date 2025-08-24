@@ -27,6 +27,7 @@ class ChartWidget:
     position: Dict[str, int] = None  # x, y, width, height
 
     def __post_init__(self):
+        """  Post Init   operation."""
         if self.position is None:
             self.position = {"x": 0, "y": 0, "width": 4, "height": 3}
 
@@ -45,6 +46,7 @@ class Dashboard:
     updated_at: Optional[str] = None
 
     def __post_init__(self):
+        """  Post Init   operation."""
         if self.widgets is None:
             self.widgets = []
 

@@ -40,6 +40,7 @@ class WebhooksSDKConfig:
     """Webhooks SDK configuration."""
 
     def __init__(  # noqa: PLR0913
+        """  Init   operation."""
         self,
         max_webhooks_per_tenant: int = 100,
         max_delivery_attempts: int = 10,

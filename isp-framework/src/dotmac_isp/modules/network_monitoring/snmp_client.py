@@ -40,6 +40,7 @@ class SnmpError(Exception):
     """Base exception for SNMP operations."""
 
     def __init__(self, message: str, error_code: str = None, device_ip: str = None):
+        """  Init   operation."""
         super().__init__(message)
         self.error_code = error_code
         self.device_ip = device_ip

@@ -41,6 +41,7 @@ class TenantInitializationService:
     """Service for initializing new tenant instances."""
 
     def __init__(self, session: AsyncSession):
+        """  Init   operation."""
         self.session = session
         self.licensing_service = LicensingService(session)
         self.plugin_manager = PluginManager()

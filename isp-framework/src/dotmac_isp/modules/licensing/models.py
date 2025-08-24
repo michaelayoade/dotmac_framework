@@ -164,6 +164,7 @@ class Software(TenantModel, StatusMixin, AuditMixin):
         return len(self.licenses)
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<Software(code='{self.software_code}', name='{self.name}', vendor='{self.vendor_name}')>"
 
 
@@ -282,6 +283,7 @@ class License(TenantModel, StatusMixin, AuditMixin):
         return self.licensed_quantity - self.used_quantity
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<License(number='{self.license_number}', type='{self.license_type}', status='{self.license_status}')>"
 
 
@@ -362,6 +364,7 @@ class LicenseAllocation(TenantModel, AuditMixin):
         return None
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<LicenseAllocation(license_id='{self.license_id}', allocated_to='{self.allocated_to_name}')>"
 
 
@@ -454,6 +457,7 @@ class Installation(TenantModel, AuditMixin):
         return None
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<Installation(id='{self.installation_id}', software_id='{self.software_id}', device='{self.device_name}')>"
 
 
@@ -547,6 +551,7 @@ class LicenseAudit(TenantModel, AuditMixin):
         )
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<LicenseAudit(id='{self.audit_id}', name='{self.audit_name}', status='{self.audit_status}')>"
 
 
@@ -639,6 +644,7 @@ class AuditFinding(TenantModel, AuditMixin):
         )
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<AuditFinding(id='{self.finding_id}', type='{self.finding_type}', severity='{self.severity}')>"
 
 
@@ -718,4 +724,5 @@ class LicenseAlert(TenantModel, AuditMixin):
         return (date.today() - self.trigger_date).days
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<LicenseAlert(id='{self.alert_id}', type='{self.alert_type}', severity='{self.severity}')>"

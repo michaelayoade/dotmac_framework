@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+import logging
+
+logger = logging.getLogger(__name__)
+
 """Simple test for portal management module coverage without SQLAlchemy dependencies."""
 
 import sys
@@ -7,14 +11,14 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
 def test_portal_enums_and_functions():
     """Test portal management enums and standalone functions."""
-    print("🚀 Portal Management Simple Coverage Test")
-    print("=" * 60)
+logger.info("🚀 Portal Management Simple Coverage Test")
+logger.info("=" * 60)
     
     success_count = 0
     total_tests = 0
     
     # Test 1: Enum imports and values
-    print("\n📋 Testing Portal Management Enums...")
+logger.info("\n📋 Testing Portal Management Enums...")
     total_tests += 1
     try:
         from dotmac_isp.modules.portal_management.models import (
@@ -34,14 +38,14 @@ def test_portal_enums_and_functions():
         assert PortalAccountType.RESELLER.value == "reseller"
         assert len(PortalAccountType) == 3
         
-        print("  ✅ Portal management enums: PASSED")
+logger.info("  ✅ Portal management enums: PASSED")
         success_count += 1
         
     except Exception as e:
-        print(f"  ❌ Portal management enums: FAILED - {e}")
+logger.info(f"  ❌ Portal management enums: FAILED - {e}")
     
     # Test 2: Portal ID Generation (Static Method)
-    print("\n🔑 Testing Portal ID Generation...")
+logger.info("\n🔑 Testing Portal ID Generation...")
     total_tests += 1
     try:
         from dotmac_isp.modules.portal_management.models import PortalAccount
@@ -51,17 +55,17 @@ def test_portal_enums_and_functions():
         
         # Should be 8 characters
         assert len(portal_id) == 8
-        print(f"  ✅ Generated Portal ID: {portal_id} (8 chars)")
+logger.info(f"  ✅ Generated Portal ID: {portal_id} (8 chars)")
         
         # Should not contain confusing characters
         forbidden_chars = {'0', 'O', 'I', '1'}
         assert not any(char in portal_id for char in forbidden_chars)
-        print("  ✅ No confusing characters (0, O, I, 1)")
+logger.info("  ✅ No confusing characters (0, O, I, 1)")
         
         # Should be alphanumeric uppercase
         allowed_chars = set("ABCDEFGHJKLMNPQRSTUVWXYZ23456789")
         assert all(char in allowed_chars for char in portal_id)
-        print("  ✅ Valid character set")
+logger.info("  ✅ Valid character set")
         
         # Test uniqueness (generate 50 IDs)
         ids = set()
@@ -70,18 +74,18 @@ def test_portal_enums_and_functions():
             ids.add(new_id)
         
         assert len(ids) == 50  # All should be unique
-        print("  ✅ ID generation uniqueness verified")
+logger.info("  ✅ ID generation uniqueness verified")
         
-        print("  ✅ Portal ID generation: PASSED")
+logger.info("  ✅ Portal ID generation: PASSED")
         success_count += 1
         
     except Exception as e:
-        print(f"  ❌ Portal ID generation: FAILED - {e}")
+logger.info(f"  ❌ Portal ID generation: FAILED - {e}")
         import traceback
         traceback.print_exc()
     
     # Test 3: Mock Object Property Testing
-    print("\n🧪 Testing Model Methods with Mocks...")
+logger.info("\n🧪 Testing Model Methods with Mocks...")
     total_tests += 1
     try:
         from datetime import datetime, timedelta
@@ -119,7 +123,7 @@ def test_portal_enums_and_functions():
             result = PortalAccount.is_locked.fget(mock_account)
             assert result is False
             
-        print("  ✅ is_locked property logic")
+logger.info("  ✅ is_locked property logic")
         
         # Test password_expired property logic
         with patch('dotmac_isp.modules.portal_management.models.datetime') as mock_datetime:
@@ -141,7 +145,7 @@ def test_portal_enums_and_functions():
             result = PortalAccount.password_expired.fget(mock_account)
             assert result is True
             
-        print("  ✅ password_expired property logic")
+logger.info("  ✅ password_expired property logic")
         
         # Test account methods by calling them on mock
         def test_lock_account(self, duration_minutes=30, reason=None):
@@ -163,18 +167,18 @@ def test_portal_enums_and_functions():
             assert mock_account.status == "locked"
             assert "Test reason" in mock_account.security_notes
             
-        print("  ✅ lock_account method logic")
+logger.info("  ✅ lock_account method logic")
         
-        print("  ✅ Model methods with mocks: PASSED")
+logger.info("  ✅ Model methods with mocks: PASSED")
         success_count += 1
         
     except Exception as e:
-        print(f"  ❌ Model methods with mocks: FAILED - {e}")
+logger.info(f"  ❌ Model methods with mocks: FAILED - {e}")
         import traceback
         traceback.print_exc()
     
     # Test 4: Risk Score Calculation Logic
-    print("\n🚨 Testing Risk Score Calculation...")
+logger.info("\n🚨 Testing Risk Score Calculation...")
     total_tests += 1
     try:
         from dotmac_isp.modules.portal_management.models import PortalLoginAttempt
@@ -191,13 +195,13 @@ def test_portal_enums_and_functions():
         # Test the calculate_risk_score method directly
         score = PortalLoginAttempt.calculate_risk_score(mock_attempt, [])
         assert score == 25  # Failed attempt adds 25
-        print("  ✅ Basic failed attempt risk score: 25")
+logger.info("  ✅ Basic failed attempt risk score: 25")
         
         # Test with successful attempt
         mock_attempt.success = True
         score = PortalLoginAttempt.calculate_risk_score(mock_attempt, [])
         assert score == 0  # No risk factors
-        print("  ✅ Successful attempt risk score: 0")
+logger.info("  ✅ Successful attempt risk score: 0")
         
         # Test with multiple IP attempts
         mock_attempt.success = False
@@ -209,7 +213,7 @@ def test_portal_enums_and_functions():
         
         score = PortalLoginAttempt.calculate_risk_score(mock_attempt, recent_attempts)
         assert score == 55  # 25 (failed) + 30 (multiple IP) = 55
-        print("  ✅ Multiple IP attempts risk score: 55")
+logger.info("  ✅ Multiple IP attempts risk score: 55")
         
         # Test risk score capping at 100
         # Create scenario that would exceed 100
@@ -226,35 +230,35 @@ def test_portal_enums_and_functions():
         
         score = PortalLoginAttempt.calculate_risk_score(mock_attempt, recent_attempts)
         assert score <= 100  # Should be capped at 100
-        print(f"  ✅ Risk score capped at 100: {score}")
+logger.info(f"  ✅ Risk score capped at 100: {score}")
         
-        print("  ✅ Risk score calculation: PASSED")
+logger.info("  ✅ Risk score calculation: PASSED")
         success_count += 1
         
     except Exception as e:
-        print(f"  ❌ Risk score calculation: FAILED - {e}")
+logger.info(f"  ❌ Risk score calculation: FAILED - {e}")
         import traceback
         traceback.print_exc()
     
     # Final Results
-    print("\n" + "=" * 60)
-    print("🎯 PORTAL MANAGEMENT SIMPLE TEST RESULTS")
-    print("=" * 60)
-    print(f"✅ Tests Passed: {success_count}/{total_tests}")
-    print(f"📊 Success Rate: {(success_count/total_tests)*100:.1f}%")
+logger.info("\n" + "=" * 60)
+logger.info("🎯 PORTAL MANAGEMENT SIMPLE TEST RESULTS")
+logger.info("=" * 60)
+logger.info(f"✅ Tests Passed: {success_count}/{total_tests}")
+logger.info(f"📊 Success Rate: {(success_count/total_tests)*100:.1f}%")
     
     if success_count == total_tests:
-        print("\n🎉 EXCELLENT! Portal Management core functionality tested!")
-        print("\n📋 Coverage Summary:")
-        print("  ✅ Enums & Constants: 100%")
-        print("  ✅ Portal ID Generation: 100%")
-        print("  ✅ Property Logic: 100%")
-        print("  ✅ Method Logic: 100%")
-        print("  ✅ Risk Assessment: 100%")
-        print("\n🏆 PORTAL MANAGEMENT CORE: 90%+ COVERAGE ACHIEVED!")
+logger.info("\n🎉 EXCELLENT! Portal Management core functionality tested!")
+logger.info("\n📋 Coverage Summary:")
+logger.info("  ✅ Enums & Constants: 100%")
+logger.info("  ✅ Portal ID Generation: 100%")
+logger.info("  ✅ Property Logic: 100%")
+logger.info("  ✅ Method Logic: 100%")
+logger.info("  ✅ Risk Assessment: 100%")
+logger.info("\n🏆 PORTAL MANAGEMENT CORE: 90%+ COVERAGE ACHIEVED!")
         return True
     else:
-        print(f"\n❌ {total_tests - success_count} test(s) failed.")
+logger.info(f"\n❌ {total_tests - success_count} test(s) failed.")
         return False
 
 def main():

@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+import logging
+
+logger = logging.getLogger(__name__)
+
 """
 Revenue Logic Checker - Ensure AI hasn't modified revenue-critical calculations.
 
@@ -328,72 +332,72 @@ def main():
     directory = Path(args.directory)
     
     if not directory.exists():
-        print(f"Error: Directory {directory} does not exist", file=sys.stderr)
+logger.error(f"Error: Directory {directory} does not exist", file=sys.stderr)
         sys.exit(1)
     
-    print(f"Checking revenue logic integrity in {directory}...")
+logger.info(f"Checking revenue logic integrity in {directory}...")
     results = checker.check_directory(directory)
     
     if not results:
-        print("✅ No revenue-critical files found or no issues detected.")
+logger.info("✅ No revenue-critical files found or no issues detected.")
         sys.exit(0)
     
     report = checker.generate_report(results)
     
     # Print summary
     summary = report['summary']
-    print(f"\n💰 Revenue Logic Integrity Summary:")
-    print(f"   Files checked: {summary['files_checked']}")
-    print(f"   Revenue functions: {summary['total_revenue_functions']}")
-    print(f"   Critical risk files: {summary['critical_risk_files']}")
-    print(f"   High risk files: {summary['high_risk_files']}")
-    print(f"   Forbidden operations: {summary['total_forbidden_operations']}")
-    print(f"   Status: {summary['status']}")
+logger.info(f"\n💰 Revenue Logic Integrity Summary:")
+logger.info(f"   Files checked: {summary['files_checked']}")
+logger.info(f"   Revenue functions: {summary['total_revenue_functions']}")
+logger.info(f"   Critical risk files: {summary['critical_risk_files']}")
+logger.info(f"   High risk files: {summary['high_risk_files']}")
+logger.info(f"   Forbidden operations: {summary['total_forbidden_operations']}")
+logger.info(f"   Status: {summary['status']}")
     
     if report['critical_issues']:
-        print(f"\n🚨 CRITICAL REVENUE ISSUES DETECTED:")
+logger.info(f"\n🚨 CRITICAL REVENUE ISSUES DETECTED:")
         for file_info in report['critical_issues']:
-            print(f"   📄 {file_info['file']} (risk: {file_info['risk_level']})")
+logger.info(f"   📄 {file_info['file']} (risk: {file_info['risk_level']})")
             
             for op in file_info.get('forbidden_operations', []):
-                print(f"      ❌ FORBIDDEN: {op['pattern']}")
-                print(f"         Matches: {op['matches']}")
+logger.info(f"      ❌ FORBIDDEN: {op['pattern']}")
+logger.info(f"         Matches: {op['matches']}")
             
             for change in file_info.get('suspicious_changes', []):
-                print(f"      ⚠️  {change['description']}")
+logger.info(f"      ⚠️  {change['description']}")
     
     if args.verbose and results:
-        print(f"\n🔍 Detailed Results:")
+logger.info(f"\n🔍 Detailed Results:")
         for result in results:
-            print(f"\n📄 {result['file']} (risk: {result['risk_level']})")
-            print(f"   Content hash: {result['content_hash']}")
+logger.info(f"\n📄 {result['file']} (risk: {result['risk_level']})")
+logger.info(f"   Content hash: {result['content_hash']}")
             
             if result.get('revenue_functions'):
-                print(f"   Revenue Functions:")
+logger.info(f"   Revenue Functions:")
                 for func in result['revenue_functions']:
-                    print(f"     💰 {func['name']} (line {func['line']})")
-                    print(f"        Signature: {func['signature_hash']}")
-                    print(f"        Body: {func['body_hash']}")
+logger.info(f"     💰 {func['name']} (line {func['line']})")
+logger.info(f"        Signature: {func['signature_hash']}")
+logger.info(f"        Body: {func['body_hash']}")
                     
                     returns = func['return_analysis']
                     if returns['details']:
                         for ret in returns['details']:
                             if 'warning' in ret:
-                                print(f"        ⚠️  {ret['warning']} (line {ret['line']})")
+logger.warning(f"        ⚠️  {ret['warning']} (line {ret['line']})")
     
     if args.output:
         with open(args.output, 'w') as f:
             json.dump(report, f, indent=2)
-        print(f"\n📝 Report saved to: {args.output}")
+logger.info(f"\n📝 Report saved to: {args.output}")
     
     # Exit with appropriate status
     if summary['status'] == 'CRITICAL':
-        print(f"\n❌ CRITICAL revenue integrity issues detected!")
-        print(f"   Revenue-generating logic may have been compromised.")
-        print(f"   Manual review required before deployment.")
+logger.info(f"\n❌ CRITICAL revenue integrity issues detected!")
+logger.info(f"   Revenue-generating logic may have been compromised.")
+logger.info(f"   Manual review required before deployment.")
         sys.exit(1)
     
-    print(f"\n✅ Revenue logic integrity check completed successfully")
+logger.info(f"\n✅ Revenue logic integrity check completed successfully")
 
 
 if __name__ == '__main__':

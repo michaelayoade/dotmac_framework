@@ -22,6 +22,7 @@ class OmnichannelIntegrationService:
     """Service for integrating omnichannel with other modules in the monolith."""
 
     def __init__(self, db: Session, tenant_id: str):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
         self.cache = omnichannel_cache

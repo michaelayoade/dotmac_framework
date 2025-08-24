@@ -23,6 +23,7 @@ class Event:
     """Event data structure."""
     
     def __init__(
+        """  Init   operation."""
         self,
         event_type: EventType,
         tenant_id: str,
@@ -52,6 +53,7 @@ class EventBus:
     """Event bus for handling service events."""
     
     def __init__(self):
+        """  Init   operation."""
         self._handlers: Dict[EventType, List[Callable]] = {}
     
     def subscribe(self, event_type: EventType, handler: Callable):
@@ -108,6 +110,7 @@ class EventHandler:
     """Base class for event handlers."""
     
     def __init__(self, event_bus: EventBus = None):
+        """  Init   operation."""
         self.event_bus = event_bus or globals()['event_bus']
     
     async def handle_event(self, event: Event):
@@ -142,6 +145,7 @@ class EventService:
     """Service for managing events and event handling."""
     
     def __init__(self, event_bus: EventBus = None):
+        """  Init   operation."""
         self.event_bus = event_bus or globals()['event_bus']
         self.handlers = []
     

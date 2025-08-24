@@ -55,6 +55,7 @@ class OperatorStrategyRegistry:
     """
     
     def __init__(self):
+        """  Init   operation."""
         self._strategies: Dict[TargetingOperator, OperatorStrategy] = {}
         self._initialize_default_strategies()
     

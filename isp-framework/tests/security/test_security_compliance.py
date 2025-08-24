@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 """
 Security and compliance testing suite for ISP platform.
 
@@ -876,4 +880,4 @@ class TestSecurityPerformanceBaseline:
             auth_per_second = 100 / duration
             assert auth_per_second >= 50, f"Only {auth_per_second:.1f} auth/sec with security enabled"
             
-            print(f"Security Performance: {100} authentications in {duration:.2f}s ({auth_per_second:.1f}/sec)")
+logger.info(f"Security Performance: {100} authentications in {duration:.2f}s ({auth_per_second:.1f}/sec)")

@@ -24,6 +24,7 @@ class SSHConnectionPool:
     """Connection pool for managing SSH connections efficiently"""
 
     def __init__(self, max_connections: int = 10):
+        """  Init   operation."""
         self.max_connections = max_connections
         self.active_connections: Dict[str, Any] = {}
         self.connection_lock = asyncio.Lock()
@@ -78,6 +79,7 @@ class EnhancedSSHClient:
     """Enhanced SSH client with both real and mock capabilities"""
 
     def __init__(self, host: str, username: str, port: int, use_mock: bool = False):
+        """  Init   operation."""
         self.host = host
         self.username = username
         self.port = port
@@ -98,14 +100,18 @@ class EnhancedSSHClient:
         """Create mock client for testing"""
 
         class MockClient:
+            """Class for MockClient operations."""
             def __init__(self):
+                """  Init   operation."""
                 self.connected = False
 
             def connect(self, **kwargs):
+                """Connect operation."""
                 self.connected = True
                 return True
 
             def exec_command(self, command: str):
+                """Exec Command operation."""
                 # Simulate common network device responses
                 mock_responses = {
                     "uci show wireless": "wireless.@wifi-device[0]=wifi-device\nwireless.@wifi-device[0].type='mac80211'",
@@ -131,15 +137,21 @@ class EnhancedSSHClient:
 
                 # Mock stdin, stdout, stderr
                 class MockStream:
+                    """Class for MockStream operations."""
                     def __init__(self, content: str):
+                        """  Init   operation."""
                         self.content = content
 
                     def read(self):
+                        """Read operation."""
                         return self.content.encode("utf-8")
 
                     def channel(self):
+                        """Channel operation."""
                         class MockChannel:
+                            """Class for MockChannel operations."""
                             def recv_exit_status(self):
+                                """Recv Exit Status operation."""
                                 return 0
 
                         return MockChannel()
@@ -147,6 +159,7 @@ class EnhancedSSHClient:
                 return MockStream(""), MockStream(output), MockStream(error)
 
             def close(self):
+                """Close operation."""
                 self.connected = False
 
         return MockClient()
@@ -193,6 +206,7 @@ class SSHDeviceManager:
     """Production SSH automation for network devices"""
 
     def __init__(self, max_concurrent: int = None):
+        """  Init   operation."""
         self.connection_pool = SSHConnectionPool()
         self.max_concurrent = max_concurrent or config.ssh_max_concurrent
         self.execution_history: List[Dict[str, Any]] = []
@@ -304,6 +318,7 @@ class SSHDeviceManager:
         semaphore = asyncio.Semaphore(self.max_concurrent)
 
         async def execute_with_semaphore(
+            """Execute With Semaphore operation."""
             device_ip: str, command: str, credentials: Dict[str, str]
         ):
             async with semaphore:
@@ -501,6 +516,7 @@ class SSHAutomationSDK:
     """Main SDK for SSH-based network automation"""
 
     def __init__(self, tenant_id: str):
+        """  Init   operation."""
         self.tenant_id = tenant_id
         self.ssh_manager = SSHDeviceManager()
         self.default_credentials = {}

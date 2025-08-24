@@ -17,6 +17,7 @@ from .models import (
 
 # Work Order Schemas
 class WorkOrderBase(BaseModel):
+    """Class for WorkOrderBase operations."""
     title: str = Field(..., min_length=1, max_length=255)
     description: str = Field(..., min_length=1)
     work_order_type: WorkOrderType
@@ -26,10 +27,12 @@ class WorkOrderBase(BaseModel):
 
 
 class WorkOrderCreate(WorkOrderBase):
+    """Class for WorkOrderCreate operations."""
     pass
 
 
 class WorkOrderUpdate(BaseModel):
+    """Class for WorkOrderUpdate operations."""
     title: Optional[str] = Field(None, min_length=1, max_length=255)
     description: Optional[str] = Field(None, min_length=1)
     work_order_type: Optional[WorkOrderType] = None
@@ -40,6 +43,7 @@ class WorkOrderUpdate(BaseModel):
 
 
 class WorkOrder(WorkOrderBase):
+    """Class for WorkOrder operations."""
     model_config = ConfigDict(from_attributes=True)
 
     id: str
@@ -60,6 +64,7 @@ class WorkOrder(WorkOrderBase):
 
 # Technician Schemas
 class TechnicianBase(BaseModel):
+    """Class for TechnicianBase operations."""
     employee_id: str = Field(..., min_length=1, max_length=50)
     first_name: str = Field(..., min_length=1, max_length=100)
     last_name: str = Field(..., min_length=1, max_length=100)
@@ -71,10 +76,12 @@ class TechnicianBase(BaseModel):
 
 
 class TechnicianCreate(TechnicianBase):
+    """Class for TechnicianCreate operations."""
     pass
 
 
 class TechnicianUpdate(BaseModel):
+    """Class for TechnicianUpdate operations."""
     first_name: Optional[str] = Field(None, min_length=1, max_length=100)
     last_name: Optional[str] = Field(None, min_length=1, max_length=100)
     email: Optional[str] = Field(None, max_length=255)
@@ -85,6 +92,7 @@ class TechnicianUpdate(BaseModel):
 
 
 class Technician(TechnicianBase):
+    """Class for Technician operations."""
     model_config = ConfigDict(from_attributes=True)
 
     id: str
@@ -99,6 +107,7 @@ class Technician(TechnicianBase):
 
 # Appointment Schemas
 class AppointmentBase(BaseModel):
+    """Class for AppointmentBase operations."""
     work_order_id: str
     technician_id: str
     customer_id: Optional[str] = None
@@ -110,10 +119,12 @@ class AppointmentBase(BaseModel):
 
 
 class AppointmentCreate(AppointmentBase):
+    """Class for AppointmentCreate operations."""
     pass
 
 
 class AppointmentUpdate(BaseModel):
+    """Class for AppointmentUpdate operations."""
     appointment_date: Optional[date] = None
     time_slot_start: Optional[time] = None
     time_slot_end: Optional[time] = None
@@ -125,6 +136,7 @@ class AppointmentUpdate(BaseModel):
 
 
 class Appointment(AppointmentBase):
+    """Class for Appointment operations."""
     model_config = ConfigDict(from_attributes=True)
 
     id: str
@@ -141,6 +153,7 @@ class Appointment(AppointmentBase):
 
 # Time Log Schemas
 class TimeLogBase(BaseModel):
+    """Class for TimeLogBase operations."""
     technician_id: str
     work_order_id: Optional[str] = None
     log_date: date
@@ -150,16 +163,19 @@ class TimeLogBase(BaseModel):
 
 
 class TimeLogCreate(TimeLogBase):
+    """Class for TimeLogCreate operations."""
     pass
 
 
 class TimeLogUpdate(BaseModel):
+    """Class for TimeLogUpdate operations."""
     end_time: Optional[datetime] = None
     break_duration_minutes: Optional[int] = Field(None, ge=0)
     description: Optional[str] = None
 
 
 class TimeLog(TimeLogBase):
+    """Class for TimeLog operations."""
     model_config = ConfigDict(from_attributes=True)
 
     id: str
@@ -174,6 +190,7 @@ class TimeLog(TimeLogBase):
 
 # Field Equipment Schemas
 class FieldEquipmentBase(BaseModel):
+    """Class for FieldEquipmentBase operations."""
     equipment_id: str = Field(..., min_length=1, max_length=100)
     name: str = Field(..., min_length=1, max_length=255)
     category: str = Field(..., min_length=1, max_length=100)
@@ -185,10 +202,12 @@ class FieldEquipmentBase(BaseModel):
 
 
 class FieldEquipmentCreate(FieldEquipmentBase):
+    """Class for FieldEquipmentCreate operations."""
     pass
 
 
 class FieldEquipmentUpdate(BaseModel):
+    """Class for FieldEquipmentUpdate operations."""
     name: Optional[str] = Field(None, min_length=1, max_length=255)
     category: Optional[str] = Field(None, min_length=1, max_length=100)
     manufacturer: Optional[str] = Field(None, max_length=100)
@@ -200,6 +219,7 @@ class FieldEquipmentUpdate(BaseModel):
 
 
 class FieldEquipment(FieldEquipmentBase):
+    """Class for FieldEquipment operations."""
     model_config = ConfigDict(from_attributes=True)
 
     id: str
@@ -215,6 +235,7 @@ class FieldEquipment(FieldEquipmentBase):
 
 # Service Route Schemas
 class ServiceRouteBase(BaseModel):
+    """Class for ServiceRouteBase operations."""
     route_name: str = Field(..., min_length=1, max_length=255)
     description: Optional[str] = None
     technician_id: str
@@ -223,10 +244,12 @@ class ServiceRouteBase(BaseModel):
 
 
 class ServiceRouteCreate(ServiceRouteBase):
+    """Class for ServiceRouteCreate operations."""
     pass
 
 
 class ServiceRouteUpdate(BaseModel):
+    """Class for ServiceRouteUpdate operations."""
     route_name: Optional[str] = Field(None, min_length=1, max_length=255)
     description: Optional[str] = None
     technician_id: Optional[str] = None
@@ -236,6 +259,7 @@ class ServiceRouteUpdate(BaseModel):
 
 
 class ServiceRoute(ServiceRouteBase):
+    """Class for ServiceRoute operations."""
     model_config = ConfigDict(from_attributes=True)
 
     id: str
@@ -247,12 +271,14 @@ class ServiceRoute(ServiceRouteBase):
 
 # Dashboard Response Schemas
 class WorkOrderDashboard(BaseModel):
+    """Class for WorkOrderDashboard operations."""
     summary: Dict[str, Any]
     status_breakdown: List[Dict[str, Any]]
     recent_work_orders: List[Dict[str, Any]]
 
 
 class TechnicianPerformanceReport(BaseModel):
+    """Class for TechnicianPerformanceReport operations."""
     report_period: Dict[str, date]
     technician_id: Optional[str]
     metrics: Dict[str, Any]

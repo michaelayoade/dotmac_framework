@@ -32,6 +32,7 @@ class InvoiceService(BaseTenantService[Invoice, schemas.InvoiceCreate, schemas.I
     """Service for invoice operations."""
     
     def __init__(self, db: Session, tenant_id: str):
+        """  Init   operation."""
         super().__init__(
             db=db,
             model_class=Invoice,
@@ -64,6 +65,7 @@ class PaymentService(BaseTenantService[Payment, schemas.PaymentCreate, schemas.P
     """Service for payment operations."""
     
     def __init__(self, db: Session, tenant_id: str):
+        """  Init   operation."""
         super().__init__(
             db=db,
             model_class=Payment,

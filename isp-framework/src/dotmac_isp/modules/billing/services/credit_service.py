@@ -13,6 +13,7 @@ class CreditService:
     """Service for credit management and credit note operations."""
     
     def __init__(self, db_session: AsyncSession):
+        """  Init   operation."""
         self.db_session = db_session
     
     async def create_credit_note(

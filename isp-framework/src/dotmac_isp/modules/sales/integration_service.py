@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 """Sales Integration Service - Handles sales to customer to project workflow."""
 
 from datetime import datetime, date, timedelta
@@ -396,10 +400,10 @@ class SalesIntegrationService:
                     self.db.add(notification)
             
             self.db.commit()
-            print(f"[NOTIFICATION] Created {len(notifications_to_send)} notifications for conversion")
+logger.info(f"[NOTIFICATION] Created {len(notifications_to_send)} notifications for conversion")
             
         except Exception as e:
-            print(f"[NOTIFICATION ERROR] Failed to create notifications: {e}")
+logger.error(f"[NOTIFICATION ERROR] Failed to create notifications: {e}")
             self.db.rollback()
 
     def _get_next_steps(self, project) -> List[str]:

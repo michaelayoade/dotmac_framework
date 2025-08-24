@@ -242,21 +242,26 @@ class MockRedisClient:
     """Mock Redis client for development when Redis is not available."""
 
     def __init__(self):
+        """  Init   operation."""
         self._data = {}
         self._hash_data = {}
         self._sets = {}
 
     def ping(self):
+        """Ping operation."""
         return True
 
     def setex(self, key: str, ttl: int, value: bytes) -> bool:
+        """Setex operation."""
         self._data[key] = value
         return True
 
     def get(self, key: str) -> Optional[bytes]:
+        """Get operation."""
         return self._data.get(key)
 
     def delete(self, *keys) -> int:
+        """Delete operation."""
         count = 0
         for key in keys:
             if key in self._data:
@@ -265,38 +270,46 @@ class MockRedisClient:
         return count
 
     def exists(self, key: str) -> bool:
+        """Exists operation."""
         return key in self._data
 
     def incr(self, key: str, amount: int = 1) -> int:
+        """Incr operation."""
         current = int(self._data.get(key, b"0"))
         new_value = current + amount
         self._data[key] = str(new_value).encode()
         return new_value
 
     def hset(self, hash_key: str, field: str, value: bytes) -> bool:
+        """Hset operation."""
         if hash_key not in self._hash_data:
             self._hash_data[hash_key] = {}
         self._hash_data[hash_key][field] = value
         return True
 
     def hget(self, hash_key: str, field: str) -> Optional[bytes]:
+        """Hget operation."""
         return self._hash_data.get(hash_key, {}).get(field)
 
     def hgetall(self, hash_key: str) -> Dict[bytes, bytes]:
+        """Hgetall operation."""
         hash_dict = self._hash_data.get(hash_key, {})
         return {k.encode(): v for k, v in hash_dict.items()}
 
     def hdel(self, hash_key: str, field: str) -> bool:
+        """Hdel operation."""
         if hash_key in self._hash_data and field in self._hash_data[hash_key]:
             del self._hash_data[hash_key][field]
             return True
         return False
 
     def keys(self, pattern: str) -> List[bytes]:
+        """Keys operation."""
         # Simple pattern matching for mock
         return [k.encode() for k in self._data.keys() if pattern.replace("*", "") in k]
 
     def sadd(self, key: str, *values) -> int:
+        """Sadd operation."""
         if key not in self._sets:
             self._sets[key] = set()
         count = 0
@@ -307,9 +320,11 @@ class MockRedisClient:
         return count
 
     def smembers(self, key: str) -> set:
+        """Smembers operation."""
         return self._sets.get(key, set())
 
     def expire(self, key: str, ttl: int) -> bool:
+        """Expire operation."""
         # Mock implementation - doesn't actually expire
         return True
 
@@ -356,8 +371,10 @@ def cached(
     """Decorator to cache function results."""
 
     def decorator(func):
+        """Decorator operation."""
         @wraps(func)
         def wrapper(*args, **kwargs):
+            """Wrapper operation."""
             # Generate cache key
             if key_func:
                 cache_key = key_func(*args, **kwargs)
@@ -417,6 +434,7 @@ class SessionManager:
     """Redis-based session manager."""
 
     def __init__(self, cache_manager: CacheManager = None):
+        """  Init   operation."""
         self.cache = cache_manager or get_cache_manager()
         self.namespace = "sessions"
         self.default_ttl = 1800  # 30 minutes

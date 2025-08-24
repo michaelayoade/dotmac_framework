@@ -73,6 +73,7 @@ class SecretsSDKConfig:
     """Secrets SDK configuration."""
 
     def __init__(
+        """  Init   operation."""
         self,
         master_encryption_key: str | None = None,
         cache_ttl: int = 300,  # 5 minutes

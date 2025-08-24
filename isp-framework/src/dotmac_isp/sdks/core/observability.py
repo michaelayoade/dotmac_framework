@@ -226,6 +226,7 @@ class DotMacTelemetry:
 
         # Custom request attributes extractor
         def request_hook(span, scope):
+            """Request Hook operation."""
             if span and span.is_recording():
                 # Add custom attributes
                 span.set_attribute("http.scheme", scope.get("scheme", "http"))
@@ -246,6 +247,7 @@ class DotMacTelemetry:
 
         # Custom response attributes extractor
         def response_hook(span, message):
+            """Response Hook operation."""
             if span and span.is_recording():
                 status_code = message.get("status", 0)
                 span.set_attribute("http.status_code", status_code)
@@ -344,10 +346,12 @@ class DotMacTelemetry:
         """
 
         def decorator(func):
+            """Decorator operation."""
             span_name = name or f"{self.service_name}.{func.__name__}"
 
             @wraps(func)
             async def async_wrapper(*args, **kwargs):
+                """Async Wrapper operation."""
                 with self.span(span_name, kind) as span:
                     # Add function arguments as attributes
                     span.set_attribute("function.name", func.__name__)
@@ -358,6 +362,7 @@ class DotMacTelemetry:
 
             @wraps(func)
             def sync_wrapper(*args, **kwargs):
+                """Sync Wrapper operation."""
                 with self.span(span_name, kind) as span:
                     # Add function arguments as attributes
                     span.set_attribute("function.name", func.__name__)
@@ -484,6 +489,7 @@ def trace_method(name: Optional[str] = None):
     """Decorator for tracing methods."""
 
     def decorator(func):
+        """Decorator operation."""
         if _telemetry:
             return _telemetry.trace(name)(func)
         return func

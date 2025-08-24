@@ -447,6 +447,7 @@ class BusinessRuleEngine:
     """Central engine for managing and executing business rules."""
 
     def __init__(self):
+        """  Init   operation."""
         self.rules: Dict[str, BusinessRule] = {}
         self.validators: Dict[str, BaseBusinessRuleValidator] = {}
         self.rule_violations: List[ValidationResult] = []

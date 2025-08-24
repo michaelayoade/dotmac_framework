@@ -43,6 +43,7 @@ class TariffService:
     """In-memory service for tariff and pricing operations."""
 
     def __init__(self):
+        """  Init   operation."""
         self._tariff_plans: Dict[str, Dict[str, Any]] = {}
         self._pricing_rules: Dict[str, Dict[str, Any]] = {}
         self._policy_templates: Dict[str, Dict[str, Any]] = {}
@@ -497,6 +498,7 @@ class TariffSDK:
     """Minimal, reusable SDK for tariff and policy intent management."""
 
     def __init__(self, tenant_id: str):
+        """  Init   operation."""
         self.tenant_id = tenant_id
         self._service = TariffService()
 

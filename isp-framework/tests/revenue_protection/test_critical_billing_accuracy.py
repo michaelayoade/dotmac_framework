@@ -561,9 +561,11 @@ class TestBillingScaleAccuracy:
         
         # Operations that will run concurrently
         def apply_charge():
+            """Apply Charge operation."""
             billing_service._apply_charge(customer_id, Decimal('25.00'))
             
         def apply_credit():
+            """Apply Credit operation."""
             billing_service._apply_credit(customer_id, Decimal('10.00'))
         
         # Run concurrent operations

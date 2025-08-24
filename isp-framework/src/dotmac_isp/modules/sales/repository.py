@@ -32,6 +32,7 @@ class LeadRepository:
     """Repository for lead database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 
@@ -215,6 +216,7 @@ class OpportunityRepository:
     """Repository for opportunity database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 
@@ -442,6 +444,7 @@ class SalesActivityRepository:
     """Repository for sales activity database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 
@@ -583,6 +586,7 @@ class QuoteRepository:
     """Repository for quote database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 
@@ -696,6 +700,7 @@ class SalesAnalyticsRepository:
     """Repository for sales analytics and reporting."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 

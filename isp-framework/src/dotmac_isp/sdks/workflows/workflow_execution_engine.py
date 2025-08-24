@@ -40,6 +40,7 @@ class StepDependencyResolver:
     """Handles step dependency resolution and execution ordering."""
 
     def __init__(self, workflow_def: WorkflowDefinition):
+        """  Init   operation."""
         self.workflow_def = workflow_def
         self.step_map = {step.id: step for step in workflow_def.steps}
 
@@ -75,6 +76,7 @@ class StepExecutionOrchestrator:
     """Orchestrates execution of individual workflow steps."""
 
     def __init__(self, engine: WorkflowEngine):
+        """  Init   operation."""
         self.engine = engine
 
     async def execute_step_batch(
@@ -129,6 +131,7 @@ class WorkflowExecutionStateMachine:
     """Manages workflow execution state transitions."""
 
     def __init__(self, execution: WorkflowExecution):
+        """  Init   operation."""
         self.execution = execution
 
     def start_execution(self) -> None:
@@ -175,6 +178,7 @@ class RefactoredWorkflowExecutionEngine:
     """
 
     def __init__(self, engine: WorkflowEngine, storage_adapter=None):
+        """  Init   operation."""
         self.engine = engine
         self.storage_adapter = storage_adapter
 

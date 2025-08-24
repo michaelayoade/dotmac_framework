@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 """
 Central Secret Management
 
@@ -53,6 +57,7 @@ class Secrets(BaseSettings):
     sentry_dsn: Optional[str] = Field(default=None, description="Sentry DSN")
 
     class Config:
+        """Class for Config operations."""
         env_file = ".env", ".env.local", ".env.production"
         env_file_encoding = "utf-8"
         extra = "forbid"  # Fail on unknown environment variables
@@ -167,4 +172,4 @@ def validate_production_secrets():
 
 if __name__ == "__main__":
     validate_production_secrets()
-    print("✅ All secrets validated successfully")
+logger.info("✅ All secrets validated successfully")

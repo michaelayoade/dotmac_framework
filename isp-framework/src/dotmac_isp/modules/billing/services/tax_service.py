@@ -12,6 +12,7 @@ class TaxService:
     """Service for tax calculations and management."""
     
     def __init__(self, db_session: AsyncSession):
+        """  Init   operation."""
         self.db_session = db_session
     
     async def calculate_tax(

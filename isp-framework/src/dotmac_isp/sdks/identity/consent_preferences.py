@@ -21,6 +21,7 @@ class ConsentPreferencesService:
     """In-memory service for consent preferences operations."""
 
     def __init__(self):
+        """  Init   operation."""
         self._preferences: Dict[UUID, ConsentPreference] = {}
         self._audits: Dict[UUID, List[ConsentAudit]] = {}
         self._contact_preferences: Dict[UUID, List[UUID]] = {}
@@ -90,6 +91,7 @@ class ConsentPreferencesSDK:
     """Small, composable SDK for consent preferences and GDPR/CCPA compliance."""
 
     def __init__(self, tenant_id: str):
+        """  Init   operation."""
         self.tenant_id = tenant_id
         self._service = ConsentPreferencesService()
 

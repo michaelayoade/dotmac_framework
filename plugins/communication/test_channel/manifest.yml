@@ -1,0 +1,16 @@
+plugin_id: "test_channel"
+name: "Test Communication Plugin"
+version: "1.0.0"
+description: "Test plugin for validating plugin architecture"
+author: "DotMac Team"
+channel_type: "test"
+capabilities:
+  - "text_messaging"
+  - "testing"
+required_config: []
+optional_config:
+  test_mode: true
+dependencies: []
+min_platform_version: "1.0.0"
+entry_point: "test_plugin.TestChannelPlugin"
+license: "MIT"

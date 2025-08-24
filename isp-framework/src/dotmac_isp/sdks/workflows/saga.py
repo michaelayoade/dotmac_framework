@@ -102,6 +102,7 @@ class SagaStep(BaseModel):
     )
 
     class Config:
+        """Class for Config operations."""
         extra = "allow"
 
 
@@ -130,6 +131,7 @@ class SagaDefinition(BaseModel):
     @field_validator("steps")
     @classmethod
     def validate_steps(cls, v):
+        """Validate Steps operation."""
         if not v:
             raise ValueError("Saga must have at least one step")
 
@@ -146,6 +148,7 @@ class SagaDefinition(BaseModel):
         return v
 
     class Config:
+        """Class for Config operations."""
         extra = "allow"
 
 
@@ -247,6 +250,7 @@ class SagaEngine:
     """Saga execution engine."""
 
     def __init__(self):
+        """  Init   operation."""
         self.transaction_handlers: Dict[str, Callable] = {}
         self.compensation_handlers: Dict[str, Callable] = {}
         self.validation_handlers: Dict[str, Callable] = {}
@@ -441,6 +445,7 @@ class SagaSDK:
     """SDK for saga pattern implementation and execution."""
 
     def __init__(self, tenant_id: str, storage_adapter=None):
+        """  Init   operation."""
         self.tenant_id = tenant_id
         self.storage_adapter = storage_adapter
         self.engine = SagaEngine()

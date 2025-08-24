@@ -104,7 +104,9 @@ class TestUserModelLogic:
     def create_mock_user(self):
         """Create a mock User instance for testing."""
         class MockUser:
+            """Class for MockUser operations."""
             def __init__(self):
+                """  Init   operation."""
                 self.first_name = "John"
                 self.last_name = "Doe"
                 self.locked_until = None
@@ -175,7 +177,9 @@ class TestRoleModelLogic:
     def create_mock_role(self):
         """Create a mock Role instance for testing."""
         class MockRole:
+            """Class for MockRole operations."""
             def __init__(self):
+                """  Init   operation."""
                 self.name = "Manager"
                 self.description = "System manager role"
                 self.permissions = None
@@ -242,7 +246,9 @@ class TestCustomerModelLogic:
         from dotmac_isp.modules.identity.models import CustomerType
         
         class MockCustomer:
+            """Class for MockCustomer operations."""
             def __init__(self):
+                """  Init   operation."""
                 self.customer_number = None
                 self.customer_type = CustomerType.RESIDENTIAL
                 self.company_name = None
@@ -356,7 +362,9 @@ class TestAuthTokenModelLogic:
     def create_mock_auth_token(self):
         """Create a mock AuthToken instance for testing."""
         class MockAuthToken:
+            """Class for MockAuthToken operations."""
             def __init__(self):
+                """  Init   operation."""
                 self.user_id = uuid4()
                 self.token_hash = "abc123"
                 self.token_type = "access"

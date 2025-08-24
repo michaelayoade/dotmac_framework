@@ -196,6 +196,7 @@ class VolthaOlt(TenantModel, StatusMixin, AuditMixin):
         return None
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<VolthaOlt(name='{self.name}', device_id='{self.voltha_device_id}', status='{self.operational_status}')>"
 
 
@@ -294,6 +295,7 @@ class VolthaOnu(TenantModel, StatusMixin, AuditMixin):
             return "critical"
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<VolthaOnu(name='{self.name}', onu_id={self.onu_id}, serial='{self.serial_number}')>"
 
 
@@ -356,6 +358,7 @@ class GponPort(TenantModel, StatusMixin, AuditMixin):
         return 0.0
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<GponPort(olt='{self.olt.name if self.olt else 'Unknown'}', port={self.port_number}, type='{self.port_type}')>"
 
 
@@ -426,6 +429,7 @@ class GponService(TenantModel, StatusMixin, AuditMixin):
     service_profile = relationship("ServiceProfile", back_populates="services")
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<GponService(name='{self.service_name}', type='{self.service_type}', gem_port={self.gem_port_id})>"
 
 
@@ -451,6 +455,7 @@ class VolthaDevice(TenantModel, AuditMixin):
     custom_fields = Column(JSON, nullable=True)
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<VolthaDevice(device_id='{self.voltha_device_id}', type='{self.device_type}')>"
 
 
@@ -491,6 +496,7 @@ class VolthaMetric(TenantModel):
     port = relationship("GponPort")
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<VolthaMetric(device='{self.device_id}', metric='{self.metric_name}', value={self.value})>"
 
 
@@ -552,6 +558,7 @@ class VolthaAlert(TenantModel, AuditMixin):
         self.cleared_at = datetime.utcnow()
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<VolthaAlert(id='{self.alert_id}', device='{self.device_id}', severity='{self.severity}')>"
 
 
@@ -605,6 +612,7 @@ class ServiceProfile(TenantModel, StatusMixin, AuditMixin):
     )
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<ServiceProfile(name='{self.name}', down={self.downstream_bandwidth_kbps}kbps, up={self.upstream_bandwidth_kbps}kbps)>"
 
 
@@ -644,4 +652,5 @@ class BandwidthProfile(TenantModel, StatusMixin, AuditMixin):
     )
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<BandwidthProfile(name='{self.name}', direction='{self.direction}', cir={self.committed_information_rate}kbps)>"

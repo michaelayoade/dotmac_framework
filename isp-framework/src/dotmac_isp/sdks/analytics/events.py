@@ -19,6 +19,7 @@ class EventsSDK:
     """SDK for analytics events operations."""
 
     def __init__(self, tenant_id: str, db: Session):
+        """  Init   operation."""
         self.tenant_id = tenant_id
         self.db = db
         self.service = EventService(db)

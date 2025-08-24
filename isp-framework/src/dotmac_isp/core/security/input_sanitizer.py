@@ -12,6 +12,7 @@ class InputSanitizer:
     """Input sanitizer for preventing injection attacks."""
     
     def __init__(self):
+        """  Init   operation."""
         # SQL injection patterns
         self.sql_patterns = [
             r"(\bor\b\s+\d+\s*=\s*\d+)",  # OR 1=1

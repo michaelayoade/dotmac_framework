@@ -16,7 +16,9 @@ class TestSoftDeleteMixinMethods:
     def test_soft_delete_method(self):
         """Test soft_delete method - covers lines 28-29."""
         class TestModel(SoftDeleteMixin):
+            """Class for TestModel operations."""
             def __init__(self):
+                """  Init   operation."""
                 self.is_deleted = False
                 self.deleted_at = None
         
@@ -35,7 +37,9 @@ class TestSoftDeleteMixinMethods:
     def test_restore_method(self):
         """Test restore method - covers lines 33-34."""
         class TestModel(SoftDeleteMixin):
+            """Class for TestModel operations."""
             def __init__(self):
+                """  Init   operation."""
                 self.is_deleted = True
                 self.deleted_at = datetime(2023, 12, 15, 10, 30, 45)
         
@@ -54,7 +58,9 @@ class TestStatusMixinMethods:
     def test_change_status_method(self):
         """Test change_status method - covers lines 79-81."""
         class TestModel(StatusMixin):
+            """Class for TestModel operations."""
             def __init__(self):
+                """  Init   operation."""
                 self.status = "active"
                 self.status_reason = None
                 self.status_changed_at = None
@@ -75,7 +81,9 @@ class TestStatusMixinMethods:
     def test_change_status_method_with_none_reason(self):
         """Test change_status method with None reason."""
         class TestModel(StatusMixin):
+            """Class for TestModel operations."""
             def __init__(self):
+                """  Init   operation."""
                 self.status = "active"
                 self.status_reason = "Previous reason"
                 self.status_changed_at = None
@@ -100,7 +108,9 @@ class TestAddressMixinProperties:
     def test_full_address_property_all_fields(self):
         """Test full_address property with all fields - covers lines 96-102."""
         class TestModel(AddressMixin):
+            """Class for TestModel operations."""
             def __init__(self):
+                """  Init   operation."""
                 self.street_address = "123 Main St"
                 self.city = "New York"
                 self.state_province = "NY"
@@ -117,7 +127,9 @@ class TestAddressMixinProperties:
     def test_full_address_property_partial_fields(self):
         """Test full_address property with some None fields."""
         class TestModel(AddressMixin):
+            """Class for TestModel operations."""
             def __init__(self):
+                """  Init   operation."""
                 self.street_address = "456 Oak Ave"
                 self.city = None  # None value should be filtered out
                 self.state_province = "CA"
@@ -133,7 +145,9 @@ class TestAddressMixinProperties:
     def test_full_address_property_empty_fields(self):
         """Test full_address property with empty string fields."""
         class TestModel(AddressMixin):
+            """Class for TestModel operations."""
             def __init__(self):
+                """  Init   operation."""
                 self.street_address = "789 Pine St"
                 self.city = ""  # Empty string should be filtered out
                 self.state_province = "TX"
@@ -149,7 +163,9 @@ class TestAddressMixinProperties:
     def test_full_address_property_all_none(self):
         """Test full_address property with all None fields."""
         class TestModel(AddressMixin):
+            """Class for TestModel operations."""
             def __init__(self):
+                """  Init   operation."""
                 self.street_address = None
                 self.city = None
                 self.state_province = None
@@ -164,7 +180,9 @@ class TestAddressMixinProperties:
     def test_full_address_property_mixed_none_and_empty(self):
         """Test full_address property with mix of None and empty strings."""
         class TestModel(AddressMixin):
+            """Class for TestModel operations."""
             def __init__(self):
+                """  Init   operation."""
                 self.street_address = "100 Broadway"
                 self.city = ""
                 self.state_province = None
@@ -184,7 +202,9 @@ class TestContactMixinProperties:
     def test_primary_contact_property_with_email(self):
         """Test primary_contact property with email - covers line 117."""
         class TestModel(ContactMixin):
+            """Class for TestModel operations."""
             def __init__(self):
+                """  Init   operation."""
                 self.email_primary = "user@example.com"
                 self.phone_primary = "555-1234"
         
@@ -199,7 +219,9 @@ class TestContactMixinProperties:
     def test_primary_contact_property_with_phone_only(self):
         """Test primary_contact property with phone only."""
         class TestModel(ContactMixin):
+            """Class for TestModel operations."""
             def __init__(self):
+                """  Init   operation."""
                 self.email_primary = None
                 self.phone_primary = "555-5678"
         
@@ -212,7 +234,9 @@ class TestContactMixinProperties:
     def test_primary_contact_property_with_empty_email(self):
         """Test primary_contact property with empty email."""
         class TestModel(ContactMixin):
+            """Class for TestModel operations."""
             def __init__(self):
+                """  Init   operation."""
                 self.email_primary = ""
                 self.phone_primary = "555-9999"
         
@@ -226,7 +250,9 @@ class TestContactMixinProperties:
     def test_primary_contact_property_no_contact_info(self):
         """Test primary_contact property with no contact info."""
         class TestModel(ContactMixin):
+            """Class for TestModel operations."""
             def __init__(self):
+                """  Init   operation."""
                 self.email_primary = None
                 self.phone_primary = None
         
@@ -239,7 +265,9 @@ class TestContactMixinProperties:
     def test_primary_contact_property_empty_strings(self):
         """Test primary_contact property with empty strings."""
         class TestModel(ContactMixin):
+            """Class for TestModel operations."""
             def __init__(self):
+                """  Init   operation."""
                 self.email_primary = ""
                 self.phone_primary = ""
         
@@ -252,7 +280,9 @@ class TestContactMixinProperties:
     def test_primary_contact_property_whitespace_strings(self):
         """Test primary_contact property with whitespace strings."""
         class TestModel(ContactMixin):
+            """Class for TestModel operations."""
             def __init__(self):
+                """  Init   operation."""
                 self.email_primary = "   "
                 self.phone_primary = None
         
@@ -270,7 +300,9 @@ class TestMixinIntegration:
     def test_multiple_mixin_methods(self):
         """Test using multiple mixins together."""
         class TestModel(SoftDeleteMixin, StatusMixin, AddressMixin, ContactMixin):
+            """Class for TestModel operations."""
             def __init__(self):
+                """  Init   operation."""
                 # SoftDeleteMixin
                 self.is_deleted = False
                 self.deleted_at = None
@@ -324,7 +356,9 @@ class TestMethodCoverageCompleteness:
         
         # Lines 28-29: SoftDeleteMixin.soft_delete
         class SoftDeleteModel(SoftDeleteMixin):
+            """Class for SoftDeleteModel operations."""
             def __init__(self):
+                """  Init   operation."""
                 self.is_deleted = False
                 self.deleted_at = None
         
@@ -340,7 +374,9 @@ class TestMethodCoverageCompleteness:
         
         # Lines 79-81: StatusMixin.change_status
         class StatusModel(StatusMixin):
+            """Class for StatusModel operations."""
             def __init__(self):
+                """  Init   operation."""
                 self.status = "initial"
                 self.status_reason = None
                 self.status_changed_at = None
@@ -353,7 +389,9 @@ class TestMethodCoverageCompleteness:
         
         # Lines 96-102: AddressMixin.full_address property
         class AddressModel(AddressMixin):
+            """Class for AddressModel operations."""
             def __init__(self):
+                """  Init   operation."""
                 self.street_address = "123 Main"
                 self.city = "City"
                 self.state_province = "State"
@@ -365,7 +403,9 @@ class TestMethodCoverageCompleteness:
         
         # Line 117: ContactMixin.primary_contact property  
         class ContactModel(ContactMixin):
+            """Class for ContactModel operations."""
             def __init__(self):
+                """  Init   operation."""
                 self.email_primary = "test@email.com"
                 self.phone_primary = "555-1234"
         

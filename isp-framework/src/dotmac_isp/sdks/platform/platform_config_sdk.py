@@ -34,6 +34,7 @@ class PlatformConfigSDKConfig:
     """Platform Config SDK configuration."""
 
     def __init__(  # noqa: PLR0913
+        """  Init   operation."""
         self,
         enable_caching: bool = True,
         cache_ttl_seconds: int = 300,  # 5 minutes
@@ -611,6 +612,7 @@ class PlatformConfigSDK:
                 
                 # Check for circular references in nested objects
                 def check_circular_refs(obj, visited=None):
+                    """Check Circular Refs operation."""
                     if visited is None:
                         visited = set()
                     

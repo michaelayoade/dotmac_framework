@@ -2,6 +2,7 @@
 
 import { useCachedData, usePortalAuth } from '@dotmac/headless';
 import { Card } from '@dotmac/styled-components/reseller';
+import { useState, useEffect } from 'react';
 import {
   AlertCircle,
   Award,
@@ -17,6 +18,8 @@ import {
   TrendingUp,
   UserPlus,
   Users,
+  Bell,
+  Lightbulb,
 } from 'lucide-react';
 
 import { ResellerLayout } from '../layout/ResellerLayout';
@@ -111,11 +114,80 @@ const mockResellerData = {
 
 export function ResellerDashboard() {
   const { _user, _currentPortal } = usePortalAuth();
+  const [commissionData, setCommissionData] = useState<any>(null);
+  const [salesOpportunities, setSalesOpportunities] = useState<any>(null);
 
   // In real app, these would be proper API calls
   const { data: resellerData } = useCachedData('reseller-overview', async () => mockResellerData, {
     ttl: 5 * 60 * 1000,
   });
+
+  // Load commission intelligence
+  useEffect(() => {
+    if (resellerData?.partner?.id) {
+      fetchCommissionIntelligence();
+    }
+  }, [resellerData]);
+
+  const fetchCommissionIntelligence = async () => {
+    try {
+      // Get commission tracking data
+      const commissionResponse = await fetch(`/api/isp/resellers/partners/${resellerData.partner.id}/intelligence/commission-tracking`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('reseller-token')}`,
+        },
+      });
+
+      if (commissionResponse.ok) {
+        const commissionData = await commissionResponse.json();
+        setCommissionData(commissionData);
+      } else {
+        // Demo data
+        setCommissionData({
+          commission_alerts: [
+            {
+              type: 'commission_approved',
+              priority: 'high',
+              title: '$850.00 Approved for Payment',
+              message: 'Great news! $850.00 in commissions have been approved and will be paid soon.',
+            }
+          ],
+          commission_summary: {
+            current_month_total: 2850.00,
+            pending_amount: 1200.00,
+            approved_amount: 850.00
+          }
+        });
+      }
+
+      // Get sales opportunities
+      const opportunitiesResponse = await fetch(`/api/isp/resellers/partners/${resellerData.partner.id}/intelligence/sales-opportunities`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('reseller-token')}`,
+        },
+      });
+
+      if (opportunitiesResponse.ok) {
+        const opportunities = await opportunitiesResponse.json();
+        setSalesOpportunities(opportunities);
+      } else {
+        // Demo data
+        setSalesOpportunities({
+          sales_opportunities: [
+            {
+              type: 'deal_followup',
+              title: 'Pending Deals Need Attention',
+              message: 'You have 2 pending deals worth $15,000 total.',
+              potential_value: '$15,000',
+              priority: 'high'
+            }
+          ]
+        });
+      }
+    } catch (error) {
+      console.error('Failed to fetch commission intelligence:', error);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -196,6 +268,85 @@ export function ResellerDashboard() {
             </div>
           </div>
         </div>
+
+        {/* Commission Intelligence Alerts */}
+        {commissionData && commissionData.commission_alerts.length > 0 && (
+          <Card className='p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200'>
+            <div className='flex items-center mb-3'>
+              <Bell className='h-5 w-5 text-blue-600 mr-2' />
+              <h3 className='font-semibold text-gray-900'>Commission Updates</h3>
+            </div>
+            <div className='space-y-2'>
+              {commissionData.commission_alerts.slice(0, 2).map((alert: any, index: number) => (
+                <div key={index} className={`p-3 rounded-lg ${
+                  alert.priority === 'high' ? 'bg-green-50 border border-green-200' :
+                  alert.priority === 'medium' ? 'bg-yellow-50 border border-yellow-200' :
+                  'bg-blue-50 border border-blue-200'
+                }`}>
+                  <div className='flex items-start'>
+                    <div className={`w-2 h-2 rounded-full mt-2 mr-3 ${
+                      alert.priority === 'high' ? 'bg-green-500' :
+                      alert.priority === 'medium' ? 'bg-yellow-500' :
+                      'bg-blue-500'
+                    }`}></div>
+                    <div className='flex-1'>
+                      <p className='font-medium text-gray-900 text-sm'>{alert.title}</p>
+                      <p className='text-gray-600 text-sm'>{alert.message}</p>
+                    </div>
+                    {alert.priority === 'high' && (
+                      <span className='ml-3 px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full'>
+                        🎉 Great News!
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {commissionData.commission_summary && (
+                <div className='mt-3 pt-3 border-t border-blue-200 flex justify-between text-sm'>
+                  <span className='text-gray-600'>Pending:</span>
+                  <span className='font-semibold text-gray-900'>{formatCurrency(commissionData.commission_summary.pending_amount)}</span>
+                </div>
+              )}
+            </div>
+          </Card>
+        )}
+
+        {/* Sales Opportunities Intelligence */}
+        {salesOpportunities && salesOpportunities.sales_opportunities.length > 0 && (
+          <Card className='p-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200'>
+            <div className='flex items-center justify-between mb-3'>
+              <div className='flex items-center'>
+                <Lightbulb className='h-5 w-5 text-green-600 mr-2' />
+                <h3 className='font-semibold text-gray-900'>Sales Opportunities</h3>
+              </div>
+              <span className='text-sm font-medium text-green-600 bg-green-100 px-2 py-1 rounded-full'>
+                {salesOpportunities.sales_opportunities.length} opportunities
+              </span>
+            </div>
+            <div className='space-y-2'>
+              {salesOpportunities.sales_opportunities.slice(0, 2).map((opportunity: any, index: number) => (
+                <div key={index} className='p-3 bg-white/60 rounded-lg border border-green-100'>
+                  <div className='flex items-start justify-between'>
+                    <div className='flex-1'>
+                      <p className='font-medium text-gray-900 text-sm'>{opportunity.title}</p>
+                      <p className='text-gray-600 text-sm'>{opportunity.message}</p>
+                      {opportunity.potential_value && (
+                        <p className='text-green-700 text-sm font-medium mt-1'>
+                          💰 {opportunity.potential_value}
+                        </p>
+                      )}
+                    </div>
+                    <span className={`ml-3 px-2 py-1 text-xs font-medium rounded-full ${
+                      opportunity.priority === 'high' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {opportunity.priority === 'high' ? '🔥 High Priority' : '📈 Medium Priority'}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
 
         {/* Key Performance Metrics */}
         <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4'>

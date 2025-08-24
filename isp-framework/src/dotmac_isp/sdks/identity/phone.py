@@ -19,6 +19,7 @@ class PhoneVerificationService:
     """In-memory service for phone verification operations."""
 
     def __init__(self):
+        """  Init   operation."""
         self._verifications: Dict[UUID, PhoneVerification] = {}
         self._phone_verifications: Dict[str, List[UUID]] = {}
 
@@ -68,6 +69,7 @@ class PhoneSDK:
     """Small, composable SDK for phone verification with OTP and SMS delivery."""
 
     def __init__(self, tenant_id: str):
+        """  Init   operation."""
         self.tenant_id = tenant_id
         self._service = PhoneVerificationService()
 

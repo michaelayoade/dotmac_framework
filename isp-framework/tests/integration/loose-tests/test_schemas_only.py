@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+import logging
+
+logger = logging.getLogger(__name__)
+
 """Standalone test runner for shared schemas module."""
 
 import sys
@@ -25,6 +29,6 @@ if __name__ == "__main__":
         '--tb=short'
     ]
     
-    print(f"Running: {' '.join(cmd)}")
+logger.info(f"Running: {' '.join(cmd)}")
     result = subprocess.run(cmd, cwd=os.path.dirname(__file__))
     sys.exit(result.returncode)

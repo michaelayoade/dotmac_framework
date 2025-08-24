@@ -39,6 +39,7 @@ class VolthaAPIError(Exception):
     """Exception raised when VOLTHA API call fails."""
 
     def __init__(self, message: str, status_code: int = None):
+        """  Init   operation."""
         super().__init__(message)
         self.status_code = status_code
 

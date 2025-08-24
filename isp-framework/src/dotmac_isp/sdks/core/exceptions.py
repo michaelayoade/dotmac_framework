@@ -9,6 +9,7 @@ class SDKError(Exception):
     """Base exception for all SDK errors."""
 
     def __init__(
+        """  Init   operation."""
         self,
         message: str,
         error_code: Optional[str] = None,
@@ -20,6 +21,7 @@ class SDKError(Exception):
         self.details = details or {}
 
     def __str__(self):
+        """  Str   operation."""
         if self.error_code:
             return f"[{self.error_code}] {self.message}"
         return self.message
@@ -86,6 +88,7 @@ class SDKRateLimitError(SDKError):
     """Raised when rate limit is exceeded."""
 
     def __init__(self, message: str, retry_after: Optional[int] = None, **kwargs):
+        """  Init   operation."""
         super().__init__(message, **kwargs)
         self.retry_after = retry_after
 

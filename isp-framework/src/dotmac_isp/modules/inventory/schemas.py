@@ -61,6 +61,7 @@ class ItemResponse(BaseModel):
     updated_at: datetime
 
     class Config:
+        """Class for Config operations."""
         from_attributes = True
 
 
@@ -109,6 +110,7 @@ class WarehouseResponse(BaseModel):
     updated_at: datetime
 
     class Config:
+        """Class for Config operations."""
         from_attributes = True
 
 
@@ -129,6 +131,7 @@ class StockItemResponse(BaseModel):
     updated_at: datetime
 
     class Config:
+        """Class for Config operations."""
         from_attributes = True
 
 
@@ -162,6 +165,7 @@ class StockMovementResponse(BaseModel):
     created_at: datetime
 
     class Config:
+        """Class for Config operations."""
         from_attributes = True
 
 
@@ -200,6 +204,7 @@ class PurchaseOrderResponse(BaseModel):
     updated_at: datetime
 
     class Config:
+        """Class for Config operations."""
         from_attributes = True
 
 
@@ -231,4 +236,5 @@ class StockCountResponse(BaseModel):
     updated_at: datetime
 
     class Config:
+        """Class for Config operations."""
         from_attributes = True

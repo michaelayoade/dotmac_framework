@@ -27,6 +27,7 @@ class TicketRepository:
     """Repository for ticket database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 
@@ -199,6 +200,7 @@ class TicketCommentRepository:
     """Repository for ticket comment operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 
@@ -261,6 +263,7 @@ class KnowledgeBaseRepository:
     """Repository for knowledge base operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 
@@ -340,6 +343,7 @@ class SLARepository:
     """Repository for SLA rule operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 

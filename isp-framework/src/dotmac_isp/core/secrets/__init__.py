@@ -67,7 +67,9 @@ except ImportError as e:
 
     # Provide minimal fallback classes
     class SecurityModuleUnavailable:
+        """Class for SecurityModuleUnavailable operations."""
         def __init__(self, *args, **kwargs):
+            """  Init   operation."""
             raise ImportError(
                 "Security module requires additional dependencies. "
                 "Install with: pip install structlog pydantic cryptography PyJWT"

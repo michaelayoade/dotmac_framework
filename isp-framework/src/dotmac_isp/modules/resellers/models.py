@@ -225,6 +225,7 @@ class Partner(TenantModel, StatusMixin, AuditMixin, ContactMixin, AddressMixin):
         return 0.0
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<Partner(code='{self.partner_code}', name='{self.legal_name}', type='{self.partner_type}')>"
 
 
@@ -276,6 +277,7 @@ class PartnerContact(TenantModel, AuditMixin, ContactMixin):
         return f"{self.first_name} {self.last_name}"
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<PartnerContact(partner_id='{self.partner_id}', name='{self.full_name}', type='{self.contact_type}')>"
 
 
@@ -349,6 +351,7 @@ class PartnerCertification(TenantModel, AuditMixin):
         return None
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<PartnerCertification(partner_id='{self.partner_id}', name='{self.certification_name}')>"
 
 
@@ -447,6 +450,7 @@ class DealRegistration(TenantModel, AuditMixin):
         )
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<DealRegistration(number='{self.deal_number}', partner_id='{self.partner_id}', value={self.deal_value})>"
 
 
@@ -547,6 +551,7 @@ class Commission(TenantModel, AuditMixin):
         return (date.today() - self.calculation_date).days
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<Commission(id='{self.commission_id}', partner_id='{self.partner_id}', amount={self.commission_amount})>"
 
 
@@ -627,6 +632,7 @@ class PartnerProgram(TenantModel, StatusMixin, AuditMixin):
         return None
 
     def __repr__(self):
+        """  Repr   operation."""
         return (
             f"<PartnerProgram(code='{self.program_code}', name='{self.program_name}')>"
         )
@@ -691,4 +697,5 @@ class ProgramEnrollment(TenantModel, AuditMixin):
         return self.enrollment_status == "completed" or self.completion_date is not None
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<ProgramEnrollment(program_id='{self.program_id}', partner_id='{self.partner_id}')>"

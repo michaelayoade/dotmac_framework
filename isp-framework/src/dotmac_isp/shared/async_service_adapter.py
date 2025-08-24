@@ -152,6 +152,7 @@ class SyncServiceWrapper:
         # If it's a coroutine function, wrap it to run synchronously
         if asyncio.iscoroutinefunction(attr):
             def sync_wrapper(*args, **kwargs):
+                """Sync Wrapper operation."""
                 coro = attr(*args, **kwargs)
                 return self._adapter.run_async(coro)
             return sync_wrapper
@@ -212,6 +213,7 @@ class AsyncSessionFromSync:
         async_session_class = async_sessionmaker(async_engine)
         
         def session_factory() -> AsyncSession:
+            """Session Factory operation."""
             return async_session_class()
             
         return session_factory
@@ -239,11 +241,14 @@ class ServiceMigrationHelper:
             Migrated service wrapper
         """
         class MigratedServiceWrapper:
+            """Class for MigratedServiceWrapper operations."""
             def __init__(self, service):
+                """  Init   operation."""
                 self._service = service
                 self._method_mapping = method_mapping
                 
             def __getattr__(self, name: str) -> Any:
+                """  Getattr   operation."""
                 # Check if method needs migration
                 if name in self._method_mapping:
                     new_name = self._method_mapping[name]
@@ -270,6 +275,7 @@ class ServiceMigrationHelper:
             """Compatibility wrapper for legacy service interface."""
             
             def __init__(self, *args, **kwargs):
+                """  Init   operation."""
                 super().__init__(*args, **kwargs)
                 logger.info(f"Using compatibility layer for {old_service_class.__name__}")
             

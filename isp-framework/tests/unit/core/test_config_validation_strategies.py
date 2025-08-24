@@ -215,6 +215,7 @@ class TestValidationStrategies:
     def test_custom_validation_strategy(self):
         """Test custom validation strategy."""
         def custom_validator(field_path, field_value, rule, environment):
+            """Custom Validator operation."""
             if field_value == "forbidden":
                 return [ValidationIssue(
                     issue_id=f"{rule.rule_id}_custom_error",
@@ -365,7 +366,9 @@ class TestFieldValidationOrchestrator:
     def test_add_custom_strategy(self):
         """Test adding custom validation strategy."""
         class CustomStrategy:
+            """Class for CustomStrategy operations."""
             def validate(self, field_path, field_value, rule, environment=None):
+                """Validate operation."""
                 if field_value == "custom_fail":
                     return [ValidationIssue(
                         issue_id="custom_issue",
@@ -463,6 +466,7 @@ class TestComplexityReduction:
     def test_error_handling_preserved(self):
         """Test that error handling is preserved in new implementation."""
         def failing_validator(field_path, field_value, rule, environment):
+            """Failing Validator operation."""
             raise ValueError("Validator failed")
         
         orchestrator = create_field_validation_orchestrator({

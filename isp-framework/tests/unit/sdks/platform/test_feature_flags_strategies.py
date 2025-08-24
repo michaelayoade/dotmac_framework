@@ -194,7 +194,9 @@ class TestOperatorStrategyRegistry:
     def test_register_custom_strategy(self):
         """Test registering a custom strategy."""
         class CustomStrategy(OperatorStrategy):
+            """Class for CustomStrategy operations."""
             def evaluate(self, attribute_value, rule_value):
+                """Evaluate operation."""
                 return attribute_value == "custom"
         
         custom_strategy = CustomStrategy()

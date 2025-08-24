@@ -21,6 +21,7 @@ class ContractValidator:
     """
     
     def __init__(self, base_url: str = "http://localhost:8000"):
+        """  Init   operation."""
         self.base_url = base_url
         self.schemas_cache: Dict[str, Dict] = {}
     
@@ -123,8 +124,10 @@ def contract_test(
             validator.validate_response_schema(response, "customer")
     """
     def decorator(func):
+        """Decorator operation."""
         @wraps(func)
         def wrapper(*args, **kwargs):
+            """Wrapper operation."""
             validator = ContractValidator()
             return func(validator, *args, **kwargs)
         

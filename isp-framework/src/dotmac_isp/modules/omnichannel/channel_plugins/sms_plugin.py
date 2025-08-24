@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 """SMS communication channel plugin using Twilio."""
 
 import asyncio
@@ -47,7 +51,7 @@ class SMSChannelPlugin(BaseChannelPlugin):
 
                 self._twilio_available = True
             except ImportError:
-                print("Twilio library not available. SMS plugin running in mock mode.")
+logger.info("Twilio library not available. SMS plugin running in mock mode.")
                 self._twilio_available = False
                 return True  # Still initialize in mock mode
 
@@ -63,7 +67,7 @@ class SMSChannelPlugin(BaseChannelPlugin):
             return True
 
         except Exception as e:
-            print(f"SMS plugin initialization failed: {e}")
+logger.info(f"SMS plugin initialization failed: {e}")
             return False
 
     async def send_message(self, message: ChannelMessage) -> Dict[str, Any]:

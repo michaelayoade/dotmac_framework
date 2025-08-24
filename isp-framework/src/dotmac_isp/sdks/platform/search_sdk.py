@@ -33,6 +33,7 @@ class SearchSDKConfig:
     """Search SDK configuration."""
 
     def __init__(
+        """  Init   operation."""
         self,
         max_indexes_per_tenant: int = 100,
         max_documents_per_index: int = 100000,

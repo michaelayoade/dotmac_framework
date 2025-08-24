@@ -14,6 +14,7 @@ class NetworkTopologyService:
     """In-memory service for network topology operations."""
 
     def __init__(self):
+        """  Init   operation."""
         self._nodes: Dict[str, Dict[str, Any]] = {}
         self._links: Dict[str, Dict[str, Any]] = {}
         self._ports: Dict[str, Dict[str, Any]] = {}
@@ -123,6 +124,7 @@ class NetworkTopologySDK:
     """Minimal, reusable SDK for network topology management."""
 
     def __init__(self, tenant_id: str):
+        """  Init   operation."""
         self.tenant_id = tenant_id
         self._service = NetworkTopologyService()
 

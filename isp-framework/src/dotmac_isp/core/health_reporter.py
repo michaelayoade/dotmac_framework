@@ -21,6 +21,7 @@ class HealthReporter:
     """Service for reporting health status to Management Platform."""
 
     def __init__(self):
+        """  Init   operation."""
         self.tenant_id = os.getenv("ISP_TENANT_ID")
         self.reporting_interval = int(
             os.getenv("HEALTH_REPORTING_INTERVAL", "60")

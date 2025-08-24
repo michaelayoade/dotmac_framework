@@ -17,14 +17,17 @@ class GraphNode:
     """Represents a network node with attributes"""
 
     def __init__(self, node_id: str, **attributes):
+        """  Init   operation."""
         self.node_id = node_id
         self.attributes = attributes
         self.neighbors: Set[str] = set()
 
     def add_neighbor(self, neighbor_id: str):
+        """Add Neighbor operation."""
         self.neighbors.add(neighbor_id)
 
     def remove_neighbor(self, neighbor_id: str):
+        """Remove Neighbor operation."""
         self.neighbors.discard(neighbor_id)
 
 
@@ -32,6 +35,7 @@ class GraphEdge:
     """Represents a network link with properties"""
 
     def __init__(self, source: str, target: str, **attributes):
+        """  Init   operation."""
         self.source = source
         self.target = target
         self.attributes = attributes
@@ -50,6 +54,7 @@ class NetworkGraph:
     """NetworkX-inspired graph implementation for network topology"""
 
     def __init__(self, directed: bool = False):
+        """  Init   operation."""
         self.directed = directed
         self.nodes: Dict[str, GraphNode] = {}
         self.edges: Dict[Tuple[str, str], GraphEdge] = {}
@@ -183,6 +188,7 @@ class GraphAlgorithms:
         paths = []
 
         def dfs(current: str, path: List[str], visited: Set[str]):
+            """Dfs operation."""
             if len(path) > max_length:
                 return
 
@@ -353,6 +359,7 @@ class AdvancedNetworkTopology:
     """Advanced network topology management with graph algorithms"""
 
     def __init__(self):
+        """  Init   operation."""
         self.graph = NetworkGraph()
         self.device_attributes: Dict[str, Dict[str, Any]] = {}
         self.link_attributes: Dict[Tuple[str, str], Dict[str, Any]] = {}
@@ -711,6 +718,7 @@ class GraphTopologySDK:
     """Main SDK for advanced network topology management"""
 
     def __init__(self, tenant_id: str):
+        """  Init   operation."""
         self.tenant_id = tenant_id
         self.topology = AdvancedNetworkTopology()
 

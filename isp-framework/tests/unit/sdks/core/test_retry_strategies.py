@@ -109,6 +109,7 @@ class TestRetryExecutors:
         
         # Mock async function that succeeds
         async def mock_func(*args, **kwargs):
+            """Mock Func operation."""
             return "async_success"
         
         executor = AsyncRetryExecutor(policy)
@@ -129,6 +130,7 @@ class TestRetryExecutors:
         call_count = 0
         
         async def mock_func():
+            """Mock Func operation."""
             nonlocal call_count
             call_count += 1
             if call_count <= 2:
@@ -164,6 +166,7 @@ class TestRetryExecutors:
         call_count = 0
         
         async def mock_func():
+            """Mock Func operation."""
             nonlocal call_count
             call_count += 1
             if call_count == 1:
@@ -196,6 +199,7 @@ class TestRetryDecoratorFactory:
         # Decorate a sync function
         @decorator
         def sync_func():
+            """Sync Func operation."""
             return "sync_result"
         
         result = sync_func()
@@ -213,6 +217,7 @@ class TestRetryDecoratorFactory:
         # Decorate an async function
         @decorator
         async def async_func():
+            """Async Func operation."""
             return "async_result"
         
         # Test that it returns a coroutine
@@ -321,6 +326,7 @@ class TestBulkheadRetryExecutor:
         max_concurrent_seen = 0
         
         async def mock_func():
+            """Mock Func operation."""
             nonlocal concurrent_count, max_concurrent_seen
             concurrent_count += 1
             max_concurrent_seen = max(max_concurrent_seen, concurrent_count)
@@ -358,6 +364,7 @@ class TestRetryDecorators:
         
         @with_retry(policy)
         def test_func():
+            """Test Func operation."""
             nonlocal call_count
             call_count += 1
             if call_count == 1:
@@ -383,6 +390,7 @@ class TestRetryDecorators:
         
         @with_retry(policy)
         async def test_async_func():
+            """Test Async Func operation."""
             nonlocal call_count
             call_count += 1
             if call_count == 1:
@@ -399,6 +407,7 @@ class TestRetryDecorators:
         """Test circuit breaker retry decorator."""
         @with_circuit_breaker_retry(failure_threshold=1)
         def test_func():
+            """Test Func operation."""
             raise Exception("always fails")
         
         # First call should fail and open circuit
@@ -414,6 +423,7 @@ class TestRetryDecorators:
         """Test bulkhead retry decorator."""
         @with_bulkhead_retry(max_concurrent=1)
         async def test_async_func():
+            """Test Async Func operation."""
             await asyncio.sleep(0.05)
             return "bulkhead_success"
         
@@ -426,6 +436,7 @@ class TestRetryDecorators:
         with pytest.raises(ValueError, match="Bulkhead retry only supports async functions"):
             @with_bulkhead_retry()
             def sync_func():
+                """Sync Func operation."""
                 return "sync"
 
 
@@ -444,6 +455,7 @@ class TestComplexityReduction:
         # Should work as a decorator
         @decorator
         def test_func():
+            """Test Func operation."""
             return "test"
         
         result = test_func()
@@ -461,6 +473,7 @@ class TestComplexityReduction:
         
         @with_retry(policy)
         def sync_func():
+            """Sync Func operation."""
             nonlocal call_count
             call_count += 1
             if call_count <= 2:
@@ -485,6 +498,7 @@ class TestComplexityReduction:
         
         @with_retry(policy)
         async def async_func():
+            """Async Func operation."""
             nonlocal call_count
             call_count += 1
             if call_count <= 2:
@@ -505,6 +519,7 @@ class TestComplexityReduction:
         
         @with_retry(policy)
         def failing_func():
+            """Failing Func operation."""
             raise ValueError("test error")
         
         # Should propagate exception when no retry
@@ -533,6 +548,7 @@ class TestRetryIntegration:
         
         @with_retry(policy)
         def integration_func():
+            """Integration Func operation."""
             nonlocal call_count
             call_count += 1
             if call_count <= 2:
@@ -559,6 +575,7 @@ class TestPerformanceImprovement:
         
         @with_retry(policy)
         def fast_func():
+            """Fast Func operation."""
             return "fast"
         
         # Time multiple executions

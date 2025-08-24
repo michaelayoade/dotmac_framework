@@ -27,6 +27,7 @@ class ServicePlanRepository:
     """Repository for service plan database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 
@@ -130,6 +131,7 @@ class ServiceInstanceRepository:
     """Repository for service instance database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 
@@ -291,6 +293,7 @@ class ProvisioningTaskRepository:
     """Repository for provisioning task database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 

@@ -1,0 +1,25 @@
+plugin_id: "twilio_sms"
+name: "Twilio SMS Plugin"
+version: "1.0.0"
+description: "SMS communication via Twilio API with delivery receipts"
+author: "DotMac Team"
+channel_type: "sms"
+capabilities:
+  - "text_messaging"
+  - "delivery_receipts"
+  - "two_way_messaging"
+  - "webhook_support"
+  - "bulk_messaging"
+required_config:
+  - "account_sid"
+  - "auth_token"
+  - "from_number"
+optional_config:
+  webhook_url: "URL for delivery receipts"
+  max_retries: 3
+  timeout_seconds: 30
+dependencies: []
+min_platform_version: "1.0.0"
+entry_point: "twilio_sms_plugin.TwilioSMSPlugin"
+license: "MIT"
+homepage: "https://github.com/dotmac/plugins/twilio-sms"

@@ -29,6 +29,7 @@ class EquipmentService(BaseTenantService[Equipment, schemas.EquipmentCreate, sch
     """Service for equipment management."""
 
     def __init__(self, db: Session, tenant_id: str):
+        """  Init   operation."""
         super().__init__(
             db=db,
             model_class=Equipment,
@@ -86,6 +87,7 @@ class WarehouseService(BaseTenantService[Warehouse, schemas.WarehouseCreate, sch
     """Service for warehouse management."""
 
     def __init__(self, db: Session, tenant_id: str):
+        """  Init   operation."""
         super().__init__(
             db=db,
             model_class=Warehouse,
@@ -121,6 +123,7 @@ class VendorService(BaseTenantService[Vendor, schemas.VendorCreate, schemas.Vend
     """Service for vendor management."""
 
     def __init__(self, db: Session, tenant_id: str):
+        """  Init   operation."""
         super().__init__(
             db=db,
             model_class=Vendor,
@@ -151,6 +154,7 @@ class StockMovementService(BaseTenantService[StockMovement, schemas.StockMovemen
     """Service for stock movement tracking."""
 
     def __init__(self, db: Session, tenant_id: str):
+        """  Init   operation."""
         super().__init__(
             db=db,
             model_class=StockMovement,
@@ -191,6 +195,7 @@ class InventoryService:
     """Legacy inventory service - use individual services instead."""
 
     def __init__(self, db: Session, tenant_id: str):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
         self.equipment_service = EquipmentService(db, tenant_id)

@@ -109,6 +109,7 @@ class FieldEncryption:
     """Field-level encryption utilities"""
 
     def __init__(self, encryption_service):
+        """  Init   operation."""
         self.encryption_service = encryption_service
 
     def encrypt_model_fields(
@@ -252,6 +253,7 @@ class SecureDataModel(BaseModel):
         """
 
         class EncryptedModel(cls):
+            """Class for EncryptedModel operations."""
             _encryption_service = encryption_service
             _classification = classification
 
@@ -292,6 +294,7 @@ def encrypt_sensitive_data(  # noqa: C901
     """
 
     def decorator(cls):  # noqa: C901
+        """Decorator operation."""
         if not issubclass(cls, BaseModel):
             raise TypeError(
                 "encrypt_sensitive_data can only be used on Pydantic models"
@@ -301,6 +304,7 @@ def encrypt_sensitive_data(  # noqa: C901
 
         @wraps(original_init)
         def new_init(self, **kwargs):
+            """New Init operation."""
             # Initialize normally first
             original_init(self, **kwargs)
 
@@ -354,6 +358,7 @@ def selective_encryption(field_mapping: dict[str, DataClassification]):
     """
 
     def decorator(cls):
+        """Decorator operation."""
         if not issubclass(cls, BaseModel):
             raise TypeError("selective_encryption can only be used on Pydantic models")
 
@@ -361,6 +366,7 @@ def selective_encryption(field_mapping: dict[str, DataClassification]):
 
         @wraps(original_init)
         def new_init(self, **kwargs):
+            """New Init operation."""
             # Initialize normally first
             original_init(self, **kwargs)
 

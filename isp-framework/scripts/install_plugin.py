@@ -10,7 +10,12 @@ import subprocess
 import sys
 import json
 import os
+import logging
 from pathlib import Path
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+logger = logging.getLogger(__name__)
 
 # Plugin definitions with their required dependencies
 PLUGIN_DEFINITIONS = {
@@ -306,14 +311,14 @@ def get_project_root():
 
 def install_dependencies(dependencies):
     """Install plugin dependencies via pip."""
-    print(f"Installing dependencies: {', '.join(dependencies)}")
+    logger.info(f"Installing dependencies: {', '.join(dependencies)}")
     try:
         subprocess.check_call([
             sys.executable, "-m", "pip", "install", "--upgrade"
         ] + dependencies)
         return True
     except subprocess.CalledProcessError as e:
-        print(f"Error installing dependencies: {e}")
+        logger.error(f"Error installing dependencies: {e}")
         return False
 
 def create_plugin_config_template(plugin_name, plugin_info):
@@ -346,7 +351,7 @@ def create_plugin_config_template(plugin_name, plugin_info):
     with open(config_file, 'w') as f:
         json.dump(config_data, f, indent=2)
     
-    print(f"Configuration template created: {config_file}")
+    logger.info(f"Configuration template created: {config_file}")
     return config_file
 
 def register_plugin_metadata(plugin_name, plugin_info):
@@ -381,14 +386,14 @@ def register_plugin_metadata(plugin_name, plugin_info):
 def install_plugin(plugin_name):
     """Install a specific plugin."""
     if plugin_name not in PLUGIN_DEFINITIONS:
-        print(f"Unknown plugin: {plugin_name}")
-        print(f"Available plugins: {', '.join(PLUGIN_DEFINITIONS.keys())}")
+        logger.error(f"Unknown plugin: {plugin_name}")
+        logger.info(f"Available plugins: {', '.join(PLUGIN_DEFINITIONS.keys())}")
         return False
     
     plugin_info = PLUGIN_DEFINITIONS[plugin_name]
-    print(f"\nInstalling {plugin_info['name']}...")
-    print(f"Description: {plugin_info['description']}")
-    print(f"Category: {plugin_info['category']}")
+    logger.info(f"\nInstalling {plugin_info['name']}...")
+    logger.info(f"Description: {plugin_info['description']}")
+    logger.info(f"Category: {plugin_info['category']}")
     
     # Install dependencies
     if not install_dependencies(plugin_info["dependencies"]):
@@ -400,7 +405,7 @@ def install_plugin(plugin_name):
     # Register plugin metadata
     register_plugin_metadata(plugin_name, plugin_info)
     
-    print(f"\n✅ {plugin_info['name']} installed successfully!")
+    logger.info(f"\n✅ {plugin_info['name']} installed successfully!")
     print(f"\nNext steps:")
     print(f"1. Configure the plugin: {config_file}")
     print(f"2. Copy the example config and set your credentials")

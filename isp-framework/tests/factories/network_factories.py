@@ -19,6 +19,7 @@ class NetworkDeviceFactory(BaseFactory, TenantMixin, TimestampMixin, AuditMixin)
     """Factory for NetworkDevice test data."""
     
     class Meta:
+        """Class for Meta operations."""
         model = None
     
     # Device identification
@@ -101,6 +102,7 @@ class NetworkInterfaceFactory(BaseFactory, TenantMixin, TimestampMixin):
     """Factory for NetworkInterface test data."""
     
     class Meta:
+        """Class for Meta operations."""
         model = None
     
     # Interface identification
@@ -149,6 +151,7 @@ class NetworkMonitoringEventFactory(BaseFactory, TenantMixin, TimestampMixin):
     """Factory for NetworkMonitoringEvent test data."""
     
     class Meta:
+        """Class for Meta operations."""
         model = None
     
     # Event identification
@@ -209,6 +212,7 @@ class NetworkTopologyFactory(BaseFactory, TenantMixin, TimestampMixin):
     """Factory for NetworkTopology test data."""
     
     class Meta:
+        """Class for Meta operations."""
         model = None
     
     # Topology identification
@@ -237,6 +241,7 @@ class VLANConfigurationFactory(BaseFactory, TenantMixin, TimestampMixin, AuditMi
     """Factory for VLAN configuration test data."""
     
     class Meta:
+        """Class for Meta operations."""
         model = None
     
     # VLAN identification

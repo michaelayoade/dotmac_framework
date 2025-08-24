@@ -78,11 +78,13 @@ class SequentialValueFactory:
     """Factory for generating sequential values."""
     
     def __init__(self, prefix: str = "", start: int = 1, padding: int = 3):
+        """  Init   operation."""
         self.prefix = prefix
         self.current = start
         self.padding = padding
     
     def __call__(self):
+        """  Call   operation."""
         value = f"{self.prefix}{self.current:0{self.padding}d}"
         self.current += 1
         return value

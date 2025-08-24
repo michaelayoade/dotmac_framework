@@ -52,9 +52,18 @@ def send_email_notification(self, notification_id: str, channel_config: Dict[str
                 subject = f"Alert: {alert_data['message']}"
                 body = self._create_email_body(alert_data)
                 
-                # TODO: Implement actual email sending
-                # For now, simulate email sending
-                await asyncio.sleep(1)
+                # Send notification using dynamic provider
+                provider = NotificationChannelRegistry.get_provider("email")
+                if provider:
+                    await provider.send_notification(
+                        recipient={"email": alert_data["recipients"]["email"]},
+                        content=body,
+                        metadata={
+                            "subject": subject,
+                            "tenant_id": tenant_id,
+                            "type": "alert"
+                        }
+                    )
                 
                 # Simulate success/failure
                 if "test_fail" not in alert_data.get("labels", {}):
@@ -155,9 +164,18 @@ def send_slack_notification(self, notification_id: str, channel_config: Dict[str
                     }]
                 }
                 
-                # TODO: Implement actual Slack webhook call
-                # For now, simulate sending
-                await asyncio.sleep(1)
+                # Send notification using dynamic provider
+                provider = NotificationChannelRegistry.get_provider("slack")
+                if provider:
+                    await provider.send_notification(
+                        recipient={"slack_webhook": channel_config.get("webhook_url")},
+                        content=alert_data["message"],
+                        metadata={
+                            "tenant_id": tenant_id,
+                            "type": "alert",
+                            "subject": f"Alert: {alert_data['message']}"
+                        }
+                    )
                 
                 # Simulate success/failure
                 if "test_fail" not in alert_data.get("labels", {}):
@@ -234,9 +252,18 @@ def send_webhook_notification(self, notification_id: str, channel_config: Dict[s
                     "source": "dotmac_management_platform"
                 }
                 
-                # TODO: Implement actual HTTP request
-                # For now, simulate webhook call
-                await asyncio.sleep(1)
+                # Send notification using dynamic provider
+                provider = NotificationChannelRegistry.get_provider("webhook")
+                if provider:
+                    await provider.send_notification(
+                        recipient={"webhook_url": channel_config.get("webhook_url")},
+                        content=alert_data["message"],
+                        metadata={
+                            "tenant_id": tenant_id,
+                            "type": "alert",
+                            "payload": webhook_payload
+                        }
+                    )
                 
                 # Simulate success/failure based on configuration
                 if "test_fail" not in alert_data.get("labels", {}):
@@ -404,8 +431,11 @@ def send_digest_notifications(self, digest_type: str = "daily"):
                     raise ValueError(f"Unknown digest type: {digest_type}")
                 
                 # Get tenants that have digest subscriptions
-                # TODO: Implement digest subscription management
-                # For now, simulate with all tenants
+                # Get active digest subscriptions from database
+                active_subscriptions = await _get_active_digest_subscriptions(
+                    tenant_id=tenant_uuid,
+                    digest_type="daily"
+                )
                 
                 digests_sent = 0
                 digests_failed = 0
@@ -445,9 +475,15 @@ def send_digest_notifications(self, digest_type: str = "daily"):
                             ]
                         }
                         
-                        # TODO: Send digest via configured channels
-                        # For now, just log the digest
-                        logger.info(f"Digest prepared for tenant {tenant_id}: {digest_data['total_alerts']} alerts")
+                        # Send digest via configured notification channels
+                        for subscription in active_subscriptions:
+                            await _send_digest_notification(
+                                subscriber=subscription,
+                                channel=subscription["channel_type"],
+                                digest_content=digest_html,
+                                tenant_id=tenant_id
+                            )
+                        logger.info(f"Digest sent for tenant {tenant_id}: {digest_data['total_alerts']} alerts")
                         
                         digests_sent += 1
                         
@@ -555,3 +591,249 @@ def test_notification_channels(self, tenant_id: str):
                 raise self.retry(countdown=60, exc=e)
     
     return asyncio.run(_test_channels())
+
+
+async def _send_email(to_address: str, subject: str, body: str, tenant_id: str) -> None:
+    """Send email using configured email provider."""
+    import aiohttp
+    import os
+    
+    # Get email configuration from environment
+    smtp_host = os.getenv("SMTP_HOST", "localhost")
+    smtp_port = int(os.getenv("SMTP_PORT", "587"))
+    smtp_user = os.getenv("SMTP_USER")
+    smtp_password = os.getenv("SMTP_PASSWORD")
+    from_email = os.getenv("FROM_EMAIL", f"noreply@{tenant_id}.dotmac.platform")
+    
+    if not smtp_user or not smtp_password:
+        logger.warning("SMTP credentials not configured, email not sent")
+        return
+        
+    # Use aiosmtplib for async email sending
+    try:
+        import aiosmtplib
+        from email.mime.text import MIMEText
+        from email.mime.multipart import MIMEMultipart
+        
+        message = MIMEMultipart()
+        message["From"] = from_email
+        message["To"] = to_address
+        message["Subject"] = subject
+        message.attach(MIMEText(body, "html"))
+        
+        await aiosmtplib.send(
+            message,
+            hostname=smtp_host,
+            port=smtp_port,
+            username=smtp_user,
+            password=smtp_password,
+            use_tls=True
+        )
+        logger.info(f"Email sent successfully to {to_address}")
+        
+    except ImportError:
+        logger.error("aiosmtplib not installed, cannot send email")
+        raise
+    except Exception as e:
+        logger.error(f"Failed to send email: {e}")
+        raise
+
+
+async def _send_slack_notification(webhook_url: str, message: dict, tenant_id: str) -> None:
+    """Send Slack notification using webhook."""
+    import aiohttp
+    
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(webhook_url, json=message) as response:
+                if response.status == 200:
+                    logger.info("Slack notification sent successfully")
+                else:
+                    logger.error(f"Slack notification failed: {response.status}")
+                    raise Exception(f"Slack webhook returned {response.status}")
+                    
+    except Exception as e:
+        logger.error(f"Failed to send Slack notification: {e}")
+        raise
+
+
+async def _send_webhook_notification(webhook_url: str, payload: dict, tenant_id: str) -> None:
+    """Send HTTP webhook notification."""
+    import aiohttp
+    
+    headers = {
+        "Content-Type": "application/json",
+        "User-Agent": "DotMac-Platform-Notifications/1.0",
+        "X-Tenant-ID": tenant_id
+    }
+    
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(webhook_url, json=payload, headers=headers, timeout=30) as response:
+                if response.status in [200, 201, 202, 204]:
+                    logger.info(f"Webhook notification sent successfully: {response.status}")
+                else:
+                    logger.error(f"Webhook notification failed: {response.status}")
+                    raise Exception(f"Webhook returned {response.status}")
+                    
+    except Exception as e:
+        logger.error(f"Failed to send webhook notification: {e}")
+        raise
+
+
+async def _get_active_digest_subscriptions(tenant_id: str, digest_type: str) -> list:
+    """Get active digest subscriptions for a tenant."""
+    from app.core.db_manager import DatabaseManager
+    
+    async with DatabaseManager() as service:
+        # Query digest subscriptions
+        subscriptions = await service.db.execute(
+            """
+            SELECT user_id, channel_type, channel_config
+            FROM digest_subscriptions 
+            WHERE tenant_id = :tenant_id 
+            AND digest_type = :digest_type 
+            AND is_active = true
+            """,
+            {"tenant_id": tenant_id, "digest_type": digest_type}
+        )
+        return [dict(row) for row in subscriptions.fetchall()]
+
+
+async def _send_digest_notification(subscriber: dict, channel: str, digest_content: str, tenant_id: str) -> None:
+    """Send digest notification via dynamically registered channel provider."""
+    try:
+        # Use notification channel registry instead of hardcoded types
+        channel_provider = NotificationChannelRegistry.get_provider(channel)
+        if not channel_provider:
+            logger.warning(f"No provider registered for channel type: {channel}")
+            return
+            
+        await channel_provider.send_notification(
+            recipient=subscriber,
+            content=digest_content,
+            metadata={
+                "type": "digest",
+                "tenant_id": tenant_id,
+                "subject": f"Daily Digest - {tenant_id}"
+            }
+        )
+            
+    except Exception as e:
+        logger.error(f"Failed to send digest to {subscriber} via {channel}: {e}")
+        # Don't re-raise to avoid failing entire digest job
+
+
+class NotificationChannelRegistry:
+    """Registry for dynamically registering notification channel providers."""
+    
+    _providers = {}
+    
+    @classmethod
+    def register_provider(cls, channel_type: str, provider_class):
+        """Register a notification channel provider."""
+        cls._providers[channel_type] = provider_class
+        logger.info(f"Registered notification provider: {channel_type}")
+    
+    @classmethod
+    def get_provider(cls, channel_type: str):
+        """Get a notification channel provider."""
+        provider_class = cls._providers.get(channel_type)
+        if provider_class:
+            return provider_class()
+        return None
+    
+    @classmethod
+    def list_providers(cls) -> list:
+        """List all registered providers."""
+        return list(cls._providers.keys())
+
+
+class BaseNotificationProvider:
+    """Base class for notification channel providers."""
+    
+    async def send_notification(self, recipient: dict, content: str, metadata: dict) -> bool:
+        """Send notification via this channel."""
+        raise NotImplementedError("Providers must implement send_notification")
+    
+    async def validate_configuration(self, config: dict) -> bool:
+        """Validate channel configuration."""
+        raise NotImplementedError("Providers must implement validate_configuration")
+
+
+class EmailNotificationProvider(BaseNotificationProvider):
+    """Email notification provider."""
+    
+    async def send_notification(self, recipient: dict, content: str, metadata: dict) -> bool:
+        """Send email notification."""
+        return await _send_email(
+            to_address=recipient.get("email"),
+            subject=metadata.get("subject", "Notification"),
+            body=content,
+            tenant_id=metadata.get("tenant_id")
+        )
+    
+    async def validate_configuration(self, config: dict) -> bool:
+        """Validate email configuration."""
+        required_fields = ["smtp_host", "smtp_user", "smtp_password"]
+        return all(config.get(field) for field in required_fields)
+
+
+class WebhookNotificationProvider(BaseNotificationProvider):
+    """Generic webhook notification provider."""
+    
+    async def send_notification(self, recipient: dict, content: str, metadata: dict) -> bool:
+        """Send webhook notification."""
+        webhook_url = recipient.get("webhook_url")
+        if not webhook_url:
+            raise ValueError("webhook_url required for webhook notifications")
+            
+        payload = {
+            "content": content,
+            "metadata": metadata,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+        return await _send_webhook_notification(
+            webhook_url=webhook_url,
+            payload=payload,
+            tenant_id=metadata.get("tenant_id")
+        )
+    
+    async def validate_configuration(self, config: dict) -> bool:
+        """Validate webhook configuration."""
+        return bool(config.get("webhook_url"))
+
+
+# Register default providers
+NotificationChannelRegistry.register_provider("email", EmailNotificationProvider)
+NotificationChannelRegistry.register_provider("webhook", WebhookNotificationProvider)
+
+# Conditional registration based on available configurations
+def register_optional_providers():
+    """Register optional providers based on available configurations."""
+    import os
+    
+    # Only register Slack if webhook URL is configured
+    slack_webhook = os.getenv("SLACK_DEFAULT_WEBHOOK")
+    if slack_webhook:
+        class SlackNotificationProvider(BaseNotificationProvider):
+            async def send_notification(self, recipient: dict, content: str, metadata: dict) -> bool:
+                slack_message = {
+                    "text": metadata.get("subject", "Notification"),
+                    "attachments": [{"text": content}]
+                }
+                return await _send_slack_notification(
+                    webhook_url=recipient.get("slack_webhook", slack_webhook),
+                    message=slack_message,
+                    tenant_id=metadata.get("tenant_id")
+                )
+            
+            async def validate_configuration(self, config: dict) -> bool:
+                return bool(config.get("slack_webhook"))
+        
+        NotificationChannelRegistry.register_provider("slack", SlackNotificationProvider)
+        logger.info("Slack notification provider registered")
+
+# Register optional providers on module import
+register_optional_providers()

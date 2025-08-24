@@ -14,6 +14,7 @@ class RADIUSService:
     """In-memory service for RADIUS AAA operations."""
 
     def __init__(self):
+        """  Init   operation."""
         self._sessions: Dict[str, Dict[str, Any]] = {}
         self._users: Dict[str, Dict[str, Any]] = {}
         self._accounting_records: List[Dict[str, Any]] = []
@@ -215,6 +216,7 @@ class RADIUSSDK:
     """Minimal, reusable SDK for RADIUS AAA operations."""
 
     def __init__(self, tenant_id: str):
+        """  Init   operation."""
         self.tenant_id = tenant_id
         self._service = RADIUSService()
 

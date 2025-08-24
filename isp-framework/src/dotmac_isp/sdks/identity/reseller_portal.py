@@ -14,6 +14,7 @@ class ResellerPortalService:
     """In-memory service for reseller portal operations."""
 
     def __init__(self):
+        """  Init   operation."""
         self._accesses: Dict[UUID, ResellerPortalAccess] = {}
         self._portal_accesses: Dict[UUID, List[UUID]] = {}
         self._reseller_accesses: Dict[UUID, List[UUID]] = {}
@@ -58,6 +59,7 @@ class ResellerPortalSDK:
     """Small, composable SDK for reseller portal access management."""
 
     def __init__(self, tenant_id: str):
+        """  Init   operation."""
         self.tenant_id = tenant_id
         self._service = ResellerPortalService()
 

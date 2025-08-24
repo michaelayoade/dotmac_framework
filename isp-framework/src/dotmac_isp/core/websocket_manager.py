@@ -43,6 +43,7 @@ class WebSocketMessage:
     message_id: str = None
     
     def __post_init__(self):
+        """  Post Init   operation."""
         if self.timestamp is None:
             self.timestamp = datetime.utcnow().isoformat()
         if self.message_id is None:
@@ -72,6 +73,7 @@ class ConnectionInfo:
     subscriptions: Set[str]
     
     def __post_init__(self):
+        """  Post Init   operation."""
         if isinstance(self.subscriptions, list):
             self.subscriptions = set(self.subscriptions)
 

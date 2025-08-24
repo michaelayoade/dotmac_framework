@@ -15,6 +15,7 @@ class AlarmEventsService:
     """In-memory service for alarm and event operations."""
 
     def __init__(self):
+        """  Init   operation."""
         self._alarms: Dict[str, Dict[str, Any]] = {}
         self._events: List[Dict[str, Any]] = []
         self._alarm_rules: Dict[str, Dict[str, Any]] = {}
@@ -241,6 +242,7 @@ class AlarmEventsSDK:
     """Minimal, reusable SDK for alarm and event management."""
 
     def __init__(self, tenant_id: str):
+        """  Init   operation."""
         self.tenant_id = tenant_id
         self._service = AlarmEventsService()
 

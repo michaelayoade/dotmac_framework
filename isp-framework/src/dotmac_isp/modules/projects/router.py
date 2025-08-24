@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 """Installation Project Management API endpoints."""
 
 from datetime import datetime, date
@@ -623,7 +627,7 @@ async def notify_phase_status_change(
         db.add(notification)
         db.commit()
     except Exception as e:
-        print(f"Failed to create phase change notification: {e}")
+logger.info(f"Failed to create phase change notification: {e}")
 
 
 async def notify_customer_project_update(project_id: UUID, update_id: UUID):
@@ -649,7 +653,7 @@ async def notify_customer_project_update(project_id: UUID, update_id: UUID):
         db.add(notification)
         db.commit()
     except Exception as e:
-        print(f"Failed to create customer update notification: {e}")
+logger.info(f"Failed to create customer update notification: {e}")
 
 
 async def notify_project_created(project_id: UUID, recipients: List[str]):
@@ -676,7 +680,7 @@ async def notify_project_created(project_id: UUID, recipients: List[str]):
             db.add(notification)
         db.commit()
     except Exception as e:
-        print(f"Failed to create project creation notifications: {e}")
+logger.info(f"Failed to create project creation notifications: {e}")
 
 
 async def send_custom_project_notification(
@@ -713,4 +717,4 @@ async def send_custom_project_notification(
             db.add(notification)
         db.commit()
     except Exception as e:
-        print(f"Failed to create custom project notifications: {e}")
+logger.info(f"Failed to create custom project notifications: {e}")

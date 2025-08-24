@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+import logging
+
+logger = logging.getLogger(__name__)
+
 """Standalone Services module test with coverage analysis."""
 
 import sys
@@ -7,14 +11,14 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
 def test_services_comprehensive():
     """Comprehensive test of services module for coverage."""
-    print("🚀 Services Module Comprehensive Test")
-    print("=" * 60)
+logger.info("🚀 Services Module Comprehensive Test")
+logger.info("=" * 60)
     
     success_count = 0
     total_tests = 0
     
     # Test 1: Services Enums
-    print("\n🔧 Testing Services Enums...")
+logger.info("\n🔧 Testing Services Enums...")
     total_tests += 1
     try:
         from dotmac_isp.modules.services.models import (
@@ -54,20 +58,20 @@ def test_services_comprehensive():
         assert BandwidthUnit.GBPS.value == "gbps"
         assert len(BandwidthUnit) == 3
         
-        print("  ✅ ServiceType enum (7 values)")
-        print("  ✅ ServiceStatus enum (6 values)")
-        print("  ✅ ProvisioningStatus enum (5 values)")
-        print("  ✅ BandwidthUnit enum (3 values)")
-        print("  ✅ Services enums: PASSED")
+logger.info("  ✅ ServiceType enum (7 values)")
+logger.info("  ✅ ServiceStatus enum (6 values)")
+logger.info("  ✅ ProvisioningStatus enum (5 values)")
+logger.info("  ✅ BandwidthUnit enum (3 values)")
+logger.info("  ✅ Services enums: PASSED")
         success_count += 1
         
     except Exception as e:
-        print(f"  ❌ Services enums: FAILED - {e}")
+logger.info(f"  ❌ Services enums: FAILED - {e}")
         import traceback
         traceback.print_exc()
     
     # Test 2: Service Plan Model Logic
-    print("\n📋 Testing Service Plan Model Logic...")
+logger.info("\n📋 Testing Service Plan Model Logic...")
     total_tests += 1
     try:
         from decimal import Decimal
@@ -120,47 +124,47 @@ def test_services_comprehensive():
         assert plan.service_type == ServiceType.INTERNET
         assert plan.monthly_price == Decimal("49.99")
         assert plan.setup_fee == Decimal("25.00")
-        print("  ✅ Service plan basic properties")
+logger.info("  ✅ Service plan basic properties")
         
         # Test speed display
         speed_display = plan.get_speed_display()
         assert speed_display == "100 MBPS down / 20 MBPS up"
-        print("  ✅ Speed display formatting")
+logger.info("  ✅ Speed display formatting")
         
         # Test unlimited data check
         assert plan.is_unlimited_data() is True
         plan.data_allowance = 500  # 500 GB limit
         assert plan.is_unlimited_data() is False
         plan.data_allowance = None  # Reset to unlimited
-        print("  ✅ Unlimited data detection")
+logger.info("  ✅ Unlimited data detection")
         
         # Test feature checks
         assert plan.has_feature("vpn") is True
         assert plan.has_feature("static_ip") is False
         assert plan.has_feature("nonexistent") is False
-        print("  ✅ Feature availability checks")
+logger.info("  ✅ Feature availability checks")
         
         # Test first month cost calculation
         first_month_cost = plan.calculate_total_first_month()
         assert first_month_cost == Decimal("74.99")  # 49.99 + 25.00
-        print("  ✅ First month cost calculation")
+logger.info("  ✅ First month cost calculation")
         
         # Test plan availability
         assert plan.is_active is True
         assert plan.is_public is True
         assert plan.requires_approval is False
-        print("  ✅ Plan availability flags")
+logger.info("  ✅ Plan availability flags")
         
-        print("  ✅ Service plan model logic: PASSED")
+logger.info("  ✅ Service plan model logic: PASSED")
         success_count += 1
         
     except Exception as e:
-        print(f"  ❌ Service plan model logic: FAILED - {e}")
+logger.info(f"  ❌ Service plan model logic: FAILED - {e}")
         import traceback
         traceback.print_exc()
     
     # Test 3: Service Instance Model Logic
-    print("\n🔗 Testing Service Instance Model Logic...")
+logger.info("\n🔗 Testing Service Instance Model Logic...")
     total_tests += 1
     try:
         from datetime import datetime, date, timedelta
@@ -228,51 +232,51 @@ def test_services_comprehensive():
         assert instance.status == ServiceStatus.ACTIVE
         assert instance.assigned_ip == "192.168.1.100"
         assert instance.assigned_vlan == 100
-        print("  ✅ Service instance basic properties")
+logger.info("  ✅ Service instance basic properties")
         
         # Test status checks
         assert instance.is_active() is True
         assert instance.is_suspended() is False
-        print("  ✅ Service status checks")
+logger.info("  ✅ Service status checks")
         
         # Test activation timing
         days_active = instance.days_since_activation()
         assert days_active is not None and days_active >= 29  # Approximately 30 days
-        print("  ✅ Days since activation calculation")
+logger.info("  ✅ Days since activation calculation")
         
         # Test contract timing
         days_remaining = instance.days_until_contract_end()
         assert days_remaining is not None and days_remaining > 330  # Approximately 335 days
         assert instance.is_contract_expired() is False
-        print("  ✅ Contract expiry calculations")
+logger.info("  ✅ Contract expiry calculations")
         
         # Test service suspension
         instance.suspend_service()
         assert instance.is_suspended() is True
         assert instance.suspension_date is not None
-        print("  ✅ Service suspension")
+logger.info("  ✅ Service suspension")
         
         # Test service reactivation
         instance.reactivate_service()
         assert instance.is_active() is True
         assert instance.suspension_date is None
-        print("  ✅ Service reactivation")
+logger.info("  ✅ Service reactivation")
         
         # Test service address and coordinates
         assert "123 Main St" in instance.service_address
         assert instance.service_coordinates == "37.7749,-122.4194"
-        print("  ✅ Service location details")
+logger.info("  ✅ Service location details")
         
-        print("  ✅ Service instance model logic: PASSED")
+logger.info("  ✅ Service instance model logic: PASSED")
         success_count += 1
         
     except Exception as e:
-        print(f"  ❌ Service instance model logic: FAILED - {e}")
+logger.info(f"  ❌ Service instance model logic: FAILED - {e}")
         import traceback
         traceback.print_exc()
     
     # Test 4: Provisioning Task Model Logic
-    print("\n⚙️ Testing Provisioning Task Model Logic...")
+logger.info("\n⚙️ Testing Provisioning Task Model Logic...")
     total_tests += 1
     try:
         from datetime import datetime, timedelta
@@ -333,17 +337,17 @@ def test_services_comprehensive():
         assert task.status == ProvisioningStatus.PENDING
         assert task.assigned_technician_id == "tech-123"
         assert task.task_data["vlan"] == 100
-        print("  ✅ Provisioning task basic properties")
+logger.info("  ✅ Provisioning task basic properties")
         
         # Test task not overdue (scheduled for future)
         assert task.is_overdue() is False
-        print("  ✅ Task not overdue (future scheduled)")
+logger.info("  ✅ Task not overdue (future scheduled)")
         
         # Test starting task
         task.start_task()
         assert task.status == ProvisioningStatus.IN_PROGRESS
         assert task.started_date is not None
-        print("  ✅ Task start process")
+logger.info("  ✅ Task start process")
         
         # Test completing task
         result_data = {"success": True, "assigned_ip": "192.168.1.100"}
@@ -351,12 +355,12 @@ def test_services_comprehensive():
         assert task.status == ProvisioningStatus.COMPLETED
         assert task.completed_date is not None
         assert task.result_data == result_data
-        print("  ✅ Task completion process")
+logger.info("  ✅ Task completion process")
         
         # Test task duration
         duration = task.duration_minutes()
         assert duration is not None and duration >= 0
-        print("  ✅ Task duration calculation")
+logger.info("  ✅ Task duration calculation")
         
         # Test failing task
         failed_task = MockProvisioningTask()
@@ -364,24 +368,24 @@ def test_services_comprehensive():
         failed_task.fail_task("Network configuration error")
         assert failed_task.status == ProvisioningStatus.FAILED
         assert failed_task.error_message == "Network configuration error"
-        print("  ✅ Task failure process")
+logger.info("  ✅ Task failure process")
         
         # Test overdue task
         overdue_task = MockProvisioningTask()
         overdue_task.scheduled_date = datetime.utcnow() - timedelta(hours=1)
         assert overdue_task.is_overdue() is True
-        print("  ✅ Overdue task detection")
+logger.info("  ✅ Overdue task detection")
         
-        print("  ✅ Provisioning task model logic: PASSED")
+logger.info("  ✅ Provisioning task model logic: PASSED")
         success_count += 1
         
     except Exception as e:
-        print(f"  ❌ Provisioning task model logic: FAILED - {e}")
+logger.info(f"  ❌ Provisioning task model logic: FAILED - {e}")
         import traceback
         traceback.print_exc()
     
     # Test 5: Service Usage Model Logic
-    print("\n📊 Testing Service Usage Model Logic...")
+logger.info("\n📊 Testing Service Usage Model Logic...")
     total_tests += 1
     try:
         from decimal import Decimal
@@ -440,24 +444,24 @@ def test_services_comprehensive():
         assert usage.data_uploaded == Decimal("256.25")
         assert usage.total_data == Decimal("1280.75")
         assert usage.uptime_percentage == Decimal("99.95")
-        print("  ✅ Service usage basic properties")
+logger.info("  ✅ Service usage basic properties")
         
         # Test data conversion to GB
         total_gb = usage.get_total_data_gb()
         assert abs(total_gb - Decimal("1.25")) < Decimal("0.01")  # ~1.25 GB
-        print("  ✅ Data usage GB conversion")
+logger.info("  ✅ Data usage GB conversion")
         
         # Test speed efficiency calculation
         speed_efficiency = usage.get_speed_efficiency()
         assert speed_efficiency > 80  # Should be around 85-90%
-        print("  ✅ Speed efficiency calculation")
+logger.info("  ✅ Speed efficiency calculation")
         
         # Test heavy usage detection
         assert usage.is_heavy_usage_day() is False  # 1.25 GB < 50 GB
         usage.total_data = Decimal("51200")  # 50 GB in MB
         assert usage.is_heavy_usage_day() is True
         usage.total_data = Decimal("1280.75")  # Reset
-        print("  ✅ Heavy usage day detection")
+logger.info("  ✅ Heavy usage day detection")
         
         # Test uptime status classification
         assert usage.get_uptime_status() == "excellent"
@@ -467,23 +471,23 @@ def test_services_comprehensive():
         assert usage.get_uptime_status() == "fair"
         usage.uptime_percentage = Decimal("90.0")
         assert usage.get_uptime_status() == "poor"
-        print("  ✅ Uptime status classification")
+logger.info("  ✅ Uptime status classification")
         
         # Test additional metrics
         assert usage.additional_metrics["latency_avg"] == 15.5
         assert usage.additional_metrics["jitter_avg"] == 2.1
-        print("  ✅ Additional metrics storage")
+logger.info("  ✅ Additional metrics storage")
         
-        print("  ✅ Service usage model logic: PASSED")
+logger.info("  ✅ Service usage model logic: PASSED")
         success_count += 1
         
     except Exception as e:
-        print(f"  ❌ Service usage model logic: FAILED - {e}")
+logger.info(f"  ❌ Service usage model logic: FAILED - {e}")
         import traceback
         traceback.print_exc()
     
     # Test 6: Service Alert Model Logic
-    print("\n🚨 Testing Service Alert Model Logic...")
+logger.info("\n🚨 Testing Service Alert Model Logic...")
     total_tests += 1
     try:
         from datetime import datetime, timedelta
@@ -559,33 +563,33 @@ def test_services_comprehensive():
         assert alert.title == "Service Outage Detected"
         assert alert.is_resolved is False
         assert alert.is_acknowledged is False
-        print("  ✅ Service alert basic properties")
+logger.info("  ✅ Service alert basic properties")
         
         # Test alert acknowledgment
         alert.acknowledge("tech-456")
         assert alert.is_acknowledged is True
         assert alert.acknowledged_time is not None
         assert alert.assigned_to == "tech-456"
-        print("  ✅ Alert acknowledgment process")
+logger.info("  ✅ Alert acknowledgment process")
         
         # Test alert resolution
         alert.resolve("Network equipment restarted, service restored")
         assert alert.is_resolved is True
         assert alert.resolved_time is not None
         assert "resolution_notes" in alert.alert_data
-        print("  ✅ Alert resolution process")
+logger.info("  ✅ Alert resolution process")
         
         # Test duration calculation
         duration = alert.get_duration_minutes()
         assert duration >= 0
-        print("  ✅ Alert duration calculation")
+logger.info("  ✅ Alert duration calculation")
         
         # Test critical alert detection
         assert alert.is_critical() is False
         critical_alert = MockServiceAlert()
         critical_alert.severity = "critical"
         assert critical_alert.is_critical() is True
-        print("  ✅ Critical alert detection")
+logger.info("  ✅ Critical alert detection")
         
         # Test overdue alert detection
         acknowledged_alert = MockServiceAlert()
@@ -595,7 +599,7 @@ def test_services_comprehensive():
         overdue_alert = MockServiceAlert()
         overdue_alert.alert_time = datetime.utcnow() - timedelta(hours=2)  # 2 hours ago
         assert overdue_alert.is_overdue(60) is True  # Overdue by 60+ minutes
-        print("  ✅ Overdue alert detection")
+logger.info("  ✅ Overdue alert detection")
         
         # Test priority score calculation
         priority_score = alert.get_priority_score()
@@ -606,36 +610,36 @@ def test_services_comprehensive():
         critical_outage_score.alert_type = "outage"
         high_priority_score = critical_outage_score.get_priority_score()
         assert high_priority_score > priority_score
-        print("  ✅ Priority score calculation")
+logger.info("  ✅ Priority score calculation")
         
-        print("  ✅ Service alert model logic: PASSED")
+logger.info("  ✅ Service alert model logic: PASSED")
         success_count += 1
         
     except Exception as e:
-        print(f"  ❌ Service alert model logic: FAILED - {e}")
+logger.info(f"  ❌ Service alert model logic: FAILED - {e}")
         import traceback
         traceback.print_exc()
     
     # Final Results
-    print("\n" + "=" * 60)
-    print("🎯 SERVICES MODULE COMPREHENSIVE TEST RESULTS")
-    print("=" * 60)
-    print(f"✅ Tests Passed: {success_count}/{total_tests}")
-    print(f"📊 Success Rate: {(success_count/total_tests)*100:.1f}%")
+logger.info("\n" + "=" * 60)
+logger.info("🎯 SERVICES MODULE COMPREHENSIVE TEST RESULTS")
+logger.info("=" * 60)
+logger.info(f"✅ Tests Passed: {success_count}/{total_tests}")
+logger.info(f"📊 Success Rate: {(success_count/total_tests)*100:.1f}%")
     
     if success_count == total_tests:
-        print("\n🎉 EXCELLENT! Services module comprehensively tested!")
-        print("\n📋 Coverage Summary:")
-        print("  ✅ Services Enums: 100% (Type, Status, Provisioning, Bandwidth)")
-        print("  ✅ Service Plan Logic: 100% (pricing, features, speeds)")
-        print("  ✅ Service Instance Logic: 100% (status, contracts, locations)")
-        print("  ✅ Provisioning Logic: 100% (task management, scheduling)")
-        print("  ✅ Usage Tracking Logic: 100% (data, speeds, uptime)")
-        print("  ✅ Alert Management Logic: 100% (severity, acknowledgment, resolution)")
-        print("\n🏆 SERVICES MODULE: 90%+ COVERAGE ACHIEVED!")
+logger.info("\n🎉 EXCELLENT! Services module comprehensively tested!")
+logger.info("\n📋 Coverage Summary:")
+logger.info("  ✅ Services Enums: 100% (Type, Status, Provisioning, Bandwidth)")
+logger.info("  ✅ Service Plan Logic: 100% (pricing, features, speeds)")
+logger.info("  ✅ Service Instance Logic: 100% (status, contracts, locations)")
+logger.info("  ✅ Provisioning Logic: 100% (task management, scheduling)")
+logger.info("  ✅ Usage Tracking Logic: 100% (data, speeds, uptime)")
+logger.info("  ✅ Alert Management Logic: 100% (severity, acknowledgment, resolution)")
+logger.info("\n🏆 SERVICES MODULE: 90%+ COVERAGE ACHIEVED!")
         return True
     else:
-        print(f"\n❌ {total_tests - success_count} test(s) failed.")
+logger.info(f"\n❌ {total_tests - success_count} test(s) failed.")
         return False
 
 def main():

@@ -24,6 +24,7 @@ class CustomerService(BaseTenantService[models.Customer, schemas.CustomerCreate,
     """Service for customer management operations."""
 
     def __init__(self, db: Session, tenant_id: str):
+        """  Init   operation."""
         super().__init__(
             db=db,
             model_class=models.Customer,
@@ -82,6 +83,7 @@ class UserService(BaseTenantService[models.User, schemas.UserCreate, schemas.Use
     """Service for user management operations."""
 
     def __init__(self, db: Session, tenant_id: str):
+        """  Init   operation."""
         super().__init__(
             db=db,
             model_class=models.User,
@@ -131,6 +133,7 @@ class IdentityService:
     """Legacy identity service - use CustomerService and UserService instead."""
 
     def __init__(self, db: Session, tenant_id: str):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
         self.customer_service = CustomerService(db, tenant_id)

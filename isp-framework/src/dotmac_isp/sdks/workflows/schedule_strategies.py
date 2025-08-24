@@ -69,6 +69,7 @@ class CronScheduleStrategy(ScheduleCalculationStrategy):
             return None
     
     def get_strategy_name(self) -> str:
+        """Get Strategy Name operation."""
         return "Cron Schedule"
 
 
@@ -102,6 +103,7 @@ class IntervalScheduleStrategy(ScheduleCalculationStrategy):
         return next_run
     
     def get_strategy_name(self) -> str:
+        """Get Strategy Name operation."""
         return "Interval Schedule"
 
 
@@ -127,6 +129,7 @@ class OneTimeScheduleStrategy(ScheduleCalculationStrategy):
             return None
     
     def get_strategy_name(self) -> str:
+        """Get Strategy Name operation."""
         return "One-Time Schedule"
 
 
@@ -173,6 +176,7 @@ class RecurringScheduleStrategy(ScheduleCalculationStrategy):
         return next_run
     
     def get_strategy_name(self) -> str:
+        """Get Strategy Name operation."""
         return "Recurring Schedule"
 
 

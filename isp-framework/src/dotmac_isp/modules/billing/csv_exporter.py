@@ -20,6 +20,7 @@ class BillingCSVExporter:
     """Export billing data to CSV format."""
     
     def __init__(self):
+        """  Init   operation."""
         self.date_format = "%Y-%m-%d"
         self.datetime_format = "%Y-%m-%d %H:%M:%S"
     
@@ -290,6 +291,7 @@ class FinancialReportExporter:
     """Export financial reports in CSV format."""
     
     def __init__(self):
+        """  Init   operation."""
         self.exporter = BillingCSVExporter()
     
     async def export_revenue_report(self, data: List[Dict[str, Any]]) -> str:
@@ -387,6 +389,7 @@ class CSVBatchExporter:
     """Handle batch CSV exports."""
     
     def __init__(self):
+        """  Init   operation."""
         self.billing_exporter = BillingCSVExporter()
         self.financial_exporter = FinancialReportExporter()
     

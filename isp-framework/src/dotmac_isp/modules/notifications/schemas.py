@@ -94,6 +94,7 @@ class NotificationTemplateResponse(NotificationTemplateBase):
     updated_at: Optional[datetime] = Field(None, description="Last update timestamp")
 
     class Config:
+        """Class for Config operations."""
         from_attributes = True
 
 
@@ -164,6 +165,7 @@ class NotificationRuleResponse(NotificationRuleBase):
     updated_at: Optional[datetime] = Field(None, description="Last update timestamp")
 
     class Config:
+        """Class for Config operations."""
         from_attributes = True
 
 
@@ -250,6 +252,7 @@ class NotificationResponse(NotificationBase):
     updated_at: Optional[datetime] = Field(None, description="Last update timestamp")
 
     class Config:
+        """Class for Config operations."""
         from_attributes = True
 
 
@@ -293,6 +296,7 @@ class NotificationDeliveryResponse(NotificationDeliveryBase):
     error_message: Optional[str] = Field(None, description="Error message")
 
     class Config:
+        """Class for Config operations."""
         from_attributes = True
 
 
@@ -374,6 +378,7 @@ class NotificationPreferenceResponse(NotificationPreferenceBase):
     updated_at: Optional[datetime] = Field(None, description="Last update timestamp")
 
     class Config:
+        """Class for Config operations."""
         from_attributes = True
 
 

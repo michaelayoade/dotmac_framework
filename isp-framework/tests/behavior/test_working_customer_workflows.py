@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 """
 BEHAVIOR-DRIVEN TESTING - COMPLETE CUSTOMER WORKFLOWS
 =====================================================
@@ -23,12 +27,14 @@ from tests.revenue_protection.test_working_billing_accuracy import BillingCalcul
 
 
 class CustomerType(Enum):
+    """Class for CustomerType operations."""
     RESIDENTIAL = "residential"
     BUSINESS = "business"
     ENTERPRISE = "enterprise"
 
 
 class ServiceStatus(Enum):
+    """Class for ServiceStatus operations."""
     PENDING = "pending"
     ACTIVE = "active"
     SUSPENDED = "suspended"
@@ -36,6 +42,7 @@ class ServiceStatus(Enum):
 
 
 class PaymentStatus(Enum):
+    """Class for PaymentStatus operations."""
     PENDING = "pending"
     COMPLETED = "completed" 
     FAILED = "failed"
@@ -55,6 +62,7 @@ class CustomerProfile:
     created_at: datetime = field(default_factory=datetime.now)
     
     def to_dict(self) -> Dict[str, Any]:
+        """To Dict operation."""
         return {
             'customer_id': self.customer_id,
             'customer_number': self.customer_number,
@@ -79,6 +87,7 @@ class ServicePlan:
     contract_length_months: int = 12
     
     def to_dict(self) -> Dict[str, Any]:
+        """To Dict operation."""
         return {
             'service_id': self.service_id,
             'service_name': self.service_name,
@@ -117,6 +126,7 @@ class CustomerWorkflowSimulator:
     """
     
     def __init__(self):
+        """  Init   operation."""
         self.billing_calculator = BillingCalculator()
         self.customers: Dict[str, CustomerProfile] = {}
         self.services: Dict[str, Dict[str, Any]] = {}  # customer_id -> services
@@ -677,6 +687,7 @@ class TestBusinessRulesBehavior:
         # Override credit score to test failure
         simulator_residential = CustomerWorkflowSimulator()
         def mock_credit_check_fail(customer):
+            """Mock Credit Check Fail operation."""
             return False
         simulator_residential._perform_credit_check = mock_credit_check_fail
         
@@ -705,4 +716,4 @@ if __name__ == "__main__":
     result = simulator.customer_signup_workflow(customer_data, service_plan)
     assert result.success, f"Workflow failed: {result.errors}"
     
-    print("✅ Behavior testing validation passed!")
+logger.info("✅ Behavior testing validation passed!")

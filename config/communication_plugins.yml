@@ -1,0 +1,63 @@
+# Communication Plugin Configuration
+# This file defines which plugins are loaded and their configuration
+
+plugin_paths:
+  - "plugins/communication"
+  - "/opt/dotmac/plugins/communication"
+  - "~/.dotmac/plugins/communication"
+
+enabled_plugins:
+  # Twilio SMS Plugin
+  - plugin_id: "twilio_sms"
+    enabled: true
+    priority: 1
+    config:
+      account_sid: "${TWILIO_SID}"           # Environment variable
+      auth_token: "${TWILIO_TOKEN}"          # Environment variable  
+      from_number: "${TWILIO_FROM_NUMBER}"   # Environment variable
+      webhook_url: "${TWILIO_WEBHOOK_URL}"   # Optional webhook
+      max_retries: 3
+      timeout_seconds: 30
+
+  # SendGrid Email Plugin (example)
+  - plugin_id: "sendgrid_email"
+    enabled: true
+    priority: 1
+    config:
+      api_key: "${SENDGRID_API_KEY}"
+      from_email: "${FROM_EMAIL}"
+      from_name: "DotMac Platform"
+      template_id: "${SENDGRID_TEMPLATE_ID}"
+
+  # Slack Webhook Plugin (example)
+  - plugin_id: "slack_webhook"
+    enabled: true
+    priority: 1
+    config:
+      webhook_url: "${SLACK_WEBHOOK_URL}"
+      default_channel: "#alerts"
+      username: "DotMac Bot"
+      icon_emoji: ":robot_face:"
+
+  # Generic Webhook Plugin
+  - plugin_id: "generic_webhook"
+    enabled: true
+    priority: 2  # Lower priority (fallback)
+    config:
+      timeout_seconds: 30
+      retry_attempts: 3
+      verify_ssl: true
+
+# Plugin system settings
+settings:
+  auto_reload: true              # Hot reload plugins on file changes
+  security_validation: true     # Enable plugin security validation
+  max_concurrent_sends: 100     # Max concurrent message sends
+  circuit_breaker_enabled: true # Enable circuit breaker for failed plugins
+  health_check_interval: 300    # Health check interval in seconds
+
+# Environment variable defaults (used if env vars not set)
+defaults:
+  timeout_seconds: 30
+  max_retries: 3
+  rate_limit_per_minute: 60

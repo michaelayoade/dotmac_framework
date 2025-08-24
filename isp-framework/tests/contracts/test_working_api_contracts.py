@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 """
 CONTRACT TESTING - API AND SERVICE CONTRACTS
 ============================================
@@ -23,6 +27,7 @@ from jsonschema import validate, ValidationError
 
 
 class ContractType(Enum):
+    """Class for ContractType operations."""
     PAYMENT_PROCESSOR = "payment_processor"
     SNMP_DEVICE = "snmp_device"
     EMAIL_SERVICE = "email_service"
@@ -50,6 +55,7 @@ class ContractValidator:
     """
     
     def __init__(self):
+        """  Init   operation."""
         self.contracts = self._load_contracts()
     
     def validate_request(self, contract_name: str, request_data: Dict[str, Any]) -> bool:
@@ -321,6 +327,7 @@ class ContractValidator:
     
     # Test data
     def _stripe_test_data(self) -> Dict[str, Any]:
+        """ Stripe Test Data operation."""
         return {
             "request": {
                 "amount": 7999,  # $79.99
@@ -347,6 +354,7 @@ class ContractValidator:
         }
     
     def _sendgrid_test_data(self) -> Dict[str, Any]:
+        """ Sendgrid Test Data operation."""
         return {
             "request": {
                 "personalizations": [
@@ -371,6 +379,7 @@ class ContractValidator:
         }
     
     def _twilio_test_data(self) -> Dict[str, Any]:
+        """ Twilio Test Data operation."""
         return {
             "request": {
                 "To": "+15551234567",
@@ -391,6 +400,7 @@ class ContractValidator:
         }
     
     def _snmp_test_data(self) -> Dict[str, Any]:
+        """ Snmp Test Data operation."""
         return {
             "request": {
                 "host": "192.168.1.1",
@@ -415,6 +425,7 @@ class ContractValidator:
         }
     
     def _webhook_test_data(self) -> Dict[str, Any]:
+        """ Webhook Test Data operation."""
         return {
             "request": {
                 "event_type": "payment.succeeded",
@@ -632,6 +643,7 @@ class StripePaymentProcessor:
     """Mock Stripe payment processor for contract testing."""
     
     def __init__(self, api_key: str):
+        """  Init   operation."""
         self.api_key = api_key
     
     async def process_payment(
@@ -669,6 +681,7 @@ class SendGridEmailService:
     """Mock SendGrid email service for contract testing."""
     
     def __init__(self, api_key: str):
+        """  Init   operation."""
         self.api_key = api_key
     
     async def send_email(
@@ -745,6 +758,7 @@ class WebhookHandler:
     """Mock webhook handler for contract testing."""
     
     def __init__(self, secret_key: str):
+        """  Init   operation."""
         self.secret_key = secret_key
     
     def generate_signature(self, payload: Dict[str, Any]) -> str:
@@ -779,4 +793,4 @@ if __name__ == "__main__":
     assert validator.validate_request('stripe_payment', request_data)
     assert validator.validate_response('stripe_payment', response_data)
     
-    print("✅ Contract testing validation passed!")
+logger.info("✅ Contract testing validation passed!")

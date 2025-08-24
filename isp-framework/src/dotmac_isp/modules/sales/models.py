@@ -219,6 +219,7 @@ class Lead(TenantModel, StatusMixin, AuditMixin, ContactMixin, AddressMixin):
         return self.next_follow_up_date and date.today() > self.next_follow_up_date
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<Lead(id='{self.lead_id}', name='{self.full_name}', status='{self.lead_status}')>"
 
 
@@ -356,6 +357,7 @@ class Opportunity(TenantModel, StatusMixin, AuditMixin, AddressMixin):
         return (date.today() - self.created_date).days
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<Opportunity(id='{self.opportunity_id}', name='{self.opportunity_name}', stage='{self.opportunity_stage}')>"
 
 
@@ -452,6 +454,7 @@ class SalesActivity(TenantModel, AuditMixin):
         return (self.scheduled_date.date() - date.today()).days
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<SalesActivity(id='{self.activity_id}', type='{self.activity_type}', status='{self.activity_status}')>"
 
 
@@ -558,6 +561,7 @@ class Quote(TenantModel, StatusMixin, AuditMixin, AddressMixin):
         return None
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<Quote(number='{self.quote_number}', opportunity_id='{self.opportunity_id}', total={self.total_amount})>"
 
 
@@ -625,6 +629,7 @@ class QuoteLineItem(TenantModel, AuditMixin):
         return None
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<QuoteLineItem(quote_id='{self.quote_id}', line={self.line_number}, product='{self.product_name}')>"
 
 
@@ -699,6 +704,7 @@ class SalesForecast(TenantModel, AuditMixin):
         return None
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<SalesForecast(id='{self.forecast_id}', period='{self.forecast_period}', commit={self.commit})>"
 
 
@@ -745,6 +751,7 @@ class Territory(TenantModel, StatusMixin, AuditMixin):
     )
 
     def __repr__(self):
+        """  Repr   operation."""
         return (
             f"<Territory(code='{self.territory_code}', name='{self.territory_name}')>"
         )

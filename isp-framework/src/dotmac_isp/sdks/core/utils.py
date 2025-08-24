@@ -102,8 +102,10 @@ def handle_deprecation(
     """
 
     def decorator(func):
+        """Decorator operation."""
         @wraps(func)
         def wrapper(*args, **kwargs):
+            """Wrapper operation."""
             message = f"{func.__name__} is deprecated"
 
             if deprecated_in:

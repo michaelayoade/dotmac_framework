@@ -198,6 +198,7 @@ class KeyManager:
     """Encryption key management service"""
 
     def __init__(self, master_key: bytes | None = None):
+        """  Init   operation."""
         self.keys: dict[str, EncryptionKey] = {}
         self.key_cache: dict[str, tuple[Any, datetime]] = {}
         self.master_key = master_key or self._generate_master_key()
@@ -339,6 +340,7 @@ class EncryptionService:
     """Main encryption service for data at rest"""
 
     def __init__(self, key_manager: KeyManager | None = None):
+        """  Init   operation."""
         self.key_manager = key_manager or KeyManager()
         self.policies: dict[DataClassification, EncryptionPolicy] = {}
         self._setup_default_policies()
@@ -571,6 +573,7 @@ class FieldEncryption:
     """Decorator for automatic field encryption in Pydantic models"""
 
     def __init__(
+        """  Init   operation."""
         self,
         encryption_service: EncryptionService,
         classification: DataClassification = DataClassification.CONFIDENTIAL,
@@ -583,6 +586,7 @@ class FieldEncryption:
         original_init = cls.__init__
 
         def new_init(self, **kwargs):
+            """New Init operation."""
             # Encrypt sensitive fields before initialization
             for field_name, field_info in cls.__fields__.items():
                 if hasattr(
@@ -632,6 +636,7 @@ class KeyRotationManager:
     """Manages encryption key rotation and lifecycle."""
 
     def __init__(self, key_manager: KeyManager, encryption_service: EncryptionService):
+        """  Init   operation."""
         self.key_manager = key_manager
         self.encryption_service = encryption_service
         self._rotation_schedule: dict[str, datetime] = {}

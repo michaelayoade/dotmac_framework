@@ -64,6 +64,7 @@ class RBACSDKConfig:
     """RBAC SDK configuration."""
 
     def __init__(
+        """  Init   operation."""
         self,
         cache_ttl: int = 300,  # 5 minutes
         max_role_depth: int = 10,
@@ -295,6 +296,7 @@ class RBACSDK:
         processed_roles = set()
 
         def process_role(role_name: str, depth: int = 0) -> None:
+            """Process Role operation."""
             if depth > self.config.max_role_depth:
                 logger.warning(f"Max role depth exceeded for role {role_name}")
                 return
@@ -711,6 +713,7 @@ class RBACSDK:
         """Check if adding parent roles would create a circular dependency."""
 
         def has_path(start: str, end: str, visited: set[str]) -> bool:
+            """Has Path operation."""
             if start == end:
                 return True
             if start in visited:

@@ -39,6 +39,7 @@ class TablesSDKConfig:
     """Tables SDK configuration."""
 
     def __init__(  # noqa: PLR0913
+        """  Init   operation."""
         self,
         max_tables_per_tenant: int = 100,
         max_columns_per_table: int = 100,
@@ -768,6 +769,7 @@ class TablesSDK:
             return data
 
         def sort_key(row):
+            """Sort Key operation."""
             keys = []
             for order in query.order_by:
                 column = order.get("column", "")

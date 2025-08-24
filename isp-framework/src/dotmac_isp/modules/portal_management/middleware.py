@@ -21,6 +21,7 @@ class PortalAuthenticationError(HTTPException):
     """Portal authentication error."""
 
     def __init__(self, detail: str = "Authentication failed"):
+        """  Init   operation."""
         super().__init__(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=detail,
@@ -32,6 +33,7 @@ class PortalAuthorizationError(HTTPException):
     """Portal authorization error."""
 
     def __init__(self, detail: str = "Insufficient privileges"):
+        """  Init   operation."""
         super().__init__(status_code=status.HTTP_403_FORBIDDEN, detail=detail)
 
 
@@ -150,6 +152,7 @@ def require_portal_account_type(*allowed_types: str):
     """
 
     async def _require_account_type(
+        """ Require Account Type operation."""
         account: PortalAccount = Depends(get_current_portal_account),
     ) -> PortalAccount:
         if account.account_type not in allowed_types:
@@ -233,6 +236,7 @@ class PortalRateLimitError(HTTPException):
     """Portal rate limit error."""
 
     def __init__(self, detail: str = "Rate limit exceeded"):
+        """  Init   operation."""
         super().__init__(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail=detail,

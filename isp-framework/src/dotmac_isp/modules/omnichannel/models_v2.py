@@ -175,6 +175,7 @@ class CustomerContact(TenantModel, AuditMixin):
 
     @hybrid_property
     def full_name(self):
+        """Full Name operation."""
         return f"{self.first_name} {self.last_name}"
 
     __table_args__ = (

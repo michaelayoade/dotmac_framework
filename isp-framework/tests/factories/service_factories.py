@@ -21,6 +21,7 @@ class ServicePlanFactory(BaseFactory, TenantMixin, TimestampMixin):
     """Factory for ServicePlan test data."""
     
     class Meta:
+        """Class for Meta operations."""
         model = None
     
     # Plan identification
@@ -82,6 +83,7 @@ class ServiceInstanceFactory(BaseFactory, TenantMixin, TimestampMixin, AuditMixi
     """Factory for ServiceInstance test data."""
     
     class Meta:
+        """Class for Meta operations."""
         model = None
     
     # Service identification
@@ -162,6 +164,7 @@ class ServiceChangeOrderFactory(BaseFactory, TenantMixin, TimestampMixin, AuditM
     """Factory for ServiceChangeOrder test data."""
     
     class Meta:
+        """Class for Meta operations."""
         model = None
     
     # Change order identification
@@ -221,6 +224,7 @@ class ServiceOutageFactory(BaseFactory, TenantMixin, TimestampMixin):
     """Factory for ServiceOutage test data."""
     
     class Meta:
+        """Class for Meta operations."""
         model = None
     
     # Outage identification

@@ -34,6 +34,7 @@ class ObservabilitySDKConfig:
     """Observability SDK configuration."""
 
     def __init__(
+        """  Init   operation."""
         self,
         metrics_retention_days: int = 30,
         logs_retention_days: int = 7,
@@ -280,6 +281,7 @@ class ObservabilitySDK:
                 search_lower = query.search_text.lower()
 
                 def matches_search(log_entry):
+                    """Matches Search operation."""
                     # Search in message
                     if search_lower in log_entry.message.lower():
                         return True

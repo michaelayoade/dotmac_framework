@@ -39,6 +39,7 @@ class ServiceRegistry(IServiceRegistry):
     """Service registry implementation with dependency injection."""
 
     def __init__(self):
+        """  Init   operation."""
         self._factories: Dict[Type, ServiceFactory] = {}
         self._instances: Dict[str, Any] = {}  # For singleton services
         self._singleton_types: set = set()
@@ -147,6 +148,7 @@ def register_service(
     """
 
     def decorator(func):
+        """Decorator operation."""
         _service_registry.register(service_type, factory or func, singleton)
         return func
 
@@ -158,6 +160,7 @@ class ServiceBoundary:
     """Enforces service boundaries and dependencies."""
 
     def __init__(self, registry: IServiceRegistry):
+        """  Init   operation."""
         self.registry = registry
         self._dependencies: Dict[Type, set] = {}
 
@@ -195,6 +198,7 @@ class ServiceContext:
     """Context manager for service lifecycle management."""
 
     def __init__(
+        """  Init   operation."""
         self, db: Session, tenant_id: UUID, registry: Optional[IServiceRegistry] = None
     ):
         self.db = db
@@ -211,9 +215,11 @@ class ServiceContext:
         return self._services[service_type]
 
     def __enter__(self):
+        """  Enter   operation."""
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        """  Exit   operation."""
         # Cleanup services if needed
         self._services.clear()
 
@@ -223,6 +229,7 @@ class DomainService:
     """Base class for domain services."""
 
     def __init__(self, tenant_id: UUID):
+        """  Init   operation."""
         self.tenant_id = tenant_id
 
     @property
@@ -243,6 +250,7 @@ class ServiceHealthCheck:
     """Health check for services."""
 
     def __init__(self, registry: IServiceRegistry):
+        """  Init   operation."""
         self.registry = registry
 
     def check_service_health(

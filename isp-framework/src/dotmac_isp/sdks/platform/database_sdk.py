@@ -31,6 +31,7 @@ class DatabaseSDK:
     """
 
     def __init__(self, database_url: str, tenant_id: str | None = None):
+        """  Init   operation."""
         self.database_url = database_url
         self.tenant_id = tenant_id
         self._engine = None

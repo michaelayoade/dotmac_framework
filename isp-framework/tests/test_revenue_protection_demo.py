@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 """
 Revenue Protection Tests Demo - Standalone Version
 
@@ -63,7 +67,7 @@ class TestBillingCalculationAccuracyDemo:
                 f"Expected {case['expected_charge']}, got {calculated_charge}"
             )
         
-        print(f"✅ Revenue Protection: All {len(test_cases)} precision edge cases passed")
+logger.info(f"✅ Revenue Protection: All {len(test_cases)} precision edge cases passed")
     
     def test_proration_calculation_accuracy(self):
         """Demo: Test monthly fee proration for partial billing periods."""
@@ -116,7 +120,7 @@ class TestBillingCalculationAccuracyDemo:
                 f"Expected {case['expected']}, got {calculated}"
             )
         
-        print(f"✅ Revenue Protection: All {len(test_cases)} proration cases passed")
+logger.info(f"✅ Revenue Protection: All {len(test_cases)} proration cases passed")
     
     def test_tax_calculation_precision(self):
         """Demo: Test tax calculations with complex rates and rounding."""
@@ -163,7 +167,7 @@ class TestBillingCalculationAccuracyDemo:
                 f"Expected {case['expected']}, got {calculated_tax}"
             )
         
-        print(f"✅ Revenue Protection: All {len(test_cases)} tax calculations passed")
+logger.info(f"✅ Revenue Protection: All {len(test_cases)} tax calculations passed")
 
 
 @pytest.mark.revenue_critical
@@ -235,7 +239,7 @@ class TestBillingIntegrityDemo:
         assert result['final_amount'] >= Decimal('0'), "Over-discount allowed"
         assert result['total_discount'] <= base_amount, "Total discount exceeds base amount"
         
-        print("✅ Revenue Protection: Discount stacking validation passed")
+logger.info("✅ Revenue Protection: Discount stacking validation passed")
     
     def test_billing_audit_trail(self):
         """Demo: Ensure all billing operations are properly audited."""
@@ -290,7 +294,7 @@ class TestBillingIntegrityDemo:
         assert payment_log['event_type'] == 'payment_received'
         assert 'transaction_id' in payment_log['details']
         
-        print("✅ Revenue Protection: Billing audit trail validation passed")
+logger.info("✅ Revenue Protection: Billing audit trail validation passed")
 
 
 if __name__ == "__main__":

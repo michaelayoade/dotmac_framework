@@ -12,6 +12,7 @@ class RateLimiter:
     """Rate limiter for API endpoints."""
     
     def __init__(self, default_limit: int = 100, window_minutes: int = 1):
+        """  Init   operation."""
         self.default_limit = default_limit
         self.window_minutes = window_minutes
         self._requests: Dict[str, list] = defaultdict(list)

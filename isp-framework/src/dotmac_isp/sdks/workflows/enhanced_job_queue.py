@@ -150,6 +150,7 @@ class PriorityQueue:
     """Priority queue with fairness and ordering guarantees."""
 
     def __init__(self):
+        """  Init   operation."""
         # Priority heaps for each priority level
         self.priority_heaps: Dict[Priority, List] = {
             Priority.CRITICAL: [],
@@ -295,6 +296,7 @@ class DeadLetterQueue:
     """Dead letter queue for poison messages."""
 
     def __init__(self, max_size: int = 10000):
+        """  Init   operation."""
         self.max_size = max_size
         self.messages: Dict[str, JobMessage] = {}
         self.insertion_order: deque = deque()
@@ -370,6 +372,7 @@ class EnhancedJobQueue:
     """Enhanced job queue with all advanced features."""
 
     def __init__(
+        """  Init   operation."""
         self,
         name: str,
         tenant_id: str,

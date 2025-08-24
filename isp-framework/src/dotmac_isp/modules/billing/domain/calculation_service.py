@@ -17,6 +17,7 @@ class BillingCalculationService(IBillingCalculationService):
     """Domain service for billing calculations."""
 
     def __init__(self):
+        """  Init   operation."""
         # Configure decimal precision for financial calculations
         self.decimal_places = Decimal("0.01")  # 2 decimal places
 

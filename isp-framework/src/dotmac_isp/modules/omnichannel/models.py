@@ -177,6 +177,7 @@ class CustomerContact(TenantModel, AuditMixin):
         return f"{self.first_name} {self.last_name}".strip()
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<CustomerContact(customer_id='{self.customer_id}', name='{self.full_name}', type='{self.contact_type}')>"
 
 
@@ -241,6 +242,7 @@ class ContactCommunicationChannel(TenantModel, AuditMixin):
     )
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<ContactCommunicationChannel(contact_id='{self.contact_id}', type='{self.channel_type}', value='{self.channel_value}')>"
 
 
@@ -380,6 +382,7 @@ class CommunicationInteraction(TenantModel, AuditMixin):
         return None
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<CommunicationInteraction(ref='{self.interaction_reference}', channel='{self.channel_type}', status='{self.status}')>"
 
 
@@ -435,6 +438,7 @@ class InteractionResponse(TenantModel, AuditMixin):
     )
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<InteractionResponse(interaction_id='{self.interaction_id}', seq={self.sequence_number}, author='{self.author_type}')>"
 
 
@@ -556,6 +560,7 @@ class OmnichannelAgent(TenantModel, AuditMixin):
         return 0.0
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<OmnichannelAgent(code='{self.agent_code}', name='{self.display_name}', status='{self.status}')>"
 
 
@@ -614,6 +619,7 @@ class AgentTeam(TenantModel, AuditMixin):
     __table_args__ = (Index("ix_teams_active", "is_active"),)
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<AgentTeam(code='{self.team_code}', name='{self.team_name}')>"
 
 
@@ -675,6 +681,7 @@ class RoutingRule(TenantModel, AuditMixin):
     __table_args__ = (Index("ix_routing_rules_priority", "priority", "is_active"),)
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<RoutingRule(code='{self.rule_code}', name='{self.rule_name}')>"
 
 
@@ -737,6 +744,7 @@ class InteractionEscalation(TenantModel, AuditMixin):
     )
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<InteractionEscalation(interaction_id='{self.interaction_id}', level={self.escalation_level})>"
 
 
@@ -814,6 +822,7 @@ class AgentPerformanceMetric(TenantModel):
     )
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<AgentPerformanceMetric(agent_id='{self.agent_id}', date='{self.metric_date}', period='{self.metric_period}')>"
 
 
@@ -867,6 +876,7 @@ class AgentSchedule(TenantModel, AuditMixin):
     )
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<AgentSchedule(agent_id='{self.agent_id}', date='{self.schedule_date}', type='{self.schedule_type}')>"
 
 
@@ -937,6 +947,7 @@ class ChannelAnalytics(TenantModel):
     )
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<ChannelAnalytics(channel='{self.channel_type}', date='{self.metric_date}', period='{self.metric_period}')>"
 
 
@@ -1012,4 +1023,5 @@ class CustomerCommunicationSummary(TenantModel, AuditMixin):
     )
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<CustomerCommunicationSummary(customer_id='{self.customer_id}', interactions={self.total_interactions})>"

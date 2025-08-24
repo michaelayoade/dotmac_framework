@@ -133,6 +133,7 @@ class PortalAccountService:
     """Service for managing Portal Accounts."""
 
     def __init__(self, db: Session):
+        """  Init   operation."""
         self.db = db
         self.settings = get_settings()
         self.password_generator = PortalPasswordGenerator()
@@ -481,6 +482,7 @@ class PortalAuthService:
     """Service for Portal Authentication."""
 
     def __init__(self, db: Session):
+        """  Init   operation."""
         self.db = db
         self.settings = get_settings()
 

@@ -42,6 +42,7 @@ class SecurityChecker:
     """Comprehensive security configuration checker."""
 
     def __init__(self):
+        """  Init   operation."""
         self.settings = get_settings()
         self.checks: List[SecurityCheck] = []
 

@@ -26,6 +26,7 @@ class OmnichannelBaseSchema(BaseModel):
     """Base schema for omnichannel objects."""
 
     class Config:
+        """Class for Config operations."""
         use_enum_values = True
         arbitrary_types_allowed = True
         json_encoders = {

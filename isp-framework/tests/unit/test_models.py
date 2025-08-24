@@ -36,6 +36,7 @@ class TestBaseMixins:
     def test_timestamp_mixin(self):
         """Test timestamp mixin functionality."""
         class TestModel(TimestampMixin):
+            """Class for TestModel operations."""
             pass
         
         # Check that columns exist (this is a basic structure test)

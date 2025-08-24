@@ -176,6 +176,7 @@ class DeviceVerifier:
     """Device trust verification service"""
 
     def __init__(self):
+        """  Init   operation."""
         self.trusted_devices: dict[str, dict[str, Any]] = {}
         self.device_fingerprints: dict[str, str] = {}
 
@@ -237,6 +238,7 @@ class LocationVerifier:
     """Location-based verification service"""
 
     def __init__(self):
+        """  Init   operation."""
         self.trusted_locations: set[str] = set()
         self.suspicious_locations: set[str] = set()
         self.geolocation_cache: dict[str, dict[str, Any]] = {}
@@ -306,6 +308,7 @@ class BehaviorVerifier:
     """Behavioral analysis verification service"""
 
     def __init__(self):
+        """  Init   operation."""
         self.user_patterns: dict[str, dict[str, Any]] = {}
         self.anomaly_threshold = 0.8
 
@@ -395,6 +398,7 @@ class ZeroTrustManager:
     """Main zero-trust architecture manager"""
 
     def __init__(self):
+        """  Init   operation."""
         self.policies: dict[str, ZeroTrustPolicy] = {}
         self.security_contexts: dict[str, SecurityContext] = {}
         self.device_verifier = DeviceVerifier()

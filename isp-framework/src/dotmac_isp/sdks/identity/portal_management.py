@@ -14,6 +14,7 @@ class PortalManagementService:
     """In-memory service for portal management operations."""
 
     def __init__(self):
+        """  Init   operation."""
         self._portals: Dict[UUID, Portal] = {}
         self._portal_settings: Dict[UUID, PortalSettings] = {}
         self._portal_id_index: Dict[str, UUID] = {}
@@ -88,6 +89,7 @@ class PortalManagementSDK:
     """Small, composable SDK for portal management."""
 
     def __init__(self, tenant_id: str):
+        """  Init   operation."""
         self.tenant_id = tenant_id
         self._service = PortalManagementService()
 

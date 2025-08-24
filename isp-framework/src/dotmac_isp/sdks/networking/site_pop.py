@@ -14,6 +14,7 @@ class SitePopService:
     """In-memory service for site/POP operations."""
 
     def __init__(self):
+        """  Init   operation."""
         self._sites: Dict[str, Dict[str, Any]] = {}
         self._racks: Dict[str, List[Dict[str, Any]]] = {}
         self._rooms: Dict[str, List[Dict[str, Any]]] = {}
@@ -105,6 +106,7 @@ class SitePopSDK:
     """Minimal, reusable SDK for site/POP management."""
 
     def __init__(self, tenant_id: str):
+        """  Init   operation."""
         self.tenant_id = tenant_id
         self._service = SitePopService()
 

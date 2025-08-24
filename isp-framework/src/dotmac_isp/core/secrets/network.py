@@ -78,6 +78,7 @@ class CertificateManager:
     """SSL/TLS certificate management"""
 
     def __init__(self):
+        """  Init   operation."""
         self.certificates: dict[str, CertificateInfo] = {}
         self.private_keys: dict[str, bytes] = {}
         self.certificate_chains: dict[str, list[bytes]] = {}
@@ -399,6 +400,7 @@ class TLSManager:
     """TLS configuration and context management"""
 
     def __init__(self, certificate_manager: CertificateManager):
+        """  Init   operation."""
         self.certificate_manager = certificate_manager
         self.tls_contexts: dict[str, ssl.SSLContext] = {}
 
@@ -470,6 +472,7 @@ class NetworkSecurityManager:
     """Network security manager"""
 
     def __init__(self):
+        """  Init   operation."""
         self.certificate_manager = CertificateManager()
         self.tls_manager = TLSManager(self.certificate_manager)
         self.trusted_networks: list[str] = []

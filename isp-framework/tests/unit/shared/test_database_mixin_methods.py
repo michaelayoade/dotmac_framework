@@ -14,7 +14,9 @@ class TestSoftDeleteMixinMethods:
         """Test soft_delete method actually executes the missing lines."""
         # Create a concrete class with the mixin
         class TestModel(SoftDeleteMixin):
+            """Class for TestModel operations."""
             def __init__(self):
+                """  Init   operation."""
                 self.is_deleted = False
                 self.deleted_at = None
         
@@ -37,7 +39,9 @@ class TestSoftDeleteMixinMethods:
         """Test restore method actually executes the missing lines."""
         # Create a concrete class with the mixin
         class TestModel(SoftDeleteMixin):
+            """Class for TestModel operations."""
             def __init__(self):
+                """  Init   operation."""
                 self.is_deleted = True
                 self.deleted_at = datetime(2023, 12, 15, 10, 30, 45)
         
@@ -53,7 +57,9 @@ class TestSoftDeleteMixinMethods:
     def test_soft_delete_method_multiple_calls(self):
         """Test soft_delete method can be called multiple times."""
         class TestModel(SoftDeleteMixin):
+            """Class for TestModel operations."""
             def __init__(self):
+                """  Init   operation."""
                 self.is_deleted = False
                 self.deleted_at = None
         
@@ -82,7 +88,9 @@ class TestStatusMixinMethods:
         """Test change_status method with reason parameter."""
         # Create a concrete class with the mixin
         class TestModel(StatusMixin):
+            """Class for TestModel operations."""
             def __init__(self):
+                """  Init   operation."""
                 self.status = "active"
                 self.status_reason = None
                 self.status_changed_at = None
@@ -106,7 +114,9 @@ class TestStatusMixinMethods:
     def test_change_status_method_without_reason(self):
         """Test change_status method without reason parameter."""
         class TestModel(StatusMixin):
+            """Class for TestModel operations."""
             def __init__(self):
+                """  Init   operation."""
                 self.status = "active"
                 self.status_reason = None
                 self.status_changed_at = None
@@ -129,7 +139,9 @@ class TestStatusMixinMethods:
     def test_change_status_method_multiple_changes(self):
         """Test change_status method with multiple status changes."""
         class TestModel(StatusMixin):
+            """Class for TestModel operations."""
             def __init__(self):
+                """  Init   operation."""
                 self.status = "active"
                 self.status_reason = None
                 self.status_changed_at = None
@@ -163,7 +175,9 @@ class TestStatusMixinMethods:
     def test_change_status_with_empty_string_reason(self):
         """Test change_status method with empty string as reason."""
         class TestModel(StatusMixin):
+            """Class for TestModel operations."""
             def __init__(self):
+                """  Init   operation."""
                 self.status = "active"
                 self.status_reason = "Initial reason"
                 self.status_changed_at = None
@@ -189,7 +203,9 @@ class TestMixinMethodsIntegration:
     def test_combined_mixin_methods(self):
         """Test that both mixins work together correctly."""
         class TestModel(SoftDeleteMixin, StatusMixin):
+            """Class for TestModel operations."""
             def __init__(self):
+                """  Init   operation."""
                 # SoftDeleteMixin attributes
                 self.is_deleted = False
                 self.deleted_at = None
@@ -225,7 +241,9 @@ class TestMixinMethodsIntegration:
         """Test to ensure all method lines are executed for coverage."""
         # Test SoftDeleteMixin methods
         class SoftDeleteModel(SoftDeleteMixin):
+            """Class for SoftDeleteModel operations."""
             def __init__(self):
+                """  Init   operation."""
                 self.is_deleted = False
                 self.deleted_at = None
         
@@ -245,7 +263,9 @@ class TestMixinMethodsIntegration:
         
         # Test StatusMixin methods
         class StatusModel(StatusMixin):
+            """Class for StatusModel operations."""
             def __init__(self):
+                """  Init   operation."""
                 self.status = "initial"
                 self.status_reason = None
                 self.status_changed_at = None

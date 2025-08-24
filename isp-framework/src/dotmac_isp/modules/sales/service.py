@@ -36,6 +36,7 @@ class LeadManagementService:
     """Service for lead management and qualification."""
 
     def __init__(self, db: Session, tenant_id: str):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = UUID(tenant_id)
         self.lead_repo = LeadRepository(db, self.tenant_id)
@@ -273,6 +274,7 @@ class OpportunityManagementService:
     """Service for opportunity management and sales pipeline."""
 
     def __init__(self, db: Session, tenant_id: str):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = UUID(tenant_id)
         self.opportunity_repo = OpportunityRepository(db, self.tenant_id)
@@ -569,6 +571,7 @@ class SalesActivityService:
     """Service for sales activity management."""
 
     def __init__(self, db: Session, tenant_id: str):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = UUID(tenant_id)
         self.activity_repo = SalesActivityRepository(db, self.tenant_id)
@@ -641,6 +644,7 @@ class SalesAnalyticsService:
     """Service for sales analytics and reporting."""
 
     def __init__(self, db: Session, tenant_id: str):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = UUID(tenant_id)
         self.analytics_repo = SalesAnalyticsRepository(db, self.tenant_id)
@@ -768,6 +772,7 @@ class SalesMainService:
     """Main service orchestrating all sales operations."""
 
     def __init__(self, db: Session, tenant_id: str):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
         self.lead_service = LeadManagementService(db, tenant_id)

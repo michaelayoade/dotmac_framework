@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 """
 AI Safety Tests for Revenue-Critical Code Protection
 
@@ -187,7 +191,7 @@ def test_revenue_critical_modules_integrity():
         pytest.fail(f"Revenue-critical risks detected:\n{risk_summary}")
     
     # Always log scan results for monitoring
-    print(f"✅ Revenue protection scan complete: {len(all_risks)} total findings, 0 critical risks")
+logger.info(f"✅ Revenue protection scan complete: {len(all_risks)} total findings, 0 critical risks")
 
 
 @pytest.mark.ai_safety
@@ -362,9 +366,9 @@ def test_ai_code_markers_presence():
     
     # This is a warning rather than failure - helps track AI modifications
     if unmarked_revenue_files:
-        print(f"⚠️  Revenue-critical files without AI markers: {len(unmarked_revenue_files)}")
+logger.info(f"⚠️  Revenue-critical files without AI markers: {len(unmarked_revenue_files)}")
         for file in unmarked_revenue_files[:5]:  # Show first 5
-            print(f"  - {file}")
+logger.info(f"  - {file}")
         
         # In production, this might be a hard failure
         # assert False, f"Revenue-critical files lack AI modification markers: {unmarked_revenue_files}"

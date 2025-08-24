@@ -43,8 +43,10 @@ class AITestGenerator:
 def property_test(data_generator, max_examples=100):
     """Decorator for property-based tests."""
     def decorator(test_func):
+        """Decorator operation."""
         @wraps(test_func)
         def wrapper(*args, **kwargs):
+            """Wrapper operation."""
             # Simple implementation - could be extended with Hypothesis
             for i in range(max_examples):
                 test_data = data_generator
@@ -61,12 +63,15 @@ class AIPropertyTestGenerator:
     
     @staticmethod
     def generate_billing_data():
+        """Generate Billing Data operation."""
         return AITestGenerator.generate_billing_data()
     
     @staticmethod
     def generate_customer_data():
+        """Generate Customer Data operation."""
         return AITestGenerator.generate_customer_data()
     
     @staticmethod
     def generate_service_data():
+        """Generate Service Data operation."""
         return AITestGenerator.generate_service_data()

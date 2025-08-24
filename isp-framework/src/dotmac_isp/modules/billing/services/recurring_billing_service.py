@@ -14,6 +14,7 @@ class RecurringBillingService:
     """Service for managing recurring billing operations."""
     
     def __init__(self, db_session: AsyncSession):
+        """  Init   operation."""
         self.db_session = db_session
         self.billing_service = BillingService(db_session)
     

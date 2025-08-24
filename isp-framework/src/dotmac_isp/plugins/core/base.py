@@ -67,6 +67,7 @@ class PluginInfo:
     updated_at: datetime = None
 
     def __post_init__(self):
+        """  Post Init   operation."""
         if self.dependencies is None:
             self.dependencies = []
         if self.permissions_required is None:
@@ -96,6 +97,7 @@ class PluginConfig(BaseModel):
     logging_enabled: bool = True
 
     class Config:
+        """Class for Config operations."""
         extra = "allow"
 
 
@@ -103,6 +105,7 @@ class PluginContext:
     """Plugin execution context."""
 
     def __init__(
+        """  Init   operation."""
         self,
         tenant_id: Optional[UUID] = None,
         user_id: Optional[UUID] = None,
@@ -127,6 +130,7 @@ class PluginAPI:
     """Plugin API interface for accessing framework services."""
 
     def __init__(self, framework_services: Dict[str, Any]):
+        """  Init   operation."""
         self._services = framework_services
 
     def get_service(self, service_name: str) -> Any:
@@ -280,6 +284,7 @@ class BasePlugin(ABC):
             raise
 
     def __repr__(self) -> str:
+        """  Repr   operation."""
         return f"<{self.__class__.__name__}(name={self.plugin_info.name}, status={self.status.value})>"
 
 

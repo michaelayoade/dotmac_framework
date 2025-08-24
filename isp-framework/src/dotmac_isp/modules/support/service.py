@@ -43,6 +43,7 @@ class TicketService(BaseTenantService[Ticket, schemas.TicketCreate, schemas.Tick
     """Service for support ticket management."""
 
     def __init__(self, db: Session, tenant_id: str):
+        """  Init   operation."""
         super().__init__(
             db=db,
             model_class=Ticket,
@@ -102,6 +103,7 @@ class KnowledgeBaseService(BaseTenantService[KnowledgeBaseArticle, schemas.Knowl
     """Service for knowledge base article management."""
 
     def __init__(self, db: Session, tenant_id: str):
+        """  Init   operation."""
         super().__init__(
             db=db,
             model_class=KnowledgeBaseArticle,
@@ -134,6 +136,7 @@ class SLAService(BaseTenantService[SLA, schemas.SLACreate, schemas.SLAUpdate, sc
     """Service for SLA rule management."""
 
     def __init__(self, db: Session, tenant_id: str):
+        """  Init   operation."""
         super().__init__(
             db=db,
             model_class=SLA,
@@ -169,6 +172,7 @@ class SupportTicketService:
     """Legacy support service - use individual services instead."""
 
     def __init__(self, db: Session, tenant_id: str):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
         self.ticket_service = TicketService(db, tenant_id)

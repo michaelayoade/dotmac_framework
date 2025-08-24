@@ -45,6 +45,7 @@ class EmailVerification:
     max_attempts: int = 3
     
     def __init__(self, **kwargs):
+        """  Init   operation."""
         self.id = kwargs.get('id', uuid4())
         self.email = kwargs.get('email')
         self.verification_token = kwargs.get('verification_token')
@@ -91,6 +92,7 @@ class PhoneVerification:
     max_attempts: int = 3
     
     def __init__(self, **kwargs):
+        """  Init   operation."""
         self.id = kwargs.get('id', uuid4())
         self.phone_number = kwargs.get('phone_number')
         self.verification_code = kwargs.get('verification_code')

@@ -19,6 +19,7 @@ class ContactService:
     """In-memory service for contact operations."""
 
     def __init__(self):
+        """  Init   operation."""
         self._contacts: Dict[UUID, Contact] = {}
         self._emails: Dict[UUID, List[ContactEmail]] = {}
         self._phones: Dict[UUID, List[ContactPhone]] = {}
@@ -70,6 +71,7 @@ class ContactsSDK:
     """Small, composable SDK for contacts management across CRM, orders, support."""
 
     def __init__(self, tenant_id: str):
+        """  Init   operation."""
         self.tenant_id = tenant_id
         self._service = ContactService()
 

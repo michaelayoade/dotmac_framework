@@ -47,6 +47,7 @@ class EqualsStrategy(OperatorStrategy):
     """Strategy for equality comparison."""
     
     def evaluate(self, attribute_value: Any, rule_value: Any) -> bool:
+        """Evaluate operation."""
         return attribute_value == rule_value
 
 
@@ -54,6 +55,7 @@ class NotEqualsStrategy(OperatorStrategy):
     """Strategy for inequality comparison."""
     
     def evaluate(self, attribute_value: Any, rule_value: Any) -> bool:
+        """Evaluate operation."""
         return attribute_value != rule_value
 
 
@@ -61,6 +63,7 @@ class GreaterThanStrategy(OperatorStrategy):
     """Strategy for greater than comparison."""
     
     def evaluate(self, attribute_value: Any, rule_value: Any) -> bool:
+        """Evaluate operation."""
         try:
             return self._safe_numeric_conversion(attribute_value) > self._safe_numeric_conversion(rule_value)
         except Exception as e:
@@ -72,6 +75,7 @@ class LessThanStrategy(OperatorStrategy):
     """Strategy for less than comparison."""
     
     def evaluate(self, attribute_value: Any, rule_value: Any) -> bool:
+        """Evaluate operation."""
         try:
             return self._safe_numeric_conversion(attribute_value) < self._safe_numeric_conversion(rule_value)
         except Exception as e:
@@ -83,6 +87,7 @@ class GreaterThanOrEqualStrategy(OperatorStrategy):
     """Strategy for greater than or equal comparison."""
     
     def evaluate(self, attribute_value: Any, rule_value: Any) -> bool:
+        """Evaluate operation."""
         try:
             return self._safe_numeric_conversion(attribute_value) >= self._safe_numeric_conversion(rule_value)
         except Exception as e:
@@ -94,6 +99,7 @@ class LessThanOrEqualStrategy(OperatorStrategy):
     """Strategy for less than or equal comparison."""
     
     def evaluate(self, attribute_value: Any, rule_value: Any) -> bool:
+        """Evaluate operation."""
         try:
             return self._safe_numeric_conversion(attribute_value) <= self._safe_numeric_conversion(rule_value)
         except Exception as e:
@@ -105,6 +111,7 @@ class ContainsStrategy(OperatorStrategy):
     """Strategy for substring containment check."""
     
     def evaluate(self, attribute_value: Any, rule_value: Any) -> bool:
+        """Evaluate operation."""
         try:
             attr_str = self._safe_string_conversion(attribute_value).lower()
             rule_str = self._safe_string_conversion(rule_value).lower()
@@ -118,6 +125,7 @@ class NotContainsStrategy(OperatorStrategy):
     """Strategy for substring not containment check."""
     
     def evaluate(self, attribute_value: Any, rule_value: Any) -> bool:
+        """Evaluate operation."""
         try:
             attr_str = self._safe_string_conversion(attribute_value).lower()
             rule_str = self._safe_string_conversion(rule_value).lower()
@@ -131,6 +139,7 @@ class StartsWithStrategy(OperatorStrategy):
     """Strategy for string prefix check."""
     
     def evaluate(self, attribute_value: Any, rule_value: Any) -> bool:
+        """Evaluate operation."""
         try:
             attr_str = self._safe_string_conversion(attribute_value).lower()
             rule_str = self._safe_string_conversion(rule_value).lower()
@@ -144,6 +153,7 @@ class EndsWithStrategy(OperatorStrategy):
     """Strategy for string suffix check."""
     
     def evaluate(self, attribute_value: Any, rule_value: Any) -> bool:
+        """Evaluate operation."""
         try:
             attr_str = self._safe_string_conversion(attribute_value).lower()
             rule_str = self._safe_string_conversion(rule_value).lower()
@@ -157,6 +167,7 @@ class InStrategy(OperatorStrategy):
     """Strategy for membership in a collection."""
     
     def evaluate(self, attribute_value: Any, rule_value: Any) -> bool:
+        """Evaluate operation."""
         try:
             # rule_value should be a list/collection
             if isinstance(rule_value, (list, tuple, set)):
@@ -175,6 +186,7 @@ class NotInStrategy(OperatorStrategy):
     """Strategy for non-membership in a collection."""
     
     def evaluate(self, attribute_value: Any, rule_value: Any) -> bool:
+        """Evaluate operation."""
         try:
             # rule_value should be a list/collection
             if isinstance(rule_value, (list, tuple, set)):
@@ -193,6 +205,7 @@ class RegexStrategy(OperatorStrategy):
     """Strategy for regular expression matching."""
     
     def evaluate(self, attribute_value: Any, rule_value: Any) -> bool:
+        """Evaluate operation."""
         try:
             attr_str = self._safe_string_conversion(attribute_value)
             pattern = self._safe_string_conversion(rule_value)
@@ -206,6 +219,7 @@ class VersionCompareStrategy(OperatorStrategy):
     """Strategy for semantic version comparison."""
     
     def evaluate(self, attribute_value: Any, rule_value: Any) -> bool:
+        """Evaluate operation."""
         try:
             attr_version = self._parse_version(str(attribute_value))
             rule_version = self._parse_version(str(rule_value))
@@ -224,6 +238,7 @@ class DateCompareStrategy(OperatorStrategy):
     """Strategy for date comparison."""
     
     def evaluate(self, attribute_value: Any, rule_value: Any) -> bool:
+        """Evaluate operation."""
         try:
             attr_date = self._parse_date(attribute_value)
             rule_date = self._parse_date(rule_value)

@@ -211,6 +211,7 @@ class CustomerContact(TenantModel, AuditMixin):
 
     @hybrid_property
     def full_name(self):
+        """Full Name operation."""
         return self.display_name or f"{self.first_name} {self.last_name}"
 
     __table_args__ = (
@@ -326,6 +327,7 @@ class ConversationThread(TenantModel, AuditMixin):
 
     @hybrid_property
     def interaction_count(self):
+        """Interaction Count operation."""
         return len(self.interactions)
 
     __table_args__ = (
@@ -498,6 +500,7 @@ class OmnichannelAgent(TenantModel, AuditMixin):
 
     @hybrid_property
     def is_available(self):
+        """Is Available operation."""
         return (
             self.status == AgentStatus.AVAILABLE
             and self.current_workload < self.max_concurrent_interactions
@@ -505,6 +508,7 @@ class OmnichannelAgent(TenantModel, AuditMixin):
 
     @hybrid_property
     def utilization_percentage(self):
+        """Utilization Percentage operation."""
         if self.max_concurrent_interactions > 0:
             return (self.current_workload / self.max_concurrent_interactions) * 100
         return 0
@@ -553,10 +557,12 @@ class AgentTeam(TenantModel, AuditMixin):
 
     @hybrid_property
     def member_count(self):
+        """Member Count operation."""
         return len([m for m in self.team_memberships if m.is_active])
 
     @hybrid_property
     def available_agents_count(self):
+        """Available Agents Count operation."""
         return len(
             [m for m in self.team_memberships if m.is_active and m.agent.is_available]
         )

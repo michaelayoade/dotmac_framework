@@ -170,6 +170,7 @@ class RadiusUser(TenantModel, StatusMixin, AuditMixin):
         return True
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<RadiusUser(username='{self.username}', type='{self.user_type}', enabled={self.enabled})>"
 
 
@@ -212,6 +213,7 @@ class RadiusGroup(TenantModel, StatusMixin, AuditMixin):
     )
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<RadiusGroup(name='{self.group_name}', priority={self.priority})>"
 
 
@@ -239,6 +241,7 @@ class RadiusUserGroup(TenantModel):
     )
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<RadiusUserGroup(user='{self.user.username if self.user else 'Unknown'}', group='{self.group.group_name if self.group else 'Unknown'}')>"
 
 
@@ -296,6 +299,7 @@ class RadiusClient(TenantModel, StatusMixin, AuditMixin):
         return 0.0
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<RadiusClient(name='{self.client_name}', ip='{self.nas_ip_address}', type='{self.nas_type}')>"
 
 
@@ -332,6 +336,7 @@ class RadiusCheck(RadiusAttribute):
     group = relationship("RadiusGroup", back_populates="check_attributes")
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<RadiusCheck(attribute='{self.attribute_name}', value='{self.attribute_value}', operator='{self.operator}')>"
 
 
@@ -352,6 +357,7 @@ class RadiusReply(RadiusAttribute):
     group = relationship("RadiusGroup", back_populates="reply_attributes")
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<RadiusReply(attribute='{self.attribute_name}', value='{self.attribute_value}', operator='{self.operator}')>"
 
 
@@ -427,6 +433,7 @@ class RadiusSession(TenantModel):
         return None
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<RadiusSession(username='{self.username}', nas='{self.nas_ip_address}', status='{self.status}')>"
 
 
@@ -491,6 +498,7 @@ class RadiusAccounting(TenantModel):
     )
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<RadiusAccounting(username='{self.username}', status='{self.acct_status_type}', session='{self.unique_session_id}')>"
 
 
@@ -531,6 +539,7 @@ class RadiusPolicy(TenantModel, StatusMixin, AuditMixin):
     )
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<RadiusPolicy(name='{self.policy_name}', type='{self.policy_type}', priority={self.priority})>"
 
 
@@ -562,4 +571,5 @@ class RadiusNas(TenantModel, StatusMixin, AuditMixin):
     )
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<RadiusNas(name='{self.nas_name}', ip='{self.nas_ip}', type='{self.nas_type}')>"

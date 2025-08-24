@@ -16,6 +16,7 @@ class RedisCacheMiddleware(BaseHTTPMiddleware):
     """Middleware for Redis-based HTTP response caching."""
 
     def __init__(self, app, cache_ttl: int = 300, cache_private: bool = False):
+        """  Init   operation."""
         super().__init__(app)
         self.cache_manager = get_cache_manager()
         self.cache_ttl = cache_ttl
@@ -88,6 +89,7 @@ class RedisSessionMiddleware(BaseHTTPMiddleware):
     """Middleware for Redis-based session management."""
 
     def __init__(
+        """  Init   operation."""
         self,
         app,
         session_cookie: str = "session_id",
@@ -169,6 +171,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     """Redis-based rate limiting middleware."""
 
     def __init__(self, app, max_requests: int = 100, window_seconds: int = 60):
+        """  Init   operation."""
         super().__init__(app)
         self.cache_manager = get_cache_manager()
         self.max_requests = max_requests
@@ -241,6 +244,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
     """Middleware for logging requests with Redis-based analytics."""
 
     def __init__(self, app):
+        """  Init   operation."""
         super().__init__(app)
         self.cache_manager = get_cache_manager()
         self.namespace = "analytics"

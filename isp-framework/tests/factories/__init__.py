@@ -4,10 +4,26 @@ This module provides comprehensive factories for creating test data
 across all modules with proper relationships and realistic data.
 """
 
-from .billing_factories import *
-from .identity_factories import *
-from .service_factories import *
-from .network_factories import *
+# Import specific factories to avoid namespace pollution
+from .billing_factories import (
+    InvoiceFactory,
+    PaymentFactory, 
+    SubscriptionFactory,
+    BillingAccountFactory,
+)
+from .identity_factories import (
+    CustomerFactory,
+    UserFactory,
+    OrganizationFactory,
+)
+from .service_factories import (
+    ServiceInstanceFactory,
+    ServicePlanFactory,
+)
+from .network_factories import (
+    NetworkDeviceFactory,
+    DeviceStatusFactory,
+)
 
 __all__ = [
     # Billing factories

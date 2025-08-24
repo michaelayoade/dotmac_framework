@@ -29,6 +29,7 @@ from sqlalchemy import Column, String, Boolean
 from sqlalchemy.dialects.postgresql import UUID
 
 class TestModel(Base):
+    """Class for TestModel operations."""
     __tablename__ = 'test_model'
     __table_args__ = {"extend_existing": True}
     
@@ -37,12 +38,14 @@ class TestModel(Base):
     active = Column(Boolean, default=True)
     
     def __init__(self, **kwargs):
+        """  Init   operation."""
         super().__init__()
         for key, value in kwargs.items():
             setattr(self, key, value)
 
 
 class TestTenantModel(Base, TenantMixin):
+    """Class for TestTenantModel operations."""
     __tablename__ = 'test_tenant_model'
     __table_args__ = {"extend_existing": True}
     
@@ -50,27 +53,32 @@ class TestTenantModel(Base, TenantMixin):
     name = Column(String(100))
     
     def __init__(self, **kwargs):
+        """  Init   operation."""
         super().__init__()
         for key, value in kwargs.items():
             setattr(self, key, value)
 
 
 class TestCreateSchema(BaseModel):
+    """Class for TestCreateSchema operations."""
     name: str
     active: bool = True
 
 
 class TestUpdateSchema(BaseModel):
+    """Class for TestUpdateSchema operations."""
     name: str = None
     active: bool = None
 
 
 class TestResponseSchema(BaseModel):
+    """Class for TestResponseSchema operations."""
     id: PythonUUID
     name: str
     active: bool
     
     class Config:
+        """Class for Config operations."""
         from_attributes = True
 
 
@@ -79,6 +87,7 @@ class ConcreteTestService(BaseService[TestModel, TestCreateSchema, TestUpdateSch
     """Concrete service implementation for testing."""
     
     def __init__(self, db, tenant_id=None):
+        """  Init   operation."""
         super().__init__(
             db=db,
             model_class=TestModel,
@@ -516,19 +525,24 @@ class TestServiceHooks:
     def service(self, mock_db):
         """Create service with custom hooks."""
         class ServiceWithHooks(ConcreteTestService):
+            """Class for ServiceWithHooks operations."""
             def __init__(self, db):
+                """  Init   operation."""
                 super().__init__(db)
                 self.pre_create_called = False
                 self.post_create_called = False
                 self.validate_create_called = False
             
             async def _pre_create_hook(self, data):
+                """ Pre Create Hook operation."""
                 self.pre_create_called = True
             
             async def _post_create_hook(self, entity, data):
+                """ Post Create Hook operation."""
                 self.post_create_called = True
             
             async def _validate_create_rules(self, data):
+                """ Validate Create Rules operation."""
                 self.validate_create_called = True
                 if data.name == "forbidden":
                     raise BusinessRuleError("Forbidden name")

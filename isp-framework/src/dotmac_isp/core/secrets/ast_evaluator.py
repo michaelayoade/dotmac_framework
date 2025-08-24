@@ -32,6 +32,7 @@ class ASTNodeEvaluator:
     }
 
     def __init__(self, context: dict[str, Any]):
+        """  Init   operation."""
         self.context = context
 
     def evaluate_bool_op(self, node: ast.BoolOp) -> bool:
@@ -122,6 +123,7 @@ class SafeExpressionEvaluator:
     """Safe expression evaluator using AST parsing."""
 
     def __init__(self, max_expression_length: int = 1000):
+        """  Init   operation."""
         self.max_expression_length = max_expression_length
 
     def evaluate(self, expression: str, context: dict[str, Any]) -> bool:

@@ -23,6 +23,7 @@ class EquipmentRepository:
     """Repository for equipment database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 
@@ -200,6 +201,7 @@ class EquipmentTypeRepository:
     """Repository for equipment type database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 
@@ -254,6 +256,7 @@ class WarehouseRepository:
     """Repository for warehouse database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 
@@ -303,6 +306,7 @@ class VendorRepository:
     """Repository for vendor database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 
@@ -346,6 +350,7 @@ class StockMovementRepository:
     """Repository for stock movement database operations."""
 
     def __init__(self, db: Session, tenant_id: UUID):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
 

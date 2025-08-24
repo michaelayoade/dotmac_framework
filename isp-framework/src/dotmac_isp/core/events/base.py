@@ -24,6 +24,7 @@ class AdapterConfig(BaseModel):
     retry_backoff_seconds: float = 1.0
 
     class Config:
+        """Class for Config operations."""
         extra = "allow"
 
 

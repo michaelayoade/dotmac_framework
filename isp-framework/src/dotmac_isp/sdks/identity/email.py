@@ -23,6 +23,7 @@ class EmailVerificationService:
     """In-memory service for email verification operations."""
 
     def __init__(self):
+        """  Init   operation."""
         self._verifications: Dict[UUID, EmailVerification] = {}
         self._email_verifications: Dict[str, List[UUID]] = {}
 
@@ -71,6 +72,7 @@ class EmailSDK:
     """Small, composable SDK for email verification with OTP and deliverability."""
 
     def __init__(self, tenant_id: str):
+        """  Init   operation."""
         self.tenant_id = tenant_id
         self._service = EmailVerificationService()
 

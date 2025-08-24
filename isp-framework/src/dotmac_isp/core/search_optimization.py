@@ -99,6 +99,7 @@ class DatabaseIndexManager:
     """Manages database indexes for optimal search performance."""
 
     def __init__(self):
+        """  Init   operation."""
         self.cache_manager = get_cache_manager()
         self.query_stats = {}
 
@@ -461,6 +462,7 @@ class SearchOptimizer:
     """Optimizes search queries and manages search caching."""
 
     def __init__(self):
+        """  Init   operation."""
         self.cache_manager = get_cache_manager()
         self.cache_ttl = 300  # 5 minutes default
         self.max_cache_size = 1000

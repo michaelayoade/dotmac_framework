@@ -206,6 +206,7 @@ class NetworkDevice(TenantModel, StatusMixin, AuditMixin, AddressMixin):
         return None
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<NetworkDevice(name='{self.name}', type='{self.device_type}', ip='{self.management_ip}')>"
 
 
@@ -283,6 +284,7 @@ class NetworkInterface(TenantModel, StatusMixin, AuditMixin):
         return None
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<NetworkInterface(name='{self.name}', device='{self.device.name if self.device else 'Unknown'}')>"
 
 
@@ -338,6 +340,7 @@ class NetworkLocation(TenantModel, AddressMixin, AuditMixin):
         return None
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<NetworkLocation(name='{self.name}', type='{self.location_type}')>"
 
 
@@ -376,6 +379,7 @@ class NetworkMetric(TenantModel):
     interface = relationship("NetworkInterface")
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<NetworkMetric(device='{self.device.name if self.device else 'Unknown'}', metric='{self.metric_name}', value='{self.value}')>"
 
 
@@ -423,6 +427,7 @@ class NetworkTopology(TenantModel, AuditMixin):
     )
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<NetworkTopology(parent='{self.parent_device.name if self.parent_device else 'Unknown'}', child='{self.child_device.name if self.child_device else 'Unknown'}')>"
 
 
@@ -462,6 +467,7 @@ class DeviceConfiguration(TenantModel, AuditMixin):
     device = relationship("NetworkDevice", back_populates="configurations")
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<DeviceConfiguration(device='{self.device.name if self.device else 'Unknown'}', name='{self.name}', version='{self.version}')>"
 
 
@@ -518,6 +524,7 @@ class NetworkAlert(TenantModel, AuditMixin):
         self.resolved_at = datetime.utcnow()
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<NetworkAlert(type='{self.alert_type}', severity='{self.severity}', device='{self.device.name if self.device else 'System'}')>"
 
 
@@ -545,6 +552,7 @@ class DeviceGroup(TenantModel, AuditMixin):
     # Many-to-many relationship with devices would be implemented via association table
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<DeviceGroup(name='{self.name}', type='{self.group_type}')>"
 
 
@@ -579,6 +587,7 @@ class NetworkService(TenantModel, StatusMixin, AuditMixin):
     custom_fields = Column(JSON, nullable=True)
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<NetworkService(name='{self.name}', type='{self.service_type}', port='{self.port}')>"
 
 
@@ -622,4 +631,5 @@ class MaintenanceWindow(TenantModel, AuditMixin):
     custom_fields = Column(JSON, nullable=True)
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<MaintenanceWindow(name='{self.name}', type='{self.maintenance_type}', start='{self.start_time}')>"

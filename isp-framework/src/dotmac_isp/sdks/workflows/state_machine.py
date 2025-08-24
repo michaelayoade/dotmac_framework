@@ -67,6 +67,7 @@ class StateTransition(BaseModel):
     priority: int = Field(0, description="Transition priority")
 
     class Config:
+        """Class for Config operations."""
         extra = "allow"
 
 
@@ -101,6 +102,7 @@ class StateDefinition(BaseModel):
     )
 
     class Config:
+        """Class for Config operations."""
         extra = "allow"
 
 
@@ -130,6 +132,7 @@ class StateMachineDefinition(BaseModel):
     @field_validator("states")
     @classmethod
     def validate_states(cls, v, info):
+        """Validate States operation."""
         if not v:
             raise ValueError("State machine must have at least one state")
 
@@ -151,6 +154,7 @@ class StateMachineDefinition(BaseModel):
     @field_validator("transitions")
     @classmethod
     def validate_transitions(cls, v, info):
+        """Validate Transitions operation."""
         states = info.data.get("states", [])
         state_ids = {state.id for state in states}
 
@@ -165,6 +169,7 @@ class StateMachineDefinition(BaseModel):
         return v
 
     class Config:
+        """Class for Config operations."""
         extra = "allow"
 
 
@@ -211,6 +216,7 @@ class StateMachineEngine:
     """State machine execution engine."""
 
     def __init__(self):
+        """  Init   operation."""
         self.action_handlers: Dict[str, Callable] = {}
         self.condition_evaluators: Dict[str, Callable] = {}
         self.event_handlers: Dict[str, Callable] = {}
@@ -311,6 +317,7 @@ class StateMachine:
     """State machine runtime instance."""
 
     def __init__(self, definition: StateMachineDefinition, engine: StateMachineEngine):
+        """  Init   operation."""
         self.definition = definition
         self.engine = engine
         self.state_map = {state.id: state for state in definition.states}
@@ -582,6 +589,7 @@ class StateMachineSDK:
     """SDK for state machine management and execution."""
 
     def __init__(self, tenant_id: str, storage_adapter=None):
+        """  Init   operation."""
         self.tenant_id = tenant_id
         self.storage_adapter = storage_adapter
         self.engine = StateMachineEngine()

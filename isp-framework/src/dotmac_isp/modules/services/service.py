@@ -32,6 +32,7 @@ class ServicePlanService(BaseTenantService[ServicePlan, schemas.ServicePlanCreat
     """Service for service plan management."""
 
     def __init__(self, db: Session, tenant_id: str):
+        """  Init   operation."""
         super().__init__(
             db=db,
             model_class=ServicePlan,
@@ -71,6 +72,7 @@ class ServiceInstanceService(BaseTenantService[ServiceInstance, schemas.ServiceI
     """Service for service instance management."""
 
     def __init__(self, db: Session, tenant_id: str):
+        """  Init   operation."""
         super().__init__(
             db=db,
             model_class=ServiceInstance,
@@ -123,6 +125,7 @@ class ProvisioningTaskService(BaseTenantService[ProvisioningTask, schemas.Provis
     """Service for provisioning task management."""
 
     def __init__(self, db: Session, tenant_id: str):
+        """  Init   operation."""
         super().__init__(
             db=db,
             model_class=ProvisioningTask,
@@ -160,6 +163,7 @@ class ServiceProvisioningService:
     """Legacy service provisioning service - use individual services instead."""
 
     def __init__(self, db: Session, tenant_id: str):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
         self.plan_service = ServicePlanService(db, tenant_id)

@@ -14,6 +14,7 @@ class OltOnuService:
     """In-memory service for OLT/ONU operations."""
 
     def __init__(self):
+        """  Init   operation."""
         self._olts: Dict[str, Dict[str, Any]] = {}
         self._onus: Dict[str, Dict[str, Any]] = {}
         self._pon_ports: Dict[str, List[Dict[str, Any]]] = {}
@@ -139,6 +140,7 @@ class OltOnuSDK:
     """Minimal, reusable SDK for OLT/ONU management."""
 
     def __init__(self, tenant_id: str):
+        """  Init   operation."""
         self.tenant_id = tenant_id
         self._service = OltOnuService()
 

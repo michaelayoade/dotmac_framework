@@ -25,6 +25,7 @@ class InvoicePDFGenerator:
     """Generate PDF documents for invoices."""
     
     def __init__(self, company_info: Optional[Dict[str, Any]] = None):
+        """  Init   operation."""
         self.company_info = company_info or self._get_default_company_info()
         self.styles = getSampleStyleSheet()
         self._setup_custom_styles()
@@ -346,6 +347,7 @@ class ReceiptPDFGenerator:
     """Generate PDF receipts for payments."""
     
     def __init__(self, company_info: Optional[Dict[str, Any]] = None):
+        """  Init   operation."""
         self.company_info = company_info or self._get_default_company_info()
         self.styles = getSampleStyleSheet()
     
@@ -407,6 +409,7 @@ class PDFBatchProcessor:
     """Process multiple PDFs in batch operations."""
     
     def __init__(self):
+        """  Init   operation."""
         self.invoice_generator = InvoicePDFGenerator()
         self.receipt_generator = ReceiptPDFGenerator()
     

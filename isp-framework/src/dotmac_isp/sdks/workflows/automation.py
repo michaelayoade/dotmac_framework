@@ -92,6 +92,7 @@ class AutomationTrigger(BaseModel):
     )
 
     class Config:
+        """Class for Config operations."""
         extra = "allow"
 
 
@@ -104,6 +105,7 @@ class AutomationCondition(BaseModel):
     data_type: Optional[str] = Field(None, description="Expected data type")
 
     class Config:
+        """Class for Config operations."""
         extra = "forbid"
 
 
@@ -137,6 +139,7 @@ class AutomationAction(BaseModel):
     )
 
     class Config:
+        """Class for Config operations."""
         extra = "allow"
 
 
@@ -171,6 +174,7 @@ class AutomationRule(BaseModel):
     metadata: OperationMetadata = Field(default_factory=OperationMetadata)
 
     class Config:
+        """Class for Config operations."""
         extra = "allow"
 
 
@@ -251,6 +255,7 @@ class ActionExecutor:
     """Executes automation actions."""
 
     def __init__(self):
+        """  Init   operation."""
         self.action_handlers: Dict[ActionType, Callable] = {}
         self.custom_handlers: Dict[str, Callable] = {}
 
@@ -371,6 +376,7 @@ class AutomationEngine:
     """Automation execution engine."""
 
     def __init__(self):
+        """  Init   operation."""
         self.condition_evaluator = ConditionEvaluator()
         self.action_executor = ActionExecutor()
         self.event_listeners: Dict[str, List[str]] = {}  # pattern -> rule_ids
@@ -498,6 +504,7 @@ class AutomationSDK:
     """SDK for automation management and execution."""
 
     def __init__(self, tenant_id: str, storage_adapter=None):
+        """  Init   operation."""
         self.tenant_id = tenant_id
         self.storage_adapter = storage_adapter
         self.engine = AutomationEngine()

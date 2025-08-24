@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 """Test the configurable Portal ID system and account management."""
 
 import asyncio
@@ -20,26 +24,26 @@ from dotmac_isp.modules.identity.models import CustomerType
 
 def test_portal_id_configuration():
     """Test different Portal ID generation patterns."""
-    print("🧪 Testing Configurable Portal ID Generation\n")
+logger.info("🧪 Testing Configurable Portal ID Generation\n")
     
     # Test current configuration
     generator = get_portal_id_generator()
     config = generator.get_configuration_summary()
     
-    print("📊 Current Configuration:")
-    print(f"   Pattern: {config['pattern']}")
-    print(f"   Length: {config['total_length']}")
-    print(f"   Prefix: {config['prefix']}")
-    print(f"   Character Set: {config['character_set'][:20]}{'...' if len(config['character_set']) > 20 else ''}")
-    print(f"   Max Combinations: {config['max_combinations']:,}")
-    print(f"   Example: {config['example']}")
+logger.info("📊 Current Configuration:")
+logger.info(f"   Pattern: {config['pattern']}")
+logger.info(f"   Length: {config['total_length']}")
+logger.info(f"   Prefix: {config['prefix']}")
+logger.info(f"   Character Set: {config['character_set'][:20]}{'...' if len(config['character_set']) > 20 else ''}")
+logger.info(f"   Max Combinations: {config['max_combinations']:,}")
+logger.info(f"   Example: {config['example']}")
     
     # Test different patterns
-    print("\n🎲 Testing Different Patterns:")
+logger.info("\n🎲 Testing Different Patterns:")
     patterns = PortalIdPattern.__members__.items()
     
     for pattern_name, pattern_value in patterns:
-        print(f"\n   {pattern_name} ({pattern_value.value}):")
+logger.info(f"\n   {pattern_name} ({pattern_value.value}):")
         
         # Temporarily modify settings for testing
         settings = get_settings()
@@ -53,9 +57,9 @@ def test_portal_id_configuration():
             for _ in range(3):
                 examples.append(generator.generate_portal_id())
             
-            print(f"     Examples: {', '.join(examples)}")
+logger.info(f"     Examples: {', '.join(examples)}")
         except Exception as e:
-            print(f"     Error: {e}")
+logger.error(f"     Error: {e}")
         finally:
             # Restore original settings
             settings.portal_id_pattern = original_pattern
@@ -64,7 +68,7 @@ def test_portal_id_configuration():
 
 def test_portal_id_uniqueness():
     """Test Portal ID uniqueness and collision handling."""
-    print("\n🔒 Testing Portal ID Uniqueness:")
+logger.info("\n🔒 Testing Portal ID Uniqueness:")
     
     generator = get_portal_id_generator()
     existing_ids = set()
@@ -75,13 +79,13 @@ def test_portal_id_uniqueness():
         assert portal_id not in existing_ids, f"Duplicate Portal ID: {portal_id}"
         existing_ids.add(portal_id)
     
-    print(f"   ✅ Generated 100 unique Portal IDs")
-    print(f"   Examples: {list(existing_ids)[:5]}")
+logger.info(f"   ✅ Generated 100 unique Portal IDs")
+logger.info(f"   Examples: {list(existing_ids)[:5]}")
 
 
 async def test_portal_account_management():
     """Test Portal Account creation and management."""
-    print("\n🔐 Testing Portal Account Management:")
+logger.info("\n🔐 Testing Portal Account Management:")
     
     db = SessionLocal()
     try:
@@ -91,7 +95,7 @@ async def test_portal_account_management():
         test_portal_id = "TEST-PORTAL-001"
         test_password = "TestPassword123!"
         
-        print(f"   Creating Portal Account: {test_portal_id}")
+logger.info(f"   Creating Portal Account: {test_portal_id}")
         
         portal_account = await portal_service.create_portal_account(
             portal_id=test_portal_id,
@@ -100,34 +104,34 @@ async def test_portal_account_management():
             force_password_change=False
         )
         
-        print(f"   ✅ Portal Account created: {portal_account.portal_id}")
-        print(f"   Status: {portal_account.status}")
-        print(f"   Account Type: {portal_account.account_type}")
+logger.info(f"   ✅ Portal Account created: {portal_account.portal_id}")
+logger.info(f"   Status: {portal_account.status}")
+logger.info(f"   Account Type: {portal_account.account_type}")
         
         # Test authentication
-        print(f"\n   Testing authentication...")
+logger.info(f"\n   Testing authentication...")
         auth_result = await portal_service.authenticate_portal_user(
             test_portal_id, 
             test_password
         )
         
         if auth_result:
-            print(f"   ✅ Authentication successful")
+logger.info(f"   ✅ Authentication successful")
         else:
-            print(f"   ❌ Authentication failed")
+logger.info(f"   ❌ Authentication failed")
         
         # Test account activation
-        print(f"\n   Activating account...")
+logger.info(f"\n   Activating account...")
         await portal_service.activate_portal_account(test_portal_id)
         
         # Get account status
         status = portal_service.get_portal_account_status(test_portal_id)
-        print(f"   ✅ Account activated")
-        print(f"   Can Login: {status['can_login']}")
-        print(f"   Is Active: {status['is_active']}")
+logger.info(f"   ✅ Account activated")
+logger.info(f"   Can Login: {status['can_login']}")
+logger.info(f"   Is Active: {status['is_active']}")
         
         # Test password change
-        print(f"\n   Testing password change...")
+logger.info(f"\n   Testing password change...")
         new_password = "NewPassword456#"
         
         await portal_service.change_portal_password(
@@ -135,7 +139,7 @@ async def test_portal_account_management():
             test_password,
             new_password
         )
-        print(f"   ✅ Password changed successfully")
+logger.info(f"   ✅ Password changed successfully")
         
         # Test authentication with new password
         auth_result = await portal_service.authenticate_portal_user(
@@ -144,14 +148,14 @@ async def test_portal_account_management():
         )
         
         if auth_result:
-            print(f"   ✅ Authentication with new password successful")
+logger.info(f"   ✅ Authentication with new password successful")
         else:
-            print(f"   ❌ Authentication with new password failed")
+logger.info(f"   ❌ Authentication with new password failed")
         
         return True
         
     except Exception as e:
-        print(f"   ❌ Portal Account test failed: {e}")
+logger.info(f"   ❌ Portal Account test failed: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -161,7 +165,7 @@ async def test_portal_account_management():
 
 async def test_integrated_customer_portal():
     """Test integrated customer and Portal Account creation."""
-    print("\n👤 Testing Integrated Customer + Portal Creation:")
+logger.info("\n👤 Testing Integrated Customer + Portal Creation:")
     
     db = SessionLocal()
     try:
@@ -178,35 +182,35 @@ async def test_integrated_customer_portal():
             phone="+1888999000"
         )
         
-        print(f"   Creating customer: {customer_data.customer_number}")
+logger.info(f"   Creating customer: {customer_data.customer_number}")
         
         result = await service.create_customer(customer_data)
         
-        print(f"   ✅ Customer created successfully!")
-        print(f"   Portal ID: {result.portal_id}")
-        print(f"   Portal Password: {result.portal_password}")
-        print(f"   Customer Type: {result.customer_type}")
+logger.info(f"   ✅ Customer created successfully!")
+logger.info(f"   Portal ID: {result.portal_id}")
+logger.info(f"   Portal Password: {result.portal_password}")
+logger.info(f"   Customer Type: {result.customer_type}")
         
         # Test Portal ID configuration info
         portal_config = service.get_portal_id_configuration()
-        print(f"\n   📊 Portal ID Configuration Used:")
-        print(f"   Pattern: {portal_config['pattern']}")
-        print(f"   Length: {portal_config['total_length']}")
-        print(f"   Character Set: {portal_config['character_set'][:15]}...")
+logger.info(f"\n   📊 Portal ID Configuration Used:")
+logger.info(f"   Pattern: {portal_config['pattern']}")
+logger.info(f"   Length: {portal_config['total_length']}")
+logger.info(f"   Character Set: {portal_config['character_set'][:15]}...")
         
         # Verify Portal Account was created
         portal_account = service.portal_service.get_portal_account_by_id(result.portal_id)
         if portal_account:
-            print(f"   ✅ Portal Account created and linked")
-            print(f"   Portal Status: {portal_account.status}")
-            print(f"   Account Type: {portal_account.account_type}")
+logger.info(f"   ✅ Portal Account created and linked")
+logger.info(f"   Portal Status: {portal_account.status}")
+logger.info(f"   Account Type: {portal_account.account_type}")
         else:
-            print(f"   ❌ Portal Account not found")
+logger.info(f"   ❌ Portal Account not found")
         
         return True
         
     except Exception as e:
-        print(f"   ❌ Integrated test failed: {e}")
+logger.info(f"   ❌ Integrated test failed: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -216,19 +220,19 @@ async def test_integrated_customer_portal():
 
 def show_pattern_examples():
     """Show examples of different Portal ID patterns."""
-    print("\n📋 Available Portal ID Patterns:")
+logger.info("\n📋 Available Portal ID Patterns:")
     examples = get_portal_id_generator().get_pattern_examples()
     
     for pattern, info in examples.items():
-        print(f"\n   {pattern.upper()}:")
-        print(f"     Description: {info['description']}")
-        print(f"     Example: {info['example']}")
-        print(f"     Recommended for: {info['recommended_for']}")
+logger.info(f"\n   {pattern.upper()}:")
+logger.info(f"     Description: {info['description']}")
+logger.info(f"     Example: {info['example']}")
+logger.info(f"     Recommended for: {info['recommended_for']}")
 
 
 async def main():
     """Run all Portal system tests."""
-    print("🏛️ Portal ID System & Account Management Tests\n")
+logger.info("🏛️ Portal ID System & Account Management Tests\n")
     
     success_count = 0
     total_tests = 0
@@ -239,7 +243,7 @@ async def main():
         test_portal_id_configuration()
         success_count += 1
     except Exception as e:
-        print(f"❌ Portal ID configuration test failed: {e}")
+logger.info(f"❌ Portal ID configuration test failed: {e}")
     
     # Test 2: Portal ID Uniqueness
     total_tests += 1
@@ -247,7 +251,7 @@ async def main():
         test_portal_id_uniqueness()
         success_count += 1
     except Exception as e:
-        print(f"❌ Portal ID uniqueness test failed: {e}")
+logger.info(f"❌ Portal ID uniqueness test failed: {e}")
     
     # Test 3: Portal Account Management
     total_tests += 1
@@ -262,25 +266,25 @@ async def main():
     # Show pattern examples
     show_pattern_examples()
     
-    print(f"\n📊 Test Results: {success_count}/{total_tests} tests passed")
+logger.info(f"\n📊 Test Results: {success_count}/{total_tests} tests passed")
     
     if success_count == total_tests:
-        print("\n🎉 ALL TESTS PASSED - Portal System Working!")
-        print("\n✨ Features Verified:")
-        print("   ✅ Configurable Portal ID generation patterns")
-        print("   ✅ Portal ID uniqueness and collision handling")
-        print("   ✅ Portal Account creation and management")
-        print("   ✅ Password authentication and changes")
-        print("   ✅ Account activation and status management")
-        print("   ✅ Integrated Customer + Portal Account creation")
-        print("\n🛠️ Configuration Options:")
-        print("   • portal_id_pattern: alphanumeric_clean, alphanumeric, numeric, custom")
-        print("   • portal_id_length: 4-20 characters")
-        print("   • portal_id_prefix: Optional prefix (e.g., 'CX', 'USR')")
-        print("   • portal_id_exclude_ambiguous: Exclude 0,O,I,1")
-        print("   • portal_id_custom_charset: Custom character set")
+logger.info("\n🎉 ALL TESTS PASSED - Portal System Working!")
+logger.info("\n✨ Features Verified:")
+logger.info("   ✅ Configurable Portal ID generation patterns")
+logger.info("   ✅ Portal ID uniqueness and collision handling")
+logger.info("   ✅ Portal Account creation and management")
+logger.info("   ✅ Password authentication and changes")
+logger.info("   ✅ Account activation and status management")
+logger.info("   ✅ Integrated Customer + Portal Account creation")
+logger.info("\n🛠️ Configuration Options:")
+logger.info("   • portal_id_pattern: alphanumeric_clean, alphanumeric, numeric, custom")
+logger.info("   • portal_id_length: 4-20 characters")
+logger.info("   • portal_id_prefix: Optional prefix (e.g., 'CX', 'USR')")
+logger.info("   • portal_id_exclude_ambiguous: Exclude 0,O,I,1")
+logger.info("   • portal_id_custom_charset: Custom character set")
     else:
-        print("⚠️  Some tests failed - check implementation")
+logger.info("⚠️  Some tests failed - check implementation")
 
 
 if __name__ == "__main__":

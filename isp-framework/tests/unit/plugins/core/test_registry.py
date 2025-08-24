@@ -21,6 +21,7 @@ class TestPlugin1(BasePlugin):
     
     @property
     def plugin_info(self):
+        """Plugin Info operation."""
         return PluginInfo(
             id="test_plugin_1",
             name="Test Plugin 1",
@@ -31,9 +32,13 @@ class TestPlugin1(BasePlugin):
         )
     
     async def initialize(self): pass
+        """Initialize operation."""
     async def activate(self): pass
+        """Activate operation."""
     async def deactivate(self): pass
+        """Deactivate operation."""
     async def cleanup(self): pass
+        """Cleanup operation."""
 
 
 class TestPlugin2(BasePlugin):
@@ -41,6 +46,7 @@ class TestPlugin2(BasePlugin):
     
     @property
     def plugin_info(self):
+        """Plugin Info operation."""
         return PluginInfo(
             id="test_plugin_2",
             name="Test Plugin 2",
@@ -52,9 +58,13 @@ class TestPlugin2(BasePlugin):
         )
     
     async def initialize(self): pass
+        """Initialize operation."""
     async def activate(self): pass
+        """Activate operation."""
     async def deactivate(self): pass
+        """Deactivate operation."""
     async def cleanup(self): pass
+        """Cleanup operation."""
 
 
 class TestPlugin3(BasePlugin):
@@ -62,6 +72,7 @@ class TestPlugin3(BasePlugin):
     
     @property
     def plugin_info(self):
+        """Plugin Info operation."""
         return PluginInfo(
             id="test_plugin_3",
             name="Test Plugin 3",
@@ -73,9 +84,13 @@ class TestPlugin3(BasePlugin):
         )
     
     async def initialize(self): pass
+        """Initialize operation."""
     async def activate(self): pass
+        """Activate operation."""
     async def deactivate(self): pass
+        """Deactivate operation."""
     async def cleanup(self): pass
+        """Cleanup operation."""
 
 
 class TestPluginRegistry:
@@ -329,8 +344,10 @@ class TestPluginRegistry:
         
         # Create plugin with missing dependency
         class BadPlugin(BasePlugin):
+            """Class for BadPlugin operations."""
             @property
             def plugin_info(self):
+                """Plugin Info operation."""
                 return PluginInfo(
                     id="bad_plugin",
                     name="Bad Plugin",
@@ -341,9 +358,13 @@ class TestPluginRegistry:
                     dependencies=["missing_dependency"]
                 )
             async def initialize(self): pass
+                """Initialize operation."""
             async def activate(self): pass
+                """Activate operation."""
             async def deactivate(self): pass
+                """Deactivate operation."""
             async def cleanup(self): pass
+                """Cleanup operation."""
         
         self.registry.register_plugin(BadPlugin)
         missing = self.registry.validate_dependencies("bad_plugin")
@@ -380,30 +401,42 @@ class TestPluginRegistry:
     def test_calculate_load_order_circular_dependency(self):
         """Test load order calculation handles circular dependencies."""
         class CircularPlugin1(BasePlugin):
+            """Class for CircularPlugin1 operations."""
             @property
             def plugin_info(self):
+                """Plugin Info operation."""
                 return PluginInfo(
                     id="circular_1", name="Circular 1", version="1.0.0",
                     description="", author="", category=PluginCategory.CUSTOM,
                     dependencies=["circular_2"]
                 )
             async def initialize(self): pass
+                """Initialize operation."""
             async def activate(self): pass
+                """Activate operation."""
             async def deactivate(self): pass
+                """Deactivate operation."""
             async def cleanup(self): pass
+                """Cleanup operation."""
         
         class CircularPlugin2(BasePlugin):
+            """Class for CircularPlugin2 operations."""
             @property
             def plugin_info(self):
+                """Plugin Info operation."""
                 return PluginInfo(
                     id="circular_2", name="Circular 2", version="1.0.0",
                     description="", author="", category=PluginCategory.CUSTOM,
                     dependencies=["circular_1"]
                 )
             async def initialize(self): pass
+                """Initialize operation."""
             async def activate(self): pass
+                """Activate operation."""
             async def deactivate(self): pass
+                """Deactivate operation."""
             async def cleanup(self): pass
+                """Cleanup operation."""
         
         # Should not crash with circular dependency
         self.registry.register_plugin(CircularPlugin1)
@@ -421,6 +454,7 @@ class TestPluginRegistry:
         callback_calls = []
         
         def test_callback(event_type, event_data):
+            """Test Callback operation."""
             callback_calls.append((event_type, event_data))
         
         # Add listener
@@ -447,7 +481,9 @@ class TestPluginRegistry:
         callback_calls = []
         
         class TestCallback:
+            """Class for TestCallback operations."""
             def __call__(self, event_type, event_data):
+                """  Call   operation."""
                 callback_calls.append((event_type, event_data))
         
         callback = TestCallback()
@@ -473,6 +509,7 @@ class TestPluginRegistry:
         callback_calls = []
         
         async def async_callback(event_type, event_data):
+            """Async Callback operation."""
             callback_calls.append((event_type, event_data))
         
         self.registry.add_event_listener("test_event", async_callback)

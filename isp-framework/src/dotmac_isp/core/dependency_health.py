@@ -45,6 +45,7 @@ class DependencyHealthMonitor:
     """
 
     def __init__(self):
+        """  Init   operation."""
         self.health_cache: Dict[str, HealthResult] = {}
         self.cache_ttl_seconds = 30
         

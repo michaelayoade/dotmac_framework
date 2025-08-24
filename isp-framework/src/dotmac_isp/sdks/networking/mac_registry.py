@@ -14,6 +14,7 @@ class MacRegistryService:
     """In-memory service for MAC address registry operations."""
 
     def __init__(self):
+        """  Init   operation."""
         self._mac_entries: Dict[str, Dict[str, Any]] = {}
         self._device_macs: Dict[str, List[str]] = {}
         self._vendor_oui: Dict[str, str] = {}  # OUI -> Vendor mapping
@@ -86,6 +87,7 @@ class MacRegistrySDK:
     """Minimal, reusable SDK for MAC address registry."""
 
     def __init__(self, tenant_id: str):
+        """  Init   operation."""
         self.tenant_id = tenant_id
         self._service = MacRegistryService()
 

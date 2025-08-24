@@ -36,6 +36,7 @@ class TestBase:
         """Test Base can be used to create models."""
         # Create a test model using Base
         class TestModel(Base):
+            """Class for TestModel operations."""
             __tablename__ = 'test_table'
             id: Mapped[str] = mapped_column(String(50), primary_key=True)
 
@@ -51,6 +52,7 @@ class TestTimestampMixin:
     def test_timestamp_mixin_fields(self):
         """Test TimestampMixin has required fields."""
         class TestModel(Base, TimestampMixin):
+            """Class for TestModel operations."""
             __tablename__ = 'test_timestamps'
             id: Mapped[str] = mapped_column(String(50), primary_key=True)
 
@@ -61,6 +63,7 @@ class TestTimestampMixin:
     def test_timestamp_mixin_field_types(self):
         """Test TimestampMixin field configurations."""
         class TestModel(Base, TimestampMixin):
+            """Class for TestModel operations."""
             __tablename__ = 'test_timestamps_types'
             id = String(50, primary_key=True)
 
@@ -76,6 +79,7 @@ class TestTimestampMixin:
     def test_timestamp_mixin_default_values(self):
         """Test TimestampMixin default value configurations."""
         class TestModel(Base, TimestampMixin):
+            """Class for TestModel operations."""
             __tablename__ = 'test_timestamps_defaults'
             id = String(50, primary_key=True)
 
@@ -91,6 +95,7 @@ class TestTimestampMixin:
         mock_now.return_value = "mocked_now_func"
 
         class TestModel(Base, TimestampMixin):
+            """Class for TestModel operations."""
             __tablename__ = 'test_timestamps_server'
             id = String(50, primary_key=True)
 
@@ -105,6 +110,7 @@ class TestSoftDeleteMixin:
     def test_soft_delete_mixin_fields(self):
         """Test SoftDeleteMixin has required fields."""
         class TestModel(Base, SoftDeleteMixin):
+            """Class for TestModel operations."""
             __tablename__ = 'test_soft_delete'
             id = String(50, primary_key=True)
 
@@ -114,6 +120,7 @@ class TestSoftDeleteMixin:
     def test_soft_delete_mixin_field_types(self):
         """Test SoftDeleteMixin field configurations."""
         class TestModel(Base, SoftDeleteMixin):
+            """Class for TestModel operations."""
             __tablename__ = 'test_soft_delete_types'
             id = String(50, primary_key=True)
 
@@ -128,6 +135,7 @@ class TestSoftDeleteMixin:
     def test_soft_delete_method(self):
         """Test soft_delete method functionality."""
         class TestModel(Base, SoftDeleteMixin):
+            """Class for TestModel operations."""
             __tablename__ = 'test_soft_delete_method'
             id = String(50, primary_key=True)
 
@@ -148,6 +156,7 @@ class TestSoftDeleteMixin:
     def test_restore_method(self):
         """Test restore method functionality."""
         class TestModel(Base, SoftDeleteMixin):
+            """Class for TestModel operations."""
             __tablename__ = 'test_restore_method'
             id = String(50, primary_key=True)
 
@@ -171,6 +180,7 @@ class TestSoftDeleteMixin:
     def test_soft_delete_default_values(self):
         """Test SoftDeleteMixin default values."""
         class TestModel(Base, SoftDeleteMixin):
+            """Class for TestModel operations."""
             __tablename__ = 'test_soft_delete_defaults'
             id = String(50, primary_key=True)
 
@@ -187,6 +197,7 @@ class TestTenantMixin:
     def test_tenant_mixin_fields(self):
         """Test TenantMixin has required fields."""
         class TestModel(Base, TenantMixin):
+            """Class for TestModel operations."""
             __tablename__ = 'test_tenant'
             id = String(50, primary_key=True)
 
@@ -195,6 +206,7 @@ class TestTenantMixin:
     def test_tenant_mixin_field_configuration(self):
         """Test TenantMixin field configuration."""
         class TestModel(Base, TenantMixin):
+            """Class for TestModel operations."""
             __tablename__ = 'test_tenant_config'
             id = String(50, primary_key=True)
 
@@ -207,6 +219,7 @@ class TestTenantMixin:
     def test_tenant_mixin_uuid_type(self):
         """Test TenantMixin uses UUID type."""
         class TestModel(Base, TenantMixin):
+            """Class for TestModel operations."""
             __tablename__ = 'test_tenant_uuid'
             id = String(50, primary_key=True)
 
@@ -221,6 +234,7 @@ class TestStatusMixin:
     def test_status_mixin_fields(self):
         """Test StatusMixin has required fields."""
         class TestModel(Base, StatusMixin):
+            """Class for TestModel operations."""
             __tablename__ = 'test_status'
             id = String(50, primary_key=True)
 
@@ -231,6 +245,7 @@ class TestStatusMixin:
     def test_status_mixin_field_configurations(self):
         """Test StatusMixin field configurations."""
         class TestModel(Base, StatusMixin):
+            """Class for TestModel operations."""
             __tablename__ = 'test_status_config'
             id = String(50, primary_key=True)
 
@@ -246,6 +261,7 @@ class TestStatusMixin:
     def test_status_mixin_defaults(self):
         """Test StatusMixin default values."""
         class TestModel(Base, StatusMixin):
+            """Class for TestModel operations."""
             __tablename__ = 'test_status_defaults'
             id = String(50, primary_key=True)
 
@@ -255,6 +271,7 @@ class TestStatusMixin:
     def test_change_status_method(self):
         """Test change_status method functionality."""
         class TestModel(Base, StatusMixin):
+            """Class for TestModel operations."""
             __tablename__ = 'test_change_status'
             id = String(50, primary_key=True)
 
@@ -273,6 +290,7 @@ class TestStatusMixin:
     def test_change_status_method_without_reason(self):
         """Test change_status method without reason."""
         class TestModel(Base, StatusMixin):
+            """Class for TestModel operations."""
             __tablename__ = 'test_change_status_no_reason'
             id = String(50, primary_key=True)
 
@@ -295,6 +313,7 @@ class TestAuditMixin:
     def test_audit_mixin_fields(self):
         """Test AuditMixin has required fields."""
         class TestModel(Base, AuditMixin):
+            """Class for TestModel operations."""
             __tablename__ = 'test_audit'
             id = String(50, primary_key=True)
 
@@ -305,6 +324,7 @@ class TestAuditMixin:
     def test_audit_mixin_field_configurations(self):
         """Test AuditMixin field configurations."""
         class TestModel(Base, AuditMixin):
+            """Class for TestModel operations."""
             __tablename__ = 'test_audit_config'
             id = String(50, primary_key=True)
 
@@ -319,6 +339,7 @@ class TestAuditMixin:
     def test_audit_mixin_uuid_types(self):
         """Test AuditMixin uses UUID for user fields."""
         class TestModel(Base, AuditMixin):
+            """Class for TestModel operations."""
             __tablename__ = 'test_audit_uuid'
             id = String(50, primary_key=True)
 
@@ -355,6 +376,7 @@ class TestBaseModel:
         """Test BaseModel id field configuration."""
         # Create a concrete model to test id field
         class ConcreteModel(BaseModel):
+            """Class for ConcreteModel operations."""
             __tablename__ = 'test_concrete_base'
 
         id_column = ConcreteModel.__table__.columns.get('id')
@@ -366,6 +388,7 @@ class TestBaseModel:
     def test_base_model_id_default_function(self):
         """Test BaseModel id field has default UUID generator."""
         class ConcreteModel(BaseModel):
+            """Class for ConcreteModel operations."""
             __tablename__ = 'test_concrete_id_default'
 
         id_column = ConcreteModel.__table__.columns.get('id')
@@ -378,6 +401,7 @@ class TestBaseModel:
     def test_base_model_combined_functionality(self):
         """Test BaseModel combines all mixin functionality."""
         class ConcreteModel(BaseModel):
+            """Class for ConcreteModel operations."""
             __tablename__ = 'test_concrete_combined'
 
         model = ConcreteModel()
@@ -435,6 +459,7 @@ class TestTenantModel:
     def test_tenant_model_field_configurations(self):
         """Test TenantModel field configurations."""
         class ConcreteTenantModel(TenantModel):
+            """Class for ConcreteTenantModel operations."""
             __tablename__ = 'test_concrete_tenant'
 
         id_column = ConcreteTenantModel.__table__.columns.get('id')
@@ -477,6 +502,7 @@ class TestSimpleModel:
     def test_simple_model_id_configuration(self):
         """Test SimpleModel id field configuration."""
         class ConcreteSimpleModel(SimpleModel):
+            """Class for ConcreteSimpleModel operations."""
             __tablename__ = 'test_concrete_simple'
 
         id_column = ConcreteSimpleModel.__table__.columns.get('id')
@@ -496,6 +522,7 @@ class TestMixinCombinations:
     def test_single_mixin_usage(self):
         """Test using individual mixins."""
         class TimestampOnlyModel(Base, TimestampMixin):
+            """Class for TimestampOnlyModel operations."""
             __tablename__ = 'test_timestamp_only'
             id = String(50, primary_key=True)
 
@@ -506,6 +533,7 @@ class TestMixinCombinations:
     def test_custom_mixin_combinations(self):
         """Test custom combinations of mixins."""
         class CustomModel(Base, TimestampMixin, StatusMixin):
+            """Class for CustomModel operations."""
             __tablename__ = 'test_custom_combo'
             id = String(50, primary_key=True)
 
@@ -518,6 +546,7 @@ class TestMixinCombinations:
     def test_all_methods_available_on_base_model(self):
         """Test all mixin methods are available on BaseModel."""
         class ConcreteModel(BaseModel):
+            """Class for ConcreteModel operations."""
             __tablename__ = 'test_all_methods'
 
         model = ConcreteModel()
@@ -547,6 +576,7 @@ class TestEdgeCases:
     def test_empty_status_change(self):
         """Test changing status to empty string."""
         class TestModel(Base, StatusMixin):
+            """Class for TestModel operations."""
             __tablename__ = 'test_empty_status'
             id = String(50, primary_key=True)
 
@@ -558,6 +588,7 @@ class TestEdgeCases:
     def test_none_status_change(self):
         """Test changing status to None."""
         class TestModel(Base, StatusMixin):
+            """Class for TestModel operations."""
             __tablename__ = 'test_none_status'
             id = String(50, primary_key=True)
 
@@ -569,6 +600,7 @@ class TestEdgeCases:
     def test_restore_without_soft_delete(self):
         """Test restore on non-deleted model."""
         class TestModel(Base, SoftDeleteMixin):
+            """Class for TestModel operations."""
             __tablename__ = 'test_restore_clean'
             id = String(50, primary_key=True)
 
@@ -581,6 +613,7 @@ class TestEdgeCases:
     def test_multiple_soft_deletes(self):
         """Test multiple soft deletes on same model."""
         class TestModel(Base, SoftDeleteMixin):
+            """Class for TestModel operations."""
             __tablename__ = 'test_multiple_deletes'
             id = String(50, primary_key=True)
 

@@ -493,6 +493,7 @@ class TestMiddlewareIntegration:
         mock_request.state = MagicMock()
 
         async def verify_state(request):
+            """Verify State operation."""
             # State should be available in downstream handler
             assert request.state.tenant_id == "persistent-tenant"
             return MagicMock()

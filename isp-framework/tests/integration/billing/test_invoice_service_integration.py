@@ -398,6 +398,7 @@ class TestInvoiceServiceIntegration:
         original_create = invoice_service.invoice_repo.create
         
         def failing_create(*args, **kwargs):
+            """Failing Create operation."""
             raise Exception("Simulated database error")
         
         invoice_service.invoice_repo.create = failing_create

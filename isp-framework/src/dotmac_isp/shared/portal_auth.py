@@ -98,6 +98,7 @@ class AuthenticationError(HTTPException):
     """Custom authentication error with portal context."""
     
     def __init__(
+        """  Init   operation."""
         self, 
         detail: str, 
         portal_type: PortalType,
@@ -152,6 +153,7 @@ class PortalAuthManager:
     }
     
     def __init__(self):
+        """  Init   operation."""
         self.failed_attempts: Dict[str, Dict[str, Any]] = {}
     
     def detect_portal_type_from_request(self, request) -> Optional[PortalType]:

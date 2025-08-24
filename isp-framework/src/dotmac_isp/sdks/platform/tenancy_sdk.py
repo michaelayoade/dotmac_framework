@@ -65,6 +65,7 @@ class TenancySDKConfig:
     """Tenancy SDK configuration."""
 
     def __init__(
+        """  Init   operation."""
         self,
         cache_ttl: int = 300,  # 5 minutes
         enable_caching: bool = True,

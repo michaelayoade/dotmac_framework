@@ -21,6 +21,7 @@ class RLSPolicyManager:
     """Manages Row Level Security policies for multi-tenant isolation."""
 
     def __init__(self):
+        """  Init   operation."""
         self.settings = get_settings()
         self.policies_created = set()
 
@@ -421,6 +422,7 @@ class TenantContext:
     """Context manager for setting tenant isolation in database sessions."""
 
     def __init__(
+        """  Init   operation."""
         self,
         tenant_id: str,
         user_id: str = None,

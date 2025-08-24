@@ -36,6 +36,7 @@ class NetworkDeviceService(BaseTenantService[NetworkDevice, schemas.NetworkDevic
     """Service for network device management."""
 
     def __init__(self, db: Session, tenant_id: str):
+        """  Init   operation."""
         super().__init__(
             db=db,
             model_class=NetworkDevice,
@@ -97,6 +98,7 @@ class NetworkInterfaceService(BaseTenantService[NetworkInterface, schemas.Networ
     """Service for network interface management."""
 
     def __init__(self, db: Session, tenant_id: str):
+        """  Init   operation."""
         super().__init__(
             db=db,
             model_class=NetworkInterface,
@@ -133,6 +135,7 @@ class NetworkMetricService(BaseTenantService[NetworkMetric, schemas.NetworkMetri
     """Service for network metrics management."""
 
     def __init__(self, db: Session, tenant_id: str):
+        """  Init   operation."""
         super().__init__(
             db=db,
             model_class=NetworkMetric,
@@ -159,6 +162,7 @@ class NetworkAlertService(BaseTenantService[NetworkAlert, schemas.NetworkAlertCr
     """Service for network alert management."""
 
     def __init__(self, db: Session, tenant_id: str):
+        """  Init   operation."""
         super().__init__(
             db=db,
             model_class=NetworkAlert,
@@ -189,6 +193,7 @@ class NetworkIntegrationService:
     """Legacy network integration service - use individual services instead."""
 
     def __init__(self, db: Session, tenant_id: str):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
         self.device_service = NetworkDeviceService(db, tenant_id)
@@ -398,6 +403,7 @@ class NetworkInterfaceService:
     """Service for network interface management."""
 
     def __init__(self, db: Session, tenant_id: str):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = UUID(tenant_id)
         self.interface_repo = NetworkInterfaceRepository(db, self.tenant_id)
@@ -465,6 +471,7 @@ class NetworkMonitoringService:
     """Service for network monitoring and metrics."""
 
     def __init__(self, db: Session, tenant_id: str):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = UUID(tenant_id)
         self.metric_repo = NetworkMetricRepository(db, self.tenant_id)
@@ -617,6 +624,7 @@ class NetworkTopologyService:
     """Service for network topology management."""
 
     def __init__(self, db: Session, tenant_id: str):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = UUID(tenant_id)
         self.topology_repo = NetworkTopologyRepository(db, self.tenant_id)
@@ -682,6 +690,7 @@ class NetworkIntegrationService:
     """Main service orchestrating network integration operations."""
 
     def __init__(self, db: Session, tenant_id: str):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
         self.device_service = NetworkDeviceService(db, tenant_id)

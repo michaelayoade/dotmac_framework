@@ -18,6 +18,7 @@ class OrganizationService:
     """In-memory service for organization operations."""
 
     def __init__(self):
+        """  Init   operation."""
         self._organizations: Dict[UUID, Organization] = {}
         self._members: Dict[UUID, List[OrganizationMember]] = {}
         self._name_index: Dict[str, UUID] = {}
@@ -60,6 +61,7 @@ class OrganizationsSDK:
     """Small, composable SDK for organizations/tenants/companies management."""
 
     def __init__(self, tenant_id: str):
+        """  Init   operation."""
         self.tenant_id = tenant_id
         self._service = OrganizationService()
 

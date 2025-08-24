@@ -13,6 +13,7 @@ class PaymentService:
     """Service for payment operations."""
     
     def __init__(self, db_session: AsyncSession):
+        """  Init   operation."""
         self.db_session = db_session
     
     async def get_payment_by_id(self, payment_id: str) -> Optional[Payment]:

@@ -59,6 +59,7 @@ class PolicySDKConfig:
     """Policy SDK configuration."""
 
     def __init__(
+        """  Init   operation."""
         self,
         cache_ttl: int = 600,  # 10 minutes
         max_evaluation_time_ms: int = 1000,  # 1 second
@@ -300,6 +301,7 @@ class PolicySDK:
         import re
 
         def replace_var(match):
+            """Replace Var operation."""
             var_path = match.group(1)
             parts = var_path.split(".")
 

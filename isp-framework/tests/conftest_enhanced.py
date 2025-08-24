@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 """Enhanced pytest configuration and fixtures for DotMac ISP Framework.
 
 This module provides comprehensive test fixtures for:
@@ -175,7 +179,7 @@ def import_all_models():
             pass
             
     except Exception as e:
-        print(f"Warning: Model import issue: {e}")
+logger.warning(f"Warning: Model import issue: {e}")
         # Continue with testing even if some models fail to import
 
 TestAsyncSessionLocal = async_sessionmaker(

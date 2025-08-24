@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+import logging
+
+logger = logging.getLogger(__name__)
+
 """
 AI Safety Pipeline for CI/CD Integration
 
@@ -378,7 +382,7 @@ class AISafetyPipeline:
     
     def run_full_pipeline(self) -> Dict[str, Any]:
         """Execute complete AI safety pipeline"""
-        print("🤖 Starting AI Safety Pipeline...")
+logger.info("🤖 Starting AI Safety Pipeline...")
         
         # Execute all safety checks
         checks = [
@@ -390,13 +394,13 @@ class AISafetyPipeline:
         ]
         
         for check_func in checks:
-            print(f"  Running {check_func.__name__.replace('run_', '').replace('_', ' ').title()}...")
+logger.info(f"  Running {check_func.__name__.replace('run_', '').replace('_', ' ').title()}...")
             result = check_func()
             self.results.append(result)
             
             # Print immediate status
             status_emoji = {"PASS": "✅", "FAIL": "❌", "WARN": "⚠️"}
-            print(f"    {status_emoji.get(result.status, '❓')} {result.message}")
+logger.info(f"    {status_emoji.get(result.status, '❓')} {result.message}")
         
         return self.generate_report()
     
@@ -495,31 +499,31 @@ def main():
         report = pipeline.run_full_pipeline()
         
         # Output results
-        print("\n" + "="*60)
-        print("🛡️  AI SAFETY PIPELINE REPORT")
-        print("="*60)
-        print(f"Overall Status: {report['overall_status']}")
-        print(f"Execution Time: {report['total_execution_time']:.2f}s")
-        print(f"Results: {report['summary']['passed']}✅ {report['summary']['failed']}❌ {report['summary']['warned']}⚠️")
+logger.info("\n" + "="*60)
+logger.info("🛡️  AI SAFETY PIPELINE REPORT")
+logger.info("="*60)
+logger.info(f"Overall Status: {report['overall_status']}")
+logger.info(f"Execution Time: {report['total_execution_time']:.2f}s")
+logger.info(f"Results: {report['summary']['passed']}✅ {report['summary']['failed']}❌ {report['summary']['warned']}⚠️")
         
         if report['recommendations']:
-            print("\n📋 Recommendations:")
+logger.info("\n📋 Recommendations:")
             for rec in report['recommendations']:
-                print(f"  • {rec}")
+logger.info(f"  • {rec}")
         
         # Save detailed report
         report_file = Path("ai_safety_report.json")
         with report_file.open('w') as f:
             json.dump(report, f, indent=2)
         
-        print(f"\n📊 Detailed report saved: {report_file}")
+logger.info(f"\n📊 Detailed report saved: {report_file}")
         
         # Exit with appropriate code for CI/CD
         exit_code = 1 if report['overall_status'] == 'FAIL' else 0
         sys.exit(exit_code)
         
     except Exception as e:
-        print(f"❌ AI Safety Pipeline failed: {e}")
+logger.info(f"❌ AI Safety Pipeline failed: {e}")
         sys.exit(1)
 
 

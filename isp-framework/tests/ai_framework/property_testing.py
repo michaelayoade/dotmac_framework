@@ -86,6 +86,7 @@ def property_test(
             assert bill <= billing_data['usage_gb'] * billing_data['rate_per_gb'] * 2  # Bill shouldn't exceed 2x usage cost
     """
     def decorator(func):
+        """Decorator operation."""
         # Create hypothesis strategy from input strategies
         if len(test_data_strategies) == 1:
             strategy = test_data_strategies[0]
@@ -100,6 +101,7 @@ def property_test(
         )
         @wraps(func)
         def wrapper(*args, **kwargs):
+            """Wrapper operation."""
             return func(*args, **kwargs)
         
         # Add pytest marker
@@ -117,6 +119,7 @@ class CustomerLifecycleStateMachine(RuleBasedStateMachine):
     """
     
     def __init__(self):
+        """  Init   operation."""
         super().__init__()
         self.customers: Dict[str, Dict] = {}
         self.services: Dict[str, Dict] = {}

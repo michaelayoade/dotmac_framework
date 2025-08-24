@@ -12,6 +12,7 @@ class AddressService:
     """In-memory service for address operations."""
 
     def __init__(self):
+        """  Init   operation."""
         self._addresses: Dict[UUID, Address] = {}
         self._contact_addresses: Dict[UUID, List[UUID]] = {}
         self._organization_addresses: Dict[UUID, List[UUID]] = {}
@@ -54,6 +55,7 @@ class AddressesSDK:
     """Small, composable SDK for postal/geo address management."""
 
     def __init__(self, tenant_id: str):
+        """  Init   operation."""
         self.tenant_id = tenant_id
         self._service = AddressService()
 

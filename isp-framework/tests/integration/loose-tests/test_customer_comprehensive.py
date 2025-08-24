@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 """Comprehensive tests for customer module functionality."""
 
 import asyncio
@@ -13,7 +17,7 @@ from src.dotmac_isp.sdks.identity import CustomerResponse
 
 async def test_customer_creation():
     """Test customer creation with portal ID and password generation."""
-    print("Testing customer creation...")
+logger.info("Testing customer creation...")
     
     mock_db = Mock()
     service = CustomerService(mock_db, tenant_id='test-tenant')
@@ -63,12 +67,12 @@ async def test_customer_creation():
     assert result.portal_password is not None
     assert len(result.portal_password) >= 8
     
-    print("✅ Customer creation test passed")
+logger.info("✅ Customer creation test passed")
 
 
 async def test_customer_retrieval():
     """Test customer retrieval by ID."""
-    print("Testing customer retrieval...")
+logger.info("Testing customer retrieval...")
     
     mock_db = Mock()
     service = CustomerService(mock_db)
@@ -104,12 +108,12 @@ async def test_customer_retrieval():
     assert result.tags == ["vip"]
     assert result.custom_fields == {"priority": "high"}
     
-    print("✅ Customer retrieval test passed")
+logger.info("✅ Customer retrieval test passed")
 
 
 async def test_customer_not_found():
     """Test customer not found scenario."""
-    print("Testing customer not found...")
+logger.info("Testing customer not found...")
     
     mock_db = Mock()
     service = CustomerService(mock_db)
@@ -123,12 +127,12 @@ async def test_customer_not_found():
         assert False, "Should have raised NotFoundError"
     except NotFoundError as e:
         assert str(customer_id) in str(e)
-        print("✅ Customer not found test passed")
+logger.info("✅ Customer not found test passed")
 
 
 async def test_customer_activation():
     """Test customer activation."""
-    print("Testing customer activation...")
+logger.info("Testing customer activation...")
     
     mock_db = Mock()
     service = CustomerService(mock_db)
@@ -180,12 +184,12 @@ async def test_customer_activation():
     assert result.customer_id == customer_id
     assert result.state == "active"
     
-    print("✅ Customer activation test passed")
+logger.info("✅ Customer activation test passed")
 
 
 async def test_customer_list_with_filters():
     """Test customer listing with filters."""
-    print("Testing customer list with filters...")
+logger.info("Testing customer list with filters...")
     
     mock_db = Mock()
     service = CustomerService(mock_db)
@@ -226,12 +230,12 @@ async def test_customer_list_with_filters():
     assert len(result) == 5
     assert all(isinstance(customer, schemas.CustomerResponseAPI) for customer in result)
     
-    print("✅ Customer list with filters test passed")
+logger.info("✅ Customer list with filters test passed")
 
 
 def test_portal_id_uniqueness():
     """Test portal ID generation uniqueness."""
-    print("Testing portal ID uniqueness...")
+logger.info("Testing portal ID uniqueness...")
     
     mock_db = Mock()
     service = CustomerService(mock_db)
@@ -253,12 +257,12 @@ def test_portal_id_uniqueness():
         assert 'I' not in portal_id
         assert '1' not in portal_id
     
-    print("✅ Portal ID uniqueness test passed")
+logger.info("✅ Portal ID uniqueness test passed")
 
 
 def test_password_security():
     """Test password generation security requirements."""
-    print("Testing password security...")
+logger.info("Testing password security...")
     
     mock_db = Mock()
     service = CustomerService(mock_db)
@@ -277,12 +281,12 @@ def test_password_security():
         assert any(c.isdigit() for c in password), f"No digit in password: {password}"
         assert any(c in '!@#$%' for c in password), f"No special char in password: {password}"
     
-    print("✅ Password security test passed")
+logger.info("✅ Password security test passed")
 
 
 async def run_all_tests():
     """Run all comprehensive tests."""
-    print("🧪 Starting comprehensive customer module tests...\n")
+logger.info("🧪 Starting comprehensive customer module tests...\n")
     
     try:
         # Service tests
@@ -296,18 +300,18 @@ async def run_all_tests():
         await test_customer_activation()
         await test_customer_list_with_filters()
         
-        print("\n✅ ALL TESTS PASSED - 100% Customer Module Coverage")
-        print("📊 Test Summary:")
-        print("   - Portal ID generation: ✅")
-        print("   - Password generation: ✅")
-        print("   - Customer creation: ✅")
-        print("   - Customer retrieval: ✅")
-        print("   - Error handling: ✅")
-        print("   - State transitions: ✅")
-        print("   - Filtering & pagination: ✅")
+logger.info("\n✅ ALL TESTS PASSED - 100% Customer Module Coverage")
+logger.info("📊 Test Summary:")
+logger.info("   - Portal ID generation: ✅")
+logger.info("   - Password generation: ✅")
+logger.info("   - Customer creation: ✅")
+logger.info("   - Customer retrieval: ✅")
+logger.error("   - Error handling: ✅")
+logger.info("   - State transitions: ✅")
+logger.info("   - Filtering & pagination: ✅")
         
     except Exception as e:
-        print(f"\n❌ TEST FAILED: {e}")
+logger.info(f"\n❌ TEST FAILED: {e}")
         import traceback
         traceback.print_exc()
 

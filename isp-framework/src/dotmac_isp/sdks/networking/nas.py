@@ -14,6 +14,7 @@ class NASService:
     """In-memory service for NAS (Network Access Server) operations."""
 
     def __init__(self):
+        """  Init   operation."""
         self._nas_devices: Dict[str, Dict[str, Any]] = {}
         self._sessions: Dict[str, Dict[str, Any]] = {}
         self._policies: Dict[str, Dict[str, Any]] = {}
@@ -120,6 +121,7 @@ class NASSDK:
     """Minimal, reusable SDK for NAS management."""
 
     def __init__(self, tenant_id: str):
+        """  Init   operation."""
         self.tenant_id = tenant_id
         self._service = NASService()
 

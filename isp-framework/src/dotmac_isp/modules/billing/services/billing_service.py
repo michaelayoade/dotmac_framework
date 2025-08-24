@@ -28,6 +28,7 @@ class BillingService:
     """DEPRECATED: Use main BillingService instead."""
     
     def __init__(self, db_session: AsyncSession):
+        """  Init   operation."""
         warnings.warn(
             "This BillingService is deprecated. Use dotmac_isp.modules.billing.service.BillingService instead.",
             DeprecationWarning,

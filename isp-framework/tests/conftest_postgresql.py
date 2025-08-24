@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 """PostgreSQL-specific test configuration for production-like testing."""
 
 import asyncio
@@ -124,7 +128,7 @@ def import_all_models():
                 pass
                 
     except Exception as e:
-        print(f"Warning: Model import issue: {e}")
+logger.warning(f"Warning: Model import issue: {e}")
 
 
 async def create_test_database():
@@ -149,10 +153,10 @@ async def create_test_database():
             if not result.fetchone():
                 # Create database
                 await conn.execute(text(f'CREATE DATABASE "{pg_database}"'))
-                print(f"Created test database: {pg_database}")
+logger.info(f"Created test database: {pg_database}")
         await engine.dispose()
     except Exception as e:
-        print(f"Warning: Could not create test database: {e}")
+logger.warning(f"Warning: Could not create test database: {e}")
 
 
 async def drop_test_database():
@@ -179,10 +183,10 @@ async def drop_test_database():
             )
             # Drop database
             await conn.execute(text(f'DROP DATABASE IF EXISTS "{pg_database}"'))
-            print(f"Dropped test database: {pg_database}")
+logger.info(f"Dropped test database: {pg_database}")
         await engine.dispose()
     except Exception as e:
-        print(f"Warning: Could not drop test database: {e}")
+logger.warning(f"Warning: Could not drop test database: {e}")
 
 
 @pytest.fixture(scope="session")
@@ -216,7 +220,7 @@ async def setup_postgresql_database():
         async with test_engine_async.begin() as conn:
             await conn.run_sync(Base.metadata.drop_all)
     except Exception as e:
-        print(f"Warning during cleanup: {e}")
+logger.warning(f"Warning during cleanup: {e}")
     
     # Dispose engines
     if test_engine_async:
@@ -306,10 +310,10 @@ async def validate_postgresql_connection():
         async with test_engine_async.connect() as conn:
             result = await conn.execute(text("SELECT version()"))
             version = result.fetchone()[0]
-            print(f"PostgreSQL connection successful: {version}")
+logger.info(f"PostgreSQL connection successful: {version}")
             return True
     except Exception as e:
-        print(f"PostgreSQL connection failed: {e}")
+logger.info(f"PostgreSQL connection failed: {e}")
         return False
 
 
@@ -333,7 +337,7 @@ def performance_monitor():
     end_time = time.time()
     duration = end_time - start_time
     if duration > 1.0:  # Warn if test takes more than 1 second
-        print(f"Warning: Test took {duration:.2f} seconds")
+logger.warning(f"Warning: Test took {duration:.2f} seconds")
 
 
 # Database seeding fixtures

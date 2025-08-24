@@ -56,6 +56,7 @@ class TokenAuthStrategy(VaultAuthStrategy):
         return config.token.get_secret_value()
     
     def get_strategy_name(self) -> str:
+        """Get Strategy Name operation."""
         return "Token Authentication"
     
     def validate_config(self, config) -> bool:
@@ -89,6 +90,7 @@ class AppRoleAuthStrategy(VaultAuthStrategy):
             raise ValueError(f"AppRole authentication failed: {str(e)}")
     
     def get_strategy_name(self) -> str:
+        """Get Strategy Name operation."""
         return "AppRole Authentication"
     
     def validate_config(self, config) -> bool:
@@ -141,6 +143,7 @@ class KubernetesAuthStrategy(VaultAuthStrategy):
             raise ValueError(f"Failed to read service account token: {str(e)}")
     
     def get_strategy_name(self) -> str:
+        """Get Strategy Name operation."""
         return "Kubernetes Authentication"
     
     def validate_config(self, config) -> bool:
@@ -173,6 +176,7 @@ class AWSAuthStrategy(VaultAuthStrategy):
             raise ValueError(f"AWS authentication failed: {str(e)}")
     
     def get_strategy_name(self) -> str:
+        """Get Strategy Name operation."""
         return "AWS IAM Authentication"
     
     def validate_config(self, config) -> bool:
@@ -209,6 +213,7 @@ class LDAPAuthStrategy(VaultAuthStrategy):
             raise ValueError(f"LDAP authentication failed: {str(e)}")
     
     def get_strategy_name(self) -> str:
+        """Get Strategy Name operation."""
         return "LDAP Authentication"
     
     def validate_config(self, config) -> bool:

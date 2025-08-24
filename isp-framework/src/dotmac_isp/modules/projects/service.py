@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 """Installation Project Management Services."""
 
 import secrets
@@ -594,7 +598,7 @@ class ProjectWorkflowService:
             self.db.add(notification)
             self.db.commit()
         except Exception as e:
-            print(f"Failed to create project notification: {e}")
+logger.info(f"Failed to create project notification: {e}")
 
     async def _update_opportunity_status(self, opportunity_id: UUID, status: str):
         """Update sales opportunity status."""
@@ -612,8 +616,8 @@ class ProjectWorkflowService:
                     opportunity.opportunity_status = OpportunityStatus.WON
                     opportunity.updated_at = datetime.utcnow()
                     self.db.commit()
-                    print(f"Updated opportunity {opportunity_id} status to WON")
+logger.info(f"Updated opportunity {opportunity_id} status to WON")
         except ImportError:
-            print(f"Sales module not available for opportunity update: {opportunity_id}")
+logger.info(f"Sales module not available for opportunity update: {opportunity_id}")
         except Exception as e:
-            print(f"Failed to update opportunity status: {e}")
+logger.info(f"Failed to update opportunity status: {e}")

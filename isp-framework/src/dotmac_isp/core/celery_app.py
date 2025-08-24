@@ -15,7 +15,9 @@ except ImportError:
 
     # Mock classes for when Celery is not available
     class MockCelery:
+        """Class for MockCelery operations."""
         def __init__(self, *args, **kwargs):
+            """  Init   operation."""
             self.conf = self
             self.control = self
             # Use environment variable or default to container name
@@ -23,34 +25,45 @@ except ImportError:
             self.broker_url = os.getenv("CELERY_BROKER_URL", "redis://redis-shared:6379/1")
 
         def task(self, *args, **kwargs):
+            """Task operation."""
             def decorator(func):
+                """Decorator operation."""
                 func.delay = lambda *args, **kwargs: None
                 return func
 
             return decorator
 
         def send_task(self, *args, **kwargs):
+            """Send Task operation."""
             logging.warning("Celery not available - task not sent")
             return None
 
         def inspect(self):
+            """Inspect operation."""
             return MockInspect()
 
         def update(self, **kwargs):
+            """Update operation."""
             pass
 
     class MockInspect:
+        """Class for MockInspect operations."""
         def stats(self):
+            """Stats operation."""
             return None
 
         def active(self):
+            """Active operation."""
             return None
 
         def scheduled(self):
+            """Scheduled operation."""
             return None
 
     class MockQueue:
+        """Class for MockQueue operations."""
         def __init__(self, *args, **kwargs):
+            """  Init   operation."""
             pass
 
     Celery = MockCelery
@@ -58,7 +71,9 @@ except ImportError:
 
     # Mock signal decorators
     class MockSignal:
+        """Class for MockSignal operations."""
         def connect(self, func):
+            """Connect operation."""
             return func
 
     task_prerun = MockSignal()

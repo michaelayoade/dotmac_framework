@@ -68,6 +68,7 @@ class VaultConfig(BaseModel):
     aws_role: str | None = Field(default=None, description="AWS IAM role")
 
     class Config:
+        """Class for Config operations."""
         validate_assignment = True
 
 

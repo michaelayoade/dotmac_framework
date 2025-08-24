@@ -164,6 +164,7 @@ class NotificationTemplate(TenantModel, StatusMixin, AuditMixin):
     )
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<NotificationTemplate(name='{self.template_name}', type='{self.notification_type}')>"
 
 
@@ -220,6 +221,7 @@ class NotificationRule(TenantModel, StatusMixin, AuditMixin):
     __table_args__ = (Index("ix_rules_event_active", "event_type", "is_active"),)
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<NotificationRule(name='{self.rule_name}', event='{self.event_type}')>"
 
 
@@ -329,6 +331,7 @@ class Notification(TenantModel, AuditMixin):
         return self.status == NotificationStatus.FAILED
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<Notification(id='{self.notification_id}', type='{self.notification_type}', status='{self.status}')>"
 
 
@@ -381,6 +384,7 @@ class NotificationDelivery(TenantModel):
     )
 
     def __repr__(self):
+        """  Repr   operation."""
         return (
             f"<NotificationDelivery(channel='{self.channel}', status='{self.status}')>"
         )
@@ -431,6 +435,7 @@ class NotificationPreference(TenantModel, AuditMixin):
     )
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<NotificationPreference(user='{self.user_id}', type='{self.notification_type}', enabled={self.enabled})>"
 
 
@@ -475,6 +480,7 @@ class NotificationQueue(TenantModel):
     )
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<NotificationQueue(queue='{self.queue_name}', status='{self.status}')>"
 
 
@@ -512,4 +518,5 @@ class NotificationLog(TenantModel):
     )
 
     def __repr__(self):
+        """  Repr   operation."""
         return f"<NotificationLog(notification='{self.notification_id}', event='{self.event_type}')>"

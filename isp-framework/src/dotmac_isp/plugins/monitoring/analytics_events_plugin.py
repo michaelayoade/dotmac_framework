@@ -63,6 +63,7 @@ class AnalyticsEvent:
     correlation_id: Optional[str] = None
     
     def __post_init__(self):
+        """  Post Init   operation."""
         if self.tags is None:
             self.tags = []
             
@@ -88,6 +89,7 @@ class EventFilter:
     tags: List[str] = None
     
     def __post_init__(self):
+        """  Post Init   operation."""
         if self.categories is None:
             self.categories = []
         if self.severities is None:

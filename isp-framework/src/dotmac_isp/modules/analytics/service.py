@@ -31,6 +31,7 @@ class MetricService(BaseTenantService[Metric, schemas.MetricCreate, schemas.Metr
     """Service for metrics management."""
 
     def __init__(self, db: Session, tenant_id: str):
+        """  Init   operation."""
         super().__init__(
             db=db,
             model_class=Metric,
@@ -66,6 +67,7 @@ class ReportService(BaseTenantService[Report, schemas.ReportCreate, schemas.Repo
     """Service for report management."""
 
     def __init__(self, db: Session, tenant_id: str):
+        """  Init   operation."""
         super().__init__(
             db=db,
             model_class=Report,
@@ -104,6 +106,7 @@ class DashboardService(BaseTenantService[Dashboard, schemas.DashboardCreate, sch
     """Service for dashboard management."""
 
     def __init__(self, db: Session, tenant_id: str):
+        """  Init   operation."""
         super().__init__(
             db=db,
             model_class=Dashboard,
@@ -135,6 +138,7 @@ class AlertService(BaseTenantService[Alert, schemas.AlertCreate, schemas.AlertUp
     """Service for analytics alert management."""
 
     def __init__(self, db: Session, tenant_id: str):
+        """  Init   operation."""
         super().__init__(
             db=db,
             model_class=Alert,
@@ -170,6 +174,7 @@ class AnalyticsService:
     """Legacy analytics service - use individual services instead."""
 
     def __init__(self, db: Session, tenant_id: str):
+        """  Init   operation."""
         self.db = db
         self.tenant_id = tenant_id
         self.metric_service = MetricService(db, tenant_id)

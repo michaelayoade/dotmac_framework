@@ -64,6 +64,7 @@ class SecretsManager:
     """
 
     def __init__(
+        """  Init   operation."""
         self,
         backend: str = "openbao",
         openbao_url: Optional[str] = None,

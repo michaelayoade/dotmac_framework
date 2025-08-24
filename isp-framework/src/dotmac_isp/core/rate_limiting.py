@@ -17,6 +17,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     """Redis-based rate limiting middleware."""
 
     def __init__(
+        """  Init   operation."""
         self,
         app,
         default_rate_limit: str = "100/minute",  # "number/time_unit"
@@ -210,6 +211,7 @@ class RateLimitManager:
     """Manager for custom rate limiting scenarios."""
 
     def __init__(self):
+        """  Init   operation."""
         self.cache_manager = get_cache_manager()
 
     def check_rate_limit(
