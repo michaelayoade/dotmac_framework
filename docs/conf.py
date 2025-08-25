@@ -80,28 +80,53 @@ autodoc_default_options = {
 
 autodoc_typehints = 'description'
 autodoc_typehints_format = 'short'
+# NEW APPROACH: Only mock what is LITERALLY IMPOSSIBLE to replicate
 autodoc_mock_imports = [
-    'redis',
-    'asyncpg',
-    'sqlalchemy',
-    'fastapi',
-    'pydantic',
-    'celery',
-    'alembic',
-    'passlib',
-    'jwt',
-    'cryptography',
-    'prometheus_client',
+    # 🚫 IMPOSSIBLE: External APIs (cost money, need real credentials)
+    'stripe',          # Payment processing: Real money transactions
+    'twilio',          # SMS/Voice: Real charges per message  
+    'boto3',           # AWS: Creates real cloud resources
+    'aiobotocore',     # AWS async client
+    'azure',           # Microsoft Azure APIs
+    'google-cloud',    # Google Cloud Platform APIs
+    
+    # 🚫 IMPOSSIBLE: Network hardware (needs physical equipment)
+    'pysnmp',          # SNMP: Requires routers/switches/modems
+    'netmiko',         # SSH: Network device configuration
+    'napalm',          # Multi-vendor network automation
+    'paramiko',        # SSH: Server access (can be dangerous in docs)
+    
+    # 🚫 IMPOSSIBLE: System automation (needs target infrastructure)  
+    'ansible',         # Server provisioning & configuration
+    'ansible-runner',  # Playbook execution environment
+    
+    # 📦 REPLICABLE but heavy for basic docs (mock for performance)
     'opentelemetry',
+    'opentelemetry-api', 
+    'opentelemetry-sdk',
+    'opentelemetry-instrumentation',
+    'opentelemetry-instrumentation-fastapi',
+    'opentelemetry-instrumentation-sqlalchemy', 
+    'opentelemetry-instrumentation-redis',
+    'opentelemetry-instrumentation-celery',
+    'opentelemetry-instrumentation-httpx',
 ]
+
+# 🎯 STRATEGY: Everything else gets installed for production-grade docs
+# Including: Redis, PostgreSQL, MongoDB via Docker Compose
+
+# Everything else gets INSTALLED for production-grade documentation
+
+# Enable better error handling for import issues
+autodoc_mock_imports_strict = False
 
 # Intersphinx mapping to external documentation
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),
     'fastapi': ('https://fastapi.tiangolo.com', None),
-    'sqlalchemy': ('https://docs.sqlalchemy.org/en/14/', None),
-    'pydantic': ('https://docs.pydantic.dev/', None),
-    'redis': ('https://redis-py.readthedocs.io/en/stable/', None),
+    'sqlalchemy': ('https://docs.sqlalchemy.org/en/20/', None),
+    'pydantic': ('https://docs.pydantic.dev/2.8/', None),
+    'redis': ('https://redis-py.readthedocs.io/en/latest/', None),
 }
 
 # The master toctree document
