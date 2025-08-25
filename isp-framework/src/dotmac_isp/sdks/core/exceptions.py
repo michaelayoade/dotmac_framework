@@ -9,12 +9,12 @@ class SDKError(Exception):
     """Base exception for all SDK errors."""
 
     def __init__(
-        """  Init   operation."""
         self,
         message: str,
         error_code: Optional[str] = None,
         details: Optional[Dict[str, Any]] = None,
     ):
+        """Initialize SDK error."""
         super().__init__(message)
         self.message = message
         self.error_code = error_code

@@ -360,8 +360,8 @@ class APIDocumentationService:
         self,
         version: str,
         changes: List[Dict[str, Any]],
-        release_date: Optional[datetime] = None,
-        created_by: str
+        created_by: str,
+        release_date: Optional[datetime] = None
     ) -> Dict[str, Any]:
         """
         Create a new changelog entry.

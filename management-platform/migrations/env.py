@@ -15,23 +15,22 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 # Import models to ensure they are registered - explicit imports for security
 from app.models.base import Base as ModelBase
 from app.models.billing import (
-    BillingAccount, Invoice, InvoiceItem, Payment, PaymentMethod,
-    Subscription, SubscriptionItem, UsageRecord, BillingEvent
+    PricingPlan, Subscription, Invoice, Payment, UsageRecord, Commission
 )
 from app.models.deployment import (
-    Deployment, DeploymentLog, Infrastructure, Resource
+    InfrastructureTemplate, Deployment, DeploymentEvent, DeploymentResource
 )
 from app.models.monitoring import (
-    Alert, MetricData, MonitoringRule
+    HealthCheck, Metric, Alert, SLARecord
 )
 from app.models.plugin import (
-    Plugin, PluginInstance, PluginConfiguration
+    PluginCategory, Plugin, PluginLicense, PluginUsage
 )
 from app.models.tenant import (
-    Tenant, TenantConfiguration, TenantResource, TenantUser
+    Tenant, TenantConfiguration, TenantInvitation
 )
 from app.models.user import (
-    User, UserSession, UserRole, Permission
+    User, UserSession, UserRole, UserInvitation
 )
 from app.database import Base
 

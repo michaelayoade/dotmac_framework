@@ -200,3 +200,14 @@ def _register_integration_routers(app: FastAPI) -> None:
         logger.warning(f"Unified authentication endpoints not available: {e}")
     except Exception as e:
         logger.error(f"Error registering unified authentication endpoints: {e}")
+    
+    # Register domain management endpoints
+    try:
+        from dotmac_isp.api.domain_router import router as domain_router
+        
+        app.include_router(domain_router, prefix="/api/v1/domains", tags=["domain-management"])
+        logger.info("Registered domain management endpoints at /api/v1/domains")
+    except ImportError as e:
+        logger.warning(f"Domain management endpoints not available: {e}")
+    except Exception as e:
+        logger.error(f"Error registering domain management endpoints: {e}")

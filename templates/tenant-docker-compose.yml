@@ -1,0 +1,238 @@
+# Container-per-tenant deployment template for DotMac Platform
+# This template creates isolated infrastructure for a single tenant
+
+version: '3.8'
+
+services:
+  # Tenant-specific PostgreSQL
+  postgres-${TENANT_ID}:
+    image: postgres:15-alpine
+    container_name: dotmac-postgres-${TENANT_ID}
+    environment:
+      POSTGRES_DB: dotmac_${TENANT_ID}
+      POSTGRES_USER: tenant_${TENANT_ID}
+      POSTGRES_PASSWORD: ${TENANT_POSTGRES_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    volumes:
+      - postgres_data_${TENANT_ID}:/var/lib/postgresql/data
+      - ./shared/sql/init-tenant-schema.sql:/docker-entrypoint-initdb.d/init-schema.sql:ro
+    networks:
+      - tenant-${TENANT_ID}-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tenant_${TENANT_ID} -d dotmac_${TENANT_ID}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: ${TENANT_POSTGRES_MEMORY:-1G}
+          cpus: '${TENANT_POSTGRES_CPUS:-1.0}'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+    labels:
+      - dotmac.tenant_id=${TENANT_ID}
+      - dotmac.service=database
+      - dotmac.isolation=enabled
+
+  # Tenant-specific Redis
+  redis-${TENANT_ID}:
+    image: redis:7-alpine
+    container_name: dotmac-redis-${TENANT_ID}
+    command: >
+      redis-server 
+      --requirepass ${TENANT_REDIS_PASSWORD}
+      --appendonly yes
+      --appendfsync everysec
+      --maxmemory ${TENANT_REDIS_MAXMEMORY:-256mb}
+      --maxmemory-policy allkeys-lru
+      --databases 16
+    volumes:
+      - redis_data_${TENANT_ID}:/data
+    networks:
+      - tenant-${TENANT_ID}-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${TENANT_REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: ${TENANT_REDIS_MEMORY:-512M}
+          cpus: '${TENANT_REDIS_CPUS:-0.5}'
+        reservations:
+          memory: 128M
+          cpus: '0.25'
+    labels:
+      - dotmac.tenant_id=${TENANT_ID}
+      - dotmac.service=cache
+      - dotmac.isolation=enabled
+
+  # Tenant-specific ISP Framework
+  isp-framework-${TENANT_ID}:
+    image: dotmac/isp-framework:${ISP_FRAMEWORK_VERSION:-latest}
+    container_name: dotmac-isp-${TENANT_ID}
+    environment:
+      # Tenant identification
+      TENANT_ID: ${TENANT_ID}
+      TENANT_NAME: ${TENANT_NAME}
+      
+      # Database connection
+      DATABASE_URL: postgresql://tenant_${TENANT_ID}:${TENANT_POSTGRES_PASSWORD}@postgres-${TENANT_ID}:5432/dotmac_${TENANT_ID}
+      
+      # Redis connection
+      REDIS_URL: redis://:${TENANT_REDIS_PASSWORD}@redis-${TENANT_ID}:6379/0
+      
+      # Application settings
+      DEBUG: 'false'
+      ENVIRONMENT: ${ENVIRONMENT:-production}
+      SECRET_KEY: ${TENANT_SECRET_KEY}
+      
+      # Feature flags per tenant
+      ENABLE_BILLING: ${TENANT_ENABLE_BILLING:-true}
+      ENABLE_ANALYTICS: ${TENANT_ENABLE_ANALYTICS:-true}
+      ENABLE_PLUGINS: ${TENANT_ENABLE_PLUGINS:-true}
+      
+      # Resource limits
+      MAX_CUSTOMERS: ${TENANT_MAX_CUSTOMERS:-10000}
+      MAX_SERVICES: ${TENANT_MAX_SERVICES:-1000}
+      
+      # Observability
+      SIGNOZ_ENDPOINT: signoz-collector:4317
+      SIGNOZ_SERVICE_NAME: isp-framework-${TENANT_ID}
+      
+      # Security
+      ALLOWED_HOSTS: ${TENANT_ALLOWED_HOSTS}
+      CORS_ORIGINS: ${TENANT_CORS_ORIGINS}
+    volumes:
+      - tenant_uploads_${TENANT_ID}:/app/uploads
+      - tenant_logs_${TENANT_ID}:/app/logs
+    networks:
+      - tenant-${TENANT_ID}-network
+      - dotmac-shared-network  # For shared services like SignOz
+    ports:
+      - "${TENANT_ISP_PORT:-8000}:8000"
+    depends_on:
+      postgres-${TENANT_ID}:
+        condition: service_healthy
+      redis-${TENANT_ID}:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: ${TENANT_ISP_MEMORY:-2G}
+          cpus: '${TENANT_ISP_CPUS:-2.0}'
+        reservations:
+          memory: 1G
+          cpus: '1.0'
+    security_opt:
+      - no-new-privileges:true
+    read_only: false  # ISP framework needs write access for logs/uploads
+    tmpfs:
+      - /tmp:noexec,nosuid,size=100m
+    labels:
+      - dotmac.tenant_id=${TENANT_ID}
+      - dotmac.service=isp_framework
+      - dotmac.isolation=enabled
+      - dotmac.tier=${TENANT_TIER:-standard}
+
+  # Tenant-specific Nginx (optional, for custom domains)
+  nginx-${TENANT_ID}:
+    image: nginx:alpine
+    container_name: dotmac-nginx-${TENANT_ID}
+    volumes:
+      - ./templates/nginx-tenant.conf:/etc/nginx/nginx.conf:ro
+      - tenant_ssl_${TENANT_ID}:/etc/nginx/ssl:ro
+      - tenant_logs_${TENANT_ID}:/var/log/nginx
+    networks:
+      - tenant-${TENANT_ID}-network
+    ports:
+      - "${TENANT_HTTP_PORT:-80}:80"
+      - "${TENANT_HTTPS_PORT:-443}:443"
+    depends_on:
+      - isp-framework-${TENANT_ID}
+    restart: unless-stopped
+    environment:
+      TENANT_ID: ${TENANT_ID}
+      TENANT_DOMAIN: ${TENANT_DOMAIN}
+      ISP_BACKEND: isp-framework-${TENANT_ID}:8000
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
+        reservations:
+          memory: 64M
+          cpus: '0.1'
+    labels:
+      - dotmac.tenant_id=${TENANT_ID}
+      - dotmac.service=proxy
+      - dotmac.isolation=enabled
+
+networks:
+  # Isolated network for this tenant
+  tenant-${TENANT_ID}-network:
+    driver: bridge
+    name: dotmac-tenant-${TENANT_ID}
+    driver_opts:
+      com.docker.network.bridge.enable_icc: "true"
+      com.docker.network.driver.mtu: "1500"
+    ipam:
+      driver: default
+      config:
+        - subnet: ${TENANT_SUBNET:-172.20.0.0/24}
+    labels:
+      - dotmac.tenant_id=${TENANT_ID}
+      - dotmac.isolation=enabled
+
+  # Shared network for accessing shared services (SignOz, etc.)
+  dotmac-shared-network:
+    external: true
+
+volumes:
+  # Tenant-specific persistent volumes
+  postgres_data_${TENANT_ID}:
+    driver: local
+    labels:
+      - dotmac.tenant_id=${TENANT_ID}
+      - dotmac.service=database
+      - dotmac.isolation=enabled
+
+  redis_data_${TENANT_ID}:
+    driver: local
+    labels:
+      - dotmac.tenant_id=${TENANT_ID}
+      - dotmac.service=cache
+      - dotmac.isolation=enabled
+
+  tenant_uploads_${TENANT_ID}:
+    driver: local
+    labels:
+      - dotmac.tenant_id=${TENANT_ID}
+      - dotmac.service=storage
+      - dotmac.isolation=enabled
+
+  tenant_logs_${TENANT_ID}:
+    driver: local
+    labels:
+      - dotmac.tenant_id=${TENANT_ID}
+      - dotmac.service=logs
+      - dotmac.isolation=enabled
+
+  tenant_ssl_${TENANT_ID}:
+    driver: local
+    labels:
+      - dotmac.tenant_id=${TENANT_ID}
+      - dotmac.service=ssl
+      - dotmac.isolation=enabled

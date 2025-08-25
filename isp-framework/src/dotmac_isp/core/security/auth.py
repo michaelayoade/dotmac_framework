@@ -3,7 +3,7 @@
 from typing import Optional, Dict, Any, List
 from datetime import datetime, timedelta
 import bcrypt
-import jwt
+from jose import jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 

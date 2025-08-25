@@ -752,14 +752,14 @@ def create_pre_commit_hook(project_root: Optional[Path] = None) -> bool:
             hook_file.write_text(hook_content)
             hook_file.chmod(0o755)  # Make executable
             
-logger.info(f"✅ Pre-commit security hook installed at {hook_file}")
+            logger.info(f"✅ Pre-commit security hook installed at {hook_file}")
             return True
         else:
-logger.info("⚠️ Not a git repository - hook not installed")
+            logger.info("⚠️ Not a git repository - hook not installed")
             return False
             
     except Exception as e:
-logger.info(f"❌ Failed to create pre-commit hook: {e}")
+        logger.info(f"❌ Failed to create pre-commit hook: {e}")
         return False
 
 
@@ -799,9 +799,9 @@ def main():
     
     if args.output:
         args.output.write_text(json.dumps(report, indent=2))
-logger.info(f"📄 Security report saved to {args.output}")
+        logger.info(f"📄 Security report saved to {args.output}")
     else:
-logger.info(json.dumps(report, indent=2))
+        logger.info(json.dumps(report, indent=2))
 
 
 if __name__ == "__main__":

@@ -1,0 +1,11 @@
+[Unit]
+Description=DotMac Daily Backup Timer
+Requires=simple-backup.service
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+RandomizedDelaySec=1h
+
+[Install]
+WantedBy=timers.target

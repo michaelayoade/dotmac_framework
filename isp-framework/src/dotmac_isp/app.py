@@ -56,22 +56,37 @@ async def lifespan(app: FastAPI):
         logging.info("✅ Redis cache connection established")
 
         # Initialize SignOz observability
+        signoz_telemetry = None
         if SIGNOZ_AVAILABLE and init_signoz:
             try:
                 signoz_telemetry = init_signoz(
                     service_name="dotmac-isp-framework",
                     service_version="1.0.0",
                     environment=settings.environment,
-                    signoz_endpoint=settings.signoz_endpoint if hasattr(settings, 'signoz_endpoint') else None,
+                    signoz_endpoint=getattr(settings, 'signoz_endpoint', 'localhost:4317'),
+                    signoz_access_token=getattr(settings, 'signoz_access_token', None),
+                    enable_metrics=True,
+                    enable_traces=True,
+                    enable_logs=True,
+                    enable_profiling=getattr(settings, 'signoz_profiling', False),
                     custom_attributes={
+                        "service.tier": "backend",
+                        "service.component": "isp_framework", 
                         "platform": "isp_framework",
                         "deployment": "monolithic",
-                        "business_model": "b2b_saas"
+                        "business_model": "b2b_saas",
+                        "tenant.isolation": "enabled",
+                        "plugin.system": "enabled"
                     }
                 )
-                logging.info("✅ SignOz observability initialized")
+                logging.info("✅ SignOz observability initialized with full telemetry")
+                
+                # Store reference for FastAPI instrumentation
+                app.state.signoz_telemetry = signoz_telemetry
+                
             except Exception as e:
                 logging.warning(f"⚠️  SignOz initialization failed: {e}")
+                signoz_telemetry = None
 
         # Initialize infrastructure (monitoring, metrics, tracing)
         await startup_infrastructure()
@@ -141,6 +156,14 @@ async def lifespan(app: FastAPI):
             logging.info("🔌 WebSocket manager shutdown complete")
         except Exception as e:
             logging.error(f"⚠️  WebSocket manager shutdown failed: {e}")
+
+        # Shutdown SignOz telemetry
+        if hasattr(app.state, 'signoz_telemetry') and app.state.signoz_telemetry:
+            try:
+                app.state.signoz_telemetry.shutdown()
+                logging.info("✅ SignOz telemetry shutdown complete")
+            except Exception as e:
+                logging.error(f"⚠️  SignOz shutdown failed: {e}")
 
         # Shutdown infrastructure
         await shutdown_infrastructure()

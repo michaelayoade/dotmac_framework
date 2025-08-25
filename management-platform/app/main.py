@@ -159,7 +159,7 @@ app.add_middleware(
 )
 
 trusted_hosts = (
-    ["localhost", "127.0.0.1", "testserver", "*.dotmac.app"]
+    ["localhost", "127.0.0.1", "149.102.135.97", "testserver", "*.dotmac.app"]
     if not settings.is_production
     else ["*.dotmac.app"]
 )

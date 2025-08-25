@@ -1,0 +1,40 @@
+[Unit]
+Description=DotMac Platform Backup Health Monitor
+Documentation=https://docs.dotmac.com/operations/backup
+After=docker.service postgresql.service redis.service
+Requires=docker.service
+Wants=postgresql.service redis.service
+
+[Service]
+Type=simple
+User=dotmac
+Group=docker
+Environment=PYTHONPATH=/home/dotmac_framework
+WorkingDirectory=/home/dotmac_framework
+ExecStart=/usr/bin/python3 /home/dotmac_framework/scripts/backup-health-monitor.py --config=/home/dotmac_framework/config/backup-config.yml
+Restart=always
+RestartSec=30
+StandardOutput=journal
+StandardError=journal
+PrivateTmp=yes
+NoNewPrivileges=yes
+ProtectSystem=strict
+ReadWritePaths=/var/backups/dotmac /var/log /tmp
+EnvironmentFile=-/home/dotmac_framework/.env
+
+# Resource limits
+MemoryLimit=1G
+CPUQuota=50%
+IOWeight=50
+
+# Health check
+TimeoutStartSec=60
+TimeoutStopSec=30
+
+# Logging
+SyslogIdentifier=dotmac-backup-monitor
+SyslogFacility=daemon
+SyslogLevel=info
+
+[Install]
+WantedBy=multi-user.target

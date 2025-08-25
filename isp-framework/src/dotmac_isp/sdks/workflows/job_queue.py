@@ -142,13 +142,8 @@ class JobExecution:
 class JobQueue:
     """Job queue implementation with priority and delay support."""
 
-    def __init__(
-        """  Init   operation."""
-        self,
-        name: str,
-        queue_type: QueueType = QueueType.PRIORITY,
-        max_size: int = 10000,
-    ):
+    def __init__(        ):
+            """Initialize operation."""
         self.name = name
         self.queue_type = queue_type
         self.max_size = max_size

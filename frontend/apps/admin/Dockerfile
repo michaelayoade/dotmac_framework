@@ -18,7 +18,38 @@ COPY packages/styled-components/package.json ./packages/styled-components/
 # Install dependencies
 RUN pnpm install --frozen-lockfile
 
-# Stage 2: Builder
+# Stage 2: Development (for hot-reload during development)
+FROM node:20-alpine AS development
+WORKDIR /app
+
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@8.15.0 --activate
+
+# Copy dependencies from deps stage
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/apps/admin/node_modules ./apps/admin/node_modules
+COPY --from=deps /app/packages/*/node_modules ./packages/*/node_modules
+
+# Copy package files
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/admin/package.json ./apps/admin/
+COPY packages/headless/package.json ./packages/headless/
+COPY packages/primitives/package.json ./packages/primitives/
+COPY packages/styled-components/package.json ./packages/styled-components/
+
+# Copy source code
+COPY . .
+
+# Set development environment
+ENV NODE_ENV development
+ENV NEXT_TELEMETRY_DISABLED 1
+
+EXPOSE 3000
+
+# Development command with hot-reload
+CMD ["pnpm", "--filter", "@dotmac/admin-app", "dev"]
+
+# Stage 3: Builder
 FROM node:20-alpine AS builder
 WORKDIR /app
 
@@ -38,7 +69,7 @@ ENV NEXT_TELEMETRY_DISABLED 1
 ENV NODE_ENV production
 RUN pnpm --filter @dotmac/admin-app build
 
-# Stage 3: Runner
+# Stage 4: Runner
 FROM node:20-alpine AS runner
 WORKDIR /app
 

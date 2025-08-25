@@ -51,8 +51,8 @@ class DNSService:
         self, 
         tenant_id: UUID, 
         domain_name: str,
-        subdomain_prefix: Optional[str] = None,
-        user_id: str
+        user_id: str,
+        subdomain_prefix: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Create a domain/subdomain for a tenant with DNS zone configuration.

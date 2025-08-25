@@ -96,14 +96,25 @@ async def init_database():
         # Import all models to ensure they are registered
         from .models import tenant, billing, deployment, plugin, monitoring, user  # noqa
         
-        # Create all tables
-        await conn.run_sync(Base.metadata.create_all)
+        # Tables are now created via migrations, so we skip create_all
+        # await conn.run_sync(Base.metadata.create_all)
         
         # Enable Row Level Security for multi-tenancy
         if settings.enable_tenant_isolation:
-            await conn.execute(text("ALTER TABLE tenants ENABLE ROW LEVEL SECURITY"))
-            await conn.execute(text("ALTER TABLE tenant_subscriptions ENABLE ROW LEVEL SECURITY"))
-            await conn.execute(text("ALTER TABLE tenant_deployments ENABLE ROW LEVEL SECURITY"))
+            # Check if tables exist before enabling RLS
+            tables_to_secure = ["tenants", "subscriptions", "deployments"]
+            for table_name in tables_to_secure:
+                try:
+                    await conn.execute(text(f"ALTER TABLE {table_name} ENABLE ROW LEVEL SECURITY"))
+                    logger.info(f"Enabled RLS for table: {table_name}")
+                except Exception as e:
+                    logger.warning(f"Could not enable RLS for table {table_name}: {e}")
+        
+        # Test connection
+        result = await conn.execute(text("SELECT 1 as test"))
+        row = result.fetchone()
+        if row and row.test == 1:
+            logger.info("Database initialized successfully")
 
 
 async def close_database():

@@ -9,10 +9,11 @@ from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision: str = '003_create_identity_tables'
-down_revision: Union[str, None] = None
+down_revision: Union[str, None] = '002_create_ansible_integration_tables'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -23,12 +24,12 @@ def upgrade() -> None:
     # Create roles table
     op.create_table(
         'roles',
-        sa.Column('id', sa.String(36), primary_key=True),
-        sa.Column('created_at', sa.DateTime, nullable=False, server_default=sa.text("(datetime('now'))")),
-        sa.Column('updated_at', sa.DateTime, nullable=False, server_default=sa.text("(datetime('now'))")),
-        sa.Column('deleted_at', sa.DateTime, nullable=True),
+        sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True),
+        sa.Column('created_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('now()')),
+        sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('now()')),
+        sa.Column('deleted_at', sa.DateTime(timezone=True), nullable=True),
         sa.Column('is_deleted', sa.Boolean(), nullable=False, default=False),
-        sa.Column('tenant_id', sa.String(36), nullable=False),
+        sa.Column('tenant_id', postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column('name', sa.String(100), nullable=False),
         sa.Column('description', sa.Text(), nullable=True),
         sa.Column('permissions', sa.String(500), nullable=True),
@@ -41,12 +42,12 @@ def upgrade() -> None:
     # Create users table
     op.create_table(
         'users',
-        sa.Column('id', sa.String(36), primary_key=True),
-        sa.Column('created_at', sa.DateTime, nullable=False, server_default=sa.text("(datetime('now'))")),
-        sa.Column('updated_at', sa.DateTime, nullable=False, server_default=sa.text("(datetime('now'))")),
-        sa.Column('deleted_at', sa.DateTime, nullable=True),
+        sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True),
+        sa.Column('created_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('now()')),
+        sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('now()')),
+        sa.Column('deleted_at', sa.DateTime(timezone=True), nullable=True),
         sa.Column('is_deleted', sa.Boolean(), nullable=False, default=False),
-        sa.Column('tenant_id', sa.String(36), nullable=False),
+        sa.Column('tenant_id', postgresql.UUID(as_uuid=True), nullable=False),
         
         # Core user fields
         sa.Column('username', sa.String(50), nullable=False),
@@ -78,21 +79,21 @@ def upgrade() -> None:
     # Create user_roles association table
     op.create_table(
         'user_roles',
-        sa.Column('user_id', sa.String(36), sa.ForeignKey('users.id'), primary_key=True),
-        sa.Column('role_id', sa.String(36), sa.ForeignKey('roles.id'), primary_key=True),
-        sa.Column('assigned_at', sa.DateTime, nullable=False, server_default=sa.text("(datetime('now'))")),
-        sa.Column('assigned_by', sa.String(36), nullable=True),
+        sa.Column('user_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('users.id'), primary_key=True),
+        sa.Column('role_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('roles.id'), primary_key=True),
+        sa.Column('assigned_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('now()')),
+        sa.Column('assigned_by', postgresql.UUID(as_uuid=True), nullable=True),
     )
     
     # Create customers table
     op.create_table(
         'customers',
-        sa.Column('id', sa.String(36), primary_key=True),
-        sa.Column('created_at', sa.DateTime, nullable=False, server_default=sa.text("(datetime('now'))")),
-        sa.Column('updated_at', sa.DateTime, nullable=False, server_default=sa.text("(datetime('now'))")),
-        sa.Column('deleted_at', sa.DateTime, nullable=True),
+        sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True),
+        sa.Column('created_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('now()')),
+        sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('now()')),
+        sa.Column('deleted_at', sa.DateTime(timezone=True), nullable=True),
         sa.Column('is_deleted', sa.Boolean(), nullable=False, default=False),
-        sa.Column('tenant_id', sa.String(36), nullable=False),
+        sa.Column('tenant_id', postgresql.UUID(as_uuid=True), nullable=False),
         
         # Core customer fields
         sa.Column('customer_number', sa.String(50), nullable=False),
@@ -117,14 +118,14 @@ def upgrade() -> None:
         # Business fields
         sa.Column('credit_limit', sa.String(20), nullable=False, default='0.00'),
         sa.Column('payment_terms', sa.String(50), nullable=False, default='net_30'),
-        sa.Column('installation_date', sa.DateTime, nullable=True),
+        sa.Column('installation_date', sa.DateTime(timezone=True), nullable=True),
         sa.Column('notes', sa.Text(), nullable=True),
         
         # Portal integration
         sa.Column('portal_id', sa.String(20), nullable=True),
         
         # Relationships
-        sa.Column('primary_user_id', sa.String(36), sa.ForeignKey('users.id'), nullable=True),
+        sa.Column('primary_user_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('users.id'), nullable=True),
         
         sa.UniqueConstraint('tenant_id', 'customer_number', name='uq_customers_tenant_number'),
         sa.UniqueConstraint('portal_id', name='uq_customers_portal_id'),
@@ -137,12 +138,12 @@ def upgrade() -> None:
     # Create portal_accounts table (as part of customer module)
     op.create_table(
         'portal_accounts',
-        sa.Column('id', sa.String(36), primary_key=True),
-        sa.Column('created_at', sa.DateTime, nullable=False, server_default=sa.text("(datetime('now'))")),
-        sa.Column('updated_at', sa.DateTime, nullable=False, server_default=sa.text("(datetime('now'))")),
-        sa.Column('deleted_at', sa.DateTime, nullable=True),
+        sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True),
+        sa.Column('created_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('now()')),
+        sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('now()')),
+        sa.Column('deleted_at', sa.DateTime(timezone=True), nullable=True),
         sa.Column('is_deleted', sa.Boolean(), nullable=False, default=False),
-        sa.Column('tenant_id', sa.String(36), nullable=False),
+        sa.Column('tenant_id', postgresql.UUID(as_uuid=True), nullable=False),
         
         # Portal identification
         sa.Column('portal_id', sa.String(20), nullable=False, unique=True),
@@ -169,8 +170,8 @@ def upgrade() -> None:
         sa.Column('language_preference', sa.String(10), nullable=False, default='en'),
         
         # Relationships
-        sa.Column('customer_id', sa.String(36), sa.ForeignKey('customers.id'), nullable=True),
-        sa.Column('user_id', sa.String(36), sa.ForeignKey('users.id'), nullable=True),
+        sa.Column('customer_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('customers.id'), nullable=True),
+        sa.Column('user_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('users.id'), nullable=True),
         
         sa.Index('ix_portal_accounts_tenant_id', 'tenant_id'),
         sa.Index('ix_portal_accounts_portal_id', 'portal_id'),

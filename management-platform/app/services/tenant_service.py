@@ -404,6 +404,28 @@ class TenantService:
             "warnings": 1
         }
     
+    async def list_tenants(
+        self,
+        skip: int = 0,
+        limit: int = 100,
+        filters: Optional[Dict[str, Any]] = None
+    ) -> List[Tenant]:
+        """List all tenants with pagination."""
+        from sqlalchemy import select, desc
+        
+        query = select(Tenant).order_by(desc(Tenant.created_at))
+        
+        # Apply filters if provided
+        if filters:
+            if 'status' in filters:
+                query = query.where(Tenant.status == filters['status'])
+        
+        # Apply pagination
+        query = query.offset(skip).limit(limit)
+        
+        result = await self.db.execute(query)
+        return result.scalars().all()
+    
     async def search_tenants(
         self,
         search_term: str,

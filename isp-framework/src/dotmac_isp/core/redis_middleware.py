@@ -89,13 +89,13 @@ class RedisSessionMiddleware(BaseHTTPMiddleware):
     """Middleware for Redis-based session management."""
 
     def __init__(
-        """  Init   operation."""
         self,
         app,
         session_cookie: str = "session_id",
         secure: bool = False,
         httponly: bool = True,
     ):
+        """Initialize Redis session middleware."""
         super().__init__(app)
         self.session_manager = get_session_manager()
         self.session_cookie = session_cookie

@@ -1,0 +1,60 @@
+/* Custom CSS for DotMac Platform Documentation */
+
+.wy-nav-content {
+    max-width: 1200px;
+}
+
+.rst-content .section {
+    margin-bottom: 24px;
+}
+
+.rst-content h1 {
+    color: #2980b9;
+    border-bottom: 3px solid #2980b9;
+    padding-bottom: 10px;
+}
+
+.rst-content h2 {
+    color: #34495e;
+    border-bottom: 2px solid #ecf0f1;
+    padding-bottom: 8px;
+}
+
+/* Code blocks */
+.rst-content pre {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+}
+
+/* API documentation styling */
+.rst-content dl.class > dt,
+.rst-content dl.function > dt,
+.rst-content dl.method > dt {
+    background-color: #f8f9fa;
+    border-left: 4px solid #2980b9;
+    padding: 8px 12px;
+    margin-bottom: 8px;
+}
+
+/* Parameter lists */
+.rst-content dl.field-list > dt {
+    background-color: #ecf0f1;
+    padding: 4px 8px;
+    border-radius: 3px;
+}
+
+/* Navigation improvements */
+.wy-menu-vertical li.current a {
+    border-right: 3px solid #2980b9;
+}
+
+/* Table styling */
+.rst-content table.docutils {
+    border: 1px solid #e1e4e5;
+}
+
+.rst-content table.docutils th {
+    background-color: #f1f2f3;
+    color: #2c3e50;
+}

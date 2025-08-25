@@ -422,7 +422,6 @@ class TenantContext:
     """Context manager for setting tenant isolation in database sessions."""
 
     def __init__(
-        """  Init   operation."""
         self,
         tenant_id: str,
         user_id: str = None,

@@ -37,15 +37,16 @@ from opentelemetry.sdk.metrics.view import View, ExplicitBucketHistogramAggregat
 from opentelemetry.trace import Status, StatusCode, SpanKind
 
 # Instrumentation imports
-from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
-from opentelemetry.instrumentation.redis import RedisInstrumentor
-from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
-from opentelemetry.instrumentation.asyncio import AsyncioInstrumentor
-from opentelemetry.instrumentation.psycopg2 import Psycopg2Instrumentor
-from opentelemetry.instrumentation.requests import RequestsInstrumentor
-from opentelemetry.instrumentation.celery import CeleryInstrumentor
-from opentelemetry.instrumentation.system_metrics import SystemMetricsInstrumentor
+# Temporarily commented out for initial deployment - add back later
+# from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+# from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
+# from opentelemetry.instrumentation.redis import RedisInstrumentor
+# from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor  
+# from opentelemetry.instrumentation.asyncio import AsyncioInstrumentor
+# from opentelemetry.instrumentation.psycopg2 import Psycopg2Instrumentor
+# from opentelemetry.instrumentation.requests import RequestsInstrumentor
+# from opentelemetry.instrumentation.celery import CeleryInstrumentor
+# from opentelemetry.instrumentation.system_metrics import SystemMetricsInstrumentor
 
 # Propagation
 from opentelemetry.propagate import set_global_textmap
@@ -436,29 +437,30 @@ class ManagementPlatformObservability:
                         duration_ms=time.time() * 1000
                     )
 
-            # Instrument FastAPI
-            FastAPIInstrumentor.instrument_app(
-                app,
-                server_request_hook=request_hook,
-                client_response_hook=response_hook,
-                excluded_urls="/health,/metrics,/docs,/openapi.json",
-            )
-            
-            # Instrument database
-            SQLAlchemyInstrumentor().instrument()
-            
-            # Instrument Redis
-            RedisInstrumentor().instrument()
-            
-            # Instrument HTTP clients
-            HTTPXClientInstrumentor().instrument()
-            RequestsInstrumentor().instrument()
-            
-            # Instrument Celery
-            CeleryInstrumentor().instrument()
-            
-            # Instrument system metrics
-            SystemMetricsInstrumentor().instrument()
+            # Temporarily commented out for initial deployment - add back later
+            # # Instrument FastAPI
+            # FastAPIInstrumentor.instrument_app(
+            #     app,
+            #     server_request_hook=request_hook,
+            #     client_response_hook=response_hook,
+            #     excluded_urls="/health,/metrics,/docs,/openapi.json",
+            # )
+            # 
+            # # Instrument database
+            # SQLAlchemyInstrumentor().instrument()
+            # 
+            # # Instrument Redis
+            # RedisInstrumentor().instrument()
+            # 
+            # # Instrument HTTP clients
+            # HTTPXClientInstrumentor().instrument()
+            # RequestsInstrumentor().instrument()
+            # 
+            # # Instrument Celery
+            # CeleryInstrumentor().instrument()
+            # 
+            # # Instrument system metrics
+            # SystemMetricsInstrumentor().instrument()
             
             logger.info(f"FastAPI and dependencies instrumented for {self.service_name}")
             

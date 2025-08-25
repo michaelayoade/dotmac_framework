@@ -58,16 +58,8 @@ class InvalidPolicyError(PolicyError):
 class PolicySDKConfig:
     """Policy SDK configuration."""
 
-    def __init__(
-        """  Init   operation."""
-        self,
-        cache_ttl: int = 600,  # 10 minutes
-        max_evaluation_time_ms: int = 1000,  # 1 second
-        enable_caching: bool = True,
-        enable_audit_logging: bool = True,
-        default_effect: PolicyEffect = PolicyEffect.DENY,
-        evaluation_strategy: str = "first_applicable",  # first_applicable, deny_overrides, permit_overrides
-    ):
+    def __init__(        ):
+            """Initialize operation."""
         self.cache_ttl = cache_ttl
         self.max_evaluation_time_ms = max_evaluation_time_ms
         self.enable_caching = enable_caching

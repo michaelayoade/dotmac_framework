@@ -32,16 +32,8 @@ logger = logging.getLogger(__name__)
 class SearchSDKConfig:
     """Search SDK configuration."""
 
-    def __init__(
-        """  Init   operation."""
-        self,
-        max_indexes_per_tenant: int = 100,
-        max_documents_per_index: int = 100000,
-        enable_query_caching: bool = True,
-        query_cache_ttl_seconds: int = 300,
-        enable_analytics: bool = True,
-        default_query_timeout_ms: int = 30000,
-    ):
+    def __init__(        ):
+            """Initialize operation."""
         self.max_indexes_per_tenant = max_indexes_per_tenant
         self.max_documents_per_index = max_documents_per_index
         self.enable_query_caching = enable_query_caching

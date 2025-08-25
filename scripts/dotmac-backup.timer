@@ -1,0 +1,17 @@
+[Unit]
+Description=DotMac Platform Backup Timer
+Documentation=https://docs.dotmac.com/operations/backup
+Requires=dotmac-backup.service
+
+[Timer]
+# Daily backup at 2:00 AM
+OnCalendar=*-*-* 02:00:00
+# Run backup if system was down during scheduled time
+Persistent=true
+# Add random delay to avoid all instances backing up simultaneously
+RandomizedDelaySec=300
+# Accuracy window
+AccuracySec=1m
+
+[Install]
+WantedBy=timers.target

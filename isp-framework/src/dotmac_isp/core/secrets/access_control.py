@@ -167,15 +167,8 @@ class PolicyDecisionMaker:
 class AccessControlEvaluator:
     """Main access control evaluation orchestrator."""
 
-    def __init__(
-        """  Init   operation."""
-        self,
-        subjects: dict[str, Subject],
-        permissions: dict[str, Permission],
-        policy_engine,
-        get_subject_permissions_func,
-        cache_ttl: timedelta = timedelta(minutes=5),
-    ):
+    def __init__(        ):
+            """Initialize operation."""
         self.subjects = subjects
         self.cache_manager = AccessCacheManager(cache_ttl)
         self.permission_matcher = PermissionMatcher(permissions)

@@ -121,6 +121,19 @@ class Settings(BaseSettings):
             pass
         return v
     
+    @field_validator('cors_origins', mode='before')
+    @classmethod
+    def parse_cors_origins(cls, v) -> List[str]:
+        """Parse CORS origins from string or list."""
+        if isinstance(v, str):
+            import json
+            try:
+                return json.loads(v)
+            except json.JSONDecodeError:
+                # If not valid JSON, split by comma
+                return [origin.strip() for origin in v.split(',') if origin.strip()]
+        return v
+
     @field_validator('secret_key', 'jwt_secret_key')
     @classmethod
     def validate_secrets(cls, v: str, info) -> str:

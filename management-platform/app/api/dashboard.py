@@ -15,10 +15,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..core.observability import get_observability
 from ..core.plugins.service_integration import service_integration
-from ..database import get_db_session
+from ..database import get_db
 from ..services.tenant_service import TenantService
 from ..services.deployment_service import DeploymentService
-from ..models.tenants import Tenant, TenantStatus
+from ..models.tenant import Tenant, TenantStatus
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
@@ -33,7 +33,7 @@ deployment_logs: Dict[str, list] = {}
 @router.get("/", response_class=HTMLResponse)
 async def dashboard(
     request: Request,
-    db: AsyncSession = Depends(get_db_session)
+    db: AsyncSession = Depends(get_db)
 ):
     """Main dashboard interface."""
     try:
@@ -63,7 +63,7 @@ async def create_tenant(
     ssh_user: str = Form(...),
     ssh_key_path: Optional[str] = Form(None),
     deployment_provider: str = Form("ssh_deployment"),
-    db: AsyncSession = Depends(get_db_session)
+    db: AsyncSession = Depends(get_db)
 ):
     """Create a new tenant and deploy ISP Framework."""
     try:
@@ -231,7 +231,7 @@ async def get_deployment_status(deployment_id: str):
 
 
 @router.get("/metrics")
-async def get_platform_metrics(db: AsyncSession = Depends(get_db_session)):
+async def get_platform_metrics(db: AsyncSession = Depends(get_db)):
     """Get platform metrics for dashboard."""
     try:
         tenant_service = TenantService(db)
@@ -277,13 +277,13 @@ async def get_platform_metrics(db: AsyncSession = Depends(get_db_session)):
 @router.get("/tenants")
 async def list_tenants(
     limit: int = 20,
-    offset: int = 0,
-    db: AsyncSession = Depends(get_db_session)
+    skip: int = 0,
+    db: AsyncSession = Depends(get_db)
 ):
     """Get tenant list for API access."""
     try:
         tenant_service = TenantService(db)
-        tenants = await tenant_service.list_tenants(limit=limit, offset=offset)
+        tenants = await tenant_service.list_tenants(limit=limit, skip=skip)
         
         return {
             "tenants": [
@@ -307,7 +307,7 @@ async def list_tenants(
 @router.delete("/tenants/{tenant_id}")
 async def delete_tenant(
     tenant_id: str,
-    db: AsyncSession = Depends(get_db_session)
+    db: AsyncSession = Depends(get_db)
 ):
     """Delete a tenant and cleanup resources."""
     try:

@@ -27,10 +27,11 @@ class User(BaseModel):
     __tablename__ = "users"
     
     # Basic user information
-    email = Column(String(255), unique=True, nullable=False, index=True)
-    username = Column(String(100), unique=True, nullable=True, index=True)
-    full_name = Column(String(255), nullable=False)
-    password_hash = Column(String(255), nullable=False)
+    email = Column(String(255), nullable=False, unique=True)
+    username = Column(String(50), nullable=False, unique=True)
+    hashed_password = Column(String(255), nullable=False)
+    first_name = Column(String(100), nullable=True)
+    last_name = Column(String(100), nullable=True)
     
     # User status
     is_active = Column(Boolean, default=True, nullable=False, index=True)
@@ -38,10 +39,14 @@ class User(BaseModel):
     is_superuser = Column(Boolean, default=False, nullable=False)
     
     # Role and permissions
-    role = Column(String(50), nullable=False, index=True)  # master_admin, tenant_admin, etc.
+    role = Column(String(50), nullable=False, default='user')
     
     # Tenant association (None for master admins)
     tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=True, index=True)
+    
+    # Additional fields from migration
+    permissions = Column(Text, nullable=True)  # JSON permissions
+    password_changed_at = Column(DateTime, nullable=True)
     
     # Authentication metadata
     last_login = Column(DateTime, nullable=True)
@@ -68,6 +73,13 @@ class User(BaseModel):
     
     def __repr__(self) -> str:
         return f"<User(email='{self.email}', role='{self.role}')>"
+    
+    @property
+    def full_name(self) -> str:
+        """Get user's full name from first_name and last_name."""
+        if self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name}"
+        return self.first_name or self.last_name or ""
     
     @property
     def is_master_admin(self) -> bool:

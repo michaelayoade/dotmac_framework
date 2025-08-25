@@ -244,8 +244,13 @@ db-setup:
 	@make db-migrate-all
 
 .PHONY: db-migrate-all
-db-migrate-all: db-migrate-isp db-migrate-mgmt
-	@echo "$(GREEN)✅ All migrations completed$(NC)"
+db-migrate-all: db-validate-schemas db-migrate-mgmt db-migrate-isp
+	@echo "$(GREEN)✅ All migrations completed in coordinated order$(NC)"
+
+.PHONY: db-validate-schemas
+db-validate-schemas:
+	@echo "$(YELLOW)Validating schema compatibility...$(NC)"
+	@python3 -c "import sys; sys.path.append('shared'); from database.coordination import validate_schemas; warnings = validate_schemas(); print('\\n'.join(warnings) if warnings else '✅ Schema validation passed')"
 
 .PHONY: db-migrate-isp
 db-migrate-isp:

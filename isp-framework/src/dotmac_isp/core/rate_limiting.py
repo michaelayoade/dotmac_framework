@@ -17,15 +17,15 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     """Redis-based rate limiting middleware."""
 
     def __init__(
-        """  Init   operation."""
         self,
         app,
-        default_rate_limit: str = "100/minute",  # "number/time_unit"
-        per_ip_limit: str = "60/minute",
-        per_user_limit: str = "1000/minute",
+        default_rate_limit: str = "1000/hour",
+        per_ip_limit: str = "100/minute", 
+        per_user_limit: str = "500/hour",
         rate_limit_rules: Optional[Dict[str, str]] = None,
         exempt_paths: Optional[List[str]] = None,
     ):
+        """Initialize rate limiting middleware."""
         super().__init__(app)
         self.default_rate_limit = self._parse_rate_limit(default_rate_limit)
         self.per_ip_limit = self._parse_rate_limit(per_ip_limit)

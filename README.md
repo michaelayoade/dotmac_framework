@@ -1,15 +1,17 @@
-# 🚀 DotMac Platform - ISP Management System
+# 🚀 DotMac Platform - SaaS for Internet Service Providers
 
 **Status**: Beta Release - Active Development
 
-> The DotMac Platform is currently in active development with core revenue and billing systems operational. For deployment guidance and current capabilities, see the [Production Readiness Checklist](PRODUCTION_READINESS_CHECKLIST.md).
+> DotMac is a **SaaS platform** where ISPs get dedicated, secure containers with complete operational management. We handle infrastructure, ISPs focus on customers. For deployment status, see the [Production Readiness Checklist](PRODUCTION_READINESS_CHECKLIST.md).
 
-## 🎯 Project Vision
+## 🎯 Platform Vision
 
-DotMac is being developed as a comprehensive ISP management platform with two main components:
+**DotMac provides ISPs with dedicated containerized instances** for complete operational management through our SaaS platform:
 
-1. **ISP Framework**: Monolithic ISP operations management system
-2. **Management Platform**: Multi-tenant SaaS orchestration platform
+- **Container-per-Tenant**: Each ISP gets an isolated, dedicated container
+- **Usage-Based Pricing**: Pay per customer + optional premium bundles  
+- **Partner Revenue Sharing**: 10-20% commissions for vendor/reseller partners
+- **Zero Infrastructure Management**: We handle servers, ISPs handle customers
 
 **Target Market**: ISPs with 50-10,000 customers (rural WISPs to regional providers)
 
@@ -25,65 +27,66 @@ DotMac is being developed as a comprehensive ISP management platform with two ma
 **Current Capabilities**: Suitable for development environments and revenue system testing
 **Production Deployment**: Additional operational infrastructure required
 
-## 🏗️ Architecture Overview
+## 🏗️ SaaS Platform Architecture
 
 ```
-📦 DotMac Platform
-├── 🏢 ISP Framework (Monolithic Application)
-│   ├── Customer & User Management
-│   ├── Service Provisioning & Lifecycle
-│   ├── Billing & Payment Processing
-│   ├── Network Infrastructure Management
-│   ├── Support & Field Operations
+🌐 DotMac SaaS Platform (We Operate)
+├── 🏢 ISP Containers (Container-per-Tenant)
+│   ├── Dedicated ISP Framework Instance
+│   ├── Isolated Customer & User Management
+│   ├── Private Billing & Payment Processing
+│   ├── Secure Network Infrastructure Management
+│   ├── Dedicated Support & Field Operations
 │   └── Multi-Portal Access (Admin, Customer, Reseller, Technician)
 │
-├── 🎛️ Management Platform (SaaS Orchestration)
-│   ├── Multi-Tenant Management
-│   ├── ISP Instance Provisioning
-│   ├── Usage-Based Billing
-│   ├── Plugin Marketplace
-│   └── Reseller Network Management
+├── 🎛️ Management Platform (SaaS Orchestration - We Operate)
+│   ├── Container Provisioning (4-minute deployment)
+│   ├── Usage-Based Billing & Partner Commissions
+│   ├── Premium Feature Bundles
+│   ├── Partner Revenue Sharing Portal
+│   └── Vendor/Reseller Network Management
 │
-└── 🌐 Frontend Applications (React/Next.js)
-    ├── Admin Portal
-    ├── Customer Portal
-    ├── Reseller Portal
+└── 🌐 Frontend Applications (Included in Each Container)
+    ├── ISP Admin Portal
+    ├── Customer Self-Service Portal
+    ├── Reseller Partner Portal
     ├── Technician Mobile App
-    └── Management Dashboard
+    └── ISP Management Dashboard
 ```
 
-## 🚀 Development Quick Start
+## 🚀 SaaS Platform Development
 
-**Choose your development path:**
+**Developing the DotMac SaaS Platform:**
 
-### Option 1: Full Development Environment
+### Option 1: Full SaaS Platform Development
 ```bash
 git clone <repository-url>
 cd dotmac-framework
 
-# Complete setup (all components)
+# Complete SaaS platform setup
 make install-dev
 make dev
+# Simulates: Management Platform + Multiple ISP Containers
 ```
 
-### Option 2: Backend Only (API Development)
+### Option 2: Container Development (ISP Framework)
 ```bash
 make dev-backend
-# Starts ISP Framework + Management Platform APIs only
+# Develops individual ISP container functionality
 ```
 
-### Option 3: Frontend Only (Portal Development)
+### Option 3: Platform Development (SaaS Orchestration)
 ```bash
 make dev-frontend  
-# Starts all portals with mock backend data
+# Develops container provisioning and partner portals
 ```
 
-### Option 4: Platform-Specific Development
+### Option 4: Component-Specific Development
 ```bash
-# ISP Framework only
+# ISP Container Framework (tenant-specific)
 cd isp-framework && make run-dev
 
-# Management Platform only  
+# SaaS Management Platform (we operate)
 cd management-platform && make run-api
 ```
 
@@ -195,21 +198,22 @@ This is a development project. Key areas needing contribution:
 - ❌ **Not Ready**: Production deployment, auto-scaling, multi-tenancy
 
 ### For Business Use
-- ✅ **Revenue Testing**: Billing calculations are production-accurate
-- ✅ **Demo Environment**: Suitable for client demonstrations
-- ❌ **Customer Deployment**: Not ready for live customer operations
-- ❌ **Production SaaS**: Multi-tenant functionality incomplete
+- ✅ **Revenue Testing**: Usage-based billing calculations are production-accurate
+- ✅ **Demo Environment**: Suitable for ISP prospect demonstrations
+- ✅ **Partner Demos**: Shows container-per-tenant isolation model
+- ❌ **Live SaaS Operations**: Container provisioning automation incomplete
+- ❌ **Partner Commissions**: Revenue sharing calculations need production testing
 
 ## 📈 Roadmap to Production
 
 See [Production Readiness Checklist](PRODUCTION_READINESS_CHECKLIST.md) for the complete roadmap.
 
 **Next Major Milestones:**
-1. **Phase 4 Completion** - Production operations (24 remaining items)
-2. **Load Testing** - Performance validation at scale
-3. **Security Audit** - Third-party security assessment
-4. **Beta Deployment** - Limited production trial
-5. **Production Release** - Full SaaS platform launch
+1. **Phase 4 Completion** - SaaS operations automation (24 remaining items)
+2. **Container Orchestration** - Automated ISP provisioning and scaling
+3. **Partner Revenue System** - Commission calculations and payments
+4. **Beta SaaS Launch** - Limited ISP tenant onboarding
+5. **Full Platform Launch** - Complete SaaS platform with partner network
 
 ---
 

@@ -7,12 +7,12 @@ class DotMacISPError(Exception):
     """Base exception for DotMac ISP Framework."""
 
     def __init__(
-        """  Init   operation."""
         self,
         message: str,
         error_code: Optional[str] = None,
         details: Optional[Dict[str, Any]] = None,
     ):
+        """Initialize DotMac ISP error."""
         self.message = message
         self.error_code = error_code
         self.details = details or {}
@@ -23,13 +23,13 @@ class ValidationError(DotMacISPError):
     """Raised when data validation fails."""
 
     def __init__(
-        """  Init   operation."""
         self,
         message: str = "Validation failed",
         field: Optional[str] = None,
         value: Optional[Any] = None,
         **kwargs,
     ):
+        """Initialize validation error."""
         self.field = field
         self.value = value
         super().__init__(message, error_code="VALIDATION_ERROR", **kwargs)
@@ -39,13 +39,13 @@ class NotFoundError(DotMacISPError):
     """Raised when a requested resource is not found."""
 
     def __init__(
-        """  Init   operation."""
         self,
         message: str = "Resource not found",
         resource_type: Optional[str] = None,
         resource_id: Optional[str] = None,
         **kwargs,
     ):
+        """Initialize not found error."""
         self.resource_type = resource_type
         self.resource_id = resource_id
         super().__init__(message, error_code="NOT_FOUND", **kwargs)
@@ -55,13 +55,13 @@ class ConflictError(DotMacISPError):
     """Raised when a resource conflict occurs."""
 
     def __init__(
-        """  Init   operation."""
         self,
         message: str = "Resource conflict",
         resource_type: Optional[str] = None,
         conflicting_field: Optional[str] = None,
         **kwargs,
     ):
+        """Initialize conflict error."""
         self.resource_type = resource_type
         self.conflicting_field = conflicting_field
         super().__init__(message, error_code="CONFLICT", **kwargs)
@@ -71,7 +71,7 @@ class AuthenticationError(DotMacISPError):
     """Raised when authentication fails."""
 
     def __init__(self, message: str = "Authentication failed", **kwargs):
-        """  Init   operation."""
+        """Initialize authentication error."""
         super().__init__(message, error_code="AUTHENTICATION_ERROR", **kwargs)
 
 
@@ -79,7 +79,6 @@ class AuthorizationError(DotMacISPError):
     """Raised when authorization fails."""
 
     def __init__(
-        """  Init   operation."""
         self,
         message: str = "Authorization failed",
         required_permission: Optional[str] = None,
@@ -93,7 +92,6 @@ class ServiceError(DotMacISPError):
     """Raised when a service operation fails."""
 
     def __init__(
-        """  Init   operation."""
         self,
         message: str = "Service operation failed",
         service_name: Optional[str] = None,
@@ -107,7 +105,6 @@ class ExternalServiceError(DotMacISPError):
     """Raised when an external service call fails."""
 
     def __init__(
-        """  Init   operation."""
         self,
         message: str = "External service error",
         service_name: Optional[str] = None,
@@ -123,7 +120,6 @@ class NetworkError(DotMacISPError):
     """Raised when network-related operations fail."""
 
     def __init__(
-        """  Init   operation."""
         self,
         message: str = "Network operation failed",
         network_resource: Optional[str] = None,
@@ -137,7 +133,6 @@ class BillingError(DotMacISPError):
     """Raised when billing operations fail."""
 
     def __init__(
-        """  Init   operation."""
         self,
         message: str = "Billing operation failed",
         billing_component: Optional[str] = None,
@@ -151,7 +146,6 @@ class TenantError(DotMacISPError):
     """Raised when tenant-related operations fail."""
 
     def __init__(
-        """  Init   operation."""
         self,
         message: str = "Tenant operation failed",
         tenant_id: Optional[str] = None,
@@ -165,7 +159,6 @@ class RateLimitError(DotMacISPError):
     """Raised when rate limit is exceeded."""
 
     def __init__(
-        """  Init   operation."""
         self,
         message: str = "Rate limit exceeded",
         limit: Optional[int] = None,
@@ -181,7 +174,6 @@ class ConfigurationError(DotMacISPError):
     """Raised when configuration is invalid or missing."""
 
     def __init__(
-        """  Init   operation."""
         self,
         message: str = "Configuration error",
         config_key: Optional[str] = None,
@@ -195,7 +187,6 @@ class EntityNotFoundError(DotMacISPError):
     """Raised when a requested entity is not found in the database."""
 
     def __init__(
-        """  Init   operation."""
         self,
         message: str = "Entity not found",
         entity_type: Optional[str] = None,
@@ -211,7 +202,6 @@ class BusinessRuleError(DotMacISPError):
     """Raised when a business rule is violated."""
 
     def __init__(
-        """  Init   operation."""
         self,
         message: str = "Business rule violation",
         rule_name: Optional[str] = None,
@@ -225,7 +215,6 @@ class DuplicateEntityError(DotMacISPError):
     """Raised when attempting to create a duplicate entity."""
 
     def __init__(
-        """  Init   operation."""
         self,
         message: str = "Duplicate entity",
         entity_type: Optional[str] = None,
@@ -241,7 +230,6 @@ class DatabaseError(DotMacISPError):
     """Raised when a database operation fails."""
 
     def __init__(
-        """  Init   operation."""
         self,
         message: str = "Database operation failed",
         operation: Optional[str] = None,
@@ -249,3 +237,10 @@ class DatabaseError(DotMacISPError):
     ):
         self.operation = operation
         super().__init__(message, error_code="DATABASE_ERROR", **kwargs)
+
+
+class NotImplementedError(DotMacISPError):
+    """Raised when a feature is not implemented."""
+
+    def __init__(self, message: str = "Feature not implemented", **kwargs):
+        super().__init__(message, error_code="NOT_IMPLEMENTED", **kwargs)

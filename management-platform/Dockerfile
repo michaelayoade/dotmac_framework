@@ -31,11 +31,7 @@ RUN pip install --no-cache-dir pytest pytest-asyncio pytest-cov black flake8 myp
 # Copy source code
 COPY . .
 
-# Install OpenTofu
-RUN curl -fsSL https://get.opentofu.org/install-opentofu.sh -o install-opentofu.sh \
-    && chmod +x install-opentofu.sh \
-    && ./install-opentofu.sh --install-method deb \
-    && rm install-opentofu.sh
+# Skip OpenTofu installation for now (add later when needed)
 
 # Expose port
 EXPOSE 8000
@@ -52,11 +48,7 @@ COPY migrations ./migrations
 COPY alembic.ini ./
 COPY requirements.txt ./
 
-# Install OpenTofu
-RUN curl -fsSL https://get.opentofu.org/install-opentofu.sh -o install-opentofu.sh \
-    && chmod +x install-opentofu.sh \
-    && ./install-opentofu.sh --install-method deb \
-    && rm install-opentofu.sh
+# Skip OpenTofu installation for now (add later when needed)
 
 # Create non-root user
 RUN useradd --create-home --shell /bin/bash app && \

@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from typing import Optional
-from sqlalchemy import Column, String, Boolean, Text, ForeignKey, Table, Enum, DateTime
+from sqlalchemy import Column, String, Boolean, Text, ForeignKey, Table, Enum, DateTime, Integer, UniqueConstraint, Index
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 import enum
@@ -54,10 +54,17 @@ class User(TenantModel, ContactMixin):
     """User model for system authentication and access."""
 
     __tablename__ = "users"
-    __table_args__ = {"extend_existing": True}
+    __table_args__ = (
+        UniqueConstraint('tenant_id', 'username', name='uq_users_tenant_username'),
+        UniqueConstraint('tenant_id', 'email', name='uq_users_tenant_email'),
+        Index('ix_users_tenant_id', 'tenant_id'),
+        Index('ix_users_username', 'username'),
+        Index('ix_users_email', 'email'),
+        {"extend_existing": True}
+    )
 
-    username = Column(String(50), unique=True, nullable=False, index=True)
-    email = Column(String(255), unique=True, nullable=False, index=True)
+    username = Column(String(50), nullable=False)
+    email = Column(String(255), nullable=False)
     password_hash = Column(String(255), nullable=False)
     first_name = Column(String(100), nullable=False)
     last_name = Column(String(100), nullable=False)
@@ -65,9 +72,12 @@ class User(TenantModel, ContactMixin):
     # Authentication fields
     is_active = Column(Boolean, default=True, nullable=False)
     is_verified = Column(Boolean, default=False, nullable=False)
+    is_superuser = Column(Boolean, default=False, nullable=False)
     last_login = Column(DateTime(timezone=True), nullable=True)
-    failed_login_attempts = Column(String(10), default="0", nullable=False)
-    locked_until = Column(DateTime(timezone=True), nullable=True)
+    
+    # Contact information
+    phone_primary = Column(String(20), nullable=True)
+    phone_secondary = Column(String(20), nullable=True)
 
     # Profile fields
     avatar_url = Column(String(500), nullable=True)
@@ -97,11 +107,16 @@ class Role(TenantModel):
     """Role model for permission management."""
 
     __tablename__ = "roles"
-    __table_args__ = {"extend_existing": True}
+    __table_args__ = (
+        UniqueConstraint('tenant_id', 'name', name='uq_roles_tenant_name'),
+        Index('ix_roles_tenant_id', 'tenant_id'),
+        Index('ix_roles_name', 'name'),
+        {"extend_existing": True}
+    )
 
     name = Column(String(100), nullable=False)
     description = Column(Text, nullable=True)
-    permissions = Column(Text, nullable=True)  # JSON string of permissions
+    permissions = Column(String(500), nullable=True)  # Match migration
     is_system_role = Column(Boolean, default=False, nullable=False)
 
     # Relationships
@@ -112,7 +127,15 @@ class Customer(TenantModel):
     """Customer model for ISP service subscribers."""
 
     __tablename__ = "customers"
-    __table_args__ = {"extend_existing": True}
+    __table_args__ = (
+        UniqueConstraint('tenant_id', 'customer_number', name='uq_customers_tenant_number'),
+        UniqueConstraint('portal_id', name='uq_customers_portal_id'),
+        Index('ix_customers_tenant_id', 'tenant_id'),
+        Index('ix_customers_customer_number', 'customer_number'),
+        Index('ix_customers_portal_id', 'portal_id'),
+        Index('ix_customers_email', 'email'),
+        {"extend_existing": True}
+    )
 
     # Core customer fields (match migration exactly)
     customer_number = Column(String(50), nullable=False)

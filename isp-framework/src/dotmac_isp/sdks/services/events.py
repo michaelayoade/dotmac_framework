@@ -23,13 +23,13 @@ class Event:
     """Event data structure."""
     
     def __init__(
-        """  Init   operation."""
         self,
         event_type: EventType,
         tenant_id: str,
         data: Dict[str, Any],
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ):
+        """Initialize event."""
         self.event_type = event_type
         self.tenant_id = tenant_id
         self.data = data

@@ -1,0 +1,38 @@
+[Unit]
+Description=DotMac Platform Backup Service
+Documentation=https://docs.dotmac.com/operations/backup
+After=docker.service postgresql.service redis.service
+Requires=docker.service
+Wants=postgresql.service redis.service
+
+[Service]
+Type=oneshot
+User=dotmac
+Group=docker
+Environment=PYTHONPATH=/home/dotmac_framework
+WorkingDirectory=/home/dotmac_framework
+ExecStart=/usr/bin/python3 /home/dotmac_framework/scripts/backup-system.py backup --backup-type=scheduled --config=/home/dotmac_framework/config/backup-config.yml
+StandardOutput=journal
+StandardError=journal
+PrivateTmp=yes
+NoNewPrivileges=yes
+ProtectSystem=strict
+ReadWritePaths=/var/backups/dotmac /var/log /tmp
+EnvironmentFile=-/home/dotmac_framework/.env
+
+# Resource limits
+MemoryLimit=4G
+CPUQuota=200%
+IOWeight=100
+
+# Restart policy
+TimeoutStartSec=1800
+TimeoutStopSec=300
+
+# Logging
+SyslogIdentifier=dotmac-backup
+SyslogFacility=daemon
+SyslogLevel=info
+
+[Install]
+WantedBy=multi-user.target

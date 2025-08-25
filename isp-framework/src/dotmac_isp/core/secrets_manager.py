@@ -63,15 +63,8 @@ class SecretsManager:
     Supports OpenBao/Vault, local encrypted storage, and environment variables.
     """
 
-    def __init__(
-        """  Init   operation."""
-        self,
-        backend: str = "openbao",
-        openbao_url: Optional[str] = None,
-        openbao_token: Optional[str] = None,
-        encryption_key: Optional[str] = None,
-        local_storage_path: str = "/etc/dotmac/secrets",
-    ):
+    def __init__(        ):
+            """Initialize operation."""
         self.backend = backend
         self.openbao_url = openbao_url or os.getenv(
             "OPENBAO_URL", "http://localhost:8200"

@@ -6,7 +6,7 @@ import logging
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any, List
 
-import jwt
+from jose import jwt
 from fastapi import HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from passlib.context import CryptContext

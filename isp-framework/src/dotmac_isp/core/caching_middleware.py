@@ -19,7 +19,6 @@ class ResponseCacheMiddleware(BaseHTTPMiddleware):
     """Middleware for automatic HTTP response caching."""
 
     def __init__(
-        """  Init   operation."""
         self,
         app,
         default_ttl: int = 300,  # 5 minutes

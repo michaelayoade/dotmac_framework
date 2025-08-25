@@ -135,13 +135,8 @@ class Session:
 class TokenValidator:
     """JWT token validation service"""
 
-    def __init__(
-        """  Init   operation."""
-        self,
-        public_key: bytes | None = None,
-        issuer: str = "dotmac-platform",
-        audience: str = "dotmac-services",
-    ):
+    def __init__(        ):
+            """Initialize operation."""
         self.issuer = issuer
         self.audience = audience
         self.public_key = public_key
@@ -197,10 +192,8 @@ class TokenValidator:
 class SessionManager:
     """User session management"""
 
-    def __init__(
-        """  Init   operation."""
-        self, session_timeout_minutes: int = 60, max_sessions_per_user: int = 5
-    ):
+    def __init__(        ):
+            """Initialize operation."""
         self.sessions: dict[str, Session] = {}
         self.user_sessions: dict[str, list[str]] = {}
         self.session_timeout = timedelta(minutes=session_timeout_minutes)
@@ -335,13 +328,8 @@ class SessionManager:
 class IdentityProvider:
     """Main identity provider service"""
 
-    def __init__(
-        """  Init   operation."""
-        self,
-        private_key: bytes | None = None,
-        session_manager: SessionManager | None = None,
-        token_validator: TokenValidator | None = None,
-    ):
+    def __init__(        ):
+            """Initialize operation."""
 
         # Generate RSA key pair if not provided
         if private_key:

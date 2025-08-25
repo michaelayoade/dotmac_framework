@@ -138,6 +138,20 @@ class Settings(BaseSettings):
         default="/etc/ssl/dotmac", description="Directory to store SSL certificates"
     )
 
+    # DNS Management Settings
+    cloudflare_token: Optional[str] = Field(
+        default=None, description="Cloudflare API token for DNS automation"
+    )
+    cloudflare_zone_id: Optional[str] = Field(
+        default=None, description="Cloudflare Zone ID for base domain"
+    )
+    base_domain: str = Field(
+        default="dotmac.io", description="Base domain for tenant subdomains"
+    )
+    load_balancer_ip: str = Field(
+        default="127.0.0.1", description="Load balancer IP for DNS A records"
+    )
+
     # Multi-tenancy
     enable_multi_tenancy: bool = True
     tenant_id: str = Field(

@@ -4,10 +4,8 @@
 class PluginError(Exception):
     """Base exception for plugin system errors."""
 
-    def __init__(
-        """  Init   operation."""
-        self, message: str, plugin_name: str = None, plugin_version: str = None
-    ):
+    def __init__(        ):
+            """Initialize operation."""
         self.plugin_name = plugin_name
         self.plugin_version = plugin_version
         super().__init__(message)
@@ -38,10 +36,8 @@ class PluginConfigError(PluginError):
 class PluginDependencyError(PluginError):
     """Exception raised when plugin dependencies cannot be resolved."""
 
-    def __init__(
-        """  Init   operation."""
-        self, message: str, plugin_name: str = None, missing_dependencies: list = None
-    ):
+    def __init__(        ):
+            """Initialize operation."""
         self.missing_dependencies = missing_dependencies or []
         super().__init__(message, plugin_name)
 

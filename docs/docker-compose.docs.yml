@@ -1,0 +1,96 @@
+version: '3.8'
+
+services:
+  # Level 2: Full Infrastructure Documentation
+  docs-with-infrastructure:
+    build:
+      context: .
+      dockerfile: Dockerfile.docs
+    volumes:
+      - .:/docs
+      - ..:/project
+    environment:
+      # Real service connections for complete testing
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=postgresql://docs:docs@postgres:5432/docs
+      - MONGODB_URL=mongodb://mongo:27017/docs
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin
+      - PROMETHEUS_URL=http://prometheus:9090
+    depends_on:
+      - redis
+      - postgres
+      - mongo
+      - rabbitmq
+      - minio
+      - prometheus
+    command: >
+      bash -c "
+        echo '🚀 Building docs with REAL infrastructure...' &&
+        pip install -r requirements.txt &&
+        python check_dependencies.py &&
+        sphinx-build -b html . _build/html -v &&
+        echo '✅ Production-grade documentation complete!'
+      "
+    
+  # Core infrastructure that we CAN replicate
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+      
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: docs
+      POSTGRES_PASSWORD: docs
+      POSTGRES_DB: docs
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+      
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      
+  minio:
+    image: minio/minio:latest
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+      
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+
+volumes:
+  postgres_data:
+  mongo_data:
+  rabbitmq_data:
+  minio_data:
+  prometheus_data:

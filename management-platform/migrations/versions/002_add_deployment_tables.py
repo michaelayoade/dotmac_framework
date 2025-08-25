@@ -19,13 +19,49 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    # Create infrastructure_templates table first (referenced by deployments)
+    op.create_table(
+        'infrastructure_templates',
+        sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True),
+        sa.Column('tenant_id', postgresql.UUID(as_uuid=True), nullable=False),
+        sa.Column('name', sa.String(255), nullable=False),
+        sa.Column('description', sa.Text(), nullable=True),
+        sa.Column('version', sa.String(50), nullable=False),
+        sa.Column('cloud_provider', sa.String(50), nullable=False),
+        sa.Column('resource_tier', sa.String(50), nullable=False),
+        sa.Column('cpu_cores', sa.Integer(), nullable=False),
+        sa.Column('memory_gb', sa.Integer(), nullable=False),
+        sa.Column('storage_gb', sa.Integer(), nullable=False),
+        sa.Column('network_bandwidth_mbps', sa.Integer(), nullable=False),
+        sa.Column('hourly_cost_cents', sa.Integer(), nullable=False),
+        sa.Column('monthly_cost_cents', sa.Integer(), nullable=False),
+        sa.Column('template_config', sa.JSON(), nullable=False),
+        sa.Column('environment_variables', sa.JSON(), nullable=False, default=sa.text("'{}'::json")),
+        sa.Column('is_active', sa.Boolean(), nullable=False, default=True),
+        sa.Column('is_public', sa.Boolean(), nullable=False, default=True),
+        sa.Column('metadata', sa.JSON(), nullable=True),
+        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+        sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+        sa.Column('created_by', sa.String(255), nullable=True),
+        sa.Column('updated_by', sa.String(255), nullable=True),
+        sa.Column('is_deleted', sa.Boolean(), nullable=False, default=False),
+        sa.Column('deleted_at', sa.DateTime(timezone=True), nullable=True),
+        sa.ForeignKeyConstraint(['tenant_id'], ['tenants.id'], ondelete='CASCADE')
+    )
+    
+    # Create indexes for infrastructure_templates
+    op.create_index('ix_infrastructure_templates_tenant_id', 'infrastructure_templates', ['tenant_id'])
+    op.create_index('ix_infrastructure_templates_name', 'infrastructure_templates', ['name'])
+    op.create_index('ix_infrastructure_templates_cloud_provider', 'infrastructure_templates', ['cloud_provider'])
+    op.create_index('ix_infrastructure_templates_resource_tier', 'infrastructure_templates', ['resource_tier'])
+    op.create_index('ix_infrastructure_templates_is_active', 'infrastructure_templates', ['is_active'])
+
     # Create deployments table
     op.create_table(
         'deployments',
         sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True),
         sa.Column('tenant_id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('infrastructure_id', postgresql.UUID(as_uuid=True), nullable=True),
-        sa.Column('template_id', postgresql.UUID(as_uuid=True), nullable=True),
+        sa.Column('infrastructure_template_id', postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column('name', sa.String(255), nullable=False),
         sa.Column('version', sa.String(50), nullable=False),
         sa.Column('status', sa.String(50), nullable=False),
@@ -41,8 +77,7 @@ def upgrade() -> None:
         sa.Column('is_deleted', sa.Boolean(), nullable=False, default=False),
         sa.Column('deleted_at', sa.DateTime(timezone=True), nullable=True),
         sa.ForeignKeyConstraint(['tenant_id'], ['tenants.id'], ondelete='CASCADE'),
-        sa.ForeignKeyConstraint(['infrastructure_id'], ['infrastructure.id']),
-        sa.ForeignKeyConstraint(['template_id'], ['deployment_templates.id'])
+        sa.ForeignKeyConstraint(['infrastructure_template_id'], ['infrastructure_templates.id'])
     )
     
     # Create service_instances table
@@ -111,7 +146,15 @@ def downgrade() -> None:
     op.drop_index('ix_deployments_status')
     op.drop_index('ix_deployments_tenant_id')
     
-    # Drop tables
+    # Drop tables (in reverse order)
     op.drop_table('deployment_logs')
     op.drop_table('service_instances')
     op.drop_table('deployments')
+    
+    # Drop infrastructure_templates indexes and table
+    op.drop_index('ix_infrastructure_templates_is_active')
+    op.drop_index('ix_infrastructure_templates_resource_tier')
+    op.drop_index('ix_infrastructure_templates_cloud_provider')
+    op.drop_index('ix_infrastructure_templates_name')
+    op.drop_index('ix_infrastructure_templates_tenant_id')
+    op.drop_table('infrastructure_templates')

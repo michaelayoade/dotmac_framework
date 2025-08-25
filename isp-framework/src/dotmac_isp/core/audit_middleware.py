@@ -38,9 +38,9 @@ class AuditMiddleware(BaseHTTPMiddleware):
     """Middleware for comprehensive audit logging of HTTP requests."""
 
     def __init__(
-        """  Init   operation."""
         self, app, exclude_paths: list = None, sensitive_endpoints: list = None
     ):
+        """Initialize audit middleware."""
         super().__init__(app)
         self.exclude_paths = exclude_paths or [
             "/health",

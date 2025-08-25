@@ -33,16 +33,8 @@ logger = logging.getLogger(__name__)
 class ObservabilitySDKConfig:
     """Observability SDK configuration."""
 
-    def __init__(
-        """  Init   operation."""
-        self,
-        metrics_retention_days: int = 30,
-        logs_retention_days: int = 7,
-        traces_retention_days: int = 7,
-        enable_async_processing: bool = True,
-        max_queue_size: int = 50000,
-        batch_size: int = 1000,
-    ):
+    def __init__(        ):
+            """Initialize operation."""
         self.metrics_retention_days = metrics_retention_days
         self.logs_retention_days = logs_retention_days
         self.traces_retention_days = traces_retention_days

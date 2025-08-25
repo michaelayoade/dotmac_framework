@@ -18,14 +18,8 @@ logger = logging.getLogger(__name__)
 class InvoiceService(IInvoiceService):
     """Domain service for invoice operations."""
 
-    def __init__(
-        """  Init   operation."""
-        self,
-        invoice_repo: InvoiceRepository,
-        line_item_repo: InvoiceLineItemRepository,
-        calculation_service: IBillingCalculationService,
-        tenant_id: UUID,
-    ):
+    def __init__(        ):
+            """Initialize operation."""
         self.invoice_repo = invoice_repo
         self.line_item_repo = line_item_repo
         self.calculation_service = calculation_service

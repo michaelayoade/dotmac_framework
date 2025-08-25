@@ -80,27 +80,32 @@ autodoc_default_options = {
 
 autodoc_typehints = 'description'
 autodoc_typehints_format = 'short'
-# NEW APPROACH: Only mock what is LITERALLY IMPOSSIBLE to replicate
+# STRATEGIC: Only mock what is LITERALLY IMPOSSIBLE to replicate
+# Based on comprehensive import analysis - fixed security and dependency issues
 autodoc_mock_imports = [
     # 🚫 IMPOSSIBLE: External APIs (cost money, need real credentials)
     'stripe',          # Payment processing: Real money transactions
     'twilio',          # SMS/Voice: Real charges per message  
     'boto3',           # AWS: Creates real cloud resources
     'aiobotocore',     # AWS async client
+    'botocore',        # AWS core client
     'azure',           # Microsoft Azure APIs
     'google-cloud',    # Google Cloud Platform APIs
+    'minio',           # S3-compatible storage (needs server)
     
     # 🚫 IMPOSSIBLE: Network hardware (needs physical equipment)
     'pysnmp',          # SNMP: Requires routers/switches/modems
     'netmiko',         # SSH: Network device configuration
     'napalm',          # Multi-vendor network automation
-    'paramiko',        # SSH: Server access (can be dangerous in docs)
+    'paramiko',        # SSH: Server access (security risk in docs)
     
     # 🚫 IMPOSSIBLE: System automation (needs target infrastructure)  
     'ansible',         # Server provisioning & configuration
     'ansible-runner',  # Playbook execution environment
+    'docker',          # Container management (needs Docker daemon)
+    'kubernetes',      # Container orchestration (needs K8s cluster)
     
-    # 📦 REPLICABLE but heavy for basic docs (mock for performance)
+    # 📦 HEAVY: Optional observability (mock for performance)
     'opentelemetry',
     'opentelemetry-api', 
     'opentelemetry-sdk',
@@ -110,6 +115,14 @@ autodoc_mock_imports = [
     'opentelemetry-instrumentation-redis',
     'opentelemetry-instrumentation-celery',
     'opentelemetry-instrumentation-httpx',
+    'prometheus-client',
+    
+    # 🔒 SECURITY: Mock potentially dangerous packages found in analysis
+    'psycopg2',        # PostgreSQL driver (needs database)
+    'psycopg2-binary', # PostgreSQL binary driver
+    'redis',           # Redis client (needs Redis server)
+    'aioredis',        # Async Redis client
+    'celery',          # Task queue (needs broker)
 ]
 
 # 🎯 STRATEGY: Everything else gets installed for production-grade docs

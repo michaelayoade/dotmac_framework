@@ -325,13 +325,8 @@ class ObservabilityQueueManager:
 class MetricsService:
     """Service for recording and querying metrics."""
 
-    def __init__(
-        """  Init   operation."""
-        self,
-        storage: MetricStorage,
-        queue_manager: ObservabilityQueueManager | None = None,
-        enable_async: bool = True,
-    ):
+    def __init__(        ):
+            """Initialize operation."""
         self.storage = storage
         self.queue_manager = queue_manager
         self.enable_async = enable_async and queue_manager is not None
@@ -375,13 +370,8 @@ class MetricsService:
 class LoggingService:
     """Service for structured logging."""
 
-    def __init__(
-        """  Init   operation."""
-        self,
-        storage: LogStorage,
-        queue_manager: ObservabilityQueueManager | None = None,
-        enable_async: bool = True,
-    ):
+    def __init__(        ):
+            """Initialize operation."""
         self.storage = storage
         self.queue_manager = queue_manager
         self.enable_async = enable_async and queue_manager is not None

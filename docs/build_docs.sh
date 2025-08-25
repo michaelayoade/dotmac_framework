@@ -33,14 +33,39 @@ print_error() {
     echo -e "${RED}✗${NC} $1"
 }
 
-# Install dependencies
+# Install dependencies strategically
 echo "Installing documentation dependencies..."
-if pip install -q -r requirements.txt; then
-    print_status "Dependencies installed"
+
+# Option 1: Try full requirements (includes app dependencies)
+if pip install -q -r requirements-full.txt; then
+    print_status "Full dependencies installed (best quality docs)"
+elif pip install -q -r requirements.txt; then
+    print_warning "Basic docs dependencies only (some imports will be mocked)"
+    echo "To get better documentation, install: pip install -r requirements-full.txt"
 else
     print_error "Failed to install dependencies"
     exit 1
 fi
+
+# Verify critical packages
+echo "Verifying critical packages..."
+python -c "
+import sys
+missing = []
+for pkg in ['httpx', 'structlog', 'fastapi', 'pydantic']:
+    try:
+        __import__(pkg)
+        print(f'✓ {pkg}')
+    except ImportError:
+        missing.append(pkg)
+        print(f'✗ {pkg} (will be mocked)')
+
+if missing:
+    print(f'\\nNote: {len(missing)} packages will use mocked imports')
+    print('For complete documentation, run: pip install -r requirements-full.txt')
+else:
+    print('\\n✓ All critical packages available for documentation')
+"
 
 # Clean previous builds
 echo "Cleaning previous builds..."

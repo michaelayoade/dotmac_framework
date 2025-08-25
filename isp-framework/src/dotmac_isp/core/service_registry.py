@@ -198,9 +198,12 @@ class ServiceContext:
     """Context manager for service lifecycle management."""
 
     def __init__(
-        """  Init   operation."""
-        self, db: Session, tenant_id: UUID, registry: Optional[IServiceRegistry] = None
+        self, 
+        db,
+        tenant_id: str, 
+        registry: Optional['ServiceRegistry'] = None
     ):
+        """Initialize service context."""
         self.db = db
         self.tenant_id = tenant_id
         self.registry = registry or get_service_registry()

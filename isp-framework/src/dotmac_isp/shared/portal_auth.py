@@ -98,7 +98,6 @@ class AuthenticationError(HTTPException):
     """Custom authentication error with portal context."""
     
     def __init__(
-        """  Init   operation."""
         self, 
         detail: str, 
         portal_type: PortalType,

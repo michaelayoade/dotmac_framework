@@ -371,15 +371,8 @@ class DeadLetterQueue:
 class EnhancedJobQueue:
     """Enhanced job queue with all advanced features."""
 
-    def __init__(
-        """  Init   operation."""
-        self,
-        name: str,
-        tenant_id: str,
-        visibility_timeout_seconds: int = 30,
-        max_concurrent_jobs: int = 10,
-        storage_adapter=None,
-    ):
+    def __init__(        ):
+            """Initialize operation."""
         self.name = name
         self.tenant_id = tenant_id
         self.visibility_timeout_seconds = visibility_timeout_seconds

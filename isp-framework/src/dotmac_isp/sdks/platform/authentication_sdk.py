@@ -74,16 +74,8 @@ class AuthSDK:
     - Comprehensive security features
     """
 
-    def __init__(
-        """  Init   operation."""
-        self,
-        secret_key: str,
-        db_session: AsyncSession,
-        algorithm: str = "HS256",
-        access_token_expire_minutes: int = 15,
-        refresh_token_expire_days: int = 30,
-        password_context: CryptContext | None = None,
-    ):
+    def __init__(        ):
+            """Initialize operation."""
         self.secret_key = secret_key
         if AsyncSession is None and db_session is not None:
             raise ImportError(

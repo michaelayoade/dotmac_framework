@@ -1,0 +1,183 @@
+# DotMac Platform Backup Configuration
+
+# Database configuration
+database:
+  host: "${POSTGRES_HOST:-localhost}"
+  port: "${POSTGRES_PORT:-5432}"
+  user: "${POSTGRES_USER:-postgres}"
+  password: "${POSTGRES_PASSWORD}"
+  databases:
+    - dotmac_db
+    - identity_db
+    - billing_db
+    - signoz_db
+
+# Configuration directories to backup
+config_dirs:
+  - /home/dotmac_framework/config
+  - /home/dotmac_framework/shared/communication
+  - /home/dotmac_framework/signoz
+  - /home/dotmac_framework/ssl
+  - /etc/dotmac
+
+# Container images to backup (for air-gapped environments)
+container_images:
+  - dotmac/isp-framework:latest
+  - dotmac/management-platform:latest
+  - signoz/signoz-otel-collector:0.88.11
+  - signoz/query-service:0.40.0
+  - signoz/frontend:0.40.0
+  - postgres:15-alpine
+  - redis:7-alpine
+  - clickhouse/clickhouse-server:23.8-alpine
+
+# Docker volumes to backup
+docker_volumes:
+  - dotmac_postgres_data
+  - dotmac_redis_data
+  - dotmac_signoz_data
+  - dotmac_ssl_certs
+  - dotmac_config_data
+  - dotmac_logs
+
+# Backup retention (days)
+backup_retention_days: 30
+
+# Backup schedule
+backup_schedule:
+  daily: "02:00"    # Daily backup at 2 AM
+  weekly: "sun:03:00"  # Weekly backup on Sunday at 3 AM
+  monthly: "1:04:00"   # Monthly backup on 1st at 4 AM
+
+# Cloud storage configuration
+cloud_backup_enabled: true
+cloud_provider: aws
+
+# AWS S3 configuration
+aws:
+  bucket_name: "${BACKUP_S3_BUCKET:-dotmac-backups}"
+  region: "${AWS_REGION:-us-east-1}"
+  storage_class: "STANDARD_IA"
+  encryption: "AES256"
+
+# Azure Blob Storage configuration (alternative)
+azure:
+  account_name: "${AZURE_STORAGE_ACCOUNT}"
+  container_name: "${AZURE_BACKUP_CONTAINER:-dotmac-backups}"
+
+# GCP Cloud Storage configuration (alternative)
+gcp:
+  bucket_name: "${GCP_BACKUP_BUCKET:-dotmac-backups}"
+  project_id: "${GCP_PROJECT_ID}"
+
+# Backup options
+backup_options:
+  compression: true
+  encryption: true
+  parallel_uploads: 4
+  upload_timeout: 3600  # 1 hour
+  verify_checksums: true
+  backup_container_images: false  # Set to true for air-gapped environments
+  
+# Disaster recovery options
+disaster_recovery:
+  # RTO: Recovery Time Objective (minutes)
+  rto_minutes: 60
+  
+  # RPO: Recovery Point Objective (minutes)
+  rpo_minutes: 15
+  
+  # Cross-region replication
+  cross_region_replication:
+    enabled: true
+    regions:
+      - us-west-2
+      - eu-west-1
+  
+  # Automated restore testing
+  restore_testing:
+    enabled: true
+    frequency: weekly
+    test_environment: staging
+  
+# Monitoring and alerting
+monitoring:
+  # Backup completion notifications
+  notifications:
+    email:
+      enabled: true
+      recipients:
+        - ops@dotmac.com
+        - admin@dotmac.com
+    slack:
+      enabled: true
+      webhook_url: "${SLACK_BACKUP_WEBHOOK}"
+      channel: "#operations"
+    
+  # Monitoring endpoints
+  health_check:
+    enabled: true
+    port: 8080
+    endpoint: "/backup/health"
+  
+  # Metrics export
+  metrics:
+    prometheus_enabled: true
+    signoz_enabled: true
+    custom_metrics:
+      - backup_duration_seconds
+      - backup_size_bytes
+      - backup_success_total
+      - backup_failure_total
+      - restore_duration_seconds
+
+# Security settings
+security:
+  encryption_key_rotation_days: 90
+  backup_access_logs: true
+  audit_trail_enabled: true
+  compliance_mode: true
+  
+  # Access control
+  rbac:
+    backup_operators:
+      - ops-team
+      - platform-admins
+    restore_operators:
+      - platform-admins
+      - emergency-response
+
+# Performance tuning
+performance:
+  # Database backup settings
+  database:
+    parallel_jobs: 4
+    compression_level: 6
+    memory_limit: "2GB"
+    
+  # File backup settings
+  files:
+    chunk_size_mb: 64
+    concurrent_transfers: 8
+    network_timeout: 300
+    
+  # Network optimization
+  network:
+    bandwidth_limit_mbps: 100
+    retry_attempts: 3
+    retry_delay_seconds: 30
+
+# Tenant isolation settings
+tenant_isolation:
+  # Per-tenant backups
+  per_tenant_backups: true
+  tenant_backup_schedule: daily
+  tenant_retention_days: 14
+  
+  # Tenant data encryption
+  per_tenant_encryption: true
+  tenant_key_management: vault
+  
+  # Backup isolation
+  separate_storage_paths: true
+  tenant_access_control: strict

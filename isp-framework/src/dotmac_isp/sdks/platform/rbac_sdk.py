@@ -63,16 +63,8 @@ class CircularRoleError(RBACError):
 class RBACSDKConfig:
     """RBAC SDK configuration."""
 
-    def __init__(
-        """  Init   operation."""
-        self,
-        cache_ttl: int = 300,  # 5 minutes
-        max_role_depth: int = 10,
-        enable_caching: bool = True,
-        enable_audit_logging: bool = True,
-        default_permissions: list[str] | None = None,
-        system_roles: list[str] | None = None,
-    ):
+    def __init__(        ):
+            """Initialize operation."""
         self.cache_ttl = cache_ttl
         self.max_role_depth = max_role_depth
         self.enable_caching = enable_caching

@@ -266,10 +266,34 @@ export const useCustomers = () => {
 
 ### 3. Testing
 
-#### Run Backend Tests
+#### 🚀 NEW: AI-First Testing (REQUIRED)
+
+**Critical**: Always run deployment readiness tests FIRST. These ensure your app will actually start and run correctly.
+
 ```bash
 cd isp-framework
 
+# 1. CRITICAL: Deployment Readiness Check (Must Pass First)
+make -f Makefile.readiness deployment-ready
+# This validates:
+# ✅ App startup works in real environment  
+# ✅ Database schema matches models exactly
+# ✅ All imports succeed (not mocked)
+# ✅ Performance baseline meets requirements
+
+# 2. Traditional Tests (Only runs if deployment-ready passes)
+make -f Makefile.readiness test-legacy
+
+# 3. Development Workflow
+make -f Makefile.readiness dev-ready  # Complete validation + coverage
+```
+
+**Why this matters**: Traditional tests can pass while your app fails to start. Our AI-first approach tests the **entire system** as it runs in production.
+
+📖 **Read the full guide**: [AI-First Testing Strategy](AI_FIRST_TESTING_STRATEGY.md)
+
+#### Legacy Testing Commands (Use after AI-first tests pass)
+```bash
 # Run all tests
 pytest
 
@@ -328,18 +352,38 @@ pre-commit install
 pre-commit run --all-files
 ```
 
-### 5. Committing Changes
+### 5. Pre-Commit Validation (CRITICAL)
+
+**🚨 NEVER commit without running deployment readiness tests first!**
 
 ```bash
-# Stage changes
-git add .
+# 1. ALWAYS run this before committing
+make -f Makefile.readiness deployment-ready
 
-# Commit with conventional commit message
+# 2. If deployment-ready passes, then commit
+git add .
 git commit -m "feat: add customer list endpoint"
 # Types: feat, fix, docs, style, refactor, test, chore
 
-# Push to remote
+# 3. Push to remote
 git push origin feature/your-feature-name
+```
+
+**Why this prevents issues**:
+- ✅ Catches import errors before they reach CI/CD
+- ✅ Validates database migrations work correctly  
+- ✅ Ensures performance doesn't regress
+- ✅ Prevents "works on my machine" deployment failures
+
+**Failed readiness check?** Fix the issues before committing:
+```bash
+# Check the detailed report
+cat deployment_readiness_report.json
+
+# Common fixes:
+pip install -r requirements.txt  # Missing dependencies
+alembic upgrade head             # Database out of sync
+export DATABASE_URL=...          # Environment variables
 ```
 
 ### 6. Creating Pull Request

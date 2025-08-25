@@ -26,18 +26,8 @@ logger = logging.getLogger(__name__)
 class CacheSDKConfig:
     """Configuration for Cache SDK."""
 
-    def __init__(
-        """  Init   operation."""
-        self,
-        redis_url: str | None = None,
-        default_namespace: str = "default",
-        default_ttl: int = 3600,  # Match integration test parameter name
-        default_ttl_seconds: int | None = None,  # Keep for backwards compatibility
-        enable_compression: bool = False,
-        enable_fallback: bool = True,  # Add for integration test compatibility
-        max_key_length: int = 250,
-        max_value_size_mb: int = 10,
-    ):
+    def __init__(        ):
+            """Initialize operation."""
         self.redis_url = redis_url
         self.default_namespace = default_namespace
         # Use default_ttl if provided, otherwise use default_ttl_seconds
@@ -65,14 +55,8 @@ class CacheSDK:
     - Comprehensive error handling and logging
     """
 
-    def __init__(
-        """  Init   operation."""
-        self,
-        config: CacheSDKConfig | None = None,
-        redis_client=None,
-        default_namespace: str = "default",
-        default_ttl_seconds: int = 3600,
-    ):
+    def __init__(        ):
+            """Initialize operation."""
         # Use config if provided, otherwise create default config
         self.config = config or CacheSDKConfig()
         self.redis_client = redis_client

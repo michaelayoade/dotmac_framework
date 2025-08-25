@@ -18,13 +18,8 @@ logger = logging.getLogger(__name__)
 class PaymentService(IPaymentService):
     """Domain service for payment operations."""
 
-    def __init__(
-        """  Init   operation."""
-        self,
-        payment_repo: PaymentRepository,
-        invoice_repo: InvoiceRepository,
-        tenant_id: UUID,
-    ):
+    def __init__(        ):
+            """Initialize operation."""
         self.payment_repo = payment_repo
         self.invoice_repo = invoice_repo
         self.tenant_id = tenant_id

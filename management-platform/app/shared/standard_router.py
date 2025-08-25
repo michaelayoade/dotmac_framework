@@ -276,46 +276,61 @@ class StandardRouterPattern:
         )
         
         # Register endpoints with the router
-        router.post("/", response_model=response_schema)(
-            lambda data=create_schema, 
-                   db: AsyncSession = Depends(),
-                   user_id: str = Depends(get_user_id_dependency),
-                   tenant_id: str = Depends(get_tenant_id_dependency) if tenant_context else None:
-                create_func(data, db, user_id, tenant_id)
-        )
+        # Define the create endpoint function
+        async def create_endpoint(
+            data: create_schema,
+            db: AsyncSession = Depends(),
+            user_id: str = Depends(get_user_id_dependency),
+            tenant_id: str = Depends(get_tenant_id_dependency) if tenant_context else None
+        ):
+            return await create_func(data, db, user_id, tenant_id)
         
-        router.get("/{entity_id}", response_model=response_schema)(
-            lambda entity_id: UUID,
-                   db: AsyncSession = Depends(),
-                   user_id: str = Depends(get_user_id_dependency),
-                   tenant_id: str = Depends(get_tenant_id_dependency) if tenant_context else None:
-                get_func(entity_id, db, user_id, tenant_id)
-        )
+        router.post("/", response_model=response_schema)(create_endpoint)
         
-        router.put("/{entity_id}", response_model=response_schema)(
-            lambda entity_id: UUID,
-                   data=update_schema,
-                   db: AsyncSession = Depends(),
-                   user_id: str = Depends(get_user_id_dependency),
-                   tenant_id: str = Depends(get_tenant_id_dependency) if tenant_context else None:
-                update_func(entity_id, data, db, user_id, tenant_id)
-        )
+        # Define the get endpoint function
+        async def get_endpoint(
+            entity_id: UUID,
+            db: AsyncSession = Depends(),
+            user_id: str = Depends(get_user_id_dependency),
+            tenant_id: str = Depends(get_tenant_id_dependency) if tenant_context else None
+        ):
+            return await get_func(entity_id, db, user_id, tenant_id)
         
-        router.delete("/{entity_id}")(
-            lambda entity_id: UUID,
-                   db: AsyncSession = Depends(),
-                   user_id: str = Depends(get_user_id_dependency),
-                   tenant_id: str = Depends(get_tenant_id_dependency) if tenant_context else None:
-                delete_func(entity_id, db, user_id, tenant_id)
-        )
+        router.get("/{entity_id}", response_model=response_schema)(get_endpoint)
         
-        router.get("/", response_model=List[response_schema])(
-            lambda db: AsyncSession = Depends(),
-                   user_id: str = Depends(get_user_id_dependency),
-                   tenant_id: str = Depends(get_tenant_id_dependency) if tenant_context else None,
-                   skip: int = 0,
-                   limit: int = 100:
-                list_func(db, user_id, tenant_id, skip, limit)
-        )
+        # Define the update endpoint function
+        async def update_endpoint(
+            entity_id: UUID,
+            data: update_schema,
+            db: AsyncSession = Depends(),
+            user_id: str = Depends(get_user_id_dependency),
+            tenant_id: str = Depends(get_tenant_id_dependency) if tenant_context else None
+        ):
+            return await update_func(entity_id, data, db, user_id, tenant_id)
+        
+        router.put("/{entity_id}", response_model=response_schema)(update_endpoint)
+        
+        # Define the delete endpoint function
+        async def delete_endpoint(
+            entity_id: UUID,
+            db: AsyncSession = Depends(),
+            user_id: str = Depends(get_user_id_dependency),
+            tenant_id: str = Depends(get_tenant_id_dependency) if tenant_context else None
+        ):
+            return await delete_func(entity_id, db, user_id, tenant_id)
+        
+        router.delete("/{entity_id}")(delete_endpoint)
+        
+        # Define the list endpoint function
+        async def list_endpoint(
+            db: AsyncSession = Depends(),
+            user_id: str = Depends(get_user_id_dependency),
+            tenant_id: str = Depends(get_tenant_id_dependency) if tenant_context else None,
+            skip: int = 0,
+            limit: int = 100
+        ):
+            return await list_func(db, user_id, tenant_id, skip, limit)
+        
+        router.get("/", response_model=List[response_schema])(list_endpoint)
         
         return router

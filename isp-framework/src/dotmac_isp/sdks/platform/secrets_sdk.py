@@ -72,18 +72,8 @@ class SecretExpiredError(SecretsError):
 class SecretsSDKConfig:
     """Secrets SDK configuration."""
 
-    def __init__(
-        """  Init   operation."""
-        self,
-        master_encryption_key: str | None = None,
-        cache_ttl: int = 300,  # 5 minutes
-        enable_caching: bool = True,
-        enable_audit_logging: bool = True,
-        max_secret_size: int = 64 * 1024,  # 64KB
-        default_expiry_days: int = 365,
-        auto_rotate_warning_days: int = 30,
-        max_versions: int = 10,
-    ):
+    def __init__(        ):
+            """Initialize operation."""
         self.master_encryption_key = master_encryption_key
         self.cache_ttl = cache_ttl
         self.enable_caching = enable_caching

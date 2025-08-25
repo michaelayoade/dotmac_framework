@@ -572,12 +572,8 @@ class EncryptionService:
 class FieldEncryption:
     """Decorator for automatic field encryption in Pydantic models"""
 
-    def __init__(
-        """  Init   operation."""
-        self,
-        encryption_service: EncryptionService,
-        classification: DataClassification = DataClassification.CONFIDENTIAL,
-    ):
+    def __init__(        ):
+            """Initialize operation."""
         self.encryption_service = encryption_service
         self.classification = classification
 

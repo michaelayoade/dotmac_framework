@@ -104,13 +104,8 @@ class PluginConfig(BaseModel):
 class PluginContext:
     """Plugin execution context."""
 
-    def __init__(
-        """  Init   operation."""
-        self,
-        tenant_id: Optional[UUID] = None,
-        user_id: Optional[UUID] = None,
-        request_id: str = None,
-    ):
+    def __init__(        ):
+            """Initialize operation."""
         self.tenant_id = tenant_id
         self.user_id = user_id
         self.request_id = request_id or str(uuid4())

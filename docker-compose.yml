@@ -209,7 +209,7 @@ services:
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-sk_test_placeholder}
       SENDGRID_API_KEY: ${SENDGRID_API_KEY:-sg_placeholder}
       # CORS origins
-      CORS_ORIGINS: '["http://localhost:3000", "http://localhost:3001", "http://localhost:3002"]'
+      CORS_ORIGINS: '["http://localhost:3000", "http://localhost:3001", "http://localhost:3002", "http://149.102.135.97:8000", "http://149.102.135.97:3000", "http://149.102.135.97:3001"]'
       # ISP Framework Integration
       ISP_FRAMEWORK_URL: http://isp-framework:8000
     volumes:

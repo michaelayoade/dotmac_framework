@@ -13,10 +13,9 @@ from ..models.tenant import (
     Tenant, 
     TenantConfiguration, 
     TenantInvitation,
-    TenantUsageMetrics,
-    TenantStatus,
-    TenantTier
+    TenantStatus
 )
+from ..models.billing import UsageRecord  # Using billing model for usage metrics
 from .base import BaseRepository
 
 
@@ -72,19 +71,6 @@ class TenantRepository(BaseRepository[Tenant]):
             order_by="-created_at"
         )
     
-    async def get_tenants_by_tier(
-        self, 
-        tier: TenantTier,
-        skip: int = 0,
-        limit: int = 100
-    ) -> List[Tenant]:
-        """Get tenants by tier."""
-        return await self.list(
-            skip=skip,
-            limit=limit,
-            filters={"tier": tier},
-            order_by="-created_at"
-        )
     
     async def search_tenants(
         self,
@@ -96,7 +82,7 @@ class TenantRepository(BaseRepository[Tenant]):
         """Search tenants by name, email, or slug."""
         return await self.search(
             search_term=search_term,
-            search_fields=["name", "display_name", "slug", "primary_contact_email"],
+            search_fields=["name", "slug", "contact_email"],
             skip=skip,
             limit=limit,
             filters=filters
@@ -180,11 +166,9 @@ class TenantRepository(BaseRepository[Tenant]):
             summary[tenant_id] = {
                 'id': tenant.id,
                 'name': tenant.name,
-                'display_name': tenant.display_name,
+                'slug': tenant.slug,
                 'status': tenant.status,
-                'tier': tenant.tier,
                 'created_at': tenant.created_at,
-                'activated_at': tenant.activated_at,
                 'users_count': user_counts.get(tenant_id, 0),
                 'health_score': 95,  # Placeholder - would come from monitoring service
                 'monthly_revenue': subscriptions.get(tenant_id, {}).get('monthly_revenue', 0),
@@ -216,15 +200,8 @@ class TenantRepository(BaseRepository[Tenant]):
         
         update_data = {"status": new_status}
         
-        if new_status == TenantStatus.ACTIVE:
-            update_data.update({
-                "activated_at": datetime.utcnow(),
-                "suspended_at": None
-            })
-        elif new_status == TenantStatus.SUSPENDED:
-            update_data["suspended_at"] = datetime.utcnow()
-        elif new_status == TenantStatus.CANCELLED:
-            update_data["cancelled_at"] = datetime.utcnow()
+        # Note: activated_at, suspended_at, cancelled_at fields don't exist in current schema
+        # This would need to be added to future migrations if timestamps are needed
         
         return await self.update(tenant_id, update_data, user_id)
     
@@ -449,47 +426,51 @@ class TenantInvitationRepository(BaseRepository[TenantInvitation]):
         ) is not None
 
 
-class TenantUsageMetricsRepository(BaseRepository[TenantUsageMetrics]):
-    """Repository for tenant usage metrics."""
+class TenantUsageRepository(BaseRepository[UsageRecord]):
+    """Repository for tenant usage records."""
     
     def __init__(self, db: AsyncSession):
-        super().__init__(db, TenantUsageMetrics)
+        super().__init__(db, UsageRecord)
     
-    async def get_latest_metrics(
+    async def get_latest_usage(
         self, 
         tenant_id: UUID,
-        period_type: str = "daily"
-    ) -> Optional[TenantUsageMetrics]:
-        """Get latest metrics for a tenant."""
-        query = select(TenantUsageMetrics).where(
-            TenantUsageMetrics.tenant_id == tenant_id,
-            TenantUsageMetrics.period_type == period_type,
-            TenantUsageMetrics.is_deleted == False
-        ).order_by(TenantUsageMetrics.metric_date.desc()).limit(1)
+        metric_name: str
+    ) -> Optional[UsageRecord]:
+        """Get latest usage record for a tenant metric."""
+        query = select(UsageRecord).where(
+            UsageRecord.tenant_id == tenant_id,
+            UsageRecord.metric_name == metric_name,
+            UsageRecord.is_deleted == False
+        ).order_by(UsageRecord.timestamp.desc()).limit(1)
         
         result = await self.db.execute(query)
         return result.scalar_one_or_none()
     
-    async def get_metrics_range(
+    async def get_usage_range(
         self,
         tenant_id: UUID,
         start_date: str,
         end_date: str,
-        period_type: str = "daily"
-    ) -> List[TenantUsageMetrics]:
-        """Get metrics for a date range."""
+        metric_name: Optional[str] = None
+    ) -> List[UsageRecord]:
+        """Get usage records for a date range."""
         from datetime import datetime
         
         start = datetime.fromisoformat(start_date)
         end = datetime.fromisoformat(end_date)
         
-        query = select(TenantUsageMetrics).where(
-            TenantUsageMetrics.tenant_id == tenant_id,
-            TenantUsageMetrics.period_type == period_type,
-            TenantUsageMetrics.metric_date >= start,
-            TenantUsageMetrics.metric_date <= end,
-            TenantUsageMetrics.is_deleted == False
-        ).order_by(TenantUsageMetrics.metric_date.asc())
+        query = select(UsageRecord).where(
+            UsageRecord.tenant_id == tenant_id,
+            UsageRecord.timestamp >= start,
+            UsageRecord.timestamp <= end,
+            UsageRecord.is_deleted == False
+        )
+        
+        if metric_name:
+            query = query.where(UsageRecord.metric_name == metric_name)
+        
+        query = query.order_by(UsageRecord.timestamp.asc())
         
         result = await self.db.execute(query)
         return result.scalars().all()
@@ -497,24 +478,21 @@ class TenantUsageMetricsRepository(BaseRepository[TenantUsageMetrics]):
     async def record_usage(
         self,
         tenant_id: UUID,
-        usage_data: Dict[str, Any],
-        period_type: str = "daily"
-    ) -> TenantUsageMetrics:
-        """Record usage metrics for a tenant."""
+        subscription_id: UUID,
+        metric_name: str,
+        quantity: str,
+        metadata: Optional[Dict[str, Any]] = None
+    ) -> UsageRecord:
+        """Record usage for a tenant."""
         from datetime import datetime
         
-        # Check if metrics for today already exist
-        today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        usage_data = {
+            "tenant_id": tenant_id,
+            "subscription_id": subscription_id,
+            "metric_name": metric_name,
+            "quantity": quantity,
+            "timestamp": datetime.utcnow(),
+            "metadata": metadata
+        }
         
-        existing = await self.get_by_field("metric_date", today)
-        if existing and existing.tenant_id == tenant_id and existing.period_type == period_type:
-            # Update existing
-            return await self.update(existing.id, usage_data)
-        else:
-            # Create new
-            usage_data.update({
-                "tenant_id": tenant_id,
-                "metric_date": today,
-                "period_type": period_type
-            })
-            return await self.create(usage_data)
+        return await self.create(usage_data)

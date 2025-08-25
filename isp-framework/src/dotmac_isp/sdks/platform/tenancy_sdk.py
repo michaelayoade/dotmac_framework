@@ -64,17 +64,8 @@ class TenantSlugExistsError(TenancyError):
 class TenancySDKConfig:
     """Tenancy SDK configuration."""
 
-    def __init__(
-        """  Init   operation."""
-        self,
-        cache_ttl: int = 300,  # 5 minutes
-        enable_caching: bool = True,
-        enable_audit_logging: bool = True,
-        default_quotas: dict[str, int] | None = None,
-        quota_warning_threshold: int = 80,  # percentage
-        trial_duration_days: int = 30,
-        enforce_quotas: bool = True,
-    ):
+    def __init__(        ):
+            """Initialize operation."""
         self.cache_ttl = cache_ttl
         self.enable_caching = enable_caching
         self.enable_audit_logging = enable_audit_logging

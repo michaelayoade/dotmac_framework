@@ -47,14 +47,8 @@ logger = logging.getLogger(__name__)
 class FeatureFlagsSDKConfig:
     """Configuration for Feature Flags SDK."""
 
-    def __init__(
-        """  Init   operation."""
-        self,
-        cache_ttl: int = 300,
-        evaluation_timeout: float = 1.0,
-        enable_audit_logging: bool = True,
-        default_rollout_percentage: float = 0.0,
-    ):
+    def __init__(        ):
+            """Initialize operation."""
         self.cache_ttl = cache_ttl
         self.evaluation_timeout = evaluation_timeout
         self.enable_audit_logging = enable_audit_logging
