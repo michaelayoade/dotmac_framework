@@ -90,7 +90,7 @@ class TestPaginatedResponse:
         
         for total, size, expected_pages in test_cases:
             response = PaginatedResponse.create(
-                items=list(range(min(total, size))), 
+                items=list(range(min(total, size)), 
                 total=total, 
                 page=1, 
                 size=size

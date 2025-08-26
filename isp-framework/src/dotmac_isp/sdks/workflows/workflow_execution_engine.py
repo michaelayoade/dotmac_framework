@@ -160,7 +160,7 @@ class WorkflowExecutionStateMachine:
         """Mark execution as completed successfully."""
         if self.execution.status == ExecutionStatus.RUNNING:
             self.execution.status = ExecutionStatus.COMPLETED
-            self.execution.output_data = self.execution.context.variables.copy()
+            self.execution.output_data = self.execution.context.variables.model_copy()
 
         self.execution.completed_at = datetime.now(timezone.utc)
 
@@ -247,7 +247,7 @@ class RefactoredWorkflowExecutionEngine:
         """Execute the main workflow processing loop."""
         while ready_steps and state_machine.should_continue():
             # Execute current batch of ready steps
-            current_batch = ready_steps.copy()
+            current_batch = ready_steps.model_copy()
             ready_steps.clear()
 
             step_results = await step_orchestrator.execute_step_batch(

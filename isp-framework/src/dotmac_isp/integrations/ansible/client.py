@@ -18,7 +18,7 @@ from dotmac_isp.integrations.ansible.models import (
     DeviceInventory,
     ExecutionStatus,
     PlaybookType,
-)
+, timezone)
 
 
 logger = logging.getLogger(__name__)
@@ -97,7 +97,7 @@ class AnsibleClient:
         Returns:
             PlaybookExecution: Execution result object
         """
-        execution_id = str(uuid.uuid4())
+        execution_id = str(uuid.uuid4()
 
         # Create execution record
         execution = PlaybookExecution(
@@ -135,7 +135,7 @@ class AnsibleClient:
 
             # Update execution status
             execution.status = ExecutionStatus.RUNNING
-            execution.started_at = datetime.utcnow()
+            execution.started_at = datetime.now(timezone.utc)
 
             logger.info(f"Starting playbook execution: {execution_id}")
 
@@ -159,10 +159,10 @@ class AnsibleClient:
             raise AnsibleExecutionError(f"Playbook execution failed: {e}")
 
         finally:
-            execution.completed_at = datetime.utcnow()
+            execution.completed_at = datetime.now(timezone.utc)
             if execution.started_at:
                 duration = execution.completed_at - execution.started_at
-                execution.duration_seconds = int(duration.total_seconds())
+                execution.duration_seconds = int(duration.total_seconds()
 
             # Cleanup temporary files
             await self._cleanup_execution_files(execution_id)
@@ -386,7 +386,7 @@ class AnsibleClient:
 
         # Add verbosity
         if verbose > 0:
-            cmd.append("-" + "v" * min(verbose, 4))
+            cmd.append("-" + "v" * min(verbose, 4)
 
         # Add vault password file if provided
         if self.vault_password_file:
@@ -401,7 +401,7 @@ class AnsibleClient:
         self, cmd: List[str], execution_id: str
     ) -> subprocess.CompletedProcess:
         """Run Ansible command with proper environment."""
-        env = os.environ.copy()
+        env = os.environ.model_copy()
 
         # Set Ansible configuration
         config_file = await self._create_config_file(execution_id)
@@ -540,7 +540,7 @@ class AnsibleClient:
     ) -> None:
         """Update playbook execution statistics."""
         playbook.execution_count += 1
-        playbook.last_executed = datetime.utcnow()
+        playbook.last_executed = datetime.now(timezone.utc)
 
         # Calculate success rate (simplified)
         if execution.status == ExecutionStatus.SUCCESS:

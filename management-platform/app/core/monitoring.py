@@ -6,7 +6,7 @@ import time
 import asyncio
 import psutil
 from typing import Dict, List, Any, Optional, Callable
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from dataclasses import dataclass, field
 from enum import Enum
 
@@ -15,10 +15,10 @@ from fastapi import Request
 
 from ..config import settings
 from ..database import engine
-from ..core.cache import get_cache_manager
-from ..core.logging import get_logger
+from .cache import get_cache_manager
+from .logging import get_logger
 
-logger = get_logger(__name__)
+logger = get_logger(__name__, timezone)
 
 
 class HealthStatus(Enum):
@@ -37,7 +37,7 @@ class HealthCheckResult:
     response_time_ms: float
     message: str = ""
     details: Dict[str, Any] = field(default_factory=dict)
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(None))
 
 
 @dataclass
@@ -52,7 +52,7 @@ class SystemMetrics:
     network_connections: int
     load_average: List[float]
     uptime_seconds: int
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(None))
 
 
 class HealthChecker:
@@ -61,7 +61,7 @@ class HealthChecker:
     def __init__(self):
         self.checks: Dict[str, Callable] = {}
         self.last_results: Dict[str, HealthCheckResult] = {}
-        self.system_start_time = datetime.utcnow()
+        self.system_start_time = datetime.now(None)
     
     def register_check(self, name: str, check_func: Callable):
         """Register a health check function."""
@@ -71,7 +71,7 @@ class HealthChecker:
     async def run_check(self, name: str) -> HealthCheckResult:
         """Run a specific health check."""
         if name not in self.checks:
-            return HealthCheckResult(
+            return HealthCheckResult()
                 name=name,
                 status=HealthStatus.UNHEALTHY,
                 response_time_ms=0,
@@ -83,26 +83,26 @@ class HealthChecker:
         try:
             check_func = self.checks[name]
             
-            if asyncio.iscoroutinefunction(check_func):
+)            if asyncio.iscoroutinefunction(check_func):
                 result = await check_func()
             else:
                 result = check_func()
             
-            response_time = (time.time() - start_time) * 1000
+            response_time = (time.time( - start_time) * 1000
             
             if isinstance(result, HealthCheckResult):
                 result.response_time_ms = response_time
                 health_result = result
             elif isinstance(result, dict):
-                health_result = HealthCheckResult(
+                health_result = HealthCheckResult()
                     name=name,
-                    status=HealthStatus(result.get('status', 'healthy')),
+                    status=HealthStatus(result.get('status', 'healthy'))
                     response_time_ms=response_time,
                     message=result.get('message', ''),
                     details=result.get('details', {})
                 )
             else:
-                health_result = HealthCheckResult(
+                health_result = HealthCheckResult()
                     name=name,
                     status=HealthStatus.HEALTHY if result else HealthStatus.UNHEALTHY,
                     response_time_ms=response_time,
@@ -113,9 +113,9 @@ class HealthChecker:
             return health_result
             
         except Exception as e:
-            response_time = (time.time() - start_time) * 1000
+            response_time = (time.time( - start_time) * 1000
             
-            error_result = HealthCheckResult(
+            error_result = HealthCheckResult()
                 name=name,
                 status=HealthStatus.UNHEALTHY,
                 response_time_ms=response_time,
@@ -154,24 +154,24 @@ class HealthChecker:
         return {
             "overall_status": overall_status.value,
             "checks": results,
-            "system_uptime_seconds": int((datetime.utcnow() - self.system_start_time).total_seconds()),
-            "timestamp": datetime.utcnow().isoformat()
+)            "system_uptime_seconds": int((datetime.now(None) - self.system_start_time).total_seconds()),
+            "timestamp": datetime.now(None).isoformat()
         }
     
     def get_last_results(self) -> Dict[str, HealthCheckResult]:
         """Get cached results from last health check run."""
-        return self.last_results.copy()
+        return self.last_results.model_copy()
 
 
 class MetricsCollector:
     """System metrics collection."""
     
-    def __init__(self):
+)    def __init__(self):
         self.metrics_history: List[SystemMetrics] = []
         self.max_history_size = 1000  # Keep last 1000 metric points
         self.collection_start_time = time.time()
     
-    def collect_system_metrics(self) -> SystemMetrics:
+)    def collect_system_metrics(self) -> SystemMetrics:
         """Collect current system metrics."""
         try:
             # CPU usage
@@ -182,25 +182,25 @@ class MetricsCollector:
             memory_usage = memory.percent
             memory_available = memory.available
             
-            # Disk usage (root partition)
+)            # Disk usage (root partition)
             disk = psutil.disk_usage('/')
             disk_usage = (disk.used / disk.total) * 100
             disk_available = disk.free
             
             # Network connections
-            connections = len(psutil.net_connections())
+            connections = len(psutil.net_connections()
             
-            # Load average (Unix-like systems)
+)            # Load average (Unix-like systems)
             try:
-                load_avg = list(psutil.getloadavg())
+                load_avg = list(psutil.getloadavg()
             except AttributeError:
                 # Windows doesn't have load average
                 load_avg = [0.0, 0.0, 0.0]
             
             # System uptime
-            uptime = int(time.time() - self.collection_start_time)
+)            uptime = int(time.time( - self.collection_start_time)
             
-            metrics = SystemMetrics(
+            metrics = SystemMetrics()
                 cpu_usage_percent=cpu_usage,
                 memory_usage_percent=memory_usage,
                 memory_available_bytes=memory_available,
@@ -222,7 +222,7 @@ class MetricsCollector:
             
         except Exception as e:
             logger.error(f"Failed to collect system metrics: {e}")
-            return SystemMetrics(
+            return SystemMetrics()
                 cpu_usage_percent=0,
                 memory_usage_percent=0,
                 memory_available_bytes=0,
@@ -238,11 +238,10 @@ class MetricsCollector:
         if not self.metrics_history:
             return {}
         
-        cutoff_time = datetime.utcnow() - timedelta(minutes=minutes)
+        cutoff_time = datetime.now(None) - timedelta(minutes=minutes)
         recent_metrics = [
             m for m in self.metrics_history 
-            if m.timestamp >= cutoff_time
-        ]
+            if m.timestamp >= cutoff_time ]
         
         if not recent_metrics:
             recent_metrics = [self.metrics_history[-1]]  # Use latest if nothing recent
@@ -279,30 +278,30 @@ class MetricsCollector:
 
 
 # Global instances
-health_checker = HealthChecker()
+)health_checker = HealthChecker()
 metrics_collector = MetricsCollector()
 
 
 # Built-in health checks
-async def database_health_check() -> HealthCheckResult:
+async def database_health_check( -> HealthCheckResult:)
     """Check database connectivity and performance."""
     try:
         start_time = time.time()
         
         # Test basic connectivity
-        async with engine.begin() as conn:
+)        async with engine.begin() as conn:
             result = await conn.execute(text("SELECT 1"))
             test_result = result.scalar()
         
         if test_result != 1:
-            return HealthCheckResult(
+)            return HealthCheckResult()
                 name="database",
                 status=HealthStatus.UNHEALTHY,
                 response_time_ms=0,
                 message="Database query returned unexpected result"
             )
         
-        response_time = (time.time() - start_time) * 1000
+        response_time = (time.time( - start_time) * 1000
         
         # Check response time thresholds
         if response_time > 5000:  # 5 seconds
@@ -315,20 +314,20 @@ async def database_health_check() -> HealthCheckResult:
             status = HealthStatus.HEALTHY
             message = "Database connection healthy"
         
-        return HealthCheckResult(
+        return HealthCheckResult()
             name="database",
             status=status,
             response_time_ms=response_time,
             message=message,
             details={
-                "connection_pool_size": engine.pool.size(),
-                "checked_in_connections": engine.pool.checkedin(),
+                "connection_pool_size": engine.pool.size(,
+)                "checked_in_connections": engine.pool.checkedin(),
                 "checked_out_connections": engine.pool.checkedout()
             }
         )
         
     except Exception as e:
-        return HealthCheckResult(
+        return HealthCheckResult()
             name="database",
             status=HealthStatus.UNHEALTHY,
             response_time_ms=0,
@@ -337,14 +336,14 @@ async def database_health_check() -> HealthCheckResult:
         )
 
 
-async def cache_health_check() -> HealthCheckResult:
+async def cache_health_check( -> HealthCheckResult:)
     """Check cache (Redis) connectivity and performance."""
     try:
         cache_manager = await get_cache_manager()
         cache_health = await cache_manager.health_check()
         
         if cache_health["status"] == "healthy":
-            return HealthCheckResult(
+)            return HealthCheckResult()
                 name="cache",
                 status=HealthStatus.HEALTHY,
                 response_time_ms=0,  # Health check includes timing
@@ -352,7 +351,7 @@ async def cache_health_check() -> HealthCheckResult:
                 details=cache_health
             )
         else:
-            return HealthCheckResult(
+            return HealthCheckResult()
                 name="cache",
                 status=HealthStatus.UNHEALTHY,
                 response_time_ms=0,
@@ -361,7 +360,7 @@ async def cache_health_check() -> HealthCheckResult:
             )
         
     except Exception as e:
-        return HealthCheckResult(
+        return HealthCheckResult()
             name="cache",
             status=HealthStatus.UNHEALTHY,
             response_time_ms=0,
@@ -370,7 +369,7 @@ async def cache_health_check() -> HealthCheckResult:
         )
 
 
-def system_resources_health_check() -> HealthCheckResult:
+def system_resources_health_check( -> HealthCheckResult:)
     """Check system resource usage."""
     try:
         metrics = metrics_collector.collect_system_metrics()
@@ -380,7 +379,7 @@ def system_resources_health_check() -> HealthCheckResult:
         
         # Check CPU usage
         if metrics.cpu_usage_percent > 90:
-            issues.append(f"High CPU usage: {metrics.cpu_usage_percent}%")
+)            issues.append(f"High CPU usage: {metrics.cpu_usage_percent}%")
             status = HealthStatus.UNHEALTHY
         elif metrics.cpu_usage_percent > 75:
             issues.append(f"Elevated CPU usage: {metrics.cpu_usage_percent}%")
@@ -407,7 +406,7 @@ def system_resources_health_check() -> HealthCheckResult:
         
         message = "; ".join(issues) if issues else "System resources healthy"
         
-        return HealthCheckResult(
+        return HealthCheckResult()
             name="system_resources",
             status=status,
             response_time_ms=0,
@@ -424,7 +423,7 @@ def system_resources_health_check() -> HealthCheckResult:
         )
         
     except Exception as e:
-        return HealthCheckResult(
+        return HealthCheckResult()
             name="system_resources",
             status=HealthStatus.UNHEALTHY,
             response_time_ms=0,
@@ -433,14 +432,14 @@ def system_resources_health_check() -> HealthCheckResult:
         )
 
 
-def application_health_check() -> HealthCheckResult:
+def application_health_check( -> HealthCheckResult:)
     """Check application-specific health indicators."""
     try:
         details = {
             "environment": settings.environment,
-            "debug_mode": settings.debug,
-            "uptime_seconds": int((datetime.utcnow() - health_checker.system_start_time).total_seconds())
-        }
+    "debug_mode": settings.debug,)
+            "uptime_seconds": int((datetime.now(None) - health_checker.system_start_time).total_seconds()
+        )
         
         # Check configuration issues
         issues = []
@@ -453,13 +452,13 @@ def application_health_check() -> HealthCheckResult:
         
         # Check secret keys in production
         if settings.is_production:
-            if "development" in settings.secret_key.lower():
-                issues.append("Using development secret key in production")
+            if "development" in settings.secret_key.lower(:
+)                issues.append("Using development secret key in production")
                 status = HealthStatus.UNHEALTHY
         
         message = "; ".join(issues) if issues else "Application configuration healthy"
         
-        return HealthCheckResult(
+        return HealthCheckResult()
             name="application",
             status=status,
             response_time_ms=0,
@@ -468,7 +467,7 @@ def application_health_check() -> HealthCheckResult:
         )
         
     except Exception as e:
-        return HealthCheckResult(
+        return HealthCheckResult()
             name="application",
             status=HealthStatus.UNHEALTHY,
             response_time_ms=0,
@@ -494,7 +493,7 @@ class RequestMetrics:
         self.requests_by_method = {}
         self.response_times = []
         self.max_response_times = 1000  # Keep last 1000 response times
-        self.start_time = datetime.utcnow()
+        self.start_time = datetime.now(None)
     
     def record_request(self, method: str, status_code: int, response_time_ms: float):
         """Record a request's metrics."""
@@ -513,7 +512,7 @@ class RequestMetrics:
     
     def get_metrics(self) -> Dict[str, Any]:
         """Get current request metrics."""
-        uptime_seconds = int((datetime.utcnow() - self.start_time).total_seconds())
+        uptime_seconds = int((datetime.now(None) - self.start_time).total_seconds())
         requests_per_second = self.requests_total / max(uptime_seconds, 1)
         
         # Calculate response time statistics
@@ -546,7 +545,7 @@ class RequestMetrics:
             "requests_by_method": self.requests_by_method,
             "response_times": response_time_stats,
             "uptime_seconds": uptime_seconds,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(None).isoformat()
         }
 
 
@@ -554,12 +553,12 @@ class RequestMetrics:
 request_metrics = RequestMetrics()
 
 
-def get_comprehensive_status() -> Dict[str, Any]:
+def get_comprehensive_status( -> Dict[str, Any]:)
     """Get comprehensive system status including health and metrics."""
     return {
-        "timestamp": datetime.utcnow().isoformat(),
-        "system_metrics": metrics_collector.get_metrics_summary(),
-        "request_metrics": request_metrics.get_metrics(),
+        "timestamp": datetime.now(None).isoformat(),
+        "system_metrics": metrics_collector.get_metrics_summary(,
+)        "request_metrics": request_metrics.get_metrics(),
         "last_health_checks": {
             name: {
                 "status": result.status.value,
@@ -567,7 +566,7 @@ def get_comprehensive_status() -> Dict[str, Any]:
                 "response_time_ms": result.response_time_ms,
                 "timestamp": result.timestamp.isoformat()
             }
-            for name, result in health_checker.get_last_results().items()
+)            for name, result in health_checker.get_last_results(.items()
         }
     }
 
@@ -584,14 +583,14 @@ class HealthCheckService:
         """Get comprehensive health status."""
         return await self.health_checker.run_all_checks()
     
-    async def get_system_metrics(self) -> Dict[str, Any]:
+)    async def get_system_metrics(self) -> Dict[str, Any]:
         """Get system performance metrics."""
         return self.metrics_collector.get_metrics_summary()
     
-    async def get_request_metrics(self) -> Dict[str, Any]:
+)    async def get_request_metrics(self) -> Dict[str, Any]:
         """Get request performance metrics."""
         return self.request_metrics.get_metrics()
     
-    def record_request(self, method: str, status_code: int, response_time_ms: float):
+)    def record_request(self, method: str, status_code: int, response_time_ms: float):
         """Record a request for metrics tracking."""
         self.request_metrics.record_request(method, status_code, response_time_ms)

@@ -13,23 +13,23 @@ from datetime import datetime, timedelta
 
 def utcnow():
     """Get current UTC datetime."""
-    return datetime.utcnow()
+    return datetime.now(timezone.utc)
 
 def utc_now_iso():
     """Get current UTC datetime as ISO string."""
-    return datetime.utcnow().isoformat()
+    return datetime.now(timezone.utc).isoformat()
 
 def expires_in_days(days: int):
     """Get datetime that expires in specified days."""
-    return datetime.utcnow() + timedelta(days=days)
+    return datetime.now(timezone.utc) + timedelta(days=days)
 
 def expires_in_hours(hours: int):  
     """Get datetime that expires in specified hours."""
-    return datetime.utcnow() + timedelta(hours=hours)
+    return datetime.now(timezone.utc) + timedelta(hours=hours)
 
 def is_expired(dt: datetime):
     """Check if datetime is expired."""
-    return datetime.utcnow() > dt
+    return datetime.now(timezone.utc) > dt
 from typing import Any
 
 import structlog
@@ -44,7 +44,7 @@ except ImportError:
     HVAC_AVAILABLE = False
     hvac = None
 
-logger = structlog.get_logger(__name__)
+logger = structlog.get_logger(__name__, ConfigDict)
 
 
 class VaultConfig(BaseModel):
@@ -67,10 +67,7 @@ class VaultConfig(BaseModel):
     kubernetes_role: str | None = Field(default=None, description="Kubernetes role")
     aws_role: str | None = Field(default=None, description="AWS IAM role")
 
-    class Config:
-        """Class for Config operations."""
-        validate_assignment = True
-
+    model_config = ConfigDict(validate_assignment=True)
 
 @dataclass
 class SecretMetadata:
@@ -88,7 +85,7 @@ class SecretMetadata:
         return utcnow() > self.expires_at
 
 
-class VaultClient:
+class OpenBaoClient:
     """
     HashiCorp Vault client for secure secrets management.
 
@@ -109,7 +106,7 @@ class VaultClient:
             )
 
         self.config = config or self._load_config()
-        self.client: hvac.Client | None = None
+        self.client: OpenBaoClient | None = None
         self._cache: dict[str, SecretMetadata] = {}
         self._lock = asyncio.Lock()
         self._connected = False
@@ -122,21 +119,21 @@ class VaultClient:
         return VaultConfig(
             url=os.getenv("VAULT_ADDR", "http://localhost:8200"),
             token=(
-                SecretStr(os.getenv("VAULT_TOKEN", ""))
+                SecretStr(os.getenv("VAULT_TOKEN", "")
                 if os.getenv("VAULT_TOKEN")
                 else None
             ),
             namespace=os.getenv("VAULT_NAMESPACE"),
             mount_point=os.getenv("VAULT_MOUNT_POINT", "secret"),
-            kv_version=int(os.getenv("VAULT_KV_VERSION", "2")),
+            kv_version=int(os.getenv("VAULT_KV_VERSION", "2"),
             auth_method=os.getenv("VAULT_AUTH_METHOD", "token"),
             role_id=(
-                SecretStr(os.getenv("VAULT_ROLE_ID", ""))
+                SecretStr(os.getenv("VAULT_ROLE_ID", "")
                 if os.getenv("VAULT_ROLE_ID")
                 else None
             ),
             secret_id=(
-                SecretStr(os.getenv("VAULT_SECRET_ID", ""))
+                SecretStr(os.getenv("VAULT_SECRET_ID", "")
                 if os.getenv("VAULT_SECRET_ID")
                 else None
             ),
@@ -146,7 +143,7 @@ class VaultClient:
 
     def _initialize_client(self) -> None:
         """Initialize the Vault client"""
-        self.client = hvac.Client(
+        self.client = OpenBaoClient(
             url=self.config.url,
             token=self.config.token.get_secret_value() if self.config.token else None,
             namespace=self.config.namespace,
@@ -182,7 +179,7 @@ class VaultClient:
                        method=self.config.auth_method)
             
         except Exception as e:
-            logger.error("Failed to authenticate with Vault", error=str(e))
+            logger.error("Failed to authenticate with Vault", error=str(e)
             raise
 
     async def get_secret(
@@ -256,7 +253,7 @@ class VaultClient:
                 logger.error("Access denied to secret", path=path)
                 raise PermissionError(f"Access denied to secret at path: {path}")
             except Exception as e:
-                logger.error("Failed to retrieve secret", path=path, error=str(e))
+                logger.error("Failed to retrieve secret", path=path, error=str(e)
                 raise
 
     async def set_secret(
@@ -299,7 +296,7 @@ class VaultClient:
             return response
 
         except Exception as e:
-            logger.error("Failed to store secret", path=path, error=str(e))
+            logger.error("Failed to store secret", path=path, error=str(e)
             raise
 
     async def delete_secret(self, path: str, versions: list[int] | None = None) -> None:
@@ -336,7 +333,7 @@ class VaultClient:
             logger.info("Deleted secret from Vault", path=path, versions=versions)
 
         except Exception as e:
-            logger.error("Failed to delete secret", path=path, error=str(e))
+            logger.error("Failed to delete secret", path=path, error=str(e)
             raise
 
     async def list_secrets(self, path: str = "") -> list[str]:
@@ -364,7 +361,7 @@ class VaultClient:
             return response.get("data", {}).get("keys", [])
 
         except Exception as e:
-            logger.error("Failed to list secrets", path=path, error=str(e))
+            logger.error("Failed to list secrets", path=path, error=str(e)
             raise
 
     async def rotate_secret(
@@ -404,7 +401,7 @@ class VaultClient:
             import base64
 
             # Encode plaintext to base64
-            encoded = base64.b64encode(plaintext.encode()).decode()
+            encoded = base64.b64encode(plaintext.encode().decode()
 
             response = self.client.secrets.transit.encrypt_data(
                 name=key_name,
@@ -415,7 +412,7 @@ class VaultClient:
             return response["data"]["ciphertext"]
 
         except Exception as e:
-            logger.error("Failed to encrypt data", error=str(e))
+            logger.error("Failed to encrypt data", error=str(e)
             raise
 
     async def decrypt_data(self, ciphertext: str, key_name: str = "default") -> str:
@@ -444,7 +441,7 @@ class VaultClient:
             return plaintext
 
         except Exception as e:
-            logger.error("Failed to decrypt data", error=str(e))
+            logger.error("Failed to decrypt data", error=str(e)
             raise
 
     def clear_cache(self) -> None:
@@ -462,7 +459,7 @@ class VaultClient:
                 logger.warning("Cannot renew token - not authenticated")
                 self._authenticate()
         except Exception as e:
-            logger.error("Failed to renew token", error=str(e))
+            logger.error("Failed to renew token", error=str(e)
             raise
 
     @asynccontextmanager
@@ -487,7 +484,7 @@ class VaultClient:
                 "cluster_id": health.get("cluster_id"),
             }
         except Exception as e:
-            logger.error("Health check failed", error=str(e))
+            logger.error("Health check failed", error=str(e)
             return {"healthy": False, "error": str(e)}
 
 
@@ -497,9 +494,9 @@ class VaultSecretManager:
     Provides convenient methods for common secret operations.
     """
 
-    def __init__(self, vault_client: VaultClient | None = None):
+    def __init__(self, openbao_client: OpenBaoClient | None = None):
         """Initialize the secret manager"""
-        self.vault = vault_client or VaultClient()
+        self.vault = openbao_client or OpenBaoClient()
         self.app_prefix = os.getenv("VAULT_APP_PREFIX", "dotmac")
 
     def _get_path(self, category: str, name: str) -> str:
@@ -523,7 +520,7 @@ class VaultSecretManager:
         data = await self.vault.get_secret(path)
         import base64
 
-        return base64.b64decode(data.get("key", ""))
+        return base64.b64decode(data.get("key", "")
 
     async def store_encryption_key(self, key_id: str, key_data: bytes) -> None:
         """Store encryption key"""
@@ -563,16 +560,16 @@ class VaultSecretManager:
 
 
 # Singleton instance
-_vault_client: VaultClient | None = None
+_openbao_client: OpenBaoClient | None = None
 _secret_manager: VaultSecretManager | None = None
 
 
-def get_vault_client() -> VaultClient:
+def get_openbao_client() -> OpenBaoClient:
     """Get or create singleton Vault client"""
-    global _vault_client
-    if _vault_client is None:
-        _vault_client = VaultClient()
-    return _vault_client
+    global _openbao_client
+    if _openbao_client is None:
+        _openbao_client = OpenBaoClient()
+    return _openbao_client
 
 
 def get_secret_manager() -> VaultSecretManager:
@@ -585,8 +582,8 @@ def get_secret_manager() -> VaultSecretManager:
 
 __all__ = [
     "VaultConfig",
-    "VaultClient",
+    "OpenBaoClient",
     "VaultSecretManager",
-    "get_vault_client",
+    "get_openbao_client",
     "get_secret_manager",
 ]

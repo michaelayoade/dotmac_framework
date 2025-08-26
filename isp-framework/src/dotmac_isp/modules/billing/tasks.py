@@ -1,7 +1,7 @@
 """Billing-related background tasks."""
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, Any, List
 from decimal import Decimal
 
@@ -37,7 +37,7 @@ def process_monthly_billing(self):
         return {
             "processed_count": processed_count,
             "failed_count": failed_count,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     except Exception as e:
@@ -63,8 +63,8 @@ def process_payment(self, invoice_id: str, payment_method_id: str, amount: float
             "invoice_id": invoice_id,
             "amount": amount,
             "status": "completed",
-            "transaction_id": f"txn_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
-            "timestamp": datetime.utcnow().isoformat(),
+            "transaction_id": f"txn_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
         logger.info(f"Payment processed successfully: {result['transaction_id']}")
@@ -91,13 +91,13 @@ def generate_invoice(
         # 5. Send to customer
 
         invoice_data = {
-            "invoice_id": f"inv_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
+            "invoice_id": f"inv_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}",
             "subscription_id": subscription_id,
             "billing_period_start": billing_period_start,
             "billing_period_end": billing_period_end,
             "amount": Decimal("99.99"),  # Placeholder
             "status": "pending",
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
         }
 
         logger.info(f"Invoice generated: {invoice_data['invoice_id']}")
@@ -138,7 +138,7 @@ def send_payment_reminder(
             "invoice_id": invoice_id,
             "reminder_sent": True,
             "email_task_id": result.id,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     except Exception as e:
@@ -159,12 +159,12 @@ def process_refund(self, transaction_id: str, amount: float, reason: str):
         # 4. Send confirmation to customer
 
         refund_data = {
-            "refund_id": f"ref_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
+            "refund_id": f"ref_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}",
             "original_transaction_id": transaction_id,
             "amount": amount,
             "reason": reason,
             "status": "completed",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
         logger.info(f"Refund processed successfully: {refund_data['refund_id']}")
@@ -194,7 +194,7 @@ def update_subscription_status(
             "old_status": "active",  # Would be retrieved from database
             "new_status": new_status,
             "reason": reason,
-            "updated_at": datetime.utcnow().isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
         }
 
         # Send notification about status change

@@ -14,11 +14,11 @@ from dataclasses import dataclass
 from enum import Enum
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from ..repositories.plugin_additional import (
+from repositories.plugin_additional import ()
     PluginRepository,
     PluginInstallationRepository,
     PluginVersionRepository
-)
+, timezone)
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +79,7 @@ class SemanticVersion:
     
     def __eq__(self, other: 'SemanticVersion') -> bool:
         """Equality comparison."""
-        return (self.major == other.major and 
+        return (self.major == other.major and )
                 self.minor == other.minor and 
                 self.patch == other.patch and 
                 self.prerelease == other.prerelease)
@@ -125,7 +125,7 @@ class PluginVersionManager:
         version_string = version_string.lstrip('v')
         
         # Semantic versioning regex
-        semver_pattern = r'^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$'
+        semver_pattern = r'^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$')
         
         match = re.match(semver_pattern, version_string)
         if not match:
@@ -133,14 +133,13 @@ class PluginVersionManager:
             simple_patterns = [
                 r'^(\d+)\.(\d+)\.(\d+)$',  # 1.2.3
                 r'^(\d+)\.(\d+)$',         # 1.2 -> 1.2.0
-                r'^(\d+)$'                 # 1 -> 1.0.0
-            ]
+                r'^(\d+)$'                 # 1 -> 1.0.0 ]
             
             for pattern in simple_patterns:
                 match = re.match(pattern, version_string)
                 if match:
-                    groups = match.groups()
-                    major = int(groups[0])
+                    groups = match.groups(
+)                    major = int(groups[0])
                     minor = int(groups[1]) if len(groups) > 1 and groups[1] else 0
                     patch = int(groups[2]) if len(groups) > 2 and groups[2] else 0
                     return SemanticVersion(major, minor, patch)
@@ -174,7 +173,7 @@ class PluginVersionManager:
             # Determine risk level
             risk_level = self._determine_risk_level(version_type, compatibility_level)
             
-            return VersionComparison(
+            return VersionComparison()
                 current_version=current,
                 target_version=target,
                 is_upgrade=is_upgrade,
@@ -190,7 +189,7 @@ class PluginVersionManager:
             
         except Exception as e:
             logger.error(f"Failed to compare versions {current} and {target}: {e}")
-            return VersionComparison(
+            return VersionComparison()
                 current_version=current,
                 target_version=target,
                 is_upgrade=False,
@@ -204,9 +203,9 @@ class PluginVersionManager:
                 risk_level="unknown"
             )
     
-    async def get_available_updates(
+    async def get_available_updates(:)
         self,
-        installation_id: UUID
+    installation_id: UUID)
     ) -> Dict[str, Any]:
         """Get available updates for a plugin installation."""
         try:
@@ -230,15 +229,15 @@ class PluginVersionManager:
                 if version_semver > current_semver:
                     comparison = self.compare_versions(current_version, version.version)
                     
-                    updates.append({
+                    updates.append({)
                         "version": version.version,
-                        "release_date": version.release_date.isoformat() if version.release_date else None,
+                        "release_date": version.release_date.isoformat( if version.release_date else None,
                         "version_type": comparison.version_type.value,
                         "compatibility_level": comparison.compatibility_level.value,
                         "risk_level": comparison.risk_level,
                         "release_notes": version.release_notes,
                         "security_update": version.is_security_update,
-                        "recommended": self._is_recommended_update(comparison, version)
+)                        "recommended": self._is_recommended_update(comparison, version)
                     })
             
             # Sort by version (newest first)
@@ -259,16 +258,16 @@ class PluginVersionManager:
                 "recommended_update": recommended_update,
                 "update_available": len(updates) > 0,
                 "security_updates_available": any(u["security_update"] for u in updates),
-                "generated_at": datetime.utcnow().isoformat()
+                "generated_at": datetime.now(None).isoformat()
             }
             
         except Exception as e:
             logger.error(f"Failed to get available updates: {e}")
             return {"error": str(e)}
     
-    async def get_tenant_update_summary(
+    async def get_tenant_update_summary(:)
         self,
-        tenant_id: UUID
+    tenant_id: UUID)
     ) -> Dict[str, Any]:
         """Get update summary for all plugins in a tenant."""
         try:
@@ -319,7 +318,7 @@ class PluginVersionManager:
                     # Add to recommended updates if there's a recommended version
                     recommended = updates_info.get("recommended_update")
                     if recommended:
-                        summary["recommended_updates"].append({
+                        summary["recommended_updates"].append({)
                             "plugin_name": installation.plugin.name,
                             "installation_id": installation.id,
                             "current_version": updates_info["current_version"],
@@ -331,14 +330,14 @@ class PluginVersionManager:
                     
                     # Check if plugin needs immediate attention
                     if any(u["security_update"] for u in available_updates):
-                        summary["plugins_needing_attention"].append({
+                        summary["plugins_needing_attention"].append({)
                             "plugin_name": installation.plugin.name,
                             "installation_id": installation.id,
                             "reason": "Security update available",
                             "urgency": "high"
                         })
                     elif any(u["risk_level"] == "high" for u in available_updates):
-                        summary["plugins_needing_attention"].append({
+                        summary["plugins_needing_attention"].append({)
                             "plugin_name": installation.plugin.name,
                             "installation_id": installation.id,
                             "reason": "High-risk update available",
@@ -348,18 +347,18 @@ class PluginVersionManager:
             return {
                 "tenant_id": tenant_id,
                 "update_summary": summary,
-                "generated_at": datetime.utcnow().isoformat()
+                "generated_at": datetime.now(None).isoformat()
             }
             
         except Exception as e:
             logger.error(f"Failed to get tenant update summary: {e}")
             return {"error": str(e)}
     
-    async def check_version_compatibility(
+    async def check_version_compatibility(:)
         self,
         plugin_id: UUID,
         target_version: str,
-        dependency_versions: Dict[str, str]
+    dependency_versions: Dict[str, str])
     ) -> Dict[str, Any]:
         """Check if a target version is compatible with dependency versions."""
         try:
@@ -382,12 +381,12 @@ class PluginVersionManager:
             
             # Check dependency compatibility
             if version_details.dependencies:
-                for dep_name, required_version in version_details.dependencies.items():
-                    current_dep_version = dependency_versions.get(dep_name)
+                for dep_name, required_version in version_details.dependencies.items(:
+)                    current_dep_version = dependency_versions.get(dep_name)
                     
                     if not current_dep_version:
                         compatibility_results["compatible"] = False
-                        compatibility_results["compatibility_issues"].append(
+                        compatibility_results["compatibility_issues"].append()
                             f"Missing dependency: {dep_name} (required: {required_version})"
                         )
                         compatibility_results["dependency_checks"][dep_name] = {
@@ -395,11 +394,11 @@ class PluginVersionManager:
                             "current": None,
                             "compatible": False,
                             "issue": "Missing dependency"
-                        }
+                        )
                         continue
                     
                     # Check version compatibility
-                    is_compatible = self._check_dependency_compatibility(
+                    is_compatible = self._check_dependency_compatibility()
                         current_dep_version, required_version
                     )
                     
@@ -408,24 +407,24 @@ class PluginVersionManager:
                         "current": current_dep_version,
                         "compatible": is_compatible,
                         "issue": None if is_compatible else "Version mismatch"
-                    }
+                    )
                     
                     if not is_compatible:
                         compatibility_results["compatible"] = False
-                        compatibility_results["compatibility_issues"].append(
+                        compatibility_results["compatibility_issues"].append()
                             f"Dependency version mismatch: {dep_name} "
                             f"(required: {required_version}, current: {current_dep_version})"
                         )
             
             # Check platform compatibility
             if version_details.platform_requirements:
-                platform_compatible = self._check_platform_compatibility(
+                platform_compatible = self._check_platform_compatibility()
                     version_details.platform_requirements
                 )
                 
                 if not platform_compatible["compatible"]:
                     compatibility_results["compatible"] = False
-                    compatibility_results["compatibility_issues"].extend(
+                    compatibility_results["compatibility_issues"].extend()
                         platform_compatible["issues"]
                     )
             
@@ -435,10 +434,10 @@ class PluginVersionManager:
             logger.error(f"Failed to check version compatibility: {e}")
             return {"error": str(e)}
     
-    def _determine_version_type(
+    def _determine_version_type()
         self,
         current: SemanticVersion,
-        target: SemanticVersion
+    target: SemanticVersion)
     ) -> VersionType:
         """Determine the type of version change."""
         if target.major > current.major:
@@ -454,11 +453,11 @@ class PluginVersionManager:
         else:
             return VersionType.UNKNOWN
     
-    def _determine_compatibility(
+    def _determine_compatibility()
         self,
         current: SemanticVersion,
         target: SemanticVersion,
-        version_type: VersionType
+    version_type: VersionType)
     ) -> CompatibilityLevel:
         """Determine compatibility level between versions."""
         if version_type == VersionType.MAJOR:
@@ -472,10 +471,10 @@ class PluginVersionManager:
         else:
             return CompatibilityLevel.UNKNOWN
     
-    def _determine_risk_level(
+    def _determine_risk_level()
         self,
         version_type: VersionType,
-        compatibility_level: CompatibilityLevel
+    compatibility_level: CompatibilityLevel)
     ) -> str:
         """Determine risk level of the update."""
         if compatibility_level == CompatibilityLevel.BREAKING_CHANGES:
@@ -489,10 +488,10 @@ class PluginVersionManager:
         else:
             return "unknown"
     
-    def _is_recommended_update(
+    def _is_recommended_update()
         self,
         comparison: VersionComparison,
-        version: Any
+    version: Any)
     ) -> bool:
         """Determine if an update is recommended."""
         # Security updates are always recommended
@@ -504,16 +503,16 @@ class PluginVersionManager:
             return True
         
         # Medium risk minor updates are recommended
-        if (comparison.risk_level == "medium" and 
+        if (comparison.risk_level == "medium" and )
             comparison.version_type == VersionType.MINOR):
             return True
         
         return False
     
-    def _check_dependency_compatibility(
+    def _check_dependency_compatibility()
         self,
         current_version: str,
-        required_version: str
+    required_version: str)
     ) -> bool:
         """Check if current version satisfies required version constraint."""
         try:
@@ -526,14 +525,14 @@ class PluginVersionManager:
                 # Compatible within patch versions
                 required = self.parse_version(required_version[1:])
                 current = self.parse_version(current_version)
-                return (current.major == required.major and 
+                return (current.major == required.major and )
                         current.minor == required.minor and 
                         current >= required)
             elif required_version.startswith('^'):
                 # Compatible within minor versions
                 required = self.parse_version(required_version[1:])
                 current = self.parse_version(current_version)
-                return (current.major == required.major and 
+                return (current.major == required.major and )
                         current >= required)
             else:
                 # Exact version match
@@ -543,9 +542,9 @@ class PluginVersionManager:
             logger.error(f"Failed to check dependency compatibility: {e}")
             return False
     
-    def _check_platform_compatibility(
+    def _check_platform_compatibility()
         self,
-        platform_requirements: Dict[str, Any]
+    platform_requirements: Dict[str, Any])
     ) -> Dict[str, Any]:
         """Check platform compatibility requirements."""
         # This would check against actual platform capabilities

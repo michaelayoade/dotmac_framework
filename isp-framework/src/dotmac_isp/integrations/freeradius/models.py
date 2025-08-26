@@ -17,7 +17,7 @@ from sqlalchemy import (
     Enum as SQLEnum,
     BigInteger,
     Index,
-)
+, timezone)
 from sqlalchemy.dialects.postgresql import UUID, INET
 from sqlalchemy.orm import relationship, validates
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -151,7 +151,7 @@ class RadiusUser(TenantModel, StatusMixin, AuditMixin):
     @validates("username")
     def validate_username(self, key, value):
         """Validate username format."""
-        if not value or len(value.strip()) == 0:
+        if not value or len(value.strip() == 0:
             raise ValueError("Username cannot be empty")
         if len(value) > 100:
             raise ValueError("Username too long")
@@ -160,7 +160,7 @@ class RadiusUser(TenantModel, StatusMixin, AuditMixin):
     @hybrid_property
     def is_active(self) -> bool:
         """Check if user is currently active."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         if not self.enabled:
             return False
         if self.valid_from and now < self.valid_from:
@@ -427,9 +427,9 @@ class RadiusSession(TenantModel):
     def session_duration(self) -> Optional[int]:
         """Calculate session duration in seconds."""
         if self.session_start_time:
-            end_time = self.last_update or datetime.utcnow()
+            end_time = self.last_update or datetime.now(timezone.utc)
             duration = end_time - self.session_start_time
-            return int(duration.total_seconds())
+            return int(duration.total_seconds()
         return None
 
     def __repr__(self):

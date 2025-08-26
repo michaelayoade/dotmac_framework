@@ -90,7 +90,7 @@ class NetworkGraph:
             return
 
         # Remove all edges connected to this node
-        edges_to_remove = self._node_edges[node_id].copy()
+        edges_to_remove = self._node_edges[node_id].model_copy()
         for edge_key in edges_to_remove:
             self.remove_edge(*edge_key)
 
@@ -170,7 +170,7 @@ class GraphAlgorithms:
                         return new_path
 
                     visited.add(neighbor)
-                    queue.append((neighbor, new_path))
+                    queue.append((neighbor, new_path)
 
         return []  # No path found
 
@@ -242,12 +242,12 @@ class GraphAlgorithms:
 
         for node_id in graph.nodes:
             # Create graph without this node
-            temp_graph = graph.copy()
+            temp_graph = graph.model_copy()
             temp_graph.remove_node(node_id)
 
             # Check if graph becomes disconnected
-            original_components = len(GraphAlgorithms.connected_components(graph))
-            new_components = len(GraphAlgorithms.connected_components(temp_graph))
+            original_components = len(GraphAlgorithms.connected_components(graph)
+            new_components = len(GraphAlgorithms.connected_components(temp_graph)
 
             if new_components > original_components:
                 articulation_points.append(node_id)
@@ -263,12 +263,12 @@ class GraphAlgorithms:
             source, target = edge_key
 
             # Create graph without this edge
-            temp_graph = graph.copy()
+            temp_graph = graph.model_copy()
             temp_graph.remove_edge(source, target)
 
             # Check if graph becomes disconnected
-            original_components = len(GraphAlgorithms.connected_components(graph))
-            new_components = len(GraphAlgorithms.connected_components(temp_graph))
+            original_components = len(GraphAlgorithms.connected_components(graph)
+            new_components = len(GraphAlgorithms.connected_components(temp_graph)
 
             if new_components > original_components:
                 bridges.append(edge_key)
@@ -289,7 +289,7 @@ class GraphAlgorithms:
         min_connectivity = len(graph.nodes) - 1
 
         for node_id in graph.nodes:
-            temp_graph = graph.copy()
+            temp_graph = graph.model_copy()
             temp_graph.remove_node(node_id)
 
             new_components = GraphAlgorithms.connected_components(temp_graph)
@@ -299,7 +299,7 @@ class GraphAlgorithms:
                 # Try removing additional nodes
                 for second_node in temp_graph.nodes:
                     if second_node != node_id:
-                        temp_graph2 = temp_graph.copy()
+                        temp_graph2 = temp_graph.model_copy()
                         temp_graph2.remove_node(second_node)
 
                         components2 = GraphAlgorithms.connected_components(temp_graph2)
@@ -344,7 +344,7 @@ class GraphAlgorithms:
             return float("inf")  # Disconnected graph
 
         max_distance = 0
-        nodes = list(graph.nodes.keys())
+        nodes = list(graph.nodes.keys()
 
         for i, source in enumerate(nodes):
             for target in nodes[i + 1 :]:
@@ -425,9 +425,9 @@ class AdvancedNetworkTopology:
 
         # Remove link attributes
         links_removed = []
-        for link_key in list(self.link_attributes.keys()):
+        for link_key in list(self.link_attributes.keys():
             if device_id in link_key:
-                links_removed.append(self.link_attributes.pop(link_key))
+                links_removed.append(self.link_attributes.pop(link_key)
 
         self._log_topology_change(
             "device_removed",
@@ -537,7 +537,7 @@ class AdvancedNetworkTopology:
             raise TopologyError(f"Device not found: {device_id}")
 
         # Create graph without the failed device
-        temp_graph = self.graph.copy()
+        temp_graph = self.graph.model_copy()
         connected_before = self.graph.get_neighbors(device_id)
         temp_graph.remove_node(device_id)
 
@@ -671,7 +671,7 @@ class AdvancedNetworkTopology:
         """Calculate device criticality score"""
 
         # Base score from connections
-        connections = len(self.graph.get_neighbors(device_id))
+        connections = len(self.graph.get_neighbors(device_id)
         connection_score = min(connections / 10.0, 1.0)  # Normalize to 0-1
 
         # Impact score from failure simulation

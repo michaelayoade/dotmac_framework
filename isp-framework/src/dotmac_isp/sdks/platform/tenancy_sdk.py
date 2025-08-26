@@ -64,8 +64,8 @@ class TenantSlugExistsError(TenancyError):
 class TenancySDKConfig:
     """Tenancy SDK configuration."""
 
-    def __init__(        ):
-            """Initialize operation."""
+    def __init__(self, *args, **kwargs):
+        """Initialize operation."""
         self.cache_ttl = cache_ttl
         self.enable_caching = enable_caching
         self.enable_audit_logging = enable_audit_logging
@@ -532,7 +532,7 @@ class TenancySDK:
                 }
 
             # Get available features
-            features = tenant.settings.features.copy()
+            features = tenant.settings.features.model_copy()
 
             self._stats["context_switches"] += 1
 

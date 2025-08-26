@@ -1,6 +1,6 @@
 """Billing models - Invoices, payments, subscriptions, and billing cycles."""
 
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from decimal import Decimal
 from sqlalchemy import (
     Column,
@@ -299,7 +299,7 @@ class Receipt(TenantModel):
     payment_id = Column(UUID(as_uuid=True), ForeignKey("payments.id"), nullable=False)
 
     # Receipt details
-    issued_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    issued_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
     amount = Column(Numeric(10, 2), nullable=False)
     payment_method = Column(Enum(PaymentMethod), nullable=False)
     

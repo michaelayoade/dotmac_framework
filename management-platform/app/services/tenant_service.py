@@ -35,7 +35,7 @@ class TenantService:
     def _generate_slug(self, name: str) -> str:
         """Generate URL-safe slug from tenant name."""
         # Convert to lowercase and replace spaces with hyphens
-        slug = re.sub(r'[^\w\s-]', '', name.lower())
+        slug = re.sub(r'[^\w\s-]', '', name.lower()
         slug = re.sub(r'[-\s]+', '-', slug).strip('-')
         return slug
     
@@ -74,7 +74,7 @@ class TenantService:
                 await self._create_default_configurations(tenant.id, created_by)
                 
                 # Log audit event
-                log_audit_event(
+                log_audit_event()
                     action="create",
                     resource="tenant",
                     resource_id=str(tenant.id),
@@ -86,7 +86,7 @@ class TenantService:
                     }
                 )
                 
-                logger.info("Tenant created successfully", 
+                logger.info("Tenant created successfully",
                            tenant_id=str(tenant.id), 
                            tenant_name=tenant.name,
                            created_by=created_by)
@@ -96,7 +96,7 @@ class TenantService:
             raise
         except Exception as e:
             logger.error(f"Failed to create tenant: {e}", exc_info=True)
-            raise DatabaseError(
+            raise DatabaseError()
                 message="Failed to create tenant",
                 details={"error": str(e), "tenant_name": tenant_data.name}
             )
@@ -147,7 +147,7 @@ class TenantService:
             config["tenant_id"] = tenant_id
             await self.config_repo.create(config, created_by)
     
-    async def onboard_tenant(
+    async def onboard_tenant():
         self, 
         onboarding_request: TenantOnboardingRequest,
         created_by: str
@@ -158,14 +158,14 @@ class TenantService:
             tenant = await self.create_tenant(onboarding_request.tenant_info, created_by)
             
             # Create onboarding-specific configurations
-            await self._create_onboarding_configurations(
+            await self._create_onboarding_configurations()
                 tenant.id, 
                 onboarding_request,
                 created_by
             )
             
             # Trigger infrastructure deployment workflow
-            from .deployment_service import DeploymentService
+            from deployment_service import DeploymentService
             deployment_service = DeploymentService(self.db)
             
             # Create deployment for the new tenant
@@ -180,7 +180,7 @@ class TenantService:
                 }
             }
             
-            await deployment_service.create_tenant_deployment(
+            await deployment_service.create_tenant_deployment()
                 tenant.id, 
                 deployment_config, 
                 created_by
@@ -193,7 +193,7 @@ class TenantService:
             logger.error(f"Tenant onboarding failed: {e}")
             raise
     
-    async def _create_onboarding_configurations(
+    async def _create_onboarding_configurations():
         self,
         tenant_id: UUID,
         onboarding_request: TenantOnboardingRequest,
@@ -229,7 +229,7 @@ class TenantService:
         ]
         
         for config in configs:
-            await self.config_repo.upsert_configuration(
+            await self.config_repo.upsert_configuration()
                 tenant_id=tenant_id,
                 category=config["category"],
                 key=config["key"],
@@ -249,7 +249,7 @@ class TenantService:
         """Get tenant by slug."""
         return await self.tenant_repo.get_by_slug(slug)
     
-    async def update_tenant_status(
+    async def update_tenant_status():
         self,
         tenant_id: UUID,
         new_status: TenantStatus,
@@ -265,7 +265,7 @@ class TenantService:
                 await self._log_status_change(tenant_id, new_status, reason, updated_by)
                 
                 # Log audit event
-                log_audit_event(
+                log_audit_event()
                     action="update",
                     resource="tenant_status",
                     resource_id=str(tenant_id),
@@ -274,12 +274,12 @@ class TenantService:
                         "old_status": "unknown",  # Would need to fetch old status
                         "new_status": new_status.value if hasattr(new_status, 'value') else str(new_status),
                         "reason": reason
-                    }
+                    )
                 )
                 
                 # Log security event for suspensions/cancellations
                 if new_status in [TenantStatus.SUSPENDED, TenantStatus.CANCELLED]:
-                    log_security_event(
+                    log_security_event()
                         event_type="tenant_access_change",
                         details={
                             "action": "tenant_status_change",
@@ -294,7 +294,7 @@ class TenantService:
                 # Trigger status-specific workflows
                 await self._trigger_status_workflows(tenant_id, new_status, updated_by, reason)
                 
-                logger.info("Tenant status updated", 
+                logger.info("Tenant status updated", )
                            tenant_id=str(tenant_id),
                            new_status=str(new_status),
                            reason=reason,
@@ -304,12 +304,12 @@ class TenantService:
             
         except Exception as e:
             logger.error(f"Failed to update tenant status: {e}")
-            raise HTTPException(
+            raise HTTPException()
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to update tenant status"
             )
     
-    async def _log_status_change(
+    async def _log_status_change():
         self,
         tenant_id: UUID,
         new_status: TenantStatus,
@@ -322,24 +322,24 @@ class TenantService:
             "new_status": new_status.value,
             "reason": reason,
             "updated_by": updated_by,
-            "timestamp": str(datetime.utcnow())
-        }
+            "timestamp": str(datetime.now(timezone.utc)
+        )
         
-        await self.config_repo.create({
+        await self.config_repo.create({)
             "tenant_id": tenant_id,
             "category": "audit",
-            "key": f"status_change_{int(datetime.utcnow().timestamp())}",
+            "key": f"status_change_{int(datetime.now(timezone.utc).timestamp()}")
             "value": log_data
         }, updated_by)
     
     @cached(ttl=900, namespace="tenants", key_builder=lambda self, tenant_id, category=None: f"configs:{tenant_id}:{category or 'all'}")
-    async def get_tenant_configurations(
+    async def get_tenant_configurations():
         self,
         tenant_id: UUID,
         category: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         """Get tenant configurations."""
-        configs = await self.config_repo.get_tenant_configurations(
+        configs = await self.config_repo.get_tenant_configurations()
             tenant_id, 
             category=category
         )
@@ -358,7 +358,7 @@ class TenantService:
         ]
     
     @cache_invalidate(namespace="tenants", pattern=f"configs:*")
-    async def update_tenant_configuration(
+    async def update_tenant_configuration():
         self,
         tenant_id: UUID,
         category: str,
@@ -368,7 +368,7 @@ class TenantService:
     ) -> bool:
         """Update or create tenant configuration."""
         try:
-            await self.config_repo.upsert_configuration(
+            await self.config_repo.upsert_configuration()
                 tenant_id=tenant_id,
                 category=category,
                 key=key,
@@ -398,13 +398,13 @@ class TenantService:
             "uptime_percentage": 99.9,
             "response_time_ms": 150,
             "error_rate": 0.1,
-            "last_health_check": datetime.utcnow(),
+            "last_health_check": datetime.now(timezone.utc),
             "active_alerts": 0,
             "critical_issues": 0,
             "warnings": 1
         }
     
-    async def list_tenants(
+    async def list_tenants():
         self,
         skip: int = 0,
         limit: int = 100,
@@ -413,7 +413,7 @@ class TenantService:
         """List all tenants with pagination."""
         from sqlalchemy import select, desc
         
-        query = select(Tenant).order_by(desc(Tenant.created_at))
+        query = select(Tenant).order_by(desc(Tenant.created_at)
         
         # Apply filters if provided
         if filters:
@@ -426,7 +426,7 @@ class TenantService:
         result = await self.db.execute(query)
         return result.scalars().all()
     
-    async def search_tenants(
+    async def search_tenants():
         self,
         search_term: str,
         skip: int = 0,
@@ -434,7 +434,7 @@ class TenantService:
         filters: Optional[Dict[str, Any]] = None
     ) -> List[Tenant]:
         """Search tenants by name, email, or other fields."""
-        return await self.tenant_repo.search_tenants(
+        return await self.tenant_repo.search_tenants()
             search_term=search_term,
             skip=skip,
             limit=limit,
@@ -447,7 +447,7 @@ class TenantService:
     
     @log_function_call(include_args=False, include_result=False)
     @cache_invalidate(namespace="tenants", pattern="tenant:*")
-    async def update_tenant(
+    async def update_tenant():
         self, 
         tenant_id: UUID, 
         update_data: TenantUpdate, 
@@ -469,21 +469,21 @@ class TenantService:
                 update_dict["max_customers"] = update_dict.pop("max_users")
             
             # Update the tenant
-            updated_tenant = await self.tenant_repo.update(
+            updated_tenant = await self.tenant_repo.update()
                 tenant_id, update_dict, updated_by
             )
             
             if updated_tenant:
                 # Log audit event
-                log_audit_event(
+                log_audit_event()
                     action="tenant_updated",
                     resource="tenant",
                     resource_id=str(tenant_id),
                     user_id=updated_by,
                     details={
-                        "updated_fields": list(update_dict.keys()),
+                        "updated_fields": list(update_dict.keys())
                         "tenant_name": updated_tenant.name
-                    }
+                    )
                 )
                 
                 logger.info(f"Tenant {tenant_id} updated successfully by {updated_by}")
@@ -502,8 +502,8 @@ class TenantService:
         """Trigger status-specific workflows based on tenant status changes."""
         try:
             # Import services and plugin integration
-            from .billing_service import BillingService
-            from ..core.plugins.service_integration import service_integration
+            from billing_service import BillingService
+            from core.plugins.service_integration import service_integration
             
             billing_service = BillingService(self.db)
             
@@ -522,7 +522,7 @@ class TenantService:
             # Activation workflows
             if status_value == "active":
                 # Send welcome notification via plugins
-                await service_integration.send_notification(
+                await service_integration.send_notification()
                     channel_type="email",
                     message=f"Welcome! Your tenant '{tenant.name}' is now active and ready to use.",
                     recipients=[tenant.admin_email] if tenant.admin_email else [],
@@ -530,7 +530,7 @@ class TenantService:
                         "subject": f"Welcome to DotMac Platform - {tenant.name}",
                         "tenant_id": str(tenant_id),
                         "notification_type": "tenant_activated"
-                    }
+                    )
                 )
                 
                 # Start billing if not already started
@@ -541,7 +541,7 @@ class TenantService:
             # Suspension workflows
             elif status_value == "suspended":
                 # Send suspension notification via plugins
-                await service_integration.send_notification(
+                await service_integration.send_notification()
                     channel_type="email",
                     message=f"Your tenant '{tenant.name}' has been suspended. Reason: {reason}",
                     recipients=[tenant.admin_email] if tenant.admin_email else [],
@@ -550,7 +550,7 @@ class TenantService:
                         "tenant_id": str(tenant_id),
                         "notification_type": "tenant_suspended",
                         "priority": "high"
-                    }
+                    )
                 )
                 
                 # Pause billing
@@ -561,7 +561,7 @@ class TenantService:
             # Cancellation workflows
             elif status_value == "cancelled":
                 # Send cancellation notification via plugins
-                await service_integration.send_notification(
+                await service_integration.send_notification()
                     channel_type="email",
                     message=f"Your tenant '{tenant.name}' has been cancelled. Thank you for using our service.",
                     recipients=[tenant.admin_email] if tenant.admin_email else [],
@@ -570,13 +570,13 @@ class TenantService:
                         "tenant_id": str(tenant_id),
                         "notification_type": "tenant_cancelled",
                         "priority": "high"
-                    }
+                    )
                 )
                 
                 # Cancel subscription and handle refunds
                 active_subscription = await billing_service.subscription_repo.get_active_subscription(tenant_id)
                 if active_subscription:
-                    await billing_service.cancel_subscription(
+                    await billing_service.cancel_subscription()
                         active_subscription.id, 
                         reason, 
                         updated_by
@@ -585,7 +585,7 @@ class TenantService:
             # Deactivation workflows
             elif status_value == "inactive":
                 # Send deactivation notification via plugins
-                await service_integration.send_notification(
+                await service_integration.send_notification()
                     channel_type="email",
                     message=f"Your tenant '{tenant.name}' has been deactivated.",
                     recipients=[tenant.admin_email] if tenant.admin_email else [],
@@ -594,7 +594,7 @@ class TenantService:
                         "tenant_id": str(tenant_id),
                         "notification_type": "tenant_deactivated",
                         "priority": "normal"
-                    }
+                    )
                 )
             
             logger.info(f"Status workflow completed for tenant {tenant_id} -> {status_value}")

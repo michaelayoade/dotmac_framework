@@ -87,10 +87,10 @@ logger.info(f"\n🔍 {self.name}: {self.description}")
                 
             try:
                 with open(py_file, 'r') as f:
-                    tree = ast.parse(f.read(), filename=str(py_file))
+                    tree = ast.parse(f.read(), filename=str(py_file)
                 
                 for node in ast.walk(tree):
-                    if isinstance(node, (ast.Import, ast.ImportFrom)):
+                    if isinstance(node, (ast.Import, ast.ImportFrom):
                         if isinstance(node, ast.Import):
                             for alias in node.names:
                                 module_name = alias.name
@@ -100,7 +100,7 @@ logger.info(f"\n🔍 {self.name}: {self.description}")
                                 continue
                         
                         # Skip relative imports and internal dotmac modules
-                        if module_name and (module_name.startswith('dotmac_') or module_name.startswith('.')):
+                        if module_name and (module_name.startswith('dotmac_') or module_name.startswith('.'):
                             continue
                         
                         # Try to find external module
@@ -108,11 +108,11 @@ logger.info(f"\n🔍 {self.name}: {self.description}")
                             importlib.util.find_spec(module_name.split('.')[0])
                         except (ImportError, AttributeError, ValueError):
                             self.log_error(f"Import error in {py_file}: Cannot resolve {module_name}")
-                            failed_files.append(str(py_file))
+                            failed_files.append(str(py_file)
                             
             except Exception as e:
                 self.log_error(f"Syntax error in {py_file}: {e}")
-                failed_files.append(str(py_file))
+                failed_files.append(str(py_file)
         
         if failed_files:
             self.log_info("Run: make install-dev to fix missing dependencies")

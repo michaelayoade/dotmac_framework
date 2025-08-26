@@ -358,7 +358,7 @@ class TestBasePlugin:
     
     def test_base_plugin_plugin_info_property(self):
         """Test BasePlugin plugin_info property."""
-        plugin = TestPluginImplementation(PluginConfig(), PluginAPI({}))
+        plugin = TestPluginImplementation(PluginConfig(), PluginAPI({})
         
         info = plugin.plugin_info
         
@@ -371,14 +371,14 @@ class TestBasePlugin:
     
     async def test_validate_config_default(self):
         """Test default validate_config implementation."""
-        plugin = TestPluginImplementation(PluginConfig(), PluginAPI({}))
+        plugin = TestPluginImplementation(PluginConfig(), PluginAPI({})
         
-        result = await plugin.validate_config(PluginConfig())
+        result = await plugin.validate_config(PluginConfig()
         assert result is True
     
     async def test_health_check_default(self):
         """Test default health_check implementation."""
-        plugin = TestPluginImplementation(PluginConfig(), PluginAPI({}))
+        plugin = TestPluginImplementation(PluginConfig(), PluginAPI({})
         plugin.status = PluginStatus.ACTIVE
         
         result = await plugin.health_check()
@@ -389,7 +389,7 @@ class TestBasePlugin:
     
     async def test_health_check_unhealthy_status(self):
         """Test health_check with unhealthy status."""
-        plugin = TestPluginImplementation(PluginConfig(), PluginAPI({}))
+        plugin = TestPluginImplementation(PluginConfig(), PluginAPI({})
         plugin.status = PluginStatus.ERROR
         
         result = await plugin.health_check()
@@ -399,7 +399,7 @@ class TestBasePlugin:
     
     async def test_get_metrics_default(self):
         """Test default get_metrics implementation."""
-        plugin = TestPluginImplementation(PluginConfig(), PluginAPI({}))
+        plugin = TestPluginImplementation(PluginConfig(), PluginAPI({})
         plugin.status = PluginStatus.ACTIVE
         
         result = await plugin.get_metrics()
@@ -409,7 +409,7 @@ class TestBasePlugin:
     
     async def test_get_metrics_with_context(self):
         """Test get_metrics with context."""
-        plugin = TestPluginImplementation(PluginConfig(), PluginAPI({}))
+        plugin = TestPluginImplementation(PluginConfig(), PluginAPI({})
         plugin.status = PluginStatus.ACTIVE
         
         # Set context with started_at
@@ -423,7 +423,7 @@ class TestBasePlugin:
     
     def test_context_operations(self):
         """Test plugin context operations."""
-        plugin = TestPluginImplementation(PluginConfig(), PluginAPI({}))
+        plugin = TestPluginImplementation(PluginConfig(), PluginAPI({})
         
         # Initially no context
         assert plugin.get_context() is None
@@ -476,7 +476,7 @@ class TestBasePlugin:
     
     def test_plugin_repr(self):
         """Test BasePlugin __repr__ method."""
-        plugin = TestPluginImplementation(PluginConfig(), PluginAPI({}))
+        plugin = TestPluginImplementation(PluginConfig(), PluginAPI({})
         plugin.status = PluginStatus.ACTIVE
         
         repr_str = repr(plugin)

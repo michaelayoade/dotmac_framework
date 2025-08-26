@@ -64,13 +64,13 @@ class InteractionManager:
                     )
 
             # Set default values
-            interaction_dict = interaction_data.dict()
+            interaction_dict = interaction_data.model_dump()
             interaction_dict.update(
                 {
                     "tenant_id": self.tenant_id,
                     "status": interaction_data.status or InteractionStatus.OPEN,
                     "priority": interaction_data.priority or "medium",
-                    "created_at": datetime.utcnow(),
+                    "created_at": datetime.now(timezone.utc),
                 }
             )
 
@@ -107,9 +107,9 @@ class InteractionManager:
                     )
 
             # Create response
-            response_dict = response_data.dict()
+            response_dict = response_data.model_dump()
             response_dict.update(
-                {"tenant_id": self.tenant_id, "created_at": datetime.utcnow()}
+                {"tenant_id": self.tenant_id, "created_at": datetime.now(timezone.utc)}
             )
 
             response = await self.repository.create_interaction_response(response_dict)
@@ -123,7 +123,7 @@ class InteractionManager:
                     response_data.interaction_id,
                     {
                         "status": response_data.update_interaction_status,
-                        "updated_at": datetime.utcnow(),
+                        "updated_at": datetime.now(timezone.utc),
                     },
                 )
 
@@ -153,8 +153,8 @@ class InteractionManager:
             # Update interaction status
             update_data = {
                 "status": InteractionStatus.RESOLVED,
-                "resolved_at": datetime.utcnow(),
-                "updated_at": datetime.utcnow(),
+                "resolved_at": datetime.now(timezone.utc),
+                "updated_at": datetime.now(timezone.utc),
             }
 
             if resolution_notes:
@@ -194,9 +194,9 @@ class InteractionManager:
                     )
 
             # Create escalation record
-            escalation_dict = escalation_data.dict()
+            escalation_dict = escalation_data.model_dump()
             escalation_dict.update(
-                {"tenant_id": self.tenant_id, "escalated_at": datetime.utcnow()}
+                {"tenant_id": self.tenant_id, "escalated_at": datetime.now(timezone.utc)}
             )
 
             escalation = await self.repository.create_escalation(escalation_dict)
@@ -206,7 +206,7 @@ class InteractionManager:
                 escalation_data.interaction_id,
                 {
                     "status": InteractionStatus.ESCALATED,
-                    "updated_at": datetime.utcnow(),
+                    "updated_at": datetime.now(timezone.utc),
                 },
             )
 

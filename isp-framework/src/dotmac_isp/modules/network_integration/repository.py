@@ -22,7 +22,7 @@ from .models import (
     InterfaceStatus,
     AlertSeverity,
     AlertType,
-)
+, timezone)
 from dotmac_isp.shared.exceptions import NotFoundError, ConflictError, ValidationError
 
 
@@ -138,12 +138,12 @@ class NetworkDeviceRepository:
             return None
 
         device.status = status
-        device.updated_at = datetime.utcnow()
+        device.updated_at = datetime.now(timezone.utc)
 
         if notes and hasattr(device, "notes"):
             current_notes = getattr(device, "notes", "") or ""
             device.notes = (
-                f"{current_notes}\n{datetime.utcnow().isoformat()}: {notes}".strip()
+                f"{current_notes}\n{datetime.now(timezone.utc).isoformat()}: {notes}".strip()
             )
 
         self.db.commit()
@@ -156,8 +156,8 @@ class NetworkDeviceRepository:
         if not device:
             return None
 
-        device.last_config_backup = datetime.utcnow()
-        device.updated_at = datetime.utcnow()
+        device.last_config_backup = datetime.now(timezone.utc)
+        device.updated_at = datetime.now(timezone.utc)
 
         self.db.commit()
         self.db.refresh(device)
@@ -236,7 +236,7 @@ class NetworkInterfaceRepository:
 
         interface.admin_status = admin_status
         interface.operational_status = operational_status
-        interface.last_change = datetime.utcnow()
+        interface.last_change = datetime.now(timezone.utc)
 
         self.db.commit()
         self.db.refresh(interface)
@@ -340,7 +340,7 @@ class NetworkMetricRepository:
         metric = NetworkMetric(
             id=uuid4(),
             tenant_id=self.tenant_id,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             **metric_data,
         )
 
@@ -356,7 +356,7 @@ class NetworkMetricRepository:
             metric = NetworkMetric(
                 id=uuid4(),
                 tenant_id=self.tenant_id,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
                 **metric_data,
             )
             metrics.append(metric)
@@ -369,7 +369,7 @@ class NetworkMetricRepository:
         self, device_id: UUID, metric_names: Optional[List[str]] = None, hours: int = 24
     ) -> List[NetworkMetric]:
         """Get latest metrics for a device."""
-        cutoff_time = datetime.utcnow() - datetime.timedelta(hours=hours)
+        cutoff_time = datetime.now(timezone.utc) - datetime.timedelta(hours=hours)
 
         query = self.db.query(NetworkMetric).filter(
             and_(
@@ -380,9 +380,9 @@ class NetworkMetricRepository:
         )
 
         if metric_names:
-            query = query.filter(NetworkMetric.metric_name.in_(metric_names))
+            query = query.filter(NetworkMetric.metric_name.in_(metric_names)
 
-        return query.order_by(desc(NetworkMetric.timestamp)).all()
+        return query.order_by(desc(NetworkMetric.timestamp).all()
 
 
 class NetworkAlertRepository:
@@ -438,7 +438,7 @@ class NetworkAlertRepository:
             query = query.filter(NetworkAlert.alert_type == alert_type)
 
         return (
-            query.order_by(desc(NetworkAlert.created_at))
+            query.order_by(desc(NetworkAlert.created_at)
             .offset(skip)
             .limit(limit)
             .all()
@@ -452,7 +452,7 @@ class NetworkAlertRepository:
         if not alert:
             return None
 
-        alert.acknowledge(str(user_id))
+        alert.acknowledge(str(user_id)
         self.db.commit()
         self.db.refresh(alert)
         return alert
@@ -525,7 +525,7 @@ class DeviceConfigurationRepository:
                     DeviceConfiguration.tenant_id == self.tenant_id,
                 )
             )
-            .order_by(desc(DeviceConfiguration.created_at))
+            .order_by(desc(DeviceConfiguration.created_at)
             .all()
         )
 
@@ -546,7 +546,7 @@ class DeviceConfigurationRepository:
 
         # Activate this config
         config.is_active = True
-        config.deployment_time = datetime.utcnow()
+        config.deployment_time = datetime.now(timezone.utc)
         config.deployment_status = "deployed"
 
         self.db.commit()

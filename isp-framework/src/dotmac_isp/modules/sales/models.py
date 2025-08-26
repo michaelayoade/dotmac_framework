@@ -211,7 +211,7 @@ class Lead(TenantModel, StatusMixin, AuditMixin, ContactMixin, AddressMixin):
     @hybrid_property
     def days_since_creation(self) -> int:
         """Calculate days since lead was created."""
-        return (date.today() - self.created_at.date()).days
+        return (date.today() - self.created_at.date().days
 
     @hybrid_property
     def is_overdue_follow_up(self) -> bool:
@@ -451,7 +451,7 @@ class SalesActivity(TenantModel, AuditMixin):
     @hybrid_property
     def days_until_scheduled(self) -> int:
         """Calculate days until scheduled date."""
-        return (self.scheduled_date.date() - date.today()).days
+        return (self.scheduled_date.date() - date.today().days
 
     def __repr__(self):
         """  Repr   operation."""
@@ -551,7 +551,7 @@ class Quote(TenantModel, StatusMixin, AuditMixin, AddressMixin):
     @hybrid_property
     def days_to_expiry(self) -> int:
         """Calculate days until quote expires."""
-        return (self.valid_until - date.today()).days
+        return (self.valid_until - date.today().days
 
     @hybrid_property
     def response_time_days(self) -> Optional[int]:
@@ -693,7 +693,7 @@ class SalesForecast(TenantModel, AuditMixin):
     def quota_achievement(self) -> Optional[float]:
         """Calculate quota achievement percentage."""
         if self.quota_target and self.quota_target > 0:
-            return round((float(self.closed_won) / float(self.quota_target)) * 100, 2)
+            return round((float(self.closed_won) / float(self.quota_target) * 100, 2)
         return None
 
     @hybrid_property

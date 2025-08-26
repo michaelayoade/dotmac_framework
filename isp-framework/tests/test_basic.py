@@ -6,7 +6,7 @@ from pathlib import Path
 
 # Add src directory to Python path
 src_path = Path(__file__).parent.parent / "src"
-sys.path.insert(0, str(src_path))
+sys.path.insert(0, str(src_path)
 
 from dotmac_isp.shared.schemas import (
     BaseSchema,
@@ -18,14 +18,14 @@ from dotmac_isp.modules.identity.schemas import (
     UserCreate,
 )
 from uuid import uuid4
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 @pytest.mark.unit
 class TestSchemasFunctionality:
     """Test that schemas work correctly after fixes."""
     
-    def test_base_schema_config(self):
+    def test_base_schema_config(self, timezone):
         """Test base schema configuration."""
         schema = BaseSchema()
         config = schema.model_config
@@ -38,8 +38,8 @@ class TestSchemasFunctionality:
         # This test verifies the critical schema inheritance fix
         data = {
             "id": uuid4(),
-            "created_at": datetime.utcnow(),
-            "updated_at": datetime.utcnow(),
+            "created_at": datetime.now(timezone.utc),
+            "updated_at": datetime.now(timezone.utc),
             "is_deleted": False,
         }
         schema = BaseModelSchema(**data)

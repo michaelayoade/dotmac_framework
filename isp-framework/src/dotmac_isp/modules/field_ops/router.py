@@ -32,6 +32,7 @@ from .service import (
     AppointmentService,
     FieldEquipmentService,
 )
+from datetime import timezone
 from dotmac_isp.shared.exceptions import NotFoundError, ValidationError, ServiceError
 
 router = APIRouter(prefix="/field-ops", tags=["field-operations"])
@@ -39,7 +40,7 @@ router = APIRouter(prefix="/field-ops", tags=["field-operations"])
 
 def generate_work_order_number() -> str:
     """Generate a unique work order number."""
-    timestamp = int(datetime.utcnow().timestamp())
+    timestamp = int(datetime.now(timezone.utc).timestamp())
     random_chars = "".join(
         secrets.choice(string.ascii_uppercase + string.digits) for _ in range(4)
     )
@@ -48,7 +49,7 @@ def generate_work_order_number() -> str:
 
 def generate_appointment_id() -> str:
     """Generate a unique appointment ID."""
-    timestamp = int(datetime.utcnow().timestamp())
+    timestamp = int(datetime.now(timezone.utc).timestamp())
     return f"APT-{timestamp}"
 
 
@@ -356,7 +357,7 @@ async def end_time_log(
         raise HTTPException(status_code=404, detail="Time log not found")
 
     time_log.end_time = end_time
-    time_log.updated_at = datetime.utcnow()
+    time_log.updated_at = datetime.now(timezone.utc)
 
     db.commit()
     db.refresh(time_log)

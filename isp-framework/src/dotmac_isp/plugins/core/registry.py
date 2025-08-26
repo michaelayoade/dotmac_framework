@@ -234,16 +234,16 @@ class PluginRegistry:
 
     def get_plugin_dependencies(self, plugin_id: str) -> Set[str]:
         """Get plugin dependencies."""
-        return self._plugin_dependencies.get(plugin_id, set()).copy()
+        return self._plugin_dependencies.get(plugin_id, set()).model_copy()
 
     def get_plugin_dependents(self, plugin_id: str) -> Set[str]:
         """Get plugins that depend on this plugin."""
-        return self._plugin_dependents.get(plugin_id, set()).copy()
+        return self._plugin_dependents.get(plugin_id, set()).model_copy()
 
     def get_load_order(self) -> List[str]:
         """Get plugin load order respecting dependencies."""
         with self._lock:
-            return self._load_order.copy()
+            return self._load_order.model_copy()
 
     def validate_dependencies(self, plugin_id: str) -> List[str]:
         """
@@ -343,7 +343,7 @@ class PluginRegistry:
                     live_listeners.append(ref)
                 except Exception as e:
                     # Log error but continue with other listeners
-logger.error(f"Error in plugin registry event listener: {e}")
+                    logger.error(f"Error in plugin registry event listener: {e}")
 
         self._event_listeners[event_type] = live_listeners
 

@@ -27,7 +27,7 @@ from ..contracts.common_schemas import (
     TimeoutPolicy,
     ErrorInfo,
     Priority,
-)
+    ConfigDict)
 
 logger = structlog.get_logger(__name__)
 
@@ -109,10 +109,7 @@ class ScheduleDefinition(BaseModel):
             raise ValueError("End time must be after start time")
         return v
 
-    class Config:
-        """Class for Config operations."""
-        extra = "allow"
-
+    model_config = ConfigDict(extra="allow")
 
 @dataclass
 class JobExecution:
@@ -145,8 +142,8 @@ class JobExecution:
             ),
             "input_data": self.input_data,
             "output_data": self.output_data,
-            "context": self.context.dict() if self.context else None,
-            "error": self.error.dict() if self.error else None,
+            "context": self.context.model_dump() if self.context else None,
+            "error": self.error.model_dump() if self.error else None,
             "retry_count": self.retry_count,
         }
 
@@ -318,7 +315,7 @@ class JobScheduler:
                 raise ValueError(f"Handler {schedule.job_handler} not registered")
 
             # Prepare input data
-            input_data = schedule.job_parameters.copy()
+            input_data = schedule.job_parameters.model_copy()
             input_data.update(job_execution.input_data)
 
             # Apply timeout if specified
@@ -574,7 +571,7 @@ class SchedulerSDK:
                         schedule_id=schedule.id,
                         job_id=job_id,
                         scheduled_time=current_time,
-                        input_data=schedule.job_parameters.copy(),
+                        input_data=schedule.job_parameters.model_copy(),
                         context=context,
                     )
 

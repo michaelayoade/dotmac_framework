@@ -20,7 +20,7 @@ from ..notifications.models import (
     NotificationPriority,
     NotificationStatus,
     NotificationChannel
-)
+, timezone)
 
 from dotmac_isp.core.database import get_db
 from .models import (
@@ -53,7 +53,7 @@ class InstallationProjectService:
 
     def generate_project_number(self) -> str:
         """Generate unique project number."""
-        timestamp = int(datetime.utcnow().timestamp())
+        timestamp = int(datetime.now(timezone.utc).timestamp())
         random_chars = "".join(
             secrets.choice(string.ascii_uppercase + string.digits) for _ in range(4)
         )
@@ -409,7 +409,7 @@ class InstallationProjectService:
             query = query.filter(InstallationProject.project_status == status_filter)
 
         projects = (
-            query.order_by(desc(InstallationProject.created_at))
+            query.order_by(desc(InstallationProject.created_at)
             .offset(skip)
             .limit(limit)
             .all()
@@ -440,7 +440,7 @@ class InstallationProjectService:
                         ProjectUpdate.is_customer_visible == True,
                     )
                 )
-                .order_by(desc(ProjectUpdate.created_at))
+                .order_by(desc(ProjectUpdate.created_at)
                 .first()
             )
 
@@ -521,7 +521,7 @@ class InstallationProjectService:
             updates_query = updates_query.filter(
                 ProjectUpdate.is_customer_visible == True
             )
-        updates = updates_query.order_by(desc(ProjectUpdate.created_at)).limit(10).all()
+        updates = updates_query.order_by(desc(ProjectUpdate.created_at).limit(10).all()
 
         return ProjectTimelineResponse(
             project=InstallationProjectResponse.from_orm(project),
@@ -592,8 +592,8 @@ class ProjectWorkflowService:
                     "customer_id": str(project.customer_id)
                 },
                 status=NotificationStatus.PENDING,
-                scheduled_for=datetime.utcnow(),
-                created_at=datetime.utcnow()
+                scheduled_for=datetime.now(timezone.utc),
+                created_at=datetime.now(timezone.utc)
             )
             self.db.add(notification)
             self.db.commit()
@@ -614,7 +614,7 @@ logger.info(f"Failed to create project notification: {e}")
             if opportunity:
                 if status == "converted_to_project":
                     opportunity.opportunity_status = OpportunityStatus.WON
-                    opportunity.updated_at = datetime.utcnow()
+                    opportunity.updated_at = datetime.now(timezone.utc)
                     self.db.commit()
 logger.info(f"Updated opportunity {opportunity_id} status to WON")
         except ImportError:

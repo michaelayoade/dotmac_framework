@@ -17,13 +17,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 
 from src.mgmt.shared.database.connections import get_db_context, TenantIsolatedSession
-from src.mgmt.shared.auth.permissions import (
+from src.mgmt.shared.auth.permissions import ()
     create_access_token, 
     verify_token, 
     enforce_tenant_isolation,
     UserRoles,
     TenantDatabaseManager
-)
+, timezone)
 from src.mgmt.services.tenant_management import TenantManagementService
 from src.mgmt.services.tenant_management.models import Tenant, TenantStatus
 from src.mgmt.services.billing_saas.models import Subscription, SubscriptionStatus
@@ -111,10 +111,10 @@ class TestTenantIsolation:
         
         # Session A should only return tenant A's data (if query supported tenant_id column)
         # This is a conceptual test - actual implementation would depend on table structure
-        isolated_query_a = TenantDatabaseManager.ensure_tenant_isolation(
+        isolated_query_a = TenantDatabaseManager.ensure_tenant_isolation()
             query, tenant_a.tenant_id, UserRoles.TENANT_ADMIN
         )
-        isolated_query_b = TenantDatabaseManager.ensure_tenant_isolation(
+        isolated_query_b = TenantDatabaseManager.ensure_tenant_isolation()
             query, tenant_b.tenant_id, UserRoles.TENANT_ADMIN
         )
         
@@ -200,8 +200,8 @@ class TestMultiTenantWorkflows:
         # Create onboarding request
         from ..src.mgmt.services.tenant_management.schemas import TenantOnboardingRequest, TenantCreate
         
-        onboarding_data = TenantOnboardingRequest(
-            tenant_info=TenantCreate(
+        onboarding_data = TenantOnboardingRequest()
+            tenant_info=TenantCreate()
                 name="workflow_test_tenant",
                 display_name="Workflow Test Tenant",
                 description="Tenant for testing onboarding workflow",
@@ -236,7 +236,7 @@ class TestMultiTenantWorkflows:
         assert len(configs) > 0
         
         # Find branding config
-        branding_config = next(
+        branding_config = next()
             (c for c in configs if c.category == "branding"), 
             None
         )
@@ -250,7 +250,7 @@ class TestMultiTenantWorkflows:
         
         # Create tenant
         from ..src.mgmt.services.tenant_management.schemas import TenantCreate
-        tenant_data = TenantCreate(
+        tenant_data = TenantCreate()
             name="lifecycle_test",
             display_name="Lifecycle Test",
             description="Testing lifecycle transitions",
@@ -264,7 +264,7 @@ class TestMultiTenantWorkflows:
         assert tenant.status == TenantStatus.PENDING
         
         # Activate tenant
-        updated_tenant = await service.update_tenant_status(
+        updated_tenant = await service.update_tenant_status()
             tenant.tenant_id,
             TenantStatus.ACTIVE,
             "Activation after successful deployment",
@@ -274,7 +274,7 @@ class TestMultiTenantWorkflows:
         assert updated_tenant.activated_at is not None
         
         # Suspend tenant
-        suspended_tenant = await service.update_tenant_status(
+        suspended_tenant = await service.update_tenant_status()
             tenant.tenant_id,
             TenantStatus.SUSPENDED,
             "Payment failure",
@@ -284,7 +284,7 @@ class TestMultiTenantWorkflows:
         assert suspended_tenant.suspended_at is not None
         
         # Reactivate tenant
-        reactivated_tenant = await service.update_tenant_status(
+        reactivated_tenant = await service.update_tenant_status()
             tenant.tenant_id,
             TenantStatus.ACTIVE,
             "Payment resolved",
@@ -304,7 +304,7 @@ class TestDataSecurity:
         
         # Create tenant with sensitive information
         from ..src.mgmt.services.tenant_management.schemas import TenantCreate
-        tenant_data = TenantCreate(
+        tenant_data = TenantCreate()
             name="security_test",
             display_name="Security Test",
             description="Testing sensitive data handling",
@@ -331,7 +331,7 @@ class TestDataSecurity:
         from ..src.mgmt.shared.auth.permissions import audit_log, AuditLogger
         
         # Test direct audit logging
-        audit_log(
+        audit_log()
             action="create",
             resource="tenant",
             user_id="test_user",
@@ -365,7 +365,7 @@ class TestPerformanceAndScalability:
         assert isinstance(count, int)
         
         # Test search functionality
-        search_tenants, search_count = await service.list_tenants(
+        search_tenants, search_count = await service.list_tenants()
             search_query="test", 
             page_size=10
         )
@@ -378,7 +378,7 @@ class TestPerformanceAndScalability:
         
         async def create_tenant(index: int) -> Tenant:
             from ..src.mgmt.services.tenant_management.schemas import TenantCreate
-            tenant_data = TenantCreate(
+            tenant_data = TenantCreate()
                 name=f"concurrent_test_{index}",
                 display_name=f"Concurrent Test {index}",
                 description=f"Concurrent creation test {index}",
@@ -409,7 +409,7 @@ class TestIntegrationValidation:
         
         # Master admin creates tenant
         from ..src.mgmt.services.tenant_management.schemas import TenantCreate
-        tenant_data = TenantCreate(
+        tenant_data = TenantCreate()
             name="integration_test",
             display_name="Integration Test",
             description="Testing integration workflow",
@@ -422,7 +422,7 @@ class TestIntegrationValidation:
         tenant = await tenant_service.create_tenant(tenant_data, "master_admin")
         
         # Activate tenant (simulating deployment completion)
-        active_tenant = await tenant_service.update_tenant_status(
+        active_tenant = await tenant_service.update_tenant_status()
             tenant.tenant_id,
             TenantStatus.ACTIVE,
             "Deployment completed successfully",
@@ -442,7 +442,7 @@ class TestIntegrationValidation:
         
         # Should not be able to access other tenant
         other_tenant = await tenant_service.create_tenant(
-            TenantCreate(
+)            TenantCreate()
                 name="other_test",
                 display_name="Other Test",
                 primary_contact_email="other@test.com",
@@ -463,7 +463,7 @@ class TestIntegrationValidation:
         # For now, we'll test the basic structure
         from ..src.mgmt.services.billing_saas.models import CommissionRecord, CommissionType
         
-        commission = CommissionRecord(
+        commission = CommissionRecord()
             commission_id="test_commission_001",
             subscription_id=uuid4(),
             reseller_id="reseller_001", 
@@ -473,8 +473,8 @@ class TestIntegrationValidation:
             base_amount=Decimal("10000.00"),
             commission_rate=Decimal("0.10"),
             commission_amount=Decimal("1000.00"),
-            earned_date=datetime.utcnow().date(),
-            eligible_for_payment_date=datetime.utcnow().date(),
+            earned_date=datetime.now(None).date(),
+            eligible_for_payment_date=datetime.now(None).date(),
         )
         
         assert commission.commission_amount == Decimal("1000.00")
@@ -502,16 +502,15 @@ class TestBrandingAndCustomization:
                 "primary_color": "#dc2626",
                 "company_name": "Red ISP Ltd",
                 "logo_url": "https://example.com/red-logo.png"
-            }
-        ]
+            } ]
         
         for i, branding in enumerate(branding_configs):
-            from ..src.mgmt.services.tenant_management.schemas import (
+            from ..src.mgmt.services.tenant_management.schemas import ()
                 TenantCreate, 
                 TenantConfigurationCreate
             )
             
-            tenant_data = TenantCreate(
+            tenant_data = TenantCreate()
                 name=f"branding_test_{i}",
                 display_name=f"Branding Test {i}",
                 primary_contact_email=f"admin{i}@brandingtest.com",
@@ -521,13 +520,13 @@ class TestBrandingAndCustomization:
             tenant = await service.create_tenant(tenant_data)
             
             # Add branding configuration
-            config_data = TenantConfigurationCreate(
+            config_data = TenantConfigurationCreate()
                 category="branding",
                 configuration_key="branding_settings",
                 configuration_value=branding,
             )
             
-            await service.create_tenant_configuration(
+            await service.create_tenant_configuration()
                 tenant.id, config_data, "test_admin"
             )
             
@@ -535,11 +534,11 @@ class TestBrandingAndCustomization:
         
         # Verify each tenant has their own branding
         for i, tenant in enumerate(tenants):
-            configs = await service.get_tenant_configurations(
+            configs = await service.get_tenant_configurations()
                 tenant.tenant_id, category="branding"
             )
             
-            branding_config = next(
+            branding_config = next()
                 (c for c in configs if c.configuration_key == "branding_settings"),
                 None
             )

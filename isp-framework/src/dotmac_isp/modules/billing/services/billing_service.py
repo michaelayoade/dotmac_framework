@@ -9,7 +9,7 @@ This implementation will be removed in a future version.
 import warnings
 from typing import List, Optional, Dict, Any
 from decimal import Decimal
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from dotmac_isp.shared.database.base import TenantModel
@@ -115,12 +115,12 @@ class BillingService:
     def _generate_invoice_number(self) -> str:
         """Generate unique invoice number."""
         import uuid
-        return f"INV-{datetime.now().strftime('%Y%m%d')}-{str(uuid.uuid4())[:8].upper()}"
+        return f"INV-{datetime.now(timezone.utc).strftime('%Y%m%d')}-{str(uuid.uuid4()[:8].upper())}"
     
     def _generate_payment_number(self) -> str:
         """Generate unique payment number.""" 
         import uuid
-        return f"PAY-{datetime.now().strftime('%Y%m%d')}-{str(uuid.uuid4())[:8].upper()}"
+        return f"PAY-{datetime.now(timezone.utc).strftime('%Y%m%d')}-{str(uuid.uuid4()[:8].upper())}"
     
     def _calculate_next_billing_date(self, start_date: date, cycle: BillingCycle) -> date:
         """Calculate next billing date based on cycle."""

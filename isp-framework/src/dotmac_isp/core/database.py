@@ -10,12 +10,13 @@ from dotmac_isp.shared.database.base import Base
 
 settings = get_settings()
 
-# Determine if we're using PostgreSQL or SQLite
-is_postgres = settings.database_url.startswith(("postgresql", "postgres"))
+# Determine if we're using PostgreSQL or SQLite for each connection type
+is_postgres_sync = settings.database_url.startswith(("postgresql", "postgres"))
+is_postgres_async = settings.async_database_url.startswith(("postgresql", "postgres"))
 
 # Engine configuration based on database type
 engine_kwargs = {"echo": settings.debug}
-if is_postgres:
+if is_postgres_sync:
     engine_kwargs.update({
         "pool_pre_ping": True,
         "pool_size": 10,
@@ -27,7 +28,7 @@ engine = create_engine(settings.database_url, **engine_kwargs)
 
 # Asynchronous database engine
 async_engine_kwargs = {"echo": settings.debug}
-if is_postgres:
+if is_postgres_async:
     async_engine_kwargs.update({
         "pool_pre_ping": True,
         "pool_size": 10,

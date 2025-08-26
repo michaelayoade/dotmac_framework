@@ -104,7 +104,7 @@ class OmnichannelService:
 
             # Create contact
             contact = await self.repository.create_customer_contact(
-                {**contact_data.dict(), "tenant_id": self.tenant_id}
+                {**contact_data.model_dump(), "tenant_id": self.tenant_id}
             )
 
             logger.info(f"Created customer contact: {contact.id}")
@@ -137,7 +137,7 @@ class OmnichannelService:
 
             # Update contact
             updated_contact = await self.repository.update_customer_contact(
-                contact_id, update_data.dict(exclude_unset=True)
+                contact_id, update_data.model_dump(exclude_unset=True)
             )
 
             logger.info(f"Updated customer contact: {contact_id}")
@@ -186,7 +186,7 @@ class OmnichannelService:
 
             # Create channel
             channel = await self.repository.create_communication_channel(
-                {**channel_data.dict(), "tenant_id": self.tenant_id}
+                {**channel_data.model_dump(), "tenant_id": self.tenant_id}
             )
 
             logger.info(f"Created communication channel: {channel.id}")
@@ -221,7 +221,7 @@ class OmnichannelService:
             # Basic verification - mark as verified (complex verification not needed for ISP core)
             await self.repository.update_channel(
                 channel_id,
-                {"is_verified": True, "verification_date": datetime.utcnow()},
+                {"is_verified": True, "verification_date": datetime.now(timezone.utc)},
             )
 
             logger.info(f"Verified communication channel: {channel_id}")
@@ -244,7 +244,7 @@ class OmnichannelService:
 
             # Generate unique interaction reference
             interaction_reference = (
-                f"INT-{datetime.utcnow().strftime('%Y%m%d')}-{str(uuid4())[:8].upper()}"
+                f"INT-{datetime.now(timezone.utc).strftime('%Y%m%d')}-{str(uuid4())[:8].upper()}"
             )
 
             # Determine contact and channel if not provided
@@ -261,7 +261,7 @@ class OmnichannelService:
             # Create interaction record
             interaction = await self.repository.create_interaction(
                 {
-                    **interaction_data.dict(),
+                    **interaction_data.model_dump(),
                     "interaction_reference": interaction_reference,
                     "contact_id": contact.id if contact else None,
                     "channel_id": channel.id if channel else None,
@@ -271,7 +271,7 @@ class OmnichannelService:
                     "language": analysis.get("language", "en"),
                     "urgency_score": analysis.get("urgency_score", 0.5),
                     "keywords": analysis.get("keywords", []),
-                    "received_at": datetime.utcnow(),
+                    "received_at": datetime.now(timezone.utc),
                     "tenant_id": self.tenant_id,
                 }
             )
@@ -321,9 +321,9 @@ class OmnichannelService:
             # Create response
             response = await self.repository.create_interaction_response(
                 {
-                    **response_data.dict(),
+                    **response_data.model_dump(),
                     "sequence_number": sequence_number,
-                    "sent_at": datetime.utcnow(),
+                    "sent_at": datetime.now(timezone.utc),
                     "sentiment": analysis.get("sentiment"),
                     "sentiment_score": analysis.get("sentiment_score"),
                     "tenant_id": self.tenant_id,
@@ -333,7 +333,7 @@ class OmnichannelService:
             # Update interaction timestamps and statistics
             update_data = {
                 "response_count": interaction.response_count + 1,
-                "last_response_at": datetime.utcnow(),
+                "last_response_at": datetime.now(timezone.utc),
             }
 
             # Set first response time if this is the first agent response
@@ -342,9 +342,9 @@ class OmnichannelService:
                 and not interaction.first_response_at
                 and not response_data.is_internal
             ):
-                update_data["first_response_at"] = datetime.utcnow()
+                update_data["first_response_at"] = datetime.now(timezone.utc)
                 update_data["response_time_seconds"] = int(
-                    (datetime.utcnow() - interaction.received_at).total_seconds()
+                    (datetime.now(timezone.utc) - interaction.received_at).total_seconds()
                 )
 
             await self.repository.update_interaction(interaction.id, update_data)
@@ -371,7 +371,7 @@ class OmnichannelService:
                 logger.warning(f"Interaction already resolved: {interaction_id}")
                 return True
 
-            resolved_at = datetime.utcnow()
+            resolved_at = datetime.now(timezone.utc)
             resolution_time_seconds = int(
                 (resolved_at - interaction.received_at).total_seconds()
             )
@@ -426,8 +426,8 @@ class OmnichannelService:
             # Create escalation record
             escalation = await self.repository.create_escalation(
                 {
-                    **escalation_data.dict(),
-                    "escalated_at": datetime.utcnow(),
+                    **escalation_data.model_dump(),
+                    "escalated_at": datetime.now(timezone.utc),
                     "tenant_id": self.tenant_id,
                 }
             )
@@ -466,7 +466,7 @@ class OmnichannelService:
         """Search interactions with advanced filtering."""
         try:
             interactions, total_count = await self.repository.search_interactions(
-                filters.dict(exclude_unset=True)
+                filters.model_dump(exclude_unset=True)
             )
 
             # Build response data
@@ -521,7 +521,7 @@ class OmnichannelService:
             # Create agent
             agent = await self.repository.create_agent(
                 {
-                    **agent_data.dict(),
+                    **agent_data.model_dump(),
                     "status": AgentStatus.OFFLINE,
                     "tenant_id": self.tenant_id,
                 }
@@ -548,12 +548,12 @@ class OmnichannelService:
             # Update status
             update_data = {
                 "status": status,
-                "last_activity": datetime.utcnow(),
+                "last_activity": datetime.now(timezone.utc),
                 "status_message": message,
             }
 
             if status == AgentStatus.AVAILABLE:
-                update_data["last_login"] = datetime.utcnow()
+                update_data["last_login"] = datetime.now(timezone.utc)
 
             await self.repository.update_agent(agent_id, update_data)
 
@@ -586,7 +586,7 @@ class OmnichannelService:
 
             # Create team
             team = await self.repository.create_team(
-                {**team_data.dict(), "tenant_id": self.tenant_id}
+                {**team_data.model_dump(), "tenant_id": self.tenant_id}
             )
 
             logger.info(f"Created agent team: {team.id}")
@@ -665,7 +665,7 @@ class OmnichannelService:
             self._validate_routing_conditions(rule_data.conditions)
 
             rule = await self.repository.create_routing_rule(
-                {**rule_data.dict(), "tenant_id": self.tenant_id}
+                {**rule_data.model_dump(), "tenant_id": self.tenant_id}
             )
 
             logger.info(f"Created routing rule: {rule.id}")
@@ -685,9 +685,9 @@ class OmnichannelService:
             logger.info("Generating omnichannel dashboard statistics")
 
             if not date_from:
-                date_from = datetime.utcnow() - timedelta(days=1)
+                date_from = datetime.now(timezone.utc) - timedelta(days=1)
             if not date_to:
-                date_to = datetime.utcnow()
+                date_to = datetime.now(timezone.utc)
 
             # Get current status counts
             active_interactions = await self.repository.get_interaction_count_by_status(
@@ -762,7 +762,7 @@ class OmnichannelService:
                 breached_sla_count=breached_sla,
                 high_priority_queue_size=high_priority_queue,
                 escalated_interactions_count=escalated_count,
-                calculated_at=datetime.utcnow(),
+                calculated_at=datetime.now(timezone.utc),
             )
 
         except Exception as e:
@@ -892,7 +892,7 @@ class OmnichannelService:
                 "customer_satisfaction_count": len(satisfactions),
                 "resolution_rate": resolution_rate,
                 "escalation_rate": escalation_rate,
-                "calculated_at": datetime.utcnow(),
+                "calculated_at": datetime.now(timezone.utc),
             }
 
         except Exception as e:
@@ -1013,7 +1013,7 @@ class OmnichannelService:
                 churn_risk += 0.2
             if avg_sentiment and avg_sentiment < -0.2:
                 churn_risk += 0.3
-            if complaint_dates and complaint_dates[-1] > datetime.utcnow() - timedelta(
+            if complaint_dates and complaint_dates[-1] > datetime.now(timezone.utc) - timedelta(
                 days=30
             ):
                 churn_risk += 0.2
@@ -1038,7 +1038,7 @@ class OmnichannelService:
                 "last_complaint_date": (
                     max(complaint_dates) if complaint_dates else None
                 ),
-                "last_calculated": datetime.utcnow(),
+                "last_calculated": datetime.now(timezone.utc),
                 "tenant_id": self.tenant_id,
             }
 
@@ -1198,7 +1198,7 @@ class OmnichannelService:
             sentiment = "negative"
             sentiment_score = -0.3 - (negative_count * 0.1)
 
-        sentiment_score = max(-1.0, min(1.0, sentiment_score))
+        sentiment_score = max(-1.0, min(1.0, sentiment_score)
 
         # Urgency score
         urgency_keywords = ["urgent", "emergency", "asap", "immediately", "critical"]
@@ -1247,7 +1247,7 @@ class OmnichannelService:
                         rule.id,
                         {
                             "usage_count": rule.usage_count + 1,
-                            "last_used": datetime.utcnow(),
+                            "last_used": datetime.now(timezone.utc),
                         },
                     )
 
@@ -1301,7 +1301,7 @@ class OmnichannelService:
         if "business_hours_only" in conditions and conditions["business_hours_only"]:
             # Simple business hours check (9 AM - 5 PM, Mon-Fri)
             from datetime import datetime
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             weekday = now.weekday()  # 0=Monday, 6=Sunday
             hour = now.hour
             
@@ -1405,7 +1405,7 @@ class OmnichannelService:
             update_data = {
                 "current_interactions": new_count,
                 "current_load_percentage": new_load,
-                "last_activity": datetime.utcnow(),
+                "last_activity": datetime.now(timezone.utc),
             }
 
             # Update status based on workload
@@ -1421,7 +1421,7 @@ class OmnichannelService:
         await self.repository.update_channel(
             channel_id,
             {
-                "last_used": datetime.utcnow(),
+                "last_used": datetime.now(timezone.utc),
                 "usage_count": func.coalesce(ContactCommunicationChannel.usage_count, 0)
                 + 1,
             },
@@ -1467,7 +1467,7 @@ class OmnichannelService:
             "customer_satisfaction_count": 0,
             "resolution_rate": 0,
             "escalation_rate": 0,
-            "calculated_at": datetime.utcnow(),
+            "calculated_at": datetime.now(timezone.utc),
         }
 
     async def _round_robin_selection(

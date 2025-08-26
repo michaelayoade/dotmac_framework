@@ -16,6 +16,7 @@ from dotmac_isp.modules.network_visualization.models import (
     DashboardLayout,
     NetworkMap,
 )
+
 from dotmac_isp.modules.network_visualization.schemas import (
     DashboardCreate,
     DashboardResponse,
@@ -24,6 +25,7 @@ from dotmac_isp.modules.network_visualization.schemas import (
     VisualizationWidgetResponse,
     NetworkMapResponse,
 )
+from datetime import timezone
 from dotmac_isp.modules.network_integration.models import (
     NetworkDevice,
     NetworkInterface,
@@ -87,7 +89,7 @@ async def get_dashboard(
         raise HTTPException(status_code=404, detail="Dashboard not found")
 
     # Update access tracking
-    dashboard.last_accessed = datetime.utcnow()
+    dashboard.last_accessed = datetime.now(timezone.utc)
     dashboard.access_count += 1
     await db.commit()
 
@@ -221,7 +223,7 @@ async def get_topology_data(
         "metadata": {
             "total_nodes": len(nodes),
             "total_edges": len(edges),
-            "generated_at": datetime.utcnow(),
+            "generated_at": datetime.now(timezone.utc),
         },
     }
 
@@ -298,7 +300,7 @@ async def apply_topology_layout(
         "nodes": nodes,
         "edges": edges,
         "algorithm_used": algorithm,
-        "layout_applied_at": datetime.utcnow(),
+        "layout_applied_at": datetime.now(timezone.utc),
     }
 
 
@@ -506,7 +508,7 @@ async def get_realtime_device_status(
 
     return {
         "devices": status_data,
-        "timestamp": datetime.utcnow(),
+        "timestamp": datetime.now(timezone.utc),
         "total_devices": len(status_data),
     }
 
@@ -522,7 +524,7 @@ async def get_realtime_network_metrics(
     # This would query the metrics table for recent data
     # For now, return sample data
 
-    current_time = datetime.utcnow()
+    current_time = datetime.now(timezone.utc)
 
     metrics_data = {"metrics": [], "time_range": time_range, "timestamp": current_time}
 
@@ -572,7 +574,7 @@ async def get_alert_visualization_data(
         ],
         "time_series": [
             {
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "critical": 5,
                 "high": 12,
                 "medium": 18,
@@ -582,7 +584,7 @@ async def get_alert_visualization_data(
         ],
         "group_by": group_by,
         "time_range": time_range,
-        "generated_at": datetime.utcnow(),
+        "generated_at": datetime.now(timezone.utc),
     }
 
     return alert_data

@@ -139,7 +139,7 @@ class ResponseCacheMiddleware(BaseHTTPMiddleware):
                     "content": content,
                     "status_code": response.status_code,
                     "headers": dict(response.headers),
-                    "cached_at": datetime.utcnow().isoformat(),
+                    "cached_at": datetime.now(timezone.utc).isoformat(),
                 }
 
                 # Cache the response

@@ -22,7 +22,7 @@ from .models import (
     InterfaceStatus,
     AlertSeverity,
     AlertType,
-)
+, timezone)
 from . import schemas
 from dotmac_isp.shared.exceptions import (
     EntityNotFoundError,
@@ -88,7 +88,7 @@ class NetworkDeviceService(BaseTenantService[NetworkDevice, schemas.NetworkDevic
             # Start SNMP monitoring if enabled
             if entity.snmp_enabled:
                 from .tasks import start_device_monitoring
-                start_device_monitoring.delay(str(entity.id), str(self.tenant_id))
+                start_device_monitoring.delay(str(entity.id), str(self.tenant_id)
                 
         except Exception as e:
             self._logger.error(f"Failed to start monitoring for device {entity.id}: {e}")
@@ -182,7 +182,7 @@ class NetworkAlertService(BaseTenantService[NetworkAlert, schemas.NetworkAlertCr
         try:
             if entity.severity in [AlertSeverity.HIGH, AlertSeverity.CRITICAL]:
                 from .tasks import send_alert_notification
-                send_alert_notification.delay(str(entity.id), str(self.tenant_id))
+                send_alert_notification.delay(str(entity.id), str(self.tenant_id)
                 
         except Exception as e:
             self._logger.error(f"Failed to send notification for alert {entity.id}: {e}")
@@ -325,10 +325,10 @@ class NetworkIntegrationService:
         config = config_repo.create(
             {
                 "device_id": device_id,
-                "name": f"Backup_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
-                "version": f"backup_{int(datetime.utcnow().timestamp())}",
+                "name": f"Backup_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}",
+                "version": f"backup_{int(datetime.now(timezone.utc).timestamp()}",
                 "configuration_data": config_data,
-                "configuration_hash": hashlib.sha256(config_data.encode()).hexdigest(),
+                "configuration_hash": hashlib.sha256(config_data.encode().hexdigest(),
                 "source": "automatic",
                 "is_backup": True,
             }
@@ -376,7 +376,7 @@ class NetworkIntegrationService:
         # This would connect to device and retrieve configuration
         # Using SSH, SNMP, API, etc.
         return (
-            f"# Configuration for {device.name}\n# Retrieved at {datetime.utcnow()}\n"
+            f"# Configuration for {device.name}\n# Retrieved at {datetime.now(timezone.utc)}\n"
         )
 
     async def _create_device_alert(
@@ -682,7 +682,7 @@ class NetworkTopologyService:
         return {
             "nodes": nodes,
             "edges": edges,
-            "last_updated": datetime.utcnow().isoformat(),
+            "last_updated": datetime.now(timezone.utc).isoformat(),
         }
 
 
@@ -697,14 +697,14 @@ class NetworkIntegrationService:
         self.interface_service = NetworkInterfaceService(db, tenant_id)
         self.monitoring_service = NetworkMonitoringService(db, tenant_id)
         self.topology_service = NetworkTopologyService(db, tenant_id)
-        self.alert_repo = NetworkAlertRepository(db, UUID(tenant_id))
+        self.alert_repo = NetworkAlertRepository(db, UUID(tenant_id)
 
     async def provision_network_device(
         self, device_data: schemas.NetworkDeviceCreate
     ) -> NetworkDevice:
         """Provision a complete network device with interfaces."""
         # Create device
-        device = await self.device_service.create_device(device_data.dict())
+        device = await self.device_service.create_device(device_data.model_dump()
 
         # Auto-discover interfaces if device is reachable
         if device.management_ip and device.snmp_enabled:
@@ -747,7 +747,7 @@ class NetworkIntegrationService:
             "network_uptime_percentage": round(uptime_percentage, 2),
             "total_devices": total_devices,
             "total_active_alerts": len(active_alerts),
-            "last_updated": datetime.utcnow().isoformat(),
+            "last_updated": datetime.now(timezone.utc).isoformat(),
         }
 
     async def _discover_device_interfaces(

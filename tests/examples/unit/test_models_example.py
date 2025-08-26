@@ -11,11 +11,12 @@ This demonstrates best practices for testing:
 import pytest
 from datetime import datetime, timezone
 from decimal import Decimal
+from enum import Enum
 from typing import Optional
 from uuid import uuid4
 
 import pytest
-from pydantic import BaseModel, Field, ValidationError, validator
+from pydantic import BaseModel, Field, ValidationError, validator, ConfigDict
 from pydantic.networks import EmailStr
 
 
@@ -32,21 +33,21 @@ class Address(BaseModel):
     street: str = Field(..., min_length=1, max_length=255)
     city: str = Field(..., min_length=1, max_length=100)
     state: str = Field(..., min_length=2, max_length=2)
-    zip_code: str = Field(..., regex=r"^\d{5}(-\d{4})?$")
+    zip_code: str = Field(..., pattern=r"^\d{5}(-\d{4})?$")
     country: str = Field(default="US", min_length=2, max_length=2)
 
 
 class Customer(BaseModel):
     """Customer model with comprehensive validation."""
-    id: Optional[str] = Field(default_factory=lambda: str(uuid4()))
+    id: Optional[str] = Field(default_factory=lambda: str(uuid4())
     email: EmailStr
     first_name: str = Field(..., min_length=1, max_length=50)
     last_name: str = Field(..., min_length=1, max_length=50)
-    phone: Optional[str] = Field(None, regex=r"^\+?1?[0-9]{10}$")
+    phone: Optional[str] = Field(None, pattern=r"^\+?1?[0-9]{10}$")
     address: Optional[Address] = None
     status: CustomerStatus = CustomerStatus.ACTIVE
-    balance: Decimal = Field(default=Decimal("0.00"), ge=Decimal("0.00"))
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    balance: Decimal = Field(default=Decimal("0.00"), ge=Decimal("0.00")
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc)
     tenant_id: str = Field(..., min_length=1)
 
     @validator('email')
@@ -62,16 +63,14 @@ class Customer(BaseModel):
     def clean_phone(cls, v):
         """Clean phone number by removing non-numeric characters."""
         if v:
-            return ''.join(filter(str.isdigit, v))[-10:]  # Last 10 digits
+            return ''.join(filter(str.isdigit, v)[-10:]  # Last 10 digits
         return v
 
-    class Config:
-        """Pydantic model configuration."""
-        json_encoders = {
-            datetime: lambda v: v.isoformat(),
-            Decimal: str,
+    model_config = ConfigDict(
+        json_encoders={
+            datetime: lambda v: v.isoformat() if v else None
         }
-
+    )
 
 # Test fixtures
 @pytest.fixture
@@ -157,7 +156,7 @@ class TestAddressModel:
         json_data = address.dict()
         
         expected_fields = {"street", "city", "state", "zip_code", "country"}
-        assert set(json_data.keys()) == expected_fields
+        assert set(json_data.keys() == expected_fields
         
         # Test round-trip serialization
         recreated = Address(**json_data)
@@ -291,7 +290,7 @@ class TestCustomerModel:
             "id", "email", "first_name", "last_name", "phone", 
             "address", "status", "balance", "created_at", "tenant_id"
         }
-        assert set(customer_dict.keys()) == expected_fields
+        assert set(customer_dict.keys() == expected_fields
         
         # Verify nested address is also a dict
         assert isinstance(customer_dict["address"], dict)
@@ -349,7 +348,7 @@ class TestModelPerformance:
 
 # Parameterized tests
 @pytest.mark.unit
-@pytest.mark.parametrize("status", list(CustomerStatus))
+@pytest.mark.parametrize("status", list(CustomerStatus)
 def test_all_customer_statuses(valid_customer_data, status):
     """Test all customer status values."""
     valid_customer_data["status"] = status
@@ -387,9 +386,9 @@ try:
     @pytest.mark.slow  # Property-based tests can be slower
     @given(
         email=st.emails(),
-        first_name=st.text(min_size=1, max_size=50, alphabet=st.characters(whitelist_categories=('Lu', 'Ll'))),
-        last_name=st.text(min_size=1, max_size=50, alphabet=st.characters(whitelist_categories=('Lu', 'Ll'))),
-        tenant_id=st.text(min_size=1, max_size=50, alphabet=st.characters(whitelist_categories=('Lu', 'Ll', 'Nd', '-')))
+        first_name=st.text(min_size=1, max_size=50, alphabet=st.characters(whitelist_categories=('Lu', 'Ll'),
+        last_name=st.text(min_size=1, max_size=50, alphabet=st.characters(whitelist_categories=('Lu', 'Ll'),
+        tenant_id=st.text(min_size=1, max_size=50, alphabet=st.characters(whitelist_categories=('Lu', 'Ll', 'Nd', '-')
     )
     def test_customer_creation_property_based(email, first_name, last_name, tenant_id):
         """Property-based test for customer creation."""

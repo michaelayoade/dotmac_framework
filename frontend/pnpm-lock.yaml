@@ -1246,6 +1246,9 @@ importers:
       '@types/react-dom':
         specifier: ^18.2.23
         version: 18.3.7(@types/react@18.3.23)
+      next:
+        specifier: ^14.2.18
+        version: 14.2.31(@babel/core@7.28.3)(@opentelemetry/api@1.9.0)(@playwright/test@1.54.2)(react-dom@18.3.1)(react@18.3.1)
       react:
         specifier: ^18.2.0
         version: 18.3.1

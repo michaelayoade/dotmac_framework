@@ -1,0 +1,29 @@
+{
+  "redis": {
+    "host": "redis-shared",
+    "port": 6379,
+    "db": 0,
+    "socket_connect_timeout": 5,
+    "socket_timeout": 5,
+    "retry_on_timeout": true,
+    "health_check_interval": 30,
+    "max_connections": 20,
+    "connection_pool_kwargs": {
+      "max_connections": 20,
+      "retry_on_timeout": true
+    }
+  },
+  "cache_timeouts": {
+    "user_session": 3600,
+    "user_profile": 1800,
+    "static_data": 86400,
+    "api_responses": 300,
+    "database_queries": 600
+  },
+  "cache_prefixes": {
+    "session": "sess:",
+    "user": "user:",
+    "api": "api:",
+    "query": "qry:"
+  }
+}

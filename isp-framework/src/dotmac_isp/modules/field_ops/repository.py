@@ -20,7 +20,7 @@ from .models import (
     TechnicianStatus,
     AppointmentStatus,
     EquipmentCondition,
-)
+, timezone)
 from dotmac_isp.shared.exceptions import NotFoundError, ConflictError, ValidationError
 
 
@@ -131,7 +131,7 @@ class WorkOrderRepository:
             )
 
         return (
-            query.order_by(desc(WorkOrder.created_at)).offset(skip).limit(limit).all()
+            query.order_by(desc(WorkOrder.created_at).offset(skip).limit(limit).all()
         )
 
     def update(
@@ -146,7 +146,7 @@ class WorkOrderRepository:
             if hasattr(work_order, key):
                 setattr(work_order, key, value)
 
-        work_order.updated_at = datetime.utcnow()
+        work_order.updated_at = datetime.now(timezone.utc)
         self.db.commit()
         self.db.refresh(work_order)
         return work_order
@@ -319,7 +319,7 @@ class TechnicianRepository:
             if hasattr(technician, key):
                 setattr(technician, key, value)
 
-        technician.updated_at = datetime.utcnow()
+        technician.updated_at = datetime.now(timezone.utc)
         self.db.commit()
         self.db.refresh(technician)
         return technician
@@ -551,7 +551,7 @@ class TimeLogRepository:
             if hasattr(time_log, key):
                 setattr(time_log, key, value)
 
-        time_log.updated_at = datetime.utcnow()
+        time_log.updated_at = datetime.now(timezone.utc)
         self.db.commit()
         self.db.refresh(time_log)
         return time_log
@@ -623,7 +623,7 @@ class FieldEquipmentRepository:
         if assigned_to:
             query = query.filter(FieldEquipment.assigned_to_technician == assigned_to)
         if available_only:
-            query = query.filter(FieldEquipment.assigned_to_technician.is_(None))
+            query = query.filter(FieldEquipment.assigned_to_technician.is_(None)
 
         return query.order_by(FieldEquipment.name).offset(skip).limit(limit).all()
 
@@ -649,8 +649,8 @@ class FieldEquipmentRepository:
             return False
 
         equipment.assigned_to_technician = technician_id
-        equipment.assignment_date = datetime.utcnow()
-        equipment.updated_at = datetime.utcnow()
+        equipment.assignment_date = datetime.now(timezone.utc)
+        equipment.updated_at = datetime.now(timezone.utc)
 
         self.db.commit()
         return True
@@ -663,7 +663,7 @@ class FieldEquipmentRepository:
 
         equipment.assigned_to_technician = None
         equipment.assignment_date = None
-        equipment.updated_at = datetime.utcnow()
+        equipment.updated_at = datetime.now(timezone.utc)
 
         self.db.commit()
         return True

@@ -89,7 +89,7 @@ class SMSProvider:
     async def _handle_twilio_webhook(self, raw_body: bytes) -> Dict[str, Any]:
         """Handle Twilio SMS webhook"""
         # Twilio sends form-encoded data
-        data = parse_qs(raw_body.decode())
+        data = parse_qs(raw_body.decode()
 
         # Extract key fields
         result = {
@@ -104,7 +104,7 @@ class SMSProvider:
 
     async def _handle_vonage_webhook(self, raw_body: bytes) -> Dict[str, Any]:
         """Handle Vonage SMS webhook"""
-        data = json.loads(raw_body.decode())
+        data = json.loads(raw_body.decode()
 
         result = {
             "from": data.get("msisdn"),

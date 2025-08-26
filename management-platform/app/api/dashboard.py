@@ -13,12 +13,12 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..core.observability import get_observability
-from ..core.plugins.service_integration import service_integration
-from ..database import get_db
-from ..services.tenant_service import TenantService
-from ..services.deployment_service import DeploymentService
-from ..models.tenant import Tenant, TenantStatus
+from core.observability import get_observability
+from core.plugins.service_integration import service_integration
+from database import get_db
+from services.tenant_service import TenantService
+from services.deployment_service import DeploymentService
+from models.tenant import Tenant, TenantStatus
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
@@ -101,7 +101,7 @@ async def create_tenant(
             )
             
             # Record tenant operation
-            observability.record_tenant_operation("create", tenant_id, success=True, 
+            observability.record_tenant_operation("create", tenant_id, success=True,
                                                 company_name=tenant_name)
             
             # Prepare deployment configuration
@@ -217,7 +217,7 @@ async def get_deployment_status(deployment_id: str):
             "deployment_id": deployment_id,
             "status": status,
             "logs": "\n".join(logs[-10:]),  # Return last 10 log entries
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now().isoformat()
         }
         
     except Exception as e:
@@ -226,7 +226,7 @@ async def get_deployment_status(deployment_id: str):
             "deployment_id": deployment_id,
             "status": "error",
             "logs": f"Status check failed: {str(e)}",
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now().isoformat()
         }
 
 
@@ -241,7 +241,7 @@ async def get_platform_metrics(db: AsyncSession = Depends(get_db)):
         total_tenants = await tenant_service.count_tenants()
         
         # Get deployments today (simplified)
-        today = datetime.utcnow().date()
+        today = datetime.now().date()
         deployments_today = len([
             log for log_id, log in deployment_logs.items() 
             if any("✅ ISP Framework deployed" in entry for entry in log)
@@ -259,7 +259,7 @@ async def get_platform_metrics(db: AsyncSession = Depends(get_db)):
             "deployments_today": deployments_today,
             "system_health": system_health,
             "plugin_count": plugin_count,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now().isoformat()
         }
         
     except Exception as e:
@@ -343,7 +343,7 @@ async def delete_tenant(
 async def list_plugins():
     """Get available plugins information."""
     try:
-        from ..core.plugins.registry import plugin_registry
+        from core.plugins.registry import plugin_registry
         
         plugins_info = plugin_registry.list_plugins()
         plugin_capabilities = await service_integration.get_all_plugin_capabilities()
@@ -363,7 +363,7 @@ async def list_plugins():
 async def dashboard_health():
     """Dashboard health check."""
     try:
-        from ..core.plugins.registry import plugin_registry
+        from core.plugins.registry import plugin_registry
         
         plugin_health = await plugin_registry.health_check_all()
         healthy_plugins = sum(1 for health in plugin_health.values() 
@@ -374,7 +374,7 @@ async def dashboard_health():
             "dashboard": "operational",
             "plugins_healthy": healthy_plugins,
             "plugins_total": len(plugin_health),
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now().isoformat()
         }
         
     except Exception as e:
@@ -382,5 +382,5 @@ async def dashboard_health():
         return {
             "status": "unhealthy",
             "error": str(e),
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now().isoformat()
         }

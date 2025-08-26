@@ -15,7 +15,7 @@ from .models import (
     PortalAccountStatus,
     PortalAccountType,
     SessionStatus,
-)
+, timezone)
 from dotmac_isp.shared.exceptions import NotFoundError, ConflictError, ValidationError
 
 
@@ -123,7 +123,7 @@ class PortalAccountRepository:
             )
 
         return (
-            query.order_by(desc(PortalAccount.created_at))
+            query.order_by(desc(PortalAccount.created_at)
             .offset(skip)
             .limit(limit)
             .all()
@@ -141,7 +141,7 @@ class PortalAccountRepository:
             if hasattr(account, key):
                 setattr(account, key, value)
 
-        account.updated_at = datetime.utcnow()
+        account.updated_at = datetime.now(timezone.utc)
         self.db.commit()
         self.db.refresh(account)
         return account
@@ -178,7 +178,7 @@ class PortalAccountRepository:
 
     def get_recently_created(self, days: int = 30) -> List[PortalAccount]:
         """Get recently created accounts."""
-        cutoff_date = datetime.utcnow() - timedelta(days=days)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
         return (
             self.db.query(PortalAccount)
             .filter(
@@ -188,7 +188,7 @@ class PortalAccountRepository:
                     PortalAccount.created_at >= cutoff_date,
                 )
             )
-            .order_by(desc(PortalAccount.created_at))
+            .order_by(desc(PortalAccount.created_at)
             .all()
         )
 
@@ -250,10 +250,10 @@ class PortalSessionRepository:
                     PortalSession.tenant_id == str(self.tenant_id),
                     PortalSession.is_deleted == False,
                     PortalSession.session_status == SessionStatus.ACTIVE,
-                    PortalSession.expires_at > datetime.utcnow(),
+                    PortalSession.expires_at > datetime.now(timezone.utc),
                 )
             )
-            .order_by(desc(PortalSession.created_at))
+            .order_by(desc(PortalSession.created_at)
             .all()
         )
 
@@ -269,7 +269,7 @@ class PortalSessionRepository:
             if hasattr(session, key):
                 setattr(session, key, value)
 
-        session.updated_at = datetime.utcnow()
+        session.updated_at = datetime.now(timezone.utc)
         self.db.commit()
         self.db.refresh(session)
         return session
@@ -281,8 +281,8 @@ class PortalSessionRepository:
             return False
 
         session.session_status = SessionStatus.EXPIRED
-        session.ended_at = datetime.utcnow()
-        session.updated_at = datetime.utcnow()
+        session.ended_at = datetime.now(timezone.utc)
+        session.updated_at = datetime.now(timezone.utc)
         self.db.commit()
         return True
 
@@ -293,15 +293,15 @@ class PortalSessionRepository:
             .filter(
                 and_(
                     PortalSession.tenant_id == str(self.tenant_id),
-                    PortalSession.expires_at < datetime.utcnow(),
+                    PortalSession.expires_at < datetime.now(timezone.utc),
                     PortalSession.session_status == SessionStatus.ACTIVE,
                 )
             )
             .update(
                 {
                     PortalSession.session_status: SessionStatus.EXPIRED,
-                    PortalSession.ended_at: datetime.utcnow(),
-                    PortalSession.updated_at: datetime.utcnow(),
+                    PortalSession.ended_at: datetime.now(timezone.utc),
+                    PortalSession.updated_at: datetime.now(timezone.utc),
                 }
             )
         )
@@ -333,7 +333,7 @@ class PortalLoginAttemptRepository:
         self, identifier: str, minutes: int = 15
     ) -> List[PortalLoginAttempt]:
         """Get recent login attempts for an identifier (email/portal_id)."""
-        cutoff_time = datetime.utcnow() - timedelta(minutes=minutes)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(minutes=minutes)
         return (
             self.db.query(PortalLoginAttempt)
             .filter(
@@ -343,13 +343,13 @@ class PortalLoginAttemptRepository:
                     PortalLoginAttempt.attempt_time >= cutoff_time,
                 )
             )
-            .order_by(desc(PortalLoginAttempt.attempt_time))
+            .order_by(desc(PortalLoginAttempt.attempt_time)
             .all()
         )
 
     def count_failed_attempts(self, identifier: str, minutes: int = 15) -> int:
         """Count failed login attempts for an identifier in time window."""
-        cutoff_time = datetime.utcnow() - timedelta(minutes=minutes)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(minutes=minutes)
         return (
             self.db.query(PortalLoginAttempt)
             .filter(
@@ -367,7 +367,7 @@ class PortalLoginAttemptRepository:
         self, ip_address: str, minutes: int = 15
     ) -> List[PortalLoginAttempt]:
         """Get login attempts by IP address."""
-        cutoff_time = datetime.utcnow() - timedelta(minutes=minutes)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(minutes=minutes)
         return (
             self.db.query(PortalLoginAttempt)
             .filter(
@@ -377,7 +377,7 @@ class PortalLoginAttemptRepository:
                     PortalLoginAttempt.attempt_time >= cutoff_time,
                 )
             )
-            .order_by(desc(PortalLoginAttempt.attempt_time))
+            .order_by(desc(PortalLoginAttempt.attempt_time)
             .all()
         )
 
@@ -429,7 +429,7 @@ class PortalPreferencesRepository:
             if hasattr(preferences, key):
                 setattr(preferences, key, value)
 
-        preferences.updated_at = datetime.utcnow()
+        preferences.updated_at = datetime.now(timezone.utc)
         self.db.commit()
         self.db.refresh(preferences)
         return preferences

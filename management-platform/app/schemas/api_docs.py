@@ -9,7 +9,7 @@ from enum import Enum
 
 from pydantic import BaseModel, Field, HttpUrl
 
-from .common import BaseSchema
+from schemas.common import BaseSchema
 
 
 class SDKLanguage(str, Enum):

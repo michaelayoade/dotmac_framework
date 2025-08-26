@@ -36,7 +36,7 @@ class TestUnifiedConfigSystem:
             IntegrationType.VAULT_AUTHENTICATION,
         }
         
-        assert set(system.integrations.keys()) == expected_integrations
+        assert set(system.integrations.keys() == expected_integrations
         
         # Check initial status
         for integration in system.integrations.values():
@@ -76,10 +76,10 @@ class TestUnifiedConfigSystem:
             # Configure mocks
             mock_validation.return_value = Mock()
             mock_handlers.return_value = Mock()
-            mock_sales.return_value = Mock(get_active_strategies=Mock(return_value=['budget', 'customer_type']))
-            mock_conditions.return_value = Mock(get_supported_operators=Mock(return_value=['equals', 'greater_than']))
-            mock_schedule.return_value = Mock(get_supported_schedule_types=Mock(return_value=['cron', 'interval']))
-            mock_vault.return_value = Mock(get_supported_auth_methods=Mock(return_value=['token', 'approle']))
+            mock_sales.return_value = Mock(get_active_strategies=Mock(return_value=['budget', 'customer_type'])
+            mock_conditions.return_value = Mock(get_supported_operators=Mock(return_value=['equals', 'greater_than'])
+            mock_schedule.return_value = Mock(get_supported_schedule_types=Mock(return_value=['cron', 'interval'])
+            mock_vault.return_value = Mock(get_supported_auth_methods=Mock(return_value=['token', 'approle'])
             
             system = UnifiedConfigSystem("test_service")
             result = await system.initialize_system()
@@ -393,12 +393,12 @@ class TestComplexityReductionIntegration:
             
             # 4. Schedule calculations (Week 2 refactoring)
             schedule_engine = system.get_schedule_engine()
-            next_run = schedule_engine.calculate_next_run(Mock())
+            next_run = schedule_engine.calculate_next_run(Mock()
             assert next_run is not None
             
             # 5. Vault authentication (Week 2 refactoring)
             vault_engine = system.get_vault_auth_engine()
-            auth_token = vault_engine.authenticate(Mock(), Mock())
+            auth_token = vault_engine.authenticate(Mock(), Mock()
             assert auth_token == "test-token"
             
             # Verify system health

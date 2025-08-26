@@ -102,5 +102,5 @@ class CreditService:
     def _generate_credit_note_number(self) -> str:
         """Generate unique credit note number."""
         import uuid
-        from datetime import datetime
-        return f"CN-{datetime.now().strftime('%Y%m%d')}-{str(uuid.uuid4())[:8].upper()}"
+        from datetime import datetime, timezone
+        return f"CN-{datetime.now(timezone.utc).strftime('%Y%m%d')}-{str(uuid.uuid4()[:8].upper())}"

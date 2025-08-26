@@ -76,7 +76,7 @@ class WhatsAppChannelPlugin(BaseChannelPlugin):
             return True
 
         except Exception as e:
-logger.info(f"WhatsApp plugin initialization failed: {e}")
+            logger.info(f"WhatsApp plugin initialization failed: {e}")
             return False
 
     async def send_message(self, message: ChannelMessage) -> Dict[str, Any]:
@@ -120,7 +120,7 @@ logger.info(f"WhatsApp plugin initialization failed: {e}")
                             headers=self.headers,
                         ) as response:
                             if response.status == 200:
-                                result = await response.json()
+                                result = await response.model_dump_json()
                                 return {
                                     "success": True,
                                     "message_id": result.get("messages", [{}])[0].get(

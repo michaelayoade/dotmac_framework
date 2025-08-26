@@ -9,7 +9,7 @@ Follows contract-first design with comprehensive validation and error handling.
 import logging
 import secrets
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Any, Optional
 
 from dotmac_isp.sdks.core.datetime_utils import utc_now
 
@@ -74,8 +74,15 @@ class AuthSDK:
     - Comprehensive security features
     """
 
-    def __init__(        ):
-            """Initialize operation."""
+    def __init__(
+        self,
+        secret_key: str,
+        db_session: Optional[Any] = None,
+        algorithm: str = "HS256",
+        access_token_expire_minutes: int = 30,
+        refresh_token_expire_days: int = 7,
+    ):
+        """Initialize authentication SDK."""
         self.secret_key = secret_key
         if AsyncSession is None and db_session is not None:
             raise ImportError(

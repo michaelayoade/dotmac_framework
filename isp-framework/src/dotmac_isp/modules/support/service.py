@@ -14,13 +14,12 @@ from .models import (
     Ticket,
     TicketComment,
     KnowledgeBaseArticle,
-    SLA,
-    TicketStatus,
-    TicketPriority,
+    SLAPolicy,
     TicketCategory,
     TicketSource,
     SLAStatus,
 )
+from dotmac_isp.shared.enums import Priority as TicketPriority, TicketStatus
 from . import schemas
 from dotmac_isp.shared.exceptions import (
     ServiceError,
@@ -32,7 +31,7 @@ from dotmac_isp.shared.exceptions import (
 
 def generate_ticket_number() -> str:
     """Generate a unique ticket number."""
-    timestamp = int(datetime.utcnow().timestamp())
+    timestamp = int(datetime.now(timezone.utc).timestamp())
     random_chars = "".join(
         secrets.choice(string.ascii_uppercase + string.digits) for _ in range(4)
     )
@@ -99,7 +98,7 @@ class TicketService(BaseTenantService[Ticket, schemas.TicketCreate, schemas.Tick
             self._logger.error(f"Failed to setup SLA monitoring for ticket {entity.id}: {e}")
 
 
-class KnowledgeBaseService(BaseTenantService[KnowledgeBaseArticle, schemas.KnowledgeBaseCreate, schemas.KnowledgeBaseUpdate, schemas.KnowledgeBaseResponse]):
+class KnowledgeBaseService(BaseTenantService[KnowledgeBaseArticle, schemas.KnowledgeBaseArticleCreate, schemas.KnowledgeBaseArticleUpdate, schemas.KnowledgeBaseArticleResponse]):
     """Service for knowledge base article management."""
 
     def __init__(self, db: Session, tenant_id: str):
@@ -107,13 +106,13 @@ class KnowledgeBaseService(BaseTenantService[KnowledgeBaseArticle, schemas.Knowl
         super().__init__(
             db=db,
             model_class=KnowledgeBaseArticle,
-            create_schema=schemas.KnowledgeBaseCreate,
-            update_schema=schemas.KnowledgeBaseUpdate,
-            response_schema=schemas.KnowledgeBaseResponse,
+            create_schema=schemas.KnowledgeBaseArticleCreate,
+            update_schema=schemas.KnowledgeBaseArticleUpdate,
+            response_schema=schemas.KnowledgeBaseArticleResponse,
             tenant_id=tenant_id
         )
 
-    async def _validate_create_rules(self, data: schemas.KnowledgeBaseCreate) -> None:
+    async def _validate_create_rules(self, data: schemas.KnowledgeBaseArticleCreate) -> None:
         """Validate business rules for knowledge base article creation."""
         # Ensure article title is unique for tenant
         if await self.repository.exists({'title': data.title}):
@@ -122,7 +121,7 @@ class KnowledgeBaseService(BaseTenantService[KnowledgeBaseArticle, schemas.Knowl
                 rule_name="unique_article_title"
             )
 
-    async def _validate_update_rules(self, entity: KnowledgeBaseArticle, data: schemas.KnowledgeBaseUpdate) -> None:
+    async def _validate_update_rules(self, entity: KnowledgeBaseArticle, data: schemas.KnowledgeBaseArticleUpdate) -> None:
         """Validate business rules for knowledge base article updates."""
         # Prevent unpublishing articles that are frequently accessed
         if data.is_published == False and entity.is_published and entity.view_count > 1000:
@@ -132,21 +131,21 @@ class KnowledgeBaseService(BaseTenantService[KnowledgeBaseArticle, schemas.Knowl
             )
 
 
-class SLAService(BaseTenantService[SLA, schemas.SLACreate, schemas.SLAUpdate, schemas.SLAResponse]):
+class SLAService(BaseTenantService[SLAPolicy, schemas.SLAPolicyCreate, schemas.SLAPolicyUpdate, schemas.SLAPolicyResponse]):
     """Service for SLA rule management."""
 
     def __init__(self, db: Session, tenant_id: str):
         """  Init   operation."""
         super().__init__(
             db=db,
-            model_class=SLA,
-            create_schema=schemas.SLACreate,
-            update_schema=schemas.SLAUpdate,
-            response_schema=schemas.SLAResponse,
+            model_class=SLAPolicy,
+            create_schema=schemas.SLAPolicyCreate,
+            update_schema=schemas.SLAPolicyUpdate,
+            response_schema=schemas.SLAPolicyResponse,
             tenant_id=tenant_id
         )
 
-    async def _validate_create_rules(self, data: schemas.SLACreate) -> None:
+    async def _validate_create_rules(self, data: schemas.SLAPolicyCreate) -> None:
         """Validate business rules for SLA creation."""
         # Ensure SLA name is unique for tenant
         if await self.repository.exists({'name': data.name}):
@@ -159,7 +158,7 @@ class SLAService(BaseTenantService[SLA, schemas.SLACreate, schemas.SLAUpdate, sc
         if data.response_time_hours <= 0 or data.response_time_hours > 72:
             raise ValidationError("SLA response time must be between 1 and 72 hours")
 
-    async def _validate_update_rules(self, entity: SLA, data: schemas.SLAUpdate) -> None:
+    async def _validate_update_rules(self, entity: SLAPolicy, data: schemas.SLAPolicyUpdate) -> None:
         """Validate business rules for SLA updates."""
         # Prevent reducing SLA response time if there are active tickets
         if (data.response_time_hours and data.response_time_hours < entity.response_time_hours):
@@ -194,7 +193,7 @@ class SupportTicketService:
 
             due_date = None
             if sla_rule:
-                due_date = datetime.utcnow() + timedelta(
+                due_date = datetime.now(timezone.utc) + timedelta(
                     hours=sla_rule.response_time_hours
                 )
 
@@ -315,9 +314,9 @@ class SupportTicketService:
 
                 # Handle status transitions
                 if update_data.ticket_status == TicketStatus.RESOLVED:
-                    update_dict["resolved_at"] = datetime.utcnow()
+                    update_dict["resolved_at"] = datetime.now(timezone.utc)
                 elif update_data.ticket_status == TicketStatus.CLOSED:
-                    update_dict["closed_at"] = datetime.utcnow()
+                    update_dict["closed_at"] = datetime.now(timezone.utc)
 
             update_dict["updated_by"] = updated_by
 
@@ -427,7 +426,7 @@ class SupportTicketService:
                     if ticket.priority != TicketPriority.CRITICAL
                     else TicketPriority.CRITICAL
                 ),
-                "escalated_at": datetime.utcnow(),
+                "escalated_at": datetime.now(timezone.utc),
                 "escalation_reason": escalation_reason,
                 "updated_by": escalated_by,
             }

@@ -7,7 +7,7 @@ from uuid import uuid4
 import json
 
 # Mock the dependencies
-@pytest.fixture(scope="module", autouse=True)
+@pytest.fixture(scope="module", autouse=True, timezone)
 def mock_dependencies():
     """Mock SQLAlchemy and other dependencies."""
     import sys
@@ -127,7 +127,7 @@ class TestUserModelLogic:
             def is_locked(self) -> bool:
                 """Check if user account is locked."""
                 if self.locked_until:
-                    return datetime.utcnow() < self.locked_until
+                    return datetime.now(timezone.utc) < self.locked_until
                 return False
         
         return MockUser()
@@ -149,13 +149,13 @@ class TestUserModelLogic:
     def test_is_locked_property_locked_until_future(self):
         """Test is_locked property when user is locked until future."""
         user = self.create_mock_user()
-        user.locked_until = datetime.utcnow() + timedelta(minutes=30)
+        user.locked_until = datetime.now(timezone.utc) + timedelta(minutes=30)
         assert user.is_locked is True
     
     def test_is_locked_property_lock_expired(self):
         """Test is_locked property when lock has expired."""
         user = self.create_mock_user()
-        user.locked_until = datetime.utcnow() - timedelta(minutes=30)
+        user.locked_until = datetime.now(timezone.utc) - timedelta(minutes=30)
         assert user.is_locked is False
     
     def test_user_basic_properties(self):
@@ -295,7 +295,7 @@ class TestCustomerModelLogic:
                     self.state_province,
                     self.postal_code,
                 ]
-                return ", ".join(filter(None, parts))
+                return ", ".join(filter(None, parts)
         
         return MockCustomer()
     
@@ -368,7 +368,7 @@ class TestAuthTokenModelLogic:
                 self.user_id = uuid4()
                 self.token_hash = "abc123"
                 self.token_type = "access"
-                self.expires_at = datetime.utcnow() + timedelta(hours=1)
+                self.expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
                 self.is_revoked = False
                 self.device_info = "Test Device"
                 self.ip_address = "127.0.0.1"
@@ -377,7 +377,7 @@ class TestAuthTokenModelLogic:
             @property
             def is_expired(self) -> bool:
                 """Check if token is expired."""
-                return datetime.utcnow() > self.expires_at
+                return datetime.now(timezone.utc) > self.expires_at
             
             @property
             def is_valid(self) -> bool:
@@ -394,7 +394,7 @@ class TestAuthTokenModelLogic:
     def test_token_expired(self):
         """Test token is expired when expires_at is in the past."""
         token = self.create_mock_auth_token()
-        token.expires_at = datetime.utcnow() - timedelta(hours=1)
+        token.expires_at = datetime.now(timezone.utc) - timedelta(hours=1)
         assert token.is_expired is True
     
     def test_token_valid(self):
@@ -411,7 +411,7 @@ class TestAuthTokenModelLogic:
     def test_token_invalid_expired(self):
         """Test token is invalid when expired."""
         token = self.create_mock_auth_token()
-        token.expires_at = datetime.utcnow() - timedelta(hours=1)
+        token.expires_at = datetime.now(timezone.utc) - timedelta(hours=1)
         assert token.is_valid is False
     
     def test_token_properties(self):

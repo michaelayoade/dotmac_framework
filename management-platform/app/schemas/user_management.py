@@ -8,7 +8,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field, EmailStr, validator
 
-from .common import BaseSchema
+from schemas.common import BaseSchema
 
 
 class UserCreate(BaseModel):
@@ -20,7 +20,7 @@ class UserCreate(BaseModel):
     is_active: bool = Field(default=True, description="Whether user is active")
     metadata: Optional[Dict[str, Any]] = Field(None, description="Additional metadata")
     
-    @validator('role')
+    @field_validator('role')
     def validate_role(cls, v):
         valid_roles = [
             'super_admin', 'platform_admin', 'tenant_admin', 
@@ -39,7 +39,7 @@ class UserUpdate(BaseModel):
     permissions: Optional[List[str]] = Field(None, description="Custom permissions")
     metadata: Optional[Dict[str, Any]] = Field(None, description="Updated metadata")
     
-    @validator('role')
+    @field_validator('role')
     def validate_role(cls, v):
         if v is not None:
             valid_roles = [
@@ -59,7 +59,7 @@ class UserInvite(BaseModel):
     custom_message: Optional[str] = Field(None, description="Custom invitation message")
     expires_in_days: int = Field(default=7, ge=1, le=30, description="Invitation expiry in days")
     
-    @validator('role')
+    @field_validator('role')
     def validate_role(cls, v):
         valid_roles = [
             'super_admin', 'platform_admin', 'tenant_admin', 

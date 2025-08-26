@@ -15,11 +15,13 @@ from dotmac_isp.core.audit_trail import (
     AuditEventType,
     ComplianceFramework,
 )
+
 from dotmac_isp.core.search_optimization import index_manager, search_optimizer
 from dotmac_isp.core.security_checker import (
     run_security_audit,
     generate_security_fix_script,
 )
+from datetime import timezone
 from dotmac_isp.shared.cache import get_cache_manager
 
 logger = logging.getLogger(__name__)
@@ -65,7 +67,7 @@ async def get_security_status():
             cache_status = {"status": "unhealthy", "error": str(e)}
 
         return {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "overall_status": "healthy",
             "components": {
                 "row_level_security": rls_status,
@@ -122,7 +124,7 @@ async def get_recent_audit_events(
 
         # Get audit trail
         audit_events = audit_manager.get_audit_trail(
-            start_date=datetime.utcnow() - timedelta(days=7), limit=limit, **filters
+            start_date=datetime.now(timezone.utc) - timedelta(days=7), limit=limit, **filters
         )
 
         return {
@@ -161,7 +163,7 @@ async def generate_compliance_report(
             )
 
         # Calculate date range
-        end_date = datetime.utcnow()
+        end_date = datetime.now(timezone.utc)
         start_date = end_date - timedelta(days=days)
 
         # Generate report
@@ -179,7 +181,7 @@ async def generate_compliance_report(
 
         return {
             "report": report,
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
             "parameters": {
                 "framework": framework,
                 "days": days,
@@ -288,7 +290,7 @@ async def get_database_index_analysis():
         return {
             "existing_indexes": index_analysis,
             "recommendations": rec_data,
-            "analysis_timestamp": datetime.utcnow().isoformat(),
+            "analysis_timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     except Exception as e:
@@ -373,7 +375,7 @@ async def clear_security_caches(
         return {
             "message": f"Cleared {cleared_keys} cache entries",
             "cache_type": cache_type,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     except Exception as e:
@@ -396,7 +398,7 @@ async def cleanup_old_audit_logs(
         return {
             "message": f"Cleaned up {deleted_count} old audit log entries",
             "retention_days": days_to_keep,
-            "cleanup_timestamp": datetime.utcnow().isoformat(),
+            "cleanup_timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     except Exception as e:
@@ -461,14 +463,14 @@ async def run_comprehensive_security_audit():
         audit_results = run_security_audit()
 
         return {
-            "audit_timestamp": datetime.utcnow().isoformat(),
+            "audit_timestamp": datetime.now(timezone.utc).isoformat(),
             "audit_results": audit_results,
             "summary": {
                 "security_score": audit_results["security_score"],
                 "security_status": audit_results["security_status"],
                 "critical_issues": audit_results["summary"]["critical_issues"],
                 "high_issues": audit_results["summary"]["high_issues"],
-                "recommendations_count": len(audit_results.get("recommendations", [])),
+                "recommendations_count": len(audit_results.get("recommendations", []))
             },
         }
 
@@ -559,9 +561,9 @@ async def check_critical_vulnerabilities():
             "total_critical": len(critical_vulnerabilities),
             "total_high": len(high_vulnerabilities),
             "total_medium": audit_results["summary"]["medium_issues"],
-            "scan_timestamp": datetime.utcnow().isoformat(),
+            "scan_timestamp": datetime.now(timezone.utc).isoformat(),
             "next_scan_recommended": (
-                datetime.utcnow() + timedelta(days=1)
+                datetime.now(timezone.utc) + timedelta(days=1)
             ).isoformat(),
         }
 

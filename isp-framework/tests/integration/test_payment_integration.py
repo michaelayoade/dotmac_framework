@@ -180,7 +180,7 @@ def test_payment_data_persistence():
             json=payment_data
         )
         assert response.status_code == 200
-        results.append(response.json())
+        results.append(response.json()
     
     # Then: All results should be consistent
     for i, result in enumerate(results):

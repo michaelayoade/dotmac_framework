@@ -221,8 +221,8 @@ class VersionCompareStrategy(OperatorStrategy):
     def evaluate(self, attribute_value: Any, rule_value: Any) -> bool:
         """Evaluate operation."""
         try:
-            attr_version = self._parse_version(str(attribute_value))
-            rule_version = self._parse_version(str(rule_value))
+            attr_version = self._parse_version(str(attribute_value)
+            rule_version = self._parse_version(str(rule_value)
             return attr_version >= rule_version
         except Exception as e:
             logger.warning(f"Error in version comparison: {e}")
@@ -231,7 +231,7 @@ class VersionCompareStrategy(OperatorStrategy):
     def _parse_version(self, version_str: str) -> tuple:
         """Parse version string into comparable tuple."""
         parts = version_str.replace('v', '').split('.')
-        return tuple(int(part) for part in parts if part.isdigit())
+        return tuple(int(part) for part in parts if part.isdigit()
 
 
 class DateCompareStrategy(OperatorStrategy):

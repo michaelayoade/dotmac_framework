@@ -349,7 +349,7 @@ class MonitoringAlert(TenantModel, AuditMixin):
         """Acknowledge the alert."""
         self.status = AlertStatus.ACKNOWLEDGED
         self.acknowledged_by = user_id
-        self.acknowledged_at = datetime.utcnow()
+        self.acknowledged_at = datetime.now(timezone.utc)
         if comment:
             if not self.alert_data:
                 self.alert_data = {}
@@ -359,7 +359,7 @@ class MonitoringAlert(TenantModel, AuditMixin):
         """Resolve the alert."""
         self.status = AlertStatus.RESOLVED
         self.resolved_by = user_id
-        self.resolved_at = datetime.utcnow()
+        self.resolved_at = datetime.now(timezone.utc)
         if comment:
             if not self.alert_data:
                 self.alert_data = {}

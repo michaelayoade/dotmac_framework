@@ -130,7 +130,7 @@ class DeviceConfigService:
                 new_lines,
                 fromfile="current_config",
                 tofile="new_config",
-                lineterm="",
+                lineterm=""
             )
         )
 
@@ -247,7 +247,7 @@ class DeviceConfigSDK(NetJSONConfigMixin):
             vendor=vendor,
             variables=variables or [],
             tenant_id=self.tenant_id,
-            **kwargs,
+            **kwargs
         )
 
         return {
@@ -269,7 +269,7 @@ class DeviceConfigSDK(NetJSONConfigMixin):
         parameters: Dict[str, Any],
         requires_approval: bool = False,
         maintenance_window_id: Optional[str] = None,
-        **kwargs,
+        **kwargs
     ) -> Dict[str, Any]:
         """Create configuration intent."""
         intent = await self._service.create_config_intent(
@@ -278,7 +278,7 @@ class DeviceConfigSDK(NetJSONConfigMixin):
             parameters=parameters,
             requires_approval=requires_approval,
             maintenance_window_id=maintenance_window_id,
-            **kwargs,
+            **kwargs
         )
 
         return {
@@ -338,7 +338,7 @@ class DeviceConfigSDK(NetJSONConfigMixin):
                 {
                     "expected_config_id": drift_result.get("expected_config_id"),
                     "diff": drift_result.get("diff"),
-                },
+                }
             )
 
         return {
@@ -355,7 +355,7 @@ class DeviceConfigSDK(NetJSONConfigMixin):
         end_time: str,
         device_ids: Optional[List[str]] = None,
         description: Optional[str] = None,
-        **kwargs,
+        **kwargs
     ) -> Dict[str, Any]:
         """Create maintenance window."""
         window = await self._service.create_maintenance_window(
@@ -364,7 +364,7 @@ class DeviceConfigSDK(NetJSONConfigMixin):
             end_time=end_time,
             device_ids=device_ids or [],
             description=description,
-            **kwargs,
+            **kwargs
         )
 
         return {

@@ -3,12 +3,27 @@ FastAPI application entry point.
 """
 
 import logging
+import sys
 from contextlib import asynccontextmanager
 from typing import Any, Dict
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
+
+# Add shared components to path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "shared"))
+
+from startup.error_handling import (
+    create_startup_manager,
+    StartupPhase,
+    StartupErrorSeverity,
+    managed_startup,
+    initialize_database_with_retry
+)
+from health.comprehensive_checks import setup_health_checker
+from health.endpoints import add_health_endpoints, add_startup_status_endpoint
 
 from .api.portals import portals_router
 from .api.v1 import api_router
@@ -39,75 +54,107 @@ logger = get_logger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Application lifespan manager."""
-    # Startup
-    logger.info("Starting DotMac Management Platform...")
+    """Application lifespan manager with standardized error handling."""
     
-    # Initialize database
-    await init_database()
-    logger.info("Database initialized")
-    
-    # Initialize observability (SignOz integration)
-    try:
-        observability = init_observability()
-        logger.info("SignOz observability initialized")
-    except Exception as e:
-        logger.warning("Failed to initialize observability", error=str(e))
-    
-    # Initialize cache manager
-    try:
-        from .core.cache import get_cache_manager
-        cache_manager = await get_cache_manager()
-        logger.info("Cache manager initialized")
-    except Exception as e:
-        logger.warning("Failed to initialize cache manager", error=str(e))
-    
-    # Initialize plugins
-    try:
-        from .core.plugins.registry import plugin_registry
-        from .plugins.deployment import AWSDeploymentPlugin, SSHDeploymentPlugin
-        from .plugins.notifications import EmailPlugin, SlackPlugin, WebhookPlugin
-        from .plugins.monitoring import PrometheusPlugin
+    async with managed_startup(
+        service_name="DotMac Management Platform",
+        fail_on_critical=True,
+        fail_on_high_severity=False
+    ) as startup_manager:
         
-        # Register deployment plugins
-        aws_plugin = AWSDeploymentPlugin()
-        ssh_plugin = SSHDeploymentPlugin()
+        logger.info("Starting DotMac Management Platform...")
         
-        # Register notification plugins
-        email_plugin = EmailPlugin()
-        slack_plugin = SlackPlugin()
-        webhook_plugin = WebhookPlugin()
+        # Initialize database with retry
+        db_result = await initialize_database_with_retry(
+            init_database, startup_manager, max_retries=5
+        )
         
-        # Register monitoring plugins
-        prometheus_plugin = PrometheusPlugin()
+        if db_result.success:
+            logger.info("✅ Database initialized")
         
-        # Register all plugins
-        plugins_to_register = [
-            aws_plugin,
-            ssh_plugin,
-            email_plugin,
-            slack_plugin,
-            webhook_plugin,
-            prometheus_plugin
-        ]
+        # Initialize observability (SignOz integration) with retry
+        observability_result = await startup_manager.execute_with_retry(
+            operation=init_observability,
+            phase=StartupPhase.OBSERVABILITY,
+            component="SignOz Observability",
+            severity=StartupErrorSeverity.MEDIUM,
+            max_retries=2
+        )
         
-        registered_count = 0
-        for plugin in plugins_to_register:
-            try:
-                if await plugin_registry.register_plugin(plugin):
-                    registered_count += 1
-                    logger.info(f"Registered plugin: {plugin.meta.name}")
-                else:
-                    logger.warning(f"Failed to register plugin: {plugin.meta.name}")
-            except Exception as e:
-                logger.warning(f"Plugin registration error for {plugin.meta.name}: {e}")
+        if observability_result.success:
+            logger.info("✅ SignOz observability initialized")
+            app.state.observability = observability_result.metadata.get("result")
         
-        logger.info(f"Plugins initialized: {registered_count} plugins registered")
+        # Initialize cache manager with retry
+        async def init_cache():
+            from core.cache import get_cache_manager
+            return await get_cache_manager()
+            
+        cache_result = await startup_manager.execute_with_retry(
+            operation=init_cache,
+            phase=StartupPhase.CACHE,
+            component="Cache Manager",
+            severity=StartupErrorSeverity.HIGH,
+            max_retries=3
+        )
         
-    except Exception as e:
-        logger.warning("Failed to initialize plugins", error=str(e))
-    
-    logger.info("DotMac Management Platform startup complete")
+        if cache_result.success:
+            logger.info("✅ Cache manager initialized")
+            app.state.cache_manager = cache_result.metadata.get("result")
+        
+        # Initialize plugins with error handling
+        async def init_plugins():
+            from core.plugins.registry import plugin_registry
+            from plugins.deployment import AWSDeploymentPlugin, SSHDeploymentPlugin
+            from plugins.notifications import EmailPlugin, SlackPlugin, WebhookPlugin
+            from plugins.monitoring import PrometheusPlugin
+            
+            # Create plugin instances
+            plugins_to_register = [
+                AWSDeploymentPlugin(),
+                SSHDeploymentPlugin(),
+                EmailPlugin(),
+                SlackPlugin(),
+                WebhookPlugin(),
+                PrometheusPlugin()
+            ]
+            
+            registered_count = 0
+            for plugin in plugins_to_register:
+                try:
+                    if await plugin_registry.register_plugin(plugin):
+                        registered_count += 1
+                        logger.info(f"Registered plugin: {plugin.meta.name}")
+                except Exception as e:
+                    logger.warning(f"Plugin registration error for {plugin.meta.name}: {e}")
+                    
+            return {"registered_count": registered_count, "total_plugins": len(plugins_to_register)}
+        
+        plugin_result = await startup_manager.execute_with_retry(
+            operation=init_plugins,
+            phase=StartupPhase.INITIALIZATION,
+            component="Plugin System",
+            severity=StartupErrorSeverity.MEDIUM,
+            max_retries=1
+        )
+        
+        if plugin_result.success:
+            metadata = plugin_result.metadata.get("result", {})
+            logger.info(f"✅ Plugin system initialized: {metadata.get('registered_count', 0)} plugins registered")
+        
+        # Set up comprehensive health checks
+        health_checker = setup_health_checker(
+            service_name="DotMac Management Platform",
+            cache_client=getattr(app.state, 'cache_manager', None),
+            additional_filesystem_paths=["logs", "uploads"]
+        )
+        app.state.health_checker = health_checker
+        startup_manager.add_metadata("health_checks_registered", len(health_checker.health_checks))
+        
+        # Store startup manager for shutdown and health endpoints
+        app.state.startup_manager = startup_manager
+        
+        logger.info("🚀 DotMac Management Platform startup complete")
     
     yield
     
@@ -124,7 +171,7 @@ async def lifespan(app: FastAPI):
     
     # Close cache connections
     try:
-        from .core.cache import get_cache_manager
+        from core.cache import get_cache_manager
         cache_manager = await get_cache_manager()
         await cache_manager.close()
         logger.info("Cache connections closed")
@@ -177,12 +224,16 @@ app.add_middleware(TenantIsolationMiddleware)
 # Add exception handlers
 add_exception_handlers(app)
 
+# Add comprehensive health check endpoints
+add_health_endpoints(app)
+add_startup_status_endpoint(app)
+
 # Include routers
 app.include_router(api_router, prefix=settings.api_v1_prefix)
 app.include_router(portals_router, prefix="/portals")
 
 # Include dashboard router (web UI)
-from .api.dashboard import router as dashboard_router
+from api.dashboard import router as dashboard_router
 app.include_router(dashboard_router)
 
 # Instrument FastAPI with observability

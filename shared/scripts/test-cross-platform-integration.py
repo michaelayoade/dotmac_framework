@@ -53,7 +53,7 @@ class CrossPlatformIntegrationTests:
             try:
                 response = requests.get(health_url, timeout=10)
                 if response.status_code == 200:
-                    health_data = response.json()
+                    health_data = response.model_dump_json()
                     logger.info(f"✅ {service_name} health: {health_data}")
                     self.test_results.append({
                         "test": f"{service_name} Health Check",
@@ -202,12 +202,12 @@ class CrossPlatformIntegrationTests:
             response = requests.get(f"{self.mgmt_base_url}/api/v1/plugins/catalog", timeout=10)
             
             if response.status_code == 200:
-                plugins = response.json()
-                logger.info(f"✅ Plugin catalog loaded: {len(plugins.get('plugins', []))} plugins")
+                plugins = response.model_dump_json()
+                logger.info(f"✅ Plugin catalog loaded: {len(plugins.get('plugins', [])} plugins")
                 self.test_results.append({
                     "test": "Plugin Catalog Integration",
                     "status": "PASS",
-                    "details": f"Found {len(plugins.get('plugins', []))} plugins"
+                    "details": f"Found {len(plugins.get('plugins', [])} plugins"
                 })
                 return True
             else:

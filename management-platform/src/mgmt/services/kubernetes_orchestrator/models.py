@@ -110,13 +110,13 @@ class TenantDeployment(TenantModel):
         """Mark deployment as healthy."""
         self.health_status = "healthy"
         self.health_message = None
-        self.last_health_check = datetime.utcnow()
+        self.last_health_check = datetime.now(timezone.utc)
     
     def mark_unhealthy(self, message: str):
         """Mark deployment as unhealthy with error message."""
         self.health_status = "unhealthy"
         self.health_message = message
-        self.last_health_check = datetime.utcnow()
+        self.last_health_check = datetime.now(timezone.utc)
         self.error_count += 1
     
     def update_pod_status(self, total_pods: int, ready_pods: int):

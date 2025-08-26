@@ -13,7 +13,7 @@ from pydantic import BaseModel, Field
 from dotmac_isp.core.management_platform_client import get_management_client
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__, ConfigDict)
 
 
 class EventType(str, Enum):
@@ -115,10 +115,7 @@ class CrossPlatformEvent(BaseModel):
     processing_time_ms: Optional[float] = None
     response_code: Optional[int] = None
 
-    class Config:
-        """Class for Config operations."""
-        use_enum_values = True
-
+    model_config = ConfigDict(use_enum_values=True)
 
 class EventEmitter:
     """Cross-platform event emitter."""
@@ -422,7 +419,7 @@ class EventEmitter:
             return
 
         try:
-            events_to_send = self.event_buffer.copy()
+            events_to_send = self.event_buffer.model_copy()
             self.event_buffer.clear()
 
             # Send events to Management Platform
@@ -443,7 +440,7 @@ class EventEmitter:
             management_client = await get_management_client()
 
             # Convert events to dict format
-            events_data = [event.dict() for event in events]
+            events_data = [event.model_dump() for event in events]
 
             # This would be a new endpoint in the Management Platform
             # For now, we'll log the events and potentially use the health status endpoint

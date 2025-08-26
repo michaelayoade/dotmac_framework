@@ -13,7 +13,7 @@ from fastapi import WebSocket, WebSocketDisconnect
 from starlette.websockets import WebSocketState
 import redis.asyncio as redis
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__, timezone)
 
 
 class EventType(Enum):
@@ -45,7 +45,7 @@ class WebSocketMessage:
     def __post_init__(self):
         """  Post Init   operation."""
         if self.timestamp is None:
-            self.timestamp = datetime.utcnow().isoformat()
+            self.timestamp = datetime.now(timezone.utc).isoformat()
         if self.message_id is None:
             self.message_id = str(uuid.uuid4())
     
@@ -198,7 +198,7 @@ class WebSocketManager:
                 user_id=user_id,
                 tenant_id=tenant_id,
                 session_id=session_id,
-                connected_at=datetime.utcnow(),
+                connected_at=datetime.now(timezone.utc),
                 subscriptions=set()
             )
             
@@ -325,7 +325,7 @@ class WebSocketManager:
         if tenant_id not in self.tenant_connections:
             return
             
-        connection_ids = self.tenant_connections[tenant_id].copy()
+        connection_ids = self.tenant_connections[tenant_id].model_copy()
         
         # Apply subscription filter
         if subscription_filter:
@@ -357,7 +357,7 @@ class WebSocketManager:
         if user_id not in self.user_connections:
             return
             
-        connection_ids = self.user_connections[user_id].copy()
+        connection_ids = self.user_connections[user_id].model_copy()
         
         # Apply subscription filter
         if subscription_filter:
@@ -386,7 +386,7 @@ class WebSocketManager:
         if subscription not in self.subscription_connections:
             return
             
-        connection_ids = self.subscription_connections[subscription].copy()
+        connection_ids = self.subscription_connections[subscription].model_copy()
         
         # Apply tenant filter
         if tenant_filter:
@@ -470,7 +470,7 @@ class WebSocketManager:
         
         try:
             if connection_info.websocket.client_state == WebSocketState.CONNECTED:
-                await connection_info.websocket.send_text(json.dumps(message.to_dict()))
+                await connection_info.websocket.send_text(json.dumps(message.to_dict()
             else:
                 # Connection is closed, remove it
                 await self.disconnect(connection_id)
@@ -485,7 +485,7 @@ class WebSocketManager:
         """Send message to multiple connections."""
         tasks = []
         for connection_id in connection_ids:
-            task = asyncio.create_task(self._send_to_connection(connection_id, message))
+            task = asyncio.create_task(self._send_to_connection(connection_id, message)
             tasks.append(task)
         
         if tasks:
@@ -493,7 +493,7 @@ class WebSocketManager:
     
     async def _close_all_connections(self):
         """Close all WebSocket connections."""
-        connection_ids = list(self.connections.keys())
+        connection_ids = list(self.connections.keys()
         for connection_id in connection_ids:
             await self.disconnect(connection_id)
     
@@ -509,7 +509,7 @@ class WebSocketManager:
                 "subscription_filter": subscription_filter,
             }
             
-            await self.redis_client.publish("websocket:events", json.dumps(event_data))
+            await self.redis_client.publish("websocket:events", json.dumps(event_data)
             
         except Exception as e:
             logger.error(f"Failed to publish to Redis: {e}")
@@ -517,12 +517,12 @@ class WebSocketManager:
     def _start_background_tasks(self):
         """Start background monitoring tasks."""
         # Health check task
-        health_task = asyncio.create_task(self._health_check_loop())
+        health_task = asyncio.create_task(self._health_check_loop()
         self.background_tasks.add(health_task)
         health_task.add_done_callback(self.background_tasks.discard)
         
         # Redis message listener
-        redis_task = asyncio.create_task(self._redis_message_loop())
+        redis_task = asyncio.create_task(self._redis_message_loop()
         self.background_tasks.add(redis_task)
         redis_task.add_done_callback(self.background_tasks.discard)
     
@@ -531,7 +531,7 @@ class WebSocketManager:
         while self.is_running:
             try:
                 # Check for stale connections
-                current_time = datetime.utcnow()
+                current_time = datetime.now(timezone.utc)
                 stale_connections = []
                 
                 for connection_id, conn_info in self.connections.items():
@@ -544,7 +544,7 @@ class WebSocketManager:
                                 tenant_id=conn_info.tenant_id,
                                 user_id=conn_info.user_id,
                             )
-                            await conn_info.websocket.send_text(json.dumps(ping_message.to_dict()))
+                            await conn_info.websocket.send_text(json.dumps(ping_message.to_dict()
                         else:
                             stale_connections.append(connection_id)
                     except:

@@ -24,7 +24,7 @@ from .models import (
     CommissionType,
     DealStatus,
     CertificationStatus,
-)
+, timezone)
 from dotmac_isp.shared.exceptions import NotFoundError, ConflictError, ValidationError
 
 
@@ -68,7 +68,7 @@ class PartnerRepository:
         """Get partner by ID."""
         return (
             self.db.query(Partner)
-            .filter(and_(Partner.id == partner_id, Partner.tenant_id == self.tenant_id))
+            .filter(and_(Partner.id == partner_id, Partner.tenant_id == self.tenant_id)
             .first()
         )
 
@@ -136,12 +136,12 @@ class PartnerRepository:
             return None
 
         partner.partner_status = status
-        partner.updated_at = datetime.utcnow()
+        partner.updated_at = datetime.now(timezone.utc)
 
         if notes:
             current_notes = partner.notes or ""
             partner.notes = (
-                f"{current_notes}\n{datetime.utcnow().isoformat()}: {notes}".strip()
+                f"{current_notes}\n{datetime.now(timezone.utc).isoformat()}: {notes}".strip()
             )
 
         self.db.commit()
@@ -155,7 +155,7 @@ class PartnerRepository:
             return None
 
         partner.partner_tier = tier
-        partner.updated_at = datetime.utcnow()
+        partner.updated_at = datetime.now(timezone.utc)
 
         self.db.commit()
         self.db.refresh(partner)
@@ -173,7 +173,7 @@ class PartnerRepository:
             return None
 
         partner.ytd_sales = ytd_sales
-        partner.updated_at = datetime.utcnow()
+        partner.updated_at = datetime.now(timezone.utc)
 
         # Update tier based on performance if specified
         if target_achievement and partner.sales_target:
@@ -206,7 +206,7 @@ class PartnerRepository:
                     Partner.sales_target > 0,
                 )
             )
-            .order_by(desc((Partner.ytd_sales / Partner.sales_target) * 100))
+            .order_by(desc((Partner.ytd_sales / Partner.sales_target) * 100)
             .limit(limit)
             .all()
         )
@@ -246,7 +246,7 @@ class PartnerRepository:
         prefix = prefix_map.get(partner_type, "PTR")
         today = date.today()
         count = (
-            self.db.query(func.count(Partner.id))
+            self.db.query(func.count(Partner.id)
             .filter(
                 and_(
                     Partner.tenant_id == self.tenant_id,
@@ -461,7 +461,7 @@ class DealRegistrationRepository:
             )
 
         return (
-            query.order_by(desc(DealRegistration.deal_value))
+            query.order_by(desc(DealRegistration.deal_value)
             .offset(skip)
             .limit(limit)
             .all()
@@ -476,7 +476,7 @@ class DealRegistrationRepository:
             return None
 
         deal.deal_status = status
-        deal.updated_at = datetime.utcnow()
+        deal.updated_at = datetime.now(timezone.utc)
 
         if status == DealStatus.APPROVED:
             deal.approval_date = date.today()
@@ -489,7 +489,7 @@ class DealRegistrationRepository:
             else:
                 current_notes = deal.notes or ""
                 deal.notes = (
-                    f"{current_notes}\n{datetime.utcnow().isoformat()}: {notes}".strip()
+                    f"{current_notes}\n{datetime.now(timezone.utc).isoformat()}: {notes}".strip()
                 )
 
         self.db.commit()
@@ -517,7 +517,7 @@ class DealRegistrationRepository:
         if reason:
             deal.win_loss_reason = reason
 
-        deal.updated_at = datetime.utcnow()
+        deal.updated_at = datetime.now(timezone.utc)
 
         self.db.commit()
         self.db.refresh(deal)
@@ -566,7 +566,7 @@ class DealRegistrationRepository:
             "total_pipeline_value": float(total_pipeline),
             "total_won_value": float(total_won),
             "average_deal_size": (
-                float(sum(d.deal_value for d in deals) / len(deals)) if deals else 0
+                float(sum(d.deal_value for d in deals) / len(deals) if deals else 0
             ),
         }
 
@@ -574,7 +574,7 @@ class DealRegistrationRepository:
         """Generate unique deal number."""
         today = date.today()
         count = (
-            self.db.query(func.count(DealRegistration.id))
+            self.db.query(func.count(DealRegistration.id)
             .filter(
                 and_(
                     DealRegistration.tenant_id == self.tenant_id,
@@ -660,7 +660,7 @@ class CommissionRepository:
             query = query.filter(Commission.earned_date <= earned_to)
 
         return (
-            query.order_by(desc(Commission.earned_date)).offset(skip).limit(limit).all()
+            query.order_by(desc(Commission.earned_date).offset(skip).limit(limit).all()
         )
 
     def update_status(
@@ -672,7 +672,7 @@ class CommissionRepository:
             return None
 
         commission.commission_status = status
-        commission.updated_at = datetime.utcnow()
+        commission.updated_at = datetime.now(timezone.utc)
 
         if status == CommissionStatus.APPROVED:
             commission.approved_date = date.today()
@@ -738,7 +738,7 @@ class CommissionRepository:
         """Generate unique commission ID."""
         today = date.today()
         count = (
-            self.db.query(func.count(Commission.id))
+            self.db.query(func.count(Commission.id)
             .filter(
                 and_(
                     Commission.tenant_id == self.tenant_id,
@@ -809,7 +809,7 @@ class PartnerAnalyticsRepository:
         )
 
         # Partner count and tiers
-        partners = self.db.query(Partner).filter(and_(*partner_filters)).all()
+        partners = self.db.query(Partner).filter(and_(*partner_filters).all()
 
         tier_distribution = {}
         for tier in PartnerTier:
@@ -837,16 +837,16 @@ class PartnerAnalyticsRepository:
                     sum(d.actual_deal_value or d.deal_value for d in won_deals)
                 ),
                 "win_rate": (
-                    (len(won_deals) / (len(won_deals) + len(lost_deals)) * 100)
+                    (len(won_deals) / (len(won_deals) + len(lost_deals) * 100)
                     if (won_deals or lost_deals)
                     else 0
                 ),
                 "average_deal_size": (
-                    float(sum(d.deal_value for d in deals) / len(deals)) if deals else 0
+                    float(sum(d.deal_value for d in deals) / len(deals) if deals else 0
                 ),
             },
             "commissions": {
-                "total_earned": float(sum(c.commission_amount for c in commissions)),
+                "total_earned": float(sum(c.commission_amount for c in commissions),
                 "total_paid": float(
                     sum(
                         c.commission_amount

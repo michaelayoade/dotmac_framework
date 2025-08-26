@@ -24,7 +24,7 @@ import tempfile
 import shutil
 
 
-class QualityGateStatus(Enum):
+class QualityGateStatus(Enum, timezone):
     """Quality gate status enumeration."""
     PASSED = "passed"
     FAILED = "failed"
@@ -178,7 +178,7 @@ logger.warning(f"Warning: Could not load config file {config_file}: {e}")
 logger.info("🚀 Starting Comprehensive Quality Assurance Analysis")
 logger.info("=" * 60)
         
-        report_start = datetime.utcnow()
+        report_start = datetime.now(timezone.utc)
         gate_results = []
         overall_status = QualityGateStatus.PASSED
         
@@ -233,7 +233,7 @@ logger.info(f"\n❌ QUALITY GATE FAILURE: {gate_name} failed (blocking)")
         # Generate comprehensive report
         report = QualityReport(
             project_root=str(self.project_root),
-            report_timestamp=datetime.utcnow(),
+            report_timestamp=datetime.now(timezone.utc),
             overall_status=overall_status,
             gate_results=gate_results,
             summary_metrics=self._calculate_summary_metrics(gate_results),
@@ -257,7 +257,7 @@ logger.info(f"\n❌ QUALITY GATE FAILURE: {gate_name} failed (blocking)")
         Returns:
             QualityGateResult with execution details
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         
         try:
             # Map gate names to execution methods
@@ -291,7 +291,7 @@ logger.error(f"Error executing {gate_name}: {e}")
             )]
             metrics = {}
         
-        end_time = datetime.utcnow()
+        end_time = datetime.now(timezone.utc)
         duration = (end_time - start_time).total_seconds()
         
         return QualityGateResult(
@@ -393,7 +393,7 @@ logger.error(f"Error executing {gate_name}: {e}")
                     for pattern, rule_id in dangerous_patterns.items():
                         if re.search(pattern, line, re.IGNORECASE):
                             issues.append(QualityIssue(
-                                file_path=str(py_file.relative_to(self.project_root)),
+                                file_path=str(py_file.relative_to(self.project_root),
                                 line_number=line_num,
                                 rule_id=rule_id,
                                 message=f"Potential hardcoded secret detected: {rule_id}",
@@ -401,7 +401,7 @@ logger.error(f"Error executing {gate_name}: {e}")
                                 category="security",
                                 tool="basic_security_scan",
                                 fix_suggestion="Use environment variables or secure secret management"
-                            ))
+                            )
             except Exception as e:
 logger.warning(f"Warning: Could not scan file {py_file}: {e}")
         
@@ -456,7 +456,7 @@ logger.warning(f"Warning: Could not scan file {py_file}: {e}")
                                         category="complexity",
                                         tool="radon",
                                         fix_suggestion="Consider refactoring using Strategy Pattern or decomposition"
-                                    ))
+                                    )
                 
                 except json.JSONDecodeError:
                     # Parse text output as fallback
@@ -521,7 +521,7 @@ logger.warning(f"Warning: Could not scan file {py_file}: {e}")
                             category="typing",
                             tool="mypy",
                             fix_suggestion="Add proper type annotations"
-                        ))
+                        )
             
             error_count = len([i for i in issues if i.severity == QualitySeverity.HIGH])
             
@@ -587,7 +587,7 @@ logger.warning(f"Warning: Could not read coverage data: {e}")
                     category="testing",
                     tool="pytest",
                     fix_suggestion="Add more comprehensive test cases"
-                ))
+                )
             
             # Check individual file coverage
             files_data = coverage_data.get('files', {})
@@ -605,7 +605,7 @@ logger.warning(f"Warning: Could not read coverage data: {e}")
                         category="testing",
                         tool="pytest",
                         fix_suggestion="Add targeted tests for this file"
-                    ))
+                    )
             
             critical_issues = [i for i in issues if i.severity == QualitySeverity.CRITICAL]
             
@@ -650,7 +650,7 @@ logger.warning(f"Warning: Could not read coverage data: {e}")
             if result.returncode != 0:
                 for line in result.stderr.splitlines():
                     if "would reformat" in line:
-                        file_path = line.split()[2] if len(line.split()) > 2 else "unknown"
+                        file_path = line.split()[2] if len(line.split() > 2 else "unknown"
                         issues.append(QualityIssue(
                             file_path=file_path.replace(str(self.project_root) + "/", ""),
                             line_number=None,
@@ -660,7 +660,7 @@ logger.warning(f"Warning: Could not read coverage data: {e}")
                             category="style",
                             tool="black",
                             fix_suggestion="Run 'black .' to auto-format"
-                        ))
+                        )
             
             # Check isort
             cmd = ["isort", "--check-only", str(self.project_root / "src")]
@@ -679,7 +679,7 @@ logger.warning(f"Warning: Could not read coverage data: {e}")
                             category="style",
                             tool="isort",
                             fix_suggestion="Run 'isort .' to auto-sort imports"
-                        ))
+                        )
             
             # Style checks are usually non-blocking
             status = QualityGateStatus.WARNING if issues else QualityGateStatus.PASSED
@@ -715,14 +715,14 @@ logger.warning(f"Warning: Could not read coverage data: {e}")
                     tree = ast.parse(content)
                     
                     for node in ast.walk(tree):
-                        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef):
                             if (not ast.get_docstring(node) and 
                                 not node.name.startswith('_') and 
                                 node.name not in ['__init__']):
                                 
                                 undocumented_functions += 1
                                 issues.append(QualityIssue(
-                                    file_path=str(py_file.relative_to(self.project_root)),
+                                    file_path=str(py_file.relative_to(self.project_root),
                                     line_number=node.lineno,
                                     rule_id="missing_docstring",
                                     message=f"{node.__class__.__name__} '{node.name}' lacks docstring",
@@ -730,7 +730,7 @@ logger.warning(f"Warning: Could not read coverage data: {e}")
                                     category="documentation",
                                     tool="ast_parser",
                                     fix_suggestion="Add comprehensive docstring with Args, Returns, and Examples"
-                                ))
+                                )
                 
                 except SyntaxError:
                     # Skip files with syntax errors
@@ -745,7 +745,7 @@ logger.warning(f"Warning: Could not read coverage data: {e}")
         metrics = {
             'files_checked': files_checked,
             'undocumented_functions': undocumented_functions,
-            'documentation_score': max(0, 100 - (undocumented_functions / max(1, files_checked) * 10))
+            'documentation_score': max(0, 100 - (undocumented_functions / max(1, files_checked) * 10)
         }
         
         return status, issues, metrics
@@ -782,7 +782,7 @@ logger.warning(f"Warning: Could not read coverage data: {e}")
                 category="security",
                 tool="security_scanner",
                 fix_suggestion=finding.get('remediation')
-            ))
+            )
         
         return issues
     
@@ -806,7 +806,7 @@ logger.warning(f"Warning: Could not read coverage data: {e}")
             'total_issues': total_issues,
             'critical_issues': critical_issues,
             'total_duration_seconds': total_duration,
-            'quality_score': max(0, 100 - (critical_issues * 10) - (total_issues * 2))
+            'quality_score': max(0, 100 - (critical_issues * 10) - (total_issues * 2)
         }
     
     def _generate_recommendations(self, gate_results: List[QualityGateResult]) -> List[str]:
@@ -868,7 +868,7 @@ logger.warning(f"Warning: Could not read coverage data: {e}")
         # Save human-readable report
         text_file = self.report_dir / f"quality_report_{timestamp}.txt"
         with open(text_file, 'w') as f:
-            f.write(self._format_text_report(report))
+            f.write(self._format_text_report(report)
         
         # Save latest report (symlink)
         latest_json = self.report_dir / "quality_report_latest.json"

@@ -17,7 +17,7 @@ import jwt
 
 from dotmac_isp.core.settings import get_settings
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__, timezone)
 settings = get_settings()
 
 
@@ -246,7 +246,7 @@ class PortalAuthManager:
         last_attempt = attempts.get('last_attempt')
         if last_attempt:
             lockout_expires = last_attempt + timedelta(minutes=config.lockout_duration_minutes)
-            if datetime.utcnow() > lockout_expires:
+            if datetime.now(timezone.utc) > lockout_expires:
                 # Clear expired lockout
                 self.failed_attempts.pop(key, None)
                 return False
@@ -262,7 +262,7 @@ class PortalAuthManager:
         key = f"{portal_type}:{identifier}"
         attempts = self.failed_attempts.get(key, {'count': 0})
         attempts['count'] += 1
-        attempts['last_attempt'] = datetime.utcnow()
+        attempts['last_attempt'] = datetime.now(timezone.utc)
         self.failed_attempts[key] = attempts
     
     def clear_failed_attempts(self, identifier: str, portal_type: PortalType):
@@ -284,7 +284,7 @@ class PortalAuthManager:
         config = self.PORTAL_CONFIGS[portal_type]
         timeout_minutes = session_timeout_override or config.session_timeout_minutes
         
-        expires_at = datetime.utcnow() + timedelta(minutes=timeout_minutes)
+        expires_at = datetime.now(timezone.utc) + timedelta(minutes=timeout_minutes)
         
         # Access token payload
         access_payload = {
@@ -293,17 +293,17 @@ class PortalAuthManager:
             'user_type': user_info.get('user_type', 'unknown'),
             'tenant_id': str(user_info.get('tenant_id')) if user_info.get('tenant_id') else None,
             'exp': expires_at.timestamp(),
-            'iat': datetime.utcnow().timestamp(),
-            'session_id': f"{portal_type.value}_{user_id}_{datetime.utcnow().timestamp()}"
+            'iat': datetime.now(timezone.utc).timestamp(),
+            'session_id': f"{portal_type.value}_{user_id}_{datetime.now(timezone.utc).timestamp()}"
         }
         
         # Refresh token (longer lived)
-        refresh_expires = datetime.utcnow() + timedelta(days=7)
+        refresh_expires = datetime.now(timezone.utc) + timedelta(days=7)
         refresh_payload = {
             'user_id': str(user_id),
             'portal_type': portal_type.value,
             'exp': refresh_expires.timestamp(),
-            'iat': datetime.utcnow().timestamp(),
+            'iat': datetime.now(timezone.utc).timestamp(),
             'type': 'refresh'
         }
         
@@ -368,7 +368,7 @@ class PortalAuthManager:
                 user_type=user_info['user_type'],
                 access_token=access_token,
                 refresh_token=refresh_token,
-                session_id=f"{auth_request.portal_type.value}_{user_info['user_id']}_{datetime.utcnow().timestamp()}",
+                session_id=f"{auth_request.portal_type.value}_{user_info['user_id']}_{datetime.now(timezone.utc).timestamp()}",
                 expires_at=expires_at,
                 user_info=user_info,
                 permissions=user_info.get('permissions', []),

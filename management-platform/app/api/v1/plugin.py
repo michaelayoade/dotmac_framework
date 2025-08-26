@@ -27,10 +27,10 @@ router = APIRouter()
 
 # Plugin Marketplace
 @router.post("/plugins", response_model=Plugin)
-async def create_plugin(
+async def create_plugin():
     plugin_data: PluginCreate,
     db: AsyncSession = Depends(get_db),
-    current_user = Depends(require_plugin_write())
+    current_user = Depends(require_plugin_write()
 ):
     """Create a new plugin in the marketplace."""
     service = PluginService(db)
@@ -38,7 +38,7 @@ async def create_plugin(
 
 
 @router.post("/plugins/search", response_model=PluginListResponse)
-async def search_plugins(
+async def search_plugins():
     search_request: PluginSearchRequest,
     pagination: PaginationParams = Depends(),
     db: AsyncSession = Depends(get_db),
@@ -47,7 +47,7 @@ async def search_plugins(
     """Search plugins in the marketplace."""
     service = PluginService(db)
     
-    plugins = await service.search_plugins(
+    plugins = await service.search_plugins()
         search_request=search_request,
         skip=pagination.skip,
         limit=pagination.limit
@@ -56,7 +56,7 @@ async def search_plugins(
     # Get total count for pagination
     total = await service.plugin_repo.count_search_results(search_request)
     
-    return PluginListResponse(
+    return PluginListResponse()
         items=plugins,
         total=total,
         page=pagination.page,
@@ -66,7 +66,7 @@ async def search_plugins(
 
 
 @router.get("/plugins", response_model=PluginListResponse)
-async def list_plugins(
+async def list_plugins():
     category: Optional[str] = None,
     author: Optional[str] = None,
     is_official: Optional[bool] = None,
@@ -88,14 +88,14 @@ async def list_plugins(
     if is_verified is not None:
         filters["is_verified"] = is_verified
     
-    plugins = await service.plugin_repo.list(
+    plugins = await service.plugin_repo.list()
         skip=pagination.skip,
         limit=pagination.limit,
         filters=filters
     )
     total = await service.plugin_repo.count(filters)
     
-    return PluginListResponse(
+    return PluginListResponse()
         items=plugins,
         total=total,
         page=pagination.page,
@@ -105,7 +105,7 @@ async def list_plugins(
 
 
 @router.get("/plugins/{plugin_id}", response_model=Plugin)
-async def get_plugin(
+async def get_plugin():
     plugin_id: UUID,
     db: AsyncSession = Depends(get_db),
     current_user = Depends(get_current_user)
@@ -114,7 +114,7 @@ async def get_plugin(
     service = PluginService(db)
     plugin = await service.plugin_repo.get_by_id(plugin_id)
     if not plugin:
-        raise HTTPException(
+        raise HTTPException()
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Plugin not found"
         )
@@ -122,19 +122,19 @@ async def get_plugin(
 
 
 @router.put("/plugins/{plugin_id}", response_model=Plugin)
-async def update_plugin_details(
+async def update_plugin_details():
     plugin_id: UUID,
     plugin_update: PluginUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user = Depends(require_plugin_write())
+    current_user = Depends(require_plugin_write()
 ):
     """Update plugin details."""
     service = PluginService(db)
-    plugin = await service.plugin_repo.update(
+    plugin = await service.plugin_repo.update()
         plugin_id, plugin_update.model_dump(exclude_unset=True), current_user.user_id
     )
     if not plugin:
-        raise HTTPException(
+        raise HTTPException()
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Plugin not found"
         )
@@ -142,10 +142,10 @@ async def update_plugin_details(
 
 
 @router.get("/plugins/{plugin_id}/analytics", response_model=PluginAnalytics)
-async def get_plugin_analytics(
+async def get_plugin_analytics():
     plugin_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user = Depends(require_plugin_read())
+    current_user = Depends(require_plugin_read()
 ):
     """Get analytics for a plugin."""
     service = PluginService(db)
@@ -154,15 +154,15 @@ async def get_plugin_analytics(
 
 # Plugin Installations
 @router.post("/installations", response_model=PluginInstallation)
-async def install_plugin(
+async def install_plugin():
     tenant_id: UUID,
     install_request: PluginInstallRequest,
     db: AsyncSession = Depends(get_db),
-    current_user = Depends(require_plugin_install())
+    current_user = Depends(require_plugin_install()
 ):
     """Install a plugin for a tenant."""
     service = PluginService(db)
-    return await service.install_plugin(
+    return await service.install_plugin()
         tenant_id=tenant_id,
         install_request=install_request,
         installed_by=current_user.user_id
@@ -170,14 +170,14 @@ async def install_plugin(
 
 
 @router.get("/installations", response_model=PluginInstallationListResponse)
-async def list_plugin_installations(
+async def list_plugin_installations():
     tenant_id: Optional[UUID] = None,
     plugin_id: Optional[UUID] = None,
     status: Optional[str] = None,
     enabled: Optional[bool] = None,
     pagination: PaginationParams = Depends(),
     db: AsyncSession = Depends(get_db),
-    current_user = Depends(require_plugin_read())
+    current_user = Depends(require_plugin_read()
 ):
     """List plugin installations with optional filters."""
     service = PluginService(db)
@@ -192,14 +192,14 @@ async def list_plugin_installations(
     if enabled is not None:
         filters["enabled"] = enabled
     
-    installations = await service.installation_repo.list(
+    installations = await service.installation_repo.list()
         skip=pagination.skip,
         limit=pagination.limit,
         filters=filters
     )
     total = await service.installation_repo.count(filters)
     
-    return PluginInstallationListResponse(
+    return PluginInstallationListResponse()
         items=installations,
         total=total,
         page=pagination.page,
@@ -209,16 +209,16 @@ async def list_plugin_installations(
 
 
 @router.get("/installations/{installation_id}", response_model=PluginInstallation)
-async def get_plugin_installation(
+async def get_plugin_installation():
     installation_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user = Depends(require_plugin_read())
+    current_user = Depends(require_plugin_read()
 ):
     """Get a specific plugin installation."""
     service = PluginService(db)
     installation = await service.installation_repo.get_with_plugin(installation_id)
     if not installation:
-        raise HTTPException(
+        raise HTTPException()
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Plugin installation not found"
         )
@@ -226,15 +226,15 @@ async def get_plugin_installation(
 
 
 @router.put("/installations/{installation_id}", response_model=PluginInstallation)
-async def update_plugin_installation(
+async def update_plugin_installation():
     installation_id: UUID,
     update_request: PluginUpdateRequest,
     db: AsyncSession = Depends(get_db),
-    current_user = Depends(require_plugin_write())
+    current_user = Depends(require_plugin_write()
 ):
     """Update an installed plugin."""
     service = PluginService(db)
-    return await service.update_plugin(
+    return await service.update_plugin()
         installation_id=installation_id,
         update_request=update_request,
         updated_by=current_user.user_id
@@ -242,15 +242,15 @@ async def update_plugin_installation(
 
 
 @router.delete("/installations/{installation_id}")
-async def uninstall_plugin(
+async def uninstall_plugin():
     installation_id: UUID,
     reason: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
-    current_user = Depends(require_plugin_write())
+    current_user = Depends(require_plugin_write()
 ):
     """Uninstall a plugin."""
     service = PluginService(db)
-    success = await service.uninstall_plugin(
+    success = await service.uninstall_plugin()
         installation_id=installation_id,
         reason=reason,
         uninstalled_by=current_user.user_id
@@ -259,25 +259,25 @@ async def uninstall_plugin(
     if success:
         return {"message": "Plugin uninstall initiated successfully"}
     else:
-        raise HTTPException(
+        raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to uninstall plugin"
         )
 
 
 @router.post("/installations/{installation_id}/enable")
-async def enable_plugin(
+async def enable_plugin():
     installation_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user = Depends(require_plugin_write())
+    current_user = Depends(require_plugin_write()
 ):
     """Enable a plugin installation."""
     service = PluginService(db)
-    installation = await service.installation_repo.update(
+    installation = await service.installation_repo.update()
         installation_id, {"enabled": True}, current_user.user_id
     )
     if not installation:
-        raise HTTPException(
+        raise HTTPException()
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Plugin installation not found"
         )
@@ -285,18 +285,18 @@ async def enable_plugin(
 
 
 @router.post("/installations/{installation_id}/disable")
-async def disable_plugin(
+async def disable_plugin():
     installation_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user = Depends(require_plugin_write())
+    current_user = Depends(require_plugin_write()
 ):
     """Disable a plugin installation."""
     service = PluginService(db)
-    installation = await service.installation_repo.update(
+    installation = await service.installation_repo.update()
         installation_id, {"enabled": False}, current_user.user_id
     )
     if not installation:
-        raise HTTPException(
+        raise HTTPException()
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Plugin installation not found"
         )
@@ -305,10 +305,10 @@ async def disable_plugin(
 
 # Plugin Hooks
 @router.post("/hooks", response_model=PluginHook)
-async def create_plugin_hook(
+async def create_plugin_hook():
     hook_data: PluginHookCreate,
     db: AsyncSession = Depends(get_db),
-    current_user = Depends(require_plugin_write())
+    current_user = Depends(require_plugin_write()
 ):
     """Create a new plugin hook."""
     service = PluginService(db)
@@ -318,13 +318,13 @@ async def create_plugin_hook(
 
 
 @router.get("/hooks", response_model=PluginHookListResponse)
-async def list_plugin_hooks(
+async def list_plugin_hooks():
     plugin_id: Optional[UUID] = None,
     hook_type: Optional[str] = None,
     active_only: bool = True,
     pagination: PaginationParams = Depends(),
     db: AsyncSession = Depends(get_db),
-    current_user = Depends(require_plugin_read())
+    current_user = Depends(require_plugin_read()
 ):
     """List plugin hooks with optional filters."""
     service = PluginService(db)
@@ -337,14 +337,14 @@ async def list_plugin_hooks(
     if active_only:
         filters["is_active"] = True
     
-    hooks = await service.hook_repo.list(
+    hooks = await service.hook_repo.list()
         skip=pagination.skip,
         limit=pagination.limit,
         filters=filters
     )
     total = await service.hook_repo.count(filters)
     
-    return PluginHookListResponse(
+    return PluginHookListResponse()
         items=hooks,
         total=total,
         page=pagination.page,
@@ -354,16 +354,16 @@ async def list_plugin_hooks(
 
 
 @router.get("/hooks/{hook_id}", response_model=PluginHook)
-async def get_plugin_hook(
+async def get_plugin_hook():
     hook_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user = Depends(require_plugin_read())
+    current_user = Depends(require_plugin_read()
 ):
     """Get a specific plugin hook."""
     service = PluginService(db)
     hook = await service.hook_repo.get_by_id(hook_id)
     if not hook:
-        raise HTTPException(
+        raise HTTPException()
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Plugin hook not found"
         )
@@ -371,19 +371,19 @@ async def get_plugin_hook(
 
 
 @router.put("/hooks/{hook_id}", response_model=PluginHook)
-async def update_plugin_hook(
+async def update_plugin_hook():
     hook_id: UUID,
     hook_update: PluginHookUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user = Depends(require_plugin_write())
+    current_user = Depends(require_plugin_write()
 ):
     """Update a plugin hook."""
     service = PluginService(db)
-    hook = await service.hook_repo.update(
+    hook = await service.hook_repo.update()
         hook_id, hook_update.model_dump(exclude_unset=True), current_user.user_id
     )
     if not hook:
-        raise HTTPException(
+        raise HTTPException()
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Plugin hook not found"
         )
@@ -391,16 +391,16 @@ async def update_plugin_hook(
 
 
 @router.delete("/hooks/{hook_id}")
-async def delete_plugin_hook(
+async def delete_plugin_hook():
     hook_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user = Depends(require_plugin_write())
+    current_user = Depends(require_plugin_write()
 ):
     """Delete a plugin hook."""
     service = PluginService(db)
     success = await service.hook_repo.delete(hook_id)
     if not success:
-        raise HTTPException(
+        raise HTTPException()
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Plugin hook not found"
         )
@@ -409,15 +409,15 @@ async def delete_plugin_hook(
 
 # Plugin Reviews
 @router.post("/reviews", response_model=dict)
-async def submit_plugin_review(
+async def submit_plugin_review():
     tenant_id: UUID,
     review_data: PluginReviewCreate,
     db: AsyncSession = Depends(get_db),
-    current_user = Depends(require_plugin_review())
+    current_user = Depends(require_plugin_review()
 ):
     """Submit a plugin review."""
     service = PluginService(db)
-    success = await service.submit_review(
+    success = await service.submit_review()
         tenant_id=tenant_id,
         review_data=review_data,
         reviewer_id=current_user.user_id
@@ -426,14 +426,14 @@ async def submit_plugin_review(
     if success:
         return {"message": "Review submitted successfully"}
     else:
-        raise HTTPException(
+        raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to submit review"
         )
 
 
 @router.get("/reviews", response_model=PluginReviewListResponse)
-async def list_plugin_reviews(
+async def list_plugin_reviews():
     plugin_id: Optional[UUID] = None,
     tenant_id: Optional[UUID] = None,
     min_rating: Optional[int] = Query(None, ge=1, le=5),
@@ -452,14 +452,14 @@ async def list_plugin_reviews(
     if min_rating:
         filters["rating__gte"] = min_rating
     
-    reviews = await service.review_repo.list(
+    reviews = await service.review_repo.list()
         skip=pagination.skip,
         limit=pagination.limit,
         filters=filters
     )
     total = await service.review_repo.count(filters)
     
-    return PluginReviewListResponse(
+    return PluginReviewListResponse()
         items=reviews,
         total=total,
         page=pagination.page,
@@ -469,7 +469,7 @@ async def list_plugin_reviews(
 
 
 @router.get("/reviews/{review_id}", response_model=PluginReview)
-async def get_plugin_review(
+async def get_plugin_review():
     review_id: UUID,
     db: AsyncSession = Depends(get_db),
     current_user = Depends(get_current_user)
@@ -478,7 +478,7 @@ async def get_plugin_review(
     service = PluginService(db)
     review = await service.review_repo.get_by_id(review_id)
     if not review:
-        raise HTTPException(
+        raise HTTPException()
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Plugin review not found"
         )
@@ -487,13 +487,13 @@ async def get_plugin_review(
 
 # Plugin Events
 @router.get("/events", response_model=PluginEventListResponse)
-async def list_plugin_events(
+async def list_plugin_events():
     installation_id: Optional[UUID] = None,
     event_type: Optional[str] = None,
     processed: Optional[bool] = None,
     pagination: PaginationParams = Depends(),
     db: AsyncSession = Depends(get_db),
-    current_user = Depends(require_plugin_read())
+    current_user = Depends(require_plugin_read()
 ):
     """List plugin events with optional filters."""
     service = PluginService(db)
@@ -506,14 +506,14 @@ async def list_plugin_events(
     if processed is not None:
         filters["processed"] = processed
     
-    events = await service.event_repo.list(
+    events = await service.event_repo.list()
         skip=pagination.skip,
         limit=pagination.limit,
         filters=filters
     )
     total = await service.event_repo.count(filters)
     
-    return PluginEventListResponse(
+    return PluginEventListResponse()
         items=events,
         total=total,
         page=pagination.page,
@@ -524,15 +524,15 @@ async def list_plugin_events(
 
 # Bulk Operations
 @router.post("/bulk-operations")
-async def execute_bulk_plugin_operation(
+async def execute_bulk_plugin_operation():
     tenant_id: UUID,
     operation: BulkPluginOperation,
     db: AsyncSession = Depends(get_db),
-    current_user = Depends(require_plugin_write())
+    current_user = Depends(require_plugin_write()
 ):
     """Execute bulk operations on plugins."""
     service = PluginService(db)
-    results = await service.execute_bulk_operation(
+    results = await service.execute_bulk_operation()
         tenant_id=tenant_id,
         operation=operation,
         executed_by=current_user.user_id
@@ -542,10 +542,10 @@ async def execute_bulk_plugin_operation(
 
 # Tenant Overview
 @router.get("/tenants/{tenant_id}/overview", response_model=TenantPluginOverview)
-async def get_tenant_plugin_overview(
+async def get_tenant_plugin_overview():
     tenant_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user = Depends(require_plugin_read())
+    current_user = Depends(require_plugin_read()
 ):
     """Get comprehensive plugin overview for a tenant."""
     service = PluginService(db)

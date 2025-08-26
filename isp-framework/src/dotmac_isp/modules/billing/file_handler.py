@@ -15,7 +15,7 @@ from fastapi import UploadFile, HTTPException
 from dotmac_isp.core.settings import get_settings
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__, timezone)
 settings = get_settings()
 
 
@@ -151,7 +151,7 @@ class FileStorageManager:
                           entity_id: Optional[str] = None) -> str:
         """Generate unique filename."""
         file_id = str(uuid.uuid4())
-        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         
         # Extract file extension
         _, ext = os.path.splitext(original_filename)
@@ -194,7 +194,7 @@ class FileStorageManager:
             'size': len(content),
             'content_type': file.content_type,
             'hash': file_hash,
-            'stored_at': datetime.utcnow()
+            'stored_at': datetime.now(timezone.utc)
         }
     
     async def retrieve_file(self, relative_path: str) -> Tuple[bytes, str]:

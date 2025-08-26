@@ -4,6 +4,7 @@ Portal Management SDK - creates and manages portal_id and portal settings per te
 
 from typing import Any, Dict, List, Optional
 from uuid import UUID
+from datetime import datetime, timezone
 
 from ..core.exceptions import PortalError, PortalNotFoundError
 from ..models.portals import Portal, PortalSettings, PortalStatus, PortalType
@@ -57,7 +58,7 @@ class PortalManagementService:
             if hasattr(portal, key):
                 setattr(portal, key, value)
 
-        portal.updated_at = portal.updated_at.__class__.utcnow()
+        portal.updated_at = datetime.now(timezone.utc)
         return portal
 
     async def create_portal_settings(

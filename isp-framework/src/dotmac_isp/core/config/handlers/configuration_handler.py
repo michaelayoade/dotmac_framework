@@ -141,10 +141,10 @@ class ConfigurationHandler(ABC):
     def _backup_config_file(self, config_path: Path) -> Optional[Path]:
         """Create backup of configuration file."""
         import shutil
-        from datetime import datetime
+        from datetime import datetime, timezone
         
         try:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
             backup_path = config_path.with_suffix(f"{config_path.suffix}.backup_{timestamp}")
             shutil.copy2(config_path, backup_path)
             logger.info(f"Created config backup: {backup_path}")

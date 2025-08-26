@@ -12,7 +12,7 @@ from .models import (
     MovementType,
     WarehouseType,
     PurchaseOrderStatus,
-)
+, ConfigDict)
 
 
 # Item schemas
@@ -60,9 +60,7 @@ class ItemResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        """Class for Config operations."""
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # Warehouse schemas
@@ -109,9 +107,7 @@ class WarehouseResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        """Class for Config operations."""
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # Stock Item schemas
@@ -130,9 +126,7 @@ class StockItemResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        """Class for Config operations."""
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # Stock Movement schemas
@@ -164,9 +158,7 @@ class StockMovementResponse(BaseModel):
     movement_date: datetime
     created_at: datetime
 
-    class Config:
-        """Class for Config operations."""
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # Purchase Order schemas
@@ -203,9 +195,7 @@ class PurchaseOrderResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        """Class for Config operations."""
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # Stock Count schemas
@@ -235,6 +225,4 @@ class StockCountResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        """Class for Config operations."""
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

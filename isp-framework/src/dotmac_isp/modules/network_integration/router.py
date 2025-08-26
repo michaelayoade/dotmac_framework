@@ -20,6 +20,7 @@ from dotmac_isp.modules.network_integration.models import (
     NetworkService,
     MaintenanceWindow,
 )
+
 from dotmac_isp.modules.network_integration.schemas import (
     NetworkDeviceCreate,
     NetworkDeviceUpdate,
@@ -42,6 +43,7 @@ from dotmac_isp.modules.network_integration.schemas import (
     PaginatedNetworkLocationResponse,
     PaginatedNetworkAlertResponse,
 )
+from datetime import timezone
 
 router = APIRouter(prefix="/api/v1/network", tags=["Network Integration"])
 network_router = router  # Export with expected name
@@ -588,7 +590,7 @@ async def list_maintenance_windows(
 
     filters = []
     if upcoming_only:
-        filters.append(MaintenanceWindow.start_time >= datetime.utcnow())
+        filters.append(MaintenanceWindow.start_time >= datetime.now(timezone.utc))
     if maintenance_type:
         filters.append(MaintenanceWindow.maintenance_type == maintenance_type)
 
@@ -686,7 +688,7 @@ async def get_network_dashboard_summary(db: AsyncSession = Depends(get_db)):
         "total_locations": total_locations,
         "device_status": device_status,
         "alert_severity": alert_severity,
-        "timestamp": datetime.utcnow(),
+        "timestamp": datetime.now(timezone.utc),
     }
 
 

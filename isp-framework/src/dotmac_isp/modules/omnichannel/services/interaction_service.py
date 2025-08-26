@@ -64,13 +64,13 @@ class InteractionService(BaseOmnichannelService):
             # Create interaction
             interaction = await self.repository.create_interaction(
                 {
-                    **interaction_data.dict(),
+                    **interaction_data.model_dump(),
                     "tenant_id": self.tenant_id,
                     "interaction_reference": interaction_ref,
                     "status": InteractionStatus.OPEN,
                     "assigned_agent_id": routing_info.get("agent_id"),
                     "assigned_team_id": routing_info.get("team_id"),
-                    "created_at": datetime.utcnow(),
+                    "created_at": datetime.now(timezone.utc),
                 }
             )
 
@@ -109,9 +109,9 @@ class InteractionService(BaseOmnichannelService):
             # Create response
             response = await self.repository.create_interaction_response(
                 {
-                    **response_data.dict(),
+                    **response_data.model_dump(),
                     "tenant_id": self.tenant_id,
-                    "created_at": datetime.utcnow(),
+                    "created_at": datetime.now(timezone.utc),
                 }
             )
 
@@ -119,7 +119,7 @@ class InteractionService(BaseOmnichannelService):
             await self.repository.update_interaction(
                 interaction.id,
                 {
-                    "last_activity_at": datetime.utcnow(),
+                    "last_activity_at": datetime.now(timezone.utc),
                     "response_count": interaction.response_count + 1,
                 },
             )
@@ -154,7 +154,7 @@ class InteractionService(BaseOmnichannelService):
                 interaction_id,
                 {
                     "status": InteractionStatus.RESOLVED,
-                    "resolved_at": datetime.utcnow(),
+                    "resolved_at": datetime.now(timezone.utc),
                     "resolution_notes": resolution_notes,
                 },
             )
@@ -196,9 +196,9 @@ class InteractionService(BaseOmnichannelService):
             # Create escalation record
             escalation = await self.repository.create_escalation(
                 {
-                    **escalation_data.dict(),
+                    **escalation_data.model_dump(),
                     "tenant_id": self.tenant_id,
-                    "escalated_at": datetime.utcnow(),
+                    "escalated_at": datetime.now(timezone.utc),
                 }
             )
 
@@ -316,7 +316,7 @@ class InteractionService(BaseOmnichannelService):
             interaction_id,
             {
                 "status": InteractionStatus.RESOLVED,
-                "resolved_at": datetime.utcnow(),
+                "resolved_at": datetime.now(timezone.utc),
                 "auto_resolved": True,
                 "resolution_response_id": resolution_response_id,
             },
@@ -331,7 +331,7 @@ class InteractionService(BaseOmnichannelService):
                 "interaction_id": interaction_id,
                 "event_type": event_type,
                 "description": description,
-                "created_at": datetime.utcnow(),
+                "created_at": datetime.now(timezone.utc),
                 "tenant_id": self.tenant_id,
             }
         )

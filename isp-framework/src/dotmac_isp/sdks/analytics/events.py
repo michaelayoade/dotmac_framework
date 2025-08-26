@@ -364,3 +364,7 @@ class EventsSDK:
             user_id=user_id,
             customer_id=customer_id,
         )
+
+
+# Alias for compatibility
+AnalyticsEventsSDK = EventsSDK

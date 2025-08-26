@@ -11,7 +11,7 @@ Provides Redis Streams implementation of the EventAdapter interface:
 import asyncio
 import json
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, AsyncIterator, Dict, List, Optional
 
 import redis.asyncio as redis
@@ -78,7 +78,7 @@ class RedisAdapter(EventAdapter):
             )
 
         except Exception as e:
-            logger.error("Failed to connect to Redis", error=str(e))
+            logger.error("Failed to connect to Redis", error=str(e)
             raise
 
     async def disconnect(self) -> None:
@@ -141,7 +141,7 @@ class RedisAdapter(EventAdapter):
             )
 
             return PublishResult(
-                event_id=event.event_id, offset=message_id, timestamp=datetime.now()
+                event_id=event.event_id, offset=message_id, timestamp=datetime.now(timezone.utc)
             )
 
         except Exception as e:
@@ -217,7 +217,7 @@ class RedisAdapter(EventAdapter):
                                         event_data["timestamp"]
                                     ),
                                     offset=message_id.decode(),
-                                    headers=json.loads(event_data.get("headers", "{}")),
+                                    headers=json.loads(event_data.get("headers", "{}"),
                                 )
 
                                 consumer_record = ConsumerRecord(
@@ -258,7 +258,7 @@ class RedisAdapter(EventAdapter):
                             except redis.ResponseError:
                                 pass
                     else:
-                        logger.error("Redis consumer error", error=str(e))
+                        logger.error("Redis consumer error", error=str(e)
                         raise
 
                 except asyncio.TimeoutError:
@@ -269,7 +269,7 @@ class RedisAdapter(EventAdapter):
             logger.info("Redis consumer cancelled")
             raise
         except Exception as e:
-            logger.error("Redis consumer error", error=str(e))
+            logger.error("Redis consumer error", error=str(e)
             raise
 
     async def commit_offset(
@@ -314,7 +314,7 @@ class RedisAdapter(EventAdapter):
             await self._client.delete(stream_key)
             logger.info("Deleted Redis stream", topic=topic)
         except Exception as e:
-            logger.error("Failed to delete Redis stream", topic=topic, error=str(e))
+            logger.error("Failed to delete Redis stream", topic=topic, error=str(e)
             raise
 
     async def list_topics(self) -> List[str]:
@@ -326,7 +326,7 @@ class RedisAdapter(EventAdapter):
             topics = [key.decode().replace("events:", "") for key in keys]
             return topics
         except Exception as e:
-            logger.error("Failed to list Redis streams", error=str(e))
+            logger.error("Failed to list Redis streams", error=str(e)
             raise
 
     async def get_topic_info(self, topic: str) -> Dict[str, Any]:
@@ -346,7 +346,7 @@ class RedisAdapter(EventAdapter):
                 "groups": info[b"groups"],
             }
         except Exception as e:
-            logger.error("Failed to get Redis stream info", topic=topic, error=str(e))
+            logger.error("Failed to get Redis stream info", topic=topic, error=str(e)
             raise
 
     async def list_consumer_groups(self) -> List[Dict[str, Any]]:
@@ -448,7 +448,7 @@ class RedisAdapter(EventAdapter):
                 return last_entry[0].decode()
             return "0-0"
         except Exception as e:
-            logger.error("Failed to get latest offset", topic=topic, error=str(e))
+            logger.error("Failed to get latest offset", topic=topic, error=str(e)
             return "0-0"
 
     async def get_earliest_offset(self, topic: str, partition: int) -> str:
@@ -462,5 +462,5 @@ class RedisAdapter(EventAdapter):
                 return first_entry[0].decode()
             return "0-0"
         except Exception as e:
-            logger.error("Failed to get earliest offset", topic=topic, error=str(e))
+            logger.error("Failed to get earliest offset", topic=topic, error=str(e)
             return "0-0"

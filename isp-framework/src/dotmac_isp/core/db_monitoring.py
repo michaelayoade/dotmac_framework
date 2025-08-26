@@ -41,7 +41,7 @@ import asyncio
 import time
 import re
 from typing import Dict, List, Optional, Any, Tuple
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import logging
 
 import asyncpg
@@ -125,7 +125,7 @@ class SlowQuery:
     query_type: str = "unknown"
     tenant_id: Optional[str] = None
     table_name: Optional[str] = None
-    timestamp: datetime = field(default_factory=datetime.now)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class DatabaseMonitor:
@@ -251,7 +251,7 @@ class DatabaseMonitor:
                         query_type=query_type,
                         tenant_id=tenant_id,
                         table_name=None,  # Not available in pg_stat_statements
-                        timestamp=datetime.now()
+                        timestamp=datetime.now(timezone.utc)
                     )
                     
                     slow_queries.append(slow_query)
@@ -462,7 +462,7 @@ class DatabaseMonitor:
                     query_type=query_type,
                     tenant_id=tenant_id,
                     table_name=None,  # Not available in pg_stat_statements
-                    timestamp=datetime.now()
+                    timestamp=datetime.now(timezone.utc)
                 )
                 
                 slow_queries.append(slow_query)

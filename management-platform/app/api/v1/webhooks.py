@@ -118,7 +118,7 @@ async def sendgrid_email_webhook(
     Processes email delivery, bounce, and engagement events.
     """
     try:
-        events = await request.json()
+        events = await request.model_dump_json()
         
         for event in events:
             event_type = event.get("event")
@@ -164,7 +164,7 @@ async def github_deployment_webhook(
     Triggers automated deployments and updates deployment status.
     """
     try:
-        payload = await request.json()
+        payload = await request.model_dump_json()
         
         if x_github_event == "deployment":
             # Handle deployment creation
@@ -222,7 +222,7 @@ async def monitoring_alert_webhook(
     Processes alerts from Prometheus, Grafana, or other monitoring systems.
     """
     try:
-        alert_data = await request.json()
+        alert_data = await request.model_dump_json()
         
         # Verify authorization if configured
         # if not _verify_monitoring_webhook_auth(authorization):

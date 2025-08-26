@@ -29,29 +29,29 @@ class CustomerFactory(BaseFactory, TenantMixin, TimestampMixin, AuditMixin):
     portal_id = factory.LazyAttribute(lambda obj: f"P{fake.bothify('?#?#?#?#')}")
     
     # Personal information
-    first_name = factory.LazyAttribute(lambda obj: fake.first_name())
-    last_name = factory.LazyAttribute(lambda obj: fake.last_name())
+    first_name = factory.LazyAttribute(lambda obj: fake.first_name()
+    last_name = factory.LazyAttribute(lambda obj: fake.last_name()
     middle_name = factory.LazyAttribute(lambda obj: fake.first_name() if fake.boolean() else None)
     
     # Contact information
-    email_primary = factory.LazyAttribute(lambda obj: random_email())
+    email_primary = factory.LazyAttribute(lambda obj: random_email()
     email_secondary = factory.LazyAttribute(lambda obj: random_email() if fake.boolean() else None)
-    phone_primary = factory.LazyAttribute(lambda obj: random_phone())
+    phone_primary = factory.LazyAttribute(lambda obj: random_phone()
     phone_secondary = factory.LazyAttribute(lambda obj: random_phone() if fake.boolean() else None)
     
     # Customer classification
     customer_type = "residential"  # residential, business, enterprise
     account_status = "active"
-    credit_rating = factory.LazyAttribute(lambda obj: fake.random_element(["excellent", "good", "fair", "poor"]))
+    credit_rating = factory.LazyAttribute(lambda obj: fake.random_element(["excellent", "good", "fair", "poor"])
     
     # Preferences
     preferred_contact_method = "email"
     billing_cycle_preference = "monthly"
     paperless_billing = True
-    marketing_opt_in = factory.LazyAttribute(lambda obj: fake.boolean())
+    marketing_opt_in = factory.LazyAttribute(lambda obj: fake.boolean()
     
     # Service information
-    service_start_date = factory.LazyAttribute(lambda obj: fake.date_this_year())
+    service_start_date = factory.LazyAttribute(lambda obj: fake.date_this_year()
     account_manager_id = factory.LazyFunction(lambda: str(uuid4()) if fake.boolean() else None)
     
     @classmethod
@@ -83,22 +83,22 @@ class CustomerAddressFactory(BaseFactory, TenantMixin, TimestampMixin):
         """Class for Meta operations."""
         model = None
     
-    customer_id = factory.LazyFunction(lambda: str(uuid4()))
+    customer_id = factory.LazyFunction(lambda: str(uuid4())
     
     # Address type
     address_type = "billing"  # billing, service, mailing
     
     # Address components
-    street_address_1 = factory.LazyAttribute(lambda obj: fake.street_address())
+    street_address_1 = factory.LazyAttribute(lambda obj: fake.street_address()
     street_address_2 = factory.LazyAttribute(lambda obj: fake.secondary_address() if fake.boolean() else None)
-    city = factory.LazyAttribute(lambda obj: fake.city())
-    state_province = factory.LazyAttribute(lambda obj: fake.state_abbr())
-    postal_code = factory.LazyAttribute(lambda obj: fake.zipcode())
+    city = factory.LazyAttribute(lambda obj: fake.city()
+    state_province = factory.LazyAttribute(lambda obj: fake.state_abbr()
+    postal_code = factory.LazyAttribute(lambda obj: fake.zipcode()
     country = "US"
     
     # Address metadata
     is_primary = True
-    is_verified = factory.LazyAttribute(lambda obj: fake.boolean(chance_of_getting_true=80))
+    is_verified = factory.LazyAttribute(lambda obj: fake.boolean(chance_of_getting_true=80)
     verification_date = factory.LazyAttribute(lambda obj: fake.date_this_year() if obj.is_verified else None)
     
     # Geographic coordinates (for service address)
@@ -125,33 +125,33 @@ class UserFactory(BaseFactory, TenantMixin, TimestampMixin):
         model = None
     
     # User identification
-    username = factory.LazyAttribute(lambda obj: fake.user_name())
-    email = factory.LazyAttribute(lambda obj: random_email())
+    username = factory.LazyAttribute(lambda obj: fake.user_name()
+    email = factory.LazyAttribute(lambda obj: random_email()
     portal_id = factory.LazyAttribute(lambda obj: f"U{fake.bothify('?#?#?#?#')}")
     
     # Personal information
-    first_name = factory.LazyAttribute(lambda obj: fake.first_name())
-    last_name = factory.LazyAttribute(lambda obj: fake.last_name())
+    first_name = factory.LazyAttribute(lambda obj: fake.first_name()
+    last_name = factory.LazyAttribute(lambda obj: fake.last_name()
     full_name = factory.LazyAttribute(lambda obj: f"{obj.first_name} {obj.last_name}")
     
     # Authentication
-    password_hash = factory.LazyAttribute(lambda obj: fake.sha256())
+    password_hash = factory.LazyAttribute(lambda obj: fake.sha256()
     is_active = True
-    is_verified = factory.LazyAttribute(lambda obj: fake.boolean(chance_of_getting_true=90))
-    email_verified = factory.LazyAttribute(lambda obj: fake.boolean(chance_of_getting_true=85))
+    is_verified = factory.LazyAttribute(lambda obj: fake.boolean(chance_of_getting_true=90)
+    email_verified = factory.LazyAttribute(lambda obj: fake.boolean(chance_of_getting_true=85)
     
     # Authorization
     role = "user"
     permissions = factory.LazyAttribute(lambda obj: ["read", "write"] if obj.role != "admin" else ["read", "write", "admin"])
     
     # Profile information
-    phone_number = factory.LazyAttribute(lambda obj: random_phone())
-    timezone = factory.LazyAttribute(lambda obj: fake.timezone())
+    phone_number = factory.LazyAttribute(lambda obj: random_phone()
+    timezone = factory.LazyAttribute(lambda obj: fake.timezone()
     locale = "en_US"
     
     # Timestamps
-    last_login = factory.LazyAttribute(lambda obj: fake.date_time_this_month())
-    password_changed_at = factory.LazyAttribute(lambda obj: fake.date_time_this_year())
+    last_login = factory.LazyAttribute(lambda obj: fake.date_time_this_month()
+    password_changed_at = factory.LazyAttribute(lambda obj: fake.date_time_this_year()
     
     @classmethod
     def create_admin(cls, **kwargs):
@@ -184,31 +184,31 @@ class OrganizationFactory(BaseFactory, TenantMixin, TimestampMixin, AuditMixin):
         model = None
     
     # Organization identification
-    name = factory.LazyAttribute(lambda obj: fake.company())
+    name = factory.LazyAttribute(lambda obj: fake.company()
     legal_name = factory.LazyAttribute(lambda obj: f"{obj.name}, Inc.")
     organization_type = "corporation"  # corporation, llc, partnership, sole_proprietorship
     
     # Business information
-    tax_id = factory.LazyAttribute(lambda obj: fake.bothify("##-#######"))
-    duns_number = factory.LazyAttribute(lambda obj: fake.bothify("#########"))
-    industry = factory.LazyAttribute(lambda obj: fake.catch_phrase())
+    tax_id = factory.LazyAttribute(lambda obj: fake.bothify("##-#######")
+    duns_number = factory.LazyAttribute(lambda obj: fake.bothify("#########")
+    industry = factory.LazyAttribute(lambda obj: fake.catch_phrase()
     
     # Contact information
     primary_email = factory.LazyAttribute(lambda obj: f"info@{fake.domain_name()}")
-    primary_phone = factory.LazyAttribute(lambda obj: random_phone())
+    primary_phone = factory.LazyAttribute(lambda obj: random_phone()
     website = factory.LazyAttribute(lambda obj: f"https://www.{fake.domain_name()}")
     
     # Address (headquarters)
-    headquarters_address = factory.LazyAttribute(lambda obj: fake.address())
+    headquarters_address = factory.LazyAttribute(lambda obj: fake.address()
     
     # Business details
-    employee_count = factory.LazyAttribute(lambda obj: fake.random_int(1, 10000))
-    annual_revenue = factory.LazyAttribute(lambda obj: fake.random_int(100000, 50000000))
-    founded_date = factory.LazyAttribute(lambda obj: fake.date_between(start_date='-50y', end_date='today'))
+    employee_count = factory.LazyAttribute(lambda obj: fake.random_int(1, 10000)
+    annual_revenue = factory.LazyAttribute(lambda obj: fake.random_int(100000, 50000000)
+    founded_date = factory.LazyAttribute(lambda obj: fake.date_between(start_date='-50y', end_date='today')
     
     # Relationship information
     parent_organization_id = factory.LazyFunction(lambda: str(uuid4()) if fake.boolean(chance_of_getting_true=20) else None)
-    account_manager_id = factory.LazyFunction(lambda: str(uuid4()))
+    account_manager_id = factory.LazyFunction(lambda: str(uuid4())
     
     @classmethod
     def create_small_business(cls, **kwargs):
@@ -241,17 +241,17 @@ class ContactFactory(BaseFactory, TenantMixin, TimestampMixin):
         model = None
     
     # Contact identification
-    first_name = factory.LazyAttribute(lambda obj: fake.first_name())
-    last_name = factory.LazyAttribute(lambda obj: fake.last_name())
-    title = factory.LazyAttribute(lambda obj: fake.job())
+    first_name = factory.LazyAttribute(lambda obj: fake.first_name()
+    last_name = factory.LazyAttribute(lambda obj: fake.last_name()
+    title = factory.LazyAttribute(lambda obj: fake.job()
     
     # Contact information
-    email = factory.LazyAttribute(lambda obj: random_email())
-    phone_work = factory.LazyAttribute(lambda obj: random_phone())
+    email = factory.LazyAttribute(lambda obj: random_email()
+    phone_work = factory.LazyAttribute(lambda obj: random_phone()
     phone_mobile = factory.LazyAttribute(lambda obj: random_phone() if fake.boolean() else None)
     
     # Relationship
-    customer_id = factory.LazyFunction(lambda: str(uuid4()))
+    customer_id = factory.LazyFunction(lambda: str(uuid4())
     organization_id = factory.LazyFunction(lambda: str(uuid4()) if fake.boolean() else None)
     
     # Contact type and preferences
@@ -260,8 +260,8 @@ class ContactFactory(BaseFactory, TenantMixin, TimestampMixin):
     preferred_contact_method = "email"
     
     # Authorization
-    can_authorize_changes = factory.LazyAttribute(lambda obj: fake.boolean(chance_of_getting_true=70))
-    can_view_billing = factory.LazyAttribute(lambda obj: fake.boolean(chance_of_getting_true=80))
+    can_authorize_changes = factory.LazyAttribute(lambda obj: fake.boolean(chance_of_getting_true=70)
+    can_view_billing = factory.LazyAttribute(lambda obj: fake.boolean(chance_of_getting_true=80)
     
     @classmethod
     def create_technical_contact(cls, **kwargs):

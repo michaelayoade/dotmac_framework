@@ -314,7 +314,7 @@ class TestDatabaseInitialization:
     async def test_close_database_exception_handling(self, mock_async_engine):
         """Test database cleanup handles exceptions."""
         # Setup mock to raise exception
-        mock_async_engine.dispose = AsyncMock(side_effect=Exception("Connection error"))
+        mock_async_engine.dispose = AsyncMock(side_effect=Exception("Connection error")
 
         # Should not raise exception even if dispose fails - but our code doesn't handle this
         # so we expect it to raise

@@ -130,7 +130,7 @@ class TwilioSMSProvider(BaseChannelProvider):
             
             async with aiohttp.ClientSession() as session:
                 async with session.post(url, data=data, auth=auth) as response:
-                    response_data = await response.json()
+                    response_data = await response.model_dump_json()
                     delivery_time = (time.time() - start_time) * 1000
                     
                     if response.status == 201:
@@ -175,7 +175,7 @@ class TwilioSMSProvider(BaseChannelProvider):
         try:
             # Parse Twilio webhook data (form-encoded)
             if isinstance(webhook_data.get("body"), bytes):
-                parsed_data = parse_qs(webhook_data["body"].decode())
+                parsed_data = parse_qs(webhook_data["body"].decode()
                 
                 # Convert to single values
                 data = {k: v[0] if v else "" for k, v in parsed_data.items()}
@@ -186,11 +186,11 @@ class TwilioSMSProvider(BaseChannelProvider):
             result = {
                 "provider": self.provider_name,
                 "webhook_type": self._determine_webhook_type(data),
-                "message_sid": data.get("MessageSid", data.get("SmsSid")),
+                "message_sid": data.get("MessageSid", data.get("SmsSid"),
                 "from": data.get("From"),
                 "to": data.get("To"), 
                 "body": data.get("Body"),
-                "status": data.get("MessageStatus", data.get("SmsStatus")),
+                "status": data.get("MessageStatus", data.get("SmsStatus"),
                 "timestamp": data.get("DateSent"),
                 "raw_data": data
             }
@@ -220,7 +220,7 @@ class TwilioSMSProvider(BaseChannelProvider):
             async with aiohttp.ClientSession() as session:
                 async with session.get(url, auth=auth) as response:
                     if response.status == 200:
-                        data = await response.json()
+                        data = await response.model_dump_json()
                         return data.get("status")
                     else:
                         logger.error(f"Failed to get message status: {response.status}")

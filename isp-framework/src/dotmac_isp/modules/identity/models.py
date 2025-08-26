@@ -1,6 +1,6 @@
 """Identity models - Users, customers, roles, and authentication."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 from sqlalchemy import Column, String, Boolean, Text, ForeignKey, Table, Enum, DateTime, Integer, UniqueConstraint, Index
 from sqlalchemy.dialects.postgresql import UUID
@@ -99,7 +99,7 @@ class User(TenantModel, ContactMixin):
     def is_locked(self) -> bool:
         """Check if user account is locked."""
         if self.locked_until:
-            return datetime.utcnow() < self.locked_until
+            return datetime.now(timezone.utc) < self.locked_until
         return False
 
 
@@ -202,7 +202,7 @@ class AuthToken(TenantModel):
     @property
     def is_expired(self) -> bool:
         """Check if token is expired."""
-        return datetime.utcnow() > self.expires_at
+        return datetime.now(timezone.utc) > self.expires_at
 
     @property
     def is_valid(self) -> bool:

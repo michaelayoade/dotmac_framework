@@ -6,7 +6,7 @@ from typing import Dict, Any
 
 from dotmac_isp.core.celery_app import celery_app
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__, timezone)
 
 
 @celery_app.task(bind=True)
@@ -22,7 +22,7 @@ def generate_daily_reports(self):
         # 4. Store in database
         # 5. Send to stakeholders
 
-        yesterday = datetime.utcnow() - timedelta(days=1)
+        yesterday = datetime.now(timezone.utc) - timedelta(days=1)
         report_date = yesterday.strftime("%Y-%m-%d")
 
         result = {
@@ -34,7 +34,7 @@ def generate_daily_reports(self):
                 "service_uptime": 99.9,
                 "support_tickets": 8,
             },
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
         }
 
         logger.info(f"Daily reports generated for {report_date}")
@@ -65,7 +65,7 @@ def calculate_customer_metrics(self, customer_id: str):
                 "uptime_percentage": 99.8,
                 "support_tickets_count": 2,
             },
-            "calculated_at": datetime.utcnow().isoformat(),
+            "calculated_at": datetime.now(timezone.utc).isoformat(),
         }
 
         logger.info(f"Customer metrics calculated for {customer_id}")

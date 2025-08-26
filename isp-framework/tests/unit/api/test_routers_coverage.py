@@ -57,7 +57,7 @@ class TestSuccessfulRouterRegistration:
         app = FastAPI()
         
         # Mock import to raise a general exception
-        with patch('builtins.__import__', side_effect=RuntimeError("Test error")), \
+        with patch('builtins.__import__', side_effect=RuntimeError("Test error"), \
              patch('dotmac_isp.api.routers.logger') as mock_logger:
             
             _register_module_routers(app)
@@ -72,7 +72,7 @@ class TestSuccessfulRouterRegistration:
         app = FastAPI()
         
         # Mock import to raise a general exception
-        with patch('builtins.__import__', side_effect=RuntimeError("Test error")), \
+        with patch('builtins.__import__', side_effect=RuntimeError("Test error"), \
              patch('dotmac_isp.api.routers.logger') as mock_logger:
             
             _register_portal_routers(app)

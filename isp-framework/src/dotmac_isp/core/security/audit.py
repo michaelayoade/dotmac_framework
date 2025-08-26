@@ -53,7 +53,7 @@ class AuditLogger:
     ):
         """Log an audit event."""
         audit_data = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "event_type": event_type.value,
             "user_id": user_id,
             "resource_id": resource_id,

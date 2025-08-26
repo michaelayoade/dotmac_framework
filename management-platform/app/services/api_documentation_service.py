@@ -15,17 +15,17 @@ from fastapi.openapi.utils import get_openapi
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 
-from ..core.exceptions import ValidationError, DatabaseError
-from ..core.logging import get_logger
-from ..models.user import User
-from ..schemas.api_docs import (
+from core.exceptions import ValidationError, DatabaseError
+from core.logging import get_logger
+from models.user import User
+from schemas.api_docs import (
     APIEndpoint,
     SDKLanguage,
     CodeSample,
     APIDocumentation,
     DeveloperGuide,
     ChangelogEntry
-)
+, timezone)
 
 logger = get_logger(__name__)
 
@@ -236,7 +236,7 @@ class APIDocumentationService:
                 "error_handling": self._get_error_handling_examples(language),
                 "best_practices": self._get_best_practices(language),
                 "changelog": await self._get_sdk_changelog(language),
-                "generated_at": datetime.utcnow().isoformat()
+                "generated_at": datetime.now(timezone.utc).isoformat()
             }
             
             return sdk_docs
@@ -343,7 +343,7 @@ class APIDocumentationService:
             guide = {
                 "title": "DotMac Management Platform Developer Guide",
                 "version": "1.0.0",
-                "last_updated": datetime.utcnow().isoformat(),
+                "last_updated": datetime.now(timezone.utc).isoformat(),
                 "sections": {}
             }
             
@@ -379,7 +379,7 @@ class APIDocumentationService:
             logger.info(f"Creating changelog entry for version {version}")
             
             if not release_date:
-                release_date = datetime.utcnow()
+                release_date = datetime.now(timezone.utc)
             
             changelog_entry = {
                 "id": str(uuid4()),
@@ -387,7 +387,7 @@ class APIDocumentationService:
                 "release_date": release_date.isoformat(),
                 "changes": changes,
                 "created_by": created_by,
-                "created_at": datetime.utcnow().isoformat()
+                "created_at": datetime.now(timezone.utc).isoformat()
             }
             
             # In a real implementation, this would be saved to database
@@ -448,7 +448,7 @@ class APIDocumentationService:
                     "php": 150
                 },
                 "documentation_views": 5000,
-                "generated_at": datetime.utcnow().isoformat()
+                "generated_at": datetime.now(timezone.utc).isoformat()
             }
             
             return metrics

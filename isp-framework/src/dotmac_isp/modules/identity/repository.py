@@ -2,7 +2,7 @@
 
 from typing import List, Optional, Dict, Any
 from uuid import UUID, uuid4
-from datetime import datetime
+from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import and_, or_, func
@@ -13,6 +13,7 @@ from dotmac_isp.modules.identity.models import (
     Role,
     CustomerType,
     AccountStatus,
+    timezone
 )
 from dotmac_isp.shared.exceptions import NotFoundError, ConflictError, ValidationError
 
@@ -107,7 +108,7 @@ class CustomerRepository:
                 if hasattr(customer, key):
                     setattr(customer, key, value)
 
-            customer.updated_at = datetime.utcnow()
+            customer.updated_at = datetime.now(timezone.utc)
             self.db.commit()
             self.db.refresh(customer)
             return customer
@@ -195,7 +196,7 @@ class CustomerRepository:
             raise ValidationError("Customer is already active")
 
         customer.account_status = AccountStatus.ACTIVE.value
-        customer.updated_at = datetime.utcnow()
+        customer.updated_at = datetime.now(timezone.utc)
 
         self.db.commit()
         self.db.refresh(customer)
@@ -211,7 +212,7 @@ class CustomerRepository:
             raise ValidationError("Customer is already suspended")
 
         customer.account_status = AccountStatus.SUSPENDED.value
-        customer.updated_at = datetime.utcnow()
+        customer.updated_at = datetime.now(timezone.utc)
 
         self.db.commit()
         self.db.refresh(customer)
@@ -224,8 +225,8 @@ class CustomerRepository:
             return False
 
         customer.is_deleted = True
-        customer.deleted_at = datetime.utcnow()
-        customer.updated_at = datetime.utcnow()
+        customer.deleted_at = datetime.now(timezone.utc)
+        customer.updated_at = datetime.now(timezone.utc)
 
         self.db.commit()
         return True
@@ -341,7 +342,7 @@ class UserRepository:
                 if hasattr(user, key):
                     setattr(user, key, value)
 
-            user.updated_at = datetime.utcnow()
+            user.updated_at = datetime.now(timezone.utc)
             self.db.commit()
             self.db.refresh(user)
             return user
@@ -374,8 +375,8 @@ class UserRepository:
             return False
 
         user.is_deleted = True
-        user.deleted_at = datetime.utcnow()
-        user.updated_at = datetime.utcnow()
+        user.deleted_at = datetime.now(timezone.utc)
+        user.updated_at = datetime.now(timezone.utc)
 
         self.db.commit()
         return True
@@ -453,7 +454,7 @@ class RoleRepository:
                 if hasattr(role, key):
                     setattr(role, key, value)
 
-            role.updated_at = datetime.utcnow()
+            role.updated_at = datetime.now(timezone.utc)
             self.db.commit()
             self.db.refresh(role)
             return role
@@ -474,8 +475,8 @@ class RoleRepository:
             return False
 
         role.is_deleted = True
-        role.deleted_at = datetime.utcnow()
-        role.updated_at = datetime.utcnow()
+        role.deleted_at = datetime.now(timezone.utc)
+        role.updated_at = datetime.now(timezone.utc)
 
         self.db.commit()
         return True
@@ -530,7 +531,7 @@ class AuthTokenRepository:
 
         if token:
             token.is_revoked = True
-            token.updated_at = datetime.utcnow()
+            token.updated_at = datetime.now(timezone.utc)
             self.db.commit()
             return True
         return False
@@ -545,7 +546,7 @@ class AuthTokenRepository:
                 AuthToken.tenant_id == self.tenant_id,
                 AuthToken.is_revoked == False,
             )
-        ).update({"is_revoked": True, "updated_at": datetime.utcnow()})
+        ).update({"is_revoked": True, "updated_at": datetime.now(timezone.utc)})
         self.db.commit()
 
     def cleanup_expired_tokens(self) -> int:
@@ -557,7 +558,7 @@ class AuthTokenRepository:
             .filter(
                 and_(
                     AuthToken.tenant_id == self.tenant_id,
-                    AuthToken.expires_at < datetime.utcnow(),
+                    AuthToken.expires_at < datetime.now(timezone.utc),
                 )
             )
             .count()
@@ -566,7 +567,7 @@ class AuthTokenRepository:
         self.db.query(AuthToken).filter(
             and_(
                 AuthToken.tenant_id == self.tenant_id,
-                AuthToken.expires_at < datetime.utcnow(),
+                AuthToken.expires_at < datetime.now(timezone.utc),
             )
         ).delete()
 
@@ -599,7 +600,7 @@ class LoginAttemptRepository:
         """Get recent login attempts for a username."""
         from dotmac_isp.modules.identity.models import LoginAttempt
 
-        since = datetime.utcnow() - timedelta(minutes=minutes)
+        since = datetime.now(timezone.utc) - timedelta(minutes=minutes)
         return (
             self.db.query(LoginAttempt)
             .filter(
@@ -617,7 +618,7 @@ class LoginAttemptRepository:
         """Count failed login attempts for a username in recent time."""
         from dotmac_isp.modules.identity.models import LoginAttempt
 
-        since = datetime.utcnow() - timedelta(minutes=minutes)
+        since = datetime.now(timezone.utc) - timedelta(minutes=minutes)
         return (
             self.db.query(LoginAttempt)
             .filter(
@@ -635,7 +636,7 @@ class LoginAttemptRepository:
         """Remove old login attempts and return count."""
         from dotmac_isp.modules.identity.models import LoginAttempt
 
-        cutoff = datetime.utcnow() - timedelta(days=days)
+        cutoff = datetime.now(timezone.utc) - timedelta(days=days)
         count = (
             self.db.query(LoginAttempt)
             .filter(

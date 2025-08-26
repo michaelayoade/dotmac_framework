@@ -2,7 +2,7 @@
 
 import logging
 import jwt
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any
 from uuid import UUID
 
@@ -238,7 +238,7 @@ class AuthService(BaseIdentityService):
                 user_id,
                 {
                     "password_hash": new_password_hash,
-                    "password_changed_at": datetime.utcnow(),
+                    "password_changed_at": datetime.now(timezone.utc),
                     "force_password_change": False,
                 },
             )
@@ -275,7 +275,7 @@ class AuthService(BaseIdentityService):
                     "user_id": user.id,
                     "token_type": "reset",
                     "access_token": reset_token,
-                    "expires_at": datetime.utcnow() + timedelta(hours=1),
+                    "expires_at": datetime.now(timezone.utc) + timedelta(hours=1),
                     "tenant_id": self.tenant_id,
                 }
             )
@@ -315,7 +315,7 @@ class AuthService(BaseIdentityService):
                 user_id,
                 {
                     "password_hash": new_password_hash,
-                    "password_changed_at": datetime.utcnow(),
+                    "password_changed_at": datetime.now(timezone.utc),
                     "force_password_change": False,
                 },
             )
@@ -335,7 +335,7 @@ class AuthService(BaseIdentityService):
     # Private methods
     def _generate_jwt_token(self, user, token_type: str, expires_in: int = None) -> str:
         """Generate JWT token."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         exp = (
             now + timedelta(seconds=expires_in)
             if expires_in
@@ -402,7 +402,7 @@ class AuthService(BaseIdentityService):
                 "token_type": "bearer",
                 "access_token": access_token,
                 "refresh_token": refresh_token,
-                "expires_at": datetime.utcnow()
+                "expires_at": datetime.now(timezone.utc)
                 + timedelta(days=self.settings.jwt_refresh_token_expire_days),
                 "ip_address": ip_address,
                 "user_agent": user_agent,
@@ -428,7 +428,7 @@ class AuthService(BaseIdentityService):
                 "user_agent": user_agent,
                 "success": success,
                 "failure_reason": failure_reason,
-                "attempted_at": datetime.utcnow(),
+                "attempted_at": datetime.now(timezone.utc),
                 "tenant_id": self.tenant_id,
             }
         )
@@ -440,13 +440,13 @@ class AuthService(BaseIdentityService):
 
         update_data = {
             "failed_login_attempts": failed_attempts,
-            "last_failed_login": datetime.utcnow(),
+            "last_failed_login": datetime.now(timezone.utc),
         }
 
         # Lock account after 5 failed attempts
         if failed_attempts >= 5:
             update_data["is_active"] = False
-            update_data["locked_until"] = datetime.utcnow() + timedelta(hours=1)
+            update_data["locked_until"] = datetime.now(timezone.utc) + timedelta(hours=1)
 
         self.user_repo.update(user.id, update_data)
 
@@ -463,7 +463,7 @@ class AuthService(BaseIdentityService):
 
     async def _update_last_login(self, user) -> None:
         """Update last login timestamp."""
-        self.user_repo.update(user.id, {"last_login": datetime.utcnow()})
+        self.user_repo.update(user.id, {"last_login": datetime.now(timezone.utc)})
 
     def _map_user_to_response(self, user) -> schemas.UserResponse:
         """Map database user to response schema."""

@@ -6,7 +6,7 @@ import os
 
 from celery import Celery
 
-from ..config import settings
+from config import settings
 
 # Create Celery instance
 celery_app = Celery(

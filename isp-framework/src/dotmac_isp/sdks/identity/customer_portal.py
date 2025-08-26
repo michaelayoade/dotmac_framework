@@ -4,6 +4,7 @@ Customer Portal SDK - binds customer/contact to portal account, login policies, 
 
 from typing import Any, Dict, List, Optional
 from uuid import UUID
+from datetime import datetime, timezone
 
 from ..core.exceptions import PortalError
 from ..models.portals import AccessLevel, BindingStatus, CustomerPortalBinding
@@ -67,7 +68,7 @@ class CustomerPortalService:
             if hasattr(binding, key):
                 setattr(binding, key, value)
 
-        binding.updated_at = binding.updated_at.__class__.utcnow()
+        binding.updated_at = datetime.now(timezone.utc)
         return binding
 
     async def list_bindings_by_portal(

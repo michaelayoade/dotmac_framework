@@ -129,7 +129,7 @@ class LengthValidationStrategy(FieldValidationStrategy):
                 compliance_frameworks=rule.compliance_frameworks or [],
                 current_value=f"length: {len(value_str)}",
                 expected_value=f"minimum length: {rule.min_length}",
-            ))
+            )
         
         # Max length check
         if rule.max_length and len(value_str) > rule.max_length:
@@ -144,7 +144,7 @@ class LengthValidationStrategy(FieldValidationStrategy):
                 compliance_frameworks=rule.compliance_frameworks or [],
                 current_value=f"length: {len(value_str)}",
                 expected_value=f"maximum length: {rule.max_length}",
-            ))
+            )
         
         return issues
 
@@ -228,7 +228,7 @@ class ForbiddenPatternsStrategy(FieldValidationStrategy):
                     suggestion="Remove or replace the forbidden content",
                     compliance_frameworks=rule.compliance_frameworks or [],
                     validation_rule=f"forbidden: {forbidden_pattern}",
-                ))
+                )
         
         return issues
 

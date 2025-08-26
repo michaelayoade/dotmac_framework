@@ -2,7 +2,7 @@
 
 from typing import List, Optional, Dict, Any
 from uuid import UUID
-from datetime import date, datetime
+from datetime import date, datetime, timezone, timedelta
 from decimal import Decimal
 import logging
 
@@ -18,8 +18,14 @@ logger = logging.getLogger(__name__)
 class InvoiceService(IInvoiceService):
     """Domain service for invoice operations."""
 
-    def __init__(        ):
-            """Initialize operation."""
+    def __init__(
+        self,
+        invoice_repo: InvoiceRepository,
+        line_item_repo: InvoiceLineItemRepository,
+        calculation_service: IBillingCalculationService,
+        tenant_id: UUID,
+    ):
+        """Initialize operation."""
         self.invoice_repo = invoice_repo
         self.line_item_repo = line_item_repo
         self.calculation_service = calculation_service
@@ -277,7 +283,7 @@ class InvoiceService(IInvoiceService):
                 {
                     "amount_paid": invoice.total_amount,
                     "amount_due": Decimal("0.00"),
-                    "paid_date": datetime.utcnow(),
+                    "paid_date": datetime.now(timezone.utc),
                 },
             )
             logger.info(f"Invoice {invoice.id} has been marked as paid")

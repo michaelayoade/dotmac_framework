@@ -434,7 +434,7 @@ class CommunicationInteraction(TenantModel, AuditMixin):
     def is_overdue(self):
         """Check if interaction is overdue."""
         if self.sla_due_time and not self.resolution_time:
-            return datetime.utcnow() > self.sla_due_time
+            return datetime.now(timezone.utc) > self.sla_due_time
         return False
 
     __table_args__ = (

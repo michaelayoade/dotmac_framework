@@ -14,7 +14,7 @@ from ..database import database_transaction
 from ..repositories.billing_additional import (
     BillingPlanRepository, SubscriptionRepository, InvoiceRepository,
     PaymentRepository, UsageRecordRepository
-)
+, timezone)
 from ..schemas.billing import (
     BillingPlanCreate, SubscriptionCreate, InvoiceCreate,
     PaymentCreate, UsageRecordCreate
@@ -41,7 +41,7 @@ class BillingService:
         self.payment_repo = PaymentRepository(db)
         self.usage_repo = UsageRecordRepository(db)
     
-    async def create_billing_plan(
+    async def create_billing_plan():
         self, 
         plan_data: BillingPlanCreate, 
         created_by: str
@@ -55,12 +55,12 @@ class BillingService:
             return plan
         except Exception as e:
             logger.error(f"Failed to create billing plan: {e}", exc_info=True)
-            raise DatabaseError(
+            raise DatabaseError()
                 message="Failed to create billing plan",
                 details={"error": str(e), "plan_name": plan_data.name}
             )
     
-    async def upgrade_subscription(
+    async def upgrade_subscription():
         self,
         tenant_id: UUID,
         new_plan_id: UUID,
@@ -87,18 +87,18 @@ class BillingService:
                 
                 # Validate upgrade (business logic)
                 if new_plan.price <= current_subscription.price:
-                    raise BusinessLogicError(
+                    raise BusinessLogicError()
                         "Cannot upgrade to a lower or same priced plan",
                         details={
                             "current_price": str(current_subscription.price),
                             "new_price": str(new_plan.price)
-                        }
+                        )
                     )
                 
-                effective_date = effective_date or datetime.utcnow()
+                effective_date = effective_date or datetime.now(timezone.utc)
                 
                 # Calculate prorated charges
-                proration_amount = await self._calculate_proration(
+                proration_amount = await self._calculate_proration()
                     current_subscription, new_plan, effective_date
                 )
                 
@@ -115,14 +115,14 @@ class BillingService:
                         "type": "proration"
                     }
                     
-                    proration_invoice = await self.invoice_repo.create(
+                    proration_invoice = await self.invoice_repo.create()
                         proration_invoice_data, updated_by
                     )
                     
                     logger.info(f"Proration invoice created: {proration_invoice.id}")
                 
                 # Update current subscription to cancelled
-                await self.subscription_repo.update(
+                await self.subscription_repo.update()
                     current_subscription.id,
                     {
                         "status": "cancelled",
@@ -141,16 +141,16 @@ class BillingService:
                     "price": new_plan.price,
                     "currency": new_plan.currency,
                     "started_at": effective_date,
-                    "next_billing_date": self._calculate_next_billing_date(
+                    "next_billing_date": self._calculate_next_billing_date()
                         effective_date, new_plan.billing_cycle
                     )
-                }
+                )
                 
-                new_subscription = await self.subscription_repo.create(
+                new_subscription = await self.subscription_repo.create()
                     new_subscription_data, updated_by
                 )
                 
-                logger.info(
+                logger.info()
                     f"Subscription upgraded for tenant {tenant_id}: "
                     f"{current_subscription.id} -> {new_subscription.id}"
                 )
@@ -161,16 +161,16 @@ class BillingService:
             raise
         except Exception as e:
             logger.error(f"Failed to upgrade subscription: {e}", exc_info=True)
-            raise DatabaseError(
+            raise DatabaseError()
                 message="Failed to upgrade subscription",
                 details={
                     "error": str(e),
                     "tenant_id": str(tenant_id),
                     "new_plan_id": str(new_plan_id)
-                }
+                )
             )
     
-    async def _calculate_proration(
+    async def _calculate_proration():
         self,
         current_subscription: Subscription,
         new_plan: PricingPlan,
@@ -184,7 +184,7 @@ class BillingService:
             return Decimal("0.00")
         
         # Calculate remaining days in current billing cycle
-        remaining_days = (current_subscription.next_billing_date.date() - effective_date.date()).days
+        remaining_days = (current_subscription.next_billing_date.date() - effective_date.date().days
         
         if remaining_days <= 0:
             return Decimal("0.00")
@@ -196,7 +196,7 @@ class BillingService:
         # Calculate proration
         proration_amount = (new_daily_rate - current_daily_rate) * remaining_days
         
-        return max(proration_amount, Decimal("0.00"))
+        return max(proration_amount, Decimal("0.00")
     
     def _calculate_next_billing_date(self, start_date: datetime, billing_cycle: str) -> datetime:
         """Calculate next billing date based on cycle."""
@@ -212,7 +212,7 @@ class BillingService:
             # Default to monthly
             return start_date.replace(month=start_date.month + 1)
     
-    async def subscribe_tenant(
+    async def subscribe_tenant():
         self,
         tenant_id: UUID,
         plan_id: UUID,
@@ -225,7 +225,7 @@ class BillingService:
             # Check if plan exists
             plan = await self.plan_repo.get_by_id(plan_id)
             if not plan:
-                raise HTTPException(
+                raise HTTPException()
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Billing plan not found"
                 )
@@ -233,7 +233,7 @@ class BillingService:
             # Check for existing active subscription
             existing = await self.subscription_repo.get_active_subscription(tenant_id)
             if existing:
-                raise HTTPException(
+                raise HTTPException()
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Tenant already has an active subscription"
                 )
@@ -268,12 +268,12 @@ class BillingService:
             raise
         except Exception as e:
             logger.error(f"Failed to create subscription: {e}")
-            raise HTTPException(
+            raise HTTPException()
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to create subscription"
             )
     
-    async def _generate_subscription_invoice(
+    async def _generate_subscription_invoice():
         self,
         subscription_id: UUID,
         created_by: Optional[str] = None
@@ -299,7 +299,7 @@ class BillingService:
         # Calculate amounts
         base_amount = subscription.custom_pricing.get("base_price", subscription.plan.base_price) if subscription.custom_pricing else subscription.plan.base_price
         tax_rate = Decimal("0.08")  # 8% tax rate - should be configurable
-        subtotal = Decimal(str(base_amount))
+        subtotal = Decimal(str(base_amount)
         tax_amount = subtotal * tax_rate
         total_amount = subtotal + tax_amount
         
@@ -320,7 +320,7 @@ class BillingService:
         
         return await self.invoice_repo.create(invoice_data, created_by)
     
-    async def process_payment(
+    async def process_payment():
         self,
         payment_data: PaymentCreate,
         created_by: Optional[str] = None
@@ -330,20 +330,20 @@ class BillingService:
             # Check if invoice exists and is payable
             invoice = await self.invoice_repo.get_by_id(payment_data.invoice_id)
             if not invoice:
-                raise HTTPException(
+                raise HTTPException()
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Invoice not found"
                 )
             
             if invoice.status == "paid":
-                raise HTTPException(
+                raise HTTPException()
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Invoice is already paid"
                 )
             
             # Create payment record
             payment_dict = payment_data.model_dump()
-            payment_dict["processed_at"] = datetime.utcnow()
+            payment_dict["processed_at"] = datetime.now(timezone.utc)
             
             payment = await self.payment_repo.create(payment_dict, created_by)
             
@@ -354,7 +354,7 @@ class BillingService:
                 # Update subscription status if needed
                 subscription = await self.subscription_repo.get_by_id(invoice.subscription_id)
                 if subscription and subscription.status in ["pending", "past_due"]:
-                    await self.subscription_repo.update_status(
+                    await self.subscription_repo.update_status()
                         subscription.id, "active", created_by
                     )
             
@@ -365,12 +365,12 @@ class BillingService:
             raise
         except Exception as e:
             logger.error(f"Failed to process payment: {e}")
-            raise HTTPException(
+            raise HTTPException()
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to process payment"
             )
     
-    async def record_usage(
+    async def record_usage():
         self,
         usage_data: UsageRecordCreate,
         created_by: Optional[str] = None
@@ -381,7 +381,7 @@ class BillingService:
             await self.usage_repo.create(usage_dict, created_by)
             
             # Check if usage threshold triggers billing
-            await self._check_usage_billing(
+            await self._check_usage_billing()
                 usage_data.tenant_id,
                 usage_data.subscription_id,
                 usage_data.metric_name,
@@ -394,7 +394,7 @@ class BillingService:
             logger.error(f"Failed to record usage: {e}")
             return False
     
-    async def _check_usage_billing(
+    async def _check_usage_billing():
         self,
         tenant_id: UUID,
         subscription_id: UUID,
@@ -422,7 +422,7 @@ class BillingService:
         today = date.today()
         period_start = today.replace(day=1)  # First day of current month
         
-        current_usage = await self.usage_repo.get_period_usage(
+        current_usage = await self.usage_repo.get_period_usage()
             subscription_id, metric_name, period_start, today
         )
         
@@ -440,13 +440,13 @@ class BillingService:
             overage_cost = overage_amount * overage_rate
             
             # Create usage-based invoice
-            invoice_data = InvoiceCreate(
+            invoice_data = InvoiceCreate()
                 tenant_id=subscription.tenant_id,
                 subscription_id=subscription_id,
                 amount=overage_cost,
                 description=f"Usage overage for {metric_name}: {overage_amount} units",
                 status="pending",
-                due_date=(datetime.utcnow() + timedelta(days=7)).date(),
+                due_date=(datetime.now(timezone.utc) + timedelta(days=7).date())
                 line_items=[{
                     "description": f"{metric_name} overage ({overage_amount} units)",
                     "quantity": overage_amount,
@@ -526,7 +526,7 @@ class BillingService:
             payment = last_payment[0]
             
             # Calculate days remaining in billing period
-            today = datetime.utcnow().date()
+            today = datetime.now(timezone.utc).date()
             billing_period_start = payment.created_at.date()
             
             # Determine billing period length based on subscription tier
@@ -562,7 +562,7 @@ class BillingService:
                 "amount": amount,
                 "reason": reason,
                 "status": "pending",
-                "created_at": datetime.utcnow(),
+                "created_at": datetime.now(timezone.utc),
                 "processed_at": None
             }
             
@@ -602,7 +602,7 @@ class BillingService:
         """Calculate churn metrics for the given period."""
         try:
             # Get subscriptions cancelled during the period
-            churned_subscriptions = await self.subscription_repo.get_churned_subscriptions(
+            churned_subscriptions = await self.subscription_repo.get_churned_subscriptions()
                 start_date, end_date
             )
             
@@ -612,7 +612,7 @@ class BillingService:
             # Calculate churn metrics
             churned_count = len(churned_subscriptions)
             active_count = len(active_at_start)
-            churn_rate = (churned_count / max(active_count, 1)) * 100
+            churn_rate = (churned_count / max(active_count, 1) * 100
             
             # Group by tier for detailed analysis
             tier_churn = {}
@@ -636,7 +636,7 @@ class BillingService:
         """Calculate trial conversion metrics for the given period."""
         try:
             # Get all subscriptions that started as trials
-            trial_subscriptions = await self.subscription_repo.get_trial_subscriptions(
+            trial_subscriptions = await self.subscription_repo.get_trial_subscriptions()
                 start_date, end_date
             )
             
@@ -649,7 +649,7 @@ class BillingService:
                 trial_count += 1
                 
                 # Check if trial converted to paid
-                if subscription.status == "active" and subscription.trial_end_date and subscription.trial_end_date < datetime.utcnow():
+                if subscription.status == "active" and subscription.trial_end_date and subscription.trial_end_date < datetime.now(timezone.utc):
                     converted_count += 1
                     
                     tier = subscription.tier
@@ -663,20 +663,20 @@ class BillingService:
                     conversions_by_tier[tier] = {"trials": 0, "conversions": 0}
                 conversions_by_tier[tier]["trials"] += 1
             
-            conversion_rate = (converted_count / max(trial_count, 1)) * 100
+            conversion_rate = (converted_count / max(trial_count, 1) * 100
             
             return {
                 "total_trials": trial_count,
                 "total_conversions": converted_count,
                 "conversion_rate_percent": round(conversion_rate, 2),
                 "by_tier": conversions_by_tier
-            }
+            )
             
         except Exception as e:
             logger.error(f"Error calculating trial conversions: {e}")
             return {"total_trials": 0, "total_conversions": 0, "conversion_rate_percent": 0.0, "by_tier": {}}
     
-    async def get_tenant_billing_overview(
+    async def get_tenant_billing_overview():
         self,
         tenant_id: UUID
     ) -> Dict[str, Any]:
@@ -686,12 +686,12 @@ class BillingService:
             subscription = await self.subscription_repo.get_active_subscription(tenant_id)
             
             # Get recent invoices
-            recent_invoices = await self.invoice_repo.get_tenant_invoices(
+            recent_invoices = await self.invoice_repo.get_tenant_invoices()
                 tenant_id, limit=5
             )
             
             # Get recent payments
-            recent_payments = await self.payment_repo.get_tenant_payments(
+            recent_payments = await self.payment_repo.get_tenant_payments()
                 tenant_id, limit=5
             )
             
@@ -718,7 +718,7 @@ class BillingService:
             
         except Exception as e:
             logger.error(f"Failed to get billing overview: {e}")
-            raise HTTPException(
+            raise HTTPException()
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to get billing overview"
             )
@@ -728,7 +728,7 @@ class BillingService:
         unpaid_invoices = await self.invoice_repo.get_unpaid_invoices(tenant_id)
         return sum(invoice.total_amount for invoice in unpaid_invoices)
     
-    async def cancel_subscription(
+    async def cancel_subscription():
         self,
         subscription_id: UUID,
         reason: Optional[str] = None,
@@ -739,13 +739,13 @@ class BillingService:
         try:
             subscription = await self.subscription_repo.get_by_id(subscription_id)
             if not subscription:
-                raise HTTPException(
+                raise HTTPException()
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Subscription not found"
                 )
             
             if subscription.status == "cancelled":
-                raise HTTPException(
+                raise HTTPException()
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Subscription is already cancelled"
                 )
@@ -760,7 +760,7 @@ class BillingService:
                 "auto_renew": False
             }
             
-            subscription = await self.subscription_repo.update(
+            subscription = await self.subscription_repo.update()
                 subscription_id, update_data, updated_by
             )
             
@@ -779,12 +779,12 @@ class BillingService:
             raise
         except Exception as e:
             logger.error(f"Failed to cancel subscription: {e}")
-            raise HTTPException(
+            raise HTTPException()
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to cancel subscription"
             )
     
-    async def generate_billing_analytics(
+    async def generate_billing_analytics():
         self,
         start_date: date,
         end_date: date,
@@ -819,25 +819,25 @@ class BillingService:
             
         except Exception as e:
             logger.error(f"Failed to generate billing analytics: {e}")
-            raise HTTPException(
+            raise HTTPException()
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to generate billing analytics"
             )
     
-    async def _calculate_revenue(
+    async def _calculate_revenue():
         self,
         start_date: date,
         end_date: date,
         tenant_id: Optional[UUID] = None
     ) -> Decimal:
         """Calculate total revenue for a period."""
-        payments = await self.payment_repo.get_payments_in_period(
+        payments = await self.payment_repo.get_payments_in_period()
             start_date, end_date, tenant_id
         )
         return sum(payment.amount for payment in payments)
     
     # Test-compatible wrapper methods
-    async def create_subscription(
+    async def create_subscription():
         self,
         tenant_id: UUID,
         subscription_data: SubscriptionCreate,
@@ -861,7 +861,7 @@ class BillingService:
             
         return await self.subscription_repo.create(subscription_dict, created_by)
     
-    async def generate_invoice(
+    async def generate_invoice():
         self,
         subscription_id: UUID,
         created_by: str
@@ -886,7 +886,7 @@ class BillingService:
         
         return await self.invoice_repo.create(invoice_data, created_by)
     
-    async def calculate_usage_cost(
+    async def calculate_usage_cost():
         self,
         tenant_id: UUID,
         usage_data: Dict[str, Any],
@@ -913,12 +913,12 @@ class BillingService:
             "usage_cost": float(usage_cost),
             "total_cost": float(total_cost),
             "breakdown": {
-                "storage": float(Decimal(usage_data.get("storage_gb", 0)) * Decimal("0.10")),
-                "bandwidth": float(Decimal(usage_data.get("bandwidth_gb", 0)) * Decimal("0.05")),
-                "api_requests": float(Decimal(usage_data.get("api_requests", 0)) * Decimal("0.001")),
-                "users": float(Decimal(usage_data.get("users", 0)) * Decimal("2.00"))
-            }
-        }
+                "storage": float(Decimal(usage_data.get("storage_gb", 0) * Decimal("0.10"))
+                "bandwidth": float(Decimal(usage_data.get("bandwidth_gb", 0) * Decimal("0.05"))
+                "api_requests": float(Decimal(usage_data.get("api_requests", 0) * Decimal("0.001"))
+                "users": float(Decimal(usage_data.get("users", 0) * Decimal("2.00")
+            )
+        )
 
     async def _calculate_mrr(self, as_of_date: date, tenant_id: Optional[UUID] = None) -> Dict[str, float]:
         """Calculate Monthly Recurring Revenue (MRR) and Annual Recurring Revenue (ARR)."""

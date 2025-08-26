@@ -24,7 +24,7 @@ from .models import (
     ActivityStatus,
     QuoteStatus,
     CustomerType,
-)
+, timezone)
 from dotmac_isp.shared.exceptions import NotFoundError, ConflictError, ValidationError
 
 
@@ -64,7 +64,7 @@ class LeadRepository:
         """Get lead by ID."""
         return (
             self.db.query(Lead)
-            .filter(and_(Lead.id == lead_id, Lead.tenant_id == self.tenant_id))
+            .filter(and_(Lead.id == lead_id, Lead.tenant_id == self.tenant_id)
             .first()
         )
 
@@ -72,7 +72,7 @@ class LeadRepository:
         """Get lead by lead ID string."""
         return (
             self.db.query(Lead)
-            .filter(and_(Lead.lead_id == lead_id, Lead.tenant_id == self.tenant_id))
+            .filter(and_(Lead.lead_id == lead_id, Lead.tenant_id == self.tenant_id)
             .first()
         )
 
@@ -80,7 +80,7 @@ class LeadRepository:
         """Get lead by email."""
         return (
             self.db.query(Lead)
-            .filter(and_(Lead.email == email, Lead.tenant_id == self.tenant_id))
+            .filter(and_(Lead.email == email, Lead.tenant_id == self.tenant_id)
             .first()
         )
 
@@ -122,7 +122,7 @@ class LeadRepository:
                 )
             )
 
-        return query.order_by(desc(Lead.created_at)).offset(skip).limit(limit).all()
+        return query.order_by(desc(Lead.created_at).offset(skip).limit(limit).all()
 
     def update_status(
         self, lead_id: UUID, status: LeadStatus, notes: Optional[str] = None
@@ -133,7 +133,7 @@ class LeadRepository:
             return None
 
         lead.lead_status = status
-        lead.updated_at = datetime.utcnow()
+        lead.updated_at = datetime.now(timezone.utc)
 
         if status == LeadStatus.CONVERTED:
             lead.converted_date = date.today()
@@ -141,7 +141,7 @@ class LeadRepository:
         if notes:
             current_notes = lead.notes or ""
             lead.notes = (
-                f"{current_notes}\n{datetime.utcnow().isoformat()}: {notes}".strip()
+                f"{current_notes}\n{datetime.now(timezone.utc).isoformat()}: {notes}".strip()
             )
 
         self.db.commit()
@@ -159,7 +159,7 @@ class LeadRepository:
         lead.assigned_to = assigned_to
         if sales_team:
             lead.sales_team = sales_team
-        lead.updated_at = datetime.utcnow()
+        lead.updated_at = datetime.now(timezone.utc)
 
         self.db.commit()
         self.db.refresh(lead)
@@ -172,7 +172,7 @@ class LeadRepository:
             return None
 
         lead.lead_score = score
-        lead.updated_at = datetime.utcnow()
+        lead.updated_at = datetime.now(timezone.utc)
 
         self.db.commit()
         self.db.refresh(lead)
@@ -199,7 +199,7 @@ class LeadRepository:
         """Generate unique lead ID."""
         today = date.today()
         count = (
-            self.db.query(func.count(Lead.id))
+            self.db.query(func.count(Lead.id)
             .filter(
                 and_(
                     Lead.tenant_id == self.tenant_id,
@@ -231,7 +231,7 @@ class OpportunityRepository:
             if opportunity_data.get("estimated_value") and opportunity_data.get(
                 "probability"
             ):
-                estimated_value = Decimal(str(opportunity_data["estimated_value"]))
+                estimated_value = Decimal(str(opportunity_data["estimated_value"])
                 probability = opportunity_data["probability"]
                 opportunity_data["weighted_value"] = estimated_value * (
                     probability / 100
@@ -327,7 +327,7 @@ class OpportunityRepository:
             )
 
         return (
-            query.order_by(desc(Opportunity.estimated_value))
+            query.order_by(desc(Opportunity.estimated_value)
             .offset(skip)
             .limit(limit)
             .all()
@@ -342,7 +342,7 @@ class OpportunityRepository:
             return None
 
         opportunity.opportunity_stage = stage
-        opportunity.updated_at = datetime.utcnow()
+        opportunity.updated_at = datetime.now(timezone.utc)
 
         # Update status based on stage
         if stage == OpportunityStage.CLOSED_WON:
@@ -361,7 +361,7 @@ class OpportunityRepository:
         if notes:
             current_notes = opportunity.notes or ""
             opportunity.notes = (
-                f"{current_notes}\n{datetime.utcnow().isoformat()}: {notes}".strip()
+                f"{current_notes}\n{datetime.now(timezone.utc).isoformat()}: {notes}".strip()
             )
 
         self.db.commit()
@@ -378,7 +378,7 @@ class OpportunityRepository:
 
         opportunity.probability = probability
         opportunity.weighted_value = opportunity.estimated_value * (probability / 100)
-        opportunity.updated_at = datetime.utcnow()
+        opportunity.updated_at = datetime.now(timezone.utc)
 
         self.db.commit()
         self.db.refresh(opportunity)
@@ -427,7 +427,7 @@ class OpportunityRepository:
         """Generate unique opportunity ID."""
         today = date.today()
         count = (
-            self.db.query(func.count(Opportunity.id))
+            self.db.query(func.count(Opportunity.id)
             .filter(
                 and_(
                     Opportunity.tenant_id == self.tenant_id,
@@ -521,7 +521,7 @@ class SalesActivityRepository:
             query = query.filter(
                 and_(
                     SalesActivity.activity_status == ActivityStatus.PLANNED,
-                    SalesActivity.scheduled_date < datetime.utcnow(),
+                    SalesActivity.scheduled_date < datetime.now(timezone.utc),
                 )
             )
 
@@ -538,7 +538,7 @@ class SalesActivityRepository:
             return None
 
         activity.activity_status = ActivityStatus.COMPLETED
-        activity.completed_date = datetime.utcnow()
+        activity.completed_date = datetime.now(timezone.utc)
         activity.outcome = outcome
         activity.outcome_description = outcome_description
 
@@ -550,7 +550,7 @@ class SalesActivityRepository:
         self, assigned_to: Optional[str] = None, days: int = 7
     ) -> List[SalesActivity]:
         """Get upcoming activities."""
-        end_date = datetime.utcnow() + timedelta(days=days)
+        end_date = datetime.now(timezone.utc) + timedelta(days=days)
 
         query = self.db.query(SalesActivity).filter(
             and_(
@@ -569,7 +569,7 @@ class SalesActivityRepository:
         """Generate unique activity ID."""
         today = date.today()
         count = (
-            self.db.query(func.count(SalesActivity.id))
+            self.db.query(func.count(SalesActivity.id)
             .filter(
                 and_(
                     SalesActivity.tenant_id == self.tenant_id,
@@ -616,7 +616,7 @@ class QuoteRepository:
         """Get quote by ID."""
         return (
             self.db.query(Quote)
-            .filter(and_(Quote.id == quote_id, Quote.tenant_id == self.tenant_id))
+            .filter(and_(Quote.id == quote_id, Quote.tenant_id == self.tenant_id)
             .first()
         )
 
@@ -657,7 +657,7 @@ class QuoteRepository:
         if date_to:
             query = query.filter(Quote.quote_date <= date_to)
 
-        return query.order_by(desc(Quote.created_at)).offset(skip).limit(limit).all()
+        return query.order_by(desc(Quote.created_at).offset(skip).limit(limit).all()
 
     def update_status(self, quote_id: UUID, status: QuoteStatus) -> Optional[Quote]:
         """Update quote status."""
@@ -666,7 +666,7 @@ class QuoteRepository:
             return None
 
         quote.quote_status = status
-        quote.updated_at = datetime.utcnow()
+        quote.updated_at = datetime.now(timezone.utc)
 
         if status == QuoteStatus.SENT:
             quote.sent_date = date.today()
@@ -683,7 +683,7 @@ class QuoteRepository:
         """Generate unique quote number."""
         today = date.today()
         count = (
-            self.db.query(func.count(Quote.id))
+            self.db.query(func.count(Quote.id)
             .filter(
                 and_(
                     Quote.tenant_id == self.tenant_id,

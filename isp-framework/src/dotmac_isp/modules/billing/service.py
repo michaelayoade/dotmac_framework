@@ -20,6 +20,7 @@ from dotmac_isp.modules.billing.models import (
     PaymentMethod,
     BillingCycle,
 )
+from datetime import datetime, timezone
 from dotmac_isp.shared.exceptions import (
     ServiceError,
     EntityNotFoundError,
@@ -197,7 +198,7 @@ class BillingService(BaseTenantService[Invoice, schemas.InvoiceCreate, schemas.I
                 "invoice_id": payment_data.invoice_id,
                 "amount": payment_data.amount,
                 "payment_method": payment_data.payment_method,
-                "payment_date": payment_data.payment_date or datetime.utcnow(),
+                "payment_date": payment_data.payment_date or datetime.now(timezone.utc),
                 "status": PaymentStatus.PENDING,
                 "gateway_transaction_id": payment_data.gateway_transaction_id,
                 "gateway_response": payment_data.gateway_response,
@@ -394,7 +395,7 @@ class BillingService(BaseTenantService[Invoice, schemas.InvoiceCreate, schemas.I
                     "transaction_id": f"txn_{uuid4().hex[:12]}",
                     "gateway": "mock_gateway",
                     "status": "completed",
-                    "processed_at": datetime.utcnow().isoformat(),
+                    "processed_at": datetime.now(timezone.utc).isoformat(),
                 },
             }
         else:
@@ -404,7 +405,7 @@ class BillingService(BaseTenantService[Invoice, schemas.InvoiceCreate, schemas.I
                     "error_code": "PAYMENT_DECLINED",
                     "error_message": "Payment was declined by the bank",
                     "gateway": "mock_gateway",
-                    "processed_at": datetime.utcnow().isoformat(),
+                    "processed_at": datetime.now(timezone.utc).isoformat(),
                 },
             }
 

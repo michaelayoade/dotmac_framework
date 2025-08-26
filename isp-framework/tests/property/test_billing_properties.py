@@ -18,29 +18,29 @@ from typing import Optional
 @st.composite 
 def customer_ids(draw):
     """Generate realistic customer IDs"""
-    prefix = draw(st.sampled_from(['CUS', 'CUST', 'C']))
-    number = draw(st.integers(min_value=1, max_value=999999))
+    prefix = draw(st.sampled_from(['CUS', 'CUST', 'C'])
+    number = draw(st.integers(min_value=1, max_value=999999)
     return f"{prefix}-{number:06d}"
 
 
 @st.composite
 def service_amounts(draw):
     """Generate realistic ISP service amounts"""
-    base_amount = draw(st.floats(min_value=9.99, max_value=999.99))
+    base_amount = draw(st.floats(min_value=9.99, max_value=999.99)
     # Round to 2 decimal places like real currency
-    return float(Decimal(str(base_amount)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP))
+    return float(Decimal(str(base_amount).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
 
 @st.composite
 def tax_rates(draw):
     """Generate realistic tax rates"""
-    return draw(st.floats(min_value=0.0, max_value=0.25))  # 0% to 25% tax
+    return draw(st.floats(min_value=0.0, max_value=0.25)  # 0% to 25% tax
 
 
 @st.composite
 def bandwidth_plans(draw):
     """Generate realistic bandwidth tiers"""
-    return draw(st.sampled_from([25, 50, 100, 200, 500, 1000, 2000]))
+    return draw(st.sampled_from([25, 50, 100, 200, 500, 1000, 2000])
 
 
 # Property-Based Test: Billing Calculations
@@ -201,7 +201,7 @@ def test_payment_processing_properties(payment_amount: float, customer_balance: 
 @pytest.mark.billing_core
 @given(
     services=st.lists(
-        st.tuples(service_amounts(), st.text(min_size=1, max_size=50)),
+        st.tuples(service_amounts(), st.text(min_size=1, max_size=50),
         min_size=1,
         max_size=10
     ),
@@ -236,7 +236,7 @@ def test_invoice_generation_properties(services, due_days: int, late_fee_rate: f
     # Property 2: Service amounts are valid
     for amount, description in services:
         assert amount > 0, f"Service amount must be positive: {description}"
-        assert len(description.strip()) > 0, "Service description cannot be empty"
+        assert len(description.strip() > 0, "Service description cannot be empty"
     
     # Property 3: Mathematical correctness
     calculated_total = sum(amount for amount, _ in services)

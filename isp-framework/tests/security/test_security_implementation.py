@@ -29,7 +29,7 @@ from fastapi.testclient import TestClient
 from dotmac_isp.core.security import (
     SecurityManager, AuthenticationService, AuthorizationService,
     RateLimiter, InputSanitizer, AuditLogger
-)
+, timezone)
 from dotmac_isp.core.encryption import EncryptionService
 from dotmac_isp.modules.identity.models import User, UserRole, UserSession
 from dotmac_isp.core.exceptions import (
@@ -86,7 +86,7 @@ class TestAuthenticationSecurity:
         token = await auth_service.generate_jwt_token(user_data, expires_in=3600)
         
         assert isinstance(token, str)
-        assert len(token.split('.')) == 3  # JWT has 3 parts
+        assert len(token.split('.') == 3  # JWT has 3 parts
         
         # Decode and verify token
         decoded_payload = await auth_service.verify_jwt_token(token)
@@ -133,7 +133,7 @@ class TestAuthenticationSecurity:
         assert session.user_id == user_id
         assert session.ip_address == "192.168.1.100"
         assert session.user_agent == "Test Browser/1.0"
-        assert session.expires_at > datetime.utcnow()
+        assert session.expires_at > datetime.now(timezone.utc)
         assert len(session.session_token) >= 32  # Secure session token
         
         # Test session validation
@@ -392,7 +392,7 @@ class TestInputValidationSecurity:
             "<script>alert('XSS')</script>",
             "javascript:alert('XSS')",
             "<img src=x onerror=alert('XSS')>",
-            "';alert(String.fromCharCode(88,83,83))//';alert(String.fromCharCode(88,83,83))//",
+            "';alert(String.fromCharCode(88,83,83)//';alert(String.fromCharCode(88,83,83)//",
             "<svg onload=alert('XSS')>",
             "&#60;script&#62;alert('XSS')&#60;/script&#62;"
         ]
@@ -624,7 +624,7 @@ class TestRateLimitingSecurity:
         # Start multiple concurrent requests
         tasks = []
         for i in range(max_concurrent + 3):  # Try more than allowed
-            task = asyncio.create_task(make_request(i))
+            task = asyncio.create_task(make_request(i)
             tasks.append(task)
         
         # Wait for all requests to complete
@@ -816,7 +816,7 @@ class TestAuditLoggingSecurity:
                 "after": {"email": "new@example.com", "phone": "555-9876"}
             },
             "ip_address": "192.168.1.50",
-            "timestamp": datetime.utcnow()
+            "timestamp": datetime.now(timezone.utc)
         }
         
         # Log data modification

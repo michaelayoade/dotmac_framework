@@ -27,7 +27,7 @@ from ..contracts.common_schemas import (
     TimeoutPolicy,
     ErrorInfo,
     Priority,
-)
+    ConfigDict)
 
 logger = structlog.get_logger(__name__)
 
@@ -64,10 +64,7 @@ class TaskDependency(BaseModel):
     condition: Optional[str] = Field(None, description="Dependency condition")
     timeout_seconds: Optional[float] = Field(None, description="Dependency timeout")
 
-    class Config:
-        """Class for Config operations."""
-        extra = "forbid"
-
+    model_config = ConfigDict(extra="forbid")
 
 class ResourceRequirement(BaseModel):
     """Resource requirements for task execution."""
@@ -83,10 +80,7 @@ class ResourceRequirement(BaseModel):
         default_factory=dict, description="Custom resources"
     )
 
-    class Config:
-        """Class for Config operations."""
-        extra = "allow"
-
+    model_config = ConfigDict(extra="allow")
 
 class TaskDefinition(BaseModel):
     """Definition of a task."""
@@ -130,10 +124,7 @@ class TaskDefinition(BaseModel):
     tenant_id: str = Field(..., description="Tenant identifier")
     metadata: OperationMetadata = Field(default_factory=OperationMetadata)
 
-    class Config:
-        """Class for Config operations."""
-        extra = "allow"
-
+    model_config = ConfigDict(extra="allow")
 
 @dataclass
 class TaskExecution:
@@ -161,8 +152,8 @@ class TaskExecution:
             "status": self.status.value,
             "input_data": self.input_data,
             "output_data": self.output_data,
-            "context": self.context.dict() if self.context else None,
-            "error": self.error.dict() if self.error else None,
+            "context": self.context.model_dump() if self.context else None,
+            "error": self.error.model_dump() if self.error else None,
             "started_at": self.started_at.isoformat() if self.started_at else None,
             "completed_at": (
                 self.completed_at.isoformat() if self.completed_at else None

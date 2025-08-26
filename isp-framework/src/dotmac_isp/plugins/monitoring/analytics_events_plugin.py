@@ -19,7 +19,7 @@ from ..core.base import (
     PluginContext,
     PluginConfig,
     PluginAPI,
-)
+, timezone)
 from ..core.exceptions import PluginError, PluginConfigError
 
 
@@ -127,9 +127,9 @@ class AnalyticsEventsPlugin(MonitoringPlugin):
         
         # Basic configuration
         self.analytics_host = os.getenv("ANALYTICS_HOST", "localhost")
-        self.analytics_port = int(os.getenv("ANALYTICS_PORT", "8080"))
-        self.batch_size = int(os.getenv("ANALYTICS_BATCH_SIZE", "100"))
-        self.flush_interval = int(os.getenv("ANALYTICS_FLUSH_INTERVAL", "30"))
+        self.analytics_port = int(os.getenv("ANALYTICS_PORT", "8080")
+        self.batch_size = int(os.getenv("ANALYTICS_BATCH_SIZE", "100")
+        self.flush_interval = int(os.getenv("ANALYTICS_FLUSH_INTERVAL", "30")
         
         # Get secure credentials
         try:
@@ -187,10 +187,10 @@ class AnalyticsEventsPlugin(MonitoringPlugin):
             config_data = self.config.config_data or {}
             
             # Override with environment if available
-            self.analytics_host = os.getenv("ANALYTICS_HOST", config_data.get("analytics_host", "localhost"))
-            self.analytics_port = int(os.getenv("ANALYTICS_PORT", str(config_data.get("analytics_port", 8080))))
-            self.batch_size = int(os.getenv("ANALYTICS_BATCH_SIZE", str(config_data.get("batch_size", 100))))
-            self.flush_interval = int(os.getenv("ANALYTICS_FLUSH_INTERVAL", str(config_data.get("flush_interval", 30))))
+            self.analytics_host = os.getenv("ANALYTICS_HOST", config_data.get("analytics_host", "localhost")
+            self.analytics_port = int(os.getenv("ANALYTICS_PORT", str(config_data.get("analytics_port", 8080)
+            self.batch_size = int(os.getenv("ANALYTICS_BATCH_SIZE", str(config_data.get("batch_size", 100)
+            self.flush_interval = int(os.getenv("ANALYTICS_FLUSH_INTERVAL", str(config_data.get("flush_interval", 30)
             
             # Re-validate credentials during initialization
             if not hasattr(self, 'analytics_api_key') or not self.analytics_api_key:
@@ -293,7 +293,7 @@ class AnalyticsEventsPlugin(MonitoringPlugin):
     ) -> str:
         """Create analytics alert/notification."""
         try:
-            alert_id = f"alert_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}_{id(alert_data)}"
+            alert_id = f"alert_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{id(alert_data)}"
             
             # Create analytics event for the alert
             alert_event = AnalyticsEvent(
@@ -301,7 +301,7 @@ class AnalyticsEventsPlugin(MonitoringPlugin):
                 event_name="analytics_alert_created",
                 category=EventCategory.TECHNICAL,
                 severity=EventSeverity.HIGH,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
                 tenant_id=str(context.tenant_id) if context.tenant_id else "system",
                 source="analytics_events_plugin",
                 properties={
@@ -428,7 +428,7 @@ class AnalyticsEventsPlugin(MonitoringPlugin):
                 "successful": successful,
                 "failed": failed,
                 "errors": errors,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
             
         except Exception as e:
@@ -500,11 +500,11 @@ class AnalyticsEventsPlugin(MonitoringPlugin):
             
             # Track report generation event
             report_event = AnalyticsEvent(
-                event_id=f"report_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
+                event_id=f"report_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}",
                 event_name="analytics_report_generated",
                 category=EventCategory.BUSINESS,
                 severity=EventSeverity.MEDIUM,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
                 tenant_id=str(context.tenant_id) if context.tenant_id else "system",
                 source="analytics_events_plugin",
                 properties={
@@ -530,7 +530,7 @@ class AnalyticsEventsPlugin(MonitoringPlugin):
     ) -> str:
         """Create analytics dashboard."""
         try:
-            dashboard_id = f"dashboard_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
+            dashboard_id = f"dashboard_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}"
             
             # Store dashboard configuration
             await self._store_dashboard_config(dashboard_id, dashboard_config)
@@ -541,7 +541,7 @@ class AnalyticsEventsPlugin(MonitoringPlugin):
                 event_name="analytics_dashboard_created",
                 category=EventCategory.BUSINESS,
                 severity=EventSeverity.MEDIUM,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
                 tenant_id=str(context.tenant_id) if context.tenant_id else "system",
                 source="analytics_events_plugin",
                 properties={
@@ -573,11 +573,11 @@ class AnalyticsEventsPlugin(MonitoringPlugin):
     ) -> Dict[str, Any]:
         """Track page view event."""
         event = AnalyticsEvent(
-            event_id=f"pageview_{datetime.utcnow().strftime('%Y%m%d_%H%M%S_%f')}",
+            event_id=f"pageview_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S_%f')}",
             event_name="page_view",
             category=EventCategory.USER_BEHAVIOR,
             severity=EventSeverity.LOW,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             tenant_id=str(context.tenant_id) if context and context.tenant_id else "system",
             source="web_analytics",
             user_id=user_id,
@@ -603,11 +603,11 @@ class AnalyticsEventsPlugin(MonitoringPlugin):
     ) -> Dict[str, Any]:
         """Track conversion event."""
         event = AnalyticsEvent(
-            event_id=f"conversion_{datetime.utcnow().strftime('%Y%m%d_%H%M%S_%f')}",
+            event_id=f"conversion_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S_%f')}",
             event_name="conversion",
             category=EventCategory.BUSINESS,
             severity=EventSeverity.HIGH,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             tenant_id=str(context.tenant_id) if context and context.tenant_id else "system",
             source="business_analytics",
             customer_id=customer_id,
@@ -633,11 +633,11 @@ class AnalyticsEventsPlugin(MonitoringPlugin):
     ) -> Dict[str, Any]:
         """Track financial transaction event."""
         event = AnalyticsEvent(
-            event_id=f"transaction_{transaction_id}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
+            event_id=f"transaction_{transaction_id}_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}",
             event_name="financial_transaction",
             category=EventCategory.FINANCIAL,
             severity=EventSeverity.HIGH,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             tenant_id=str(context.tenant_id) if context and context.tenant_id else "system",
             source="financial_analytics",
             customer_id=customer_id,
@@ -755,11 +755,11 @@ class AnalyticsEventsPlugin(MonitoringPlugin):
         # Generate events for high resource usage
         if metrics.get("cpu_usage", 0) > 80:
             event = AnalyticsEvent(
-                event_id=f"cpu_alert_{resource_id}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
+                event_id=f"cpu_alert_{resource_id}_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}",
                 event_name="high_cpu_usage",
                 category=EventCategory.PERFORMANCE,
                 severity=EventSeverity.HIGH,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
                 tenant_id=str(context.tenant_id) if context and context.tenant_id else "system",
                 source="system_metrics",
                 properties={
@@ -808,7 +808,7 @@ class AnalyticsEventsPlugin(MonitoringPlugin):
         """Generate conversion funnel report."""
         return {
             "report_type": "conversion_funnel",
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
             "data": {
                 "funnel_steps": ["landing", "signup", "purchase"],
                 "conversion_rates": [100, 15, 5],
@@ -822,7 +822,7 @@ class AnalyticsEventsPlugin(MonitoringPlugin):
         """Generate user behavior report."""
         return {
             "report_type": "user_behavior",
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
             "data": {
                 "page_views": 10000,
                 "unique_visitors": 1500,
@@ -837,7 +837,7 @@ class AnalyticsEventsPlugin(MonitoringPlugin):
         """Generate business metrics report."""
         return {
             "report_type": "business_metrics",
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
             "data": {
                 "revenue": 50000,
                 "new_customers": 100,
@@ -852,7 +852,7 @@ class AnalyticsEventsPlugin(MonitoringPlugin):
         """Generate performance summary report."""
         return {
             "report_type": "performance_summary",
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
             "data": {
                 "avg_response_time": 150,
                 "error_rate": 0.01,
@@ -867,7 +867,7 @@ class AnalyticsEventsPlugin(MonitoringPlugin):
         """Generate security audit report."""
         return {
             "report_type": "security_audit",
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
             "data": {
                 "security_events": 25,
                 "blocked_attempts": 10,
@@ -884,12 +884,12 @@ class AnalyticsEventsPlugin(MonitoringPlugin):
     def _start_background_tasks(self) -> None:
         """Start background tasks."""
         # Event flushing task
-        flush_task = asyncio.create_task(self._event_flush_loop())
+        flush_task = asyncio.create_task(self._event_flush_loop()
         self.background_tasks.add(flush_task)
         flush_task.add_done_callback(self.background_tasks.discard)
         
         # Metrics collection task
-        metrics_task = asyncio.create_task(self._metrics_collection_loop())
+        metrics_task = asyncio.create_task(self._metrics_collection_loop()
         self.background_tasks.add(metrics_task)
         metrics_task.add_done_callback(self.background_tasks.discard)
         
@@ -922,7 +922,7 @@ class AnalyticsEventsPlugin(MonitoringPlugin):
             try:
                 # Collect system metrics and generate events
                 system_metrics = {
-                    "timestamp": datetime.utcnow(),
+                    "timestamp": datetime.now(timezone.utc),
                     "events_buffered": len(self.event_buffer),
                     "schemas_loaded": len(self.event_schemas),
                     "alert_rules": len(self.alert_rules),
@@ -930,11 +930,11 @@ class AnalyticsEventsPlugin(MonitoringPlugin):
                 
                 # Generate system health event
                 health_event = AnalyticsEvent(
-                    event_id=f"system_health_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
+                    event_id=f"system_health_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}",
                     event_name="analytics_system_health",
                     category=EventCategory.TECHNICAL,
                     severity=EventSeverity.LOW,
-                    timestamp=datetime.utcnow(),
+                    timestamp=datetime.now(timezone.utc),
                     tenant_id="system",
                     source="analytics_events_plugin",
                     properties=system_metrics,

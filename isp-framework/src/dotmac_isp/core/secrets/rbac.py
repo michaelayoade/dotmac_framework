@@ -282,9 +282,9 @@ class PolicyEngine:
             # Evaluate rule
             if rule.evaluate(context):
                 applicable_rules.append(rule)
-                self.rule_cache[cache_key] = (True, utcnow())
+                self.rule_cache[cache_key] = (True, utcnow()
             else:
-                self.rule_cache[cache_key] = (False, utcnow())
+                self.rule_cache[cache_key] = (False, utcnow()
 
         # Sort by priority (higher priority first)
         return sorted(applicable_rules, key=lambda r: r.priority, reverse=True)
@@ -533,7 +533,7 @@ class RBACManager:
             description="Full system access",
             is_system_role=True,
         )
-        super_admin.permissions = set(self.permissions.keys())
+        super_admin.permissions = set(self.permissions.keys()
 
         # Organization Admin - Organization-level access
         org_admin = Role(
@@ -737,7 +737,7 @@ class RBACManager:
 
         # Get permissions from roles (including inheritance)
         for role_id in subject.roles:
-            permissions.update(self._get_role_permissions(role_id))
+            permissions.update(self._get_role_permissions(role_id)
 
         return permissions
 
@@ -762,7 +762,7 @@ class RBACManager:
         # Add permissions from parent roles
         for parent_role_id in role.parent_roles:
             permissions.update(
-                self._get_role_permissions(parent_role_id, visited.copy())
+                self._get_role_permissions(parent_role_id, visited.model_copy()
             )
 
         return permissions
@@ -867,7 +867,7 @@ class RBACManager:
 
             children = []
             for parent_role_id in role.parent_roles:
-                children.append(build_hierarchy(parent_role_id, visited.copy()))
+                children.append(build_hierarchy(parent_role_id, visited.model_copy())
 
             return {
                 "id": role.id,
@@ -918,7 +918,7 @@ class RBACManager:
         for key in expired_keys:
             del self.access_cache[key]
 
-        logger.debug("Cache cleanup completed", expired_entries=len(expired_keys))
+        logger.debug("Cache cleanup completed", expired_entries=len(expired_keys)
 
 
 # Decorators for RBAC enforcement
@@ -952,7 +952,7 @@ def require_permission(
 
         def sync_wrapper(*args, **kwargs):
             """Sync Wrapper operation."""
-            return asyncio.run(async_wrapper(*args, **kwargs))
+            return asyncio.run(async_wrapper(*args, **kwargs)
 
         return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper
 
@@ -980,7 +980,7 @@ def require_role(role_id: str, rbac_manager_key: str = "rbac_manager"):
 
         def sync_wrapper(*args, **kwargs):
             """Sync Wrapper operation."""
-            return asyncio.run(async_wrapper(*args, **kwargs))
+            return asyncio.run(async_wrapper(*args, **kwargs)
 
         return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper
 

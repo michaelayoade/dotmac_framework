@@ -22,7 +22,7 @@ from decimal import Decimal
 class TestRadiusAuthenticationDemo:
     """Demo: Test RADIUS authentication for ISP customer access."""
     
-    async def test_pppoe_customer_authentication_success(self):
+    async def test_pppoe_customer_authentication_success(self, timezone):
         """Demo: Test successful PPPoE customer authentication via RADIUS."""
         
         class MockRadiusServer:
@@ -101,7 +101,7 @@ class TestRadiusAuthenticationDemo:
         assert "Framed-IP-Address" in result["attributes"], "No IP address assigned"
         assert result["attributes"]["Session-Timeout"] == 86400, "Wrong session timeout"
         
-logger.info("✅ Network Infrastructure: RADIUS authentication successful")
+        logger.info("✅ Network Infrastructure: RADIUS authentication successful")
         
     async def test_radius_authentication_failures(self):
         """Demo: Test RADIUS authentication failure scenarios."""
@@ -167,7 +167,7 @@ logger.info("✅ Network Infrastructure: RADIUS authentication successful")
             assert result["reply_message"] == "Access-Reject", f"{case['name']} wrong reply"
             assert case["expected_reason"] in result["reason"], f"{case['name']} wrong reason"
         
-logger.info(f"✅ Network Infrastructure: All {len(test_cases)} failure scenarios handled correctly")
+        logger.info(f"✅ Network Infrastructure: All {len(test_cases)} failure scenarios handled correctly")
 
 
 @pytest.mark.network_monitoring  
@@ -246,7 +246,7 @@ class TestNetworkDeviceMonitoringDemo:
             assert interface["in_octets"] >= 0, "Invalid input octets"
             assert interface["out_octets"] >= 0, "Invalid output octets"
         
-logger.info("✅ Network Infrastructure: SNMP polling successful")
+        logger.info("✅ Network Infrastructure: SNMP polling successful")
         
         # Test polling access switch
         switch_ip = "10.0.2.1"
@@ -255,7 +255,7 @@ logger.info("✅ Network Infrastructure: SNMP polling successful")
         assert switch_info["system_name"] == "access-switch-01", "Wrong switch name"
         assert switch_info["cpu_usage"] < 50, "Switch CPU usage too high"
         
-logger.info("✅ Network Infrastructure: Multiple device polling successful")
+        logger.info("✅ Network Infrastructure: Multiple device polling successful")
     
     async def test_network_fault_detection(self):
         """Demo: Test network fault detection and alerting."""
@@ -350,7 +350,7 @@ logger.info("✅ Network Infrastructure: Multiple device polling successful")
         critical_alerts = [a for a in alerts if a["severity"] == "critical"]
         assert len(critical_alerts) == 1, "Missing critical alert for interface errors"
         
-logger.info(f"✅ Network Infrastructure: Fault detection generated {len(alerts)} alerts correctly")
+        logger.info(f"✅ Network Infrastructure: Fault detection generated {len(alerts)} alerts correctly")
 
 
 @pytest.mark.network_monitoring
@@ -417,7 +417,7 @@ class TestNetworkServiceProvisioningDemo:
                     "status": "active",
                     "ip_address": ip_address,
                     "plan": customer_data.get("plan", "basic"),
-                    "activated_at": datetime.utcnow()
+                    "activated_at": datetime.now(timezone.utc)
                 }
                 results["activate_service"] = "completed"
                 
@@ -454,7 +454,7 @@ class TestNetworkServiceProvisioningDemo:
         for step in required_steps:
             assert step in steps, f"Missing provisioning step: {step}"
         
-logger.info(f"✅ Network Infrastructure: Service {result['service_id']} provisioned successfully")
+        logger.info(f"✅ Network Infrastructure: Service {result['service_id']} provisioned successfully")
         
         # Test provisioning failure (unavailable area)
         unavailable_customer = {
@@ -467,7 +467,7 @@ logger.info(f"✅ Network Infrastructure: Service {result['service_id']} provisi
         assert result["success"] is False, "Should fail for unavailable area"
         assert "Service not available" in result["error"], "Wrong error message"
         
-logger.info("✅ Network Infrastructure: Provisioning failure handled correctly")
+        logger.info("✅ Network Infrastructure: Provisioning failure handled correctly")
     
     async def test_service_deactivation_workflow(self):
         """Demo: Test service deactivation and cleanup."""
@@ -517,7 +517,7 @@ logger.info("✅ Network Infrastructure: Provisioning failure handled correctly"
                 
                 # Step 4: Mark service inactive
                 service["status"] = "inactive"
-                service["deactivated_at"] = datetime.utcnow()
+                service["deactivated_at"] = datetime.now(timezone.utc)
                 service["deactivation_reason"] = reason
                 
                 cleanup_steps.append({
@@ -551,14 +551,14 @@ logger.info("✅ Network Infrastructure: Provisioning failure handled correctly"
         for step in expected_steps:
             assert step in step_names, f"Missing cleanup step: {step}"
         
-logger.info("✅ Network Infrastructure: Service deactivation completed successfully")
+        logger.info("✅ Network Infrastructure: Service deactivation completed successfully")
         
         # Test deactivating non-existent service
         result = await provisioning_engine.deactivate_service("SVC-INVALID", "test")
         assert result["success"] is False, "Should fail for non-existent service"
         assert "Service not found" in result["error"], "Wrong error message"
         
-logger.info("✅ Network Infrastructure: Invalid service deactivation handled correctly")
+        logger.info("✅ Network Infrastructure: Invalid service deactivation handled correctly")
 
 
 if __name__ == "__main__":

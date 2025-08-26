@@ -1,0 +1,25 @@
+{
+    "include": [
+        "isp-framework/src",
+        "backend",
+        "scripts"
+    ],
+    "exclude": [
+        "**/node_modules",
+        "**/__pycache__",
+        "**/.*",
+        "build",
+        "dist"
+    ],
+    "extraPaths": [
+        "./isp-framework/src",
+        "./backend"
+    ],
+    "pythonVersion": "3.12",
+    "pythonPlatform": "Linux",
+    "typeCheckingMode": "basic",
+    "useLibraryCodeForTypes": true,
+    "autoImportCompletions": true,
+    "autoSearchPaths": true,
+    "stubPath": "./typings"
+}

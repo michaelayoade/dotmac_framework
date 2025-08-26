@@ -160,12 +160,12 @@ class TestMixinMethods:
 
     def test_soft_delete_methods_exist(self):
         """Test soft delete methods exist and are callable."""
-        assert callable(getattr(SoftDeleteMixin, 'soft_delete'))
-        assert callable(getattr(SoftDeleteMixin, 'restore'))
+        assert callable(getattr(SoftDeleteMixin, 'soft_delete')
+        assert callable(getattr(SoftDeleteMixin, 'restore')
 
     def test_status_methods_exist(self):
         """Test status methods exist and are callable."""
-        assert callable(getattr(StatusMixin, 'change_status'))
+        assert callable(getattr(StatusMixin, 'change_status')
 
     def test_mixin_inheritance_chain(self):
         """Test that BaseModel gets all mixin methods."""

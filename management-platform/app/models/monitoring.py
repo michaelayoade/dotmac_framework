@@ -2,7 +2,7 @@
 Monitoring and analytics models.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 from enum import Enum
 from typing import Optional, Dict, Any
@@ -99,12 +99,12 @@ class HealthCheck(BaseModel):
         """Check if health check is overdue."""
         if not self.next_check_at:
             return False
-        return datetime.utcnow() > self.next_check_at
+        return datetime.now(timezone.utc) > self.next_check_at
     
     def schedule_next_check(self) -> None:
         """Schedule next health check."""
         from datetime import timedelta
-        self.next_check_at = datetime.utcnow() + timedelta(seconds=self.check_interval_seconds)
+        self.next_check_at = datetime.now(timezone.utc) + timedelta(seconds=self.check_interval_seconds)
 
 
 class Metric(BaseModel):
@@ -124,7 +124,7 @@ class Metric(BaseModel):
     unit = Column(String(50), nullable=True)
     
     # Metric timestamp
-    timestamp = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False, index=True)
     
     # Metric dimensions/labels
     labels = Column(JSON, default=dict, nullable=False)
@@ -176,8 +176,8 @@ class Alert(BaseModel):
     current_value = Column(Numeric(20, 6), nullable=True)
     
     # Alert timing
-    first_triggered_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    last_triggered_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    first_triggered_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    last_triggered_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     acknowledged_at = Column(DateTime, nullable=True)
     resolved_at = Column(DateTime, nullable=True)
     
@@ -220,20 +220,20 @@ class Alert(BaseModel):
     @property
     def duration_minutes(self) -> int:
         """Get alert duration in minutes."""
-        end_time = self.resolved_at or datetime.utcnow()
+        end_time = self.resolved_at or datetime.now(timezone.utc)
         delta = end_time - self.first_triggered_at
         return int(delta.total_seconds() / 60)
     
     def acknowledge(self, user_id: str) -> None:
         """Acknowledge the alert."""
         self.status = AlertStatus.ACKNOWLEDGED
-        self.acknowledged_at = datetime.utcnow()
+        self.acknowledged_at = datetime.now(timezone.utc)
         self.acknowledged_by = user_id
     
     def resolve(self, user_id: str = None) -> None:
         """Resolve the alert."""
         self.status = AlertStatus.RESOLVED
-        self.resolved_at = datetime.utcnow()
+        self.resolved_at = datetime.now(timezone.utc)
         if user_id:
             self.resolved_by = user_id
     

@@ -14,7 +14,7 @@ from dotmac_isp.core.database import get_async_session
 from dotmac_isp.core.management_platform_client import get_management_client
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__, timezone)
 
 
 class HealthReporter:
@@ -71,7 +71,7 @@ class HealthReporter:
 
             # Cache the data
             self._health_data_cache = health_data
-            self._last_report_time = datetime.utcnow()
+            self._last_report_time = datetime.now(timezone.utc)
 
             # Report each component to Management Platform
             management_client = await get_management_client()
@@ -172,7 +172,7 @@ class HealthReporter:
                 start_time = time.time()
 
                 # Test basic connectivity
-                result = await session.execute(text("SELECT 1"))
+                result = await session.execute(text("SELECT 1")
                 basic_check = result.scalar()
 
                 # Test database performance
@@ -435,7 +435,7 @@ class HealthReporter:
                     if self._last_report_time
                     else None
                 ),
-                "components": list(self._health_data_cache.keys()),
+                "components": list(self._health_data_cache.keys())
             }
         except Exception as e:
             return {"status": "error", "error": str(e)}

@@ -11,7 +11,7 @@ from dotmac_isp.shared.schemas import (
     TenantModelSchema,
     PaginationParams,
     PaginatedResponse,
-)
+, timezone)
 from dotmac_isp.modules.identity.schemas import (
     UserCreate,
     UserResponse,
@@ -38,8 +38,8 @@ class TestBaseSchemas:
         """Test base model schema structure."""
         data = {
             "id": uuid4(),
-            "created_at": datetime.utcnow(),
-            "updated_at": datetime.utcnow(),
+            "created_at": datetime.now(timezone.utc),
+            "updated_at": datetime.now(timezone.utc),
             "is_deleted": False,
         }
         schema = BaseModelSchema(**data)
@@ -54,8 +54,8 @@ class TestBaseSchemas:
         data = {
             "id": uuid4(),
             "tenant_id": uuid4(),
-            "created_at": datetime.utcnow(),
-            "updated_at": datetime.utcnow(),
+            "created_at": datetime.now(timezone.utc),
+            "updated_at": datetime.now(timezone.utc),
             "is_deleted": False,
         }
         schema = TenantModelSchema(**data)

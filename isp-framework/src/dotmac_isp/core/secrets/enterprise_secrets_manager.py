@@ -23,10 +23,10 @@ from contextlib import contextmanager
 from enum import Enum
 from pydantic import BaseModel, Field, SecretStr, validator
 
-from .vault_client import VaultClient, VaultConfig
+# OpenBaoClient removed - using OpenBaoClient instead
 from ..validation_types import ValidationSeverity, ValidationCategory
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__, timezone)
 
 
 class SecretType(str, Enum):
@@ -101,7 +101,7 @@ class EnterpriseSecretsManager:
     def __init__(self, vault_config: Optional[VaultConfig] = None):
         """Initialize the enterprise secrets manager."""
         self.vault_config = vault_config
-        self.vault_client: Optional[VaultClient] = None
+        self.openbao_client: Optional[OpenBaoClient] = None
         self.secret_cache: Dict[str, Any] = {}
         self.metadata_registry: Dict[str, SecretMetadata] = {}
         self.validation_functions: Dict[str, Callable] = {}
@@ -109,7 +109,7 @@ class EnterpriseSecretsManager:
         # Initialize vault client if config provided
         if vault_config:
             try:
-                self.vault_client = VaultClient(vault_config)
+                self.openbao_client = OpenBaoClient(vault_config)
                 logger.info("Vault client initialized successfully")
             except Exception as e:
                 logger.error(f"Failed to initialize Vault client: {e}")
@@ -150,7 +150,7 @@ class EnterpriseSecretsManager:
             secret_id=secret_id,
             secret_type=secret_type,
             description=description,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
             validation_rules=validation_rules or SecretValidationRule(),
             compliance_frameworks=compliance_frameworks or [],
             is_critical=is_critical,
@@ -234,7 +234,7 @@ class EnterpriseSecretsManager:
         if secret_value and use_cache:
             self.secret_cache[secret_id] = {
                 'value': secret_value,
-                'cached_at': datetime.utcnow(),
+                'cached_at': datetime.now(timezone.utc),
                 'ttl_seconds': 300  # 5 minutes default
             }
         
@@ -304,7 +304,7 @@ class EnterpriseSecretsManager:
             
             if success:
                 # Update metadata
-                metadata.last_rotated = datetime.utcnow()
+                metadata.last_rotated = datetime.now(timezone.utc)
                 # Clear cache
                 self.secret_cache.pop(secret_id, None)
                 # Log rotation
@@ -355,7 +355,7 @@ class EnterpriseSecretsManager:
         validation_results = self.validate_all_secrets()
         
         report = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "total_secrets": len(self.metadata_registry),
             "valid_secrets": sum(1 for r in validation_results.values() if r.is_valid),
             "invalid_secrets": sum(1 for r in validation_results.values() if not r.is_valid),
@@ -408,12 +408,12 @@ class EnterpriseSecretsManager:
     
     def _get_from_vault(self, secret_id: str, metadata: Optional[SecretMetadata]) -> Optional[str]:
         """Get secret from Vault."""
-        if not self.vault_client:
+        if not self.openbao_client:
             return None
         
         try:
             vault_path = f"secret/{secret_id}"
-            return self.vault_client.get_secret(vault_path)
+            return self.openbao_client.get_secret(vault_path)
         except Exception as e:
             logger.error(f"Failed to retrieve secret from Vault: {e}")
             return None
@@ -529,10 +529,10 @@ class EnterpriseSecretsManager:
             score += 10
         
         # Character diversity (max 25 points)
-        has_lower = bool(re.search(r'[a-z]', secret_value))
-        has_upper = bool(re.search(r'[A-Z]', secret_value))
-        has_digit = bool(re.search(r'[0-9]', secret_value))
-        has_special = bool(re.search(r'[^a-zA-Z0-9]', secret_value))
+        has_lower = bool(re.search(r'[a-z]', secret_value)
+        has_upper = bool(re.search(r'[A-Z]', secret_value)
+        has_digit = bool(re.search(r'[0-9]', secret_value)
+        has_special = bool(re.search(r'[^a-zA-Z0-9]', secret_value)
         
         diversity_score = sum([has_lower, has_upper, has_digit, has_special]) * 6.25
         score += diversity_score
@@ -548,7 +548,7 @@ class EnterpriseSecretsManager:
             if re.search(pattern, secret_value, re.IGNORECASE):
                 pattern_violations += 1
         
-        pattern_score = max(0, 20 - (pattern_violations * 5))
+        pattern_score = max(0, 20 - (pattern_violations * 5)
         score += pattern_score
         
         return min(100.0, score)
@@ -564,21 +564,21 @@ class EnterpriseSecretsManager:
             return secrets.token_hex(32)
         elif secret_type == SecretType.DATABASE_PASSWORD:
             chars = string.ascii_letters + string.digits + "!@#$%^&*"
-            return ''.join(secrets.choice(chars) for _ in range(16))
+            return ''.join(secrets.choice(chars) for _ in range(16)
         elif secret_type == SecretType.ENCRYPTION_KEY:
             return secrets.token_hex(32)
         else:
             # Default secure random string
             chars = string.ascii_letters + string.digits
-            return ''.join(secrets.choice(chars) for _ in range(24))
+            return ''.join(secrets.choice(chars) for _ in range(24)
     
     def _store_secret(self, secret_id: str, secret_value: str, metadata: SecretMetadata) -> bool:
         """Store secret in appropriate backend."""
         # Try Vault first
-        if self.vault_client:
+        if self.openbao_client:
             try:
                 vault_path = f"secret/{secret_id}"
-                return self.vault_client.store_secret(vault_path, secret_value)
+                return self.openbao_client.store_secret(vault_path, secret_value)
             except Exception as e:
                 logger.error(f"Failed to store secret in Vault: {e}")
         
@@ -599,7 +599,7 @@ class EnterpriseSecretsManager:
             return True  # Never rotated
         
         rotation_due = metadata.last_rotated + timedelta(days=metadata.rotation_interval_days)
-        return datetime.utcnow() > rotation_due
+        return datetime.now(timezone.utc) > rotation_due
     
     def _is_cache_expired(self, cache_entry: Dict) -> bool:
         """Check if cache entry is expired."""
@@ -610,7 +610,7 @@ class EnterpriseSecretsManager:
             return True
         
         expires_at = cached_at + timedelta(seconds=ttl_seconds)
-        return datetime.utcnow() > expires_at
+        return datetime.now(timezone.utc) > expires_at
     
     def _log_secret_access(self, secret_id: str, success: bool) -> None:
         """Log secret access for audit purposes."""
@@ -619,7 +619,7 @@ class EnterpriseSecretsManager:
             extra={
                 'secret_id': secret_id,
                 'access_success': success,
-                'timestamp': datetime.utcnow().isoformat(),
+                'timestamp': datetime.now(timezone.utc).isoformat(),
                 'audit_event': 'secret_access'
             }
         )

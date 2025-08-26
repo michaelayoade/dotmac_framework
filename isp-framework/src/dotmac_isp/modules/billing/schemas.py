@@ -1,6 +1,6 @@
 """Billing module schemas."""
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, List
 from decimal import Decimal
 from datetime import datetime
@@ -77,9 +77,7 @@ class LineItem(LineItemBase):
     total: Decimal
     created_at: datetime
 
-    class Config:
-        """Class for Config operations."""
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class InvoiceBase(BaseModel):
@@ -123,9 +121,13 @@ class Invoice(InvoiceBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        """Class for Config operations."""
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
+
+class InvoiceResponse(Invoice):
+    """Invoice response schema."""
+    
+    pass
 
 
 class CreditNoteBase(BaseModel):
@@ -152,9 +154,7 @@ class CreditNote(CreditNoteBase):
     created_at: datetime
     applied_at: Optional[datetime] = None
 
-    class Config:
-        """Class for Config operations."""
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PaymentBase(BaseModel):
@@ -173,6 +173,14 @@ class PaymentCreate(PaymentBase):
     pass
 
 
+class PaymentUpdate(BaseModel):
+    """Update payment schema."""
+
+    status: Optional[PaymentStatus] = None
+    reference_number: Optional[str] = None
+    notes: Optional[str] = None
+
+
 class Payment(PaymentBase):
     """Payment schema."""
 
@@ -182,9 +190,13 @@ class Payment(PaymentBase):
     transaction_id: Optional[str] = None
     created_at: datetime
 
-    class Config:
-        """Class for Config operations."""
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PaymentResponse(Payment):
+    """Payment response schema."""
+    
+    pass
 
 
 class ReceiptBase(BaseModel):
@@ -211,9 +223,7 @@ class Receipt(ReceiptBase):
     customer_name: str
     invoice_number: str
 
-    class Config:
-        """Class for Config operations."""
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class TaxRateBase(BaseModel):
@@ -239,9 +249,7 @@ class TaxRate(TaxRateBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        """Class for Config operations."""
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class SubscriptionBase(BaseModel):
@@ -284,9 +292,7 @@ class Subscription(SubscriptionBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        """Class for Config operations."""
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class BillingReport(BaseModel):
@@ -350,6 +356,4 @@ class InvoiceCalculationResult(BaseModel):
     total_amount: Decimal
     line_items: List[LineItem]
     
-    class Config:
-        """Class for Config operations."""
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

@@ -366,7 +366,7 @@ class TestInvoiceServiceIntegration:
                     )
                 ]
             )
-            tasks.append(invoice_service.create_invoice(invoice_data))
+            tasks.append(invoice_service.create_invoice(invoice_data)
         
         # Execute all tasks concurrently
         results = await asyncio.gather(*tasks, return_exceptions=True)

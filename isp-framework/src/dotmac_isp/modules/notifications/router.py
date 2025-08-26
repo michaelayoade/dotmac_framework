@@ -46,13 +46,14 @@ from .schemas import (
     NotificationDashboardResponse,
     NotificationQueueResponse,
 )
+from datetime import datetime, timezone
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
 
 
 def generate_notification_id() -> str:
     """Generate a unique notification ID."""
-    timestamp = int(datetime.utcnow().timestamp())
+    timestamp = int(datetime.now(timezone.utc).timestamp())
     random_chars = "".join(
         secrets.choice(string.ascii_uppercase + string.digits) for _ in range(6)
     )
@@ -68,7 +69,7 @@ async def process_notification_delivery(notification_id: str, db: Session):
     )
     if notification:
         notification.status = NotificationStatus.SENT
-        notification.sent_at = datetime.utcnow()
+        notification.sent_at = datetime.now(timezone.utc)
         db.commit()
 
 
@@ -97,7 +98,7 @@ async def create_template(
         raise HTTPException(status_code=400, detail="Template code already exists")
 
     db_template = NotificationTemplate(
-        id=str(uuid4()), tenant_id=tenant_id, **template.dict()
+        id=str(uuid4()), tenant_id=tenant_id, **template.model_dump()
     )
 
     db.add(db_template)
@@ -187,10 +188,10 @@ async def update_template(
         raise HTTPException(status_code=404, detail="Template not found")
 
     # Update only provided fields
-    for field, value in template_update.dict(exclude_unset=True).items():
+    for field, value in template_update.model_dump(exclude_unset=True).items():
         setattr(template, field, value)
 
-    template.updated_at = datetime.utcnow()
+    template.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(template)
 
@@ -259,7 +260,7 @@ async def create_rule(
     if not template:
         raise HTTPException(status_code=400, detail="Template not found")
 
-    db_rule = NotificationRule(id=str(uuid4()), tenant_id=tenant_id, **rule.dict())
+    db_rule = NotificationRule(id=str(uuid4()), tenant_id=tenant_id, **rule.model_dump())
 
     db.add(db_rule)
     db.commit()
@@ -342,10 +343,10 @@ async def update_rule(
         raise HTTPException(status_code=404, detail="Rule not found")
 
     # Update only provided fields
-    for field, value in rule_update.dict(exclude_unset=True).items():
+    for field, value in rule_update.model_dump(exclude_unset=True).items():
         setattr(rule, field, value)
 
-    rule.updated_at = datetime.utcnow()
+    rule.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(rule)
 
@@ -633,10 +634,10 @@ async def update_notification(
         raise HTTPException(status_code=404, detail="Notification not found")
 
     # Update only provided fields
-    for field, value in notification_update.dict(exclude_unset=True).items():
+    for field, value in notification_update.model_dump(exclude_unset=True).items():
         setattr(notification, field, value)
 
-    notification.updated_at = datetime.utcnow()
+    notification.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(notification)
 
@@ -681,8 +682,8 @@ async def retry_notification(
     # Reset status and schedule retry
     notification.status = NotificationStatus.PENDING
     notification.retry_count += 1
-    notification.next_retry_at = datetime.utcnow() + timedelta(minutes=5)
-    notification.updated_at = datetime.utcnow()
+    notification.next_retry_at = datetime.now(timezone.utc) + timedelta(minutes=5)
+    notification.updated_at = datetime.now(timezone.utc)
 
     db.commit()
 
@@ -761,7 +762,7 @@ async def create_preference(
         )
 
     db_preference = NotificationPreference(
-        id=str(uuid4()), tenant_id=tenant_id, **preference.dict()
+        id=str(uuid4()), tenant_id=tenant_id, **preference.model_dump()
     )
 
     db.add(db_preference)
@@ -855,10 +856,10 @@ async def update_preference(
         raise HTTPException(status_code=404, detail="Preference not found")
 
     # Update only provided fields
-    for field, value in preference_update.dict(exclude_unset=True).items():
+    for field, value in preference_update.model_dump(exclude_unset=True).items():
         setattr(preference, field, value)
 
-    preference.updated_at = datetime.utcnow()
+    preference.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(preference)
 
@@ -902,7 +903,7 @@ async def get_notification_stats(
 ):
     """Get notification statistics."""
 
-    since_date = datetime.utcnow() - timedelta(days=days)
+    since_date = datetime.now(timezone.utc) - timedelta(days=days)
 
     # Basic counts
     total_notifications = (
@@ -1156,7 +1157,7 @@ async def get_queue_status(
             queue_data[queue_name]["oldest_scheduled"] = oldest_scheduled
 
     # Calculate age in seconds for oldest item
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     queue_responses = []
     for queue_name, data in queue_data.items():
         oldest_age = None

@@ -16,14 +16,13 @@ from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
 import structlog
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 from ..contracts.common_schemas import (
     ExecutionContext,
     ExecutionStatus,
     OperationMetadata,
-    ErrorInfo,
-)
+    ErrorInfo)
 
 logger = structlog.get_logger(__name__)
 
@@ -66,10 +65,7 @@ class StateTransition(BaseModel):
     )
     priority: int = Field(0, description="Transition priority")
 
-    class Config:
-        """Class for Config operations."""
-        extra = "allow"
-
+    model_config = ConfigDict(extra="allow")
 
 class StateDefinition(BaseModel):
     """State definition."""
@@ -101,10 +97,7 @@ class StateDefinition(BaseModel):
         None, description="Timeout transition target"
     )
 
-    class Config:
-        """Class for Config operations."""
-        extra = "allow"
-
+    model_config = ConfigDict(extra="allow")
 
 class StateMachineDefinition(BaseModel):
     """State machine definition."""
@@ -168,10 +161,7 @@ class StateMachineDefinition(BaseModel):
 
         return v
 
-    class Config:
-        """Class for Config operations."""
-        extra = "allow"
-
+    model_config = ConfigDict(extra="allow")
 
 @dataclass
 class StateMachineExecution:
@@ -198,10 +188,10 @@ class StateMachineExecution:
             "current_state": self.current_state,
             "previous_state": self.previous_state,
             "status": self.status.value,
-            "context": self.context.dict() if self.context else None,
+            "context": self.context.model_dump() if self.context else None,
             "state_data": self.state_data,
             "transition_history": self.transition_history,
-            "error": self.error.dict() if self.error else None,
+            "error": self.error.model_dump() if self.error else None,
             "started_at": self.started_at.isoformat() if self.started_at else None,
             "last_transition_at": (
                 self.last_transition_at.isoformat() if self.last_transition_at else None

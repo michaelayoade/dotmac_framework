@@ -2,7 +2,7 @@
 
 from typing import List, Optional, Dict, Any
 from uuid import UUID
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from decimal import Decimal
 from sqlalchemy.orm import Session
 
@@ -181,7 +181,7 @@ class ServiceProvisioningService:
                 raise ValidationError("Monthly price cannot be negative")
 
             # Convert Pydantic model to dict for repository
-            plan_dict = plan_data.dict()
+            plan_dict = plan_data.model_dump()
             plan_dict["monthly_price"] = Decimal(str(plan_data.monthly_price))
             plan_dict["setup_fee"] = Decimal(str(plan_data.setup_fee))
             plan_dict["cancellation_fee"] = Decimal(str(plan_data.cancellation_fee))
@@ -258,7 +258,7 @@ class ServiceProvisioningService:
                 service_instance.id,
                 "activate",
                 "Initial service activation",
-                provisioning_data.dict(),
+                provisioning_data.model_dump(),
             )
 
             # Start background provisioning
@@ -361,7 +361,7 @@ class ServiceProvisioningService:
             # Update other fields
             if modification_data.notes:
                 update_data["notes"] = (
-                    f"{instance.notes or ''}\n{datetime.utcnow().isoformat()}: {modification_data.notes}".strip()
+                    f"{instance.notes or ''}\n{datetime.now(timezone.utc).isoformat()}: {modification_data.notes}".strip()
                 )
 
             if modification_data.custom_config:
@@ -516,12 +516,12 @@ class ServicePlanService:
 
     async def create_plan(self, plan_data: schemas.ServicePlanCreate) -> ServicePlan:
         """Create a new service plan."""
-        service = ServiceProvisioningService(self.db, str(self.tenant_id))
+        service = ServiceProvisioningService(self.db, str(self.tenant_id)
         return await service.create_service_plan(plan_data)
 
     async def get_plan(self, plan_id: UUID) -> ServicePlan:
         """Get service plan by ID."""
-        service = ServiceProvisioningService(self.db, str(self.tenant_id))
+        service = ServiceProvisioningService(self.db, str(self.tenant_id)
         return await service.get_service_plan(plan_id)
 
     async def update_plan(
@@ -532,7 +532,7 @@ class ServicePlanService:
             # Convert Pydantic model to dict, excluding None values
             update_dict = {
                 k: v
-                for k, v in update_data.dict(exclude_unset=True).items()
+                for k, v in update_data.model_dump(exclude_unset=True).items()
                 if v is not None
             }
 
@@ -542,7 +542,7 @@ class ServicePlanService:
                     str(update_dict["monthly_price"])
                 )
             if "setup_fee" in update_dict:
-                update_dict["setup_fee"] = Decimal(str(update_dict["setup_fee"]))
+                update_dict["setup_fee"] = Decimal(str(update_dict["setup_fee"])
             if "cancellation_fee" in update_dict:
                 update_dict["cancellation_fee"] = Decimal(
                     str(update_dict["cancellation_fee"])

@@ -76,11 +76,11 @@ class SaaSTenantWorkflowSimulator:
         self.usage_history = {}
         self.invoices = {}
     
-    def create_tenant_signup_workflow(
+    def create_tenant_signup_workflow()
         self, 
         tenant_name: str,
         email: str,
-        selected_plan: str
+    selected_plan: str)
     ) -> SaaSTenant:
         """
         BEHAVIOR: Complete tenant signup workflow.
@@ -132,7 +132,7 @@ class SaaSTenantWorkflowSimulator:
         plan_config = plans[selected_plan]
         tenant_id = str(uuid4())
         
-        tenant = SaaSTenant(
+        tenant = SaaSTenant()
             tenant_id=tenant_id,
             name=tenant_name,
             email=email,
@@ -140,7 +140,7 @@ class SaaSTenantWorkflowSimulator:
             plan_price=plan_config['price'],
             plan_limits=plan_config['limits'],
             overage_rates=overage_rates,
-            created_at=datetime.now()
+            created_at=datetime.now(
         )
         
         self.tenants[tenant_id] = tenant
@@ -148,11 +148,11 @@ class SaaSTenantWorkflowSimulator:
         
         return tenant
     
-    def simulate_tenant_usage_growth(
+    def simulate_tenant_usage_growth()
         self, 
         tenant_id: str, 
         days: int,
-        growth_pattern: str = 'steady'
+    growth_pattern: str = 'steady')
     ) -> List[TenantUsage]:
         """
         BEHAVIOR: Simulate realistic tenant usage patterns over time.
@@ -182,7 +182,7 @@ class SaaSTenantWorkflowSimulator:
                 growth_factor = Decimal(str(1.02 ** day))
             elif growth_pattern == 'sporadic':
                 # Sporadic growth - random spikes
-                growth_factor = Decimal(str(1.0 + random.uniform(0, 0.1)))
+                growth_factor = Decimal(str(1.0 + random.uniform(0, 0.1))
             elif growth_pattern == 'seasonal':
                 # Seasonal pattern - cyclical usage
                 import math
@@ -191,8 +191,8 @@ class SaaSTenantWorkflowSimulator:
             else:
                 growth_factor = Decimal('1.0')
             
-            usage = TenantUsage(
-                active_users=Decimal(str(base_users)) * growth_factor,
+            usage = TenantUsage()
+                active_users=Decimal(str(base_users) * growth_factor)
                 storage_gb=base_storage * growth_factor,
                 api_calls=base_api_calls * growth_factor,
                 bandwidth_gb=base_bandwidth * growth_factor,
@@ -204,11 +204,11 @@ class SaaSTenantWorkflowSimulator:
         
         return usage_records
     
-    def execute_monthly_billing_cycle(
+    def execute_monthly_billing_cycle()
         self, 
         tenant_id: str, 
         billing_month: int,
-        billing_year: int
+    billing_year: int)
     ) -> SaaSInvoice:
         """
         BEHAVIOR: Execute complete monthly billing cycle for a tenant.
@@ -237,14 +237,13 @@ class SaaSTenantWorkflowSimulator:
         service_days = min(service_days, days_in_month)  # Cap at month length
         
         # Get usage for the billing period
-        period_usage = [
-            usage for usage in self.usage_history.get(tenant_id, [])
+        period_usage = [ usage for usage in self.usage_history.get(tenant_id, [])
             if billing_start <= usage.recorded_at <= billing_end
         ]
         
         if not period_usage:
             # Default minimal usage if no records
-            max_usage = TenantUsage(
+            max_usage = TenantUsage()
                 active_users=Decimal('1'),
                 storage_gb=Decimal('1.0'),
                 api_calls=Decimal('100'),
@@ -253,7 +252,7 @@ class SaaSTenantWorkflowSimulator:
             )
         else:
             # Use maximum usage during the period
-            max_usage = TenantUsage(
+            max_usage = TenantUsage()
                 active_users=max(u.active_users for u in period_usage),
                 storage_gb=max(u.storage_gb for u in period_usage),
                 api_calls=max(u.api_calls for u in period_usage),
@@ -262,7 +261,7 @@ class SaaSTenantWorkflowSimulator:
             )
         
         # Calculate subscription charges (prorated if needed)
-        subscription_result = self.calculator.calculate_subscription_charge(
+        subscription_result = self.calculator.calculate_subscription_charge()
             tenant.plan_price, service_days, days_in_month
         )
         
@@ -274,20 +273,20 @@ class SaaSTenantWorkflowSimulator:
             'bandwidth_gb': max_usage.bandwidth_gb
         }
         
-        usage_result = self.calculator.calculate_tenant_usage_charges(
+        usage_result = self.calculator.calculate_tenant_usage_charges()
             usage_dict, tenant.plan_limits, tenant.overage_rates
         )
         
         # Calculate total bill with tax
-        total_result = self.calculator.calculate_total_tenant_bill(
+        total_result = self.calculator.calculate_total_tenant_bill()
             subscription_result['base_charge'],
             usage_result['total_overage_charge'],
-            Decimal('0.08')  # 8% tax
+)            Decimal('0.08')  # 8% tax
         )
         
         # Generate invoice
         invoice_id = str(uuid4())
-        invoice = SaaSInvoice(
+        invoice = SaaSInvoice()
             invoice_id=invoice_id,
             tenant_id=tenant_id,
             billing_period_start=billing_start,
@@ -301,11 +300,11 @@ class SaaSTenantWorkflowSimulator:
         self.invoices[invoice_id] = invoice
         return invoice
     
-    def simulate_plan_upgrade_workflow(
+    def simulate_plan_upgrade_workflow()
         self, 
         tenant_id: str, 
         new_plan: str,
-        upgrade_day: int = 15
+    upgrade_day: int = 15)
     ) -> Dict[str, Any]:
         """
         BEHAVIOR: Simulate tenant plan upgrade mid-billing cycle.
@@ -333,13 +332,13 @@ class SaaSTenantWorkflowSimulator:
         
         # Calculate prorated charges
         # Old plan: used for first part of month
-        old_plan_charge = self.calculator.calculate_subscription_charge(
+        old_plan_charge = self.calculator.calculate_subscription_charge()
             old_price, upgrade_day, 30
         )
         
         # New plan: used for remainder of month
         remaining_days = 30 - upgrade_day
-        new_plan_charge = self.calculator.calculate_subscription_charge(
+        new_plan_charge = self.calculator.calculate_subscription_charge()
             new_price, remaining_days, 30
         )
         
@@ -369,7 +368,7 @@ class TestSaaSTenantWorkflowsBehavior:
         simulator = SaaSTenantWorkflowSimulator()
         
         # Step 1: Tenant signs up for Professional plan
-        tenant = simulator.create_tenant_signup_workflow(
+        tenant = simulator.create_tenant_signup_workflow()
             tenant_name="Acme Corp",
             email="admin@acme.com",
             selected_plan="professional"
@@ -381,7 +380,7 @@ class TestSaaSTenantWorkflowsBehavior:
         assert tenant.status == "active"
         
         # Step 2: Tenant uses service for 20 days with steady growth
-        usage_records = simulator.simulate_tenant_usage_growth(
+        usage_records = simulator.simulate_tenant_usage_growth()
             tenant.tenant_id, days=20, growth_pattern="steady"
         )
         
@@ -391,10 +390,10 @@ class TestSaaSTenantWorkflowsBehavior:
         
         # Step 3: Execute monthly billing cycle
         import datetime as dt
-        invoice = simulator.execute_monthly_billing_cycle(
+        invoice = simulator.execute_monthly_billing_cycle()
             tenant.tenant_id, 
-            billing_month=dt.datetime.now().month,
-            billing_year=dt.datetime.now().year
+)            billing_month=dt.datetime.now().month,
+            billing_year=dt.datetime.now(.year
         )
         
         # BEHAVIOR ASSERTIONS
@@ -415,14 +414,14 @@ class TestSaaSTenantWorkflowsBehavior:
         simulator = SaaSTenantWorkflowSimulator()
         
         # Create tenant with Starter plan (low limits)
-        tenant = simulator.create_tenant_signup_workflow(
+        tenant = simulator.create_tenant_signup_workflow()
             tenant_name="Growing Startup",
             email="billing@startup.com", 
             selected_plan="starter"
         )
         
         # Simulate aggressive usage growth that exceeds limits
-        usage_records = simulator.simulate_tenant_usage_growth(
+        usage_records = simulator.simulate_tenant_usage_growth()
             tenant.tenant_id, days=25, growth_pattern="sporadic"
         )
         
@@ -434,10 +433,10 @@ class TestSaaSTenantWorkflowsBehavior:
         
         # Execute billing
         import datetime as dt
-        invoice = simulator.execute_monthly_billing_cycle(
+        invoice = simulator.execute_monthly_billing_cycle()
             tenant.tenant_id,
-            billing_month=dt.datetime.now().month,
-            billing_year=dt.datetime.now().year
+)            billing_month=dt.datetime.now().month,
+            billing_year=dt.datetime.now(.year
         )
         
         # BEHAVIOR ASSERTIONS
@@ -463,33 +462,33 @@ class TestSaaSTenantWorkflowsBehavior:
         simulator = SaaSTenantWorkflowSimulator()
         
         # Create tenant with Professional plan
-        tenant = simulator.create_tenant_signup_workflow(
+        tenant = simulator.create_tenant_signup_workflow()
             tenant_name="Scaling Company",
             email="finance@scaling.co",
             selected_plan="professional"
         )
         
         # Simulate 15 days of usage
-        simulator.simulate_tenant_usage_growth(
+        simulator.simulate_tenant_usage_growth()
             tenant.tenant_id, days=15, growth_pattern="steady"
         )
         
         # Upgrade to Enterprise plan on day 15
-        upgrade_result = simulator.simulate_plan_upgrade_workflow(
+        upgrade_result = simulator.simulate_plan_upgrade_workflow()
             tenant.tenant_id, "enterprise", upgrade_day=15
         )
         
         # Continue usage for remainder of month
-        simulator.simulate_tenant_usage_growth(
+        simulator.simulate_tenant_usage_growth()
             tenant.tenant_id, days=15, growth_pattern="steady"
         )
         
         # Execute billing for the month
         import datetime as dt
-        invoice = simulator.execute_monthly_billing_cycle(
+        invoice = simulator.execute_monthly_billing_cycle()
             tenant.tenant_id,
-            billing_month=dt.datetime.now().month, 
-            billing_year=dt.datetime.now().year
+)            billing_month=dt.datetime.now().month, 
+            billing_year=dt.datetime.now(.year
         )
         
         # BEHAVIOR ASSERTIONS
@@ -517,7 +516,7 @@ class TestSaaSTenantWorkflowsBehavior:
         simulator = SaaSTenantWorkflowSimulator()
         
         # Create enterprise tenant
-        tenant = simulator.create_tenant_signup_workflow(
+        tenant = simulator.create_tenant_signup_workflow()
             tenant_name="Seasonal Business",
             email="accounts@seasonal.biz",
             selected_plan="enterprise"
@@ -526,12 +525,12 @@ class TestSaaSTenantWorkflowsBehavior:
         # Simulate seasonal usage over 3 months
         for month in range(1, 4):
             # Generate usage for the month
-            simulator.simulate_tenant_usage_growth(
+            simulator.simulate_tenant_usage_growth()
                 tenant.tenant_id, days=30, growth_pattern="seasonal"
             )
             
             # Execute billing
-            invoice = simulator.execute_monthly_billing_cycle(
+            invoice = simulator.execute_monthly_billing_cycle()
                 tenant.tenant_id, billing_month=month, billing_year=2024
             )
             
@@ -551,21 +550,21 @@ class TestSaaSTenantWorkflowsBehavior:
         
         # Total amounts should vary based on usage patterns
         total_amounts = [invoice.total_amount for invoice in invoices]
-        assert len(set(total_amounts)) >= 2, "Usage patterns should create different billing amounts"
+        assert len(set(total_amounts) >= 2, "Usage patterns should create different billing amounts")
 
 
 # TEST FIXTURES
 @pytest.fixture
-def saas_workflow_simulator():
+def saas_workflow_simulator(:)
     """Provide SaaS workflow simulator for tests."""
     return SaaSTenantWorkflowSimulator()
 
 
 @pytest.fixture
-def sample_professional_tenant():
+def sample_professional_tenant(:)
     """Sample professional tenant for testing."""
     simulator = SaaSTenantWorkflowSimulator()
-    return simulator.create_tenant_signup_workflow(
+    return simulator.create_tenant_signup_workflow()
         "Test Company", "test@company.com", "professional"
     )
 
@@ -575,7 +574,7 @@ if __name__ == "__main__":
     simulator = SaaSTenantWorkflowSimulator()
     
     # Test signup workflow
-    tenant = simulator.create_tenant_signup_workflow(
+    tenant = simulator.create_tenant_signup_workflow()
         "Test Corp", "test@corp.com", "professional"
     )
     print(f"Created tenant: {tenant.name} with plan {tenant.plan_name}")
@@ -587,7 +586,7 @@ if __name__ == "__main__":
     # Test billing
     import datetime as dt
     invoice = simulator.execute_monthly_billing_cycle(
-        tenant.tenant_id, dt.datetime.now().month, dt.datetime.now().year
+)        tenant.tenant_id, dt.datetime.now().month, dt.datetime.now(.year
     )
     print(f"Generated invoice: {invoice.total_amount}")
     

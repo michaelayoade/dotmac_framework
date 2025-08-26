@@ -741,7 +741,7 @@ class VOLTHAIntegrationSDK:
             "total_requests": len(provisioning_requests),
             "successful_provisions": successful,
             "failed_provisions": failed,
-            "success_rate": (successful / len(provisioning_requests)) * 100,
+            "success_rate": (successful / len(provisioning_requests) * 100),
             "detailed_results": processed_results,
             "bulk_completed": utc_now().isoformat(),
         }
@@ -856,3 +856,7 @@ class VOLTHAIntegrationSDK:
         # Close VOLTHA connection if needed
         self.device_cache.clear()
         self.last_discovery = None
+
+
+# Alias for compatibility
+VolthaSDK = VOLTHAIntegrationSDK

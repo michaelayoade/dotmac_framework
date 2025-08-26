@@ -15,7 +15,7 @@ from dotmac_isp.shared.exceptions import (
     BusinessRuleError,
     DuplicateEntityError,
     ServiceError,
-)
+, timezone)
 
 from .models_production import (
     RegisteredChannel,
@@ -82,7 +82,7 @@ class EnhancedOmnichannelService:
             # 4. Calculate SLA based on customer type and priority
             sla_minutes = self._calculate_sla_time(context, interaction.priority_level)
             if sla_minutes:
-                interaction.sla_due_time = datetime.utcnow() + timedelta(
+                interaction.sla_due_time = datetime.now(timezone.utc) + timedelta(
                     minutes=sla_minutes
                 )
 
@@ -96,7 +96,7 @@ class EnhancedOmnichannelService:
             # 6. Start routing process asynchronously
             from .tasks import process_interaction_routing
 
-            process_interaction_routing.delay(self.tenant_id, str(interaction.id))
+            process_interaction_routing.delay(self.tenant_id, str(interaction.id)
 
             # 7. Cache interaction for quick access
             self.cache.cache_interaction_context(
@@ -145,7 +145,7 @@ class EnhancedOmnichannelService:
             or f"INT-{uuid4().hex[:8].upper()}",
             contact_id=contact.id,
             channel_info_id=channel_info.id,
-            interaction_type=InteractionType(data.get("type", "inbound")),
+            interaction_type=InteractionType(data.get("type", "inbound"),
             status=InteractionStatus.PENDING,
             subject=data.get("subject"),
             content=data["content"],
@@ -153,7 +153,7 @@ class EnhancedOmnichannelService:
             channel_message_id=data.get("channel_message_id"),
             channel_metadata=data.get("channel_metadata", {}),
             priority_level=data.get("priority_level", 3),
-            interaction_start=datetime.utcnow(),
+            interaction_start=datetime.now(timezone.utc),
         )
 
         self.db.add(interaction)
@@ -232,7 +232,7 @@ class EnhancedOmnichannelService:
                 sla_minutes = int(sla_minutes * 0.75)  # 25% faster SLA
 
             # Adjust based on business hours (if outside hours, extend SLA)
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             if (
                 now.weekday() >= 5 or now.hour < 8 or now.hour > 18
             ):  # Weekend or outside business hours
@@ -260,13 +260,13 @@ class EnhancedOmnichannelService:
                     ConversationThread.is_active == True,
                     ConversationThread.is_resolved == False,
                 )
-                .order_by(desc(ConversationThread.last_interaction_at))
+                .order_by(desc(ConversationThread.last_interaction_at)
                 .first()
             )
 
             if existing_thread:
                 # Update thread with new interaction
-                existing_thread.last_interaction_at = datetime.utcnow()
+                existing_thread.last_interaction_at = datetime.now(timezone.utc)
                 return existing_thread
             else:
                 # Create new thread
@@ -276,8 +276,8 @@ class EnhancedOmnichannelService:
                     registered_channel_id=interaction.channel_info.registered_channel_id,
                     thread_subject=interaction.subject or "Customer Inquiry",
                     thread_reference=f"THREAD-{uuid4().hex[:8].upper()}",
-                    first_interaction_at=datetime.utcnow(),
-                    last_interaction_at=datetime.utcnow(),
+                    first_interaction_at=datetime.now(timezone.utc),
+                    last_interaction_at=datetime.now(timezone.utc),
                     priority_level=interaction.priority_level,
                 )
 
@@ -364,7 +364,7 @@ class EnhancedOmnichannelService:
                         RoutingRule.tenant_id == self.tenant_id,
                         RoutingRule.is_active == True,
                     )
-                    .order_by(RoutingRule.priority.asc())
+                    .order_by(RoutingRule.priority.asc()
                 )
 
                 routing_rules = [
@@ -471,7 +471,7 @@ class EnhancedOmnichannelService:
     def _evaluate_time_condition(self, time_condition: Dict[str, Any]) -> bool:
         """Evaluate time-based routing conditions."""
         try:
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
 
             # Business hours condition
             if "business_hours" in time_condition:
@@ -528,7 +528,7 @@ class EnhancedOmnichannelService:
                         interaction.priority_level = rule["priority_override"]
 
                     if rule["sla_override_minutes"]:
-                        interaction.sla_due_time = datetime.utcnow() + timedelta(
+                        interaction.sla_due_time = datetime.now(timezone.utc) + timedelta(
                             minutes=rule["sla_override_minutes"]
                         )
 
@@ -551,7 +551,7 @@ class EnhancedOmnichannelService:
                         interaction.priority_level = rule["priority_override"]
 
                     if rule["sla_override_minutes"]:
-                        interaction.sla_due_time = datetime.utcnow() + timedelta(
+                        interaction.sla_due_time = datetime.now(timezone.utc) + timedelta(
                             minutes=rule["sla_override_minutes"]
                         )
 
@@ -623,7 +623,7 @@ class EnhancedOmnichannelService:
                     OmnichannelAgent.current_workload
                     < OmnichannelAgent.max_concurrent_interactions,
                 )
-                .order_by(OmnichannelAgent.current_workload.asc())
+                .order_by(OmnichannelAgent.current_workload.asc()
                 .first()
             )
 
@@ -696,12 +696,12 @@ class EnhancedOmnichannelService:
                 from .tasks import send_channel_message_async
 
                 send_channel_message_async.delay(
-                    self.tenant_id, channel_id, message.dict()
+                    self.tenant_id, channel_id, message.model_dump()
                 )
 
             # Update interaction timestamps
             if not interaction.first_response_time:
-                interaction.first_response_time = datetime.utcnow()
+                interaction.first_response_time = datetime.now(timezone.utc)
 
             self.db.commit()
 
@@ -724,12 +724,12 @@ class EnhancedOmnichannelService:
                 return cached_stats
 
             # Calculate current stats
-            now = datetime.utcnow()
-            today_start = datetime.combine(now.date(), datetime.min.time())
+            now = datetime.now(timezone.utc)
+            today_start = datetime.combine(now.date(), datetime.min.time()
 
             # Basic interaction stats
             total_interactions = (
-                self.db.query(func.count(CommunicationInteraction.id))
+                self.db.query(func.count(CommunicationInteraction.id)
                 .filter(
                     CommunicationInteraction.tenant_id == self.tenant_id,
                     CommunicationInteraction.created_at >= today_start,
@@ -738,7 +738,7 @@ class EnhancedOmnichannelService:
             )
 
             pending_interactions = (
-                self.db.query(func.count(CommunicationInteraction.id))
+                self.db.query(func.count(CommunicationInteraction.id)
                 .filter(
                     CommunicationInteraction.tenant_id == self.tenant_id,
                     CommunicationInteraction.status == InteractionStatus.PENDING,
@@ -747,7 +747,7 @@ class EnhancedOmnichannelService:
             )
 
             overdue_interactions = (
-                self.db.query(func.count(CommunicationInteraction.id))
+                self.db.query(func.count(CommunicationInteraction.id)
                 .filter(
                     CommunicationInteraction.tenant_id == self.tenant_id,
                     CommunicationInteraction.sla_due_time < now,
@@ -760,13 +760,13 @@ class EnhancedOmnichannelService:
 
             # Agent stats
             total_agents = (
-                self.db.query(func.count(OmnichannelAgent.id))
+                self.db.query(func.count(OmnichannelAgent.id)
                 .filter(OmnichannelAgent.tenant_id == self.tenant_id)
                 .scalar()
             )
 
             available_agents = (
-                self.db.query(func.count(OmnichannelAgent.id))
+                self.db.query(func.count(OmnichannelAgent.id)
                 .filter(
                     OmnichannelAgent.tenant_id == self.tenant_id,
                     OmnichannelAgent.status == AgentStatus.AVAILABLE,
@@ -787,7 +787,7 @@ class EnhancedOmnichannelService:
 
             for channel in registered_channels:
                 channel_interactions = (
-                    self.db.query(func.count(CommunicationInteraction.id))
+                    self.db.query(func.count(CommunicationInteraction.id)
                     .join(ContactCommunicationChannel)
                     .filter(
                         ContactCommunicationChannel.registered_channel_id == channel.id,
@@ -820,7 +820,7 @@ class EnhancedOmnichannelService:
 
             # Customer satisfaction average
             avg_satisfaction = (
-                self.db.query(func.avg(CommunicationInteraction.satisfaction_rating))
+                self.db.query(func.avg(CommunicationInteraction.satisfaction_rating)
                 .filter(
                     CommunicationInteraction.tenant_id == self.tenant_id,
                     CommunicationInteraction.satisfaction_rating.isnot(None),
@@ -835,7 +835,7 @@ class EnhancedOmnichannelService:
                     "pending": pending_interactions or 0,
                     "overdue": overdue_interactions or 0,
                     "sla_breach_rate": (
-                        (overdue_interactions / max(total_interactions, 1)) * 100
+                        (overdue_interactions / max(total_interactions, 1) * 100
                         if overdue_interactions
                         else 0
                     ),
@@ -844,7 +844,7 @@ class EnhancedOmnichannelService:
                     "total": total_agents or 0,
                     "available": available_agents or 0,
                     "utilization_rate": (
-                        ((total_agents - available_agents) / max(total_agents, 1)) * 100
+                        ((total_agents - available_agents) / max(total_agents, 1) * 100
                         if total_agents
                         else 0
                     ),
@@ -856,7 +856,7 @@ class EnhancedOmnichannelService:
                         round(avg_satisfaction or 0, 2) if avg_satisfaction else None
                     ),
                 },
-                "generated_at": datetime.utcnow().isoformat(),
+                "generated_at": datetime.now(timezone.utc).isoformat(),
             }
 
             # Cache for 5 minutes
@@ -866,7 +866,7 @@ class EnhancedOmnichannelService:
 
         except Exception as e:
             logger.error(f"Failed to generate dashboard stats: {e}")
-            return {"error": str(e), "generated_at": datetime.utcnow().isoformat()}
+            return {"error": str(e), "generated_at": datetime.now(timezone.utc).isoformat()}
 
     # ===== HEALTH CHECK =====
 
@@ -875,7 +875,7 @@ class EnhancedOmnichannelService:
         health_status = {
             "service_status": "healthy",
             "components": {},
-            "checked_at": datetime.utcnow().isoformat(),
+            "checked_at": datetime.now(timezone.utc).isoformat(),
         }
 
         try:

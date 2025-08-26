@@ -328,7 +328,7 @@ class TestDatabaseQueryPerformance:
                 Customer.customer_number,
                 Customer.first_name,
                 Customer.last_name,
-                func.count(Service.id.distinct()).label('service_count'),
+                func.count(Service.id.distinct().label('service_count'),
                 func.count(Invoice.id).label('invoice_count'),
                 func.sum(Invoice.total_amount).label('total_billed'),
                 func.sum(
@@ -403,7 +403,7 @@ class TestDatabaseQueryPerformance:
                 func.min(Invoice.total_amount).label('min_invoice')
             )
             .where(Invoice.tenant_id == tenant_id)
-            .group_by(func.extract('month', Invoice.billing_period_start))
+            .group_by(func.extract('month', Invoice.billing_period_start)
             .order_by('month')
         )
         
@@ -588,7 +588,7 @@ class TestConcurrentUserHandling:
         
         tasks = []
         for user_id in range(CONCURRENT_USERS):
-            task = asyncio.create_task(simulate_user_session(user_id))
+            task = asyncio.create_task(simulate_user_session(user_id)
             tasks.append(task)
         
         # Wait for all user sessions to complete
@@ -665,7 +665,7 @@ class TestConcurrentUserHandling:
         # Run concurrent database operations
         tasks = []
         for op_id in range(CONCURRENT_OPERATIONS):
-            task = asyncio.create_task(concurrent_database_operation(op_id))
+            task = asyncio.create_task(concurrent_database_operation(op_id)
             tasks.append(task)
         
         all_operation_times = await asyncio.gather(*tasks)
@@ -683,7 +683,7 @@ class TestConcurrentUserHandling:
             f"Maximum DB operation time {max_db_time:.3f}s indicates database overload"
         
         # Verify all operations completed successfully
-        customer_count_query = select(func.count(Customer.id)).where(Customer.tenant_id == tenant_id)
+        customer_count_query = select(func.count(Customer.id).where(Customer.tenant_id == tenant_id)
         result = await db_session.execute(customer_count_query)
         customer_count = result.scalar()
         
@@ -743,7 +743,7 @@ class TestConcurrentUserHandling:
         
         while time.time() - start_time < LOAD_DURATION:
             # Start new operations every 0.1 seconds
-            task = asyncio.create_task(memory_stress_operation())
+            task = asyncio.create_task(memory_stress_operation()
             stress_tasks.append(task)
             
             await asyncio.sleep(0.1)

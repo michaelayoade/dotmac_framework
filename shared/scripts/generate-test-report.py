@@ -68,7 +68,7 @@ class TestReportGenerator:
     
     def _collect_junit_results(self):
         """Collect JUnit XML test results."""
-        junit_files = list(Path(".").rglob("junit*.xml"))
+        junit_files = list(Path(".").rglob("junit*.xml")
         
         for junit_file in junit_files:
             try:
@@ -77,11 +77,11 @@ class TestReportGenerator:
                 
                 test_suite = {
                     'name': root.get('name', junit_file.stem),
-                    'tests': int(root.get('tests', 0)),
-                    'failures': int(root.get('failures', 0)),
-                    'errors': int(root.get('errors', 0)),
-                    'time': float(root.get('time', 0)),
-                    'timestamp': root.get('timestamp', datetime.now().isoformat()),
+                    'tests': int(root.get('tests', 0),
+                    'failures': int(root.get('failures', 0),
+                    'errors': int(root.get('errors', 0),
+                    'time': float(root.get('time', 0),
+                    'timestamp': root.get('timestamp', datetime.now().isoformat(),
                     'test_cases': []
                 }
                 
@@ -90,7 +90,7 @@ class TestReportGenerator:
                     test_case = {
                         'name': testcase.get('name'),
                         'classname': testcase.get('classname'),
-                        'time': float(testcase.get('time', 0)),
+                        'time': float(testcase.get('time', 0),
                         'status': 'passed'
                     }
                     
@@ -123,12 +123,12 @@ class TestReportGenerator:
                 coverage_elem = root.find(".//coverage")
                 if coverage_elem is not None:
                     self.coverage_data['total'] = {
-                        'line_rate': float(coverage_elem.get('line-rate', 0)) * 100,
-                        'branch_rate': float(coverage_elem.get('branch-rate', 0)) * 100,
-                        'lines_covered': int(coverage_elem.get('lines-covered', 0)),
-                        'lines_valid': int(coverage_elem.get('lines-valid', 0)),
-                        'branches_covered': int(coverage_elem.get('branches-covered', 0)),
-                        'branches_valid': int(coverage_elem.get('branches-valid', 0))
+                        'line_rate': float(coverage_elem.get('line-rate', 0) * 100,
+                        'branch_rate': float(coverage_elem.get('branch-rate', 0) * 100,
+                        'lines_covered': int(coverage_elem.get('lines-covered', 0),
+                        'lines_valid': int(coverage_elem.get('lines-valid', 0),
+                        'branches_covered': int(coverage_elem.get('branches-covered', 0),
+                        'branches_valid': int(coverage_elem.get('branches-valid', 0)
                     }
                 
                 # Package-level coverage
@@ -136,8 +136,8 @@ class TestReportGenerator:
                 for package in root.findall('.//package'):
                     package_data = {
                         'name': package.get('name'),
-                        'line_rate': float(package.get('line-rate', 0)) * 100,
-                        'branch_rate': float(package.get('branch-rate', 0)) * 100
+                        'line_rate': float(package.get('line-rate', 0) * 100,
+                        'branch_rate': float(package.get('branch-rate', 0) * 100
                     }
                     packages.append(package_data)
                 
@@ -149,7 +149,7 @@ class TestReportGenerator:
     def _collect_performance_data(self):
         """Collect performance test data."""
         # Look for Locust results
-        locust_files = list(Path(".").rglob("*_stats.csv"))
+        locust_files = list(Path(".").rglob("*_stats.csv")
         for locust_file in locust_files:
             try:
                 df = pd.read_csv(locust_file)
@@ -171,7 +171,7 @@ class TestReportGenerator:
                 print(f"Error parsing performance data: {e}")
         
         # Look for benchmark results
-        benchmark_files = list(Path(".").rglob("benchmark*.json"))
+        benchmark_files = list(Path(".").rglob("benchmark*.json")
         for benchmark_file in benchmark_files:
             try:
                 with open(benchmark_file, 'r') as f:
@@ -184,7 +184,7 @@ class TestReportGenerator:
     def _collect_quality_data(self):
         """Collect code quality data."""
         # Look for quality gate results
-        quality_files = list(Path(".").rglob("quality-gate*.json"))
+        quality_files = list(Path(".").rglob("quality-gate*.json")
         for quality_file in quality_files:
             try:
                 with open(quality_file, 'r') as f:
@@ -438,7 +438,7 @@ class TestReportGenerator:
                 
                 # Error rates
                 error_rates = [
-                    (req['Failure Count'] / max(req['Request Count'], 1)) * 100 
+                    (req['Failure Count'] / max(req['Request Count'], 1) * 100 
                     for req in requests if req['Type'] in ['GET', 'POST', 'PUT', 'DELETE']
                 ]
                 fig.add_trace(
@@ -482,7 +482,7 @@ class TestReportGenerator:
         results = self.quality_data.get('results', {})
         
         # Create quality metrics summary
-        categories = list(results.keys())
+        categories = list(results.keys()
         passed_counts = [1 if results[cat]['passed'] else 0 for cat in categories]
         
         fig = go.Figure()
@@ -550,7 +550,7 @@ class TestReportGenerator:
         }}
         .summary {{
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr);
             gap: 20px;
             margin-bottom: 30px;
         }}
@@ -611,11 +611,11 @@ class TestReportGenerator:
         {self._generate_summary_cards(summary)}
     </div>
 
-    {self._generate_section("Test Results", charts.get('test_results', ''))}
-    {self._generate_section("Code Coverage", charts.get('coverage', ''))}
-    {self._generate_section("Performance Results", charts.get('performance', ''))}
-    {self._generate_section("Code Quality", charts.get('quality', ''))}
-    {self._generate_section("Trends", charts.get('trends', ''))}
+    {self._generate_section("Test Results", charts.get('test_results', '')}
+    {self._generate_section("Code Coverage", charts.get('coverage', '')}
+    {self._generate_section("Performance Results", charts.get('performance', '')}
+    {self._generate_section("Code Quality", charts.get('quality', '')}
+    {self._generate_section("Trends", charts.get('trends', '')}
     
     <div class="section">
         <h2>📋 Detailed Results</h2>
@@ -794,4 +794,4 @@ def main():
 
 if __name__ == "__main__":
     import sys
-    sys.exit(main())
+    sys.exit(main()

@@ -4,7 +4,7 @@ import asyncio
 import json
 import logging
 from typing import Dict, List, Optional, Callable, Any
-from datetime import datetime
+from datetime import datetime, timezone
 from dataclasses import dataclass, asdict
 from enum import Enum
 import websockets
@@ -91,7 +91,7 @@ class WebSocketConnectionManager:
         await self._send_to_websocket(websocket, {
             'type': 'connection_established',
             'tenant_id': tenant_id,
-            'timestamp': datetime.utcnow().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         })
     
     async def disconnect(self, websocket: websockets.WebSocketServerProtocol, tenant_id: str):
@@ -123,7 +123,7 @@ class WebSocketConnectionManager:
         if self.redis_client:
             await self._publish_to_redis(event)
         
-        connections = self.connections[tenant_id].copy()
+        connections = self.connections[tenant_id].model_copy()
         
         for websocket in connections:
             await self._send_with_retry(websocket, tenant_id, event.to_dict())
@@ -213,7 +213,7 @@ class WebSocketConnectionManager:
             'total_connections': total_connections,
             'tenant_count': len(self.connections),
             'redis_connected': self.redis_client is not None,
-            'timestamp': datetime.utcnow().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         }
 
 
@@ -237,7 +237,7 @@ class BillingEventPublisher:
             tenant_id=tenant_id,
             customer_id=customer_id,
             entity_id=invoice_id,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             data=invoice_data,
             user_id=user_id
         )
@@ -252,7 +252,7 @@ class BillingEventPublisher:
             tenant_id=tenant_id,
             customer_id=customer_id,
             entity_id=invoice_id,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             data=payment_data,
             user_id=user_id
         )
@@ -267,7 +267,7 @@ class BillingEventPublisher:
             tenant_id=tenant_id,
             customer_id=customer_id,
             entity_id=payment_id,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             data=failure_data,
             user_id=user_id
         )
@@ -282,7 +282,7 @@ class BillingEventPublisher:
             tenant_id=tenant_id,
             customer_id=customer_id,
             entity_id=subscription_id,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             data=cancellation_data,
             user_id=user_id
         )

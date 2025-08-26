@@ -114,10 +114,10 @@ logger.info("=" * 80)
         category = plugin_info["category"]
         if category not in categories:
             categories[category] = []
-        categories[category].append((plugin_name, plugin_info))
+        categories[category].append((plugin_name, plugin_info)
     
     # Display plugins by category
-    for category, plugins in sorted(categories.items()):
+    for category, plugins in sorted(categories.items():
 logger.info(f"\n📦 {category.replace('_', ' ').title()}")
 logger.info("-" * 40)
         
@@ -162,7 +162,7 @@ logger.info("No plugins are currently registered as installed.")
 logger.info(f"\n🔌 Installed Plugins ({len(installed_plugins)} total)")
 logger.info("=" * 50)
     
-    for plugin_name in sorted(installed_plugins.keys()):
+    for plugin_name in sorted(installed_plugins.keys():
         if plugin_name in plugin_definitions:
             plugin_info = plugin_definitions[plugin_name]
             status_info = format_plugin_status(plugin_name, plugin_info, installed_plugins)

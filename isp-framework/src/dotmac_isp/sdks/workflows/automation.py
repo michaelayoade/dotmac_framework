@@ -17,7 +17,7 @@ from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
 import structlog
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 from ..contracts.common_schemas import (
     ExecutionContext,
@@ -91,10 +91,7 @@ class AutomationTrigger(BaseModel):
         default_factory=dict, description="Threshold configuration"
     )
 
-    class Config:
-        """Class for Config operations."""
-        extra = "allow"
-
+    model_config = ConfigDict(extra="allow")
 
 class AutomationCondition(BaseModel):
     """Automation condition definition."""
@@ -104,10 +101,7 @@ class AutomationCondition(BaseModel):
     value: Any = Field(..., description="Value to compare against")
     data_type: Optional[str] = Field(None, description="Expected data type")
 
-    class Config:
-        """Class for Config operations."""
-        extra = "forbid"
-
+    model_config = ConfigDict(extra="forbid")
 
 class AutomationAction(BaseModel):
     """Automation action definition."""
@@ -138,10 +132,7 @@ class AutomationAction(BaseModel):
         None, description="Execution condition"
     )
 
-    class Config:
-        """Class for Config operations."""
-        extra = "allow"
-
+    model_config = ConfigDict(extra="allow")
 
 class AutomationRule(BaseModel):
     """Automation rule definition."""
@@ -173,10 +164,7 @@ class AutomationRule(BaseModel):
     tenant_id: str = Field(..., description="Tenant identifier")
     metadata: OperationMetadata = Field(default_factory=OperationMetadata)
 
-    class Config:
-        """Class for Config operations."""
-        extra = "allow"
-
+    model_config = ConfigDict(extra="allow")
 
 @dataclass
 class AutomationExecution:
@@ -199,9 +187,9 @@ class AutomationExecution:
             "rule_id": self.rule_id,
             "status": self.status.value,
             "trigger_data": self.trigger_data,
-            "context": self.context.dict() if self.context else None,
+            "context": self.context.model_dump() if self.context else None,
             "action_results": self.action_results,
-            "error": self.error.dict() if self.error else None,
+            "error": self.error.model_dump() if self.error else None,
             "started_at": self.started_at.isoformat() if self.started_at else None,
             "completed_at": (
                 self.completed_at.isoformat() if self.completed_at else None
@@ -345,7 +333,7 @@ class ActionExecutor:
         context: ExecutionContext,
     ) -> Dict[str, Any]:
         """Prepare input data for action execution."""
-        input_data = action.parameters.copy()
+        input_data = action.parameters.model_copy()
 
         # Apply input mapping
         for target_field, source_field in action.input_mapping.items():
@@ -394,7 +382,7 @@ class AutomationEngine:
             context = ExecutionContext(
                 execution_id=execution_id,
                 tenant_id=rule.tenant_id,
-                variables=trigger_data.copy(),
+                variables=trigger_data.model_copy(),
             )
 
         execution = AutomationExecution(

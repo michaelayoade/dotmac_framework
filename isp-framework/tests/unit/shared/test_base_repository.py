@@ -25,7 +25,7 @@ from dotmac_isp.shared.models import TenantMixin
 
 
 # Isolated test models to avoid SQLAlchemy configuration conflicts
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 
 TestBase = declarative_base()
 
@@ -34,7 +34,7 @@ class TestModel(TestBase):
     __tablename__ = 'test_model'
     
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    name: Mapped[str] = mapped_column(String(100))
+    name: Mapped[str] = mapped_column(String(100)
     active: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
@@ -43,7 +43,7 @@ class TestTenantModel(TestBase, TenantMixin):
     __tablename__ = 'test_tenant_model'
     
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    name: Mapped[str] = mapped_column(String(100))
+    name: Mapped[str] = mapped_column(String(100)
 
 
 class TestBaseRepository:

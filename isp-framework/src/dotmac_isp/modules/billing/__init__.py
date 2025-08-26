@@ -5,7 +5,12 @@ from .websocket_router import websocket_router, billing_websocket_notifier
 from .websocket_manager import websocket_manager, event_publisher, initialize_websocket_manager
 from .pdf_generator import generate_invoice_pdf, generate_receipt_pdf
 from .csv_exporter import export_invoices_csv, export_payments_csv
-from .file_handler import file_upload_service
+
+# Optional file handler (requires aiofiles)
+try:
+    from .file_handler import file_upload_service
+except ImportError:
+    file_upload_service = None
 
 __all__ = [
     'billing_router',

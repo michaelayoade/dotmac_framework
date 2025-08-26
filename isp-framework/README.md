@@ -227,7 +227,7 @@ Once running, access the interactive API documentation:
 
 The DotMac ISP Framework uses an advanced configuration system with:
 
-- **OpenBao/Vault Integration**: Centralized secrets management with automatic rotation
+- **OpenBao Integration**: Centralized secrets management with automatic rotation
 - **Field-Level Encryption**: Sensitive configuration data encrypted at rest
 - **Audit Logging**: Complete configuration change tracking with approval workflows
 - **Hot-Reloading**: Zero-downtime configuration updates
@@ -236,7 +236,7 @@ The DotMac ISP Framework uses an advanced configuration system with:
 
 ### Configuration Sources (Priority Order)
 
-1. **OpenBao Vault**: Production secrets and sensitive configuration
+1. **OpenBao**: Production secrets and sensitive configuration
 2. **Environment Variables**: Runtime configuration overrides
 3. **Configuration Files**: Default settings and templates
 4. **Database**: Tenant-specific configuration settings
@@ -252,7 +252,7 @@ ENVIRONMENT=production
 SECRET_KEY=your-secret-key
 
 # Enhanced Configuration
-OPENBAO_URL=https://vault.dotmac.internal:8200
+OPENBAO_URL=https://openbao.dotmac.internal:8200
 OPENBAO_TOKEN=hvs.your-token-here
 OPENBAO_NAMESPACE=dotmac/tenant-{tenant-id}
 CONFIG_ENCRYPTION_KEY=base64-encoded-key

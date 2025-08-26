@@ -18,7 +18,7 @@ from dotmac_isp.shared.schemas import SuccessResponse, ErrorResponse
 from .plugin_service import ChannelPluginService
 from .channel_plugins.base import ChannelMessage
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__, timezone)
 
 router = APIRouter(prefix="/omnichannel/channels", tags=["channel-plugins"])
 
@@ -324,7 +324,7 @@ async def handle_webhook(
             content={
                 "status": "received",
                 "channel_id": channel_id,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
         )
 

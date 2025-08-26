@@ -28,10 +28,10 @@ class BillingCalculator:
         if rate_per_gb <= 0:
             raise ValueError("Rate must be positive")
             
-        base_cost = Decimal(str(usage_gb)) * rate_per_gb
-        discount_amount = base_cost * Decimal(str(discount_percent))
+        base_cost = Decimal(str(usage_gb) * rate_per_gb
+        discount_amount = base_cost * Decimal(str(discount_percent)
         discounted_cost = base_cost - discount_amount
-        tax_amount = discounted_cost * Decimal(str(tax_rate))
+        tax_amount = discounted_cost * Decimal(str(tax_rate)
         total = discounted_cost + tax_amount
         
         return total.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
@@ -52,19 +52,19 @@ class BillingCalculator:
 def billing_data(draw):
     """Generate realistic billing data"""
     return {
-        'usage_gb': draw(st.floats(min_value=0.0, max_value=10000.0, allow_nan=False, allow_infinity=False)),
-        'rate_per_gb': draw(st.decimals(min_value=Decimal('0.001'), max_value=Decimal('10.0'), places=3)),
-        'tax_rate': draw(st.floats(min_value=0.0, max_value=0.50, allow_nan=False)),
-        'discount_percent': draw(st.floats(min_value=0.0, max_value=0.95, allow_nan=False)),
+        'usage_gb': draw(st.floats(min_value=0.0, max_value=10000.0, allow_nan=False, allow_infinity=False),
+        'rate_per_gb': draw(st.decimals(min_value=Decimal('0.001'), max_value=Decimal('10.0'), places=3),
+        'tax_rate': draw(st.floats(min_value=0.0, max_value=0.50, allow_nan=False),
+        'discount_percent': draw(st.floats(min_value=0.0, max_value=0.95, allow_nan=False),
     }
 
 @st.composite
 def monthly_billing_data(draw):
     """Generate monthly billing scenarios"""
     return {
-        'base_fee': draw(st.decimals(min_value=Decimal('9.99'), max_value=Decimal('999.99'), places=2)),
-        'prorated_days': draw(st.integers(min_value=1, max_value=31)),
-        'total_days_in_month': draw(st.integers(min_value=28, max_value=31))
+        'base_fee': draw(st.decimals(min_value=Decimal('9.99'), max_value=Decimal('999.99'), places=2),
+        'prorated_days': draw(st.integers(min_value=1, max_value=31),
+        'total_days_in_month': draw(st.integers(min_value=28, max_value=31)
     }
 
 
@@ -72,7 +72,7 @@ def monthly_billing_data(draw):
 class TestBillingInvariants:
     """Tests that validate business invariants that must ALWAYS hold"""
     
-    @given(billing_data())
+    @given(billing_data()
     @settings(max_examples=1000, deadline=5000)
     @pytest.mark.property_based
     def test_bill_never_negative(self, data):
@@ -80,7 +80,7 @@ class TestBillingInvariants:
         bill = BillingCalculator.calculate_usage_bill(**data)
         assert bill >= 0, f"Bill should never be negative: {bill}"
     
-    @given(billing_data())
+    @given(billing_data()
     @settings(max_examples=1000, deadline=5000)
     @pytest.mark.property_based
     def test_zero_usage_zero_bill(self, data):
@@ -91,7 +91,7 @@ class TestBillingInvariants:
         if data['tax_rate'] == 0.0:
             assert bill == 0, f"Zero usage should result in zero bill: {bill}"
     
-    @given(billing_data())
+    @given(billing_data()
     @settings(max_examples=1000, deadline=5000)
     @pytest.mark.property_based
     def test_discount_reduces_bill(self, data):
@@ -108,7 +108,7 @@ class TestBillingInvariants:
         assert bill_with_discount <= bill_without_discount, \
             f"Discount should reduce bill: {bill_with_discount} <= {bill_without_discount}"
     
-    @given(billing_data())
+    @given(billing_data()
     @settings(max_examples=1000, deadline=5000)
     @pytest.mark.property_based
     def test_tax_increases_bill(self, data):
@@ -126,12 +126,12 @@ class TestBillingInvariants:
         assert bill_with_tax >= bill_without_tax, \
             f"Tax should increase bill: {bill_with_tax} >= {bill_without_tax}"
     
-    @given(st.data())
+    @given(st.data()
     @settings(max_examples=500, deadline=10000)
     @pytest.mark.property_based
     def test_usage_proportionality(self, data):
         """INVARIANT: Double usage should roughly double the bill"""
-        billing_data_1 = data.draw(billing_data())
+        billing_data_1 = data.draw(billing_data()
         assume(billing_data_1['usage_gb'] > 0.1)  # Avoid floating point issues
         assume(billing_data_1['usage_gb'] < 5000)  # Keep it reasonable
         
@@ -150,7 +150,7 @@ class TestBillingInvariants:
 class TestMonthlyBillingInvariants:
     """Test monthly recurring billing invariants"""
     
-    @given(monthly_billing_data())
+    @given(monthly_billing_data()
     @settings(max_examples=1000, deadline=5000)
     @pytest.mark.property_based
     def test_prorated_never_exceeds_full_month(self, data):
@@ -163,7 +163,7 @@ class TestMonthlyBillingInvariants:
         assert prorated <= full_month, \
             f"Prorated charge should not exceed full month: {prorated} <= {full_month}"
     
-    @given(monthly_billing_data())
+    @given(monthly_billing_data()
     @settings(max_examples=1000, deadline=5000)
     @pytest.mark.property_based
     def test_full_month_equals_base_fee(self, data):
@@ -222,7 +222,7 @@ class BillingStateMachine(RuleBasedStateMachine):
     @invariant()
     def total_charges_consistent(self):
         """INVARIANT: Total charges should equal sum of individual bills"""
-        calculated_total = sum(self.customer_bills, Decimal('0.00'))
+        calculated_total = sum(self.customer_bills, Decimal('0.00')
         assert abs(self.total_charges - calculated_total) <= Decimal('0.01'), \
             f"Total charges inconsistent: {self.total_charges} vs {calculated_total}"
     
@@ -237,7 +237,7 @@ class BillingStateMachine(RuleBasedStateMachine):
         """INVARIANT: Total charges should be reasonable given usage"""
         if self.total_usage > 0:
             # Total charges shouldn't exceed $10 per GB (very high rate)
-            max_reasonable = Decimal(str(self.total_usage * 10))
+            max_reasonable = Decimal(str(self.total_usage * 10)
             assert self.total_charges <= max_reasonable, \
                 f"Total charges unreasonable: ${self.total_charges} for {self.total_usage}GB"
 
@@ -256,7 +256,7 @@ class TestRevenueCriticalPaths:
             tax_rate=0.08,
             discount_percent=0.05
         )
-        expected_range = (Decimal('95.00'), Decimal('105.00'))  # Rough range
+        expected_range = (Decimal('95.00'), Decimal('105.00')  # Rough range
         assert expected_range[0] <= bill <= expected_range[1], \
             f"Standard high-usage billing failed: {bill}"
     
@@ -282,4 +282,4 @@ def pytest_configure_node(node):
     if hasattr(node.config, 'option'):
         # Set hypothesis settings for CI/CD
         if node.config.getoption("--hypothesis-max-examples"):
-            settings.default.max_examples = int(node.config.getoption("--hypothesis-max-examples"))
+            settings.default.max_examples = int(node.config.getoption("--hypothesis-max-examples")

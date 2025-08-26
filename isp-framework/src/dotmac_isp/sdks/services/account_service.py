@@ -14,7 +14,7 @@ from ..models.accounts import Account, AccountStatus, MFAFactor, MFAFactorType
 class AccountService:
     """Simple in-memory account service for SDK operations."""
     
-    def __init__(self):
+    def __init__(self, timezone):
         """  Init   operation."""
         self._accounts: Dict[UUID, Account] = {}
         self._mfa_factors: Dict[UUID, List[MFAFactor]] = {}
@@ -61,7 +61,7 @@ class AccountService:
             for key, value in updates.items():
                 if hasattr(account, key):
                     setattr(account, key, value)
-            account.updated_at = datetime.utcnow()
+            account.updated_at = datetime.now(timezone.utc)
         return account
     
     async def delete_account(self, account_id: UUID) -> bool:
@@ -113,6 +113,6 @@ class AccountService:
         for factor in factors:
             if factor.id == factor_id:
                 factor.is_verified = True
-                factor.last_used_at = datetime.utcnow()
+                factor.last_used_at = datetime.now(timezone.utc)
                 return True
         return False

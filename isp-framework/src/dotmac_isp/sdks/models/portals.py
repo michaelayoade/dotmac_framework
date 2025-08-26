@@ -50,8 +50,8 @@ class CustomerPortalBinding:
         self.portal_username = kwargs.get('portal_username')
         self.access_level = kwargs.get('access_level', AccessLevel.BASIC)
         self.status = kwargs.get('status', BindingStatus.ACTIVE)
-        self.created_at = kwargs.get('created_at', datetime.utcnow())
-        self.updated_at = kwargs.get('updated_at', datetime.utcnow())
+        self.created_at = kwargs.get('created_at', datetime.now(timezone.utc))
+        self.updated_at = kwargs.get('updated_at', datetime.now(timezone.utc))
         self.last_login = kwargs.get('last_login')
 
 
@@ -130,8 +130,8 @@ class Portal:
         self.url = kwargs.get('url')
         self.description = kwargs.get('description')
         self.settings = kwargs.get('settings', PortalSettings())
-        self.created_at = kwargs.get('created_at', datetime.utcnow())
-        self.updated_at = kwargs.get('updated_at', datetime.utcnow())
+        self.created_at = kwargs.get('created_at', datetime.now(timezone.utc))
+        self.updated_at = kwargs.get('updated_at', datetime.now(timezone.utc))
         self.last_accessed_at = kwargs.get('last_accessed_at')
         self.access_count = kwargs.get('access_count', 0)
     
@@ -146,23 +146,23 @@ class Portal:
     def activate(self) -> None:
         """Activate the portal."""
         self.status = PortalStatus.ACTIVE
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(timezone.utc)
     
     def deactivate(self) -> None:
         """Deactivate the portal."""
         self.status = PortalStatus.INACTIVE
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(timezone.utc)
     
     def enter_maintenance(self, message: Optional[str] = None) -> None:
         """Put portal in maintenance mode."""
         self.status = PortalStatus.MAINTENANCE
         if message:
             self.settings.maintenance_message = message
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(timezone.utc)
     
     def record_access(self) -> None:
         """Record portal access."""
-        self.last_accessed_at = datetime.utcnow()
+        self.last_accessed_at = datetime.now(timezone.utc)
         self.access_count += 1
 
 
@@ -188,7 +188,7 @@ class ResellerPortalAccess:
         self.portal_id = kwargs.get('portal_id')
         self.access_level = kwargs.get('access_level', AccessLevel.BASIC)
         self.is_active = kwargs.get('is_active', True)
-        self.granted_at = kwargs.get('granted_at', datetime.utcnow())
+        self.granted_at = kwargs.get('granted_at', datetime.now(timezone.utc))
         self.granted_by = kwargs.get('granted_by')
         self.expires_at = kwargs.get('expires_at')
         self.last_accessed_at = kwargs.get('last_accessed_at')
@@ -196,7 +196,7 @@ class ResellerPortalAccess:
     
     def is_expired(self) -> bool:
         """Check if access has expired."""
-        return self.expires_at and datetime.utcnow() > self.expires_at
+        return self.expires_at and datetime.now(timezone.utc) > self.expires_at
     
     def is_valid(self) -> bool:
         """Check if access is valid."""
@@ -208,5 +208,5 @@ class ResellerPortalAccess:
     
     def record_access(self) -> None:
         """Record access."""
-        self.last_accessed_at = datetime.utcnow()
+        self.last_accessed_at = datetime.now(timezone.utc)
         self.access_count += 1

@@ -27,7 +27,7 @@ def discover_and_register_plugins():
             try:
                 importlib.import_module(module_name)
             except ImportError as e:
-logger.info(f"Failed to load plugin {filename}: {e}")
+                logger.info(f"Failed to load plugin {filename}: {e}")
 
 
 # Auto-discover plugins on import

@@ -30,7 +30,7 @@ import httpx
 
 # Add src directory to Python path
 src_path = Path(__file__).parent.parent / "src"
-sys.path.insert(0, str(src_path))
+sys.path.insert(0, str(src_path)
 
 # Local imports
 from dotmac_isp.main import app
@@ -73,14 +73,14 @@ def import_all_models():
             class Customer(TenantModel):
                 __tablename__ = "customers"
                 customer_number = Column(String(50), unique=True)
-                first_name = Column(String(100))
-                last_name = Column(String(100))
-                email_primary = Column(String(255))
+                first_name = Column(String(100)
+                last_name = Column(String(100)
+                email_primary = Column(String(255)
             
             class User(TenantModel):
                 __tablename__ = "users"
                 username = Column(String(100), unique=True)
-                email = Column(String(255))
+                email = Column(String(255)
             
         try:
             from dotmac_isp.modules.billing import models as billing_models  # noqa: F401
@@ -95,8 +95,8 @@ def import_all_models():
             
             class ServiceInstance(TenantModel):
                 __tablename__ = "service_instances"
-                service_name = Column(String(255))
-                monthly_price = Column(Numeric(10, 2))
+                service_name = Column(String(255)
+                monthly_price = Column(Numeric(10, 2)
                 
         try:
             from dotmac_isp.modules.support import models as support_models  # noqa: F401

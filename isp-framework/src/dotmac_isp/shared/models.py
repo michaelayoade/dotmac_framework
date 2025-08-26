@@ -33,7 +33,7 @@ class SoftDeleteMixin:
     def soft_delete(self):
         """Mark record as deleted."""
         self.is_deleted = True
-        self.deleted_at = datetime.utcnow()
+        self.deleted_at = datetime.now(timezone.utc)
 
     def restore(self):
         """Restore soft deleted record."""
@@ -87,7 +87,7 @@ class StatusMixin:
         """Change status with timestamp and reason."""
         self.status = new_status
         self.status_reason = reason
-        self.status_changed_at = datetime.utcnow()
+        self.status_changed_at = datetime.now(timezone.utc)
 
 
 class AddressMixin:

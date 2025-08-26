@@ -40,7 +40,7 @@ async def test_engine():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
-        '''))
+        ''')
         
         await conn.execute(text('''
         CREATE TABLE customers (
@@ -58,7 +58,7 @@ async def test_engine():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
-        '''))
+        ''')
         
         # Billing tables  
         await conn.execute(text('''
@@ -78,7 +78,7 @@ async def test_engine():
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (customer_id) REFERENCES customers(id)
         )
-        '''))
+        ''')
         
         await conn.execute(text('''
         CREATE TABLE invoice_line_items (
@@ -92,7 +92,7 @@ async def test_engine():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (invoice_id) REFERENCES invoices(id)
         )
-        '''))
+        ''')
         
         await conn.execute(text('''
         CREATE TABLE payments (
@@ -107,7 +107,7 @@ async def test_engine():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (invoice_id) REFERENCES invoices(id)
         )
-        '''))
+        ''')
         
         # Support tables
         await conn.execute(text('''
@@ -124,7 +124,7 @@ async def test_engine():
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (customer_id) REFERENCES customers(id)
         )
-        '''))
+        ''')
         
         # Service tables
         await conn.execute(text('''
@@ -138,7 +138,7 @@ async def test_engine():
             is_active BOOLEAN DEFAULT 1,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
-        '''))
+        ''')
         
         await conn.execute(text('''
         CREATE TABLE service_instances (
@@ -153,7 +153,7 @@ async def test_engine():
             FOREIGN KEY (customer_id) REFERENCES customers(id),
             FOREIGN KEY (service_plan_id) REFERENCES service_plans(id)
         )
-        '''))
+        ''')
     
     yield engine
     await engine.dispose()
@@ -178,7 +178,7 @@ class DatabaseTestFactory:
     async def create_user(session: AsyncSession, **kwargs) -> str:
         """Create a test user."""
         user_id = str(uuid4())
-        tenant_id = kwargs.get('tenant_id', str(uuid4()))
+        tenant_id = kwargs.get('tenant_id', str(uuid4())
         
         await session.execute(text('''
             INSERT INTO users (id, tenant_id, username, email, password_hash, first_name, last_name)
@@ -200,7 +200,7 @@ class DatabaseTestFactory:
     async def create_customer(session: AsyncSession, **kwargs) -> str:
         """Create a test customer."""
         customer_id = str(uuid4())
-        tenant_id = kwargs.get('tenant_id', str(uuid4()))
+        tenant_id = kwargs.get('tenant_id', str(uuid4())
         
         await session.execute(text('''
             INSERT INTO customers (id, tenant_id, customer_number, display_name, customer_type, first_name, last_name, email)
@@ -223,7 +223,7 @@ class DatabaseTestFactory:
     async def create_invoice(session: AsyncSession, customer_id: str, **kwargs) -> str:
         """Create a test invoice."""
         invoice_id = str(uuid4())
-        tenant_id = kwargs.get('tenant_id', str(uuid4()))
+        tenant_id = kwargs.get('tenant_id', str(uuid4())
         
         await session.execute(text('''
             INSERT INTO invoices (id, tenant_id, invoice_number, customer_id, invoice_date, due_date, total_amount, status)
@@ -233,9 +233,9 @@ class DatabaseTestFactory:
             'tenant_id': tenant_id,
             'invoice_number': kwargs.get('invoice_number', f'INV{invoice_id[:8]}'),
             'customer_id': customer_id,
-            'invoice_date': kwargs.get('invoice_date', date.today().isoformat()),
-            'due_date': kwargs.get('due_date', (date.today() + timedelta(days=30)).isoformat()),
-            'total_amount': kwargs.get('total_amount', Decimal('100.00')),
+            'invoice_date': kwargs.get('invoice_date', date.today().isoformat(),
+            'due_date': kwargs.get('due_date', (date.today() + timedelta(days=30).isoformat(),
+            'total_amount': kwargs.get('total_amount', Decimal('100.00'),
             'status': kwargs.get('status', 'draft')
         })
         
@@ -246,7 +246,7 @@ class DatabaseTestFactory:
     async def create_service_plan(session: AsyncSession, **kwargs) -> str:
         """Create a test service plan."""
         plan_id = str(uuid4())
-        tenant_id = kwargs.get('tenant_id', str(uuid4()))
+        tenant_id = kwargs.get('tenant_id', str(uuid4())
         
         await session.execute(text('''
             INSERT INTO service_plans (id, tenant_id, plan_code, name, monthly_price, service_type)
@@ -256,7 +256,7 @@ class DatabaseTestFactory:
             'tenant_id': tenant_id,
             'plan_code': kwargs.get('plan_code', f'PLAN{plan_id[:8]}'),
             'name': kwargs.get('name', f'Test Plan {plan_id[:8]}'),
-            'monthly_price': kwargs.get('monthly_price', Decimal('50.00')),
+            'monthly_price': kwargs.get('monthly_price', Decimal('50.00'),
             'service_type': kwargs.get('service_type', 'internet')
         })
         

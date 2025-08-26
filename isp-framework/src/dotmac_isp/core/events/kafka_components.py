@@ -73,7 +73,7 @@ class KafkaConnectionManager:
             )
 
         except Exception as e:
-            logger.error("Failed to connect to Kafka", error=str(e))
+            logger.error("Failed to connect to Kafka", error=str(e)
             await self.disconnect()
             raise
 
@@ -92,7 +92,7 @@ class KafkaConnectionManager:
             logger.info("Kafka connections closed")
 
         except Exception as e:
-            logger.warning("Error during Kafka disconnect", error=str(e))
+            logger.warning("Error during Kafka disconnect", error=str(e)
 
     @property
     def is_connected(self) -> bool:
@@ -168,7 +168,7 @@ class KafkaProducerService:
                 error=str(e),
             )
 
-            return PublishResult(success=False, error=str(e))
+            return PublishResult(success=False, error=str(e)
 
 
 class KafkaConsumerService:
@@ -209,7 +209,7 @@ class KafkaConsumerService:
             logger.info("Kafka consumer cancelled")
             raise
         except Exception as e:
-            logger.error("Kafka consumer error", error=str(e))
+            logger.error("Kafka consumer error", error=str(e)
             raise
         finally:
             await consumer.stop()
@@ -235,7 +235,7 @@ class KafkaConsumerService:
             session_timeout_ms=self.connection_manager.config.session_timeout_ms,
             heartbeat_interval_ms=self.connection_manager.config.heartbeat_interval_ms,
             max_poll_records=self.connection_manager.config.max_poll_records,
-            value_deserializer=lambda m: json.loads(m.decode("utf-8")),
+            value_deserializer=lambda m: json.loads(m.decode("utf-8"),
         )
 
     def _parse_message(self, message) -> ConsumerRecord:
@@ -300,7 +300,7 @@ class KafkaTopicManager:
         except TopicAlreadyExistsError:
             logger.warning("Kafka topic already exists", topic=topic)
         except Exception as e:
-            logger.error("Failed to create Kafka topic", topic=topic, error=str(e))
+            logger.error("Failed to create Kafka topic", topic=topic, error=str(e)
             raise
 
     async def delete_topic(self, topic: str) -> None:
@@ -312,7 +312,7 @@ class KafkaTopicManager:
             logger.info("Kafka topic deleted", topic=topic)
 
         except Exception as e:
-            logger.error("Failed to delete Kafka topic", topic=topic, error=str(e))
+            logger.error("Failed to delete Kafka topic", topic=topic, error=str(e)
             raise
 
     async def list_topics(self) -> Dict[str, Any]:
@@ -322,7 +322,7 @@ class KafkaTopicManager:
             metadata = await admin_client.list_topics()
 
             return {
-                "topics": list(metadata.topics.keys()),
+                "topics": list(metadata.topics.keys(),
                 "brokers": [
                     {"id": broker.nodeId, "host": broker.host, "port": broker.port}
                     for broker in metadata.brokers
@@ -330,7 +330,7 @@ class KafkaTopicManager:
             }
 
         except Exception as e:
-            logger.error("Failed to list Kafka topics", error=str(e))
+            logger.error("Failed to list Kafka topics", error=str(e)
             raise
 
 

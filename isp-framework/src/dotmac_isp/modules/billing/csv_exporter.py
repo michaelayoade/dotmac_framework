@@ -79,7 +79,7 @@ class BillingCSVExporter:
                 
                 if invoice.line_items:
                     for item in invoice.line_items:
-                        row = base_row.copy()
+                        row = base_row.model_copy()
                         row.update({
                             'line_item_description': item.description,
                             'line_item_quantity': self._format_value(item.quantity),

@@ -36,7 +36,7 @@ class WhatsAppProvider:
             async with session.post(url, data=data) as response:
                 result = await response.json()
                 if result.get("sent"):
-                    return result.get("id", "ultramsg_" + str(int(asyncio.get_event_loop().time())))
+                    return result.get("id", "ultramsg_" + str(int(asyncio.get_event_loop().time())
                 raise Exception(f"UltraMsg error: {result}")
 
     async def _send_infobip(self, to: str, template: str = None, vars: Dict[str, Any] = {}, body: str = None) -> str:
@@ -90,7 +90,7 @@ class WhatsAppProvider:
 
     async def _handle_ultramsg_webhook(self, raw_body: bytes) -> Dict[str, Any]:
         """Handle UltraMsg webhook"""
-        data = json.loads(raw_body.decode())
+        data = json.loads(raw_body.decode()
 
         result = {
             "from": data.get("from"),
@@ -106,7 +106,7 @@ class WhatsAppProvider:
 
     async def _handle_infobip_webhook(self, raw_body: bytes) -> Dict[str, Any]:
         """Handle Infobip webhook"""
-        data = json.loads(raw_body.decode())
+        data = json.loads(raw_body.decode()
 
         # Infobip can send different webhook types
         if "results" in data:

@@ -1,6 +1,6 @@
 """Installation Project Management Repository."""
 
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from typing import Optional, List, Dict, Any
 from uuid import UUID
 
@@ -75,7 +75,7 @@ class InstallationProjectRepository:
             query = query.filter(InstallationProject.project_status == status_filter)
 
         return (
-            query.order_by(desc(InstallationProject.created_at))
+            query.order_by(desc(InstallationProject.created_at)
             .offset(offset)
             .limit(limit)
             .all()
@@ -97,7 +97,7 @@ class InstallationProjectRepository:
             query = query.filter(InstallationProject.tenant_id == tenant_id)
 
         return (
-            query.order_by(desc(InstallationProject.created_at))
+            query.order_by(desc(InstallationProject.created_at)
             .offset(offset)
             .limit(limit)
             .all()
@@ -123,7 +123,7 @@ class InstallationProjectRepository:
         if tenant_id:
             query = query.filter(InstallationProject.tenant_id == tenant_id)
 
-        return query.order_by(asc(InstallationProject.planned_end_date)).all()
+        return query.order_by(asc(InstallationProject.planned_end_date).all()
 
     def list_by_technician(
         self,
@@ -150,7 +150,7 @@ class InstallationProjectRepository:
                 )
             )
 
-        return query.order_by(asc(InstallationProject.planned_start_date)).all()
+        return query.order_by(asc(InstallationProject.planned_start_date).all()
 
     def get_project_statistics(
         self, tenant_id: Optional[UUID] = None
@@ -221,14 +221,14 @@ class InstallationProjectRepository:
             if hasattr(project, field):
                 setattr(project, field, value)
 
-        project.updated_at = datetime.utcnow()
+        project.updated_at = datetime.now(timezone.utc)
         self.db.flush()
         return project
 
     def delete(self, project: InstallationProject):
         """Soft delete project."""
         project.is_deleted = True
-        project.deleted_at = datetime.utcnow()
+        project.deleted_at = datetime.now(timezone.utc)
         self.db.flush()
 
 
@@ -307,7 +307,7 @@ class ProjectPhaseRepository:
         if tenant_id:
             query = query.filter(ProjectPhase.tenant_id == tenant_id)
 
-        return query.order_by(asc(ProjectPhase.planned_end_date)).all()
+        return query.order_by(asc(ProjectPhase.planned_end_date).all()
 
     def get_completed_count_for_project(self, project_id: UUID) -> int:
         """Get count of completed phases for a project."""
@@ -328,7 +328,7 @@ class ProjectPhaseRepository:
             if hasattr(phase, field):
                 setattr(phase, field, value)
 
-        phase.updated_at = datetime.utcnow()
+        phase.updated_at = datetime.now(timezone.utc)
         self.db.flush()
         return phase
 
@@ -416,7 +416,7 @@ class ProjectMilestoneRepository:
         if tenant_id:
             query = query.filter(ProjectMilestone.tenant_id == tenant_id)
 
-        return query.order_by(asc(ProjectMilestone.planned_date)).all()
+        return query.order_by(asc(ProjectMilestone.planned_date).all()
 
     def get_next_milestone_for_project(
         self, project_id: UUID
@@ -443,7 +443,7 @@ class ProjectMilestoneRepository:
         milestone.actual_date = date.today()
         if completion_notes:
             milestone.completion_notes = completion_notes
-        milestone.updated_at = datetime.utcnow()
+        milestone.updated_at = datetime.now(timezone.utc)
         self.db.flush()
 
 
@@ -490,7 +490,7 @@ class ProjectUpdateRepository:
             query = query.filter(ProjectUpdate.is_customer_visible == True)
 
         return (
-            query.order_by(desc(ProjectUpdate.created_at))
+            query.order_by(desc(ProjectUpdate.created_at)
             .offset(offset)
             .limit(limit)
             .all()
@@ -507,7 +507,7 @@ class ProjectUpdateRepository:
         if customer_visible_only:
             query = query.filter(ProjectUpdate.is_customer_visible == True)
 
-        return query.order_by(desc(ProjectUpdate.created_at)).first()
+        return query.order_by(desc(ProjectUpdate.created_at).first()
 
     def list_recent(
         self,
@@ -517,7 +517,7 @@ class ProjectUpdateRepository:
         limit: int = 50,
     ) -> List[ProjectUpdate]:
         """List recent updates."""
-        since_date = datetime.utcnow() - timedelta(days=days)
+        since_date = datetime.now(timezone.utc) - timedelta(days=days)
 
         query = self.db.query(ProjectUpdate).filter(
             ProjectUpdate.created_at >= since_date
@@ -531,10 +531,10 @@ class ProjectUpdateRepository:
                 InstallationProject.customer_id == customer_id
             )
 
-        return query.order_by(desc(ProjectUpdate.created_at)).limit(limit).all()
+        return query.order_by(desc(ProjectUpdate.created_at).limit(limit).all()
 
     def mark_customer_notified(self, update: ProjectUpdate):
         """Mark update as customer notified."""
         update.customer_notified = True
-        update.notification_sent_at = datetime.utcnow()
+        update.notification_sent_at = datetime.now(timezone.utc)
         self.db.flush()

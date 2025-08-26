@@ -192,7 +192,7 @@ class ChannelMigrationHelper:
                 "hardcoded webhook URLs -> Provider-based webhook management"
             ],
             "available_providers": global_channel_registry.list_active_providers(),
-            "supported_channel_types": list(global_channel_registry._active_providers.keys())
+            "supported_channel_types": list(global_channel_registry._active_providers.keys()
         }
     
     async def validate_migration_readiness(self) -> Dict[str, Any]:

@@ -8,12 +8,12 @@ import json
 import logging
 import asyncio
 from typing import Dict, Any, Optional, List, Union
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 import base64
-import hvac
+# hvac import removed - using OpenBao
 from pydantic import BaseModel, Field
 from enum import Enum
 
@@ -63,8 +63,15 @@ class SecretsManager:
     Supports OpenBao/Vault, local encrypted storage, and environment variables.
     """
 
-    def __init__(        ):
-            """Initialize operation."""
+    def __init__(
+        self,
+        backend: str = "local",
+        openbao_url: Optional[str] = None,
+        openbao_token: Optional[str] = None,
+        local_storage_path: str = "/tmp/secrets",
+        encryption_key: Optional[str] = None,
+    ):
+        """Initialize secrets manager."""
         self.backend = backend
         self.openbao_url = openbao_url or os.getenv(
             "OPENBAO_URL", "http://localhost:8200"
@@ -80,7 +87,7 @@ class SecretsManager:
             self._cipher = None
 
         # Initialize backend
-        self._vault_client = None
+        self._openbao_client = None
         self._initialize_backend()
 
     def _create_cipher(self, password: str) -> Fernet:
@@ -100,10 +107,10 @@ class SecretsManager:
         """Initialize the secrets backend."""
         if self.backend == "openbao" and self.openbao_token:
             try:
-                self._vault_client = hvac.Client(
+                self._openbao_client = OpenBaoClient(
                     url=self.openbao_url, token=self.openbao_token
                 )
-                if self._vault_client.is_authenticated():
+                if self._openbao_client.is_authenticated():
                     logger.info("OpenBao client initialized successfully")
                 else:
                     logger.warning(
@@ -157,7 +164,7 @@ class SecretsManager:
             )
 
         # Create metadata
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         metadata = SecretMetadata(
             secret_id=secret_id,
             secret_type=secret_type,
@@ -176,7 +183,7 @@ class SecretsManager:
         checksum = self._calculate_checksum(value)
 
         # Store based on backend
-        if self.backend == "openbao" and self._vault_client:
+        if self.backend == "openbao" and self._openbao_client:
             await self._store_secret_vault(secret_id, value, metadata, checksum)
         else:
             await self._store_secret_local(secret_id, value, metadata, checksum)
@@ -198,7 +205,7 @@ class SecretsManager:
         Returns:
             SecretValue if found, None otherwise
         """
-        if self.backend == "openbao" and self._vault_client:
+        if self.backend == "openbao" and self._openbao_client:
             return await self._get_secret_vault(secret_id)
         else:
             return await self._get_secret_local(secret_id)
@@ -227,7 +234,7 @@ class SecretsManager:
         Returns:
             List of SecretMetadata
         """
-        if self.backend == "openbao" and self._vault_client:
+        if self.backend == "openbao" and self._openbao_client:
             return await self._list_secrets_vault(
                 environment, service, secret_type, include_expired
             )
@@ -260,8 +267,8 @@ class SecretsManager:
 
         # Update secret
         metadata = secret.metadata
-        metadata.updated_at = datetime.utcnow()
-        metadata.last_rotated = datetime.utcnow()
+        metadata.updated_at = datetime.now(timezone.utc)
+        metadata.last_rotated = datetime.now(timezone.utc)
 
         # Store updated secret
         await self.store_secret(
@@ -289,7 +296,7 @@ class SecretsManager:
         Returns:
             True if deleted, False if not found
         """
-        if self.backend == "openbao" and self._vault_client:
+        if self.backend == "openbao" and self._openbao_client:
             result = await self._delete_secret_vault(secret_id)
         else:
             result = await self._delete_secret_local(secret_id)
@@ -318,8 +325,8 @@ class SecretsManager:
 
         try:
             # Check backend accessibility
-            if self.backend == "openbao" and self._vault_client:
-                health["backend_accessible"] = self._vault_client.is_authenticated()
+            if self.backend == "openbao" and self._openbao_client:
+                health["backend_accessible"] = self._openbao_client.is_authenticated()
             else:
                 health["backend_accessible"] = os.path.exists(self.local_storage_path)
 
@@ -327,7 +334,7 @@ class SecretsManager:
             all_secrets = await self.list_secrets(include_expired=True)
             health["secrets_count"] = len(all_secrets)
 
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             for secret in all_secrets:
                 # Check expiration
                 if secret.expires_at and secret.expires_at < now:
@@ -367,11 +374,11 @@ class SecretsManager:
         )
         secret_data = {
             "value": value,
-            "metadata": metadata.dict(),
+            "metadata": metadata.model_dump(),
             "checksum": checksum,
         }
 
-        self._vault_client.secrets.kv.v2.create_or_update_secret(
+        self._openbao_client.secrets.kv.v2.create_or_update_secret(
             path=secret_path, secret=secret_data
         )
 
@@ -388,7 +395,7 @@ class SecretsManager:
                 ]:  # Add more services as needed
                     secret_path = f"secret/dotmac/{env}/{service}/{secret_id}"
                     try:
-                        response = self._vault_client.secrets.kv.v2.read_secret_version(
+                        response = self._openbao_client.secrets.kv.v2.read_secret_version(
                             path=secret_path
                         )
                         secret_data = response["data"]["data"]
@@ -414,7 +421,7 @@ class SecretsManager:
 
         secret_data = {
             "value": self._encrypt_value(value) if self._cipher else value,
-            "metadata": metadata.dict(),
+            "metadata": metadata.model_dump(),
             "checksum": checksum,
         }
 
@@ -479,7 +486,7 @@ class SecretsManager:
                 if (
                     not include_expired
                     and metadata.expires_at
-                    and metadata.expires_at < datetime.utcnow()
+                    and metadata.expires_at < datetime.now(timezone.utc)
                 ):
                     continue
 

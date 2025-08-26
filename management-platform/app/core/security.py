@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from typing import Optional, Dict, Any, List
 
 from jose import jwt
+from jose.exceptions import JWTError
 from fastapi import HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from passlib.context import CryptContext
@@ -177,12 +178,12 @@ def create_access_token(
     expires_delta: Optional[timedelta] = None
 ) -> str:
     """Create JWT access token."""
-    to_encode = data.copy()
+    to_encode = data.model_copy()
     
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=settings.access_token_expire_minutes)
+        expire = datetime.now(timezone.utc) + timedelta(minutes=settings.access_token_expire_minutes)
     
     to_encode.update({"exp": expire, "type": "access"})
     
@@ -199,12 +200,12 @@ def create_refresh_token(
     expires_delta: Optional[timedelta] = None
 ) -> str:
     """Create JWT refresh token."""
-    to_encode = data.copy()
+    to_encode = data.model_copy()
     
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(days=settings.refresh_token_expire_days)
+        expire = datetime.now(timezone.utc) + timedelta(days=settings.refresh_token_expire_days)
     
     to_encode.update({"exp": expire, "type": "refresh"})
     
@@ -231,7 +232,7 @@ def decode_token(token: str) -> Dict[str, Any]:
             detail="Token has expired",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    except jwt.InvalidTokenError:
+    except JWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token",

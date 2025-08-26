@@ -8,8 +8,8 @@ from uuid import UUID
 import asyncio
 from collections import defaultdict
 
-from .base import BasePlugin, PluginType, PluginStatus, PluginError
-from .loader import PluginLoader
+from base import BasePlugin, PluginType, PluginStatus, PluginError
+from loader import PluginLoader
 
 logger = logging.getLogger(__name__)
 

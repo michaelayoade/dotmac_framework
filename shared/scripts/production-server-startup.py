@@ -220,7 +220,7 @@ class ProductionServerManager:
         """Check if a port is currently in use."""
         import socket
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            return s.connect_ex(('localhost', port)) == 0
+            return s.connect_ex(('localhost', port) == 0
     
     async def _stop_service_on_port(self, port: int):
         """Stop service running on specific port."""
@@ -315,7 +315,7 @@ class ProductionServerManager:
         ]
         
         # Set environment variables
-        env = os.environ.copy()
+        env = os.environ.model_copy()
         env.update({
             'ENVIRONMENT': 'production',
             'PORT': str(port),
@@ -367,7 +367,7 @@ class ProductionServerManager:
         ]
         
         # Set environment variables
-        env = os.environ.copy()
+        env = os.environ.model_copy()
         env.update({
             'NODE_ENV': 'production',
             'PORT': str(port),
@@ -580,7 +580,7 @@ http {
         try:
             # Test configuration
             test_result = await self._run_async_command([
-                "nginx", "-t", "-c", str(config_path.absolute())
+                "nginx", "-t", "-c", str(config_path.absolute()
             ])
             
             if test_result['returncode'] != 0:
@@ -588,13 +588,13 @@ http {
             
             # Start nginx
             start_result = await self._run_async_command([
-                "nginx", "-c", str(config_path.absolute())
+                "nginx", "-c", str(config_path.absolute()
             ])
             
             if start_result['returncode'] != 0:
                 # Try to reload if already running
                 reload_result = await self._run_async_command([
-                    "nginx", "-s", "reload", "-c", str(config_path.absolute())
+                    "nginx", "-s", "reload", "-c", str(config_path.absolute()
                 ])
                 
                 if reload_result['returncode'] != 0:
@@ -845,7 +845,7 @@ async def main():
         await asyncio.sleep(30)  # Check every 30 seconds
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(main()
 '''
     
     async def _start_health_monitoring(self):
@@ -1040,7 +1040,7 @@ if __name__ == "__main__":
             f.write(report['deployment_status'])
         
         with open('.server-urls', 'w') as f:
-            f.write('\\n'.join(server_urls))
+            f.write('\\n'.join(server_urls)
         
         # Save full deployment report
         with open(f'deployment-logs/deployment-report-{datetime.now().strftime("%Y%m%d-%H%M%S")}.json', 'w') as f:
@@ -1157,4 +1157,4 @@ async def main():
         sys.exit(1)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(main()

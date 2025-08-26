@@ -19,7 +19,7 @@ import shutil
 import subprocess
 import tarfile
 import tempfile
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Any
 import json
@@ -125,7 +125,7 @@ class DatabaseBackup:
     async def create_backup(self, backup_dir: str, tenant_id: Optional[str] = None) -> List[str]:
         """Create database backup with optional tenant filtering."""
         backup_files = []
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         
         try:
             for database in self.databases:
@@ -235,7 +235,7 @@ class ConfigurationBackup:
     
     async def create_backup(self, backup_dir: str) -> str:
         """Create configuration backup."""
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         backup_file = os.path.join(backup_dir, f"config_backup_{timestamp}.tar.gz")
         
         try:
@@ -253,7 +253,7 @@ class ConfigurationBackup:
                 
                 for compose_file in compose_files:
                     if os.path.exists(compose_file):
-                        tar.add(compose_file, arcname=os.path.basename(compose_file))
+                        tar.add(compose_file, arcname=os.path.basename(compose_file)
                         logger.info(f"Added {compose_file} to configuration backup")
                 
                 # Add environment files
@@ -264,7 +264,7 @@ class ConfigurationBackup:
                 
                 for env_file in env_files:
                     if os.path.exists(env_file):
-                        tar.add(env_file, arcname=os.path.basename(env_file))
+                        tar.add(env_file, arcname=os.path.basename(env_file)
                         logger.info(f"Added {env_file} to configuration backup")
             
             file_size = os.path.getsize(backup_file)
@@ -277,7 +277,7 @@ class ConfigurationBackup:
     
     async def backup_plugin_states(self, backup_dir: str) -> str:
         """Backup plugin configurations and states."""
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         plugin_backup_file = os.path.join(backup_dir, f"plugin_states_{timestamp}.json")
         
         try:
@@ -291,7 +291,7 @@ class ConfigurationBackup:
             # Connect to Redis to get plugin states
             redis_client = redis.Redis(
                 host=os.getenv("REDIS_HOST", "localhost"),
-                port=int(os.getenv("REDIS_PORT", "6379")),
+                port=int(os.getenv("REDIS_PORT", "6379"),
                 password=os.getenv("REDIS_PASSWORD"),
                 decode_responses=True
             )
@@ -333,7 +333,7 @@ class ContainerBackup:
     async def backup_images(self, backup_dir: str, image_tags: List[str]) -> List[str]:
         """Backup Docker images."""
         backup_files = []
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         
         try:
             for image_tag in image_tags:
@@ -369,7 +369,7 @@ class ContainerBackup:
     async def backup_volumes(self, backup_dir: str, volume_names: List[str]) -> List[str]:
         """Backup Docker volumes."""
         backup_files = []
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         
         try:
             for volume_name in volume_names:
@@ -490,10 +490,10 @@ class DisasterRecoveryManager:
     def __init__(self, config_file: str = "/etc/dotmac/backup-config.yml"):
         self.config = self._load_config(config_file)
         self.encryption = BackupEncryption()
-        self.db_backup = DatabaseBackup(self.config.get("database", {}))
-        self.config_backup = ConfigurationBackup(self.config.get("config_dirs", []))
+        self.db_backup = DatabaseBackup(self.config.get("database", {})
+        self.config_backup = ConfigurationBackup(self.config.get("config_dirs", [])
         self.container_backup = ContainerBackup()
-        self.cloud_storage = CloudStorageUpload(self.config.get("cloud_provider", "aws"))
+        self.cloud_storage = CloudStorageUpload(self.config.get("cloud_provider", "aws")
     
     def _load_config(self, config_file: str) -> Dict[str, Any]:
         """Load backup configuration."""
@@ -536,7 +536,7 @@ class DisasterRecoveryManager:
     
     async def create_full_backup(self, backup_type: str = "scheduled") -> Dict[str, Any]:
         """Create a complete system backup."""
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         backup_id = f"backup_{backup_type}_{timestamp}"
         
         # Create backup directory
@@ -644,7 +644,7 @@ class DisasterRecoveryManager:
                 json.dump(backup_manifest, f, indent=2, default=str)
             
             backup_size = sum(
-                os.path.getsize(os.path.join(root, file))
+                os.path.getsize(os.path.join(root, file)
                 for root, dirs, files in os.walk(backup_dir)
                 for file in files
             )
@@ -672,7 +672,7 @@ class DisasterRecoveryManager:
             with open(manifest_file, 'r') as f:
                 manifest = json.load(f)
             
-            components = components or list(manifest["components"].keys())
+            components = components or list(manifest["components"].keys()
             
             for component in components:
                 logger.info(f"Restoring component: {component}")
@@ -734,7 +734,7 @@ class DisasterRecoveryManager:
         """Remove backups older than retention period."""
         try:
             retention_days = self.config.get("backup_retention_days", 30)
-            cutoff_date = datetime.now() - timedelta(days=retention_days)
+            cutoff_date = datetime.now(timezone.utc) - timedelta(days=retention_days)
             
             backup_root = "/var/backups/dotmac"
             if not os.path.exists(backup_root):
@@ -782,7 +782,7 @@ class DisasterRecoveryManager:
                 
                 if os.path.exists(file_path):
                     with open(file_path, 'rb') as f:
-                        actual_checksum = hashlib.sha256(f.read()).hexdigest()
+                        actual_checksum = hashlib.sha256(f.read().hexdigest()
                     
                     if actual_checksum == expected_checksum:
                         logger.debug(f"Checksum verified: {filename}")
@@ -845,11 +845,11 @@ async def main():
             backup_root = "/var/backups/dotmac"
             if os.path.exists(backup_root):
                 backups = []
-                for backup_dir in sorted(os.listdir(backup_root)):
+                for backup_dir in sorted(os.listdir(backup_root):
                     backup_path = os.path.join(backup_root, backup_dir)
                     if os.path.isdir(backup_path):
                         size = sum(
-                            os.path.getsize(os.path.join(root, file))
+                            os.path.getsize(os.path.join(root, file)
                             for root, dirs, files in os.walk(backup_path)
                             for file in files
                         )
@@ -869,4 +869,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    exit(asyncio.run(main()))
+    exit(asyncio.run(main())

@@ -111,8 +111,8 @@ class BillingCalculator:
         charge_breakdown = []
         
         for tier in tiers:
-            tier_limit = Decimal(str(tier['limit_gb'])) if tier['limit_gb'] is not None else None
-            tier_rate = Decimal(str(tier['rate_per_gb']))
+            tier_limit = Decimal(str(tier['limit_gb']) if tier['limit_gb'] is not None else None
+            tier_rate = Decimal(str(tier['rate_per_gb'])
             
             if remaining_usage <= 0:
                 break
@@ -240,9 +240,9 @@ class TestBillingPropertiesAI:
         calculator = BillingCalculator()
         
         # Extract data from AI generator
-        usage_gb = Decimal(str(billing_data['usage_gb']))
-        rate_per_gb = Decimal(str(billing_data['rate_per_gb']))
-        tax_rate = Decimal(str(billing_data['tax_rate']))
+        usage_gb = Decimal(str(billing_data['usage_gb'])
+        rate_per_gb = Decimal(str(billing_data['rate_per_gb'])
+        tax_rate = Decimal(str(billing_data['tax_rate'])
         
         # Test usage charge calculation
         usage_charge = calculator.calculate_usage_charge(usage_gb, rate_per_gb)
@@ -289,7 +289,7 @@ class TestBillingPropertiesAI:
         assert result['base_charge'] == monthly_cost
         
         # PROPERTY 2: Tax must be calculated correctly
-        expected_tax = (monthly_cost * Decimal('0.08')).quantize(Decimal('0.01'))
+        expected_tax = (monthly_cost * Decimal('0.08').quantize(Decimal('0.01')
         assert result['tax_amount'] == expected_tax
         
         # PROPERTY 3: Total = base + tax
@@ -336,7 +336,7 @@ class TestBillingWorkflowsBehavior:
         
         # Calculate total bill
         subtotal = total_service_charges + total_usage_charges
-        tax = (subtotal * Decimal('0.08')).quantize(Decimal('0.01'))
+        tax = (subtotal * Decimal('0.08').quantize(Decimal('0.01')
         total_bill = subtotal + tax
         
         # BEHAVIOR ASSERTIONS
@@ -387,7 +387,7 @@ if __name__ == "__main__":
     calculator = BillingCalculator()
     
     # Test basic calculation
-    result = calculator.calculate_usage_charge(Decimal('100.0'), Decimal('0.10'))
+    result = calculator.calculate_usage_charge(Decimal('100.0'), Decimal('0.10')
 logger.info(f"Usage charge test: {result}")
     assert result == Decimal('10.000000')
     

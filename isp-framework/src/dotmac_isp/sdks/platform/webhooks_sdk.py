@@ -39,9 +39,7 @@ logger = logging.getLogger(__name__)
 class WebhooksSDKConfig:
     """Webhooks SDK configuration."""
 
-    def __init__(  # noqa: PLR0913
-        """  Init   operation."""
-        self,
+    def __init__(self, # noqa: PLR0913
         max_webhooks_per_tenant: int = 100,
         max_delivery_attempts: int = 10,
         default_timeout_seconds: int = 30,
@@ -264,7 +262,7 @@ class WebhooksSDK:
     ) -> Webhook | None:
         """Get webhook by ID."""
         tenant_webhooks = self._webhooks.get(str(tenant_id), {})
-        return tenant_webhooks.get(str(webhook_id))
+        return tenant_webhooks.get(str(webhook_id)
 
     async def list_webhooks(
         self,
@@ -274,7 +272,7 @@ class WebhooksSDK:
         """List webhooks with filtering."""
         try:
             tenant_webhooks = self._webhooks.get(str(query.tenant_id), {})
-            webhooks = list(tenant_webhooks.values())
+            webhooks = list(tenant_webhooks.values()
 
             # Apply filters
             if query.webhook_ids:
@@ -385,7 +383,7 @@ class WebhooksSDK:
         """Get webhook delivery history."""
         try:
             tenant_deliveries = self._deliveries.get(str(query.tenant_id), [])
-            deliveries = tenant_deliveries.copy()
+            deliveries = tenant_deliveries.model_copy()
 
             # Apply filters
             if query.webhook_id:
@@ -434,7 +432,7 @@ class WebhooksSDK:
 
             if webhook_id:
                 # Single webhook stats
-                webhook = tenant_webhooks.get(str(webhook_id))
+                webhook = tenant_webhooks.get(str(webhook_id)
                 if not webhook:
                     raise ValueError(f"Webhook {webhook_id} not found")
 
@@ -610,7 +608,7 @@ class WebhooksSDK:
     async def health_check(self) -> WebhookHealthCheck:
         """Perform health check."""
         try:
-            total_webhooks = sum(len(webhooks) for webhooks in self._webhooks.values())
+            total_webhooks = sum(len(webhooks) for webhooks in self._webhooks.values()
             active_webhooks = sum(
                 sum(1 for w in webhooks.values() if w.status == WebhookStatus.ACTIVE)
                 for webhooks in self._webhooks.values()
@@ -655,16 +653,16 @@ class WebhooksSDK:
                 if hasattr(d.status, 'value') and 'success' in d.status.value.lower()
             ])
             delivery_success_rate = (
-                (successful_recent / len(recent_deliveries)) * 100
+                (successful_recent / len(recent_deliveries) * 100
                 if recent_deliveries else 95.0
             )
             
             # Calculate error rates
             webhook_error_rate = (
-                (failed_webhooks / max(total_webhooks, 1)) * 100
+                (failed_webhooks / max(total_webhooks, 1) * 100
             )
             delivery_error_rate = (
-                (failed_deliveries_last_hour / max(len(recent_deliveries), 1)) * 100
+                (failed_deliveries_last_hour / max(len(recent_deliveries), 1) * 100
             )
 
             return WebhookHealthCheck(
@@ -815,7 +813,7 @@ class WebhooksSDK:
     ) -> Webhook | None:
         """Get webhook for delivery."""
         tenant_webhooks = self._webhooks.get(str(payload.tenant_id), {})
-        return tenant_webhooks.get(str(payload.webhook_id))
+        return tenant_webhooks.get(str(payload.webhook_id)
 
     async def _attempt_delivery(
         self, payload: WebhookPayload, webhook: Webhook
@@ -826,14 +824,14 @@ class WebhooksSDK:
 
         try:
             # Prepare request
-            headers = webhook.headers.copy()
+            headers = webhook.headers.model_copy()
             headers["Content-Type"] = "application/json"
             headers["User-Agent"] = "dotmac-webhooks/1.0"
             headers["X-Webhook-Event"] = payload.event.value
             headers["X-Webhook-Delivery"] = str(delivery_id)
 
             # Add security headers
-            request_body = json.dumps(payload.model_dump(mode="json"))
+            request_body = json.dumps(payload.model_dump(mode="json")
             if webhook.security:
                 await self._add_security_headers(
                     headers, request_body, webhook.security
@@ -963,7 +961,7 @@ class WebhooksSDK:
 
         delay = min(
             webhook.retry_config.initial_delay_seconds
-            * (webhook.retry_config.backoff_multiplier ** (payload.attempt - 1)),
+            * (webhook.retry_config.backoff_multiplier ** (payload.attempt - 1),
             webhook.retry_config.max_delay_seconds,
         )
 
@@ -972,7 +970,7 @@ class WebhooksSDK:
         payload.delivery_id = None
 
         # Schedule retry (simplified - in production, use a proper scheduler)
-        asyncio.create_task(self._delayed_retry(payload, delay))
+        asyncio.create_task(self._delayed_retry(payload, delay)
 
     async def _delayed_retry(self, payload: WebhookPayload, delay: float):
         """Delayed retry task."""

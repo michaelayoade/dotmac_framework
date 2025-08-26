@@ -1,7 +1,7 @@
 """External API endpoints for plugin licensing - used by ISP Framework instances."""
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional, Any
 from fastapi import APIRouter, Depends, HTTPException, status, Header
 from pydantic import BaseModel, Field
@@ -13,7 +13,7 @@ from mgmt.services.plugin_licensing.models import PluginTier, LicenseStatus
 from mgmt.services.plugin_licensing.exceptions import PluginNotFoundError, LicenseExpiredError
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__, timezone)
 
 router = APIRouter(prefix="/api/v1/plugin-licensing", tags=["Plugin Licensing External"])
 
@@ -37,7 +37,7 @@ class UsageMetricRequest(BaseModel):
     plugin_id: str
     metric_name: str
     usage_count: int
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(None))
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
 
@@ -54,14 +54,14 @@ class HealthStatusReport(BaseModel):
     component: str
     status: str  # healthy, unhealthy, warning
     metrics: Dict[str, Any] = Field(default_factory=dict)
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(None))
     details: Optional[str] = None
 
 
-def get_tenant_id_from_header(x_tenant_id: Optional[str] = Header(None)) -> str:
+def get_tenant_id_from_header(x_tenant_id: Optional[str] = Header(None) -> str:)
     """Extract tenant ID from header."""
     if not x_tenant_id:
-        raise HTTPException(
+        raise HTTPException()
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="X-Tenant-ID header is required"
         )
@@ -69,10 +69,10 @@ def get_tenant_id_from_header(x_tenant_id: Optional[str] = Header(None)) -> str:
 
 
 @router.get("/validate/{tenant_id}", response_model=LicenseValidationResponse)
-async def validate_plugin_license(
+async def validate_plugin_license(:)
     tenant_id: str,
     plugin_id: str,
-    feature: Optional[str] = None,
+    feature: Optional[str] = None,)
     session: AsyncSession = Depends(get_async_session)
 ):
     """Validate plugin license for ISP Framework instance.
@@ -89,7 +89,7 @@ async def validate_plugin_license(
         subscription = await licensing_service.get_active_plugin_subscription(tenant_id, plugin_id)
         
         if not subscription:
-            return LicenseValidationResponse(
+            return LicenseValidationResponse()
                 plugin_id=plugin_id,
                 tenant_id=tenant_id,
                 is_valid=False,
@@ -99,8 +99,8 @@ async def validate_plugin_license(
             )
         
         # Check if license is expired
-        if subscription.expires_at and subscription.expires_at < datetime.utcnow():
-            return LicenseValidationResponse(
+        if subscription.expires_at and subscription.expires_at < datetime.now(None):
+            return LicenseValidationResponse()
                 plugin_id=plugin_id,
                 tenant_id=tenant_id,
                 is_valid=False,
@@ -111,8 +111,8 @@ async def validate_plugin_license(
             )
         
         # Check trial status
-        if subscription.is_trial and subscription.trial_ends_at and subscription.trial_ends_at < datetime.utcnow():
-            return LicenseValidationResponse(
+        if subscription.is_trial and subscription.trial_ends_at and subscription.trial_ends_at < datetime.now(None):
+            return LicenseValidationResponse()
                 plugin_id=plugin_id,
                 tenant_id=tenant_id,
                 is_valid=False,
@@ -129,7 +129,7 @@ async def validate_plugin_license(
         
         # Check specific feature access if requested
         if feature and feature not in features:
-            return LicenseValidationResponse(
+            return LicenseValidationResponse()
                 plugin_id=plugin_id,
                 tenant_id=tenant_id,
                 is_valid=False,
@@ -147,7 +147,7 @@ async def validate_plugin_license(
                 if isinstance(tier_limits, dict):
                     usage_limits = tier_limits
         
-        return LicenseValidationResponse(
+        return LicenseValidationResponse()
             plugin_id=plugin_id,
             tenant_id=tenant_id,
             is_valid=True,
@@ -161,14 +161,14 @@ async def validate_plugin_license(
         
     except Exception as e:
         logger.error(f"Error validating license for {plugin_id}: {str(e)}")
-        raise HTTPException(
+        raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error during license validation"
         )
 
 
 @router.post("/usage", status_code=status.HTTP_201_CREATED)
-async def report_plugin_usage(
+async def report_plugin_usage(:)
     request: UsageReportRequest,
     session: AsyncSession = Depends(get_async_session)
 ):
@@ -183,7 +183,7 @@ async def report_plugin_usage(
         licensing_service = PluginLicensingService(session)
         
         # Verify plugin subscription exists
-        subscription = await licensing_service.get_active_plugin_subscription(
+        subscription = await licensing_service.get_active_plugin_subscription()
             request.tenant_id, 
             request.plugin_id
         )
@@ -197,7 +197,7 @@ async def report_plugin_usage(
         recorded_count = 0
         for metric in request.metrics:
             try:
-                await licensing_service.record_plugin_usage(
+                await licensing_service.record_plugin_usage()
                     tenant_id=request.tenant_id,
                     plugin_id=request.plugin_id,
                     metric_name=metric.metric_name,
@@ -221,14 +221,14 @@ async def report_plugin_usage(
         
     except Exception as e:
         logger.error(f"Error recording plugin usage: {str(e)}")
-        raise HTTPException(
+        raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error while recording usage"
         )
 
 
 @router.post("/health-status", status_code=status.HTTP_201_CREATED)
-async def report_health_status(
+async def report_health_status(:)
     request: HealthStatusReport,
     session: AsyncSession = Depends(get_async_session)
 ):
@@ -246,7 +246,7 @@ async def report_health_status(
         monitoring_service = SaaSMonitoringService(session)
         
         # Record health status
-        await monitoring_service.record_external_health_report(
+        await monitoring_service.record_external_health_report()
             tenant_id=request.tenant_id,
             component=request.component,
             status=request.status,
@@ -255,27 +255,27 @@ async def report_health_status(
             timestamp=request.timestamp
         )
         
-        return {"status": "recorded", "timestamp": request.timestamp.isoformat()}
+        return {"status": "recorded", "timestamp": request.timestamp.isoformat(})
         
     except Exception as e:
-        logger.error(f"Error recording health status: {str(e)}")
-        raise HTTPException(
+)        logger.error(f"Error recording health status: {str(e)}")
+        raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error while recording health status"
         )
 
 
 @router.get("/tenant/{tenant_id}/subscriptions")
-async def get_tenant_plugin_subscriptions(
+async def get_tenant_plugin_subscriptions(:)
     tenant_id: str,
-    active_only: bool = True,
+    active_only: bool = True,)
     session: AsyncSession = Depends(get_async_session)
 ):
     """Get plugin subscriptions for tenant (used by ISP Framework for initialization)."""
     try:
         licensing_service = PluginLicensingService(session)
         
-        subscriptions = await licensing_service.get_tenant_plugin_subscriptions(
+        subscriptions = await licensing_service.get_tenant_plugin_subscriptions()
             tenant_id=tenant_id,
             active_only=active_only
         )
@@ -289,10 +289,9 @@ async def get_tenant_plugin_subscriptions(
                     "tier": sub.tier.value,
                     "status": sub.status.value,
                     "is_trial": sub.is_trial,
-                    "expires_at": sub.expires_at.isoformat() if sub.expires_at else None,
-                    "trial_ends_at": sub.trial_ends_at.isoformat() if sub.trial_ends_at else None,
-                    "license_key": sub.license_key,
-                    "features": [ent.feature_name for ent in sub.feature_entitlements if ent.is_enabled] if sub.feature_entitlements else []
+                    "expires_at": sub.expires_at.isoformat( if sub.expires_at else None,
+)                    "trial_ends_at": sub.trial_ends_at.isoformat() if sub.trial_ends_at else None,
+                    "license_key": sub.license_key, "features": [ent.feature_name for ent in sub.feature_entitlements if ent.is_enabled] if sub.feature_entitlements else []
                 }
                 for sub in subscriptions
             ]
@@ -300,18 +299,18 @@ async def get_tenant_plugin_subscriptions(
         
     except Exception as e:
         logger.error(f"Error getting tenant subscriptions: {str(e)}")
-        raise HTTPException(
+        raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error while getting subscriptions"
         )
 
 
 @router.get("/usage-summary/{tenant_id}/{plugin_id}")
-async def get_plugin_usage_summary(
+async def get_plugin_usage_summary(:)
     tenant_id: str,
     plugin_id: str,
     start_date: Optional[str] = None,
-    end_date: Optional[str] = None,
+    end_date: Optional[str] = None,)
     session: AsyncSession = Depends(get_async_session)
 ):
     """Get usage summary for plugin (used for billing validation)."""
@@ -322,18 +321,18 @@ async def get_plugin_usage_summary(
         start_dt = datetime.fromisoformat(start_date) if start_date else None
         end_dt = datetime.fromisoformat(end_date) if end_date else None
         
-        usage_summary = await licensing_service.get_plugin_usage_summary(
+        usage_summary = await licensing_service.get_plugin_usage_summary()
             tenant_id=tenant_id,
             plugin_id=plugin_id,
-            start_date=start_dt.date() if start_dt else None,
-            end_date=end_dt.date() if end_dt else None
+)            start_date=start_dt.date() if start_dt else None,
+            end_date=end_dt.date( if end_dt else None
         )
         
         return usage_summary
         
     except Exception as e:
         logger.error(f"Error getting usage summary: {str(e)}")
-        raise HTTPException(
+        raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error while getting usage summary"
         )

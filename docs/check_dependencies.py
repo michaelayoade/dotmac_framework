@@ -18,7 +18,7 @@ def find_imports_in_file(file_path: Path) -> Set[str]:
         with open(file_path, 'r', encoding='utf-8') as f:
             content = f.read()
         
-        tree = ast.parse(content, filename=str(file_path))
+        tree = ast.parse(content, filename=str(file_path)
         imports = set()
         
         for node in ast.walk(tree):
@@ -44,13 +44,13 @@ def scan_project_imports() -> Set[str]:
     isp_src = project_root / "isp-framework" / "src"
     if isp_src.exists():
         for py_file in isp_src.rglob("*.py"):
-            imports.update(find_imports_in_file(py_file))
+            imports.update(find_imports_in_file(py_file)
     
     # Scan management platform
     mgmt_src = project_root / "management-platform" / "app"
     if mgmt_src.exists():
         for py_file in mgmt_src.rglob("*.py"):
-            imports.update(find_imports_in_file(py_file))
+            imports.update(find_imports_in_file(py_file)
     
     return imports
 
@@ -146,7 +146,7 @@ def main():
     
     print(f"\n💡 Install command for missing critical packages:")
     if missing_critical:
-        print(f"  pip install {' '.join(sorted(missing_critical))}")
+        print(f"  pip install {' '.join(sorted(missing_critical)}")
 
 
 if __name__ == "__main__":

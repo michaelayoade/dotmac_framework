@@ -422,7 +422,7 @@ class PluginLoader:
 
     def get_load_statistics(self) -> Dict[str, Any]:
         """Get plugin loading statistics."""
-        return self.load_stats.copy()
+        return self.load_stats.model_copy()
 
     async def _security_check_file(self, file_path: str) -> None:
         """Perform security check on plugin file."""

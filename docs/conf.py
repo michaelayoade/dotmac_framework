@@ -8,10 +8,10 @@ import sys
 from datetime import datetime
 
 # Add project root to Python path
-sys.path.insert(0, os.path.abspath('../isp-framework/src'))
-sys.path.insert(0, os.path.abspath('../management-platform/app'))
-sys.path.insert(0, os.path.abspath('../shared'))
-sys.path.insert(0, os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath('../isp-framework/src')
+sys.path.insert(0, os.path.abspath('../management-platform/app')
+sys.path.insert(0, os.path.abspath('../shared')
+sys.path.insert(0, os.path.abspath('..')
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information

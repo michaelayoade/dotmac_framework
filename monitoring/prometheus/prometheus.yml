@@ -1,0 +1,137 @@
+# Prometheus Configuration for DotMac Framework
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'dotmac-framework'
+    environment: 'production'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+# Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
+rule_files:
+  - "alert_rules/*.yml"
+  - "recording_rules/*.yml"
+
+# Scrape configurations
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Node Exporter (system metrics)
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 5s
+    metrics_path: /metrics
+
+  # ISP Framework Application
+  - job_name: 'isp-framework'
+    static_configs:
+      - targets: ['isp-framework:8000']
+    scrape_interval: 10s
+    metrics_path: /metrics
+    honor_labels: true
+    params:
+      format: ['prometheus']
+
+  # Management Platform Application  
+  - job_name: 'management-platform'
+    static_configs:
+      - targets: ['management-platform:8000']
+    scrape_interval: 10s
+    metrics_path: /metrics
+    honor_labels: true
+    params:
+      format: ['prometheus']
+
+  # PostgreSQL Database
+  - job_name: 'postgresql'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+    scrape_interval: 15s
+
+  # Redis Cache
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+    scrape_interval: 15s
+
+  # OpenBao/Vault
+  - job_name: 'openbao'
+    static_configs:
+      - targets: ['openbao-shared:8200']
+    scrape_interval: 30s
+    metrics_path: /v1/sys/metrics
+    params:
+      format: ['prometheus']
+    bearer_token_file: '/etc/prometheus/vault-token'
+
+  # ClickHouse (SignOz backend)
+  - job_name: 'clickhouse'
+    static_configs:
+      - targets: ['clickhouse:9363']
+    scrape_interval: 15s
+
+  # SignOz Query Service
+  - job_name: 'signoz-query'
+    static_configs:
+      - targets: ['signoz-query:8080']
+    scrape_interval: 15s
+    metrics_path: /metrics
+
+  # Celery Workers
+  - job_name: 'celery-workers'
+    static_configs:
+      - targets: ['mgmt-celery-worker:8888']
+    scrape_interval: 15s
+    metrics_path: /metrics
+
+  # Frontend Applications (if metrics enabled)
+  - job_name: 'frontend-apps'
+    static_configs:
+      - targets: 
+          - 'master-admin-portal:3000'
+          - 'customer-portal:3000' 
+          - 'reseller-portal:3000'
+    scrape_interval: 30s
+    metrics_path: /api/metrics
+
+  # Docker Container Metrics (cAdvisor)
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    scrape_interval: 10s
+    metrics_path: /metrics
+
+  # Network Equipment (SNMP - for ISP operations)
+  - job_name: 'network-devices'
+    static_configs:
+      - targets:
+        - '192.168.1.1:161'  # Example router
+        - '192.168.1.2:161'  # Example switch
+    scrape_interval: 60s
+    metrics_path: /snmp
+    params:
+      module: [if_mib]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: snmp-exporter:9116
+
+# Remote write to long-term storage (optional)
+# remote_write:
+#   - url: "https://prometheus-remote-write-endpoint/api/v1/write"
+#     basic_auth:
+#       username: "your-username"
+#       password: "your-password"

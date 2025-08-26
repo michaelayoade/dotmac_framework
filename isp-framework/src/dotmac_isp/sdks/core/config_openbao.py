@@ -362,7 +362,7 @@ if __name__ == "__main__":
 
     # Display configuration (redacted)
     print("\n  Settings:")
-    for key, value in config.dict().items():
+    for key, value in config.model_dump().items():
         if any(s in key.lower() for s in ["secret", "key", "password", "token"]):
             print(f"    {key}: ***REDACTED***")
         else:

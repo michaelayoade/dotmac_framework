@@ -514,7 +514,7 @@ class PeakTrafficScenario(BaseAPIUser):
         ]
         
         endpoint = random.choice(endpoints)
-        self.client.get(endpoint, headers=self.auth.get_headers())
+        self.client.get(endpoint, headers=self.auth.get_headers()
 
 
 class DatabaseStressScenario(BaseAPIUser):
@@ -534,7 +534,7 @@ class DatabaseStressScenario(BaseAPIUser):
             "order": "desc"
         }
         
-        self.client.get("/api/v1/customers", params=params, headers=self.auth.get_headers())
+        self.client.get("/api/v1/customers", params=params, headers=self.auth.get_headers()
     
     @task(2)
     def large_dataset_export(self):
@@ -544,7 +544,7 @@ class DatabaseStressScenario(BaseAPIUser):
             "limit": 1000
         }
         
-        self.client.get("/api/v1/customers/export", params=params, headers=self.auth.get_headers())
+        self.client.get("/api/v1/customers/export", params=params, headers=self.auth.get_headers()
 
 
 # You can create different locust files for different scenarios:

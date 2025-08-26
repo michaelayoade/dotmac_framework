@@ -255,7 +255,7 @@ class UniversalEmailProvider(BaseChannelProvider):
             
             return DeliveryResult(
                 success=True,
-                provider_message_id=f"smtp_{int(time.time())}"
+                provider_message_id=f"smtp_{int(time.time()}"
             )
             
         except Exception as e:
@@ -299,7 +299,7 @@ class UniversalEmailProvider(BaseChannelProvider):
                 async with session.post(url, json=payload, headers=headers) as response:
                     if response.status == 202:
                         # SendGrid returns 202 for successful sends
-                        message_id = response.headers.get("X-Message-Id", f"sg_{int(time.time())}")
+                        message_id = response.headers.get("X-Message-Id", f"sg_{int(time.time()}")
                         return DeliveryResult(
                             success=True,
                             provider_message_id=message_id

@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field
 from dotmac_isp.core.enhanced_settings import get_settings
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__, timezone)
 
 
 class PluginLicenseStatus(BaseModel):
@@ -147,7 +147,7 @@ class ManagementPlatformClient:
             )
             response.raise_for_status()
 
-            data = response.json()
+            data = response.model_dump_json()
             return PluginLicenseStatus(**data)
 
         except HTTPStatusError as e:
@@ -207,7 +207,7 @@ class ManagementPlatformClient:
             payload = {
                 "tenant_id": self.tenant_id,
                 "plugin_id": plugin_id,
-                "metrics": [metric.dict() for metric in metrics],
+                "metrics": [metric.model_dump() for metric in metrics],
             }
 
             response = await self._client.post(
@@ -260,7 +260,7 @@ class ManagementPlatformClient:
             )
 
             response = await self._client.post(
-                "/api/v1/saas-monitoring/health-status", json=health_update.dict()
+                "/api/v1/saas-monitoring/health-status", json=health_update.model_dump()
             )
             response.raise_for_status()
 
@@ -299,11 +299,11 @@ class ManagementPlatformClient:
             )
 
             response = await self._client.post(
-                "/api/v1/config/validate", json=request.dict()
+                "/api/v1/config/validate", json=request.model_dump()
             )
             response.raise_for_status()
 
-            data = response.json()
+            data = response.model_dump_json()
             return ConfigValidationResponse(**data)
 
         except HTTPStatusError as e:
@@ -335,7 +335,7 @@ class ManagementPlatformClient:
             response = await self._client.get(f"/api/v1/config/tenant/{self.tenant_id}")
             response.raise_for_status()
 
-            return response.json()
+            return response.model_dump_json()
 
         except HTTPStatusError as e:
             logger.error(f"HTTP error getting tenant config: {e}")
@@ -367,7 +367,7 @@ class ManagementPlatformClient:
                 "tenant_id": self.tenant_id,
                 "config_version": config_version,
                 "success": success,
-                "applied_at": datetime.utcnow().isoformat(),
+                "applied_at": datetime.now(timezone.utc).isoformat(),
                 "errors": errors or [],
             }
 

@@ -18,6 +18,7 @@ from .repository import (
     AlertRuleRepository,
     MonitoringScheduleRepository,
 )
+from datetime import datetime, timezone
 from .models import (
     MonitoringProfile,
     SnmpDevice,
@@ -399,9 +400,9 @@ class NetworkMonitoringService:
     ) -> List[Dict[str, Any]]:
         """Get device metrics with optional filtering and aggregation."""
         if not start_time:
-            start_time = datetime.utcnow() - timedelta(hours=24)
+            start_time = datetime.now(timezone.utc) - timedelta(hours=24)
         if not end_time:
-            end_time = datetime.utcnow()
+            end_time = datetime.now(timezone.utc)
 
         device = self.device_repo.get_by_id(device_id)
         if not device:
@@ -423,7 +424,7 @@ class NetworkMonitoringService:
         else:
             # Get all metrics
             metrics = self.metric_repo.get_latest_metrics(device_id, None, 24)
-            unique_metrics = list(set(m.metric_name for m in metrics))
+            unique_metrics = list(set(m.metric_name for m in metrics)
 
             for metric_name in unique_metrics:
                 timeseries = self.metric_repo.get_metric_timeseries(
@@ -659,13 +660,13 @@ class AlertManagementService:
         # Get counts by status
         status_counts = {}
         for status in AlertStatus:
-            count = len(self.alert_repo.list_alerts(status=status, limit=10000))
+            count = len(self.alert_repo.list_alerts(status=status, limit=10000)
             status_counts[status.value] = count
 
         # Get counts by severity
         severity_counts = {}
         for severity in AlertSeverity:
-            count = len(self.alert_repo.list_alerts(severity=severity, limit=10000))
+            count = len(self.alert_repo.list_alerts(severity=severity, limit=10000)
             severity_counts[severity.value] = count
 
         # Get recent alerts
@@ -692,7 +693,7 @@ class AlertManagementService:
                 }
                 for alert in recent_alerts
             ],
-            "last_updated": datetime.utcnow().isoformat(),
+            "last_updated": datetime.now(timezone.utc).isoformat(),
         }
 
 
@@ -707,7 +708,7 @@ class NetworkMonitoringMainService:
         self.device_service = SnmpDeviceService(db, tenant_id)
         self.monitoring_service = NetworkMonitoringService(db, tenant_id)
         self.alert_service = AlertManagementService(db, tenant_id)
-        self.metric_repo = SnmpMetricRepository(db, UUID(tenant_id))
+        self.metric_repo = SnmpMetricRepository(db, UUID(tenant_id)
 
     async def setup_device_monitoring(
         self,
@@ -717,11 +718,11 @@ class NetworkMonitoringMainService:
         """Setup complete monitoring for a device."""
         # Create monitoring profile if provided
         if profile_data:
-            profile = await self.profile_service.create_profile(profile_data.dict())
+            profile = await self.profile_service.create_profile(profile_data.model_dump()
             device_data.monitoring_profile_id = profile.id
 
         # Add device to monitoring
-        device = await self.device_service.add_device(device_data.dict())
+        device = await self.device_service.add_device(device_data.model_dump()
 
         # Create default alert rules
         await self._create_default_alert_rules(device.monitoring_profile_id)
@@ -774,7 +775,7 @@ class NetworkMonitoringMainService:
                 if uptime_percentage > 95
                 else "degraded" if uptime_percentage > 80 else "critical"
             ),
-            "last_updated": datetime.utcnow().isoformat(),
+            "last_updated": datetime.now(timezone.utc).isoformat(),
         }
 
     async def _create_default_alert_rules(self, profile_id: UUID) -> List[AlertRule]:

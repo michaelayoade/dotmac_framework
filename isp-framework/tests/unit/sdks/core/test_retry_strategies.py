@@ -73,7 +73,7 @@ class TestRetryExecutors:
         policy.calculate_delay.return_value = 0.1
         
         # Mock function that always fails
-        func = Mock(side_effect=Exception("always fails"))
+        func = Mock(side_effect=Exception("always fails")
         
         executor = SyncRetryExecutor(policy)
         
@@ -91,7 +91,7 @@ class TestRetryExecutors:
         policy.should_retry.return_value = False  # Don't retry
         
         # Mock function that fails
-        func = Mock(side_effect=Exception("no retry"))
+        func = Mock(side_effect=Exception("no retry")
         
         executor = SyncRetryExecutor(policy)
         
@@ -264,7 +264,7 @@ class TestCircuitBreakerRetryExecutor:
         executor = CircuitBreakerRetryExecutor(policy, failure_threshold=2)
         
         # Mock failing function
-        func = Mock(side_effect=Exception("fail"))
+        func = Mock(side_effect=Exception("fail")
         
         # First failure
         with pytest.raises(Exception):
@@ -293,7 +293,7 @@ class TestCircuitBreakerRetryExecutor:
         )
         
         # Force circuit open
-        func_fail = Mock(side_effect=Exception("fail"))
+        func_fail = Mock(side_effect=Exception("fail")
         with pytest.raises(Exception):
             executor.execute_with_retry(func_fail)
         assert executor.circuit_open

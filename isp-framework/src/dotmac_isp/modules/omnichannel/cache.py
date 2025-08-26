@@ -9,7 +9,7 @@ import json
 from dotmac_isp.shared.cache import CacheManager
 from dotmac_isp.shared.exceptions import EntityNotFoundError
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__, timezone)
 
 
 class OmnichannelCache:
@@ -29,7 +29,7 @@ class OmnichannelCache:
         key = f"agent_status:{tenant_id}:{agent_id}"
 
         # Add timestamp to status data
-        status_data["cached_at"] = datetime.utcnow().isoformat()
+        status_data["cached_at"] = datetime.now(timezone.utc).isoformat()
         status_data["ttl"] = ttl
 
         success = self.cache.set(key, status_data, ttl=ttl, namespace=self.namespace)
@@ -81,7 +81,7 @@ class OmnichannelCache:
         # Add metadata
         cache_data = {
             "agents": agents,
-            "cached_at": datetime.utcnow().isoformat(),
+            "cached_at": datetime.now(timezone.utc).isoformat(),
             "team_id": team_id,
             "count": len(agents),
         }
@@ -121,7 +121,7 @@ class OmnichannelCache:
 
         cache_data = {
             "rules": rules,
-            "cached_at": datetime.utcnow().isoformat(),
+            "cached_at": datetime.now(timezone.utc).isoformat(),
             "count": len(rules),
         }
 
@@ -158,7 +158,7 @@ class OmnichannelCache:
         """Cache plugin health status."""
         key = f"plugin_health:{tenant_id}:{channel_id}"
 
-        health_data["cached_at"] = datetime.utcnow().isoformat()
+        health_data["cached_at"] = datetime.now(timezone.utc).isoformat()
 
         success = self.cache.set(key, health_data, ttl=ttl, namespace=self.namespace)
         if success:
@@ -229,7 +229,7 @@ class OmnichannelCache:
         """Cache interaction context for quick access."""
         key = f"interaction_context:{tenant_id}:{interaction_id}"
 
-        context_data["cached_at"] = datetime.utcnow().isoformat()
+        context_data["cached_at"] = datetime.now(timezone.utc).isoformat()
 
         success = self.cache.set(key, context_data, ttl=ttl, namespace=self.namespace)
         if success:
@@ -261,7 +261,7 @@ class OmnichannelCache:
         """Cache conversation thread data."""
         key = f"conversation_thread:{tenant_id}:{thread_id}"
 
-        thread_data["cached_at"] = datetime.utcnow().isoformat()
+        thread_data["cached_at"] = datetime.now(timezone.utc).isoformat()
 
         success = self.cache.set(key, thread_data, ttl=ttl, namespace=self.namespace)
         if success:
@@ -288,7 +288,7 @@ class OmnichannelCache:
 
         cache_data = {
             "threads": threads,
-            "cached_at": datetime.utcnow().isoformat(),
+            "cached_at": datetime.now(timezone.utc).isoformat(),
             "count": len(threads),
         }
 
@@ -325,7 +325,7 @@ class OmnichannelCache:
         """Cache dashboard statistics."""
         key = f"dashboard_stats:{tenant_id}"
 
-        stats["cached_at"] = datetime.utcnow().isoformat()
+        stats["cached_at"] = datetime.now(timezone.utc).isoformat()
 
         success = self.cache.set(key, stats, ttl=ttl, namespace=self.namespace)
         if success:
@@ -378,7 +378,7 @@ class OmnichannelCache:
                 "tenant_id": tenant_id,
                 "cache_entries": {},
                 "total_entries": 0,
-                "checked_at": datetime.utcnow().isoformat(),
+                "checked_at": datetime.now(timezone.utc).isoformat(),
             }
 
             for pattern in patterns_to_check:
@@ -401,7 +401,7 @@ class OmnichannelCache:
             return {
                 "tenant_id": tenant_id,
                 "error": str(e),
-                "checked_at": datetime.utcnow().isoformat(),
+                "checked_at": datetime.now(timezone.utc).isoformat(),
             }
 
     def clear_tenant_cache(self, tenant_id: str) -> int:

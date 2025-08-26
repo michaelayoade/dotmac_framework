@@ -1,6 +1,6 @@
 """Licensing management API endpoints."""
 
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 from typing import List, Optional, Dict, Any
 from uuid import uuid4
 from decimal import Decimal
@@ -32,32 +32,32 @@ router = APIRouter(prefix="/licensing", tags=["licensing"])
 
 def generate_license_number(vendor: str) -> str:
     """Generate a unique license number."""
-    timestamp = int(datetime.utcnow().timestamp())
+    timestamp = int(datetime.now(timezone.utc).timestamp())
     prefix = vendor[:3].upper()
     return f"{prefix}-LIC-{timestamp}"
 
 
 def generate_audit_id() -> str:
     """Generate a unique audit ID."""
-    timestamp = int(datetime.utcnow().timestamp())
+    timestamp = int(datetime.now(timezone.utc).timestamp())
     return f"AUDIT-{timestamp}"
 
 
 def generate_finding_id() -> str:
     """Generate a unique finding ID."""
-    timestamp = int(datetime.utcnow().timestamp())
+    timestamp = int(datetime.now(timezone.utc).timestamp())
     return f"FIND-{timestamp}"
 
 
 def generate_alert_id() -> str:
     """Generate a unique alert ID."""
-    timestamp = int(datetime.utcnow().timestamp())
+    timestamp = int(datetime.now(timezone.utc).timestamp())
     return f"ALERT-{timestamp}"
 
 
 def generate_installation_id() -> str:
     """Generate a unique installation ID."""
-    timestamp = int(datetime.utcnow().timestamp())
+    timestamp = int(datetime.now(timezone.utc).timestamp())
     return f"INST-{timestamp}"
 
 
@@ -287,7 +287,7 @@ async def update_license_status(
         license.compliance_status = compliance_status
     if notes:
         license.notes = notes
-    license.updated_at = datetime.utcnow()
+    license.updated_at = datetime.now(timezone.utc)
 
     db.commit()
     db.refresh(license)
@@ -742,7 +742,7 @@ async def acknowledge_alert(
 
     alert.acknowledged = True
     alert.acknowledged_by = acknowledged_by
-    alert.acknowledged_date = datetime.utcnow()
+    alert.acknowledged_date = datetime.now(timezone.utc)
 
     db.commit()
     db.refresh(alert)

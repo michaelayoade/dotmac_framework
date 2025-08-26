@@ -247,10 +247,10 @@ class LeadManagementService:
 
     def _is_lead_qualified(self, lead_data: Dict[str, Any]) -> bool:
         """Determine if lead is qualified based on BANT."""
-        has_budget = bool(lead_data.get("budget"))
-        has_authority = bool(lead_data.get("authority"))
-        has_need = bool(lead_data.get("need"))
-        has_timeline = bool(lead_data.get("timeline"))
+        has_budget = bool(lead_data.get("budget")
+        has_authority = bool(lead_data.get("authority")
+        has_need = bool(lead_data.get("need")
+        has_timeline = bool(lead_data.get("timeline")
 
         # Lead is qualified if it has at least 3 of 4 BANT criteria
         bant_score = sum([has_budget, has_authority, has_need, has_timeline])
@@ -264,7 +264,7 @@ class LeadManagementService:
             "description": f"Follow up on new lead from {lead.lead_source}",
             "activity_type": ActivityType.CALL,
             "assigned_to": lead.assigned_to or "unassigned",
-            "scheduled_date": datetime.utcnow() + timedelta(hours=24),  # Next day
+            "scheduled_date": datetime.now(timezone.utc) + timedelta(hours=24),  # Next day
         }
 
         return self.activity_repo.create(activity_data)
@@ -544,7 +544,7 @@ class OpportunityManagementService:
             "description": f"Initial discovery call for opportunity {opportunity.opportunity_name}",
             "activity_type": ActivityType.CALL,
             "assigned_to": opportunity.sales_owner,
-            "scheduled_date": datetime.utcnow() + timedelta(days=1),
+            "scheduled_date": datetime.now(timezone.utc) + timedelta(days=1),
         }
 
         return self.activity_repo.create(activity_data)
@@ -560,8 +560,8 @@ class OpportunityManagementService:
             "activity_type": ActivityType.OTHER,
             "activity_status": ActivityStatus.COMPLETED,
             "assigned_to": opportunity.sales_owner,
-            "scheduled_date": datetime.utcnow(),
-            "completed_date": datetime.utcnow(),
+            "scheduled_date": datetime.now(timezone.utc),
+            "completed_date": datetime.now(timezone.utc),
         }
 
         return self.activity_repo.create(activity_data)
@@ -583,7 +583,7 @@ class SalesActivityService:
             raise ValidationError("Either lead_id or opportunity_id must be provided")
 
         # Validate scheduled date
-        if activity_data["scheduled_date"] < datetime.utcnow():
+        if activity_data["scheduled_date"] < datetime.now(timezone.utc):
             raise ValidationError("Scheduled date cannot be in the past")
 
         return self.activity_repo.create(activity_data)
@@ -673,8 +673,8 @@ class SalesAnalyticsService:
         # Activity counts
         activities_today = len(
             self.activity_repo.list_activities(
-                date_from=datetime.combine(today, datetime.min.time()),
-                date_to=datetime.combine(today, datetime.max.time()),
+                date_from=datetime.combine(today, datetime.min.time(),
+                date_to=datetime.combine(today, datetime.max.time(),
                 limit=1000,
             )
         )
@@ -688,7 +688,7 @@ class SalesAnalyticsService:
             self.lead_repo.list_leads(created_from=today, created_to=today, limit=1000)
         )
 
-        follow_up_leads = len(self.lead_repo.get_leads_for_follow_up())
+        follow_up_leads = len(self.lead_repo.get_leads_for_follow_up()
 
         return {
             "current_month": monthly_metrics,
@@ -703,7 +703,7 @@ class SalesAnalyticsService:
                 "new_today": new_leads_today,
                 "pending_follow_up": follow_up_leads,
             },
-            "last_updated": datetime.utcnow().isoformat(),
+            "last_updated": datetime.now(timezone.utc).isoformat(),
         }
 
     async def get_sales_performance(
@@ -787,12 +787,12 @@ class SalesMainService:
     ) -> Tuple[Lead, Optional[SalesActivity]]:
         """Create lead with optional initial activity."""
         # Create lead
-        lead = await self.lead_service.create_lead(lead_data.dict())
+        lead = await self.lead_service.create_lead(lead_data.model_dump()
 
         # Create custom activity if provided
         activity = None
         if initial_activity:
-            activity_data = initial_activity.dict()
+            activity_data = initial_activity.model_dump()
             activity_data["lead_id"] = lead.id
             activity = await self.activity_service.create_activity(activity_data)
 
@@ -818,8 +818,8 @@ class SalesMainService:
             "activity_type": ActivityType.OTHER,
             "activity_status": ActivityStatus.COMPLETED,
             "assigned_to": opportunity.sales_owner,
-            "scheduled_date": datetime.utcnow(),
-            "completed_date": datetime.utcnow(),
+            "scheduled_date": datetime.now(timezone.utc),
+            "completed_date": datetime.now(timezone.utc),
             "outcome": "won" if is_won else "lost",
             "outcome_description": close_data.get("notes"),
         }

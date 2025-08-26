@@ -161,7 +161,7 @@ class AutomatedRemediationSystem:
         if not category_history:
             return 0.5
         
-        successful_fixes = sum(1 for entry in category_history if entry.get('success', False))
+        successful_fixes = sum(1 for entry in category_history if entry.get('success', False)
         return successful_fixes / len(category_history)
     
     async def _create_backup(self):
@@ -293,7 +293,7 @@ class AutomatedRemediationSystem:
                     'team': fix_detail.get('assigned_team', 'Development Team')
                 })
         
-        return sorted(recommendations, key=lambda x: {'CRITICAL': 0, 'HIGH': 1, 'MEDIUM': 2, 'LOW': 3}.get(x['priority'], 4))
+        return sorted(recommendations, key=lambda x: {'CRITICAL': 0, 'HIGH': 1, 'MEDIUM': 2, 'LOW': 3}.get(x['priority'], 4)
     
     def _save_remediation_outputs(self, report: Dict[str, Any]):
         """Save remediation outputs for GitHub Actions."""
@@ -304,11 +304,11 @@ class AutomatedRemediationSystem:
         
         # Save number of fixes applied
         with open('.fixes-applied', 'w') as f:
-            f.write(str(report['fixes_successful']))
+            f.write(str(report['fixes_successful'])
         
         # Save rerun needed status
         with open('.rerun-needed', 'w') as f:
-            f.write(str(report['rerun_needed']).lower())
+            f.write(str(report['rerun_needed']).lower()
         
         # Save full remediation report
         with open(f'remediation-reports/remediation-{datetime.now().strftime("%Y%m%d-%H%M%S")}.json', 'w') as f:
@@ -807,4 +807,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(main()

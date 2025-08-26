@@ -156,7 +156,7 @@ class AIDeploymentValidator:
             
             # Test with real database URL structure but isolated DB
             base_url = get_database_url()
-            test_db_name = f"dotmac_test_{int(time.time())}"
+            test_db_name = f"dotmac_test_{int(time.time()}"
             
             if "postgresql" in base_url:
                 # Create test database
@@ -164,7 +164,7 @@ class AIDeploymentValidator:
                 admin_engine = create_async_engine(admin_url)
                 
                 async with admin_engine.begin() as conn:
-                    await conn.execute(text(f"CREATE DATABASE {test_db_name}"))
+                    await conn.execute(text(f"CREATE DATABASE {test_db_name}")
                 
                 self.test_database_url = base_url.rsplit('/', 1)[0] + f"/{test_db_name}"
             else:
@@ -187,15 +187,15 @@ class AIDeploymentValidator:
             
             async with async_session() as session:
                 # Test basic database connectivity
-                result = await session.execute(text("SELECT 1"))
+                result = await session.execute(text("SELECT 1")
                 assert result.scalar() == 1
                 
                 # Test that critical tables exist
                 from dotmac_isp.modules.identity.models import User, Customer
                 
                 # This will fail if models don't match DB schema
-                await session.execute(text("SELECT COUNT(*) FROM users"))
-                await session.execute(text("SELECT COUNT(*) FROM customers"))
+                await session.execute(text("SELECT COUNT(*) FROM users")
+                await session.execute(text("SELECT COUNT(*) FROM customers")
             
             self.report.database_integrity = True
             
@@ -209,7 +209,7 @@ class AIDeploymentValidator:
                 try:
                     admin_engine = create_async_engine(admin_url)
                     async with admin_engine.begin() as conn:
-                        await conn.execute(text(f"DROP DATABASE IF EXISTS {test_db_name}"))
+                        await conn.execute(text(f"DROP DATABASE IF EXISTS {test_db_name}")
                 except:
                     pass  # Best effort cleanup
     
@@ -462,7 +462,7 @@ class TestAIPropertyValidation:
     """AI-guided property-based testing for edge cases."""
     
     @given(
-        username=st.text(min_size=1, max_size=50).filter(lambda x: x.strip()),
+        username=st.text(min_size=1, max_size=50).filter(lambda x: x.strip(),
         email=st.emails(),
         tenant_data=st.dictionaries(
             keys=st.text(min_size=1, max_size=20),

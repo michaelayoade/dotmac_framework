@@ -1,0 +1,54 @@
+# DotMac Framework Code Owners
+# This file defines who should review code in different parts of the repository
+
+# Global fallback - all files require review
+* @dotmac-admin
+
+# Platform-specific ownership
+/isp-framework/ @isp-framework-team
+/management-platform/ @management-platform-team
+/shared/ @platform-architecture-team
+
+# Infrastructure and deployment
+/docker-compose*.yml @devops-team @platform-architecture-team
+/scripts/ @devops-team @qa-team
+/.github/ @devops-team @platform-architecture-team
+
+# Critical configuration files require admin review
+docker-compose*.yml @dotmac-admin
+.github/workflows/ @dotmac-admin
+*/requirements*.txt @dotmac-admin
+*/alembic/ @database-team @dotmac-admin
+*/migrations/ @database-team @dotmac-admin
+
+# Security-sensitive files
+.env* @security-team @dotmac-admin
+*/core/security* @security-team
+*/core/auth* @security-team
+
+# Documentation
+/docs/ @documentation-team
+README.md @documentation-team
+*.md @documentation-team
+
+# Frontend components
+/frontend/ @frontend-team
+
+# Database schemas and models
+*/models/ @database-team
+*/schemas/ @database-team @api-team
+*/alembic/versions/ @database-team
+
+# API endpoints
+*/api/ @api-team
+*/routers/ @api-team
+
+# Core business logic
+*/services/ @business-logic-team
+*/modules/ @business-logic-team
+
+# Testing and quality assurance
+*/tests/ @qa-team
+/scripts/validate_* @qa-team @devops-team
+/scripts/container_* @qa-team @devops-team
+pytest.ini @qa-team

@@ -8,12 +8,12 @@ from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
-from ..models.tenant import TenantStatus
-from ..core.sanitization import (
+from models.tenant import TenantStatus
+from core.sanitization import (
     validate_safe_string, validate_html_string, validate_plain_string,
     validate_email_string
 )
-from .common import BaseResponse
+from schemas.common import BaseResponse
 
 
 class TenantBase(BaseModel):

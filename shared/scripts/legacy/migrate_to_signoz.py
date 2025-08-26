@@ -72,7 +72,7 @@ class SignOzMigrator:
                 
             except Exception as e:
                 logger.error(f"✗ Failed to migrate {dashboard_meta.get('title', 'Unknown')}: {e}")
-                failed.append(dashboard_meta.get('title', 'Unknown'))
+                failed.append(dashboard_meta.get('title', 'Unknown')
         
         logger.info(f"\nDashboard Migration Complete:")
         logger.info(f"  ✓ Successfully migrated: {migrated}")
@@ -90,7 +90,7 @@ class SignOzMigrator:
             headers=self.grafana_headers
         )
         response.raise_for_status()
-        return response.json()
+        return response.model_dump_json()
     
     def _get_grafana_dashboard(self, uid: str) -> Dict:
         """Get a specific Grafana dashboard."""
@@ -99,7 +99,7 @@ class SignOzMigrator:
             headers=self.grafana_headers
         )
         response.raise_for_status()
-        return response.json()
+        return response.model_dump_json()
     
     def _convert_dashboard_to_signoz(self, grafana_dashboard: Dict) -> Dict:
         """Convert Grafana dashboard to SignOz format."""
@@ -126,7 +126,7 @@ class SignOzMigrator:
             if widget:
                 signoz_dashboard['widgets'].append(widget)
                 signoz_dashboard['layout'].append({
-                    "i": str(panel.get('id', 0)),
+                    "i": str(panel.get('id', 0),
                     "x": panel.get('gridPos', {}).get('x', 0),
                     "y": panel.get('gridPos', {}).get('y', 0),
                     "w": panel.get('gridPos', {}).get('w', 6),
@@ -139,7 +139,7 @@ class SignOzMigrator:
         """Convert Grafana template variable to SignOz format."""
         return {
             "name": grafana_var.get('name', ''),
-            "displayName": grafana_var.get('label', grafana_var.get('name', '')),
+            "displayName": grafana_var.get('label', grafana_var.get('name', ''),
             "type": "custom",  # SignOz uses different var types
             "query": grafana_var.get('query', ''),
             "default": grafana_var.get('current', {}).get('value', ''),
@@ -148,10 +148,10 @@ class SignOzMigrator:
     
     def _convert_panel_to_widget(self, panel: Dict) -> Dict:
         """Convert Grafana panel to SignOz widget."""
-        widget_type = self._map_panel_type(panel.get('type', 'graph'))
+        widget_type = self._map_panel_type(panel.get('type', 'graph')
         
         widget = {
-            "id": str(panel.get('id', 0)),
+            "id": str(panel.get('id', 0),
             "title": panel.get('title', 'Untitled'),
             "description": panel.get('description', ''),
             "panelType": widget_type,
@@ -253,7 +253,7 @@ class SignOzMigrator:
             headers=self.signoz_headers
         )
         response.raise_for_status()
-        return response.json()
+        return response.model_dump_json()
     
     def migrate_alerts(self):
         """Migrate Prometheus alert rules to SignOz."""
@@ -279,7 +279,7 @@ class SignOzMigrator:
                 
             except Exception as e:
                 logger.error(f"✗ Failed to migrate {rule.get('alert', 'Unknown')}: {e}")
-                failed.append(rule.get('alert', 'Unknown'))
+                failed.append(rule.get('alert', 'Unknown')
         
         logger.info(f"\nAlert Migration Complete:")
         logger.info(f"  ✓ Successfully migrated: {migrated}")
@@ -293,7 +293,7 @@ class SignOzMigrator:
         response.raise_for_status()
         
         rules = []
-        for group in response.json().get('data', {}).get('groups', []):
+        for group in response.model_dump_json().get('data', {}).get('groups', []):
             for rule in group.get('rules', []):
                 if rule.get('type') == 'alerting':
                     rules.append(rule)
@@ -304,7 +304,7 @@ class SignOzMigrator:
         """Convert Prometheus alert rule to SignOz format."""
         return {
             "alert": prometheus_rule.get('alert', 'Unnamed Alert'),
-            "expr": self._convert_promql_to_clickhouse(prometheus_rule.get('query', '')),
+            "expr": self._convert_promql_to_clickhouse(prometheus_rule.get('query', ''),
             "for": prometheus_rule.get('duration', 300),  # Default 5m
             "labels": prometheus_rule.get('labels', {}),
             "annotations": prometheus_rule.get('annotations', {}),
@@ -344,7 +344,7 @@ class SignOzMigrator:
             headers=self.signoz_headers
         )
         response.raise_for_status()
-        return response.json()
+        return response.model_dump_json()
     
     def migrate_data(self, start_time: str, end_time: str, metrics: List[str] = None):
         """
@@ -374,7 +374,7 @@ class SignOzMigrator:
         """Get list of all metrics from Prometheus."""
         response = requests.get(f"{self.prometheus_url}/api/v1/label/__name__/values")
         response.raise_for_status()
-        return response.json().get('data', [])
+        return response.model_dump_json().get('data', [])
     
     def _migrate_metric_data(self, metric: str, start_time: str, end_time: str):
         """Migrate data for a specific metric."""
@@ -392,7 +392,7 @@ class SignOzMigrator:
         )
         response.raise_for_status()
         
-        data = response.json().get('data', {}).get('result', [])
+        data = response.model_dump_json().get('data', {}).get('result', [])
         
         # Convert and send to SignOz
         for series in data:
@@ -428,7 +428,7 @@ class SignOzMigrator:
             headers=self.signoz_headers
         )
         response.raise_for_status()
-        return response.json().get('data', [])
+        return response.model_dump_json().get('data', [])
     
     def _get_signoz_alerts(self) -> List[Dict]:
         """Get list of SignOz alerts."""
@@ -437,7 +437,7 @@ class SignOzMigrator:
             headers=self.signoz_headers
         )
         response.raise_for_status()
-        return response.json().get('data', [])
+        return response.model_dump_json().get('data', [])
 
 
 def main():

@@ -22,7 +22,7 @@ def fix_unreachable_code(file_path: Path):
                 if (line.strip() and 
                     (current_indent <= raise_line_indent or 
                      line.strip().startswith(('def ', 'class ', 'async def ')) or
-                     line.strip().startswith(('@')))):
+                     line.strip().startswith('@'))):
                     # End of unreachable section
                     in_unreachable = False
                     new_lines.append(line)

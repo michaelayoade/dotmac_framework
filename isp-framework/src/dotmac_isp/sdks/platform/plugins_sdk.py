@@ -35,19 +35,17 @@ logger = logging.getLogger(__name__)
 class PluginsSDKConfig:
     """Plugins SDK configuration."""
 
-    def __init__(  # noqa: PLR0913
-        """  Init   operation."""
-        self,
-        max_plugins_per_tenant: int = 50,
-        max_concurrent_executions: int = 100,
-        default_execution_timeout_seconds: int = 30,
-        max_execution_timeout_seconds: int = 300,
-        default_memory_limit_mb: int = 128,
-        max_memory_limit_mb: int = 1024,
-        plugin_storage_path: str = "/tmp/plugins",
-        enable_sandboxing: bool = True,
-        allowed_runtimes: list[PluginRuntime] = None,
-        execution_history_retention_days: int = 7,
+    def __init__(self,  # noqa: PLR0913
+                 max_plugins_per_tenant: int = 50,
+                 max_concurrent_executions: int = 100,
+                 default_execution_timeout_seconds: int = 30,
+                 max_execution_timeout_seconds: int = 300,
+                 default_memory_limit_mb: int = 128,
+                 max_memory_limit_mb: int = 1024,
+                 plugin_storage_path: str = "/tmp/plugins",
+                 enable_sandboxing: bool = True,
+                 allowed_runtimes: list[PluginRuntime] = None,
+                 execution_history_retention_days: int = 7,
     ):
         self.max_plugins_per_tenant = max_plugins_per_tenant
         self.max_concurrent_executions = max_concurrent_executions

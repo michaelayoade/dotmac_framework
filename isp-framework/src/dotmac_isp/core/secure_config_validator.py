@@ -25,7 +25,7 @@ from .field_validation_strategies import create_field_validation_engine, FieldVa
 from .validation_types import (
     ValidationSeverity, ValidationCategory, ComplianceFramework,
     ValidationIssue, ValidationRule, ValidationResult
-)
+, timezone)
 
 logger = logging.getLogger(__name__)
 
@@ -325,7 +325,7 @@ class SecureConfigValidator:
         """
         result = ValidationResult(
             is_valid=True,
-            validation_timestamp=datetime.utcnow(),
+            validation_timestamp=datetime.now(timezone.utc),
             total_issues=0,
             environment=environment,
             service=service,
@@ -821,7 +821,7 @@ class SecureConfigValidator:
             "total_rules": len(self.validation_rules),
             "custom_validators": len(self.custom_validators),
             "last_validation": (
-                self.last_validation.dict() if self.last_validation else None
+                self.last_validation.model_dump() if self.last_validation else None
             ),
             "validation_history_count": len(self.validation_history),
             "supported_compliance_frameworks": [f.value for f in ComplianceFramework],

@@ -86,5 +86,5 @@ class PaymentService:
     def _generate_payment_number(self) -> str:
         """Generate unique payment number."""
         import uuid
-        from datetime import datetime
-        return f"PAY-{datetime.now().strftime('%Y%m%d')}-{str(uuid.uuid4())[:8].upper()}"
+        from datetime import datetime, timezone
+        return f"PAY-{datetime.now(timezone.utc).strftime('%Y%m%d')}-{str(uuid.uuid4()[:8].upper())}"

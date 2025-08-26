@@ -28,6 +28,7 @@ from .schemas import (
     PortalAnalyticsResponse,
 )
 from .services import PortalAccountService, PortalAuthService
+from datetime import timezone
 
 
 router = APIRouter(prefix="/portal-management", tags=["Portal Management"])
@@ -138,7 +139,7 @@ async def create_portal_account_admin(
 
     try:
         # Convert to base create schema and add admin fields
-        create_data = PortalAccountCreate(**account_data.dict())
+        create_data = PortalAccountCreate(**account_data.model_dump())
         account = service.create_portal_account(tenant_id, create_data, admin_id)
 
         # Apply admin-specific settings
@@ -235,7 +236,7 @@ async def update_portal_account_admin(
         raise HTTPException(status_code=404, detail="Portal account not found")
 
     # Apply admin updates
-    for field, value in update_data.dict(exclude_unset=True).items():
+    for field, value in update_data.model_dump(exclude_unset=True).items():
         if hasattr(account, field):
             if field in ["status"] and value:
                 setattr(
@@ -563,7 +564,7 @@ async def get_portal_analytics(request: Request, db: Session = Depends(get_db)):
     from sqlalchemy import func, and_
     from datetime import datetime, timedelta
 
-    today = datetime.utcnow().date()
+    today = datetime.now(timezone.utc).date()
 
     # Account statistics
     total_accounts = (
@@ -631,7 +632,7 @@ async def get_portal_analytics(request: Request, db: Session = Depends(get_db)):
             and_(
                 PortalSession.tenant_id == tenant_id,
                 PortalSession.is_active == True,
-                PortalSession.expires_at > datetime.utcnow(),
+                PortalSession.expires_at > datetime.now(timezone.utc),
             )
         )
         .scalar()
@@ -681,7 +682,7 @@ async def get_portal_analytics(request: Request, db: Session = Depends(get_db)):
                 PortalAccount.tenant_id == tenant_id,
                 PortalAccount.is_deleted == False,
                 PortalAccount.password_changed_at
-                < datetime.utcnow() - timedelta(days=60),
+                < datetime.now(timezone.utc) - timedelta(days=60),
             )
         )
         .scalar()
@@ -693,7 +694,7 @@ async def get_portal_analytics(request: Request, db: Session = Depends(get_db)):
             and_(
                 PortalLoginAttempt.tenant_id == tenant_id,
                 PortalLoginAttempt.flagged_as_suspicious == True,
-                PortalLoginAttempt.created_at > datetime.utcnow() - timedelta(days=7),
+                PortalLoginAttempt.created_at > datetime.now(timezone.utc) - timedelta(days=7),
             )
         )
         .scalar()

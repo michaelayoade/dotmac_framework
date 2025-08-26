@@ -12,7 +12,7 @@ import {
   getFID,
   getLCP,
   getTTFB,
-  Metric,
+  type Metric,
   onCLS,
   onFCP,
   onFID,
@@ -356,7 +356,7 @@ export function withPerformanceMonitoring<P extends object>(
 
     return (
       <PerformanceMonitor {...options} componentName={componentName}>
-        <Component {...props} ref={ref} />
+        <Component {...(props as P)} ref={ref} />
       </PerformanceMonitor>
     );
   });

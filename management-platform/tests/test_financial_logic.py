@@ -12,7 +12,7 @@ from app.services.billing_service import BillingService
 from app.repositories.billing_additional import (
     SubscriptionRepository, InvoiceRepository, PaymentRepository,
     PricingPlanRepository, UsageRecordRepository
-)
+, timezone)
 from app.models.billing import (
     Subscription, Invoice, Payment, PricingPlan, UsageRecord,
     SubscriptionStatus, InvoiceStatus, PaymentStatus
@@ -50,8 +50,8 @@ class TestSubscriptionBilling:
         # Test billing calculation
         billing_amount = await billing_service.calculate_subscription_amount(
             subscription.id, 
-            billing_period_start=datetime.utcnow(),
-            billing_period_end=datetime.utcnow() + timedelta(days=30)
+            billing_period_start=datetime.now(timezone.utc),
+            billing_period_end=datetime.now(timezone.utc) + timedelta(days=30)
         )
         
         assert billing_amount == Decimal("29.99")
@@ -148,13 +148,13 @@ class TestUsageBasedBilling:
                 subscription_id=subscription.id,
                 usage_type="storage_gb",
                 quantity=75,  # 25GB over limit
-                recorded_at=datetime.utcnow()
+                recorded_at=datetime.now(timezone.utc)
             ),
             UsageRecordCreate(
                 subscription_id=subscription.id,
                 usage_type="api_calls", 
                 quantity=15000,  # 5000 calls over limit
-                recorded_at=datetime.utcnow()
+                recorded_at=datetime.now(timezone.utc)
             )
         ]
         
@@ -164,8 +164,8 @@ class TestUsageBasedBilling:
         # Calculate total bill including overages
         total_bill = await billing_service.calculate_usage_bill(
             subscription.id,
-            billing_period_start=datetime.utcnow().replace(day=1),
-            billing_period_end=datetime.utcnow()
+            billing_period_start=datetime.now(timezone.utc).replace(day=1),
+            billing_period_end=datetime.now(timezone.utc)
         )
         
         # Base: $19.99 + Storage overage: 25GB * $2.00 = $50 + API overage: 5 * $0.01 = $0.05
@@ -210,8 +210,8 @@ class TestUsageBasedBilling:
         # Calculate bill with capped usage
         bill = await billing_service.calculate_usage_bill(
             subscription.id,
-            billing_period_start=datetime.utcnow().replace(day=1),
-            billing_period_end=datetime.utcnow()
+            billing_period_start=datetime.now(timezone.utc).replace(day=1),
+            billing_period_end=datetime.now(timezone.utc)
         )
         
         # Should not exceed reasonable amount due to cap
@@ -230,7 +230,7 @@ class TestPaymentProcessing:
             subscription_id="550e8400-e29b-41d4-a716-446655440006",
             amount_cents=2999,
             description="Monthly subscription",
-            due_date=datetime.utcnow() + timedelta(days=30)
+            due_date=datetime.now(timezone.utc) + timedelta(days=30)
         )
         invoice = await billing_service.create_invoice(invoice_data)
         
@@ -358,7 +358,7 @@ class TestRevenueCalculations:
         
         # Calculate total MRR
         mrr = await billing_service.calculate_mrr(
-            as_of_date=datetime.utcnow()
+            as_of_date=datetime.now(timezone.utc)
         )
         
         # Total: $29.99 + $49.99 + $19.99 + $39.99 = $139.96
@@ -390,7 +390,7 @@ class TestRevenueCalculations:
         
         # Calculate ARR
         arr = await billing_service.calculate_arr(
-            as_of_date=datetime.utcnow()
+            as_of_date=datetime.now(timezone.utc)
         )
         
         # Expected: $359.99 + ($29.99 * 12) + $1199.99 = $1919.87
@@ -419,12 +419,12 @@ class TestRevenueCalculations:
         # Cancel subscription
         await billing_service.cancel_subscription(
             subscription.id,
-            cancellation_date=datetime.utcnow() + timedelta(days=15)
+            cancellation_date=datetime.now(timezone.utc) + timedelta(days=15)
         )
         
         # Calculate MRR after cancellation
         post_cancel_mrr = await billing_service.calculate_mrr(
-            as_of_date=datetime.utcnow() + timedelta(days=30)
+            as_of_date=datetime.now(timezone.utc) + timedelta(days=30)
         )
         
         # MRR should decrease by the subscription amount
@@ -494,8 +494,8 @@ class TestFinancialIntegrity:
         # Get comprehensive audit trail
         audit_trail = await billing_service.get_financial_audit_trail(
             subscription.id,
-            start_date=datetime.utcnow() - timedelta(days=30),
-            end_date=datetime.utcnow()
+            start_date=datetime.now(timezone.utc) - timedelta(days=30),
+            end_date=datetime.now(timezone.utc)
         )
         
         # Verify all events are recorded
@@ -539,8 +539,8 @@ class TestFinancialIntegrity:
         
         # Run financial reconciliation
         reconciliation = await billing_service.run_financial_reconciliation(
-            start_date=datetime.utcnow() - timedelta(days=1),
-            end_date=datetime.utcnow()
+            start_date=datetime.now(timezone.utc) - timedelta(days=1),
+            end_date=datetime.now(timezone.utc)
         )
         
         # Verify totals match

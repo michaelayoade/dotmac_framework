@@ -226,7 +226,7 @@ class VendorPluginLoader:
         env_config: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Merge base configuration with environment-specific overrides."""
-        merged = base_config.copy()
+        merged = base_config.model_copy()
         
         # Merge configuration section
         if "configuration" in env_config:
@@ -249,7 +249,7 @@ class VendorPluginLoader:
             "total_plugins": len(self.loaded_plugins),
         }
         
-        for plugin_id, manager_plugin_id in list(self.loaded_plugins.items()):
+        for plugin_id, manager_plugin_id in list(self.loaded_plugins.items():
             try:
                 await self.plugin_manager.uninstall_plugin(manager_plugin_id)
                 
@@ -446,7 +446,7 @@ class VendorPluginLoader:
         
     def get_loaded_plugins(self) -> List[str]:
         """Get list of loaded vendor plugin IDs."""
-        return list(self.loaded_plugins.keys())
+        return list(self.loaded_plugins.keys()
         
     def is_plugin_loaded(self, plugin_id: str) -> bool:
         """Check if a vendor plugin is loaded."""

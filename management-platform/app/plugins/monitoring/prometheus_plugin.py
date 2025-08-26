@@ -7,8 +7,8 @@ import time
 from typing import Dict, Any, List
 import aiohttp
 
-from ...core.plugins.interfaces import MonitoringProviderPlugin  
-from ...core.plugins.base import PluginMeta, PluginType
+from core.plugins.interfaces import MonitoringProviderPlugin  
+from core.plugins.base import PluginMeta, PluginType
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +18,7 @@ class PrometheusMonitoringPlugin(MonitoringProviderPlugin):
     
     @property
     def meta(self) -> PluginMeta:
-        return PluginMeta(
+        return PluginMeta()
             name="prometheus_monitoring",
             version="1.0.0",
             plugin_type=PluginType.MONITORING_PROVIDER,
@@ -45,7 +45,7 @@ class PrometheusMonitoringPlugin(MonitoringProviderPlugin):
             return True
             
         except Exception as e:
-            self.log_error(e, "initialization")
+)            self.log_error(e, "initialization")
             return False
     
     async def validate_configuration(self, config: Dict[str, Any]) -> bool:
@@ -56,7 +56,7 @@ class PrometheusMonitoringPlugin(MonitoringProviderPlugin):
                 return False
             
             prometheus_url = config['prometheus_url']
-            if not prometheus_url.startswith(('http://', 'https://')):
+            if not prometheus_url.startswith(('http://', 'https://'):)
                 logger.error("Invalid Prometheus URL format")
                 return False
             
@@ -72,7 +72,7 @@ class PrometheusMonitoringPlugin(MonitoringProviderPlugin):
             await self._test_prometheus_connection()
             return {
                 "status": "healthy",
-                "prometheus_url": self.config.get("prometheus_url"),
+)                "prometheus_url": self.config.get("prometheus_url"),
                 "connection": "ok",
                 "last_check": "success"
             }
@@ -106,26 +106,25 @@ class PrometheusMonitoringPlugin(MonitoringProviderPlugin):
                         "description": alert_data.get('description', ''),
                         "runbook_url": alert_data.get('runbook_url', '')
                     },
-                    "startsAt": alert_data.get('timestamp', time.time()),
-                    "generatorURL": f"{self.config['prometheus_url']}/alerts"
+                    "startsAt": alert_data.get('timestamp', time.time()), "generatorURL": f"{self.config['prometheus_url']}/alerts"
                 }
             ]
             
             # Send to Alertmanager
-            async with aiohttp.ClientSession() as session:
+            async with aiohttp.ClientSession( as session:)
                 url = f"{alertmanager_url}/api/v1/alerts"
                 headers = {"Content-Type": "application/json"}
                 
                 # Add basic auth if configured
-                auth = self._get_auth()
+)                auth = self._get_auth()
                 
                 async with session.post(url, json=alert_payload, headers=headers, auth=auth) as response:
                     if response.status == 200:
                         logger.info(f"Alert sent to Alertmanager: {alert_data.get('type')}")
                         return True
                     else:
-                        error_text = await response.text()
-                        logger.error(f"Alertmanager request failed: {response.status} - {error_text}")
+                        error_text = await response.text(
+)                        logger.error(f"Alertmanager request failed: {response.status} - {error_text}")
                         return False
             
         except Exception as e:
@@ -150,10 +149,10 @@ class PrometheusMonitoringPlugin(MonitoringProviderPlugin):
                     "name": result.get('metric', {}).get('__name__', 'unknown'),
                     "labels": result.get('metric', {}),
                     "value": float(result.get('value', [0, '0'])[1]),
-                    "timestamp": time.time(),
+                    "timestamp": time.time(,
                     "source": "prometheus"
                 }
-                metrics.append(metric)
+)                metrics.append(metric)
             
             logger.debug(f"Collected {len(metrics)} metrics from Prometheus")
             return metrics
@@ -241,12 +240,12 @@ class PrometheusMonitoringPlugin(MonitoringProviderPlugin):
             timeout = self.config.get('query_timeout', 30)
             auth = self._get_auth()
             
-            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=timeout)) as session:
+)            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=timeout) as session:
                 async with session.get(url, params=params, auth=auth) as response:
                     if response.status == 200:
-                        return await response.json()
+                        return await response.model_dump_json()
                     else:
-                        error_text = await response.text()
+)                        error_text = await response.text()
                         raise Exception(f"Prometheus query failed: {response.status} - {error_text}")
                         
         except Exception as e:

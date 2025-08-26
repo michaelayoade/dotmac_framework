@@ -17,7 +17,7 @@ from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Set
 
 import structlog
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 from ..contracts.common_schemas import (
     ExecutionContext,
@@ -26,8 +26,7 @@ from ..contracts.common_schemas import (
     RetryPolicy,
     TimeoutPolicy,
     ErrorInfo,
-    Priority,
-)
+    Priority)
 
 logger = structlog.get_logger(__name__)
 
@@ -98,10 +97,7 @@ class StepDefinition(BaseModel):
     # Metadata
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Step metadata")
 
-    class Config:
-        """Class for Config operations."""
-        extra = "allow"
-
+    model_config = ConfigDict(extra="allow")
 
 class WorkflowDefinition(BaseModel):
     """Workflow definition with steps and configuration."""
@@ -163,10 +159,7 @@ class WorkflowDefinition(BaseModel):
 
         return v
 
-    class Config:
-        """Class for Config operations."""
-        extra = "allow"
-
+    model_config = ConfigDict(extra="allow")
 
 @dataclass
 class StepExecution:
@@ -190,7 +183,7 @@ class StepExecution:
             "status": self.status.value,
             "input_data": self.input_data,
             "output_data": self.output_data,
-            "error": self.error.dict() if self.error else None,
+            "error": self.error.model_dump() if self.error else None,
             "started_at": self.started_at.isoformat() if self.started_at else None,
             "completed_at": (
                 self.completed_at.isoformat() if self.completed_at else None
@@ -227,14 +220,14 @@ class WorkflowExecution:
             "status": self.status.value,
             "input_data": self.input_data,
             "output_data": self.output_data,
-            "context": self.context.dict() if self.context else None,
+            "context": self.context.model_dump() if self.context else None,
             "step_executions": {
                 k: v.to_dict() for k, v in self.step_executions.items()
             },
             "current_steps": list(self.current_steps),
             "completed_steps": list(self.completed_steps),
             "failed_steps": list(self.failed_steps),
-            "error": self.error.dict() if self.error else None,
+            "error": self.error.model_dump() if self.error else None,
             "started_at": self.started_at.isoformat() if self.started_at else None,
             "completed_at": (
                 self.completed_at.isoformat() if self.completed_at else None
@@ -465,7 +458,7 @@ class WorkflowSDK:
             context = ExecutionContext(
                 execution_id=execution_id,
                 tenant_id=self.tenant_id,
-                variables=input_data.copy(),
+                variables=input_data.model_copy(),
             )
         else:
             context.execution_id = execution_id

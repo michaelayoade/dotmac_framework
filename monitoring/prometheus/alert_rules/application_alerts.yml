@@ -1,0 +1,171 @@
+# Application-level Alert Rules for DotMac Framework
+groups:
+  - name: application.alerts
+    rules:
+      # Application Availability
+      - alert: ServiceDown
+        expr: up{job=~"isp-framework|management-platform"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: "{{ $labels.job }}"
+        annotations:
+          summary: "{{ $labels.job }} service is down"
+          description: "{{ $labels.job }} has been down for more than 1 minute"
+          runbook_url: "https://docs.dotmac.app/runbooks/service-down"
+
+      # High Error Rate
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+          service: "{{ $labels.job }}"
+        annotations:
+          summary: "High error rate on {{ $labels.job }}"
+          description: "Error rate is {{ $value | humanizePercentage }} for {{ $labels.job }}"
+          runbook_url: "https://docs.dotmac.app/runbooks/high-error-rate"
+
+      # Response Time
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+          service: "{{ $labels.job }}"
+        annotations:
+          summary: "High response time on {{ $labels.job }}"
+          description: "95th percentile response time is {{ $value }}s for {{ $labels.job }}"
+          runbook_url: "https://docs.dotmac.app/runbooks/high-response-time"
+
+      # Database Connection Issues
+      - alert: DatabaseConnectionFailure
+        expr: increase(database_connection_errors_total[5m]) > 5
+        for: 2m
+        labels:
+          severity: critical
+          service: database
+        annotations:
+          summary: "Database connection failures detected"
+          description: "{{ $value }} database connection failures in the last 5 minutes"
+          runbook_url: "https://docs.dotmac.app/runbooks/database-connection-failure"
+
+      # Cache Issues
+      - alert: RedisCacheDown
+        expr: up{job="redis"} == 0
+        for: 1m
+        labels:
+          severity: warning
+          service: redis
+        annotations:
+          summary: "Redis cache is down"
+          description: "Redis cache service is not responding"
+          runbook_url: "https://docs.dotmac.app/runbooks/redis-down"
+
+      # Memory Usage
+      - alert: HighMemoryUsage
+        expr: process_resident_memory_bytes / 1024 / 1024 > 1000
+        for: 10m
+        labels:
+          severity: warning
+          service: "{{ $labels.job }}"
+        annotations:
+          summary: "High memory usage on {{ $labels.job }}"
+          description: "Memory usage is {{ $value }}MB for {{ $labels.job }}"
+          runbook_url: "https://docs.dotmac.app/runbooks/high-memory-usage"
+
+      # Celery Queue Issues
+      - alert: CeleryQueueBacklog
+        expr: celery_queue_length > 1000
+        for: 5m
+        labels:
+          severity: warning
+          service: celery
+        annotations:
+          summary: "Celery queue backlog detected"
+          description: "Queue {{ $labels.queue }} has {{ $value }} pending tasks"
+          runbook_url: "https://docs.dotmac.app/runbooks/celery-backlog"
+
+      # Failed Celery Tasks
+      - alert: CeleryTaskFailures
+        expr: increase(celery_task_failure_total[10m]) > 10
+        for: 2m
+        labels:
+          severity: warning
+          service: celery
+        annotations:
+          summary: "High number of Celery task failures"
+          description: "{{ $value }} tasks have failed in the last 10 minutes"
+          runbook_url: "https://docs.dotmac.app/runbooks/celery-task-failures"
+
+      # Authentication Issues
+      - alert: AuthenticationFailures
+        expr: increase(auth_failures_total[5m]) > 20
+        for: 2m
+        labels:
+          severity: warning
+          service: authentication
+        annotations:
+          summary: "High number of authentication failures"
+          description: "{{ $value }} authentication failures in the last 5 minutes"
+          runbook_url: "https://docs.dotmac.app/runbooks/auth-failures"
+
+      # ISP-Specific: Network Device Monitoring
+      - alert: NetworkDeviceDown
+        expr: up{job="network-devices"} == 0
+        for: 3m
+        labels:
+          severity: critical
+          service: network-infrastructure
+        annotations:
+          summary: "Network device {{ $labels.instance }} is down"
+          description: "SNMP monitoring for {{ $labels.instance }} is failing"
+          runbook_url: "https://docs.dotmac.app/runbooks/network-device-down"
+
+      # Tenant-Specific Issues
+      - alert: TenantResourceExhaustion
+        expr: tenant_resource_usage_percent > 90
+        for: 5m
+        labels:
+          severity: warning
+          service: tenant-management
+        annotations:
+          summary: "Tenant {{ $labels.tenant_id }} resource usage high"
+          description: "Tenant {{ $labels.tenant_id }} is using {{ $value }}% of allocated resources"
+          runbook_url: "https://docs.dotmac.app/runbooks/tenant-resource-exhaustion"
+
+      # API Rate Limiting
+      - alert: RateLimitExceeded
+        expr: increase(rate_limit_exceeded_total[5m]) > 100
+        for: 2m
+        labels:
+          severity: warning
+          service: api-gateway
+        annotations:
+          summary: "High rate limit violations"
+          description: "{{ $value }} rate limit violations in the last 5 minutes"
+          runbook_url: "https://docs.dotmac.app/runbooks/rate-limit-exceeded"
+
+      # SSL Certificate Expiry
+      - alert: SSLCertificateExpiringSoon
+        expr: ssl_certificate_expiry_days < 30
+        for: 1h
+        labels:
+          severity: warning
+          service: ssl
+        annotations:
+          summary: "SSL certificate expiring soon"
+          description: "SSL certificate for {{ $labels.instance }} expires in {{ $value }} days"
+          runbook_url: "https://docs.dotmac.app/runbooks/ssl-certificate-expiry"
+
+      # Disk Space
+      - alert: DiskSpaceLow
+        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) * 100 < 10
+        for: 5m
+        labels:
+          severity: critical
+          service: infrastructure
+        annotations:
+          summary: "Low disk space on {{ $labels.instance }}"
+          description: "Disk space is {{ $value | humanizePercentage }} full on {{ $labels.instance }}"
+          runbook_url: "https://docs.dotmac.app/runbooks/disk-space-low"

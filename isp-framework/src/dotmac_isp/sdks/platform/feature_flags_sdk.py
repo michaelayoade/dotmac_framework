@@ -47,8 +47,8 @@ logger = logging.getLogger(__name__)
 class FeatureFlagsSDKConfig:
     """Configuration for Feature Flags SDK."""
 
-    def __init__(        ):
-            """Initialize operation."""
+    def __init__(self, *args, **kwargs):
+        """Initialize operation."""
         self.cache_ttl = cache_ttl
         self.evaluation_timeout = evaluation_timeout
         self.enable_audit_logging = enable_audit_logging

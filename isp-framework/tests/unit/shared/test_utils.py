@@ -15,7 +15,7 @@ from dotmac_isp.shared.utils import (
     calculate_hash, mask_sensitive_data, generate_invoice_number,
     generate_ticket_number, calculate_distance, format_currency,
     parse_boolean, sanitize_filename, chunk_list
-)
+, timezone)
 
 
 class TestUUIDGeneration:
@@ -60,7 +60,7 @@ class TestRandomStringGeneration:
         results = [generate_random_string(10) for _ in range(100)]
         
         # Should be highly unlikely to have duplicates
-        assert len(set(results)) > 95
+        assert len(set(results) > 95
     
     def test_generate_random_password_default_length(self):
         """Test generate_random_password with default length."""
@@ -165,8 +165,8 @@ class TestJWTTokens:
         
         # Check expiry is approximately 2 hours from now
         exp_time = datetime.fromtimestamp(decoded["exp"])
-        expected_time = datetime.utcnow() + expires_delta
-        time_diff = abs((exp_time - expected_time).total_seconds())
+        expected_time = datetime.now(timezone.utc) + expires_delta
+        time_diff = abs((exp_time - expected_time).total_seconds()
         assert time_diff < 60  # Within 1 minute tolerance
     
     def test_create_refresh_token(self):
@@ -340,7 +340,7 @@ class TestTextProcessing:
     def test_calculate_hash(self):
         """Test SHA-256 hash calculation."""
         test_data = "test data for hashing"
-        expected_hash = hashlib.sha256(test_data.encode()).hexdigest()
+        expected_hash = hashlib.sha256(test_data.encode().hexdigest()
         
         result = calculate_hash(test_data)
         assert result == expected_hash
@@ -353,7 +353,7 @@ class TestTextProcessing:
         hashes = [calculate_hash(data) for data in inputs]
         
         # All hashes should be different
-        assert len(set(hashes)) == len(hashes)
+        assert len(set(hashes) == len(hashes)
         
         # All should be 64 characters
         assert all(len(h) == 64 for h in hashes)

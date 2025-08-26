@@ -47,7 +47,7 @@ class Settings(BaseSettings):
     
     # Database
     database_url: str = Field(
-        default="postgresql://mgmt_user:mgmt_password@localhost:5432/mgmt_platform",
+        default="postgresql+asyncpg://mgmt_user:mgmt_pass@localhost:5432/mgmt_platform",
         description="Database connection URL"
     )
     database_pool_size: int = Field(default=10, ge=1, le=100)

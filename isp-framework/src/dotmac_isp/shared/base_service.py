@@ -113,7 +113,7 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType, Respons
             await self._validate_create_rules(data)
             
             # Convert to dict for repository
-            create_data = data.model_dump() if hasattr(data, 'model_dump') else (data.dict() if hasattr(data, 'dict') else data)
+            create_data = data.model_dump() if hasattr(data, 'model_dump') else (data.model_dump() if hasattr(data, 'dict') else data)
             
             # Create entity via repository
             entity = self.repository.create(create_data, commit=commit)
@@ -214,7 +214,7 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType, Respons
             # Convert to dict for repository, excluding None values
             update_data = {}
             if hasattr(data, 'dict'):
-                update_data = data.dict(exclude_none=True)
+                update_data = data.model_dump(exclude_none=True)
             else:
                 update_data = {k: v for k, v in data.items() if v is not None}
             

@@ -11,6 +11,7 @@ from dotmac_isp.core.database import get_db
 from dotmac_isp.core.settings import get_settings
 from .models import PortalAccount, PortalSession
 from .schemas import PortalAccountResponse
+from datetime import datetime, timezone, timedelta
 
 
 security = HTTPBearer(auto_error=False)
@@ -112,7 +113,7 @@ async def get_current_portal_account(
     # Update session activity
     from datetime import datetime
 
-    session.last_activity = datetime.utcnow()
+    session.last_activity = datetime.now(timezone.utc)
     db.commit()
 
     return account
@@ -258,7 +259,7 @@ def check_portal_rate_limit(
     from .models import PortalLoginAttempt
 
     # Example: Check for excessive login attempts in the last hour
-    one_hour_ago = datetime.utcnow() - timedelta(hours=1)
+    one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
 
     recent_attempts = (
         db.query(PortalLoginAttempt)
@@ -296,5 +297,5 @@ async def extract_request_metadata(request) -> dict:
         "user_agent": request.headers.get("User-Agent"),
         "method": request.method,
         "url": str(request.url),
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     }

@@ -2,7 +2,7 @@
 Common schemas for pagination and responses.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Generic, TypeVar, List, Optional, Any, Dict
 from uuid import UUID
 
@@ -66,14 +66,14 @@ class HealthResponse(BaseModel):
     """Health check response."""
     status: str = Field(..., description="Service status")
     version: str = Field(..., description="Service version")
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     details: Optional[Dict[str, Any]] = None
 
 
 class MetricsResponse(BaseModel):
     """Metrics response."""
     metrics: Dict[str, Any] = Field(..., description="Metrics data")
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     period: str = Field(..., description="Metrics period")
 
 

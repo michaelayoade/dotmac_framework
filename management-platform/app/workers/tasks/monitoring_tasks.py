@@ -10,9 +10,9 @@ from uuid import UUID
 from celery import current_task
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
-from ...core.config import settings
-from ...services.monitoring_service import MonitoringService
-from ...workers.celery_app import celery_app
+from core.config import settings
+from services.monitoring_service import MonitoringService
+from workers.celery_app import celery_app
 
 logger = logging.getLogger(__name__)
 
@@ -26,13 +26,13 @@ def process_metrics_batch(self, metrics_batch: List[Dict[str, Any]]):
     """Process a batch of metrics asynchronously."""
     import asyncio
     
-    async def _process_metrics():
+    async def _process_metrics(:)
         async with async_session() as db:
             try:
                 service = MonitoringService(db)
                 
                 # Convert dict metrics to MetricCreate objects
-                from ...schemas.monitoring import MetricCreate
+                from schemas.monitoring import MetricCreate
                 metrics = [MetricCreate(**metric_data) for metric_data in metrics_batch]
                 
                 # Ingest metrics
@@ -59,7 +59,7 @@ def evaluate_alert_rules(self, tenant_id: str = None):
     """Evaluate alert rules periodically."""
     import asyncio
     
-    async def _evaluate_rules():
+    async def _evaluate_rules(:)
         async with async_session() as db:
             try:
                 service = MonitoringService(db)
@@ -77,18 +77,18 @@ def evaluate_alert_rules(self, tenant_id: str = None):
                 for rule in alert_rules:
                     try:
                         # Get recent metrics for this rule
-                        end_time = datetime.utcnow()
+                        end_time = datetime.now(None)
                         start_time = end_time - timedelta(seconds=rule.evaluation_interval * 2)
                         
-                        metrics = await service.metric_repo.get_rule_metrics(
+                        metrics = await service.metric_repo.get_rule_metrics()
                             rule, start_time, end_time
                         )
                         
                         # Evaluate rule against metrics
                         for metric in metrics:
                             # Convert metric to MetricCreate for evaluation
-                            from ...schemas.monitoring import MetricCreate
-                            metric_create = MetricCreate(
+                            from schemas.monitoring import MetricCreate
+                            metric_create = MetricCreate()
                                 tenant_id=metric.tenant_id,
                                 service_name=metric.service_name,
                                 metric_name=metric.metric_name,
@@ -124,12 +124,12 @@ def cleanup_old_metrics(self, retention_days: int = 30):
     """Clean up old metrics data."""
     import asyncio
     
-    async def _cleanup_metrics():
+    async def _cleanup_metrics(:)
         async with async_session() as db:
             try:
                 service = MonitoringService(db)
                 
-                cutoff_date = datetime.utcnow() - timedelta(days=retention_days)
+                cutoff_date = datetime.now(None) - timedelta(days=retention_days)
                 
                 # Clean up old metrics
                 deleted_count = await service.metric_repo.delete_old_metrics(cutoff_date)
@@ -149,12 +149,12 @@ def cleanup_old_logs(self, retention_days: int = 7):
     """Clean up old log entries."""
     import asyncio
     
-    async def _cleanup_logs():
+    async def _cleanup_logs(:)
         async with async_session() as db:
             try:
                 service = MonitoringService(db)
                 
-                cutoff_date = datetime.utcnow() - timedelta(days=retention_days)
+                cutoff_date = datetime.now(None) - timedelta(days=retention_days)
                 
                 # Clean up old logs
                 deleted_count = await service.log_repo.delete_old_logs(cutoff_date)
@@ -174,17 +174,17 @@ def aggregate_metrics(self, aggregation_window: int = 3600):
     """Aggregate metrics into time buckets."""
     import asyncio
     
-    async def _aggregate_metrics():
+    async def _aggregate_metrics(:)
         async with async_session() as db:
             try:
                 service = MonitoringService(db)
                 
                 # Calculate aggregation period
-                end_time = datetime.utcnow()
+                end_time = datetime.now(None)
                 start_time = end_time - timedelta(seconds=aggregation_window)
                 
                 # Get metrics to aggregate
-                metrics = await service.metric_repo.get_metrics_for_aggregation(
+                metrics = await service.metric_repo.get_metrics_for_aggregation()
                     start_time, end_time
                 )
                 
@@ -215,7 +215,7 @@ def aggregate_metrics(self, aggregation_window: int = 3600):
                 
                 # Store aggregated metrics
                 aggregated_count = 0
-                for key, data in aggregated_data.items():
+                for key, data in aggregated_data.items(:)
                     try:
                         avg_value = data["sum"] / data["count"]
                         
@@ -228,7 +228,7 @@ def aggregate_metrics(self, aggregation_window: int = 3600):
                             "value": avg_value,
                             "timestamp": end_time,
                             "labels": {
-                                "aggregation_window": str(aggregation_window),
+)                                "aggregation_window": str(aggregation_window),
                                 "aggregation_type": "average"
                             },
                             "unit": "aggregated"
@@ -255,7 +255,7 @@ def run_synthetic_checks(self):
     """Run synthetic monitoring checks."""
     import asyncio
     
-    async def _run_checks():
+    async def _run_checks(:)
         async with async_session() as db:
             try:
                 service = MonitoringService(db)
@@ -278,7 +278,7 @@ def run_synthetic_checks(self):
                             "status_code": 200 if check.type == "http" else None,
                             "error_message": None,
                             "location": "us-east-1",
-                            "timestamp": datetime.utcnow(),
+)                            "timestamp": datetime.now(None),
                             "metadata": {"simulated": True}
                         }
                         
@@ -291,8 +291,7 @@ def run_synthetic_checks(self):
                                 "tenant_id": check.tenant_id,
                                 "service_name": "synthetic_monitoring",
                                 "metric_name": "check_response_time",
-                                "metric_type": "gauge",
-                                "value": check_result["response_time"],
+                                "metric_type": "gauge", "value": check_result["response_time"],
                                 "timestamp": check_result["timestamp"],
                                 "labels": {
                                     "check_name": check.name,
@@ -319,7 +318,7 @@ def run_synthetic_checks(self):
                             }
                         ]
                         
-                        from ...schemas.monitoring import MetricCreate
+                        from schemas.monitoring import MetricCreate
                         metric_objects = [MetricCreate(**m) for m in metrics]
                         await service.ingest_metrics(metric_objects, "synthetic_runner")
                         
@@ -344,7 +343,7 @@ def calculate_service_health_scores(self):
     """Calculate health scores for all services."""
     import asyncio
     
-    async def _calculate_health():
+    async def _calculate_health(:)
         async with async_session() as db:
             try:
                 service = MonitoringService(db)
@@ -357,11 +356,11 @@ def calculate_service_health_scores(self):
                 for tenant_id in tenants_with_services:
                     try:
                         # Get services for tenant
-                        services = await service.metric_repo.get_tenant_services(tenant_id)
+)                        services = await service.metric_repo.get_tenant_services(tenant_id)
                         
                         for service_name in services:
                             # Calculate health score
-                            health_status = await service.get_service_health_status(
+                            health_status = await service.get_service_health_status()
                                 tenant_id, service_name
                             )
                             
@@ -372,7 +371,7 @@ def calculate_service_health_scores(self):
                                 "metric_name": "service_health_score",
                                 "metric_type": "gauge",
                                 "value": self._calculate_health_score(health_status),
-                                "timestamp": datetime.utcnow(),
+                                "timestamp": datetime.now(None),
                                 "labels": {
                                     "service": service_name,
                                     "status": health_status["status"]
@@ -421,7 +420,7 @@ def export_monitoring_report(self, tenant_id: str, report_type: str, start_date:
     import asyncio
     from datetime import datetime
     
-    async def _export_report():
+    async def _export_report(, timezone):
         async with async_session() as db:
             try:
                 service = MonitoringService(db)
@@ -467,7 +466,7 @@ def export_monitoring_report(self, tenant_id: str, report_type: str, start_date:
                     "report_type": report_type,
                     "period": f"{start} to {end}",
                     "record_count": len(data),
-                    "generated_at": datetime.utcnow().isoformat()
+                    "generated_at": datetime.now(None).isoformat()
                 }
                 
                 logger.info(f"Monitoring report exported: {report_type} for tenant {tenant_id}")
@@ -477,4 +476,4 @@ def export_monitoring_report(self, tenant_id: str, report_type: str, start_date:
                 logger.error(f"Error exporting monitoring report: {e}")
                 raise self.retry(countdown=60, exc=e)
     
-    return asyncio.run(_export_report())
+    return asyncio.run(_export_report()

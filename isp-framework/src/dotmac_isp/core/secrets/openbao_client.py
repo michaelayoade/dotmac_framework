@@ -2,51 +2,53 @@
 OpenBao Integration for Secrets Management
 
 Provides secure secrets management using OpenBao (open-source fork of HashiCorp Vault).
-This module extends the existing vault_client.py to support both Vault and OpenBao.
+This module extends the existing openbao_client.py to support both Vault and OpenBao.
 """
 
 import os
 from typing import Any
 
-from .vault_client import (
-    VaultClient,
-    VaultConfig,
-    VaultSecretManager,
+# Import native OpenBao client
+from .openbao_native_client import (
+    OpenBaoClient as NativeOpenBaoClient,
+    OpenBaoConfig as NativeOpenBaoConfig,
+    OpenBaoSecretManager as NativeOpenBaoSecretManager,
     SecretMetadata,
-    get_vault_client,
-    get_secret_manager,
+    OpenBaoAPIException,
+    create_openbao_client,
+    create_secret_manager as create_native_secret_manager
 )
 
 # OpenBao is API-compatible with Vault, so we can reuse the existing client
 # with minor configuration adjustments
 
 
-class OpenBaoConfig(VaultConfig):
+class OpenBaoConfig(NativeOpenBaoConfig):
     """OpenBao-specific configuration settings"""
 
     def __init__(self, **kwargs):
-        """  Init   operation."""
+        """Initialize OpenBao configuration."""
         # Set OpenBao-specific defaults
         kwargs.setdefault("url", os.getenv("OPENBAO_ADDR", "http://localhost:8200"))
-        kwargs.setdefault("token", os.getenv("OPENBAO_TOKEN", os.getenv("BAO_TOKEN")))
+        kwargs.setdefault("token", os.getenv("OPENBAO_TOKEN", os.getenv("BAO_TOKEN", "")))
 
         # OpenBao uses the same environment variables as Vault for compatibility
         # but we check for OpenBao-specific ones first
         super().__init__(**kwargs)
 
 
-class OpenBaoClient(VaultClient):
+class OpenBaoClient(NativeOpenBaoClient):
     """
     OpenBao client for secure secrets management.
 
-    This client is fully compatible with the VaultClient API, allowing
+    This client is fully compatible with the OpenBaoClient API, allowing
     seamless migration from HashiCorp Vault to OpenBao.
 
     Features:
     - Full API compatibility with HashiCorp Vault
     - Same authentication methods (Token, AppRole, Kubernetes, AWS)
     - Identical secret management operations
-    - Drop-in replacement for VaultClient
+    - Drop-in replacement for OpenBaoClient
     """
 
     def __init__(self, config: OpenBaoConfig | None = None):
@@ -91,7 +93,7 @@ class OpenBaoClient(VaultClient):
         return health
 
 
-class OpenBaoSecretManager(VaultSecretManager):
+class OpenBaoSecretManager(NativeOpenBaoSecretManager):
     """
     High-level secret manager using OpenBao.
 
@@ -107,32 +109,30 @@ class OpenBaoSecretManager(VaultSecretManager):
 
 
 # Factory functions for unified interface
-def get_secret_backend() -> VaultClient | OpenBaoClient:
+def get_secret_backend() -> OpenBaoClient:
     """
     Get the appropriate secret backend based on configuration.
 
-    Returns OpenBaoClient if OPENBAO_ADDR is set, otherwise VaultClient.
+    Returns OpenBaoClient if OPENBAO_ADDR is set, otherwise OpenBaoClient.
     This allows automatic selection of the backend without code changes.
     """
-    if os.getenv("OPENBAO_ADDR") or os.getenv("USE_OPENBAO", "").lower() == "true":
-        return OpenBaoClient()
-    return get_vault_client()
+    # Always return OpenBao client since we've migrated away from Vault
+    return OpenBaoClient()
 
 
-def get_unified_secret_manager() -> VaultSecretManager | OpenBaoSecretManager:
+def get_unified_secret_manager() -> OpenBaoSecretManager:
     """
     Get the appropriate secret manager based on configuration.
 
     Returns OpenBaoSecretManager if OpenBao is configured, otherwise VaultSecretManager.
     """
-    if os.getenv("OPENBAO_ADDR") or os.getenv("USE_OPENBAO", "").lower() == "true":
-        return OpenBaoSecretManager()
-    return get_secret_manager()
+    # Always return OpenBao secret manager since we've migrated away from Vault
+    return OpenBaoSecretManager()
 
 
 # Migration utilities
 async def migrate_secrets_to_openbao(
-    source_client: VaultClient,
+    source_client: OpenBaoClient,
     target_client: OpenBaoClient,
     paths: list[str] | None = None,
 ) -> dict[str, Any]:
@@ -140,7 +140,7 @@ async def migrate_secrets_to_openbao(
     Migrate secrets from HashiCorp Vault to OpenBao.
 
     Args:
-        source_client: VaultClient instance (source)
+        source_client: OpenBaoClient instance (source)
         target_client: OpenBaoClient instance (target)
         paths: List of secret paths to migrate (None = migrate all)
 
@@ -170,7 +170,7 @@ async def migrate_secrets_to_openbao(
 
 
 async def verify_migration(
-    source_client: VaultClient,
+    source_client: OpenBaoClient,
     target_client: OpenBaoClient,
     paths: list[str],
 ) -> dict[str, Any]:
@@ -178,7 +178,7 @@ async def verify_migration(
     Verify that secrets were correctly migrated.
 
     Args:
-        source_client: VaultClient instance (source)
+        source_client: OpenBaoClient instance (source)
         target_client: OpenBaoClient instance (target)
         paths: List of secret paths to verify
 
@@ -219,9 +219,10 @@ __all__ = [
     # Migration utilities
     "migrate_secrets_to_openbao",
     "verify_migration",
-    # Re-export from vault_client for compatibility
-    "VaultConfig",
-    "VaultClient",
-    "VaultSecretManager",
+    # Native OpenBao components
+    "NativeOpenBaoClient",
+    "NativeOpenBaoConfig", 
+    "NativeOpenBaoSecretManager",
     "SecretMetadata",
+    "OpenBaoAPIException",
 ]

@@ -398,7 +398,7 @@ async def get_system_alerts_count(db: Session, tenant_id: str) -> int:
         return alert_count
         
     except Exception as e:
-logger.error(f"Error calculating system alerts: {e}")
+        logger.error(f"Error calculating system alerts: {e}")
         return 0
 
 
@@ -427,7 +427,7 @@ async def calculate_churn_rate(db: Session, tenant_id: str) -> float:
         return 0.0
         
     except Exception as e:
-logger.error(f"Error calculating churn rate: {e}")
+        logger.error(f"Error calculating churn rate: {e}")
         return 2.5  # Fallback value
 
 
@@ -457,7 +457,7 @@ async def calculate_collection_rate(db: Session, tenant_id: str) -> float:
     except ImportError:
         return 95.5  # Fallback if billing module not available
     except Exception as e:
-logger.error(f"Error calculating collection rate: {e}")
+        logger.error(f"Error calculating collection rate: {e}")
         return 95.5
 
 
@@ -489,7 +489,7 @@ async def calculate_avg_response_time(db: Session, tenant_id: str) -> float:
         return 4.0
         
     except Exception as e:
-logger.error(f"Error calculating response time: {e}")
+        logger.error(f"Error calculating response time: {e}")
         return 2.5
 
 
@@ -534,7 +534,7 @@ async def calculate_sla_compliance(db: Session, tenant_id: str) -> float:
         return 95.0
         
     except Exception as e:
-logger.error(f"Error calculating SLA compliance: {e}")
+        logger.error(f"Error calculating SLA compliance: {e}")
         return 94.2
 
 

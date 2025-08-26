@@ -24,6 +24,7 @@ from .models import (
     DeviceStatus,
     ScheduleType,
 )
+from datetime import datetime, timezone
 from dotmac_isp.shared.exceptions import NotFoundError, ConflictError, ValidationError
 
 
@@ -119,7 +120,7 @@ class MonitoringProfileRepository:
             if hasattr(profile, key):
                 setattr(profile, key, value)
 
-        profile.updated_at = datetime.utcnow()
+        profile.updated_at = datetime.now(timezone.utc)
         self.db.commit()
         self.db.refresh(profile)
         return profile
@@ -241,13 +242,13 @@ class SnmpDeviceRepository:
             return None
 
         device.monitoring_status = status
-        device.last_monitored = datetime.utcnow()
+        device.last_monitored = datetime.now(timezone.utc)
 
         if status == MonitoringStatus.FAILED:
             device.consecutive_failures += 1
             if error:
                 device.last_error = error
-                device.last_error_time = datetime.utcnow()
+                device.last_error_time = datetime.now(timezone.utc)
         else:
             device.consecutive_failures = 0
             device.last_error = None
@@ -269,7 +270,7 @@ class SnmpDeviceRepository:
 
         device.availability_status = status
         device.last_seen = (
-            datetime.utcnow() if status == DeviceStatus.UP else device.last_seen
+            datetime.now(timezone.utc) if status == DeviceStatus.UP else device.last_seen
         )
         if response_time_ms is not None:
             device.response_time_ms = response_time_ms
@@ -308,7 +309,7 @@ class SnmpMetricRepository:
         metric = SnmpMetric(
             id=uuid4(),
             tenant_id=self.tenant_id,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             **metric_data,
         )
 
@@ -324,7 +325,7 @@ class SnmpMetricRepository:
             metric = SnmpMetric(
                 id=uuid4(),
                 tenant_id=self.tenant_id,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
                 **metric_data,
             )
             metrics.append(metric)
@@ -337,7 +338,7 @@ class SnmpMetricRepository:
         self, device_id: UUID, metric_names: Optional[List[str]] = None, hours: int = 24
     ) -> List[SnmpMetric]:
         """Get latest metrics for a device."""
-        cutoff_time = datetime.utcnow() - timedelta(hours=hours)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
 
         query = self.db.query(SnmpMetric).filter(
             and_(
@@ -348,9 +349,9 @@ class SnmpMetricRepository:
         )
 
         if metric_names:
-            query = query.filter(SnmpMetric.metric_name.in_(metric_names))
+            query = query.filter(SnmpMetric.metric_name.in_(metric_names)
 
-        return query.order_by(desc(SnmpMetric.timestamp)).all()
+        return query.order_by(desc(SnmpMetric.timestamp).all()
 
     def get_metric_timeseries(
         self,
@@ -423,7 +424,7 @@ class SnmpMetricRepository:
 
     def cleanup_old_metrics(self, retention_days: int = 30) -> int:
         """Clean up metrics older than retention period."""
-        cutoff_date = datetime.utcnow() - timedelta(days=retention_days)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=retention_days)
 
         deleted_count = (
             self.db.query(SnmpMetric)
@@ -451,14 +452,14 @@ class MonitoringAlertRepository:
     def create(self, alert_data: Dict[str, Any]) -> MonitoringAlert:
         """Create new network alert."""
         # Generate unique alert ID
-        alert_id = f"alert_{int(datetime.utcnow().timestamp())}_{uuid4().hex[:8]}"
+        alert_id = f"alert_{int(datetime.now(timezone.utc).timestamp()}_{uuid4().hex[:8]}"
 
         alert = MonitoringAlert(
             id=uuid4(),
             tenant_id=self.tenant_id,
             alert_id=alert_id,
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc),
             **alert_data,
         )
 
@@ -523,7 +524,7 @@ class MonitoringAlertRepository:
             query = query.filter(MonitoringAlert.created_at <= end_time)
 
         return (
-            query.order_by(desc(MonitoringAlert.created_at))
+            query.order_by(desc(MonitoringAlert.created_at)
             .offset(skip)
             .limit(limit)
             .all()
@@ -541,7 +542,7 @@ class MonitoringAlertRepository:
         if device_id:
             query = query.filter(MonitoringAlert.device_id == device_id)
 
-        return query.order_by(desc(MonitoringAlert.created_at)).all()
+        return query.order_by(desc(MonitoringAlert.created_at).all()
 
     def acknowledge_alert(
         self, alert_id: UUID, user_id: UUID, comment: Optional[str] = None
@@ -552,7 +553,7 @@ class MonitoringAlertRepository:
             return None
 
         alert.acknowledge(str(user_id), comment)
-        alert.updated_at = datetime.utcnow()
+        alert.updated_at = datetime.now(timezone.utc)
 
         self.db.commit()
         self.db.refresh(alert)
@@ -567,7 +568,7 @@ class MonitoringAlertRepository:
             return None
 
         alert.resolve(str(user_id), comment)
-        alert.updated_at = datetime.utcnow()
+        alert.updated_at = datetime.now(timezone.utc)
 
         self.db.commit()
         self.db.refresh(alert)
@@ -652,7 +653,7 @@ class AlertRuleRepository:
         if not rule:
             return None
 
-        rule.last_evaluation = datetime.utcnow()
+        rule.last_evaluation = datetime.now(timezone.utc)
         rule.evaluation_count += 1
 
         self.db.commit()
@@ -727,7 +728,7 @@ class MonitoringScheduleRepository:
         if not schedule:
             return None
 
-        schedule.last_execution = datetime.utcnow()
+        schedule.last_execution = datetime.now(timezone.utc)
         schedule.execution_count += 1
 
         self.db.commit()

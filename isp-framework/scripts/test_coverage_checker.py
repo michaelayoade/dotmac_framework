@@ -41,10 +41,10 @@ def analyze_test_coverage(project_root: Path) -> Dict:
     
     # Count test files
     test_files = count_files_in_directory(test_dir, "test_*.py")
-    test_files.extend(count_files_in_directory(test_dir, "*_test.py"))
+    test_files.extend(count_files_in_directory(test_dir, "*_test.py")
     
     # Also count root-level test files
-    root_test_files = list(project_root.glob("test_*.py"))
+    root_test_files = list(project_root.glob("test_*.py")
     test_files.extend(root_test_files)
     
     # Analyze by module

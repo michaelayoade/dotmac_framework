@@ -88,7 +88,7 @@ interface CustomerDashboardProps {
   data?: any; // Override data from props if provided
 }
 
-export function CustomerDashboard({ data }: CustomerDashboardProps = {} as CustomerDashboardProps) {
+export function CustomerDashboard({ data = undefined }: CustomerDashboardProps = {}) {
   const { _user, _currentPortal } = usePortalAuth();
   const [serviceNotifications, setServiceNotifications] = useState<any>(null);
   const [usageInsights, setUsageInsights] = useState<any>(null);

@@ -24,33 +24,33 @@ class SecretManager:
 
     def __init__(self):
         """  Init   operation."""
-        self.vault_client: Optional[Any] = None
+        self.openbao_client: Optional[Any] = None
         self.use_vault = os.getenv("USE_VAULT", "false").lower() == "true"
         self.vault_url = os.getenv("VAULT_URL", "http://openbao:8200")
         self.vault_token = os.getenv("VAULT_TOKEN")
         self.environment = os.getenv("ENVIRONMENT", "development").lower()
         
         if self.use_vault and self.vault_token:
-            self._init_vault_client()
+            self._init_openbao_client()
 
-    def _init_vault_client(self):
+    def _init_openbao_client(self):
         """Initialize OpenBao/Vault client."""
         try:
             import hvac
-            self.vault_client = hvac.Client(
+            self.openbao_client = OpenBaoClient(
                 url=self.vault_url,
                 token=self.vault_token
             )
-            if self.vault_client.is_authenticated():
+            if self.openbao_client.is_authenticated():
                 logger.info("✅ OpenBao/Vault client initialized successfully")
             else:
                 logger.warning("⚠️ Vault client not authenticated, falling back to env vars")
-                self.vault_client = None
+                self.openbao_client = None
         except ImportError:
             logger.warning("⚠️ hvac not available, falling back to environment variables")
         except Exception as e:
             logger.warning(f"⚠️ Vault initialization failed: {e}, falling back to env vars")
-            self.vault_client = None
+            self.openbao_client = None
 
     @lru_cache(maxsize=128)
     def get_secret(self, secret_path: str, default: Optional[str] = None) -> Optional[str]:
@@ -65,9 +65,9 @@ class SecretManager:
             Secret value or None
         """
         # 1. Try OpenBao/Vault (production)
-        if self.vault_client:
+        if self.openbao_client:
             try:
-                response = self.vault_client.secrets.kv.v2.read_secret_version(
+                response = self.openbao_client.secrets.kv.v2.read_secret_version(
                     path=secret_path
                 )
                 secret_value = response['data']['data'].get('value')

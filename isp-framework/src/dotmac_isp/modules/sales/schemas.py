@@ -283,12 +283,12 @@ class SalesDashboard(BaseModel):
 class SalesMetrics(BaseModel):
     """Sales performance metrics."""
 
-    revenue: Decimal = Field(default=Decimal("0.00"))
+    revenue: Decimal = Field(default=Decimal("0.00")
     deals_closed: int = 0
     deals_won: int = 0
     deals_lost: int = 0
     win_rate: float = 0.0
-    average_deal_size: Decimal = Field(default=Decimal("0.00"))
+    average_deal_size: Decimal = Field(default=Decimal("0.00")
     sales_cycle_length: float = 0.0
     conversion_rate: float = 0.0
 
@@ -305,8 +305,8 @@ class PipelineSummary(BaseModel):
     """Sales pipeline summary."""
 
     total_opportunities: int = 0
-    total_value: Decimal = Field(default=Decimal("0.00"))
-    weighted_value: Decimal = Field(default=Decimal("0.00"))
+    total_value: Decimal = Field(default=Decimal("0.00")
+    weighted_value: Decimal = Field(default=Decimal("0.00")
     by_stage: Dict[str, Dict[str, Any]] = Field(default_factory=dict)
     by_owner: Dict[str, Dict[str, Any]] = Field(default_factory=dict)
     closing_this_month: Dict[str, Any] = Field(default_factory=dict)
@@ -341,7 +341,7 @@ class OpportunityListResponse(BaseModel):
     active_opportunities: int
     won_opportunities: int
     lost_opportunities: int
-    total_pipeline_value: Decimal = Field(default=Decimal("0.00"))
+    total_pipeline_value: Decimal = Field(default=Decimal("0.00")
 
 
 class SalesActivityListResponse(BaseModel):

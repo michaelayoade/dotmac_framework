@@ -10,8 +10,8 @@ from decimal import Decimal
 from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..models.billing import PricingPlan, Subscription, Invoice, Payment, UsageRecord
-from .base import BaseRepository
+from models.billing import PricingPlan, Subscription, Invoice, Payment, UsageRecord
+from repositories.base import BaseRepository
 
 
 class BillingPlanRepository(BaseRepository[PricingPlan]):

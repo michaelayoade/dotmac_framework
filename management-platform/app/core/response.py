@@ -3,18 +3,18 @@ Optimized API response formats and utilities.
 """
 
 from typing import Any, Dict, List, Optional, Union, TypeVar, Generic
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from functools import wraps
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 
 from ..utils.pagination import PaginatedResponse
-from ..core.logging import get_logger
+from .logging import get_logger
 
-logger = get_logger(__name__)
+logger = get_logger(__name__, timezone)
 
 T = TypeVar('T')
 
@@ -46,7 +46,7 @@ class APIError(BaseModel):
     message: str = Field(..., description="Human-readable error message")
     details: Optional[Dict[str, Any]] = Field(None, description="Additional error details")
     field: Optional[str] = Field(None, description="Field that caused the error")
-    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Error timestamp")
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(None), description="Error timestamp")
 
 
 class APIResponse(BaseModel, Generic[T]):
@@ -56,13 +56,14 @@ class APIResponse(BaseModel, Generic[T]):
     data: Optional[T] = Field(None, description="Response data")
     error: Optional[APIError] = Field(None, description="Error information if status is error")
     message: Optional[str] = Field(None, description="Human-readable message")
-    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Response timestamp")
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(None), description="Response timestamp")
     request_id: Optional[str] = Field(None, description="Request correlation ID")
     
-    class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat() if v else None
+    model_config = ConfigDict()
+        json_encoders={
+            datetime: lambda v: v.isoformat( if v else None)
         }
+    )
 
 
 class PaginatedAPIResponse(BaseModel, Generic[T]):
@@ -72,79 +73,80 @@ class PaginatedAPIResponse(BaseModel, Generic[T]):
     data: List[T] = Field(..., description="Response data items")
     pagination: Dict[str, Any] = Field(..., description="Pagination metadata")
     message: Optional[str] = Field(None, description="Human-readable message")
-    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Response timestamp")
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(None), description="Response timestamp")
     request_id: Optional[str] = Field(None, description="Request correlation ID")
     
-    class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat() if v else None
+    model_config = ConfigDict()
+        json_encoders={
+            datetime: lambda v: v.isoformat( if v else None)
         }
+    )
 
 
 class ResponseBuilder:
     """Builder for creating standardized API responses."""
     
     @staticmethod
-    def success(
+    def success()
         data: Any = None,
         message: str = None,
         request_id: str = None,
         include_metadata: bool = True,
-        status_code: int = 200
+    status_code: int = 200)
     ) -> JSONResponse:
         """Create a success response."""
         response_data = {
             "status": ResponseStatus.SUCCESS,
             "data": data,
             "message": message,
-            "timestamp": datetime.utcnow().isoformat() if include_metadata else None,
+            "timestamp": datetime.now(None).isoformat() if include_metadata else None,
             "request_id": request_id
         }
         
         # Remove None values to reduce response size
-        response_data = {k: v for k, v in response_data.items() if v is not None}
+        response_data = {k: v for k, v in response_data.items( if v is not None})
         
-        return JSONResponse(
+)        return JSONResponse()
             status_code=status_code,
             content=jsonable_encoder(response_data)
         )
     
     @staticmethod
-    def error(
+    def error()
         error_code: APIErrorCode,
         message: str,
         status_code: int = 400,
         details: Dict[str, Any] = None,
         field: str = None,
         request_id: str = None,
-        include_metadata: bool = True
+    include_metadata: bool = True)
     ) -> JSONResponse:
         """Create an error response."""
-        error_obj = APIError(
+        error_obj = APIError()
             code=error_code,
             message=message,
             details=details,
             field=field,
-            timestamp=datetime.utcnow() if include_metadata else None
+            timestamp=datetime.now(None) if include_metadata else None
         )
         
         response_data = {
             "status": ResponseStatus.ERROR,
-            "error": error_obj.dict(exclude_none=True),
-            "timestamp": datetime.utcnow().isoformat() if include_metadata else None,
+            "error": error_obj.model_dump(exclude_none=True),
+            "timestamp": datetime.now(None).isoformat() if include_metadata else None,
             "request_id": request_id
         }
         
         # Remove None values
-        response_data = {k: v for k, v in response_data.items() if v is not None}
+        response_data = {k: v for k, v in response_data.items( if v is not None})
         
-        return JSONResponse(
+)        return JSONResponse()
             status_code=status_code,
             content=jsonable_encoder(response_data)
         )
     
     @staticmethod
-    def paginated(
+    def paginated()
         data: List[Any],
         total: int,
         page: int,
@@ -152,7 +154,7 @@ class ResponseBuilder:
         message: str = None,
         request_id: str = None,
         include_metadata: bool = True,
-        **extra_pagination_data
+    **extra_pagination_data)
     ) -> JSONResponse:
         """Create a paginated response."""
         from math import ceil
@@ -176,38 +178,38 @@ class ResponseBuilder:
             "data": data,
             "pagination": pagination_data,
             "message": message,
-            "timestamp": datetime.utcnow().isoformat() if include_metadata else None,
+            "timestamp": datetime.now(None).isoformat() if include_metadata else None,
             "request_id": request_id
         }
         
         # Remove None values
-        response_data = {k: v for k, v in response_data.items() if v is not None}
+        response_data = {k: v for k, v in response_data.items( if v is not None})
         
-        return JSONResponse(
+)        return JSONResponse()
             status_code=200,
             content=jsonable_encoder(response_data)
         )
     
     @staticmethod
-    def warning(
+    def warning()
         data: Any = None,
         message: str = None,
         request_id: str = None,
-        include_metadata: bool = True
+    include_metadata: bool = True)
     ) -> JSONResponse:
         """Create a warning response."""
         response_data = {
             "status": ResponseStatus.WARNING,
             "data": data,
             "message": message,
-            "timestamp": datetime.utcnow().isoformat() if include_metadata else None,
+            "timestamp": datetime.now(None).isoformat() if include_metadata else None,
             "request_id": request_id
         }
         
         # Remove None values
-        response_data = {k: v for k, v in response_data.items() if v is not None}
+        response_data = {k: v for k, v in response_data.items( if v is not None})
         
-        return JSONResponse(
+)        return JSONResponse()
             status_code=200,
             content=jsonable_encoder(response_data)
         )
@@ -216,7 +218,7 @@ class ResponseBuilder:
 class OptimizedJSONResponse(JSONResponse):
     """Optimized JSON response with compression and minimal formatting."""
     
-    def __init__(
+    def __init__()
         self,
         content: Any = None,
         status_code: int = 200,
@@ -224,7 +226,7 @@ class OptimizedJSONResponse(JSONResponse):
         media_type: str = None,
         background=None,
         minimize_response: bool = True,
-        include_metadata: bool = True
+    include_metadata: bool = True)
     ):
         # Optimize content if requested
         if minimize_response and isinstance(content, dict):
@@ -233,12 +235,12 @@ class OptimizedJSONResponse(JSONResponse):
         # Add compression headers for large responses
         response_headers = headers or {}
         
-        if isinstance(content, (dict, list)):
+        if isinstance(content, (dict, list):)
             content_size = len(str(content))
             if content_size > 1024:  # 1KB threshold
                 response_headers["Content-Encoding"] = "gzip"
         
-        super().__init__(
+        super(.__init__()
             content=content,
             status_code=status_code,
             headers=response_headers,
@@ -254,11 +256,11 @@ class OptimizedJSONResponse(JSONResponse):
         
         minimized = {}
         
-        for key, value in data.items():
+        for key, value in data.items(:)
             if value is None:
                 continue
             
-            if isinstance(value, dict):
+)            if isinstance(value, dict):
                 minimized_value = OptimizedJSONResponse._minimize_response(value)
                 if minimized_value:  # Only include non-empty dicts
                     minimized[key] = minimized_value
@@ -266,8 +268,7 @@ class OptimizedJSONResponse(JSONResponse):
                 if value:  # Only include non-empty lists
                     minimized[key] = [
                         OptimizedJSONResponse._minimize_response(item) if isinstance(item, dict) else item
-                        for item in value
-                    ]
+                        for item in value ]
             else:
                 minimized[key] = value
         
@@ -278,11 +279,11 @@ class ResponseOptimizer:
     """Utilities for optimizing response data."""
     
     @staticmethod
-    def optimize_model_list(
+    def optimize_model_list()
         models: List[Any],
         include_fields: List[str] = None,
         exclude_fields: List[str] = None,
-        max_items: int = None
+    max_items: int = None)
     ) -> List[Dict[str, Any]]:
         """Optimize a list of Pydantic models for API response."""
         if max_items:
@@ -294,23 +295,23 @@ class ResponseOptimizer:
             if hasattr(model, 'dict'):
                 # Pydantic model
                 model_dict = model.dict(
-                    include=set(include_fields) if include_fields else None,
+)                    include=set(include_fields) if include_fields else None,
                     exclude=set(exclude_fields) if exclude_fields else None,
                     exclude_none=True
                 )
             elif isinstance(model, dict):
-                model_dict = model.copy()
+                model_dict = model.model_copy()
                 
                 if include_fields:
-                    model_dict = {k: v for k, v in model_dict.items() if k in include_fields}
+)                    model_dict = {k: v for k, v in model_dict.items() if k in include_fields}
                 
                 if exclude_fields:
-                    model_dict = {k: v for k, v in model_dict.items() if k not in exclude_fields}
+                    model_dict = {k: v for k, v in model_dict.items( if k not in exclude_fields})
             else:
                 model_dict = model
             
             # Convert datetime objects to ISO strings
-            optimized_dict = ResponseOptimizer._serialize_datetime(model_dict)
+)            optimized_dict = ResponseOptimizer._serialize_datetime(model_dict)
             optimized.append(optimized_dict)
         
         return optimized
@@ -319,23 +320,23 @@ class ResponseOptimizer:
     def _serialize_datetime(data: Any) -> Any:
         """Convert datetime objects to ISO format strings."""
         if isinstance(data, datetime):
-            return data.isoformat()
-        elif isinstance(data, dict):
-            return {k: ResponseOptimizer._serialize_datetime(v) for k, v in data.items()}
-        elif isinstance(data, list):
+            return data.isoformat(
+)        elif isinstance(data, dict):
+            return {k: ResponseOptimizer._serialize_datetime(v) for k, v in data.items(}
+)        elif isinstance(data, list):
             return [ResponseOptimizer._serialize_datetime(item) for item in data]
         else:
             return data
     
     @staticmethod
-    def create_summary_response(
+    def create_summary_response()
         items: List[Any],
         summary_fields: List[str],
         detail_fields: List[str] = None,
-        max_details: int = 10
+    max_details: int = 10)
     ) -> Dict[str, Any]:
         """Create a response with summary data and limited detailed items."""
-        summaries = ResponseOptimizer.optimize_model_list(
+        summaries = ResponseOptimizer.optimize_model_list()
             items,
             include_fields=summary_fields
         )
@@ -346,7 +347,7 @@ class ResponseOptimizer:
         }
         
         if detail_fields and items:
-            detailed_items = ResponseOptimizer.optimize_model_list(
+            detailed_items = ResponseOptimizer.optimize_model_list()
                 items[:max_details],
                 include_fields=detail_fields
             )
@@ -370,18 +371,18 @@ def standard_response(include_metadata: bool = True):
                     return result
                 
                 # Standard success response
-                return ResponseBuilder.success(
+                return ResponseBuilder.success()
                     data=result,
                     include_metadata=include_metadata
                 )
                 
             except Exception as e:
-                logger.error("Endpoint error", 
+                logger.error("Endpoint error", )
                            function=func.__name__, 
                            error=str(e), 
                            exc_info=True)
                 
-                return ResponseBuilder.error(
+                return ResponseBuilder.error()
                     error_code=APIErrorCode.INTERNAL_ERROR,
                     message="An internal error occurred",
                     status_code=500,
@@ -396,18 +397,18 @@ def standard_response(include_metadata: bool = True):
                 if isinstance(result, JSONResponse):
                     return result
                 
-                return ResponseBuilder.success(
+                return ResponseBuilder.success()
                     data=result,
                     include_metadata=include_metadata
                 )
                 
             except Exception as e:
-                logger.error("Endpoint error", 
+                logger.error("Endpoint error", )
                            function=func.__name__, 
                            error=str(e), 
                            exc_info=True)
                 
-                return ResponseBuilder.error(
+                return ResponseBuilder.error()
                     error_code=APIErrorCode.INTERNAL_ERROR,
                     message="An internal error occurred",
                     status_code=500,
@@ -435,7 +436,7 @@ class CommonResponses:
         if resource_id:
             message += f": {resource_id}"
         
-        return ResponseBuilder.error(
+        return ResponseBuilder.error()
             error_code=APIErrorCode.NOT_FOUND,
             message=message,
             status_code=404
@@ -444,7 +445,7 @@ class CommonResponses:
     @staticmethod
     def unauthorized(message: str = "Authentication required") -> JSONResponse:
         """Standard unauthorized response."""
-        return ResponseBuilder.error(
+        return ResponseBuilder.error()
             error_code=APIErrorCode.AUTHENTICATION_ERROR,
             message=message,
             status_code=401
@@ -453,7 +454,7 @@ class CommonResponses:
     @staticmethod
     def forbidden(message: str = "Access denied") -> JSONResponse:
         """Standard forbidden response."""
-        return ResponseBuilder.error(
+        return ResponseBuilder.error()
             error_code=APIErrorCode.AUTHORIZATION_ERROR,
             message=message,
             status_code=403
@@ -462,7 +463,7 @@ class CommonResponses:
     @staticmethod
     def conflict(message: str = "Resource conflict") -> JSONResponse:
         """Standard conflict response."""
-        return ResponseBuilder.error(
+        return ResponseBuilder.error()
             error_code=APIErrorCode.CONFLICT,
             message=message,
             status_code=409
@@ -471,7 +472,7 @@ class CommonResponses:
     @staticmethod
     def validation_error(message: str = "Validation failed", field: str = None) -> JSONResponse:
         """Standard validation error response."""
-        return ResponseBuilder.error(
+        return ResponseBuilder.error()
             error_code=APIErrorCode.VALIDATION_ERROR,
             message=message,
             status_code=422,

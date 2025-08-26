@@ -14,7 +14,7 @@ import asyncio
 import logging
 import os
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional, Any
 from pathlib import Path
 import aiohttp
@@ -149,7 +149,7 @@ class BackupHealthMonitor:
                     try:
                         timestamp_str = backup_dir.split('_')[-1]
                         backup_time = datetime.strptime(timestamp_str, "%Y%m%d_%H%M%S")
-                        backups.append((backup_time, backup_dir, backup_path))
+                        backups.append((backup_time, backup_dir, backup_path)
                     except (ValueError, IndexError):
                         continue
             
@@ -159,7 +159,7 @@ class BackupHealthMonitor:
                 most_recent = backups[0]
                 
                 results["last_backup"] = most_recent[1]
-                backup_age = datetime.now() - most_recent[0]
+                backup_age = datetime.now(timezone.utc) - most_recent[0]
                 results["backup_age_hours"] = backup_age.total_seconds() / 3600
                 
                 # Check if backup is stale
@@ -237,7 +237,7 @@ class BackupHealthMonitor:
                 if os.path.exists(file_path):
                     import hashlib
                     with open(file_path, 'rb') as f:
-                        actual_checksum = hashlib.sha256(f.read()).hexdigest()
+                        actual_checksum = hashlib.sha256(f.read().hexdigest()
                     
                     if actual_checksum == expected_checksum:
                         results["verified_files"] += 1
@@ -272,7 +272,7 @@ class BackupHealthMonitor:
             results["issues"].append("Restore testing disabled")
             return results
         
-        start_time = datetime.now()
+        start_time = datetime.now(timezone.utc)
         
         try:
             # Find most recent backup
@@ -330,7 +330,7 @@ class BackupHealthMonitor:
             results["issues"].append(f"Test failed: {str(e)}")
         
         finally:
-            end_time = datetime.now()
+            end_time = datetime.now(timezone.utc)
             results["duration_seconds"] = (end_time - start_time).total_seconds()
             
             # Update metrics
@@ -391,7 +391,7 @@ class BackupHealthMonitor:
         """Send alert notification."""
         try:
             alert_data = {
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "type": alert_type,
                 "message": message,
                 "severity": severity,
@@ -439,7 +439,7 @@ Health Score: {self.health_score}/100
 This is an automated alert from the DotMac Platform backup monitoring system.
 """
             
-            msg.attach(MIMEText(body, 'plain'))
+            msg.attach(MIMEText(body, 'plain')
             
             server = smtplib.SMTP(email_config["smtp_host"], email_config["smtp_port"])
             if email_config.get("smtp_password"):
@@ -507,7 +507,7 @@ This is an automated alert from the DotMac Platform backup monitoring system.
     
     async def run_health_check_cycle(self) -> Dict[str, Any]:
         """Run complete health check cycle."""
-        cycle_start = datetime.now()
+        cycle_start = datetime.now(timezone.utc)
         
         try:
             logger.info("Starting backup health check cycle")
@@ -540,7 +540,7 @@ This is an automated alert from the DotMac Platform backup monitoring system.
                     "warning" if health_score >= 50 else "critical"
                 )
             
-            cycle_duration = (datetime.now() - cycle_start).total_seconds()
+            cycle_duration = (datetime.now(timezone.utc) - cycle_start).total_seconds()
             
             result = {
                 "timestamp": cycle_start.isoformat(),
@@ -619,4 +619,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    exit(asyncio.run(main()))
+    exit(asyncio.run(main())

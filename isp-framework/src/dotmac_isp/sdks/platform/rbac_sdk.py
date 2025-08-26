@@ -7,7 +7,7 @@ checking, role management, and hierarchical role support.
 
 import logging
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional, List
 
 from dotmac_isp.sdks.contracts.rbac import (
     BulkPermissionCheckRequest,
@@ -63,8 +63,16 @@ class CircularRoleError(RBACError):
 class RBACSDKConfig:
     """RBAC SDK configuration."""
 
-    def __init__(        ):
-            """Initialize operation."""
+    def __init__(
+        self,
+        cache_ttl: int = 300,
+        max_role_depth: int = 5,
+        enable_caching: bool = True,
+        enable_audit_logging: bool = True,
+        default_permissions: Optional[List[str]] = None,
+        system_roles: Optional[List[str]] = None,
+    ):
+        """Initialize RBAC SDK."""
         self.cache_ttl = cache_ttl
         self.max_role_depth = max_role_depth
         self.enable_caching = enable_caching
@@ -476,7 +484,7 @@ class RBACSDK:
                 )
 
             # Create user role assignment with tenant context
-            conditions = request.conditions.copy() if request.conditions else {}
+            conditions = request.conditions.model_copy() if request.conditions else {}
             if context and context.headers and context.headers.x_tenant_id:
                 conditions["tenant_id"] = context.headers.x_tenant_id
 

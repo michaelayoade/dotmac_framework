@@ -164,7 +164,7 @@ class CustomerService:
     
     def _calculate_account_age(self, created_at: str) -> int:
         """Calculate account age in days."""
-        created_date = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
+        created_date = datetime.fromisoformat(created_at.replace('Z', '+00:00')
         now = datetime.now(timezone.utc)
         return (now - created_date).days
 

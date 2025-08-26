@@ -75,7 +75,7 @@ async def _configure_email_providers():
             config={
                 "backend": "smtp",
                 "smtp_host": os.getenv("SMTP_HOST"),
-                "smtp_port": int(os.getenv("SMTP_PORT", "587")),
+                "smtp_port": int(os.getenv("SMTP_PORT", "587"),
                 "smtp_user": os.getenv("SMTP_USER"),
                 "smtp_password": os.getenv("SMTP_PASSWORD"),
                 "from_email": os.getenv("FROM_EMAIL"),
@@ -231,9 +231,9 @@ async def get_provider_architecture_status() -> Dict[str, Any]:
     """Get status of the provider architecture for monitoring/debugging."""
     
     status = {
-        "architecture_initialized": len(global_channel_registry.list_active_providers()) > 0,
-        "total_providers_registered": len(global_channel_registry.list_available_providers()),
-        "active_providers": len(global_channel_registry.list_active_providers()),
+        "architecture_initialized": len(global_channel_registry.list_active_providers() > 0,
+        "total_providers_registered": len(global_channel_registry.list_available_providers(),
+        "active_providers": len(global_channel_registry.list_active_providers(),
         "providers_by_type": {},
         "provider_details": {}
     }

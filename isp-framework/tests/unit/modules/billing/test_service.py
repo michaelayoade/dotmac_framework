@@ -521,7 +521,7 @@ class TestBillingServiceErrorHandling:
         """Test handling of calculation errors."""
         # Test with invalid decimal values
         with pytest.raises(ValidationError):
-            billing_service._calculate_tax("invalid", Decimal('0.085'))
+            billing_service._calculate_tax("invalid", Decimal('0.085')
 
     async def test_concurrent_operation_handling(self, billing_service):
         """Test handling of concurrent operations."""

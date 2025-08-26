@@ -4,13 +4,14 @@ Base repository with common CRUD operations.
 
 from typing import Any, Dict, Generic, List, Optional, Tuple, Type, TypeVar
 from uuid import UUID
+from datetime import datetime, timezone
 
 from sqlalchemy import delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from ..database import Base
-from ..utils.pagination import DatabasePaginator, PaginationHelper
+from database import Base
+from utils.pagination import DatabasePaginator, PaginationHelper
 
 ModelType = TypeVar("ModelType", bound=Base)
 
@@ -258,8 +259,7 @@ class BaseRepository(Generic[ModelType]):
     ) -> Optional[ModelType]:
         """Update a record."""
         # Set audit fields
-        from datetime import datetime
-        obj_data["updated_at"] = datetime.utcnow()
+        obj_data["updated_at"] = datetime.now(timezone.utc)
         if user_id:
             obj_data["updated_by"] = user_id
         

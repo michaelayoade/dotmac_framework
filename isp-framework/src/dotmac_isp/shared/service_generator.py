@@ -185,7 +185,7 @@ from datetime import datetime
 from pydantic import BaseModel, Field, EmailStr
 
 
-class {config.model_name}Base(BaseModel):
+class {config.model_name}Base(BaseModel, ConfigDict):
     """Base {config.model_name} schema."""
     # Implementation needed: Add common fields shared between create/update/response schemas
     # Examples:
@@ -223,8 +223,7 @@ class {config.model_name}Response({config.model_name}Base):
     updated_at: Optional[datetime] = None
     {"tenant_id: str" if config.tenant_aware else ""}
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 '''
 
     def generate_model_template(self, config: ServiceConfig) -> str:
@@ -403,7 +402,7 @@ async def delete_{config.model_name.lower()}(
             os.makedirs(os.path.dirname(file_path), exist_ok=True)
             with open(file_path, 'w') as f:
                 f.write(content)
-logger.info(f"Generated: {file_path}")
+            logger.info(f"Generated: {file_path}")
 
 
 # CLI Interface
@@ -431,12 +430,12 @@ def generate_service_from_cli():
     files = generator.create_service_files(config, args.base_path)
     generator.write_files(files)
     
-logger.info(f"Generated service for {config.model_name} in {config.module_name} module")
-logger.info("Next steps:")
-logger.info("1. Update module/__init__.py to include new service")
-logger.info("2. Add router to main app.py")
-logger.info("3. Create database migration")
-logger.info("4. Add tests")
+    logger.info(f"Generated service for {config.model_name} in {config.module_name} module")
+    logger.info("Next steps:")
+    logger.info("1. Update module/__init__.py to include new service")
+    logger.info("2. Add router to main app.py")
+    logger.info("3. Create database migration")
+    logger.info("4. Add tests")
 
 
 if __name__ == "__main__":

@@ -109,7 +109,7 @@ class MetricsCollector:
             name=name,
             value=value,
             metric_type=metric_type,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             tags=tags or {},
         )
 
@@ -366,7 +366,7 @@ class AlertManager:
             metric_name=rule["metric_name"],
             threshold=rule["threshold"],
             current_value=current_value,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
         )
 
         # Store alert
@@ -409,7 +409,7 @@ class AlertManager:
 
         if alert_data:
             alert_data["resolved"] = True
-            alert_data["resolved_at"] = datetime.utcnow().isoformat()
+            alert_data["resolved_at"] = datetime.now(timezone.utc).isoformat()
             self.cache_manager.set(alert_key, alert_data, 86400 * 7, "alerts")
 
             logger.info(f"Alert resolved: {alert_id}")
@@ -436,7 +436,7 @@ class HealthChecker:
         """Run all health checks."""
         results = {
             "status": "healthy",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "checks": {},
         }
 

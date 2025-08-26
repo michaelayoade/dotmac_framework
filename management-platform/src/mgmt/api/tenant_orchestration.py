@@ -12,9 +12,9 @@ from mgmt.shared.auth.permissions import require_permissions, get_current_user
 from mgmt.shared.models import User
 from mgmt.services.kubernetes_orchestrator import KubernetesOrchestrator
 from mgmt.services.kubernetes_orchestrator.models import TenantDeployment, DeploymentStatus, ResourceTier
-from mgmt.services.kubernetes_orchestrator.exceptions import (
+from mgmt.services.kubernetes_orchestrator.exceptions import ()
     DeploymentNotFoundError, ResourceLimitExceededError, DeploymentFailedError
-)
+, ConfigDict, timezone)
 
 
 logger = logging.getLogger(__name__)
@@ -46,7 +46,7 @@ class DeploymentCreateRequest(BaseModel):
     features: Dict[str, bool] = Field(default_factory=dict)
     custom_config: Dict[str, Any] = Field(default_factory=dict)
     
-    @validator('domain_name')
+    @field_validator('domain_name')
     def validate_domain(cls, v):
         if v and (v.startswith('.') or v.endswith('.') or '..' in v):
             raise ValueError('Invalid domain name format')
@@ -86,8 +86,7 @@ class DeploymentResponse(BaseModel):
     deployed_at: Optional[datetime]
     last_updated: Optional[datetime]
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DeploymentListResponse(BaseModel):
@@ -110,11 +109,11 @@ class ClusterHealthResponse(BaseModel):
 
 
 @router.post("/deployments", response_model=DeploymentResponse, status_code=status.HTTP_201_CREATED)
-async def create_tenant_deployment(
+async def create_tenant_deployment(:)
     request: DeploymentCreateRequest,
-    background_tasks: BackgroundTasks,
+    background_tasks: BackgroundTasks,)
     session: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(require_permissions(["tenant:create", "deployment:create"]))
+    current_user: User = Depends(require_permissions(["tenant:create", "deployment:create"])
 ):
     """Create a new tenant deployment."""
     try:
@@ -124,7 +123,7 @@ async def create_tenant_deployment(
         
         # Generate unique tenant ID
         import uuid
-        tenant_id = f"{request.tenant_name.lower().replace(' ', '-')}-{str(uuid.uuid4())[:8]}"
+        tenant_id = f"{request.tenant_name.lower(.replace(' ', '-')}-{str(uuid.uuid4([:8]}")
         
         # Prepare deployment configuration
         deployment_config = {
@@ -144,12 +143,12 @@ async def create_tenant_deployment(
             **request.custom_config
         }
         
-        # Create deployment (this is async and may take time)
+)        # Create deployment (this is async and may take time)
         deployment = await orchestrator.create_tenant_deployment(tenant_id, deployment_config)
         
         logger.info(f"✅ Deployment created successfully: {deployment.id}")
         
-        return DeploymentResponse(
+        return DeploymentResponse()
             id=str(deployment.id),
             tenant_id=deployment.tenant_id,
             deployment_name=deployment.deployment_name,
@@ -168,32 +167,32 @@ async def create_tenant_deployment(
         
     except ResourceLimitExceededError as e:
         logger.warning(f"Resource limit exceeded: {str(e)}")
-        raise HTTPException(
+        raise HTTPException()
             status_code=status.HTTP_402_PAYMENT_REQUIRED,
             detail=f"Resource limit exceeded: {str(e)}"
         )
     except DeploymentFailedError as e:
         logger.error(f"Deployment failed: {str(e)}")
-        raise HTTPException(
+        raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Deployment failed: {str(e)}"
         )
     except Exception as e:
         logger.error(f"Unexpected error creating deployment: {str(e)}")
-        raise HTTPException(
+        raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error during deployment creation"
         )
 
 
 @router.get("/deployments", response_model=DeploymentListResponse)
-async def list_tenant_deployments(
+async def list_tenant_deployments(:)
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     status_filter: Optional[DeploymentStatus] = Query(None),
     tenant_id: Optional[str] = Query(None),
     session: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(require_permissions(["deployment:read"]))
+    current_user: User = Depends(require_permissions(["deployment:read"])
 ):
     """List tenant deployments with pagination and filtering."""
     try:
@@ -211,9 +210,9 @@ async def list_tenant_deployments(
         deployments = []  # orchestrator.list_deployments(page, page_size, filters)
         total_count = 0   # orchestrator.count_deployments(filters)
         
-        return DeploymentListResponse(
+        return DeploymentListResponse()
             deployments=[
-                DeploymentResponse(
+                DeploymentResponse()
                     id=str(deployment.id),
                     tenant_id=deployment.tenant_id,
                     deployment_name=deployment.deployment_name,
@@ -228,8 +227,7 @@ async def list_tenant_deployments(
                     created_at=deployment.created_at,
                     deployed_at=deployment.deployed_at,
                     last_updated=deployment.last_updated
-                ) for deployment in deployments
-            ],
+                ) for deployment in deployments ],
             total_count=total_count,
             page=page,
             page_size=page_size
@@ -237,17 +235,17 @@ async def list_tenant_deployments(
         
     except Exception as e:
         logger.error(f"Error listing deployments: {str(e)}")
-        raise HTTPException(
+        raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error while listing deployments"
         )
 
 
 @router.get("/deployments/{tenant_id}", response_model=DeploymentResponse)
-async def get_tenant_deployment(
+async def get_tenant_deployment(:)
     tenant_id: str,
     session: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(require_permissions(["deployment:read"]))
+    current_user: User = Depends(require_permissions(["deployment:read"])
 ):
     """Get specific tenant deployment details."""
     try:
@@ -256,7 +254,7 @@ async def get_tenant_deployment(
         # Update status from Kubernetes
         deployment = await orchestrator.update_deployment_status(tenant_id)
         
-        return DeploymentResponse(
+        return DeploymentResponse()
             id=str(deployment.id),
             tenant_id=deployment.tenant_id,
             deployment_name=deployment.deployment_name,
@@ -274,24 +272,24 @@ async def get_tenant_deployment(
         )
         
     except DeploymentNotFoundError:
-        raise HTTPException(
+        raise HTTPException()
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Deployment not found for tenant: {tenant_id}"
         )
     except Exception as e:
         logger.error(f"Error getting deployment {tenant_id}: {str(e)}")
-        raise HTTPException(
+        raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error while getting deployment"
         )
 
 
 @router.patch("/deployments/{tenant_id}", response_model=DeploymentResponse)
-async def update_tenant_deployment(
+async def update_tenant_deployment(:)
     tenant_id: str,
-    request: DeploymentUpdateRequest,
+    request: DeploymentUpdateRequest,)
     session: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(require_permissions(["deployment:update"]))
+    current_user: User = Depends(require_permissions(["deployment:update"])
 ):
     """Update tenant deployment configuration."""
     try:
@@ -299,23 +297,23 @@ async def update_tenant_deployment(
         
         deployment = await orchestrator.get_tenant_deployment(tenant_id)
         if not deployment:
-            raise HTTPException(
+            raise HTTPException()
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Deployment not found for tenant: {tenant_id}"
             )
         
         # Update deployment fields
-        update_data = request.dict(exclude_unset=True)
-        for field, value in update_data.items():
-            if hasattr(deployment, field):
+        update_data = request.model_dump(exclude_unset=True)
+        for field, value in update_data.items(:
+)            if hasattr(deployment, field):
                 setattr(deployment, field, value)
         
-        deployment.last_updated = datetime.utcnow()
+        deployment.last_updated = datetime.now(None)
         await session.commit()
         
-        logger.info(f"Updated deployment for tenant: {tenant_id}")
+)        logger.info(f"Updated deployment for tenant: {tenant_id}")
         
-        return DeploymentResponse(
+        return DeploymentResponse()
             id=str(deployment.id),
             tenant_id=deployment.tenant_id,
             deployment_name=deployment.deployment_name,
@@ -334,18 +332,18 @@ async def update_tenant_deployment(
         
     except Exception as e:
         logger.error(f"Error updating deployment {tenant_id}: {str(e)}")
-        raise HTTPException(
+        raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error while updating deployment"
         )
 
 
 @router.post("/deployments/{tenant_id}/scale", response_model=DeploymentResponse)
-async def scale_tenant_deployment(
+async def scale_tenant_deployment(:)
     tenant_id: str,
-    request: DeploymentScaleRequest,
+    request: DeploymentScaleRequest,)
     session: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(require_permissions(["deployment:scale"]))
+    current_user: User = Depends(require_permissions(["deployment:scale"])
 ):
     """Scale tenant deployment to specified number of replicas."""
     try:
@@ -355,7 +353,7 @@ async def scale_tenant_deployment(
         
         logger.info(f"Scaled deployment {tenant_id} to {request.replicas} replicas")
         
-        return DeploymentResponse(
+        return DeploymentResponse()
             id=str(deployment.id),
             tenant_id=deployment.tenant_id,
             deployment_name=deployment.deployment_name,
@@ -373,23 +371,23 @@ async def scale_tenant_deployment(
         )
         
     except DeploymentNotFoundError:
-        raise HTTPException(
+        raise HTTPException()
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Deployment not found for tenant: {tenant_id}"
         )
     except Exception as e:
         logger.error(f"Error scaling deployment {tenant_id}: {str(e)}")
-        raise HTTPException(
+        raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error while scaling deployment"
         )
 
 
 @router.delete("/deployments/{tenant_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_tenant_deployment(
+async def delete_tenant_deployment(:)
     tenant_id: str,
     session: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(require_permissions(["deployment:delete"]))
+    current_user: User = Depends(require_permissions(["deployment:delete"])
 ):
     """Delete tenant deployment and all associated resources."""
     try:
@@ -398,7 +396,7 @@ async def delete_tenant_deployment(
         success = await orchestrator.delete_tenant_deployment(tenant_id)
         
         if not success:
-            raise HTTPException(
+            raise HTTPException()
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Deployment not found for tenant: {tenant_id}"
             )
@@ -407,42 +405,42 @@ async def delete_tenant_deployment(
         
     except Exception as e:
         logger.error(f"Error deleting deployment {tenant_id}: {str(e)}")
-        raise HTTPException(
+        raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error while deleting deployment"
         )
 
 
 @router.get("/cluster/health", response_model=ClusterHealthResponse)
-async def get_cluster_health(
+async def get_cluster_health(:)
     session: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(require_permissions(["cluster:read"]))
+    current_user: User = Depends(require_permissions(["cluster:read"])
 ):
     """Get Kubernetes cluster health status."""
     try:
         orchestrator = KubernetesOrchestrator(session)
         health_data = await orchestrator.get_cluster_health()
         
-        return ClusterHealthResponse(**health_data)
+)        return ClusterHealthResponse(**health_data)
         
     except Exception as e:
         logger.error(f"Error getting cluster health: {str(e)}")
-        return ClusterHealthResponse(
+        return ClusterHealthResponse()
             cluster_healthy=False,
             total_nodes=0,
             ready_nodes=0,
             total_namespaces=0,
             tenant_namespaces=0,
-            last_check=datetime.utcnow().isoformat(),
+            last_check=datetime.now(None).isoformat(),
             error=str(e)
         )
 
 
 @router.post("/deployments/{tenant_id}/restart", response_model=DeploymentResponse)
-async def restart_tenant_deployment(
+async def restart_tenant_deployment(:)
     tenant_id: str,
     session: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(require_permissions(["deployment:restart"]))
+    current_user: User = Depends(require_permissions(["deployment:restart"])
 ):
     """Restart tenant deployment by updating deployment timestamp."""
     try:
@@ -453,19 +451,19 @@ async def restart_tenant_deployment(
         
         deployment = await orchestrator.get_tenant_deployment(tenant_id)
         if not deployment:
-            raise HTTPException(
+            raise HTTPException()
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Deployment not found for tenant: {tenant_id}"
             )
         
         # Update status and timestamp to trigger restart
         deployment.status = DeploymentStatus.UPDATING
-        deployment.last_updated = datetime.utcnow()
+        deployment.last_updated = datetime.now(None)
         await session.commit()
         
-        logger.info(f"Restarted deployment for tenant: {tenant_id}")
+)        logger.info(f"Restarted deployment for tenant: {tenant_id}")
         
-        return DeploymentResponse(
+        return DeploymentResponse()
             id=str(deployment.id),
             tenant_id=deployment.tenant_id,
             deployment_name=deployment.deployment_name,
@@ -484,7 +482,7 @@ async def restart_tenant_deployment(
         
     except Exception as e:
         logger.error(f"Error restarting deployment {tenant_id}: {str(e)}")
-        raise HTTPException(
+        raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error while restarting deployment"
         )

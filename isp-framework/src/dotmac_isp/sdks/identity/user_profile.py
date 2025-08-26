@@ -4,6 +4,7 @@ User Profile SDK - display name, avatar, locale, timezone.
 
 from typing import Any, Dict, Optional
 from uuid import UUID
+from datetime import datetime, timezone
 
 from ..core.exceptions import ProfileError
 from ..models.profiles import UserProfile
@@ -49,7 +50,7 @@ class UserProfileService:
             if hasattr(profile, key):
                 setattr(profile, key, value)
 
-        profile.updated_at = profile.updated_at.__class__.utcnow()
+        profile.updated_at = datetime.now(timezone.utc)
         return profile
 
 

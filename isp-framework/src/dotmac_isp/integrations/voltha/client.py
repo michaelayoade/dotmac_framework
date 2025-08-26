@@ -24,7 +24,7 @@ from dotmac_isp.integrations.voltha.models import (
     DeviceAdminState,
     OnuState,
     ServiceStatus,
-)
+, timezone)
 
 logger = logging.getLogger(__name__)
 
@@ -128,7 +128,7 @@ class VolthaClient:
 
         except grpc.RpcError as e:
             logger.error(f"Failed to get devices: {e}")
-            raise VolthaAPIError(f"Failed to get devices: {e.details()}", e.code())
+            raise VolthaAPIError(f"Failed to get devices: {e.details()}", e.code()
 
     async def get_device(self, device_id: str) -> Optional[Dict[str, Any]]:
         """Get specific device from VOLTHA.
@@ -152,7 +152,7 @@ class VolthaClient:
             if e.code() == grpc.StatusCode.NOT_FOUND:
                 return None
             logger.error(f"Failed to get device {device_id}: {e}")
-            raise VolthaAPIError(f"Failed to get device: {e.details()}", e.code())
+            raise VolthaAPIError(f"Failed to get device: {e.details()}", e.code()
 
     async def create_device(
         self, device_type: str, host_and_port: str, mac_address: str = None
@@ -184,7 +184,7 @@ class VolthaClient:
 
         except grpc.RpcError as e:
             logger.error(f"Failed to create device: {e}")
-            raise VolthaAPIError(f"Failed to create device: {e.details()}", e.code())
+            raise VolthaAPIError(f"Failed to create device: {e.details()}", e.code()
 
     async def enable_device(self, device_id: str) -> Dict[str, Any]:
         """Enable a device in VOLTHA.
@@ -206,7 +206,7 @@ class VolthaClient:
 
         except grpc.RpcError as e:
             logger.error(f"Failed to enable device {device_id}: {e}")
-            raise VolthaAPIError(f"Failed to enable device: {e.details()}", e.code())
+            raise VolthaAPIError(f"Failed to enable device: {e.details()}", e.code()
 
     async def disable_device(self, device_id: str) -> Dict[str, Any]:
         """Disable a device in VOLTHA.
@@ -228,7 +228,7 @@ class VolthaClient:
 
         except grpc.RpcError as e:
             logger.error(f"Failed to disable device {device_id}: {e}")
-            raise VolthaAPIError(f"Failed to disable device: {e.details()}", e.code())
+            raise VolthaAPIError(f"Failed to disable device: {e.details()}", e.code()
 
     async def delete_device(self, device_id: str) -> None:
         """Delete a device from VOLTHA.
@@ -246,7 +246,7 @@ class VolthaClient:
 
         except grpc.RpcError as e:
             logger.error(f"Failed to delete device {device_id}: {e}")
-            raise VolthaAPIError(f"Failed to delete device: {e.details()}", e.code())
+            raise VolthaAPIError(f"Failed to delete device: {e.details()}", e.code()
 
     # Port Management Methods
 
@@ -270,7 +270,7 @@ class VolthaClient:
 
         except grpc.RpcError as e:
             logger.error(f"Failed to get ports for device {device_id}: {e}")
-            raise VolthaAPIError(f"Failed to get device ports: {e.details()}", e.code())
+            raise VolthaAPIError(f"Failed to get device ports: {e.details()}", e.code()
 
     async def enable_port(self, device_id: str, port_number: int) -> Dict[str, Any]:
         """Enable a device port.
@@ -299,7 +299,7 @@ class VolthaClient:
             logger.error(
                 f"Failed to enable port {port_number} on device {device_id}: {e}"
             )
-            raise VolthaAPIError(f"Failed to enable port: {e.details()}", e.code())
+            raise VolthaAPIError(f"Failed to enable port: {e.details()}", e.code()
 
     async def disable_port(self, device_id: str, port_number: int) -> Dict[str, Any]:
         """Disable a device port.
@@ -328,7 +328,7 @@ class VolthaClient:
             logger.error(
                 f"Failed to disable port {port_number} on device {device_id}: {e}"
             )
-            raise VolthaAPIError(f"Failed to disable port: {e.details()}", e.code())
+            raise VolthaAPIError(f"Failed to disable port: {e.details()}", e.code()
 
     # Flow Management Methods
 
@@ -352,7 +352,7 @@ class VolthaClient:
 
         except grpc.RpcError as e:
             logger.error(f"Failed to get flows for device {device_id}: {e}")
-            raise VolthaAPIError(f"Failed to get device flows: {e.details()}", e.code())
+            raise VolthaAPIError(f"Failed to get device flows: {e.details()}", e.code()
 
     # Metrics and Monitoring Methods
 
@@ -556,19 +556,19 @@ class VolthaClient:
             {
                 "name": "cpu_usage_percent",
                 "value": 25.5,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "device_id": device_id,
             },
             {
                 "name": "memory_usage_percent",
                 "value": 45.2,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "device_id": device_id,
             },
             {
                 "name": "temperature_celsius",
                 "value": 42.1,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "device_id": device_id,
             },
         ]

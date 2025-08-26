@@ -10,7 +10,7 @@ Provides Apache Kafka implementation of the EventAdapter interface:
 
 import asyncio
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, AsyncIterator, Dict, List, Optional
 
 import structlog
@@ -120,7 +120,7 @@ class KafkaAdapter(EventAdapter):
             )
 
         except Exception as e:
-            logger.error("Failed to connect to Kafka", error=str(e))
+            logger.error("Failed to connect to Kafka", error=str(e)
             raise
 
     async def disconnect(self) -> None:
@@ -183,7 +183,7 @@ class KafkaAdapter(EventAdapter):
                 event_id=event.event_id,
                 partition=record_metadata.partition,
                 offset=str(record_metadata.offset),
-                timestamp=datetime.now(),
+                timestamp=datetime.now(timezone.utc),
             )
 
         except Exception as e:
@@ -218,7 +218,7 @@ class KafkaAdapter(EventAdapter):
             session_timeout_ms=self.config.session_timeout_ms,
             heartbeat_interval_ms=self.config.heartbeat_interval_ms,
             max_poll_records=self.config.max_poll_records,
-            value_deserializer=lambda m: json.loads(m.decode("utf-8")),
+            value_deserializer=lambda m: json.loads(m.decode("utf-8"),
         )
 
         try:
@@ -266,7 +266,7 @@ class KafkaAdapter(EventAdapter):
             logger.info("Kafka consumer cancelled")
             raise
         except Exception as e:
-            logger.error("Kafka consumer error", error=str(e))
+            logger.error("Kafka consumer error", error=str(e)
             raise
         finally:
             await consumer.stop()
@@ -309,7 +309,7 @@ class KafkaAdapter(EventAdapter):
         except TopicAlreadyExistsError:
             logger.warning("Kafka topic already exists", topic=topic)
         except Exception as e:
-            logger.error("Failed to create Kafka topic", topic=topic, error=str(e))
+            logger.error("Failed to create Kafka topic", topic=topic, error=str(e)
             raise
 
     async def delete_topic(self, topic: str) -> None:
@@ -320,7 +320,7 @@ class KafkaAdapter(EventAdapter):
             await self._admin_client.delete_topics([topic])
             logger.info("Deleted Kafka topic", topic=topic)
         except Exception as e:
-            logger.error("Failed to delete Kafka topic", topic=topic, error=str(e))
+            logger.error("Failed to delete Kafka topic", topic=topic, error=str(e)
             raise
 
     async def list_topics(self) -> List[str]:
@@ -329,11 +329,11 @@ class KafkaAdapter(EventAdapter):
 
         try:
             metadata = await self._admin_client.list_topics()
-            topics = list(metadata.topics.keys())
+            topics = list(metadata.topics.keys()
             # Filter out internal topics
             return [t for t in topics if not t.startswith("__")]
         except Exception as e:
-            logger.error("Failed to list Kafka topics", error=str(e))
+            logger.error("Failed to list Kafka topics", error=str(e)
             raise
 
     async def get_topic_info(self, topic: str) -> Dict[str, Any]:
@@ -369,7 +369,7 @@ class KafkaAdapter(EventAdapter):
                 ],
             }
         except Exception as e:
-            logger.error("Failed to get Kafka topic info", topic=topic, error=str(e))
+            logger.error("Failed to get Kafka topic info", topic=topic, error=str(e)
             raise
 
     async def list_consumer_groups(self) -> List[Dict[str, Any]]:
@@ -406,7 +406,7 @@ class KafkaAdapter(EventAdapter):
             return result
 
         except Exception as e:
-            logger.error("Failed to list Kafka consumer groups", error=str(e))
+            logger.error("Failed to list Kafka consumer groups", error=str(e)
             raise
 
     async def delete_consumer_group(self, group_id: str) -> None:

@@ -237,7 +237,7 @@ class PluginLoader:
     async def _load_plugin_module(self, manifest: PluginManifest) -> Optional[Any]:
         """Dynamically load plugin module."""
         try:
-            plugin_path = getattr(manifest, 'plugin_path', Path('.'))
+            plugin_path = getattr(manifest, 'plugin_path', Path('.')
             entry_parts = manifest.entry_point.split('.')
             module_name = '.'.join(entry_parts[:-1])
             
@@ -355,7 +355,7 @@ class PluginRegistry:
                     continue
                 
                 # Load plugin
-                plugin_instance = await self._loader.load_plugin(manifest, plugin_config.get('config', {}))
+                plugin_instance = await self._loader.load_plugin(manifest, plugin_config.get('config', {})
                 if plugin_instance:
                     # Initialize plugin
                     if await plugin_instance.initialize():
@@ -410,7 +410,7 @@ class PluginRegistry:
     
     def list_plugins(self) -> List[str]:
         """List all loaded plugins."""
-        return list(self._plugins.keys())
+        return list(self._plugins.keys()
     
     def get_plugins_by_channel_type(self, channel_type: str) -> List[PluginInterface]:
         """Get all plugins that support a channel type."""
@@ -443,7 +443,7 @@ class PluginRegistry:
                 logger.error(f"Plugin manifest not found for {plugin_id}")
                 return False
             
-            plugin_instance = await self._loader.load_plugin(manifest, plugin_config.get('config', {}))
+            plugin_instance = await self._loader.load_plugin(manifest, plugin_config.get('config', {})
             if plugin_instance and await plugin_instance.initialize():
                 self._plugins[plugin_id] = plugin_instance
                 self._manifests[plugin_id] = manifest

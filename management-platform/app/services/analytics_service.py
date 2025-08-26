@@ -15,14 +15,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_, or_, text, case, extract
 from sqlalchemy.sql import text as sql_text
 
-from ..core.exceptions import ValidationError, DatabaseError
-from ..core.logging import get_logger
-from ..models.tenant import Tenant
-from ..models.user import User
-from ..models.billing import Subscription, Invoice, Payment, BillingPlan
-from ..models.infrastructure import InfrastructureDeployment
-from ..models.notifications import NotificationLog
-from ..schemas.analytics import (
+from core.exceptions import ValidationError, DatabaseError
+from core.logging import get_logger
+from models.tenant import Tenant
+from models.user import User
+from models.billing import Subscription, Invoice, Payment, BillingPlan
+from models.infrastructure import InfrastructureDeployment
+from models.notifications import NotificationLog
+from schemas.analytics import ()
     AnalyticsTimeframe,
     MetricType,
     ReportFormat,
@@ -31,7 +31,7 @@ from ..schemas.analytics import (
     RevenueAnalytics,
     UsageAnalytics,
     PerformanceMetrics
-)
+, timezone)
 
 logger = get_logger(__name__)
 
@@ -70,12 +70,12 @@ class AnalyticsService:
     def __init__(self, db: AsyncSession):
         self.db = db
     
-    async def get_tenant_analytics(
+    async def get_tenant_analytics(:)
         self,
         tenant_id: Optional[UUID] = None,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
-        granularity: TimeGranularity = TimeGranularity.DAY
+    granularity: TimeGranularity = TimeGranularity.DAY)
     ) -> Dict[str, Any]:
         """
         Get comprehensive tenant analytics.
@@ -94,7 +94,7 @@ class AnalyticsService:
             
             # Set default date range
             if not end_date:
-                end_date = datetime.utcnow()
+                end_date = datetime.now(None)
             if not start_date:
                 start_date = end_date - timedelta(days=30)
             
@@ -122,8 +122,8 @@ class AnalyticsService:
             
             return {
                 "period": {
-                    "start": start_date.isoformat(),
-                    "end": end_date.isoformat(),
+                    "start": start_date.isoformat(,
+)                    "end": end_date.isoformat(),
                     "granularity": granularity.value
                 },
                 "tenant_metrics": tenant_metrics,
@@ -131,20 +131,20 @@ class AnalyticsService:
                 "subscription_metrics": subscription_metrics,
                 "usage_metrics": usage_metrics,
                 "top_tenants": top_tenants,
-                "generated_at": datetime.utcnow().isoformat()
+                "generated_at": datetime.now(None).isoformat()
             }
             
         except Exception as e:
             logger.error(f"Failed to generate tenant analytics: {e}")
             raise DatabaseError(f"Failed to generate tenant analytics: {e}")
     
-    async def get_revenue_analytics(
+    async def get_revenue_analytics(:)
         self,
         tenant_id: Optional[UUID] = None,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
         granularity: TimeGranularity = TimeGranularity.DAY,
-        currency: str = "USD"
+    currency: str = "USD")
     ) -> Dict[str, Any]:
         """
         Get comprehensive revenue analytics.
@@ -164,7 +164,7 @@ class AnalyticsService:
             
             # Set default date range
             if not end_date:
-                end_date = datetime.utcnow()
+                end_date = datetime.now(None)
             if not start_date:
                 start_date = end_date - timedelta(days=30)
             
@@ -174,7 +174,7 @@ class AnalyticsService:
                 filters.append(Invoice.tenant_id == tenant_id)
             
             # Revenue time series
-            revenue_series = await self._get_revenue_time_series(
+            revenue_series = await self._get_revenue_time_series()
                 filters, start_date, end_date, granularity
             )
             
@@ -182,12 +182,12 @@ class AnalyticsService:
             revenue_by_plan = await self._get_revenue_by_plan(filters, start_date, end_date)
             
             # Revenue cohort analysis
-            cohort_analysis = await self._get_revenue_cohort_analysis(
+            cohort_analysis = await self._get_revenue_cohort_analysis()
                 tenant_id, start_date, end_date
             )
             
             # MRR/ARR calculations
-            recurring_revenue = await self._calculate_recurring_revenue(
+            recurring_revenue = await self._calculate_recurring_revenue()
                 tenant_id, end_date
             )
             
@@ -203,8 +203,8 @@ class AnalyticsService:
             
             return {
                 "period": {
-                    "start": start_date.isoformat(),
-                    "end": end_date.isoformat(),
+                    "start": start_date.isoformat(,
+)                    "end": end_date.isoformat(),
                     "granularity": granularity.value,
                     "currency": currency
                 },
@@ -222,19 +222,19 @@ class AnalyticsService:
                 "recurring_revenue": recurring_revenue,
                 "forecast": forecast,
                 "churn_analysis": churn_analysis,
-                "generated_at": datetime.utcnow().isoformat()
+                "generated_at": datetime.now(None).isoformat()
             }
             
         except Exception as e:
             logger.error(f"Failed to generate revenue analytics: {e}")
             raise DatabaseError(f"Failed to generate revenue analytics: {e}")
     
-    async def get_usage_analytics(
+    async def get_usage_analytics(:)
         self,
         tenant_id: Optional[UUID] = None,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
-        resource_type: Optional[str] = None
+    resource_type: Optional[str] = None)
     ) -> Dict[str, Any]:
         """
         Get usage analytics across platform resources.
@@ -253,17 +253,17 @@ class AnalyticsService:
             
             # Set default date range
             if not end_date:
-                end_date = datetime.utcnow()
+                end_date = datetime.now(None)
             if not start_date:
                 start_date = end_date - timedelta(days=30)
             
             # Infrastructure usage
-            infrastructure_usage = await self._get_infrastructure_usage(
+            infrastructure_usage = await self._get_infrastructure_usage()
                 tenant_id, start_date, end_date
             )
             
             # Notification usage
-            notification_usage = await self._get_notification_usage(
+            notification_usage = await self._get_notification_usage()
                 tenant_id, start_date, end_date
             )
             
@@ -274,19 +274,19 @@ class AnalyticsService:
             storage_usage = await self._get_storage_usage(tenant_id, start_date, end_date)
             
             # User activity patterns
-            user_activity = await self._get_user_activity_patterns(
+            user_activity = await self._get_user_activity_patterns()
                 tenant_id, start_date, end_date
             )
             
             # Peak usage analysis
-            peak_usage = await self._get_peak_usage_analysis(
+            peak_usage = await self._get_peak_usage_analysis()
                 tenant_id, start_date, end_date
             )
             
             return {
                 "period": {
-                    "start": start_date.isoformat(),
-                    "end": end_date.isoformat()
+                    "start": start_date.isoformat(,
+)                    "end": end_date.isoformat()
                 },
                 "infrastructure_usage": infrastructure_usage,
                 "notification_usage": notification_usage,
@@ -294,18 +294,18 @@ class AnalyticsService:
                 "storage_usage": storage_usage,
                 "user_activity": user_activity,
                 "peak_usage": peak_usage,
-                "generated_at": datetime.utcnow().isoformat()
+                "generated_at": datetime.now(None).isoformat()
             }
             
         except Exception as e:
             logger.error(f"Failed to generate usage analytics: {e}")
             raise DatabaseError(f"Failed to generate usage analytics: {e}")
     
-    async def get_performance_metrics(
+    async def get_performance_metrics(:)
         self,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
-        metric_types: Optional[List[str]] = None
+    metric_types: Optional[List[str]] = None)
     ) -> Dict[str, Any]:
         """
         Get system performance metrics.
@@ -323,7 +323,7 @@ class AnalyticsService:
             
             # Set default date range
             if not end_date:
-                end_date = datetime.utcnow()
+                end_date = datetime.now(None)
             if not start_date:
                 start_date = end_date - timedelta(hours=24)
             
@@ -347,8 +347,8 @@ class AnalyticsService:
             
             return {
                 "period": {
-                    "start": start_date.isoformat(),
-                    "end": end_date.isoformat()
+                    "start": start_date.isoformat(,
+)                    "end": end_date.isoformat()
                 },
                 "response_times": response_times,
                 "error_rates": error_rates,
@@ -356,17 +356,17 @@ class AnalyticsService:
                 "resource_utilization": resource_utilization,
                 "database_performance": db_performance,
                 "external_services": external_services,
-                "generated_at": datetime.utcnow().isoformat()
+                "generated_at": datetime.now(None).isoformat()
             }
             
         except Exception as e:
             logger.error(f"Failed to generate performance metrics: {e}")
             raise DatabaseError(f"Failed to generate performance metrics: {e}")
     
-    async def create_custom_report(
+    async def create_custom_report(:)
         self,
         query: AnalyticsQuery,
-        user_id: str
+    user_id: str)
     ) -> Dict[str, Any]:
         """
         Create a custom analytics report based on user query.
@@ -409,13 +409,13 @@ class AnalyticsService:
                 "name": query.name,
                 "metric_type": query.metric_type,
                 "period": {
-                    "start": query.start_date.isoformat(),
-                    "end": query.end_date.isoformat()
+                    "start": query.start_date.isoformat(,
+)                    "end": query.end_date.isoformat()
                 },
                 "data": formatted_data,
                 "metadata": {
                     "created_by": user_id,
-                    "created_at": datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(None).isoformat(),
                     "query_execution_time": "< 1s"  # Would measure actual time
                 }
             }
@@ -424,10 +424,10 @@ class AnalyticsService:
             logger.error(f"Failed to create custom report: {e}")
             raise DatabaseError(f"Failed to create custom report: {e}")
     
-    async def get_dashboard_kpis(
+    async def get_dashboard_kpis(:)
         self,
         tenant_id: Optional[UUID] = None,
-        timeframe: AnalyticsTimeframe = AnalyticsTimeframe.LAST_30_DAYS
+    timeframe: AnalyticsTimeframe = AnalyticsTimeframe.LAST_30_DAYS)
     ) -> Dict[str, Any]:
         """
         Get key performance indicators for dashboard display.
@@ -441,7 +441,7 @@ class AnalyticsService:
         """
         try:
             # Calculate date range from timeframe
-            end_date = datetime.utcnow()
+            end_date = datetime.now(None)
             if timeframe == AnalyticsTimeframe.LAST_7_DAYS:
                 start_date = end_date - timedelta(days=7)
             elif timeframe == AnalyticsTimeframe.LAST_30_DAYS:
@@ -462,8 +462,8 @@ class AnalyticsService:
             
             # Calculate changes
             kpis = {}
-            for metric, current_value in current_metrics.items():
-                previous_value = previous_metrics.get(metric, 0)
+            for metric, current_value in current_metrics.items(:
+)                previous_value = previous_metrics.get(metric, 0)
                 change = self._calculate_percentage_change(previous_value, current_value)
                 
                 kpis[metric] = {
@@ -476,11 +476,11 @@ class AnalyticsService:
             return {
                 "timeframe": timeframe.value,
                 "period": {
-                    "current": {"start": start_date.isoformat(), "end": end_date.isoformat()},
-                    "previous": {"start": previous_start.isoformat(), "end": previous_end.isoformat()}
+                    "current": {"start": start_date.isoformat(), "end": end_date.isoformat(},
+)                    "previous": {"start": previous_start.isoformat(), "end": previous_end.isoformat(}
                 },
                 "kpis": kpis,
-                "generated_at": datetime.utcnow().isoformat()
+)                "generated_at": datetime.now(None).isoformat()
             }
             
         except Exception as e:
@@ -489,31 +489,31 @@ class AnalyticsService:
     
     # Private helper methods
     
-    async def _get_tenant_metrics(
+    async def _get_tenant_metrics(:)
         self,
         tenant_filter: List,
         start_date: datetime,
-        end_date: datetime
+    end_date: datetime)
     ) -> Dict[str, Any]:
         """Get basic tenant metrics."""
         # Total tenants
         total_result = await self.db.execute(
-            select(func.count(Tenant.id)).where(and_(*tenant_filter))
+)            select(func.count(Tenant.id).where(and_(*tenant_filter)
         )
         total_tenants = total_result.scalar()
         
         # Active tenants
-        active_result = await self.db.execute(
-            select(func.count(Tenant.id)).where(
+)        active_result = await self.db.execute()
+            select(func.count(Tenant.id).where())
                 and_(Tenant.is_active == True, *tenant_filter)
             )
         )
         active_tenants = active_result.scalar()
         
         # New tenants in period
-        new_result = await self.db.execute(
-            select(func.count(Tenant.id)).where(
-                and_(
+)        new_result = await self.db.execute()
+            select(func.count(Tenant.id).where())
+                and_()
                     Tenant.created_at >= start_date,
                     Tenant.created_at <= end_date,
                     *tenant_filter
@@ -527,15 +527,15 @@ class AnalyticsService:
             "active_tenants": active_tenants,
             "inactive_tenants": total_tenants - active_tenants,
             "new_tenants": new_tenants,
-            "activation_rate": (active_tenants / total_tenants * 100) if total_tenants > 0 else 0
+)            "activation_rate": (active_tenants / total_tenants * 100) if total_tenants > 0 else 0
         }
     
-    async def _get_user_growth_metrics(
+    async def _get_user_growth_metrics(:)
         self,
         tenant_filter: List,
         start_date: datetime,
         end_date: datetime,
-        granularity: TimeGranularity
+    granularity: TimeGranularity)
     ) -> List[Dict[str, Any]]:
         """Get user growth metrics over time."""
         # This would be more complex in a real implementation
@@ -551,55 +551,55 @@ class AnalyticsService:
             
             # Get user count for this period
             user_result = await self.db.execute(
-                select(func.count(User.id)).where(
-                    and_(
+)                select(func.count(User.id).where()
+                    and_()
                         User.created_at >= current_date,
                         User.created_at < period_end,
                         User.tenant_id.in_(
-                            select(Tenant.id).where(and_(*tenant_filter))
+)                            select(Tenant.id).where(and_(*tenant_filter)
                         ) if tenant_filter else True
                     )
                 )
             )
             user_count = user_result.scalar()
             
-            growth_data.append({
-                "period": current_date.isoformat(),
+)            growth_data.append({)
+                "period": current_date.isoformat(,
                 "new_users": user_count,
-                "cumulative_users": sum(item["new_users"] for item in growth_data) + user_count
+)                "cumulative_users": sum(item["new_users"] for item in growth_data) + user_count
             })
             
             current_date = period_end
         
         return growth_data
     
-    async def _get_subscription_metrics(
+    async def _get_subscription_metrics(:)
         self,
         tenant_filter: List,
         start_date: datetime,
-        end_date: datetime
+    end_date: datetime)
     ) -> Dict[str, Any]:
         """Get subscription metrics."""
         filters = []
         if tenant_filter:
             filters.append(
-                Subscription.tenant_id.in_(
-                    select(Tenant.id).where(and_(*tenant_filter))
+)                Subscription.tenant_id.in_()
+                    select(Tenant.id).where(and_(*tenant_filter)
                 )
             )
         
         # Active subscriptions
         active_result = await self.db.execute(
-            select(func.count(Subscription.id)).where(
+)            select(func.count(Subscription.id).where()
                 and_(Subscription.status == "active", *filters)
             )
         )
         active_subscriptions = active_result.scalar()
         
         # New subscriptions in period
-        new_result = await self.db.execute(
-            select(func.count(Subscription.id)).where(
-                and_(
+)        new_result = await self.db.execute()
+            select(func.count(Subscription.id).where())
+                and_()
                     Subscription.created_at >= start_date,
                     Subscription.created_at <= end_date,
                     *filters
@@ -609,9 +609,9 @@ class AnalyticsService:
         new_subscriptions = new_result.scalar()
         
         # Cancelled subscriptions
-        cancelled_result = await self.db.execute(
-            select(func.count(Subscription.id)).where(
-                and_(
+)        cancelled_result = await self.db.execute()
+            select(func.count(Subscription.id).where())
+                and_()
                     Subscription.status == "cancelled",
                     Subscription.updated_at >= start_date,
                     Subscription.updated_at <= end_date,
@@ -625,29 +625,29 @@ class AnalyticsService:
             "active_subscriptions": active_subscriptions,
             "new_subscriptions": new_subscriptions,
             "cancelled_subscriptions": cancelled_subscriptions,
-            "churn_rate": (cancelled_subscriptions / max(active_subscriptions, 1)) * 100
-        }
+)            "churn_rate": (cancelled_subscriptions / max(active_subscriptions, 1) * 100
+        )
     
-    async def _get_usage_metrics(
+    async def _get_usage_metrics(:)
         self,
         tenant_filter: List,
         start_date: datetime,
         end_date: datetime,
-        granularity: TimeGranularity
+    granularity: TimeGranularity)
     ) -> Dict[str, Any]:
         """Get usage metrics."""
         # Infrastructure deployments
         deployment_filters = []
         if tenant_filter:
             deployment_filters.append(
-                InfrastructureDeployment.tenant_id.in_(
-                    select(Tenant.id).where(and_(*tenant_filter))
+)                InfrastructureDeployment.tenant_id.in_()
+                    select(Tenant.id).where(and_(*tenant_filter)
                 )
             )
         
         deployment_result = await self.db.execute(
-            select(func.count(InfrastructureDeployment.id)).where(
-                and_(
+)            select(func.count(InfrastructureDeployment.id).where()
+                and_()
                     InfrastructureDeployment.created_at >= start_date,
                     InfrastructureDeployment.created_at <= end_date,
                     *deployment_filters
@@ -659,18 +659,18 @@ class AnalyticsService:
         # Notifications
         notification_filters = []
         if tenant_filter:
-            notification_filters.append(
+)            notification_filters.append()
                 NotificationLog.tenant_id.in_(
-                    select(Tenant.id).where(and_(*tenant_filter))
+)                    select(Tenant.id).where(and_(*tenant_filter)
                 )
             )
         
         notification_result = await self.db.execute(
-            select(
+)            select()
                 func.count(NotificationLog.id),
-                func.count(case((NotificationLog.status == "delivered", 1)))
-            ).where(
-                and_(
+                func.count(case((NotificationLog.status == "delivered", 1)
+            ).where()
+                and_()
                     NotificationLog.created_at >= start_date,
                     NotificationLog.created_at <= end_date,
                     *notification_filters
@@ -683,25 +683,25 @@ class AnalyticsService:
             "infrastructure_deployments": deployments,
             "total_notifications": total_notifications,
             "delivered_notifications": delivered_notifications,
-            "notification_delivery_rate": (delivered_notifications / max(total_notifications, 1)) * 100
-        }
+)            "notification_delivery_rate": (delivered_notifications / max(total_notifications, 1) * 100
+        )
     
-    async def _get_top_tenants(
+    async def _get_top_tenants(:)
         self,
         start_date: datetime,
         end_date: datetime,
-        limit: int = 10
+    limit: int = 10)
     ) -> List[Dict[str, Any]]:
         """Get top tenants by various metrics."""
         # Top tenants by revenue
         revenue_result = await self.db.execute(
-            select(
+)            select()
                 Invoice.tenant_id,
                 func.sum(Payment.amount).label("total_revenue")
             )
             .join(Payment, Invoice.id == Payment.invoice_id)
-            .where(
-                and_(
+            .where()
+                and_()
                     Payment.status == "completed",
                     Payment.processed_at >= start_date,
                     Payment.processed_at <= end_date
@@ -713,15 +713,15 @@ class AnalyticsService:
         )
         
         top_tenants = []
-        for tenant_id, revenue in revenue_result.all():
+        for tenant_id, revenue in revenue_result.all(:)
             # Get tenant details
-            tenant_result = await self.db.execute(
+)            tenant_result = await self.db.execute()
                 select(Tenant).where(Tenant.id == tenant_id)
             )
             tenant = tenant_result.scalar_one_or_none()
             
             if tenant:
-                top_tenants.append({
+)                top_tenants.append({)
                     "tenant_id": str(tenant_id),
                     "tenant_name": tenant.name,
                     "total_revenue": float(revenue),
@@ -730,12 +730,12 @@ class AnalyticsService:
         
         return top_tenants
     
-    async def _get_revenue_time_series(
+    async def _get_revenue_time_series(:)
         self,
         filters: List,
         start_date: datetime,
         end_date: datetime,
-        granularity: TimeGranularity
+    granularity: TimeGranularity)
     ) -> List[Dict[str, Any]]:
         """Get revenue time series data."""
         # Determine date truncation based on granularity
@@ -748,33 +748,32 @@ class AnalyticsService:
             date_trunc_format = "month"
         
         result = await self.db.execute(
-            select(
+)            select()
                 func.date_trunc(date_trunc_format, Payment.processed_at).label("period"),
                 func.sum(Payment.amount).label("revenue"),
                 func.count(Payment.id).label("payment_count")
             )
             .join(Invoice, Payment.invoice_id == Invoice.id)
-            .where(
-                and_(
+            .where()
+                and_()
                     Payment.processed_at >= start_date,
                     Payment.processed_at <= end_date,
                     *filters
                 )
             )
             .group_by(func.date_trunc(date_trunc_format, Payment.processed_at))
-            .order_by(func.date_trunc(date_trunc_format, Payment.processed_at))
+            .order_by(func.date_trunc(date_trunc_format, Payment.processed_at)
         )
         
         return [
             {
-                "period": period.isoformat(),
-                "revenue": float(revenue),
+                "period": period.isoformat(,
+)                "revenue": float(revenue),
                 "payment_count": payment_count
-            }
-            for period, revenue, payment_count in result.all()
-        ]
+            )
+            for period, revenue, payment_count in result.all( ])
     
-    def _calculate_growth_rate(self, time_series: List[Dict[str, Any]]) -> float:
+)    def _calculate_growth_rate(self, time_series: List[Dict[str, Any]]) -> float:
         """Calculate growth rate from time series data."""
         if len(time_series) < 2:
             return 0.0

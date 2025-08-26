@@ -175,7 +175,7 @@ class ServiceStandardsValidator:
                 rule='incorrect_inheritance',
                 message=f"Service class {class_node.name} must inherit from BaseTenantService",
                 suggestion="class YourService(BaseTenantService[Model, CreateSchema, UpdateSchema, ResponseSchema])"
-            ))
+            )
         
         # Check required methods
         self._check_required_methods(file_path, class_node)
@@ -210,7 +210,7 @@ class ServiceStandardsValidator:
                         rule='missing_method',
                         message=f"Service {class_node.name} is missing required method: {method}",
                         suggestion=f"Add async def {method}(...) method or inherit from BaseTenantService"
-                    ))
+                    )
     
     def _check_imports(self, file_path: str, tree: ast.AST) -> None:
         """Check import statements."""
@@ -234,7 +234,7 @@ class ServiceStandardsValidator:
                         rule='deprecated_import',
                         message=f"Deprecated import found: {imp}",
                         suggestion="Use consolidated service imports from modules/*/service.py"
-                    ))
+                    )
     
     def _check_async_patterns(self, file_path: str, tree: ast.AST) -> None:
         """Check for async/await patterns."""
@@ -251,7 +251,7 @@ class ServiceStandardsValidator:
                                     rule='non_async_method',
                                     message=f"Method {method.name} should be async",
                                     suggestion=f"Change to: async def {method.name}(...)"
-                                ))
+                                )
     
     def _is_async_method(self, method: ast.FunctionDef) -> bool:
         """Check if method is async."""
@@ -263,7 +263,7 @@ class ServiceStandardsValidator:
             return "✅ All service standards validation checks passed!"
         
         # Sort issues by severity and file
-        sorted_issues = sorted(self.issues, key=lambda x: (x.severity, x.file_path, x.line_number))
+        sorted_issues = sorted(self.issues, key=lambda x: (x.severity, x.file_path, x.line_number)
         
         report = []
         report.append("🔍 Service Standards Validation Report")
@@ -283,7 +283,7 @@ class ServiceStandardsValidator:
             if issue.file_path != current_file:
                 current_file = issue.file_path
                 report.append(f"📄 {issue.file_path}")
-                report.append("-" * len(issue.file_path))
+                report.append("-" * len(issue.file_path)
             
             # Issue details
             severity_icon = "❌" if issue.severity == 'error' else "⚠️" if issue.severity == 'warning' else "ℹ️"

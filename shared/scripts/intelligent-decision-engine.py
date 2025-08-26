@@ -119,7 +119,7 @@ class IntelligentDecisionEngine:
     def _analyze_security_results(self) -> Dict[str, Any]:
         """Analyze security test results."""
         security_passed = self.test_results.get('security_passed', 'false') == 'true'
-        vulnerabilities = int(self.test_results.get('vulnerabilities', '0'))
+        vulnerabilities = int(self.test_results.get('vulnerabilities', '0')
         
         # Security is critical - any vulnerability is a concern
         if vulnerabilities > 0:
@@ -127,7 +127,7 @@ class IntelligentDecisionEngine:
             
         result = {
             'passed': security_passed,
-            'score': max(0.0, 100.0 - (vulnerabilities * 10)),  # -10 points per vulnerability
+            'score': max(0.0, 100.0 - (vulnerabilities * 10),  # -10 points per vulnerability
             'weight': self.decision_matrix['security']['weight'],
             'blocking': self.decision_matrix['security']['blocking'],
             'vulnerabilities': vulnerabilities,
@@ -231,7 +231,7 @@ class IntelligentDecisionEngine:
         # Parse performance artifacts
         perf_results = self._parse_performance_artifacts()
         
-        core_vitals_score = float(self.test_results.get('core_vitals_score', '100.0'))
+        core_vitals_score = float(self.test_results.get('core_vitals_score', '100.0')
         
         result = {
             'passed': performance_passed,
@@ -250,7 +250,7 @@ class IntelligentDecisionEngine:
     def _analyze_accessibility_results(self) -> Dict[str, Any]:
         """Analyze accessibility test results."""
         a11y_passed = self.test_results.get('a11y_passed', 'true') == 'true'
-        a11y_score = float(self.test_results.get('a11y_score', '100.0'))
+        a11y_score = float(self.test_results.get('a11y_score', '100.0')
         
         result = {
             'passed': a11y_passed,
@@ -346,7 +346,7 @@ class IntelligentDecisionEngine:
                 self.failure_analysis.append(category_analysis)
         
         # Sort by severity and impact
-        self.failure_analysis.sort(key=lambda x: (x['severity'] == 'WARNING', -x['weight']))
+        self.failure_analysis.sort(key=lambda x: (x['severity'] == 'WARNING', -x['weight'])
     
     def _generate_remediation_plan(self, analysis_results: Dict[str, Dict]):
         """Generate specific remediation recommendations."""
@@ -368,7 +368,7 @@ class IntelligentDecisionEngine:
         
         # Sort by priority and estimated time
         priority_order = {'HIGH': 0, 'MEDIUM': 1, 'LOW': 2}
-        self.remediation_plan.sort(key=lambda x: (priority_order[x['priority']], x['estimated_time']))
+        self.remediation_plan.sort(key=lambda x: (priority_order[x['priority']], x['estimated_time'])
     
     def _get_remediation_steps(self, category: str, result: Dict) -> Dict[str, List[str]]:
         """Get specific remediation steps for each failure category."""
@@ -488,7 +488,7 @@ class IntelligentDecisionEngine:
         }
         
         base_time = base_times.get(category, 60)
-        issue_count = len(result.get('issues', []))
+        issue_count = len(result.get('issues', [])
         
         # Scale by number of issues
         estimated_time = base_time + (issue_count * 15)
@@ -516,16 +516,16 @@ class IntelligentDecisionEngine:
             return unit_results
         
         # Look for unit test result files
-        junit_files = list(test_artifacts_dir.glob('**/junit*.xml'))
-        coverage_files = list(test_artifacts_dir.glob('**/coverage*.xml'))
+        junit_files = list(test_artifacts_dir.glob('**/junit*.xml')
+        coverage_files = list(test_artifacts_dir.glob('**/coverage*.xml')
         
         for junit_file in junit_files:
             try:
                 tree = ET.parse(junit_file)
                 root = tree.getroot()
-                tests = int(root.get('tests', 0))
-                failures = int(root.get('failures', 0))
-                errors = int(root.get('errors', 0))
+                tests = int(root.get('tests', 0)
+                failures = int(root.get('failures', 0)
+                errors = int(root.get('errors', 0)
                 
                 unit_results['total'] += tests
                 unit_results['failed'] += failures + errors
@@ -539,7 +539,7 @@ class IntelligentDecisionEngine:
                 root = tree.getroot()
                 coverage_elem = root.find(".//coverage")
                 if coverage_elem is not None:
-                    coverage = float(coverage_elem.get("line-rate", 0)) * 100
+                    coverage = float(coverage_elem.get("line-rate", 0) * 100
                     unit_results['coverage'] = max(unit_results['coverage'], coverage)
             except Exception as e:
                 print(f"  ⚠️  Error parsing {coverage_file}: {e}")
@@ -560,7 +560,7 @@ class IntelligentDecisionEngine:
             return e2e_results
         
         # Look for E2E test result directories
-        e2e_dirs = list(test_artifacts_dir.glob('e2e-results-*'))
+        e2e_dirs = list(test_artifacts_dir.glob('e2e-results-*')
         
         for e2e_dir in e2e_dirs:
             # Extract portal and browser from directory name
@@ -570,13 +570,13 @@ class IntelligentDecisionEngine:
                 browser = dir_parts[3]
                 
                 # Check for test results
-                junit_files = list(e2e_dir.glob('**/junit*.xml'))
+                junit_files = list(e2e_dir.glob('**/junit*.xml')
                 if junit_files:
                     try:
                         tree = ET.parse(junit_files[0])
                         root = tree.getroot()
-                        failures = int(root.get('failures', 0))
-                        errors = int(root.get('errors', 0))
+                        failures = int(root.get('failures', 0)
+                        errors = int(root.get('errors', 0)
                         
                         if failures + errors == 0:
                             e2e_results['passed_runs'] += 1
@@ -668,15 +668,15 @@ class IntelligentDecisionEngine:
             f.write(report['deployment_action'])
         
         with open('.deployment-ready', 'w') as f:
-            f.write(str(report['deployment_ready']).lower())
+            f.write(str(report['deployment_ready']).lower()
         
         # Save failure analysis
         with open('.failure-analysis', 'w') as f:
-            f.write(json.dumps(report['failure_analysis'], indent=2))
+            f.write(json.dumps(report['failure_analysis'], indent=2)
         
         # Save remediation plan
         with open('.remediation-plan', 'w') as f:
-            f.write(json.dumps(report['remediation_plan'], indent=2))
+            f.write(json.dumps(report['remediation_plan'], indent=2)
         
         # Save full report
         reports_dir = Path('decision-reports')

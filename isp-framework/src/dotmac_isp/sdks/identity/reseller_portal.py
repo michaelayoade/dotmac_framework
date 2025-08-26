@@ -4,6 +4,7 @@ Reseller Portal SDK - support reseller access.
 
 from typing import Any, Dict, List, Optional
 from uuid import UUID
+from datetime import datetime, timezone
 
 from ..core.exceptions import PortalError
 from ..models.portals import AccessLevel, BindingStatus, ResellerPortalAccess
@@ -51,7 +52,7 @@ class ResellerPortalService:
             if hasattr(access, key):
                 setattr(access, key, value)
 
-        access.updated_at = access.updated_at.__class__.utcnow()
+        access.updated_at = datetime.now(timezone.utc)
         return access
 
 

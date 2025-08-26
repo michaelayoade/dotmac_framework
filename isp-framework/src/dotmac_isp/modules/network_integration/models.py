@@ -516,12 +516,12 @@ class NetworkAlert(TenantModel, AuditMixin):
         """Acknowledge the alert."""
         self.is_acknowledged = True
         self.acknowledged_by = user_id
-        self.acknowledged_at = datetime.utcnow()
+        self.acknowledged_at = datetime.now(timezone.utc)
 
     def resolve(self):
         """Resolve the alert."""
         self.is_active = False
-        self.resolved_at = datetime.utcnow()
+        self.resolved_at = datetime.now(timezone.utc)
 
     def __repr__(self):
         """  Repr   operation."""

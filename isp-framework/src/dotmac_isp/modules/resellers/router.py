@@ -27,13 +27,14 @@ from .models import (
     DealStatus,
     CertificationStatus,
 )
+from datetime import timezone
 
 router = APIRouter(prefix="/resellers", tags=["resellers"])
 
 
 def generate_partner_code(partner_type: str, legal_name: str) -> str:
     """Generate a unique partner code."""
-    timestamp = int(datetime.utcnow().timestamp())
+    timestamp = int(datetime.now(timezone.utc).timestamp())
     type_prefix = partner_type[:3].upper()
     name_prefix = "".join([c for c in legal_name.upper()[:3] if c.isalpha()])
     return f"{type_prefix}-{name_prefix}-{timestamp}"
@@ -41,19 +42,19 @@ def generate_partner_code(partner_type: str, legal_name: str) -> str:
 
 def generate_deal_number() -> str:
     """Generate a unique deal number."""
-    timestamp = int(datetime.utcnow().timestamp())
+    timestamp = int(datetime.now(timezone.utc).timestamp())
     return f"DEAL-{timestamp}"
 
 
 def generate_commission_id() -> str:
     """Generate a unique commission ID."""
-    timestamp = int(datetime.utcnow().timestamp())
+    timestamp = int(datetime.now(timezone.utc).timestamp())
     return f"COMM-{timestamp}"
 
 
 def generate_program_code(program_name: str) -> str:
     """Generate a unique program code."""
-    timestamp = int(datetime.utcnow().timestamp())
+    timestamp = int(datetime.now(timezone.utc).timestamp())
     name_prefix = "".join([c for c in program_name.upper()[:5] if c.isalpha()])
     return f"PROG-{name_prefix}-{timestamp}"
 
@@ -204,7 +205,7 @@ async def update_partner(
     if default_commission_rate is not None:
         partner.default_commission_rate = Decimal(str(default_commission_rate))
 
-    partner.updated_at = datetime.utcnow()
+    partner.updated_at = datetime.now(timezone.utc)
 
     db.commit()
     db.refresh(partner)
@@ -1063,7 +1064,7 @@ async def get_realtime_commission_data(
             raise HTTPException(status_code=404, detail="Partner not found")
         
         # Get current month commissions
-        current_month = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        current_month = datetime.now(timezone.utc).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         
         current_month_commissions = (
             db.query(Commission)
@@ -1120,7 +1121,7 @@ async def get_realtime_commission_data(
                 'title': f'${pending_amount:.2f} in Pending Commissions',
                 'message': f'You have ${pending_amount:.2f} in pending commissions awaiting approval.',
                 'action_required': False,
-                'created_at': datetime.utcnow().isoformat()
+                'created_at': datetime.now(timezone.utc).isoformat()
             })
         
         if approved_amount > 0:
@@ -1130,7 +1131,7 @@ async def get_realtime_commission_data(
                 'title': f'${approved_amount:.2f} Approved for Payment',
                 'message': f'Great news! ${approved_amount:.2f} in commissions have been approved and will be paid soon.',
                 'action_required': False,
-                'created_at': datetime.utcnow().isoformat()
+                'created_at': datetime.now(timezone.utc).isoformat()
             })
         
         return {
@@ -1152,7 +1153,7 @@ async def get_realtime_commission_data(
                 }
                 for c in recent_commissions
             ],
-            'last_updated': datetime.utcnow().isoformat()
+            'last_updated': datetime.now(timezone.utc).isoformat()
         }
         
     except HTTPException:
@@ -1174,12 +1175,12 @@ async def get_realtime_commission_data(
                     'title': '$850.00 Approved for Payment',
                     'message': 'Great news! $850.00 in commissions have been approved and will be paid soon.',
                     'action_required': False,
-                    'created_at': datetime.utcnow().isoformat()
+                    'created_at': datetime.now(timezone.utc).isoformat()
                 }
             ],
             'recent_activity': [
-                {'commission_id': 'COMM-001', 'amount': 425.00, 'status': 'approved', 'period': '2024-01', 'date': datetime.utcnow().isoformat()},
-                {'commission_id': 'COMM-002', 'amount': 325.00, 'status': 'pending', 'period': '2024-01', 'date': datetime.utcnow().isoformat()}
+                {'commission_id': 'COMM-001', 'amount': 425.00, 'status': 'approved', 'period': '2024-01', 'date': datetime.now(timezone.utc).isoformat()},
+                {'commission_id': 'COMM-002', 'amount': 325.00, 'status': 'pending', 'period': '2024-01', 'date': datetime.now(timezone.utc).isoformat()}
             ],
-            'last_updated': datetime.utcnow().isoformat()
+            'last_updated': datetime.now(timezone.utc).isoformat()
         }

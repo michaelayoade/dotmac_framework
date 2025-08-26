@@ -69,7 +69,7 @@ class EmailProvider:
             async with session.post(url, json=payload, headers=headers) as response:
                 if response.status == 202:
                     # SendGrid doesn't return message ID in response body
-                    return f"sg_{int(asyncio.get_event_loop().time())}"
+                    return f"sg_{int(asyncio.get_event_loop().time()}"
                 error = await response.text()
                 raise Exception(f"SendGrid error: {error}")
 
@@ -97,7 +97,7 @@ class EmailProvider:
     async def handle_webhook(self, raw_body: bytes) -> Dict[str, Any]:
         """Handle inbound email webhooks (bounces, opens, etc.)"""
         try:
-            data = json.loads(raw_body.decode())
+            data = json.loads(raw_body.decode()
             # Process webhook data based on provider
             return {"processed": True, "events": data}
         except Exception as e:

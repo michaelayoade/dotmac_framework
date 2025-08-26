@@ -46,7 +46,7 @@ class TestPaymentServiceIntegration:
             'customer_id': uuid4(),
             'invoice_number': f'INV-{datetime.now().strftime("%Y%m%d-%H%M%S")}',
             'invoice_date': datetime.now().date(),
-            'due_date': (datetime.now() + timedelta(days=30)).date(),
+            'due_date': (datetime.now() + timedelta(days=30).date(),
             'subtotal': Decimal('100.00'),
             'tax_amount': Decimal('8.50'),
             'discount_amount': Decimal('0.00'),
@@ -385,7 +385,7 @@ class TestPaymentServiceIntegration:
         
         # Test with non-existent payment
         with pytest.raises(NotFoundError):
-            await payment_service.get_payment_status(uuid4())
+            await payment_service.get_payment_status(uuid4()
     
     async def test_validate_payment_amount(self, payment_service):
         """Test payment amount validation."""
@@ -417,7 +417,7 @@ class TestPaymentServiceIntegration:
                 'customer_id': uuid4(),
                 'invoice_number': f'INV-CONCURRENT-{i}',
                 'invoice_date': datetime.now().date(),
-                'due_date': (datetime.now() + timedelta(days=30)).date(),
+                'due_date': (datetime.now() + timedelta(days=30).date(),
                 'subtotal': Decimal('100.00'),
                 'tax_amount': Decimal('8.50'),
                 'total_amount': Decimal('108.50'),
@@ -437,7 +437,7 @@ class TestPaymentServiceIntegration:
                 amount=Decimal('108.50'),
                 payment_method=PaymentMethod.CREDIT_CARD
             )
-            tasks.append(payment_service.process_payment(payment_data))
+            tasks.append(payment_service.process_payment(payment_data)
         
         # Mock external payment processing
         with patch.object(payment_service, '_process_external_payment') as mock_external:

@@ -33,9 +33,7 @@ logger = logging.getLogger(__name__)
 class PlatformConfigSDKConfig:
     """Platform Config SDK configuration."""
 
-    def __init__(  # noqa: PLR0913
-        """  Init   operation."""
-        self,
+    def __init__(self, # noqa: PLR0913
         enable_caching: bool = True,
         cache_ttl_seconds: int = 300,  # 5 minutes
         enable_audit_logging: bool = True,
@@ -623,7 +621,7 @@ class PlatformConfigSDK:
                         visited.add(obj_id)
                         
                         for val in obj.values():
-                            if not check_circular_refs(val, visited.copy()):
+                            if not check_circular_refs(val, visited.model_copy():
                                 return False
                     return True
                 
@@ -633,7 +631,7 @@ class PlatformConfigSDK:
                     
             elif isinstance(value, str):
                 # Check for valid JSON string if it looks like JSON
-                if value.strip().startswith(('{', '[')):
+                if value.strip().startswith(('{', '['):
                     try:
                         import json
                         json.loads(value)
@@ -810,7 +808,7 @@ class PlatformConfigSDK:
                 value = config.value
                 if variables and isinstance(value, str):
                     for var_name, var_value in variables.items():
-                        value = value.replace(f"{{{var_name}}}", str(var_value))
+                        value = value.replace(f"{{{var_name}}}", str(var_value)
 
                 await self.set_config(
                     key=config.key,
@@ -935,7 +933,7 @@ class PlatformConfigSDK:
                     errors.append(f"Value '{value}' is not a valid boolean")
             elif data_type == ConfigDataType.JSON:
                 try:
-                    json.loads(str(value)) if isinstance(value, str) else value
+                    json.loads(str(value) if isinstance(value, str) else value
                 except (json.JSONDecodeError, TypeError):
                     errors.append(f"Value '{value}' is not valid JSON")
 

@@ -20,7 +20,7 @@ from .exceptions import (
     SDKValidationError,
     SDKRateLimitError,
     SDKTimeoutError
-)
+, timezone)
 from .utils import build_headers, parse_response
 
 logger = logging.getLogger(__name__)
@@ -168,12 +168,12 @@ class BaseSDKClient(Generic[T]):
             elif response.status_code == 404:
                 return {}  # Not found is often acceptable
             elif response.status_code == 422:
-                error_detail = response.json().get('detail', 'Validation error')
+                error_detail = response.model_dump_json().get('detail', 'Validation error')
                 raise SDKValidationError(f"Validation failed: {error_detail}")
             elif response.status_code == 429:
                 raise SDKRateLimitError("Rate limit exceeded")
             elif response.status_code >= 400:
-                error_msg = response.json().get('detail', f'HTTP {response.status_code}')
+                error_msg = response.model_dump_json().get('detail', f'HTTP {response.status_code}')
                 raise SDKError(f"Request failed: {error_msg}")
             
             # Parse successful response
@@ -247,7 +247,7 @@ class BaseSDKClient(Generic[T]):
             return {
                 "status": "unhealthy",
                 "error": str(e),
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
 
 

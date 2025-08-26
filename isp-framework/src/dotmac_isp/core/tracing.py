@@ -59,7 +59,7 @@ class TraceContext:
 
     def get_context(self) -> Dict[str, Any]:
         """Get full context."""
-        return self._context.copy()
+        return self._context.model_copy()
 
     def clear(self):
         """Clear context."""
@@ -81,11 +81,11 @@ class TracingMiddleware(BaseHTTPMiddleware):
 
     def _generate_trace_id(self) -> str:
         """Generate unique trace ID."""
-        return str(uuid.uuid4()).replace("-", "")
+        return str(uuid.uuid4().replace("-", ""))
 
     def _generate_span_id(self) -> str:
         """Generate unique span ID."""
-        return str(uuid.uuid4()).replace("-", "")[:16]
+        return str(uuid.uuid4().replace("-", "")[:16])
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """Process request with tracing."""
@@ -293,9 +293,9 @@ async def _trace_execution(
     start_time = time.time()
 
     # Get current trace context
-    trace_id = trace_context.get_trace_id() or str(uuid.uuid4()).replace("-", "")
+    trace_id = trace_context.get_trace_id() or str(uuid.uuid4().replace("-", ""))
     parent_span_id = trace_context.get_span_id()
-    span_id = str(uuid.uuid4()).replace("-", "")[:16]
+    span_id = str(uuid.uuid4().replace("-", "")[:16])
 
     # Set new span context
     trace_context.set_span_id(span_id)
@@ -374,9 +374,9 @@ def _trace_sync_execution(
     # Similar to async version but for sync functions
     start_time = time.time()
 
-    trace_id = trace_context.get_trace_id() or str(uuid.uuid4()).replace("-", "")
+    trace_id = trace_context.get_trace_id() or str(uuid.uuid4().replace("-", ""))
     parent_span_id = trace_context.get_span_id()
-    span_id = str(uuid.uuid4()).replace("-", "")[:16]
+    span_id = str(uuid.uuid4().replace("-", "")[:16])
 
     trace_context.set_span_id(span_id)
 
@@ -430,9 +430,9 @@ def trace_span(operation_name: str, tags: Dict[str, Any] = None):
     """Context manager for manual span creation."""
     start_time = time.time()
 
-    trace_id = trace_context.get_trace_id() or str(uuid.uuid4()).replace("-", "")
+    trace_id = trace_context.get_trace_id() or str(uuid.uuid4().replace("-", ""))
     parent_span_id = trace_context.get_span_id()
-    span_id = str(uuid.uuid4()).replace("-", "")[:16]
+    span_id = str(uuid.uuid4().replace("-", "")[:16])
 
     # Set new span context
     old_span_id = trace_context.get_span_id()

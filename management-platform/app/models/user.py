@@ -2,7 +2,7 @@
 User and authentication models.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Optional
 
 from sqlalchemy import Column, String, Boolean, DateTime, Integer, ForeignKey, Text
@@ -62,7 +62,7 @@ class User(BaseModel):
     # Security settings
     two_factor_enabled = Column(Boolean, default=False, nullable=False)
     two_factor_secret = Column(String(32), nullable=True)
-    password_changed_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    password_changed_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     
     # Notification preferences
     email_notifications = Column(Boolean, default=True, nullable=False)
@@ -94,11 +94,11 @@ class User(BaseModel):
     @property
     def is_locked(self) -> bool:
         """Check if user account is locked."""
-        return self.locked_until and self.locked_until > datetime.utcnow()
+        return self.locked_until and self.locked_until > datetime.now(timezone.utc)
     
     def lock_account(self, duration_minutes: int = 30) -> None:
         """Lock user account for specified duration."""
-        self.locked_until = datetime.utcnow() + timedelta(minutes=duration_minutes)
+        self.locked_until = datetime.now(timezone.utc) + timedelta(minutes=duration_minutes)
         self.failed_login_attempts += 1
     
     def unlock_account(self) -> None:
@@ -108,7 +108,7 @@ class User(BaseModel):
     
     def record_login(self) -> None:
         """Record successful login."""
-        self.last_login = datetime.utcnow()
+        self.last_login = datetime.now(timezone.utc)
         self.login_count += 1
         self.failed_login_attempts = 0
         self.locked_until = None
@@ -131,7 +131,7 @@ class UserSession(BaseModel):
     # Session status
     is_active = Column(Boolean, default=True, nullable=False, index=True)
     expires_at = Column(DateTime, nullable=False, index=True)
-    last_activity = Column(DateTime, default=datetime.utcnow, nullable=False)
+    last_activity = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     
     # Relationships
     user = relationship("User", backref="sessions")
@@ -139,12 +139,12 @@ class UserSession(BaseModel):
     @property
     def is_expired(self) -> bool:
         """Check if session is expired."""
-        return datetime.utcnow() > self.expires_at
+        return datetime.now(timezone.utc) > self.expires_at
     
     def extend_session(self, minutes: int = 60) -> None:
         """Extend session expiry."""
-        self.expires_at = datetime.utcnow() + timedelta(minutes=minutes)
-        self.last_activity = datetime.utcnow()
+        self.expires_at = datetime.now(timezone.utc) + timedelta(minutes=minutes)
+        self.last_activity = datetime.now(timezone.utc)
     
     def revoke(self) -> None:
         """Revoke the session."""
@@ -179,7 +179,7 @@ class UserInvitation(BaseModel):
     @property
     def is_expired(self) -> bool:
         """Check if invitation is expired."""
-        return datetime.utcnow() > self.expires_at
+        return datetime.now(timezone.utc) > self.expires_at
     
     @property
     def is_valid(self) -> bool:

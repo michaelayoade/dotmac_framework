@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional
 
 from dotmac_communications import SupportChatService
@@ -155,9 +155,9 @@ async def get_usage_details(
 ):
     """Get detailed usage information"""
     if not start_date:
-        start_date = datetime.now() - timedelta(days=30)
+        start_date = datetime.now(timezone.utc) - timedelta(days=30)
     if not end_date:
-        end_date = datetime.now()
+        end_date = datetime.now(timezone.utc)
 
     usage_data = await usage_service.get_customer_usage(
         customer_id,
@@ -332,8 +332,8 @@ async def get_service_usage(
     days: int = 30
 ):
     """Get usage details for specific service"""
-    start_date = datetime.now() - timedelta(days=days)
-    end_date = datetime.now()
+    start_date = datetime.now(timezone.utc) - timedelta(days=days)
+    end_date = datetime.now(timezone.utc)
 
     usage_data = await usage_service.get_service_usage(
         service_id,

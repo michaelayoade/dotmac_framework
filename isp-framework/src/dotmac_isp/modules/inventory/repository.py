@@ -15,7 +15,7 @@ from dotmac_isp.modules.inventory.models import (
     StockMovement,
     EquipmentStatus,
     MovementType,
-)
+, timezone)
 from dotmac_isp.shared.exceptions import NotFoundError, ConflictError, ValidationError
 
 
@@ -115,7 +115,7 @@ class EquipmentRepository:
             query = query.filter(Equipment.vendor_id == vendor_id)
 
         return (
-            query.order_by(Equipment.created_at.desc()).offset(skip).limit(limit).all()
+            query.order_by(Equipment.created_at.desc().offset(skip).limit(limit).all()
         )
 
     def update_status(
@@ -127,17 +127,17 @@ class EquipmentRepository:
             return None
 
         equipment.status = status
-        equipment.updated_at = datetime.utcnow()
+        equipment.updated_at = datetime.now(timezone.utc)
 
         if status == EquipmentStatus.DEPLOYED and not equipment.deployment_date:
-            equipment.deployment_date = datetime.utcnow()
+            equipment.deployment_date = datetime.now(timezone.utc)
         elif (
             status == EquipmentStatus.DECOMMISSIONED and not equipment.decommission_date
         ):
-            equipment.decommission_date = datetime.utcnow()
+            equipment.decommission_date = datetime.now(timezone.utc)
 
         if notes:
-            equipment.notes = f"{equipment.notes or ''}\n{datetime.utcnow().isoformat()}: {notes}".strip()
+            equipment.notes = f"{equipment.notes or ''}\n{datetime.now(timezone.utc).isoformat()}: {notes}".strip()
 
         self.db.commit()
         self.db.refresh(equipment)
@@ -157,8 +157,8 @@ class EquipmentRepository:
         equipment.assigned_customer_id = customer_id
         equipment.assigned_service_id = service_instance_id
         equipment.status = EquipmentStatus.DEPLOYED
-        equipment.deployment_date = datetime.utcnow()
-        equipment.updated_at = datetime.utcnow()
+        equipment.deployment_date = datetime.now(timezone.utc)
+        equipment.updated_at = datetime.now(timezone.utc)
 
         self.db.commit()
         self.db.refresh(equipment)
@@ -174,7 +174,7 @@ class EquipmentRepository:
 
         old_warehouse_id = equipment.current_warehouse_id
         equipment.current_warehouse_id = warehouse_id
-        equipment.updated_at = datetime.utcnow()
+        equipment.updated_at = datetime.now(timezone.utc)
 
         self.db.commit()
         self.db.refresh(equipment)
@@ -184,7 +184,7 @@ class EquipmentRepository:
         """Generate unique equipment number."""
         today = date.today()
         count = (
-            self.db.query(func.count(Equipment.id))
+            self.db.query(func.count(Equipment.id)
             .filter(
                 and_(
                     Equipment.tenant_id == self.tenant_id,
@@ -332,7 +332,7 @@ class VendorRepository:
         """Get vendor by ID."""
         return (
             self.db.query(Vendor)
-            .filter(and_(Vendor.id == vendor_id, Vendor.tenant_id == self.tenant_id))
+            .filter(and_(Vendor.id == vendor_id, Vendor.tenant_id == self.tenant_id)
             .first()
         )
 
@@ -402,7 +402,7 @@ class StockMovementRepository:
             query = query.filter(StockMovement.movement_type == movement_type)
 
         return (
-            query.order_by(StockMovement.movement_date.desc())
+            query.order_by(StockMovement.movement_date.desc()
             .offset(skip)
             .limit(limit)
             .all()
@@ -418,6 +418,6 @@ class StockMovementRepository:
                     StockMovement.tenant_id == self.tenant_id,
                 )
             )
-            .order_by(StockMovement.movement_date.desc())
+            .order_by(StockMovement.movement_date.desc()
             .all()
         )

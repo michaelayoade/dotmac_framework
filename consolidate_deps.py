@@ -69,7 +69,7 @@ def analyze_duplicates(root_path: Path) -> Dict:
         if len(occurrences) > 1:
             duplicates[package] = occurrences
             versions = [version for _, version in occurrences]
-            if len(set(versions)) > 1:
+            if len(set(versions) > 1:
                 conflicts[package] = occurrences
     
     return {
@@ -124,27 +124,27 @@ def generate_consolidated_requirements(analysis: Dict) -> str:
     # Add categorized sections
     if web_frameworks:
         consolidated.append("# Web Frameworks")
-        consolidated.extend(sorted(web_frameworks))
+        consolidated.extend(sorted(web_frameworks)
         consolidated.append("")
         
     if databases:
         consolidated.append("# Databases & Caching") 
-        consolidated.extend(sorted(databases))
+        consolidated.extend(sorted(databases)
         consolidated.append("")
         
     if utilities:
         consolidated.append("# Core Utilities")
-        consolidated.extend(sorted(utilities))
+        consolidated.extend(sorted(utilities)
         consolidated.append("")
         
     if testing:
         consolidated.append("# Testing")
-        consolidated.extend(sorted(testing))
+        consolidated.extend(sorted(testing)
         consolidated.append("")
         
     if other:
         consolidated.append("# Other Dependencies")
-        consolidated.extend(sorted(other))
+        consolidated.extend(sorted(other)
     
     return '\n'.join(consolidated)
 

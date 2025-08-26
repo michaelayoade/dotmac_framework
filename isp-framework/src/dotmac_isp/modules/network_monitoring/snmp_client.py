@@ -24,7 +24,7 @@ try:
         usmAesCfb128Protocol,
         SnmpEngine,
         Udp6TransportTarget,
-    )
+    , timezone)
     from pysnmp.proto.rfc1902 import Counter32, Counter64, Gauge32, Integer, OctetString
     from pysnmp.error import PySnmpError
 
@@ -412,7 +412,7 @@ class SnmpClient:
             "high_speed": result.get(
                 f"{self.common_oids['ifHighSpeed']}.{interface_index}"
             ),
-            "timestamp": datetime.utcnow(),
+            "timestamp": datetime.now(timezone.utc),
         }
 
     async def ping_device(
@@ -478,13 +478,13 @@ class SnmpClient:
         # Create transport target
         if ":" in target_str and not target_str.startswith("["):
             # IPv6 address
-            transport_target = Udp6TransportTarget((target_str, port))
+            transport_target = Udp6TransportTarget((target_str, port)
         else:
             # IPv4 address
-            transport_target = UdpTransportTarget((target_str, port))
+            transport_target = UdpTransportTarget((target_str, port)
 
         # Create object types for all OIDs
-        object_types = [ObjectType(ObjectIdentity(oid)) for oid in oids]
+        object_types = [ObjectType(ObjectIdentity(oid) for oid in oids]
 
         try:
             # Perform SNMP GET
@@ -555,9 +555,9 @@ class SnmpClient:
 
         # Create transport target
         if ":" in target_str and not target_str.startswith("["):
-            transport_target = Udp6TransportTarget((target_str, port))
+            transport_target = Udp6TransportTarget((target_str, port)
         else:
-            transport_target = UdpTransportTarget((target_str, port))
+            transport_target = UdpTransportTarget((target_str, port)
 
         try:
             # Perform SNMP WALK
@@ -576,7 +576,7 @@ class SnmpClient:
                     auth_data_obj,
                     transport_target,
                     ContextData(),
-                    ObjectType(ObjectIdentity(oid)),
+                    ObjectType(ObjectIdentity(oid),
                     lexicographicMode=False,
                     ignoreNonIncreasingOid=False,
                     maxRows=1000,  # Limit to prevent runaway walks
@@ -627,12 +627,12 @@ class SnmpClient:
 
         # Create transport target
         if ":" in target_str and not target_str.startswith("["):
-            transport_target = Udp6TransportTarget((target_str, port))
+            transport_target = Udp6TransportTarget((target_str, port)
         else:
-            transport_target = UdpTransportTarget((target_str, port))
+            transport_target = UdpTransportTarget((target_str, port)
 
         # Create object types
-        object_types = [ObjectType(ObjectIdentity(oid)) for oid in oids]
+        object_types = [ObjectType(ObjectIdentity(oid) for oid in oids]
 
         try:
             # Perform SNMP GETBULK
@@ -704,8 +704,8 @@ class SnmpClient:
             "AES128": usmAesCfb128Protocol,
         }
 
-        auth_proto = auth_protocol_map.get(auth_protocol.upper()) if auth_key else None
-        priv_proto = priv_protocol_map.get(priv_protocol.upper()) if priv_key else None
+        auth_proto = auth_protocol_map.get(auth_protocol.upper() if auth_key else None
+        priv_proto = priv_protocol_map.get(priv_protocol.upper() if priv_key else None
 
         return UsmUserData(
             userName=username,
@@ -717,7 +717,7 @@ class SnmpClient:
 
     def _convert_snmp_value(self, value: Any) -> Any:
         """Convert SNMP value to Python type."""
-        if isinstance(value, (Counter32, Counter64, Gauge32, Integer)):
+        if isinstance(value, (Counter32, Counter64, Gauge32, Integer):
             return int(value)
         elif isinstance(value, OctetString):
             # Try to decode as string, fall back to bytes representation

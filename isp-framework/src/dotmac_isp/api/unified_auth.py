@@ -6,6 +6,7 @@ portal type detection and routing.
 """
 
 from typing import Optional
+from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException, Request, Response, Depends, status
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
@@ -138,7 +139,7 @@ async def unified_login(
         response.set_cookie(
             key="auth-token",
             value=auth_response.access_token,
-            max_age=int((auth_response.expires_at - auth_response.expires_at.utcnow()).total_seconds()) if auth_response.expires_at else 28800,  # 8 hours default
+            max_age=int((auth_response.expires_at - datetime.now(timezone.utc)).total_seconds()) if auth_response.expires_at else 28800,  # 8 hours default
             httponly=True,
             secure=True,
             samesite="strict"

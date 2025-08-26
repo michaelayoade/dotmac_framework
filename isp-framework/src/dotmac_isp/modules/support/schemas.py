@@ -5,12 +5,11 @@ from typing import List, Optional, Dict, Any
 from pydantic import BaseModel, Field, EmailStr
 
 from .models import (
-    TicketPriority,
-    TicketStatus,
     TicketCategory,
     TicketSource,
     SLAStatus,
 )
+from dotmac_isp.shared.enums import Priority as TicketPriority, TicketStatus
 
 
 # Base schemas

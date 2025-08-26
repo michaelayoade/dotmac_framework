@@ -55,7 +55,7 @@ class AccessCacheManager:
 
     def cache_response(self, cache_key: str, response: AccessResponse) -> None:
         """Cache an access response."""
-        self.cache[cache_key] = (response, utcnow())
+        self.cache[cache_key] = (response, utcnow()
 
     def invalidate_subject_cache(self, subject_id: str) -> None:
         """Invalidate all cache entries for a specific subject."""

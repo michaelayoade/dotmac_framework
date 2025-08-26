@@ -14,7 +14,7 @@ from pydantic import BaseModel, Field, ConfigDict, validator
 from pydantic.types import UUID4
 from enum import Enum
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__, timezone)
 
 
 class TenantStatusEnum(str, Enum):
@@ -235,7 +235,7 @@ class TenantManagementSDK:
             # Generate unique tenant ID
             tenant_id = f"tenant_{uuid4().hex[:12]}"
             tenant_uuid = uuid4()
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             
             # Validate tenant name uniqueness (simplified)
             for existing_tenant in self._service._tenants.values():
@@ -382,7 +382,7 @@ class TenantManagementSDK:
             if value is not None:
                 tenant_dict[field] = value
         
-        tenant_dict["updated_at"] = datetime.utcnow()
+        tenant_dict["updated_at"] = datetime.now(timezone.utc)
         
         logger.info(f"Updated tenant: {tenant_id} by {updated_by}")
         
@@ -413,16 +413,16 @@ class TenantManagementSDK:
         
         old_status = tenant_dict["status"]
         tenant_dict["status"] = new_status.value
-        tenant_dict["updated_at"] = datetime.utcnow()
+        tenant_dict["updated_at"] = datetime.now(timezone.utc)
         
         # Update lifecycle timestamps
         if new_status == TenantStatusEnum.ACTIVE and old_status != TenantStatusEnum.ACTIVE.value:
-            tenant_dict["activated_at"] = datetime.utcnow()
+            tenant_dict["activated_at"] = datetime.now(timezone.utc)
             tenant_dict["suspended_at"] = None
         elif new_status == TenantStatusEnum.SUSPENDED:
-            tenant_dict["suspended_at"] = datetime.utcnow()
+            tenant_dict["suspended_at"] = datetime.now(timezone.utc)
         elif new_status == TenantStatusEnum.CANCELLED:
-            tenant_dict["cancelled_at"] = datetime.utcnow()
+            tenant_dict["cancelled_at"] = datetime.now(timezone.utc)
         
         logger.info(
             f"Updated tenant {tenant_id} status from {old_status} to {new_status.value}"
@@ -519,7 +519,7 @@ class TenantManagementSDK:
             "configuration_key": config_data.configuration_key,
             "configuration_value": config_data.configuration_value,
             "is_active": config_data.is_active,
-            "created_at": datetime.utcnow(),
+            "created_at": datetime.now(timezone.utc),
             "created_by": created_by,
         }
         
@@ -576,7 +576,7 @@ class TenantManagementSDK:
         return TenantHealthStatus(
             tenant_id=tenant_id,
             status=tenant_dict["status"],
-            last_health_check=datetime.utcnow(),
+            last_health_check=datetime.now(timezone.utc),
             health_score=health_score,
             uptime_percentage=uptime_percentage,
             response_time_ms=response_time_ms,

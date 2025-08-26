@@ -333,7 +333,7 @@ class TestTenantDataIsolation:
                     # Should not see any other tenant's customers
                     for other_tenant_id, other_customer_ids in all_customers.items():
                         if other_tenant_id != tenant_id:
-                            overlap = actual_customer_ids.intersection(set(other_customer_ids))
+                            overlap = actual_customer_ids.intersection(set(other_customer_ids)
                             assert len(overlap) == 0, \
                                 f"Data leak: Tenant {tenant_id[:8]} can see " \
                                 f"customers from {other_tenant_id[:8]}: {overlap}"

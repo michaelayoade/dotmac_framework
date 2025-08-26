@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 env:
-  PYTHON_VERSION: "3.11"
+  PYTHON_VERSION: "3.12"
   POSTGRES_PASSWORD: test_password_123
   REDIS_PASSWORD: test_redis_password
 
@@ -138,7 +138,7 @@ jobs:
         env:
           DATABASE_URL: postgresql://dotmac_test:${{ env.POSTGRES_PASSWORD }}@localhost/dotmac_test
           REDIS_URL: redis://localhost:6379/0
-          TESTING: true
+          ENVIRONMENT: development
         run: |
           echo "::group::Integration Tests"
           python -m pytest \
@@ -272,7 +272,7 @@ jobs:
       - name: Run contract tests
         env:
           DATABASE_URL: postgresql://dotmac_test:${{ env.POSTGRES_PASSWORD }}@localhost/dotmac_test
-          TESTING: true
+          ENVIRONMENT: development
         run: |
           echo "::group::Contract Tests"
           python -m pytest \

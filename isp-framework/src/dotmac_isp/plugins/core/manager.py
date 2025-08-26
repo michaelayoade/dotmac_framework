@@ -492,10 +492,10 @@ class PluginManager:
         try:
             health_data = await instance.health_check()
             health_data["plugin_id"] = plugin_id
-            health_data["last_check"] = datetime.utcnow().isoformat()
+            health_data["last_check"] = datetime.now(timezone.utc).isoformat()
 
             # Store last health check time
-            self.last_health_check[plugin_id] = datetime.utcnow()
+            self.last_health_check[plugin_id] = datetime.now(timezone.utc)
 
             return health_data
 
@@ -505,7 +505,7 @@ class PluginManager:
                 "status": "error",
                 "healthy": False,
                 "error": str(e),
-                "last_check": datetime.utcnow().isoformat(),
+                "last_check": datetime.now(timezone.utc).isoformat(),
             }
 
     async def get_plugin_metrics(self, plugin_id: str) -> Dict[str, Any]:
@@ -525,7 +525,7 @@ class PluginManager:
         try:
             metrics = await instance.get_metrics()
             metrics["plugin_id"] = plugin_id
-            metrics["collected_at"] = datetime.utcnow().isoformat()
+            metrics["collected_at"] = datetime.now(timezone.utc).isoformat()
 
             # Store metrics
             self.plugin_metrics[plugin_id] = metrics
@@ -536,7 +536,7 @@ class PluginManager:
             return {
                 "plugin_id": plugin_id,
                 "error": str(e),
-                "collected_at": datetime.utcnow().isoformat(),
+                "collected_at": datetime.now(timezone.utc).isoformat(),
             }
 
     async def bulk_operation(
@@ -706,7 +706,7 @@ class PluginManager:
         while not self.shutdown_event.is_set():
             try:
                 # Clean up old contexts
-                current_time = datetime.utcnow()
+                current_time = datetime.now(timezone.utc)
                 expired_contexts = []
 
                 for plugin_id, context in self.active_contexts.items():
@@ -746,7 +746,7 @@ class PluginManager:
             if cached_license:
                 cache_time = cached_license.get("cached_at", datetime.min)
                 if (
-                    datetime.utcnow() - cache_time
+                    datetime.now(timezone.utc) - cache_time
                 ).total_seconds() < self.license_cache_ttl:
                     return cached_license.get("is_valid", False)
 
@@ -760,7 +760,7 @@ class PluginManager:
                 "license_status": license_status.license_status,
                 "tier": license_status.tier,
                 "features": license_status.features,
-                "cached_at": datetime.utcnow(),
+                "cached_at": datetime.now(timezone.utc),
             }
 
             return license_status.is_valid

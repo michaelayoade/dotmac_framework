@@ -11,7 +11,7 @@ from .service import ServiceProvisioningService
 class CustomerServiceIntelligenceService:
     """Simple service intelligence for customer portal enhancements."""
     
-    def __init__(self, db: Session, tenant_id: str):
+    def __init__(self, db: Session, tenant_id: str, timezone):
         self.db = db
         self.tenant_id = tenant_id
         self.service_provisioning = ServiceProvisioningService(db, tenant_id)
@@ -46,13 +46,13 @@ class CustomerServiceIntelligenceService:
                         'service_name': service.service_plan.name,
                         'action_required': False,
                         'estimated_resolution': '2 hours',
-                        'created_at': datetime.utcnow().isoformat()
+                        'created_at': datetime.now(timezone.utc).isoformat()
                     })
                 
                 # Proactive maintenance notifications (demo logic)
                 if hasattr(service, 'created_at'):
                     # Simulate maintenance for services older than 30 days
-                    days_old = (datetime.utcnow() - service.created_at).days
+                    days_old = (datetime.now(timezone.utc) - service.created_at).days
                     if days_old > 30 and days_old % 60 == 0:  # Every 60 days
                         service_summary['maintenance_scheduled'] += 1
                         notifications.append({
@@ -63,8 +63,8 @@ class CustomerServiceIntelligenceService:
                             'service_id': str(service.id),
                             'service_name': service.service_plan.name,
                             'action_required': False,
-                            'scheduled_date': (datetime.utcnow() + timedelta(days=7)).isoformat(),
-                            'created_at': datetime.utcnow().isoformat()
+                            'scheduled_date': (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
+                            'created_at': datetime.now(timezone.utc).isoformat()
                         })
             
             # Add general service health notification
@@ -77,13 +77,13 @@ class CustomerServiceIntelligenceService:
                     'service_id': None,
                     'service_name': 'All Services',
                     'action_required': False,
-                    'created_at': datetime.utcnow().isoformat()
+                    'created_at': datetime.now(timezone.utc).isoformat()
                 })
             
             return {
                 'notifications': notifications,
                 'service_summary': service_summary,
-                'last_updated': datetime.utcnow().isoformat()
+                'last_updated': datetime.now(timezone.utc).isoformat()
             }
             
         except Exception as e:
@@ -98,7 +98,7 @@ class CustomerServiceIntelligenceService:
                         'service_id': None,
                         'service_name': 'All Services',
                         'action_required': False,
-                        'created_at': datetime.utcnow().isoformat()
+                        'created_at': datetime.now(timezone.utc).isoformat()
                     }
                 ],
                 'service_summary': {
@@ -107,7 +107,7 @@ class CustomerServiceIntelligenceService:
                     'issues': 0,
                     'maintenance_scheduled': 0
                 },
-                'last_updated': datetime.utcnow().isoformat()
+                'last_updated': datetime.now(timezone.utc).isoformat()
             }
     
     async def get_usage_insights(self, customer_id: UUID) -> Dict[str, Any]:
@@ -151,7 +151,7 @@ class CustomerServiceIntelligenceService:
                     'total_insights': len(insights),
                     'potential_monthly_impact': '$20 savings' if insights else 'No recommendations'
                 },
-                'last_updated': datetime.utcnow().isoformat()
+                'last_updated': datetime.now(timezone.utc).isoformat()
             }
             
         except Exception as e:
@@ -173,5 +173,5 @@ class CustomerServiceIntelligenceService:
                     'total_insights': 1,
                     'potential_monthly_impact': '$15 savings'
                 },
-                'last_updated': datetime.utcnow().isoformat()
+                'last_updated': datetime.now(timezone.utc).isoformat()
             }

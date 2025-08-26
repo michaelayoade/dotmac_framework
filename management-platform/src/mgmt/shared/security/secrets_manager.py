@@ -16,8 +16,8 @@ import uuid
 
 # Import base secrets manager from ISP Framework
 import sys
-sys.path.append('/home/dotmac_framework/dotmac_isp_framework/src')
-from dotmac_isp.core.secrets_manager import (
+sys.path.append('/home/dotmac_framework/dotmac_isp_framework/src', timezone)
+from dotmac_isp.core.secrets_manager import ()
     SecretsManager as BaseSecretsManager,
     SecretType,
     SecretMetadata,
@@ -64,14 +64,14 @@ class MultiTenantSecretsManager(BaseSecretsManager):
     Provides tenant isolation, billing integration, and plugin licensing.
     """
     
-    def __init__(
+    def __init__()
         self,
         backend: str = "openbao",
         openbao_url: Optional[str] = None,
         openbao_token: Optional[str] = None,
         encryption_key: Optional[str] = None,
         local_storage_path: str = "/etc/dotmac/mgmt-secrets",
-        tenant_isolation_enabled: bool = True
+    tenant_isolation_enabled: bool = True)
     ):
         """
         Initialize multi-tenant secrets manager.
@@ -84,7 +84,7 @@ class MultiTenantSecretsManager(BaseSecretsManager):
             local_storage_path: Local storage path
             tenant_isolation_enabled: Enable strict tenant isolation
         """
-        super().__init__(
+        super(.__init__()
             backend=backend,
             openbao_url=openbao_url,
             openbao_token=openbao_token,
@@ -96,11 +96,11 @@ class MultiTenantSecretsManager(BaseSecretsManager):
         self.tenant_secret_cache = {}
         self.plugin_license_cache = {}
         
-    async def create_tenant_secret_namespace(
+    async def create_tenant_secret_namespace(:)
         self,
         tenant_id: str,
         tenant_tier: str = "small",
-        encryption_enabled: bool = True
+    encryption_enabled: bool = True)
     ) -> Dict[str, Any]:
         """
         Create isolated secret namespace for a tenant.
@@ -123,7 +123,7 @@ class MultiTenantSecretsManager(BaseSecretsManager):
                 
                 try:
                     # Enable KV secrets engine for tenant
-                    self._vault_client.sys.enable_secrets_engine(
+                    self._vault_client.sys.enable_secrets_engine()
                         backend_type='kv',
                         path=mount_path,
                         options={'version': '2'}
@@ -141,7 +141,7 @@ class MultiTenantSecretsManager(BaseSecretsManager):
                     }}
                     """
                     
-                    self._vault_client.sys.create_or_update_policy(
+                    self._vault_client.sys.create_or_update_policy()
                         name=policy_name,
                         policy=policy_rules
                     )
@@ -195,11 +195,10 @@ class MultiTenantSecretsManager(BaseSecretsManager):
                 "secret_id": f"tenant-{tenant_id}-db-password",
                 "secret_type": TenantSecretType.TENANT_DATABASE_PASSWORD,
                 "value": self._generate_secret_value(SecretType.DATABASE_PASSWORD)
-            }
-        ]
+            } ]
         
         for secret_info in default_secrets:
-            await self.store_tenant_secret(
+            await self.store_tenant_secret()
                 tenant_id=tenant_id,
                 secret_id=secret_info["secret_id"],
                 value=secret_info["value"],
@@ -208,7 +207,7 @@ class MultiTenantSecretsManager(BaseSecretsManager):
                 tags=["default", "initialization"]
             )
     
-    async def store_tenant_secret(
+    async def store_tenant_secret(:)
         self,
         tenant_id: str,
         secret_id: str,
@@ -220,7 +219,7 @@ class MultiTenantSecretsManager(BaseSecretsManager):
         expires_at: Optional[datetime] = None,
         rotation_interval_days: Optional[int] = None,
         tags: Optional[List[str]] = None,
-        overwrite: bool = False
+    overwrite: bool = False)
     ) -> TenantSecretMetadata:
         """
         Store a tenant-specific secret with proper isolation.
@@ -246,11 +245,11 @@ class MultiTenantSecretsManager(BaseSecretsManager):
             secret_id = f"tenant-{tenant_id}-{secret_id}"
         
         # Create tenant-specific metadata
-        metadata = TenantSecretMetadata(
+        metadata = TenantSecretMetadata()
             secret_id=secret_id,
             secret_type=secret_type,
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow(),
+            created_at=datetime.now(None),
+            updated_at=datetime.now(None),
             expires_at=expires_at,
             rotation_interval_days=rotation_interval_days,
             environment="production",  # Management platform is always production-grade
@@ -266,7 +265,7 @@ class MultiTenantSecretsManager(BaseSecretsManager):
         )
         
         # Store using base functionality with tenant path
-        await self.store_secret(
+        await self.store_secret()
             secret_id=secret_id,
             value=value,
             secret_type=secret_type,
@@ -286,11 +285,11 @@ class MultiTenantSecretsManager(BaseSecretsManager):
         logger.info(f"Stored tenant secret: {secret_id} for tenant {tenant_id}")
         return metadata
     
-    async def get_tenant_secret(
+    async def get_tenant_secret(:)
         self,
         tenant_id: str,
         secret_id: str,
-        verify_isolation: bool = True
+    verify_isolation: bool = True)
     ) -> Optional[SecretValue]:
         """
         Get tenant-specific secret with isolation verification.
@@ -320,11 +319,11 @@ class MultiTenantSecretsManager(BaseSecretsManager):
         
         return secret
     
-    async def list_tenant_secrets(
+    async def list_tenant_secrets(:)
         self,
         tenant_id: str,
         secret_type: Optional[Union[SecretType, TenantSecretType]] = None,
-        include_expired: bool = False
+    include_expired: bool = False)
     ) -> List[TenantSecretMetadata]:
         """
         List all secrets for a specific tenant.
@@ -338,7 +337,7 @@ class MultiTenantSecretsManager(BaseSecretsManager):
             List of tenant secret metadata
         """
         # Get all secrets and filter by tenant
-        all_secrets = await self.list_secrets(
+        all_secrets = await self.list_secrets()
             environment="production",
             service=f"tenant-{tenant_id}",
             secret_type=secret_type,
@@ -349,11 +348,11 @@ class MultiTenantSecretsManager(BaseSecretsManager):
         tenant_secrets = []
         for secret_meta in all_secrets:
             if hasattr(secret_meta, 'tenant_id') and secret_meta.tenant_id == tenant_id:
-                tenant_secrets.append(TenantSecretMetadata(**secret_meta.dict()))
+                tenant_secrets.append(TenantSecretMetadata(**secret_meta.model_dump()
             elif self.tenant_isolation_enabled and f"tenant-{tenant_id}" in secret_meta.secret_id:
                 # Create tenant metadata from base metadata
-                tenant_meta = TenantSecretMetadata(
-                    **secret_meta.dict(),
+)                tenant_meta = TenantSecretMetadata()
+                    **secret_meta.model_dump(,
                     tenant_id=tenant_id,
                     isolation_level="tenant"
                 )
@@ -361,12 +360,12 @@ class MultiTenantSecretsManager(BaseSecretsManager):
         
         return tenant_secrets
     
-    async def rotate_tenant_secret(
+    async def rotate_tenant_secret(:)
         self,
         tenant_id: str,
         secret_id: str,
         new_value: Optional[str] = None,
-        notify_tenant: bool = True
+    notify_tenant: bool = True)
     ) -> TenantSecretMetadata:
         """
         Rotate a tenant-specific secret and optionally notify tenant.
@@ -390,10 +389,10 @@ class MultiTenantSecretsManager(BaseSecretsManager):
         base_metadata = await self.rotate_secret(full_secret_id, new_value)
         
         # Create tenant metadata
-        tenant_metadata = TenantSecretMetadata(
-            **base_metadata.dict(),
+        tenant_metadata = TenantSecretMetadata()
+            **base_metadata.model_dump(,
             tenant_id=tenant_id,
-            last_rotated=datetime.utcnow()
+)            last_rotated=datetime.now(None)
         )
         
         # Update cache
@@ -407,11 +406,11 @@ class MultiTenantSecretsManager(BaseSecretsManager):
         logger.info(f"Rotated tenant secret: {secret_id} for tenant {tenant_id}")
         return tenant_metadata
     
-    async def delete_tenant_namespace(
+    async def delete_tenant_namespace(:)
         self,
         tenant_id: str,
         backup_secrets: bool = True,
-        force_delete: bool = False
+    force_delete: bool = False)
     ) -> Dict[str, Any]:
         """
         Delete entire tenant secret namespace.
@@ -432,13 +431,13 @@ class MultiTenantSecretsManager(BaseSecretsManager):
                 tenant_secrets = await self.list_tenant_secrets(tenant_id, include_expired=True)
                 backup_data = {
                     "tenant_id": tenant_id,
-                    "backup_timestamp": datetime.utcnow().isoformat(),
+                    "backup_timestamp": datetime.now(None).isoformat(),
                     "secrets_count": len(tenant_secrets),
-                    "secrets": [secret.dict() for secret in tenant_secrets]
+                    "secrets": [secret.model_dump( for secret in tenant_secrets])
                 }
                 
                 # Store backup
-                backup_path = f"/var/backups/dotmac/tenant-secrets/{tenant_id}-{datetime.utcnow().strftime('%Y%m%d-%H%M%S')}.json"
+)                backup_path = f"/var/backups/dotmac/tenant-secrets/{tenant_id}-{datetime.now(None).strftime('%Y%m%d-%H%M%S')}.json"
                 os.makedirs(os.path.dirname(backup_path), exist_ok=True)
                 with open(backup_path, 'w') as f:
                     json.dump(backup_data, f, indent=2, default=str)
@@ -486,13 +485,13 @@ class MultiTenantSecretsManager(BaseSecretsManager):
             logger.error(f"Failed to delete tenant namespace for {tenant_id}: {e}")
             raise
     
-    async def create_plugin_license_secret(
+    async def create_plugin_license_secret(:)
         self,
         tenant_id: str,
         plugin_id: str,
         license_key: str,
         license_tier: str,
-        expires_at: Optional[datetime] = None
+    expires_at: Optional[datetime] = None)
     ) -> TenantSecretMetadata:
         """
         Create plugin license secret for tenant.
@@ -510,7 +509,7 @@ class MultiTenantSecretsManager(BaseSecretsManager):
         secret_id = f"plugin-{plugin_id}-license"
         
         # Store license secret
-        metadata = await self.store_tenant_secret(
+        metadata = await self.store_tenant_secret()
             tenant_id=tenant_id,
             secret_id=secret_id,
             value=license_key,
@@ -534,10 +533,10 @@ class MultiTenantSecretsManager(BaseSecretsManager):
         logger.info(f"Created plugin license secret for tenant {tenant_id}, plugin {plugin_id}")
         return metadata
     
-    async def validate_plugin_license(
+    async def validate_plugin_license(:)
         self,
         tenant_id: str,
-        plugin_id: str
+    plugin_id: str)
     ) -> Dict[str, Any]:
         """
         Validate plugin license for tenant.
@@ -564,7 +563,7 @@ class MultiTenantSecretsManager(BaseSecretsManager):
             
             # Check expiration
             if hasattr(license_secret.metadata, 'expires_at') and license_secret.metadata.expires_at:
-                if license_secret.metadata.expires_at < datetime.utcnow():
+                if license_secret.metadata.expires_at < datetime.now(None):
                     return {
                         "valid": False,
                         "reason": "License expired",
@@ -623,7 +622,7 @@ class MultiTenantSecretsManager(BaseSecretsManager):
             expired_secrets = 0
             rotation_due = 0
             
-            now = datetime.utcnow()
+            now = datetime.now(None)
             
             for secret in tenant_secrets:
                 # Check expiration
@@ -631,7 +630,7 @@ class MultiTenantSecretsManager(BaseSecretsManager):
                     expired_secrets += 1
                 
                 # Check rotation due
-                if (secret.rotation_interval_days and secret.last_rotated and
+                if (secret.rotation_interval_days and secret.last_rotated and)
                     secret.last_rotated + timedelta(days=secret.rotation_interval_days) < now):
                     rotation_due += 1
             
@@ -653,12 +652,12 @@ class MultiTenantSecretsManager(BaseSecretsManager):
             }
             
         except Exception as e:
-            logger.error(f"Failed to check tenant secrets health for {tenant_id}: {e}")
+)            logger.error(f"Failed to check tenant secrets health for {tenant_id}: {e}")
             return {
                 "tenant_id": tenant_id,
                 "health_status": "error",
                 "error": str(e),
-                "last_check": datetime.utcnow().isoformat()
+                "last_check": datetime.now(None).isoformat()
             }
 
 
@@ -666,7 +665,7 @@ class MultiTenantSecretsManager(BaseSecretsManager):
 _mt_secrets_manager: Optional[MultiTenantSecretsManager] = None
 
 
-def get_mt_secrets_manager() -> MultiTenantSecretsManager:
+def get_mt_secrets_manager( -> MultiTenantSecretsManager:)
     """Get global multi-tenant secrets manager instance."""
     global _mt_secrets_manager
     if _mt_secrets_manager is None:
@@ -674,16 +673,16 @@ def get_mt_secrets_manager() -> MultiTenantSecretsManager:
     return _mt_secrets_manager
 
 
-def init_mt_secrets_manager(
+def init_mt_secrets_manager()
     backend: str = "openbao",
     openbao_url: Optional[str] = None,
     openbao_token: Optional[str] = None,
     encryption_key: Optional[str] = None,
-    tenant_isolation_enabled: bool = True
+    tenant_isolation_enabled: bool = True)
 ) -> MultiTenantSecretsManager:
     """Initialize global multi-tenant secrets manager."""
     global _mt_secrets_manager
-    _mt_secrets_manager = MultiTenantSecretsManager(
+    _mt_secrets_manager = MultiTenantSecretsManager()
         backend=backend,
         openbao_url=openbao_url,
         openbao_token=openbao_token,

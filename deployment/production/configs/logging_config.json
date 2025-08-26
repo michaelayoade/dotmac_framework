@@ -1,0 +1,106 @@
+{
+  "version": 1,
+  "disable_existing_loggers": false,
+  "formatters": {
+    "standard": {
+      "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    },
+    "detailed": {
+      "format": "%(asctime)s - %(name)s - %(levelname)s - %(module)s - %(funcName)s - %(lineno)d - %(message)s"
+    },
+    "audit": {
+      "format": "%(asctime)s - AUDIT - %(levelname)s - %(message)s"
+    },
+    "json": {
+      "class": "pythonjsonlogger.jsonlogger.JsonFormatter",
+      "format": "%(asctime)s %(name)s %(levelname)s %(message)s"
+    }
+  },
+  "handlers": {
+    "console": {
+      "class": "logging.StreamHandler",
+      "level": "INFO",
+      "formatter": "standard",
+      "stream": "ext://sys.stdout"
+    },
+    "file_info": {
+      "class": "logging.handlers.RotatingFileHandler",
+      "level": "INFO",
+      "formatter": "detailed",
+      "filename": "/opt/dotmac/logs/application.log",
+      "maxBytes": 50000000,
+      "backupCount": 10
+    },
+    "file_error": {
+      "class": "logging.handlers.RotatingFileHandler",
+      "level": "ERROR",
+      "formatter": "detailed",
+      "filename": "/opt/dotmac/logs/errors.log",
+      "maxBytes": 50000000,
+      "backupCount": 5
+    },
+    "audit_file": {
+      "class": "logging.handlers.TimedRotatingFileHandler",
+      "level": "INFO",
+      "formatter": "audit",
+      "filename": "/opt/dotmac/logs/audit.log",
+      "when": "midnight",
+      "backupCount": 365,
+      "interval": 1
+    },
+    "json_file": {
+      "class": "logging.handlers.RotatingFileHandler",
+      "level": "INFO",
+      "formatter": "json",
+      "filename": "/opt/dotmac/logs/structured.log",
+      "maxBytes": 100000000,
+      "backupCount": 20
+    }
+  },
+  "loggers": {
+    "dotmac_isp": {
+      "handlers": [
+        "console",
+        "file_info",
+        "file_error",
+        "json_file"
+      ],
+      "level": "INFO",
+      "propagate": false
+    },
+    "management_platform": {
+      "handlers": [
+        "console",
+        "file_info",
+        "file_error",
+        "json_file"
+      ],
+      "level": "INFO",
+      "propagate": false
+    },
+    "audit": {
+      "handlers": [
+        "audit_file",
+        "json_file"
+      ],
+      "level": "INFO",
+      "propagate": false
+    },
+    "security": {
+      "handlers": [
+        "console",
+        "file_error",
+        "audit_file"
+      ],
+      "level": "WARNING",
+      "propagate": false
+    }
+  },
+  "root": {
+    "level": "INFO",
+    "handlers": [
+      "console",
+      "file_info"
+    ]
+  }
+}

@@ -64,7 +64,7 @@ class TestBillingCalculationAccuracy:
                 )
                 
                 # Revenue protection: Must match to 6 decimal places
-                assert calculated_charge.quantize(Decimal('0.000001')) == case["expected_charge"]
+                assert calculated_charge.quantize(Decimal('0.000001') == case["expected_charge"]
 
     def test_proration_calculation_accuracy(self, db_session):
         """Test service proration calculations for partial billing periods."""
@@ -510,8 +510,8 @@ class TestBillingScaleAccuracy:
         for i in range(1000):
             scenario = {
                 "customer_id": f"cust_{i:04d}",
-                "base_amount": Decimal(str(random.uniform(50.00, 500.00))),
-                "usage_gb": Decimal(str(random.uniform(0.1, 2000.0))),
+                "base_amount": Decimal(str(random.uniform(50.00, 500.00)),
+                "usage_gb": Decimal(str(random.uniform(0.1, 2000.0)),
                 "rate_per_gb": Decimal('0.10'),
                 "tax_rate": Decimal('0.0825')
             }
@@ -527,7 +527,7 @@ class TestBillingScaleAccuracy:
             subtotal = scenario["base_amount"] + usage_charge
             tax_amount = subtotal * scenario["tax_rate"]
             expected_total = subtotal + tax_amount
-            total_expected += expected_total.quantize(Decimal('0.01'))
+            total_expected += expected_total.quantize(Decimal('0.01')
             
             # Calculate using billing service
             calculated_total = billing_service._calculate_invoice_total(
@@ -562,11 +562,11 @@ class TestBillingScaleAccuracy:
         # Operations that will run concurrently
         def apply_charge():
             """Apply Charge operation."""
-            billing_service._apply_charge(customer_id, Decimal('25.00'))
+            billing_service._apply_charge(customer_id, Decimal('25.00')
             
         def apply_credit():
             """Apply Credit operation."""
-            billing_service._apply_credit(customer_id, Decimal('10.00'))
+            billing_service._apply_credit(customer_id, Decimal('10.00')
         
         # Run concurrent operations
         threads = []
@@ -582,7 +582,7 @@ class TestBillingScaleAccuracy:
             thread.join()
         
         # Verify final balance is mathematically correct
-        expected_balance = initial_balance + (5 * Decimal('25.00')) - (5 * Decimal('10.00'))
+        expected_balance = initial_balance + (5 * Decimal('25.00') - (5 * Decimal('10.00')
         actual_balance = billing_service._get_customer_balance(customer_id)
         
         # Revenue protection: Concurrent operations must maintain data integrity

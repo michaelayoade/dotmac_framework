@@ -48,7 +48,7 @@ curl -X POST http://localhost:8000/api/v1/tenant-orchestration/deployments \
 - **Plugin System**: Tiered licensing with usage tracking and billing
 - **Monitoring**: Real-time health checks and SLA compliance tracking
 - **Infrastructure**: OpenTofu for infrastructure + Kubernetes for workloads
-- **Configuration**: **Unified Enhanced Configuration** with OpenBao vault integration
+- **Configuration**: **Unified Enhanced Configuration** with OpenBao integration
 - **Secrets**: **Multi-Tenant OpenBao** with automatic rotation and cross-platform audit orchestration
 - **Security**: **Cross-Platform Configuration Security** with encryption, hot-reloading, and disaster recovery
 - **Observability**: SignOz for metrics, traces, logs + **Configuration Audit Trails**
@@ -168,7 +168,7 @@ await mgmt_platform.orchestrate_config_reload(
 ### Enhanced Configuration Features
 
 #### **1. Multi-Tenant Secrets Management**
-- **Per-Tenant Vault Namespaces**: Isolated secret storage for each ISP customer
+- **Per-Tenant OpenBao Namespaces**: Isolated secret storage for each ISP customer
 - **Cross-Platform Secret Sync**: Automatic secret provisioning to tenant ISP Framework instances
 - **Tenant-Specific License Secrets**: Plugin licensing and feature activation credentials
 - **Emergency Secret Rotation**: Platform-wide emergency rotation capabilities

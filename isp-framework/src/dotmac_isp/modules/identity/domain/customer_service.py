@@ -10,7 +10,7 @@ This implementation will be removed in a future version.
 import warnings
 from typing import List, Optional, Dict, Any
 from uuid import UUID, uuid4
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 
 from .interfaces import ICustomerService, IUserValidationService, IIdentityEventService
@@ -67,49 +67,6 @@ class CustomerService(ICustomerService):
         raise NotImplementedError(
             "Use dotmac_isp.modules.identity.service.CustomerService instead"
         )
-
-            # Prepare customer data
-            customer_dict = {
-                "customer_number": customer_number,
-                "display_name": customer_data.display_name,
-                "customer_type": customer_data.customer_type,
-                "status": "active",
-                "first_name": customer_data.first_name,
-                "last_name": customer_data.last_name,
-                "middle_name": customer_data.middle_name,
-                "date_of_birth": customer_data.date_of_birth,
-                "company_name": customer_data.company_name,
-                "tax_id": customer_data.tax_id,
-                "email_primary": customer_data.email_primary,
-                "email_secondary": customer_data.email_secondary,
-                "phone_primary": customer_data.phone_primary,
-                "phone_secondary": customer_data.phone_secondary,
-                "phone_mobile": customer_data.phone_mobile,
-                "preferred_contact_method": customer_data.preferred_contact_method
-                or "email",
-                "language_preference": customer_data.language_preference or "en",
-                "timezone": customer_data.timezone or "UTC",
-                "notes": customer_data.notes,
-                "tags": customer_data.tags or [],
-                "custom_fields": customer_data.custom_fields or {},
-                "created_at": datetime.utcnow(),
-                "updated_at": datetime.utcnow(),
-            }
-
-            # Create customer
-            customer = self.customer_repo.create(customer_dict)
-
-            # Publish customer created event
-            await self.event_service.publish_customer_created(customer)
-
-            logger.info(f"Customer created successfully: {customer.id}")
-            return self._to_response_schema(customer)
-
-        except (ValidationError, ConflictError):
-            raise
-        except Exception as e:
-            logger.error(f"Failed to create customer: {str(e)}")
-            raise ServiceError(f"Customer creation failed: {str(e)}")
 
     async def get_customer(self, customer_id: UUID) -> schemas.CustomerResponse:
         """Get customer by ID."""
@@ -177,7 +134,7 @@ class CustomerService(ICustomerService):
                 existing_fields.update(update_data.custom_fields)
                 update_dict["custom_fields"] = existing_fields
 
-            update_dict["updated_at"] = datetime.utcnow()
+            update_dict["updated_at"] = datetime.now(timezone.utc)
 
             # Update customer
             updated_customer = self.customer_repo.update(customer_id, update_dict)
@@ -209,8 +166,8 @@ class CustomerService(ICustomerService):
             update_data = {
                 "status": "inactive",
                 "deactivation_reason": reason,
-                "deactivated_at": datetime.utcnow(),
-                "updated_at": datetime.utcnow(),
+                "deactivated_at": datetime.now(timezone.utc),
+                "updated_at": datetime.now(timezone.utc),
             }
 
             self.customer_repo.update(customer_id, update_data)
@@ -301,7 +258,7 @@ class CustomerService(ICustomerService):
             sequence = self.customer_repo.get_next_customer_sequence()
 
             # Format: CUST-YYYYMMDD-NNNN
-            today = datetime.now().strftime("%Y%m%d")
+            today = datetime.now(timezone.utc).strftime("%Y%m%d")
             customer_number = f"CUST-{today}-{sequence:04d}"
 
             # Ensure uniqueness (in case of race conditions)

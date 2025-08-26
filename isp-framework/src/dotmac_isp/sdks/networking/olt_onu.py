@@ -377,3 +377,49 @@ class OltOnuSDK:
             "last_seen": onu["last_seen"],
             "updated_at": onu["updated_at"],
         }
+
+
+class OLTONUSDK:
+    """SDK wrapper for OLT/ONU operations."""
+
+    def __init__(self, tenant_id: str):
+        """Initialize the SDK."""
+        self.tenant_id = tenant_id
+        self.service = OltOnuService()
+
+    async def register_olt(self, **kwargs) -> Dict[str, Any]:
+        """Register OLT device."""
+        return await self.service.register_olt(**kwargs)
+
+    async def register_onu(self, **kwargs) -> Dict[str, Any]:
+        """Register ONU device."""
+        return await self.service.register_onu(**kwargs)
+
+    async def get_olt_info(self, olt_id: str) -> Dict[str, Any]:
+        """Get OLT information."""
+        return await self.service.get_olt_info(olt_id)
+
+    async def get_onu_info(self, onu_id: str) -> Dict[str, Any]:
+        """Get ONU information."""
+        return await self.service.get_onu_info(onu_id)
+
+    async def list_olts(self) -> List[Dict[str, Any]]:
+        """List all OLT devices."""
+        return await self.service.list_olts()
+
+    async def list_onus_for_olt(self, olt_id: str) -> List[Dict[str, Any]]:
+        """List ONUs for specific OLT."""
+        return await self.service.list_onus_for_olt(olt_id)
+
+    async def update_onu_status(
+        self,
+        onu_id: str,
+        admin_status: Optional[str] = None,
+        oper_status: Optional[str] = None,
+        optical_power_rx: Optional[float] = None,
+        optical_power_tx: Optional[float] = None,
+    ) -> Dict[str, Any]:
+        """Update ONU status."""
+        return await self.service.update_onu_status(
+            onu_id, admin_status, oper_status, optical_power_rx, optical_power_tx
+        )

@@ -18,8 +18,8 @@ from ..models import (
     NotificationPriority,
     NotificationType,
     NotificationChannel,
-    NotificationStatus,
-)
+    NotificationStatus)
+from datetime import datetime, timezone
 from ..schemas import (
     NotificationCreate,
     NotificationUpdate,
@@ -33,7 +33,7 @@ router = APIRouter()
 
 def generate_notification_id() -> str:
     """Generate a unique notification ID."""
-    timestamp = int(datetime.utcnow().timestamp())
+    timestamp = int(datetime.now(timezone.utc).timestamp()
     random_chars = "".join(
         secrets.choice(string.ascii_uppercase + string.digits) for _ in range(6)
     )
@@ -47,7 +47,7 @@ async def process_notification_delivery(notification_id: str, db: Session):
     )
     if notification:
         notification.status = NotificationStatus.SENT
-        notification.sent_at = datetime.utcnow()
+        notification.sent_at = datetime.now(timezone.utc)
         db.commit()
 
 
@@ -65,8 +65,8 @@ async def create_notification(
         notification = Notification(
             id=notification_id,
             tenant_id=tenant_id,
-            **notification_data.dict(),
-            created_at=datetime.utcnow(),
+            **notification_data.model_dump(),
+            created_at=datetime.now(timezone.utc),
             status=NotificationStatus.PENDING,
         )
 
@@ -146,7 +146,7 @@ async def list_notifications(
     query = db.query(Notification).filter(Notification.tenant_id == tenant_id)
 
     if recipient:
-        query = query.filter(Notification.recipient.contains(recipient))
+        query = query.filter(Notification.recipient.contains(recipient)
     if channel:
         query = query.filter(Notification.channel == channel)
     if type:
@@ -155,7 +155,7 @@ async def list_notifications(
         query = query.filter(Notification.status == status)
 
     notifications = (
-        query.order_by(Notification.created_at.desc()).offset(offset).limit(limit).all()
+        query.order_by(Notification.created_at.desc().offset(offset).limit(limit).all()
     )
 
     return [
@@ -201,8 +201,8 @@ async def send_notification(
         notification = Notification(
             id=notification_id,
             tenant_id=tenant_id,
-            **notification_data.dict(),
-            created_at=datetime.utcnow(),
+            **notification_data.model_dump(),
+            created_at=datetime.now(timezone.utc),
             status=NotificationStatus.SENDING,
         )
 
@@ -249,8 +249,8 @@ async def bulk_send_notifications(
             notification = Notification(
                 id=notification_id,
                 tenant_id=tenant_id,
-                **notification_data.dict(),
-                created_at=datetime.utcnow(),
+                **notification_data.model_dump(),
+                created_at=datetime.now(timezone.utc),
                 status=NotificationStatus.PENDING,
             )
 
@@ -298,10 +298,10 @@ async def update_notification(
         )
 
     # Update fields
-    for field, value in update_data.dict(exclude_unset=True).items():
+    for field, value in update_data.model_dump(exclude_unset=True).items():
         setattr(notification, field, value)
 
-    notification.updated_at = datetime.utcnow()
+    notification.updated_at = datetime.now(timezone.utc)
 
     db.commit()
     db.refresh(notification)
@@ -376,7 +376,7 @@ async def retry_notification(
     # Reset status and retry
     notification.status = NotificationStatus.PENDING
     notification.retry_count = (notification.retry_count or 0) + 1
-    notification.updated_at = datetime.utcnow()
+    notification.updated_at = datetime.now(timezone.utc)
 
     db.commit()
 

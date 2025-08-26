@@ -10,6 +10,7 @@ from sqlalchemy import select
 from dotmac_isp.core.exceptions import (
     AuthenticationError, AuthorizationError, SecurityViolationError
 )
+from datetime import timezone
 
 
 class AuthenticationService:
@@ -34,11 +35,11 @@ class AuthenticationService:
     
     def create_access_token(self, user_id: str, permissions: List[str] = None) -> str:
         """Create JWT access token."""
-        expires = datetime.utcnow() + timedelta(hours=self.token_expire_hours)
+        expires = datetime.now(timezone.utc) + timedelta(hours=self.token_expire_hours)
         payload = {
             "sub": user_id,
             "exp": expires,
-            "iat": datetime.utcnow(),
+            "iat": datetime.now(timezone.utc),
             "permissions": permissions or []
         }
         return jwt.encode(payload, self.secret_key, algorithm=self.algorithm)

@@ -4,6 +4,7 @@ Consent Preferences SDK - comms preferences (email/SMS/WhatsApp), GDPR/CCPA flag
 
 from typing import Any, Dict, List, Optional
 from uuid import UUID
+from datetime import datetime, timezone
 
 from ..core.exceptions import ConsentError
 from ..utils.datetime_compat import utcnow
@@ -57,7 +58,7 @@ class ConsentPreferencesService:
             if hasattr(preference, key):
                 setattr(preference, key, value)
 
-        preference.updated_at = preference.updated_at.__class__.utcnow()
+        preference.updated_at = datetime.now(timezone.utc)
 
         # Create audit log
         await self._create_audit(preference, old_status, preference.status)
@@ -118,7 +119,7 @@ class ConsentPreferencesSDK:
                 ComplianceRegion(r) for r in (compliance_regions or [])
             ],
             granted_at=(
-                preference.granted_at.__class__.utcnow()
+                datetime.now(timezone.utc)
                 if hasattr(preference, "granted_at")
                 else None
             ),
@@ -143,7 +144,7 @@ class ConsentPreferencesSDK:
             UUID(preference_id),
             status=ConsentStatus.WITHDRAWN,
             withdrawn_at=(
-                preference.withdrawn_at.__class__.utcnow()
+                datetime.now(timezone.utc)
                 if hasattr(preference, "withdrawn_at")
                 else None
             ),

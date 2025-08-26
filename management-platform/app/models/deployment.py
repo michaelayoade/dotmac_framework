@@ -216,12 +216,12 @@ class Deployment(BaseModel):
     def start_deployment(self) -> None:
         """Start deployment process."""
         self.status = DeploymentStatus.PROVISIONING
-        self.deployment_started_at = datetime.utcnow()
+        self.deployment_started_at = datetime.now(timezone.utc)
     
     def complete_deployment(self) -> None:
         """Mark deployment as completed."""
         self.status = DeploymentStatus.RUNNING
-        self.deployment_completed_at = datetime.utcnow()
+        self.deployment_completed_at = datetime.now(timezone.utc)
     
     def fail_deployment(self, error_message: str) -> None:
         """Mark deployment as failed."""
@@ -232,7 +232,7 @@ class Deployment(BaseModel):
         """Update health status."""
         self.health_status = status
         self.health_details = details or {}
-        self.last_health_check = datetime.utcnow()
+        self.last_health_check = datetime.now(timezone.utc)
     
     def scale(self, instance_count: int) -> None:
         """Scale deployment."""

@@ -18,7 +18,7 @@ class JsonConfigHandler(ConfigurationHandler):
     def can_handle(self, config_path: Path, context: ReloadContext) -> bool:
         """Check if this is a JSON configuration file."""
         return (config_path.suffix.lower() == '.json' and 
-                self._is_file_readable(config_path))
+                self._is_file_readable(config_path)
     
     def handle(self, config_path: Path, context: ReloadContext) -> ReloadContext:
         """
@@ -113,4 +113,4 @@ class JsonConfigHandler(ConfigurationHandler):
             self._get_dict_depth(value, depth + 1) 
             for value in d.values() 
             if isinstance(value, dict)
-        ) if any(isinstance(value, dict) for value in d.values()) else depth + 1
+        ) if any(isinstance(value, dict) for value in d.values() else depth + 1

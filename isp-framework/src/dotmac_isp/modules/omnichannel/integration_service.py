@@ -281,7 +281,7 @@ class OmnichannelIntegrationService:
                 "recipients": recipients,
                 "data": {
                     "interaction_id": interaction_id,
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                     **(data or {}),
                 },
                 "channels": ["email", "push"],
@@ -324,7 +324,7 @@ class OmnichannelIntegrationService:
                 "services": service_status,
                 "billing": billing_status,
                 "history": interaction_history,
-                "context_generated_at": datetime.utcnow().isoformat(),
+                "context_generated_at": datetime.now(timezone.utc).isoformat(),
                 "priority_indicators": self._calculate_priority_indicators(
                     customer_details, service_status, billing_status
                 ),
@@ -341,7 +341,7 @@ class OmnichannelIntegrationService:
             logger.error(f"Failed to enrich interaction context: {e}")
             return {
                 "error": str(e),
-                "context_generated_at": datetime.utcnow().isoformat(),
+                "context_generated_at": datetime.now(timezone.utc).isoformat(),
             }
 
     async def get_recent_interaction_summary(
@@ -366,7 +366,7 @@ class OmnichannelIntegrationService:
                     CustomerContact.customer_id == customer_id,
                     CustomerContact.tenant_id == self.tenant_id,
                 )
-                .order_by(desc(CommunicationInteraction.created_at))
+                .order_by(desc(CommunicationInteraction.created_at)
                 .limit(limit)
                 .all()
             )
@@ -533,7 +533,7 @@ class OmnichannelIntegrationService:
             "notification_service": "unknown",
             "cache_service": "unknown",
             "overall_status": "healthy",
-            "checked_at": datetime.utcnow().isoformat(),
+            "checked_at": datetime.now(timezone.utc).isoformat(),
         }
 
         try:

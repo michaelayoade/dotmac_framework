@@ -1,6 +1,6 @@
 """Plugin System Database Models."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 from uuid import uuid4
 from sqlalchemy import (
@@ -112,7 +112,7 @@ class PluginRegistry(TenantModel):
     def record_load_success(self):
         """Record successful plugin load."""
         self.status = PluginStatusDB.ACTIVE
-        self.last_loaded = datetime.utcnow()
+        self.last_loaded = datetime.now(timezone.utc)
         self.load_count += 1
         self.last_error = None
 
@@ -187,7 +187,7 @@ class PluginConfiguration(TenantModel):
         """Mark configuration as valid."""
         self.is_valid = True
         self.validation_errors = None
-        self.last_validated = datetime.utcnow()
+        self.last_validated = datetime.now(timezone.utc)
 
 
 class PluginInstance(TenantModel):
@@ -242,26 +242,26 @@ class PluginInstance(TenantModel):
         if not self.started_at:
             return 0
 
-        end_time = self.stopped_at or datetime.utcnow()
+        end_time = self.stopped_at or datetime.now(timezone.utc)
         return int((end_time - self.started_at).total_seconds())
 
     def record_start(self):
         """Record instance start."""
         self.status = PluginStatusDB.ACTIVE
-        self.started_at = datetime.utcnow()
+        self.started_at = datetime.now(timezone.utc)
         self.stopped_at = None
-        self.last_heartbeat = datetime.utcnow()
+        self.last_heartbeat = datetime.now(timezone.utc)
 
     def record_stop(self, reason: str = None):
         """Record instance stop."""
         self.status = PluginStatusDB.INACTIVE
-        self.stopped_at = datetime.utcnow()
+        self.stopped_at = datetime.now(timezone.utc)
         if reason:
             self.last_error = reason
 
     def record_heartbeat(self):
         """Record heartbeat from instance."""
-        self.last_heartbeat = datetime.utcnow()
+        self.last_heartbeat = datetime.now(timezone.utc)
 
     def record_error(self, error_message: str):
         """Record error from instance."""
@@ -340,7 +340,7 @@ class PluginMetrics(TenantModel):
 
     # Timestamp
     metric_timestamp = Column(
-        DateTime(timezone=True), nullable=False, default=datetime.utcnow, index=True
+        DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc), index=True
     )
 
     # Labels and tags for filtering

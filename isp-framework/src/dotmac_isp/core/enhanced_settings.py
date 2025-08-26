@@ -347,7 +347,7 @@ class EnhancedSettings(BaseSettings):
                 ]
 
             # Validate configuration
-            config_dict = self.dict()
+            config_dict = self.model_dump()
             result = validator.validate_configuration(
                 config=config_dict,
                 environment=self.environment,
@@ -392,7 +392,7 @@ class EnhancedSettings(BaseSettings):
 
         try:
             backup_manager = get_config_backup()
-            config_dict = self.dict()
+            config_dict = self.model_dump()
 
             backup_id = backup_manager.create_backup(
                 config_data=config_dict,

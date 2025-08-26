@@ -7,7 +7,7 @@ import os
 import json
 import logging
 from typing import Dict, Any, Optional, List, Union
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from pydantic import BaseModel, Field
 from dataclasses import dataclass
@@ -60,7 +60,7 @@ class AuditEvent(BaseModel):
     """Configuration audit event."""
 
     event_id: str = Field(..., description="Unique event identifier")
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     change_type: ChangeType
     change_status: ChangeStatus
     source: ChangeSource
@@ -228,7 +228,7 @@ class ConfigurationAudit:
             pending_file = self.audit_storage_path / "pending_changes.json"
             with open(pending_file, "w") as f:
                 json.dump(
-                    {k: v.dict() for k, v in self.pending_changes.items()},
+                    {k: v.model_dump() for k, v in self.pending_changes.items()},
                     f,
                     indent=2,
                     default=str,
@@ -238,7 +238,7 @@ class ConfigurationAudit:
             workflows_file = self.audit_storage_path / "active_workflows.json"
             with open(workflows_file, "w") as f:
                 json.dump(
-                    {k: v.dict() for k, v in self.active_workflows.items()},
+                    {k: v.model_dump() for k, v in self.active_workflows.items()},
                     f,
                     indent=2,
                     default=str,
@@ -248,7 +248,7 @@ class ConfigurationAudit:
             snapshots_file = self.audit_storage_path / "snapshots_index.json"
             with open(snapshots_file, "w") as f:
                 json.dump(
-                    {k: v.dict() for k, v in self.snapshots.items()},
+                    {k: v.model_dump() for k, v in self.snapshots.items()},
                     f,
                     indent=2,
                     default=str,
@@ -389,7 +389,7 @@ class ConfigurationAudit:
             workflow_id=f"workflow-{event_id}",
             change_id=event_id,
             required_approvers=required_approvers,
-            approval_deadline=datetime.utcnow() + timedelta(hours=24),
+            approval_deadline=datetime.now(timezone.utc) + timedelta(hours=24),
             min_approvals=1 if audit_event.environment != "production" else 2,
             require_security_approval=audit_event.sensitivity_level == "critical",
             require_ops_approval=audit_event.environment == "production",
@@ -444,7 +444,7 @@ class ConfigurationAudit:
                     # Apply the change
                     audit_event.change_status = ChangeStatus.APPLIED
                     audit_event.approved_by = ", ".join(workflow.current_approvers)
-                    audit_event.approved_at = datetime.utcnow()
+                    audit_event.approved_at = datetime.now(timezone.utc)
 
                     # Write to audit log
                     self._write_audit_log(audit_event)
@@ -487,7 +487,7 @@ class ConfigurationAudit:
 
         # Write event as JSON line
         with open(log_file, "a") as f:
-            f.write(json.dumps(audit_event.dict(), default=str) + "\n")
+            f.write(json.dumps(audit_event.model_dump(), default=str) + "\n")
 
         # Set secure permissions
         os.chmod(log_file, 0o640)
@@ -514,7 +514,7 @@ class ConfigurationAudit:
             Snapshot ID
         """
         with self._lock:
-            snapshot_id = f"snapshot-{datetime.utcnow().strftime('%Y%m%d-%H%M%S')}"
+            snapshot_id = f"snapshot-{datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S')}"
 
             # Calculate configuration hash
             config_json = json.dumps(config_dict, sort_keys=True, default=str)
@@ -523,7 +523,7 @@ class ConfigurationAudit:
             # Create snapshot
             snapshot = ConfigurationSnapshot(
                 snapshot_id=snapshot_id,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
                 environment=environment,
                 service=service,
                 config_hash=config_hash,
@@ -544,7 +544,7 @@ class ConfigurationAudit:
             snapshot_file = self.audit_storage_path / f"{snapshot_id}.json"
             with open(snapshot_file, "w") as f:
                 json.dump(
-                    {"metadata": snapshot.dict(), "config": config_dict},
+                    {"metadata": snapshot.model_dump(), "config": config_dict},
                     f,
                     indent=2,
                     default=str,
@@ -595,11 +595,11 @@ class ConfigurationAudit:
     def _get_recent_events(self, days: int = 7) -> List[AuditEvent]:
         """Get recent audit events."""
         events = []
-        cutoff_date = datetime.utcnow() - timedelta(days=days)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
 
         # Read recent log files
         for i in range(days):
-            log_date = (datetime.utcnow() - timedelta(days=i)).strftime("%Y-%m-%d")
+            log_date = (datetime.now(timezone.utc) - timedelta(days=i)).strftime("%Y-%m-%d")
             log_file = self.audit_storage_path / f"audit-{log_date}.jsonl"
 
             if log_file.exists():
@@ -608,6 +608,9 @@ class ConfigurationAudit:
                         for line in f:
                             event_data = json.loads(line.strip())
                             event = AuditEvent(**event_data)
+                            # Ensure timestamp is timezone-aware for comparison
+                            if event.timestamp.tzinfo is None:
+                                event.timestamp = event.timestamp.replace(tzinfo=timezone.utc)
                             if event.timestamp >= cutoff_date:
                                 events.append(event)
                 except Exception as e:
@@ -638,9 +641,15 @@ class ConfigurationAudit:
         """
         # Default to last 30 days
         if not start_date:
-            start_date = datetime.utcnow() - timedelta(days=30)
+            start_date = datetime.now(timezone.utc) - timedelta(days=30)
         if not end_date:
-            end_date = datetime.utcnow()
+            end_date = datetime.now(timezone.utc)
+        
+        # Ensure start_date and end_date are timezone-aware for comparison
+        if start_date.tzinfo is None:
+            start_date = start_date.replace(tzinfo=timezone.utc)
+        if end_date.tzinfo is None:
+            end_date = end_date.replace(tzinfo=timezone.utc)
 
         # Get events in date range
         all_events = self._get_recent_events(days=(end_date - start_date).days + 1)
@@ -704,13 +713,13 @@ class ConfigurationAudit:
                 "by_environment": changes_by_environment,
             },
             "recent_events": [
-                event.dict() for event in filtered_events[:50]
+                event.model_dump() for event in filtered_events[:50]
             ],  # Last 50 events
         }
 
     def cleanup_old_audits(self):
         """Clean up old audit logs based on retention policy."""
-        cutoff_date = datetime.utcnow() - timedelta(days=self.max_audit_age_days)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=self.max_audit_age_days)
         cutoff_date_str = cutoff_date.strftime("%Y-%m-%d")
 
         deleted_files = 0

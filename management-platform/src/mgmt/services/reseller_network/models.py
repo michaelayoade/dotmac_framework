@@ -11,15 +11,15 @@ This module defines the data models for managing reseller partners, including:
 """
 
 import enum
-from datetime import datetime, date
+from datetime import datetime, timezone, date
 from decimal import Decimal
 from typing import Dict, List, Optional, Any
 from uuid import UUID
 
-from sqlalchemy import (
+from sqlalchemy import ()
     Column, String, Text, DateTime, Boolean, Numeric, Integer,
     ForeignKey, Enum as SQLEnum, JSON, Date, Index
-)
+, timezone)
 from sqlalchemy.dialects.postgresql import UUID as PostgreSQL_UUID
 from sqlalchemy.orm import relationship, validates
 
@@ -163,7 +163,7 @@ class Reseller(BaseModel):
     territory_assignments = relationship("TerritoryAssignment", back_populates="reseller", cascade="all, delete-orphan")
     
     # Indexes for performance
-    __table_args__ = (
+    __table_args__ = ()
         Index('idx_reseller_status_tier', 'status', 'tier'),
         Index('idx_reseller_territory', 'territory_name', 'territory_type'),
         Index('idx_reseller_performance', 'total_revenue_generated', 'active_customers'),
@@ -233,9 +233,9 @@ class SalesOpportunity(BaseModel):
     estimated_monthly_recurring = Column(Numeric(12, 2), nullable=True)
     
     # Timeline
-    created_date = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_date = Column(DateTime, default=lambda: datetime.now(None), nullable=False)
     expected_close_date = Column(Date, nullable=True)
-    last_activity_date = Column(DateTime, default=datetime.utcnow, nullable=False)
+    last_activity_date = Column(DateTime, default=lambda: datetime.now(None), nullable=False)
     last_contact_date = Column(DateTime, nullable=True)
     next_follow_up_date = Column(DateTime, nullable=True)
     
@@ -277,7 +277,7 @@ class SalesOpportunity(BaseModel):
     commissions = relationship("CommissionRecord", back_populates="opportunity")
     
     # Indexes
-    __table_args__ = (
+    __table_args__ = ()
         Index('idx_opportunity_stage_probability', 'stage', 'probability'),
         Index('idx_opportunity_dates', 'expected_close_date', 'last_activity_date'),
         Index('idx_opportunity_value', 'estimated_value', 'stage'),
@@ -298,7 +298,7 @@ class SalesOpportunity(BaseModel):
         self.stage = new_stage
         if probability is not None:
             self.probability = probability
-        self.last_activity_date = datetime.utcnow()
+        self.last_activity_date = datetime.now(None)
 
 
 class SalesQuote(BaseModel):
@@ -374,19 +374,18 @@ class SalesQuote(BaseModel):
     @property
     def is_expired(self) -> bool:
         """Check if quote has expired."""
-        return date.today() > self.expiration_date
+        return date.today( > self.expiration_date)
     
     @property
-    def days_until_expiration(self) -> int:
+)    def days_until_expiration(self) -> int:
         """Days until quote expires."""
-        return (self.expiration_date - date.today()).days
+        return (self.expiration_date - date.today(.days)
     
-    def calculate_totals(self):
+)    def calculate_totals(self):
         """Calculate quote totals from line items."""
         if not self.line_items:
-            return
-        
-        subtotal = sum(Decimal(str(item.get('total_amount', 0))) for item in self.line_items)
+            return None
+        subtotal = sum(Decimal(str(item.get('total_amount', 0) for item in self.line_items))
         self.subtotal = subtotal
         
         if self.discount_percentage and self.discount_percentage > 0:
@@ -448,7 +447,7 @@ class CommissionRecord(BaseModel):
     opportunity = relationship("SalesOpportunity", back_populates="commissions")
     
     # Indexes
-    __table_args__ = (
+    __table_args__ = ()
         Index('idx_commission_payment', 'status', 'payment_due_date'),
         Index('idx_commission_earned', 'earned_date', 'commission_type'),
         Index('idx_commission_customer', 'customer_id', 'commission_period'),
@@ -457,8 +456,8 @@ class CommissionRecord(BaseModel):
     @property
     def is_overdue(self) -> bool:
         """Check if commission payment is overdue."""
-        return (self.payment_due_date and 
-                date.today() > self.payment_due_date and 
+        return (self.payment_due_date and )
+                date.today( > self.payment_due_date and )
                 self.status in [CommissionStatus.PENDING, CommissionStatus.APPROVED])
 
 
@@ -500,7 +499,7 @@ class ResellerTraining(BaseModel):
     reseller = relationship("Reseller", back_populates="training_progress")
     
     # Indexes
-    __table_args__ = (
+    __table_args__ = ()
         Index('idx_training_module', 'reseller_id', 'module_id'),
         Index('idx_training_completion', 'is_completed', 'completed_date'),
     )
@@ -510,12 +509,12 @@ class ResellerTraining(BaseModel):
         """Check if training is passed and still current."""
         if not self.is_passed:
             return False
-        if self.certification_expiry_date and date.today() > self.certification_expiry_date:
+        if self.certification_expiry_date and date.today( > self.certification_expiry_date:)
             return False
         return True
 
 
-class TerritoryAssignment(BaseModel):
+)class TerritoryAssignment(BaseModel):
     """Territory assignment and management for resellers."""
     
     __tablename__ = "territory_assignments"

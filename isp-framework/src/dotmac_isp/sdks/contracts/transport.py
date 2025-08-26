@@ -49,7 +49,7 @@ class RequestContext:
     def __post_init__(self):
         """Initialize context with defaults."""
         if self.timestamp is None:
-            self.timestamp = datetime.utcnow()
+            self.timestamp = datetime.now(timezone.utc)
         if self.headers is None:
             self.headers = {}
         if self.metadata is None:
@@ -111,7 +111,7 @@ class ResponseMessage:
     def __post_init__(self):
         """Initialize response with defaults."""
         if self.timestamp is None:
-            self.timestamp = datetime.utcnow()
+            self.timestamp = datetime.now(timezone.utc)
 
     @property
     def is_success(self) -> bool:
@@ -143,7 +143,7 @@ class EventMessage:
     def __post_init__(self):
         """Initialize event with defaults."""
         if self.timestamp is None:
-            self.timestamp = datetime.utcnow()
+            self.timestamp = datetime.now(timezone.utc)
 
 
 @dataclass
@@ -174,7 +174,7 @@ class BatchResponse:
     def __post_init__(self):
         """Initialize batch response."""
         if self.timestamp is None:
-            self.timestamp = datetime.utcnow()
+            self.timestamp = datetime.now(timezone.utc)
 
         # Count successes and errors
         self.success_count = sum(1 for r in self.responses if r.is_success)

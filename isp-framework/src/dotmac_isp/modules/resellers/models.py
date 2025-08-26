@@ -347,7 +347,7 @@ class PartnerCertification(TenantModel, AuditMixin):
     def days_to_expiry(self) -> Optional[int]:
         """Calculate days until certification expires."""
         if self.valid_until:
-            return (self.valid_until - date.today()).days
+            return (self.valid_until - date.today().days
         return None
 
     def __repr__(self):
@@ -439,7 +439,7 @@ class DealRegistration(TenantModel, AuditMixin):
     @hybrid_property
     def days_to_close(self) -> int:
         """Calculate days until expected close."""
-        return (self.expected_close_date - date.today()).days
+        return (self.expected_close_date - date.today().days
 
     @hybrid_property
     def is_overdue(self) -> bool:
@@ -541,7 +541,7 @@ class Commission(TenantModel, AuditMixin):
         """Calculate effective commission rate."""
         if self.base_amount and self.base_amount > 0:
             return round(
-                (float(self.commission_amount) / float(self.base_amount)) * 100, 2
+                (float(self.commission_amount) / float(self.base_amount) * 100, 2
             )
         return 0.0
 

@@ -14,7 +14,7 @@ import os
 from pydantic import BaseSettings, Field, field_validator
 
 
-class Secrets(BaseSettings):
+class Secrets(BaseSettings, ConfigDict):
     """
     Centralized secret management with validation
     """
@@ -56,13 +56,7 @@ class Secrets(BaseSettings):
     # Monitoring
     sentry_dsn: Optional[str] = Field(default=None, description="Sentry DSN")
 
-    class Config:
-        """Class for Config operations."""
-        env_file = ".env", ".env.local", ".env.production"
-        env_file_encoding = "utf-8"
-        extra = "forbid"  # Fail on unknown environment variables
-        case_sensitive = True
-
+    model_config = ConfigDict(env_file=(".env", ".env.local", ".env.production"), env_file_encoding="utf-8", extra="forbid", case_sensitive=True)  # Fail on unknown environment variables
     @field_validator("jwt_secret")
     @classmethod
     def validate_jwt_secret(cls, v):

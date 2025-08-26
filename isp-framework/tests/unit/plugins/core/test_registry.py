@@ -455,7 +455,7 @@ class TestPluginRegistry:
         
         def test_callback(event_type, event_data):
             """Test Callback operation."""
-            callback_calls.append((event_type, event_data))
+            callback_calls.append((event_type, event_data)
         
         # Add listener
         self.registry.add_event_listener("test_event", test_callback)
@@ -484,7 +484,7 @@ class TestPluginRegistry:
             """Class for TestCallback operations."""
             def __call__(self, event_type, event_data):
                 """  Call   operation."""
-                callback_calls.append((event_type, event_data))
+                callback_calls.append((event_type, event_data)
         
         callback = TestCallback()
         self.registry.add_event_listener("test_event", callback)
@@ -510,7 +510,7 @@ class TestPluginRegistry:
         
         async def async_callback(event_type, event_data):
             """Async Callback operation."""
-            callback_calls.append((event_type, event_data))
+            callback_calls.append((event_type, event_data)
         
         self.registry.add_event_listener("test_event", async_callback)
         

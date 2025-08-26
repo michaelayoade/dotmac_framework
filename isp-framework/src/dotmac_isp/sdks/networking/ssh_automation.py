@@ -94,7 +94,7 @@ class EnhancedSSHClient:
             self.client.load_system_host_keys()
             self.client.load_host_keys()
             # Use RejectPolicy for production security - require known hosts
-            self.client.set_missing_host_key_policy(paramiko.RejectPolicy())
+            self.client.set_missing_host_key_policy(paramiko.RejectPolicy()
 
     def _create_mock_client(self):
         """Create mock client for testing"""

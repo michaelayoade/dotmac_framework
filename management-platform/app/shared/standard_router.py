@@ -10,7 +10,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
 
-from ..core.exceptions import (
+from core.exceptions import (
     EntityNotFoundError, ValidationError, BusinessRuleError, ServiceError
 )
 

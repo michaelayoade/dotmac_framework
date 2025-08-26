@@ -123,7 +123,7 @@ def test_snmp_device_consistency():
     for _ in range(3):
         response = requests.get(f"{base_url}/devices")
         assert response.status_code == 200
-        responses.append(response.json())
+        responses.append(response.json()
     
     # Then: Device count should be consistent
     device_counts = [len(devices) for devices in responses]
@@ -136,7 +136,7 @@ def test_snmp_device_consistency():
         "Device IDs are inconsistent across requests"
     
     # And: Device types should be stable
-    for i in range(len(responses[0])):
+    for i in range(len(responses[0]):
         device_types = [response[i]['type'] for response in responses]
         assert all(device_type == device_types[0] for device_type in device_types), \
             f"Device {i} type is inconsistent across requests"

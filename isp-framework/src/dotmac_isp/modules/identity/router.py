@@ -15,6 +15,7 @@ from dotmac_isp.shared.auth import (
     create_access_token,
     create_refresh_token,
     get_current_user,
+    get_current_tenant,
     verify_token,
 )
 from dotmac_isp.shared.exceptions import (
@@ -22,11 +23,13 @@ from dotmac_isp.shared.exceptions import (
     ValidationError,
     BusinessRuleError,
     ServiceError,
-    AuthenticationError
+    AuthenticationError,
 )
+from datetime import datetime, timezone
 from .service import CustomerService, UserService
 from . import schemas
 from .intelligence_service import CustomerIntelligenceService
+from .models import User
 
 router = APIRouter(tags=["identity"])
 identity_router = router  # Standard export alias
@@ -183,9 +186,7 @@ async def list_users(
     tenant_id: str
     created_at: datetime
 
-    class Config:
-        """Class for Config operations."""
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserCreate(BaseModel):
@@ -258,7 +259,7 @@ async def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
 
             # Lock account after 5 failed attempts
             if failed_attempts >= 5:
-                user.locked_until = datetime.utcnow() + timedelta(minutes=15)
+                user.locked_until = datetime.now(timezone.utc) + timedelta(minutes=15)
 
             db.commit()
         except Exception:
@@ -273,7 +274,7 @@ async def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
     # Reset failed login attempts on successful login
     user.failed_login_attempts = "0"
     user.locked_until = None
-    user.last_login = datetime.utcnow()
+    user.last_login = datetime.now(timezone.utc)
     db.commit()
 
     # Create tokens
@@ -289,9 +290,9 @@ async def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
 
 
 @router.post(
-    "/auth/register", response_model=UserProfile, status_code=status.HTTP_201_CREATED
+    "/auth/register", response_model=schemas.UserResponse, status_code=status.HTTP_201_CREATED
 )
-async def register(user_data: UserRegister, db: Session = Depends(get_db)):
+async def register(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
     """Register a new user."""
     # Check if user already exists
     existing_user = db.query(User).filter(User.email == user_data.email.lower()).first()
@@ -323,7 +324,7 @@ async def register(user_data: UserRegister, db: Session = Depends(get_db)):
         tenant_id=user_data.tenant_id,
         is_active=True,
         is_verified=False,
-        created_at=datetime.utcnow(),
+        created_at=datetime.now(timezone.utc),
     )
 
     db.add(new_user)
@@ -375,13 +376,13 @@ async def logout(current_user: User = Depends(get_current_user)):
 
 
 # User management endpoints
-@router.get("/me", response_model=UserProfile)
+@router.get("/me", response_model=schemas.UserResponse)
 async def get_current_user_profile(current_user: User = Depends(get_current_user)):
     """Get current user's profile."""
     return current_user
 
 
-@router.put("/me", response_model=UserProfile)
+@router.put("/me", response_model=schemas.UserResponse)
 async def update_current_user_profile(
     user_update: UserUpdate,
     current_user: User = Depends(get_current_user),
@@ -389,7 +390,7 @@ async def update_current_user_profile(
 ):
     """Update current user's profile."""
     # Update allowed fields
-    update_data = user_update.dict(exclude_unset=True)
+    update_data = user_update.model_dump(exclude_unset=True)
 
     # Check if email is being changed and not already taken
     if "email" in update_data:
@@ -431,7 +432,7 @@ async def update_current_user_profile(
     for field, value in update_data.items():
         setattr(current_user, field, value)
 
-    current_user.updated_at = datetime.utcnow()
+    current_user.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(current_user)
 
@@ -456,14 +457,14 @@ async def change_password(
 
     # Update password
     current_user.password_hash = hash_password(password_change.new_password)
-    current_user.updated_at = datetime.utcnow()
+    current_user.updated_at = datetime.now(timezone.utc)
     db.commit()
 
     return {"message": "Password changed successfully"}
 
 
 # Admin endpoints (require appropriate permissions)
-@router.get("/users", response_model=List[UserProfile])
+@router.get("/users", response_model=List[schemas.UserResponse])
 async def list_users(
     skip: int = 0,
     limit: int = 100,
@@ -484,7 +485,7 @@ async def list_users(
     return users
 
 
-@router.post("/users", response_model=UserProfile, status_code=status.HTTP_201_CREATED)
+@router.post("/users", response_model=schemas.UserResponse, status_code=status.HTTP_201_CREATED)
 async def create_user(
     user_data: UserCreate,
     current_user: User = Depends(get_current_user),
@@ -521,7 +522,7 @@ async def create_user(
         tenant_id=user_data.tenant_id,
         is_active=True,
         is_verified=True,  # Admin-created users are verified
-        created_at=datetime.utcnow(),
+        created_at=datetime.now(timezone.utc),
     )
 
     db.add(new_user)
@@ -531,7 +532,7 @@ async def create_user(
     return new_user
 
 
-@router.get("/users/{user_id}", response_model=UserProfile)
+@router.get("/users/{user_id}", response_model=schemas.UserResponse)
 async def get_user(
     user_id: str,
     current_user: User = Depends(get_current_user),
@@ -581,7 +582,7 @@ async def update_user_status(
         )
 
     user.is_active = is_active
-    user.updated_at = datetime.utcnow()
+    user.updated_at = datetime.now(timezone.utc)
     db.commit()
 
     return {

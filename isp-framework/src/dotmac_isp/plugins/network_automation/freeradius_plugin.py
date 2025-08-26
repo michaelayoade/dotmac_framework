@@ -22,6 +22,7 @@ from ..core.base import (
     PluginConfig,
     PluginAPI,
 )
+from datetime import datetime, timezone
 from ..core.exceptions import PluginError, PluginConfigError
 
 
@@ -127,8 +128,8 @@ class FreeRADIUSPlugin(NetworkAutomationPlugin):
             config_data = self.config.config_data or {}
 
             # SECURITY FIX: Override with secure values if environment/vault configured
-            self.radius_host = os.getenv("FREERADIUS_HOST", config_data.get("radius_host", "localhost"))
-            self.radius_port = int(os.getenv("FREERADIUS_PORT", str(config_data.get("radius_port", 1812))))
+            self.radius_host = os.getenv("FREERADIUS_HOST", config_data.get("radius_host", "localhost")
+            self.radius_port = int(os.getenv("FREERADIUS_PORT", str(config_data.get("radius_port", 1812)
             
             # SECURITY: Re-validate secrets during initialization (in case they were rotated)
             # This ensures we always have fresh, valid secrets
@@ -142,7 +143,7 @@ class FreeRADIUSPlugin(NetworkAutomationPlugin):
                 except (ValueError, SecurityError) as e:
                     raise ValueError(f"CRITICAL SECURITY ERROR during initialization: {e}")
             
-            self.admin_api_url = os.getenv("FREERADIUS_ADMIN_URL", config_data.get("admin_api_url"))
+            self.admin_api_url = os.getenv("FREERADIUS_ADMIN_URL", config_data.get("admin_api_url")
             
             # Admin token validation
             if not hasattr(self, 'admin_api_token'):
@@ -223,7 +224,7 @@ class FreeRADIUSPlugin(NetworkAutomationPlugin):
                         "nas_type": client.nas_type,
                         "virtual_server": client.virtual_server,
                         "status": "active",
-                        "discovered_at": datetime.utcnow().isoformat(),
+                        "discovered_at": datetime.now(timezone.utc).isoformat(),
                     }
                 )
 
@@ -282,7 +283,7 @@ class FreeRADIUSPlugin(NetworkAutomationPlugin):
                 "virtual_server": client.virtual_server,
                 "reachable": is_reachable,
                 "active_sessions": len(active_sessions),
-                "last_checked": datetime.utcnow().isoformat(),
+                "last_checked": datetime.now(timezone.utc).isoformat(),
             }
 
         except Exception as e:
@@ -321,7 +322,7 @@ class FreeRADIUSPlugin(NetworkAutomationPlugin):
                 "authenticated": auth_result.get("code") == "Access-Accept",
                 "attributes": auth_result.get("attributes", {}),
                 "message": auth_result.get("message", ""),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
             return result
@@ -332,7 +333,7 @@ class FreeRADIUSPlugin(NetworkAutomationPlugin):
                 "username": username,
                 "authenticated": False,
                 "error": str(e),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
     async def add_user(self, user: RADIUSUser, context: PluginContext = None) -> bool:
@@ -489,7 +490,7 @@ class FreeRADIUSPlugin(NetworkAutomationPlugin):
             sock.settimeout(5.0)
 
             try:
-                sock.connect((self.radius_host, self.radius_port))
+                sock.connect((self.radius_host, self.radius_port)
                 self._logger.debug(
                     f"Successfully connected to RADIUS server {self.radius_host}:{self.radius_port}"
                 )
@@ -599,7 +600,7 @@ class FreeRADIUSPlugin(NetworkAutomationPlugin):
                 "session_id": "12345",
                 "username": "user@domain.com",
                 "nas_id": device_id,
-                "start_time": datetime.utcnow().isoformat(),
+                "start_time": datetime.now(timezone.utc).isoformat(),
                 "bytes_in": 1024000,
                 "bytes_out": 2048000,
             }

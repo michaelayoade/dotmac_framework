@@ -261,7 +261,7 @@ class SecurityTestSuite:
         }
         
         # Scan Python files
-        python_files = list(self.project_root.rglob("*.py"))
+        python_files = list(self.project_root.rglob("*.py")
         
         for file_path in python_files:
             # Skip test files and virtual environments
@@ -316,7 +316,7 @@ class SecurityTestSuite:
             else:
                 # Parse vulnerability results
                 try:
-                    vuln_data = json.loads(stdout.decode())
+                    vuln_data = json.loads(stdout.decode()
                     for vuln in vuln_data:
                         results['vulnerabilities'].append({
                             'package': vuln.get('package_name'),
@@ -432,4 +432,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(main()

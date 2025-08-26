@@ -104,7 +104,7 @@ class TracePropagator:
             headers[TraceHeaders.REQUEST_ID] = context.request_id
         if context.baggage:
             # Serialize baggage as comma-separated key=value pairs
-            baggage_str = ",".join(f"{k}={v}" for k, v in context.baggage.items())
+            baggage_str = ",".join(f"{k}={v}" for k, v in context.baggage.items()
             headers[TraceHeaders.BAGGAGE] = baggage_str
 
         return headers
@@ -171,10 +171,10 @@ class DistributedTracer:
             trace_id = parent_context.trace_id
             parent_span_id = parent_context.span_id
         else:
-            trace_id = str(uuid.uuid4())
+            trace_id = str(uuid.uuid4()
             parent_span_id = None
 
-        span_id = str(uuid.uuid4())
+        span_id = str(uuid.uuid4()
 
         # Create span context
         context = TraceContext(
@@ -193,7 +193,7 @@ class DistributedTracer:
             context.user_id = parent_context.user_id
             context.request_id = parent_context.request_id
             context.correlation_id = parent_context.correlation_id
-            context.baggage = parent_context.baggage.copy()
+            context.baggage = parent_context.baggage.model_copy()
 
         # Add service tags
         context.tags.update(
@@ -276,7 +276,7 @@ class DistributedTracer:
             self.finish_span(span_context, "OK")
         except Exception as e:
             self.set_span_tag(span_context, "error", True)
-            self.set_span_tag(span_context, "error.message", str(e))
+            self.set_span_tag(span_context, "error.message", str(e)
             self.add_span_log(
                 span_context, "ERROR", str(e), {"exception": type(e).__name__}
             )
@@ -291,13 +291,13 @@ class DistributedTracer:
 
     def get_active_spans(self) -> dict[str, TraceContext]:
         """Get all currently active spans."""
-        return self.active_spans.copy()
+        return self.active_spans.model_copy()
 
     def get_completed_spans(self, trace_id: str | None = None) -> list[TraceContext]:
         """Get completed spans, optionally filtered by trace ID."""
         if trace_id:
             return [span for span in self.completed_spans if span.trace_id == trace_id]
-        return self.completed_spans.copy()
+        return self.completed_spans.model_copy()
 
 
 class TraceAnalyzer:
@@ -354,7 +354,7 @@ class TraceAnalyzer:
             "service_breakdown": service_breakdown,
             "error_count": len(error_spans),
             "error_rate": len(error_spans) / len(spans) * 100 if spans else 0,
-            "services_involved": list(service_breakdown.keys()),
+            "services_involved": list(service_breakdown.keys(),
             "deepest_nesting": self._calculate_max_depth(spans),
         }
 
@@ -374,7 +374,7 @@ class TraceAnalyzer:
         max_depth = 0
 
         for span in spans:
-            depth = self._get_span_depth(span, span_map, set())
+            depth = self._get_span_depth(span, span_map, set()
             max_depth = max(max_depth, depth)
 
         return max_depth
@@ -428,7 +428,7 @@ class CorrelationManager:
                 break
             chain.append(current)
 
-        return list(reversed(chain))
+        return list(reversed(chain)
 
 
 # Global instances for convenience
@@ -481,7 +481,7 @@ def trace_sync(operation_name: str = None):
                 return result
             except Exception as e:
                 default_tracer.set_span_tag(span_context, "error", True)
-                default_tracer.set_span_tag(span_context, "error.message", str(e))
+                default_tracer.set_span_tag(span_context, "error.message", str(e)
                 default_tracer.finish_span(span_context, "ERROR")
                 raise
 

@@ -16,7 +16,7 @@ from pydantic import BaseModel, Field
 from enum import Enum
 import re
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__, timezone)
 
 
 class FieldEncryptionLevel(str, Enum):
@@ -122,7 +122,7 @@ class ConfigurationEncryption:
                 rotation_key = self._derive_key(
                     self.master_key, salt=f"dotmac_rotation_{i}".encode()
                 )
-                keys.append(Fernet(rotation_key))
+                keys.append(Fernet(rotation_key)
 
         return keys
 
@@ -134,7 +134,7 @@ class ConfigurationEncryption:
             salt=salt,
             iterations=100000,
         )
-        return base64.urlsafe_b64encode(kdf.derive(password.encode()))
+        return base64.urlsafe_b64encode(kdf.derive(password.encode()
 
     def _load_sensitive_field_registry(self):
         """Load registry of known sensitive fields."""
@@ -253,11 +253,11 @@ class ConfigurationEncryption:
         elif encryption_level == FieldEncryptionLevel.STRONG:
             # Use MultiFernet for key rotation support
             multi_fernet = MultiFernet(self.encryption_keys)
-            encrypted_value = multi_fernet.encrypt(field_value.encode()).decode()
+            encrypted_value = multi_fernet.encrypt(field_value.encode().decode()
         else:  # BASIC
             # Use single key
             encrypted_value = (
-                self.encryption_keys[0].encrypt(field_value.encode()).decode()
+                self.encryption_keys[0].encrypt(field_value.encode().decode()
             )
 
         # Calculate checksum
@@ -268,7 +268,7 @@ class ConfigurationEncryption:
             value=encrypted_value,
             encryption_level=encryption_level,
             field_type=field_type,
-            encrypted_at=datetime.utcnow(),
+            encrypted_at=datetime.now(timezone.utc),
             key_version=self.current_key_version,
             checksum=checksum,
         )
@@ -364,7 +364,7 @@ class ConfigurationEncryption:
                     )
                     encrypted_config[key] = {
                         "_encrypted": True,
-                        "data": encrypted_field.dict(),
+                        "data": encrypted_field.model_dump(),
                     }
                 else:
                     # Keep as-is
@@ -417,11 +417,11 @@ class ConfigurationEncryption:
         # Generate new primary key
         new_primary_key = self._derive_key(
             self.master_key,
-            salt=f"dotmac_rotation_{datetime.utcnow().timestamp()}".encode(),
+            salt=f"dotmac_rotation_{datetime.now(timezone.utc).timestamp()}".encode(),
         )
 
         # Update key list (new key becomes primary, old keys kept for decryption)
-        self.encryption_keys.insert(0, Fernet(new_primary_key))
+        self.encryption_keys.insert(0, Fernet(new_primary_key)
         self.current_key_version += 1
 
         # Re-encrypt all fields with new key
@@ -465,7 +465,7 @@ class ConfigurationEncryption:
         # Add metadata
         export_data = {
             "version": "1.0",
-            "encrypted_at": datetime.utcnow().isoformat(),
+            "encrypted_at": datetime.now(timezone.utc).isoformat(),
             "key_version": self.current_key_version,
             "config": encrypted_config,
         }
@@ -501,19 +501,19 @@ class ConfigurationEncryption:
         """Encrypt value using external vault (placeholder)."""
         # This would integrate with the SecretsManager
         # For now, fallback to strong encryption
-        return self.encryption_keys[0].encrypt(value.encode()).decode()
+        return self.encryption_keys[0].encrypt(value.encode().decode()
 
     def _decrypt_with_vault(self, encrypted_value: str) -> str:
         """Decrypt value using external vault (placeholder)."""
         # This would integrate with the SecretsManager
         # For now, fallback to strong decryption
-        return self.encryption_keys[0].decrypt(encrypted_value.encode()).decode()
+        return self.encryption_keys[0].decrypt(encrypted_value.encode().decode()
 
     def _calculate_checksum(self, value: str) -> str:
         """Calculate checksum for value integrity."""
         import hashlib
 
-        return hashlib.sha256(value.encode()).hexdigest()
+        return hashlib.sha256(value.encode().hexdigest()
 
     def get_encryption_status(self) -> Dict[str, Any]:
         """

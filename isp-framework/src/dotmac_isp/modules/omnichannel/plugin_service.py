@@ -9,7 +9,8 @@ from sqlalchemy.exc import IntegrityError
 
 from .channel_plugins import channel_registry
 from .channel_plugins.base import BaseChannelPlugin, ChannelConfig, ChannelMessage
-from .models_v2 import RegisteredChannel, ChannelConfiguration
+from .models_production import RegisteredChannel, ChannelConfiguration
+from datetime import timezone
 from dotmac_isp.shared.exceptions import (
     EntityNotFoundError,
     ValidationError,
@@ -325,7 +326,7 @@ class ChannelPluginService:
 
                 # Update database with health check results
                 config.health_status = "healthy" if is_healthy else "unhealthy"
-                config.last_health_check = datetime.utcnow()
+                config.last_health_check = datetime.now(timezone.utc)
 
             except Exception as e:
                 results[channel_id] = {
@@ -336,7 +337,7 @@ class ChannelPluginService:
 
                 config.health_status = "unhealthy"
                 config.error_message = str(e)
-                config.last_health_check = datetime.utcnow()
+                config.last_health_check = datetime.now(timezone.utc)
 
         try:
             self.db.commit()

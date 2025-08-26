@@ -188,11 +188,11 @@ class BusinessRuleVerifier:
         
         for child in ast.walk(node):
             # Decision points that increase complexity
-            if isinstance(child, (ast.If, ast.While, ast.For, ast.Try)):
+            if isinstance(child, (ast.If, ast.While, ast.For, ast.Try):
                 complexity += 1
             elif isinstance(child, ast.ExceptHandler):
                 complexity += 1
-            elif isinstance(child, (ast.BoolOp, ast.Compare)):
+            elif isinstance(child, (ast.BoolOp, ast.Compare):
                 # Boolean operations add complexity
                 if isinstance(child, ast.BoolOp):
                     complexity += len(child.values) - 1
@@ -293,8 +293,8 @@ class BusinessRuleVerifier:
     
     def generate_report(self, results: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Generate business rules verification report."""
-        total_violations = sum(len(r.get('violations', [])) for r in results)
-        total_warnings = sum(len(r.get('warnings', [])) for r in results)
+        total_violations = sum(len(r.get('violations', []) for r in results)
+        total_warnings = sum(len(r.get('warnings', []) for r in results)
         critical_violations = sum(
             len([v for v in r.get('violations', []) if v.get('severity') == 'critical'])
             for r in results
@@ -310,7 +310,7 @@ class BusinessRuleVerifier:
             },
             'critical_files': [
                 r for r in results 
-                if any(v.get('severity') == 'critical' for v in r.get('violations', []))
+                if any(v.get('severity') == 'critical' for v in r.get('violations', [])
             ],
             'all_results': results
         }

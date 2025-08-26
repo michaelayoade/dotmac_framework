@@ -38,9 +38,8 @@ logger = logging.getLogger(__name__)
 class TablesSDKConfig:
     """Tables SDK configuration."""
 
-    def __init__(  # noqa: PLR0913
-        """  Init   operation."""
-        self,
+    def __init__(
+        self,  # noqa: PLR0913
         max_tables_per_tenant: int = 100,
         max_columns_per_table: int = 100,
         max_indexes_per_table: int = 20,
@@ -479,7 +478,7 @@ class TablesSDK:
             if table_data:
                 import json
 
-                sample_row_size = len(json.dumps(table_data[0]).encode())
+                sample_row_size = len(json.dumps(table_data[0]).encode()
                 total_size_bytes = sample_row_size * row_count
 
             avg_row_size_bytes = total_size_bytes / row_count if row_count > 0 else 0
@@ -505,7 +504,7 @@ class TablesSDK:
                     ]
                     
                     # Calculate unique values
-                    unique_values = len(set(v for v in column_values if v is not None))
+                    unique_values = len(set(v for v in column_values if v is not None)
                     
                     # Calculate null count
                     null_count = sum(1 for v in column_values if v is None)
@@ -601,7 +600,7 @@ class TablesSDK:
     async def health_check(self) -> TablesHealthCheck:
         """Perform health check."""
         try:
-            total_tables = sum(len(tables) for tables in self._schemas.values())
+            total_tables = sum(len(tables) for tables in self._schemas.values()
             total_rows = sum(
                 len(rows)
                 for tenant_data in self._data.values()
@@ -615,7 +614,7 @@ class TablesSDK:
                     if table_data:
                         import json
 
-                        sample_size = len(json.dumps(table_data[0]).encode())
+                        sample_size = len(json.dumps(table_data[0]).encode()
                         total_size_bytes += sample_size * len(table_data)
 
             return TablesHealthCheck(
@@ -671,7 +670,7 @@ class TablesSDK:
 
         # Check for duplicate column names
         column_names = [col.name for col in schema.columns]
-        if len(column_names) != len(set(column_names)):
+        if len(column_names) != len(set(column_names):
             raise ValueError("Duplicate column names not allowed")
 
     async def _validate_row_data(
@@ -747,7 +746,7 @@ class TablesSDK:
         if query.search:
             search_lower = query.search.lower()
             search_columns = (
-                query.search_columns or list(data[0].keys()) if data else []
+                query.search_columns or list(data[0].keys() if data else []
             )
 
             filtered_data = [
@@ -807,7 +806,7 @@ class TablesSDK:
 
         query_data = query.model_dump(mode="json")
         query_str = json.dumps(query_data, sort_keys=True)
-        return hashlib.sha256(query_str.encode()).hexdigest()
+        return hashlib.sha256(query_str.encode().hexdigest()
 
     async def _get_cached_query(self, cache_key: str) -> TableQueryResponse | None:
         """Get cached query result."""

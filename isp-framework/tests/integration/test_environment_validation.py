@@ -81,14 +81,14 @@ def test_postgres_connectivity():
     
     cursor.execute("""
         INSERT INTO test_validation (name) VALUES (%s) RETURNING id
-    """, ('environment_test',))
+    """, ('environment_test',)
     
     result = cursor.fetchone()
     assert result is not None
     test_id = result[0]
     
     # Verify data was inserted
-    cursor.execute("SELECT name FROM test_validation WHERE id = %s", (test_id,))
+    cursor.execute("SELECT name FROM test_validation WHERE id = %s", (test_id,)
     retrieved_name = cursor.fetchone()[0]
     assert retrieved_name == 'environment_test'
     
@@ -165,7 +165,7 @@ def test_cross_service_integration():
     
     cursor.execute("""
         INSERT INTO test_users (user_id, session_id) VALUES (%s, %s) RETURNING id
-    """, (session_data["user_id"], session_id))
+    """, (session_data["user_id"], session_id)
     
     user_record_id = cursor.fetchone()[0]
     pg_conn.commit()
@@ -183,7 +183,7 @@ def test_cross_service_integration():
     
     # Verify PostgreSQL record
     cursor.execute("SELECT user_id, session_id FROM test_users WHERE id = %s", 
-                  (user_record_id,))
+                  (user_record_id,)
     db_user, db_session = cursor.fetchone()
     assert db_user == session_data["user_id"]
     assert db_session == session_id

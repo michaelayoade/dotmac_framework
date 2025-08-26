@@ -5,7 +5,7 @@ Replaces the 25-complexity search_interactions method.
 
 from typing import Dict, Any, List, Tuple, Optional, Union
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.orm import Query, Session
 from sqlalchemy import desc, asc, func, and_, or_
 
@@ -265,7 +265,7 @@ class CommonQueries:
     def overdue_interactions(session: Session, tenant_id: UUID, threshold_hours: int = 24) -> InteractionQueryBuilder:
         """Get overdue interactions."""
         from datetime import timedelta
-        threshold_date = datetime.utcnow() - timedelta(hours=threshold_hours)
+        threshold_date = datetime.now(timezone.utc) - timedelta(hours=threshold_hours)
         
         return (InteractionQueryBuilder(session, tenant_id)
                 .filter_by_date_range(end_date=threshold_date)

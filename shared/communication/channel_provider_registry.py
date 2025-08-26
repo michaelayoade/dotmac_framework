@@ -297,11 +297,11 @@ class ChannelProviderRegistry:
     
     def list_available_providers(self) -> List[str]:
         """List all registered provider classes."""
-        return list(self._provider_classes.keys())
+        return list(self._provider_classes.keys()
     
     def list_active_providers(self) -> List[str]:
         """List all active/configured providers."""
-        return list(self._active_providers.keys())
+        return list(self._active_providers.keys()
     
     def get_provider_info(self, provider_name: str) -> Optional[Dict[str, Any]]:
         """Get information about a provider."""

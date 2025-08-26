@@ -1,7 +1,7 @@
 """
 Vault authentication strategies for secure authentication patterns.
 
-REFACTORED: Extracted from vault_client.py to reduce VaultClient._authenticate 
+# openbao_client removed - using openbao_client instead
 complexity from 14→3 using Strategy pattern.
 """
 
@@ -126,7 +126,7 @@ class KubernetesAuthStrategy(VaultAuthStrategy):
             
             return client_token
         except Exception as e:
-            logger.error("Kubernetes authentication failed", error=str(e))
+            logger.error("Kubernetes authentication failed", error=str(e)
             raise ValueError(f"Kubernetes authentication failed: {str(e)}")
     
     def _read_service_account_token(self) -> str:
@@ -172,7 +172,7 @@ class AWSAuthStrategy(VaultAuthStrategy):
             
             return client_token
         except Exception as e:
-            logger.error("AWS authentication failed", error=str(e))
+            logger.error("AWS authentication failed", error=str(e)
             raise ValueError(f"AWS authentication failed: {str(e)}")
     
     def get_strategy_name(self) -> str:
@@ -209,7 +209,7 @@ class LDAPAuthStrategy(VaultAuthStrategy):
             
             return client_token
         except Exception as e:
-            logger.error("LDAP authentication failed", error=str(e))
+            logger.error("LDAP authentication failed", error=str(e)
             raise ValueError(f"LDAP authentication failed: {str(e)}")
     
     def get_strategy_name(self) -> str:
@@ -230,7 +230,7 @@ class VaultAuthenticationEngine:
     """
     Engine for authenticating with Vault using Strategy pattern.
     
-    REFACTORED: Replaces the 14-complexity if-elif chain in VaultClient._authenticate
+    REFACTORED: Replaces the 14-complexity if-elif chain in OpenBaoClient._authenticate
     with a simple strategy lookup (Complexity: 3).
     """
     
@@ -286,7 +286,7 @@ class VaultAuthenticationEngine:
             
             logger.info("Successfully authenticated with Vault",
                        method=auth_method,
-                       strategy=strategy.get_strategy_name())
+                       strategy=strategy.get_strategy_name()
             
             return client_token
             
@@ -294,19 +294,19 @@ class VaultAuthenticationEngine:
             logger.error("Vault authentication failed",
                         method=auth_method,
                         strategy=strategy.get_strategy_name(),
-                        error=str(e))
+                        error=str(e)
             raise
     
     def get_supported_auth_methods(self) -> list[str]:
         """Get list of supported authentication methods."""
-        return list(self.strategies.keys())
+        return list(self.strategies.keys()
     
     def add_custom_strategy(self, auth_method: str, strategy: VaultAuthStrategy) -> None:
         """Add a custom authentication strategy."""
         self.strategies[auth_method] = strategy
         logger.info("Added custom auth strategy",
                    auth_method=auth_method,
-                   strategy_name=strategy.get_strategy_name())
+                   strategy_name=strategy.get_strategy_name()
     
     def remove_strategy(self, auth_method: str) -> bool:
         """Remove an authentication strategy."""
@@ -324,7 +324,7 @@ class VaultAuthenticationEngine:
             try:
                 validation_results[auth_method] = strategy.validate_config(config)
             except Exception as e:
-                logger.warning(f"Error validating {auth_method} config", error=str(e))
+                logger.warning(f"Error validating {auth_method} config", error=str(e)
                 validation_results[auth_method] = False
         
         return validation_results

@@ -42,12 +42,14 @@ class Settings(BaseSettings):
     redoc_url: Optional[str] = "/redoc"
     openapi_url: Optional[str] = "/openapi.json"
 
-    # Database settings
+    # Database settings - PostgreSQL required for RLS and enterprise features
     database_url: str = Field(
-        default="sqlite:///./dotmac_isp.db", description="Synchronous database URL"
+        default="postgresql://dotmac:dotmac@localhost:5432/dotmac_isp",
+        description="PostgreSQL database URL (required - SQLite not supported)"
     )
     async_database_url: str = Field(
-        default="sqlite+aiosqlite:///./dotmac_isp.db", description="Asynchronous database URL"
+        default="postgresql+asyncpg://dotmac:dotmac@localhost:5432/dotmac_isp",
+        description="Async PostgreSQL database URL (required - SQLite not supported)"
     )
 
     # Redis settings
@@ -255,7 +257,7 @@ class Settings(BaseSettings):
     @property
     def database_url_sync(self) -> str:
         """Get synchronous database URL."""
-        return self.database_url.replace("+asyncpg", "").replace("+aiomysql", "")
+        return self.database_url.replace("+asyncpg", "").replace("+psycopg2", "")
 
     @model_validator(mode="after")
     def validate_security_settings(self):
@@ -308,10 +310,17 @@ class Settings(BaseSettings):
                     "Using default MinIO access key in production - consider changing via MINIO_ACCESS_KEY"
                 )
 
-            # Database URLs should use SSL in production
+            # PostgreSQL connections should use SSL in production
             if "sslmode=require" not in self.database_url and "sslmode=require" not in self.async_database_url:
                 logger.warning(
-                    "Database connections should use SSL in production (add ?sslmode=require)"
+                    "PostgreSQL connections should use SSL in production (add ?sslmode=require)"
+                )
+
+            # Validate PostgreSQL is being used
+            if not self.database_url.startswith(("postgresql://", "postgresql+")) or \
+               not self.async_database_url.startswith(("postgresql+asyncpg://",)):
+                errors.append(
+                    "PostgreSQL is required for production - SQLite is not supported for RLS and enterprise features"
                 )
 
             # Redis should use password in production

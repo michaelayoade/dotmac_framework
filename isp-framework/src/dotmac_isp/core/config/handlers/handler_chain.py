@@ -66,7 +66,7 @@ class ConfigurationHandlerChain:
         # Step 1: Initialize context (Complexity: 1)
         context = ReloadContext(
             config_paths=config_paths,
-            original_config=original_config.copy(),
+            original_config=original_config.model_copy(),
             new_config={},
             changed_keys=[],
             errors=[],

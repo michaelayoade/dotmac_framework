@@ -40,7 +40,7 @@ class AnalyticsRepository:
 
             # New customers in period
             new_customers = (
-                self.db.query(func.count(Customer.id))
+                self.db.query(func.count(Customer.id)
                 .filter(
                     and_(
                         Customer.tenant_id == str(self.tenant_id),
@@ -55,7 +55,7 @@ class AnalyticsRepository:
 
             # Active customers (with recent activity)
             active_customers = (
-                self.db.query(func.count(Customer.id))
+                self.db.query(func.count(Customer.id)
                 .filter(
                     and_(
                         Customer.tenant_id == str(self.tenant_id),
@@ -81,7 +81,7 @@ class AnalyticsRepository:
                         Customer.created_at <= end_date,
                     )
                 )
-                .group_by(func.date(Customer.created_at))
+                .group_by(func.date(Customer.created_at)
                 .all()
             )
 
@@ -112,7 +112,7 @@ class AnalyticsRepository:
             from dotmac_isp.modules.billing.models import Invoice, Payment
 
             # Total revenue in period
-            total_revenue = self.db.query(func.sum(Invoice.total_amount)).filter(
+            total_revenue = self.db.query(func.sum(Invoice.total_amount).filter(
                 and_(
                     Invoice.tenant_id == str(self.tenant_id),
                     Invoice.is_deleted == False,
@@ -123,7 +123,7 @@ class AnalyticsRepository:
             ).scalar() or Decimal("0.00")
 
             # Outstanding revenue
-            outstanding_revenue = self.db.query(func.sum(Invoice.amount_due)).filter(
+            outstanding_revenue = self.db.query(func.sum(Invoice.amount_due).filter(
                 and_(
                     Invoice.tenant_id == str(self.tenant_id),
                     Invoice.is_deleted == False,
@@ -189,7 +189,7 @@ class AnalyticsRepository:
 
             # Total active services
             total_services = (
-                self.db.query(func.count(ServiceInstance.id))
+                self.db.query(func.count(ServiceInstance.id)
                 .filter(
                     and_(
                         ServiceInstance.tenant_id == str(self.tenant_id),
@@ -203,7 +203,7 @@ class AnalyticsRepository:
 
             # New services in period
             new_services = (
-                self.db.query(func.count(ServiceInstance.id))
+                self.db.query(func.count(ServiceInstance.id)
                 .filter(
                     and_(
                         ServiceInstance.tenant_id == str(self.tenant_id),
@@ -254,7 +254,7 @@ class AnalyticsRepository:
 
             # Total tickets in period
             total_tickets = (
-                self.db.query(func.count(Ticket.id))
+                self.db.query(func.count(Ticket.id)
                 .filter(
                     and_(
                         Ticket.tenant_id == str(self.tenant_id),
@@ -269,7 +269,7 @@ class AnalyticsRepository:
 
             # Open tickets
             open_tickets = (
-                self.db.query(func.count(Ticket.id))
+                self.db.query(func.count(Ticket.id)
                 .filter(
                     and_(
                         Ticket.tenant_id == str(self.tenant_id),
@@ -304,7 +304,7 @@ class AnalyticsRepository:
 
             # Tickets by priority
             priority_breakdown = (
-                self.db.query(Ticket.priority, func.count(Ticket.id).label("count"))
+                self.db.query(Ticket.priority, func.count(Ticket.id).label("count")
                 .filter(
                     and_(
                         Ticket.tenant_id == str(self.tenant_id),
@@ -349,7 +349,7 @@ class AnalyticsRepository:
 
             # Total network devices
             total_devices = (
-                self.db.query(func.count(NetworkDevice.id))
+                self.db.query(func.count(NetworkDevice.id)
                 .filter(
                     and_(
                         NetworkDevice.tenant_id == str(self.tenant_id),
@@ -362,7 +362,7 @@ class AnalyticsRepository:
 
             # Active devices
             active_devices = (
-                self.db.query(func.count(NetworkDevice.id))
+                self.db.query(func.count(NetworkDevice.id)
                 .filter(
                     and_(
                         NetworkDevice.tenant_id == str(self.tenant_id),
@@ -376,7 +376,7 @@ class AnalyticsRepository:
 
             # Network alerts in period
             total_alerts = (
-                self.db.query(func.count(NetworkAlert.id))
+                self.db.query(func.count(NetworkAlert.id)
                 .filter(
                     and_(
                         NetworkAlert.tenant_id == str(self.tenant_id),
@@ -391,7 +391,7 @@ class AnalyticsRepository:
 
             # Critical alerts
             critical_alerts = (
-                self.db.query(func.count(NetworkAlert.id))
+                self.db.query(func.count(NetworkAlert.id)
                 .filter(
                     and_(
                         NetworkAlert.tenant_id == str(self.tenant_id),

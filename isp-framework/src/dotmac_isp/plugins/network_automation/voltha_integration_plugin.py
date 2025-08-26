@@ -19,6 +19,7 @@ from ..core.base import (
     PluginConfig,
     PluginAPI,
 )
+from datetime import datetime, timezone
 from ..core.exceptions import PluginError, PluginConfigError
 
 
@@ -142,9 +143,9 @@ class VolthaIntegrationPlugin(NetworkAutomationPlugin):
             config_data = self.config.config_data or {}
             
             # Override with environment if available
-            self.voltha_host = os.getenv("VOLTHA_HOST", config_data.get("voltha_host", "localhost"))
-            self.voltha_port = int(os.getenv("VOLTHA_PORT", str(config_data.get("voltha_port", 50057))))
-            self.voltha_rest_port = int(os.getenv("VOLTHA_REST_PORT", str(config_data.get("voltha_rest_port", 8881))))
+            self.voltha_host = os.getenv("VOLTHA_HOST", config_data.get("voltha_host", "localhost")
+            self.voltha_port = int(os.getenv("VOLTHA_PORT", str(config_data.get("voltha_port", 50057)
+            self.voltha_rest_port = int(os.getenv("VOLTHA_REST_PORT", str(config_data.get("voltha_rest_port", 8881)
             
             # Re-validate credentials during initialization
             if not hasattr(self, 'voltha_username') or not self.voltha_username:
@@ -231,7 +232,7 @@ class VolthaIntegrationPlugin(NetworkAutomationPlugin):
                     "vendor": device.vendor,
                     "model": device.model,
                     "firmware_version": device.firmware_version,
-                    "discovered_at": datetime.utcnow().isoformat(),
+                    "discovered_at": datetime.now(timezone.utc).isoformat(),
                 })
                 
             return discovered_devices
@@ -291,7 +292,7 @@ class VolthaIntegrationPlugin(NetworkAutomationPlugin):
                 "port_count": len(ports),
                 "flow_count": len(flows),
                 "active_alarms": len(alarms),
-                "last_checked": datetime.utcnow().isoformat(),
+                "last_checked": datetime.now(timezone.utc).isoformat(),
             }
             
         except Exception as e:
@@ -337,7 +338,7 @@ class VolthaIntegrationPlugin(NetworkAutomationPlugin):
                     "status": "provisioned",
                     "host_and_port": host_and_port,
                     "device_type": device_type,
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                 }
                 
         except Exception as e:
@@ -346,7 +347,7 @@ class VolthaIntegrationPlugin(NetworkAutomationPlugin):
                 "status": "error",
                 "error": str(e),
                 "host_and_port": host_and_port,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
             
     async def provision_onu(
@@ -391,7 +392,7 @@ class VolthaIntegrationPlugin(NetworkAutomationPlugin):
                     "parent_device_id": parent_device_id,
                     "pon_port": pon_port,
                     "onu_id": onu_id,
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                 }
                 
         except Exception as e:
@@ -400,7 +401,7 @@ class VolthaIntegrationPlugin(NetworkAutomationPlugin):
                 "status": "error",
                 "error": str(e),
                 "serial_number": serial_number,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
             
     async def delete_device(self, device_id: str, context: PluginContext = None) -> bool:
@@ -486,7 +487,7 @@ class VolthaIntegrationPlugin(NetworkAutomationPlugin):
             url = f"http://{self.voltha_host}:{self.voltha_rest_port}/api/v1/devices"
             async with self.session.get(url) as response:
                 if response.status == 200:
-                    data = await response.json()
+                    data = await response.model_dump_json()
                     devices = []
                     
                     for device_data in data.get("items", []):
@@ -527,7 +528,7 @@ class VolthaIntegrationPlugin(NetworkAutomationPlugin):
             url = f"http://{self.voltha_host}:{self.voltha_rest_port}/api/v1/devices"
             async with self.session.post(url, json=device_data) as response:
                 if response.status == 200:
-                    data = await response.json()
+                    data = await response.model_dump_json()
                     return data.get("id")
                 else:
                     self._logger.error(f"Failed to create VOLTHA device: HTTP {response.status}")
@@ -588,7 +589,7 @@ class VolthaIntegrationPlugin(NetworkAutomationPlugin):
             url = f"http://{self.voltha_host}:{self.voltha_rest_port}/api/v1/devices/{device_id}/ports"
             async with self.session.get(url) as response:
                 if response.status == 200:
-                    data = await response.json()
+                    data = await response.model_dump_json()
                     return data.get("items", [])
                 return []
                 
@@ -602,7 +603,7 @@ class VolthaIntegrationPlugin(NetworkAutomationPlugin):
             url = f"http://{self.voltha_host}:{self.voltha_rest_port}/api/v1/devices/{device_id}/flows"
             async with self.session.get(url) as response:
                 if response.status == 200:
-                    data = await response.json()
+                    data = await response.model_dump_json()
                     return data.get("items", [])
                 return []
                 
@@ -616,7 +617,7 @@ class VolthaIntegrationPlugin(NetworkAutomationPlugin):
             url = f"http://{self.voltha_host}:{self.voltha_rest_port}/api/v1/devices/{device_id}/alarms"
             async with self.session.get(url) as response:
                 if response.status == 200:
-                    data = await response.json()
+                    data = await response.model_dump_json()
                     return data.get("items", [])
                 return []
                 
@@ -642,7 +643,7 @@ class VolthaIntegrationPlugin(NetworkAutomationPlugin):
             url = f"http://{self.voltha_host}:{self.voltha_rest_port}/api/v1/devices/{device_id}/stats"
             async with self.session.get(url) as response:
                 if response.status == 200:
-                    data = await response.json()
+                    data = await response.model_dump_json()
                     return data
                 return {}
                 
@@ -653,7 +654,7 @@ class VolthaIntegrationPlugin(NetworkAutomationPlugin):
     def _start_background_tasks(self) -> None:
         """Start background monitoring tasks."""
         # Start device monitoring task
-        task = asyncio.create_task(self._device_monitoring_loop())
+        task = asyncio.create_task(self._device_monitoring_loop()
         self.background_tasks.add(task)
         task.add_done_callback(self.background_tasks.discard)
         

@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from typing import Optional, List, Dict, Any
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, validator, ConfigDict
 
 from .models import (
     NotificationPriority,
@@ -93,9 +93,7 @@ class NotificationTemplateResponse(NotificationTemplateBase):
     created_at: datetime = Field(..., description="Creation timestamp")
     updated_at: Optional[datetime] = Field(None, description="Last update timestamp")
 
-    class Config:
-        """Class for Config operations."""
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class NotificationRuleBase(BaseModel):
@@ -164,9 +162,7 @@ class NotificationRuleResponse(NotificationRuleBase):
     created_at: datetime = Field(..., description="Creation timestamp")
     updated_at: Optional[datetime] = Field(None, description="Last update timestamp")
 
-    class Config:
-        """Class for Config operations."""
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class NotificationBase(BaseModel):
@@ -251,9 +247,7 @@ class NotificationResponse(NotificationBase):
     created_at: datetime = Field(..., description="Creation timestamp")
     updated_at: Optional[datetime] = Field(None, description="Last update timestamp")
 
-    class Config:
-        """Class for Config operations."""
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class NotificationDeliveryBase(BaseModel):
@@ -295,9 +289,7 @@ class NotificationDeliveryResponse(NotificationDeliveryBase):
     error_code: Optional[str] = Field(None, description="Error code")
     error_message: Optional[str] = Field(None, description="Error message")
 
-    class Config:
-        """Class for Config operations."""
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class NotificationPreferenceBase(BaseModel):
@@ -377,9 +369,7 @@ class NotificationPreferenceResponse(NotificationPreferenceBase):
     created_at: datetime = Field(..., description="Creation timestamp")
     updated_at: Optional[datetime] = Field(None, description="Last update timestamp")
 
-    class Config:
-        """Class for Config operations."""
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class NotificationSendRequest(BaseModel):

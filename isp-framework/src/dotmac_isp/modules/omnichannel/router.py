@@ -885,7 +885,7 @@ async def health_check():
     return {
         "status": "healthy",
         "service": "omnichannel",
-        "timestamp": datetime.utcnow(),
+        "timestamp": datetime.now(timezone.utc),
         "version": "1.0.0",
     }
 
@@ -908,7 +908,7 @@ async def get_system_status(
             "available_agents_count": len(available_agents),
             "supported_channels": [channel.value for channel in CommunicationChannel],
             "system_uptime": "Available",  # Uptime calculation not needed for basic ISP operations
-            "last_check": datetime.utcnow(),
+            "last_check": datetime.now(timezone.utc),
         }
 
     except Exception as e:

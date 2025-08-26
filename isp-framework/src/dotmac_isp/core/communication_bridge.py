@@ -1,11 +1,8 @@
 """
 Strategic Communication Bridge for ISP Framework
 
-Bridges the ISP Framework with the strategic plugin system, enabling:
-- Gradual migration from hardcoded patterns to plugin architecture
-- Backward compatibility with existing omnichannel plugins  
-- Forward compatibility with strategic plugin system
-- Zero-downtime migration path
+Modern communication bridge that connects the ISP Framework with the strategic plugin system.
+Provides clean integration without legacy fallback patterns.
 """
 
 import asyncio
@@ -19,23 +16,6 @@ sys.path.append(str(Path(__file__).parents[4]))
 
 from shared.communication.plugin_system import global_plugin_registry, initialize_plugin_system
 
-# Legacy imports (fallback if omnichannel module has issues)
-try:
-    from dotmac_isp.modules.omnichannel.channel_plugins.registry import ChannelPluginRegistry
-    from dotmac_isp.modules.omnichannel.channel_plugins.base import ChannelMessage
-    LEGACY_SYSTEM_AVAILABLE = True
-except ImportError as e:
-    logger.warning(f"Legacy omnichannel system not available: {e}")
-    LEGACY_SYSTEM_AVAILABLE = False
-    
-    # Create placeholder classes
-    class ChannelPluginRegistry:
-        def get_available_channels(self): return []
-        async def send_message(self, channel_type, message): return None
-    
-    class ChannelMessage:
-        def __init__(self, **kwargs): pass
-
 logger = logging.getLogger(__name__)
 
 
@@ -45,7 +25,6 @@ class ISPCommunicationBridge:
     def __init__(self):
         """Initialize communication bridge."""
         self.strategic_registry = global_plugin_registry
-        self.legacy_registry = ChannelPluginRegistry()
         self._strategic_initialized = False
         self._bridge_initialized = False
         
@@ -58,8 +37,8 @@ class ISPCommunicationBridge:
                 self._strategic_initialized = True
                 logger.info("✅ Strategic plugin system initialized for ISP Framework")
             except Exception as e:
-                logger.warning(f"Strategic plugin system initialization failed: {e}")
-                logger.info("📋 Falling back to legacy omnichannel system")
+                logger.error(f"Strategic plugin system initialization failed: {e}")
+                raise RuntimeError("Communication system initialization failed") from e
     
     async def initialize_bridge(self):
         """Initialize the communication bridge."""
@@ -68,11 +47,6 @@ class ISPCommunicationBridge:
             
         await self._ensure_strategic_system_ready()
         
-        # Initialize legacy system if strategic system fails
-        if not self._strategic_initialized:
-            logger.info("🔗 Initializing legacy omnichannel plugins as fallback")
-            # Load existing omnichannel plugins here
-            
         self._bridge_initialized = True
         logger.info("🌉 ISP Communication Bridge initialized")
     
@@ -84,7 +58,7 @@ class ISPCommunicationBridge:
         metadata: Dict[str, Any] = None
     ) -> Dict[str, Any]:
         """
-        Send message via strategic plugin system with legacy fallback.
+        Send message via strategic plugin system.
         
         Args:
             channel_type: Communication channel type (email, sms, whatsapp, etc.)
@@ -94,72 +68,36 @@ class ISPCommunicationBridge:
         
         Returns:
             Dict containing success status and delivery details
+            
+        Raises:
+            RuntimeError: If communication system is not properly initialized
         """
         await self.initialize_bridge()
         
-        # Try strategic plugin system first (preferred)
-        if self._strategic_initialized:
-            try:
-                result = await self.strategic_registry.send_message(
-                    channel_type=channel_type,
-                    recipient=recipient,
-                    content=content,
-                    metadata=metadata or {}
-                )
-                
-                if result.get("success"):
-                    logger.debug(f"✅ Message sent via strategic plugin system: {channel_type} to {recipient}")
-                    return result
-                else:
-                    logger.warning(f"Strategic plugin failed: {result.get('error')}")
-                    
-            except Exception as e:
-                logger.error(f"Strategic plugin system error: {e}")
+        if not self._strategic_initialized:
+            raise RuntimeError("Strategic plugin system not available")
         
-        # Fallback to legacy omnichannel system
-        logger.info(f"🔄 Falling back to legacy system for {channel_type}")
-        return await self._send_via_legacy_system(channel_type, recipient, content, metadata)
-    
-    async def _send_via_legacy_system(
-        self, 
-        channel_type: str, 
-        recipient: str, 
-        content: str, 
-        metadata: Dict[str, Any] = None
-    ) -> Dict[str, Any]:
-        """Send message via legacy omnichannel system."""
         try:
-            # Create legacy message format
-            message = ChannelMessage(
+            result = await self.strategic_registry.send_message(
+                channel_type=channel_type,
+                recipient=recipient,
                 content=content,
-                sender_id=metadata.get("sender_id", "system") if metadata else "system",
-                recipient_id=recipient,
                 metadata=metadata or {}
             )
             
-            # Send via legacy registry
-            result = await self.legacy_registry.send_message(channel_type, message)
-            
-            if result:
-                return {
-                    "success": True,
-                    "message_id": result.get("message_id", "legacy_message"),
-                    "provider": "legacy_omnichannel",
-                    "channel_type": channel_type
-                }
+            if result.get("success"):
+                logger.debug(f"✅ Message sent via strategic plugin system: {channel_type} to {recipient}")
+                return result
             else:
-                return {
-                    "success": False,
-                    "error": "Legacy omnichannel system failed",
-                    "provider": "legacy_omnichannel"
-                }
-                
+                logger.error(f"Strategic plugin failed: {result.get('error')}")
+                return result
+                    
         except Exception as e:
-            logger.error(f"Legacy system error: {e}")
+            logger.error(f"Strategic plugin system error: {e}")
             return {
                 "success": False,
                 "error": str(e),
-                "provider": "legacy_omnichannel"
+                "provider": "strategic_plugin"
             }
     
     async def send_customer_notification(
@@ -247,25 +185,16 @@ class ISPCommunicationBridge:
         """Get list of all available communication channels."""
         await self.initialize_bridge()
         
-        channels = set()
+        if not self._strategic_initialized:
+            return []
         
-        # Get channels from strategic plugin system
-        if self._strategic_initialized:
-            try:
-                status = await self.strategic_registry.get_system_status()
-                strategic_channels = list(status.get("plugins_by_type", {}).keys())
-                channels.update(strategic_channels)
-            except Exception as e:
-                logger.error(f"Error getting strategic channels: {e}")
-        
-        # Get channels from legacy system
         try:
-            legacy_channels = self.legacy_registry.get_available_channels()
-            channels.update(legacy_channels)
+            status = await self.strategic_registry.get_system_status()
+            strategic_channels = list(status.get("plugins_by_type", {}).keys())
+            return strategic_channels
         except Exception as e:
-            logger.error(f"Error getting legacy channels: {e}")
-        
-        return list(channels)
+            logger.error(f"Error getting strategic channels: {e}")
+            return []
     
     async def get_system_status(self) -> Dict[str, Any]:
         """Get comprehensive system status."""
@@ -277,10 +206,6 @@ class ISPCommunicationBridge:
                 "initialized": self._strategic_initialized,
                 "available": False,
                 "plugins": 0,
-                "channels": []
-            },
-            "legacy_system": {
-                "available": True,
                 "channels": []
             }
         }
@@ -296,12 +221,6 @@ class ISPCommunicationBridge:
                 })
             except Exception as e:
                 logger.error(f"Error getting strategic system status: {e}")
-        
-        # Legacy system status
-        try:
-            status["legacy_system"]["channels"] = self.legacy_registry.get_available_channels()
-        except Exception as e:
-            logger.error(f"Error getting legacy system status: {e}")
         
         return status
 

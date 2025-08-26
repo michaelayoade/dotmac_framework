@@ -2,7 +2,7 @@
 
 from typing import List, Optional, Dict, Any
 from uuid import UUID, uuid4
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import and_, or_, func
@@ -106,7 +106,7 @@ class ServicePlanRepository:
             if hasattr(plan, key):
                 setattr(plan, key, value)
 
-        plan.updated_at = datetime.utcnow()
+        plan.updated_at = datetime.now(timezone.utc)
 
         try:
             self.db.commit()
@@ -233,17 +233,17 @@ class ServiceInstanceRepository:
             return None
 
         instance.status = status
-        instance.updated_at = datetime.utcnow()
+        instance.updated_at = datetime.now(timezone.utc)
 
         if status == ServiceStatus.ACTIVE and not instance.activation_date:
-            instance.activation_date = datetime.utcnow()
+            instance.activation_date = datetime.now(timezone.utc)
         elif status == ServiceStatus.SUSPENDED and not instance.suspension_date:
-            instance.suspension_date = datetime.utcnow()
+            instance.suspension_date = datetime.now(timezone.utc)
         elif status == ServiceStatus.CANCELLED and not instance.cancellation_date:
-            instance.cancellation_date = datetime.utcnow()
+            instance.cancellation_date = datetime.now(timezone.utc)
 
         if notes:
-            instance.notes = f"{instance.notes or ''}\n{datetime.utcnow().isoformat()}: {notes}".strip()
+            instance.notes = f"{instance.notes or ''}\n{datetime.now(timezone.utc).isoformat()}: {notes}".strip()
 
         self.db.commit()
         self.db.refresh(instance)
@@ -261,7 +261,7 @@ class ServiceInstanceRepository:
             if hasattr(instance, key):
                 setattr(instance, key, value)
 
-        instance.updated_at = datetime.utcnow()
+        instance.updated_at = datetime.now(timezone.utc)
 
         try:
             self.db.commit()
@@ -276,7 +276,7 @@ class ServiceInstanceRepository:
         # Get current count for today
         today = date.today()
         count = (
-            self.db.query(func.count(ServiceInstance.id))
+            self.db.query(func.count(ServiceInstance.id)
             .filter(
                 and_(
                     ServiceInstance.tenant_id == self.tenant_id,
@@ -331,7 +331,7 @@ class ProvisioningTaskRepository:
                     ProvisioningTask.tenant_id == self.tenant_id,
                 )
             )
-            .order_by(ProvisioningTask.created_at.desc())
+            .order_by(ProvisioningTask.created_at.desc()
             .all()
         )
 
@@ -363,16 +363,16 @@ class ProvisioningTaskRepository:
             return None
 
         task.status = status
-        task.updated_at = datetime.utcnow()
+        task.updated_at = datetime.now(timezone.utc)
 
         if status == ProvisioningStatus.IN_PROGRESS and not task.started_date:
-            task.started_date = datetime.utcnow()
+            task.started_date = datetime.now(timezone.utc)
         elif status in [
             ProvisioningStatus.COMPLETED,
             ProvisioningStatus.FAILED,
             ProvisioningStatus.CANCELLED,
         ]:
-            task.completed_date = datetime.utcnow()
+            task.completed_date = datetime.now(timezone.utc)
 
         if result_data:
             task.result_data = result_data

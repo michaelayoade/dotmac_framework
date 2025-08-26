@@ -15,7 +15,7 @@ from .repository import (
     PortalSessionRepository,
     PortalLoginAttemptRepository,
     PortalPreferencesRepository,
-)
+, timezone)
 from .models import PortalAccountStatus, PortalAccountType, SessionStatus
 from . import schemas
 from dotmac_isp.shared.exceptions import (
@@ -135,7 +135,7 @@ class PortalManagementService:
         try:
             update_data = {
                 "account_status": PortalAccountStatus.SUSPENDED,
-                "deactivated_at": datetime.utcnow(),
+                "deactivated_at": datetime.now(timezone.utc),
             }
             account = self.account_repo.update(account_id, update_data)
 
@@ -188,7 +188,7 @@ class PortalManagementService:
                 "session_token": self._generate_session_token(),
                 "ip_address": ip_address,
                 "user_agent": user_agent,
-                "expires_at": datetime.utcnow() + timedelta(hours=24),
+                "expires_at": datetime.now(timezone.utc) + timedelta(hours=24),
             }
 
             session = self.session_repo.create(session_data)
@@ -198,7 +198,7 @@ class PortalManagementService:
 
             # Update last login
             await self.account_repo.update(
-                account.id, {"last_login_at": datetime.utcnow()}
+                account.id, {"last_login_at": datetime.now(timezone.utc)}
             )
 
             return schemas.PortalSession.model_validate(session)
@@ -219,7 +219,7 @@ class PortalManagementService:
                 return None
 
             # Check if session is expired
-            if session.expires_at < datetime.utcnow():
+            if session.expires_at < datetime.now(timezone.utc):
                 await self.session_repo.expire_session(session.id)
                 return None
 
@@ -304,7 +304,7 @@ class PortalManagementService:
     # Private Helper Methods
     def _generate_portal_id(self) -> str:
         """Generate a unique portal ID."""
-        timestamp = int(datetime.utcnow().timestamp())
+        timestamp = int(datetime.now(timezone.utc).timestamp()
         random_chars = "".join(
             secrets.choice(string.ascii_uppercase + string.digits) for _ in range(6)
         )
@@ -317,14 +317,14 @@ class PortalManagementService:
     def _hash_password(self, password: str) -> str:
         """Hash password using SHA-256 with salt."""
         salt = secrets.token_hex(16)
-        password_hash = hashlib.sha256((password + salt).encode()).hexdigest()
+        password_hash = hashlib.sha256((password + salt).encode().hexdigest()
         return f"{salt}:{password_hash}"
 
     def _verify_password(self, password: str, password_hash: str) -> bool:
         """Verify password against hash."""
         try:
             salt, stored_hash = password_hash.split(":")
-            computed_hash = hashlib.sha256((password + salt).encode()).hexdigest()
+            computed_hash = hashlib.sha256((password + salt).encode().hexdigest()
             return computed_hash == stored_hash
         except (ValueError, AttributeError):
             return False
@@ -343,7 +343,7 @@ class PortalManagementService:
                 "ip_address": ip_address,
                 "success": success,
                 "account_id": account_id,
-                "attempt_time": datetime.utcnow(),
+                "attempt_time": datetime.now(timezone.utc),
             }
             self.login_repo.create(attempt_data)
         except Exception:

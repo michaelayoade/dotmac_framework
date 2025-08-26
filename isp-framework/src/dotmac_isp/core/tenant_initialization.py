@@ -16,7 +16,7 @@ from dotmac_isp.plugins.core.models import PluginRegistry, PluginConfiguration
 from dotmac_isp.plugins.core.manager import PluginManager
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__, timezone)
 
 
 class TenantConfig(BaseModel):
@@ -225,8 +225,8 @@ class TenantInitializationService:
                 "license_type": license_config["license_type"],
                 "license_key": f"{tenant_id}-{uuid.uuid4().hex[:8]}",
                 "features": license_config["features"],
-                "issued_date": datetime.utcnow(),
-                "expiry_date": datetime.utcnow()
+                "issued_date": datetime.now(timezone.utc),
+                "expiry_date": datetime.now(timezone.utc)
                 + timedelta(days=365),  # 1 year license
                 "is_active": True,
                 "max_users": (
@@ -338,7 +338,7 @@ class TenantInitializationService:
             "timezone": "UTC",
             "language": "en",
             "currency": "USD",
-            "initialized_at": datetime.utcnow().isoformat(),
+            "initialized_at": datetime.now(timezone.utc).isoformat(),
             "initialization_version": "1.0",
         }
 
@@ -426,7 +426,7 @@ class TenantInitializationService:
             "tenant_id": tenant_id,
             "status": "unknown",
             "checks": {},
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
         try:

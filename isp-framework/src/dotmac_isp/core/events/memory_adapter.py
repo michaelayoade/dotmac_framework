@@ -10,7 +10,7 @@ Provides in-memory implementation of the EventAdapter interface:
 
 import asyncio
 from collections import defaultdict, deque
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, AsyncIterator, Dict, List, Optional, Set
 
 import structlog
@@ -53,7 +53,7 @@ class MemoryAdapter(EventAdapter):
         self._topic_configs: Dict[str, Dict[str, Any]] = {}
         self._consumer_groups: Dict[str, Dict[str, Any]] = {}
         self._consumer_offsets: Dict[str, Dict[str, Dict[int, int]]] = defaultdict(
-            lambda: defaultdict(lambda: defaultdict(int))
+            lambda: defaultdict(lambda: defaultdict(int)
         )
         self._subscribers: Dict[str, Set[asyncio.Queue]] = defaultdict(set)
 
@@ -119,7 +119,7 @@ class MemoryAdapter(EventAdapter):
         message = {
             "message_id": message_id,
             "event": event,
-            "timestamp": datetime.now(),
+            "timestamp": datetime.now(timezone.utc),
             "partition": partition,
         }
 
@@ -157,7 +157,7 @@ class MemoryAdapter(EventAdapter):
             event_id=event.event_id,
             partition=partition,
             offset=message_id,
-            timestamp=datetime.now(),
+            timestamp=datetime.now(timezone.utc),
         )
 
     async def subscribe(  # noqa: C901
@@ -171,7 +171,7 @@ class MemoryAdapter(EventAdapter):
             self._consumer_groups[consumer_group] = {
                 "topics": set(topics),
                 "members": 1,
-                "created_at": datetime.now(),
+                "created_at": datetime.now(timezone.utc),
             }
         else:
             self._consumer_groups[consumer_group]["topics"].update(topics)
@@ -239,7 +239,7 @@ class MemoryAdapter(EventAdapter):
             logger.info("Memory consumer cancelled")
             raise
         except Exception as e:
-            logger.error("Memory consumer error", error=str(e))
+            logger.error("Memory consumer error", error=str(e)
             raise
         finally:
             # Cleanup
@@ -287,7 +287,7 @@ class MemoryAdapter(EventAdapter):
             "partitions": partitions,
             "replication_factor": replication_factor,
             "config": config or {},
-            "created_at": datetime.now(),
+            "created_at": datetime.now(timezone.utc),
         }
 
         # Initialize partitions
@@ -325,7 +325,7 @@ class MemoryAdapter(EventAdapter):
     async def list_topics(self) -> List[str]:
         """List all memory topics."""
         self._ensure_connected()
-        return list(self._topic_configs.keys())
+        return list(self._topic_configs.keys()
 
     async def get_topic_info(self, topic: str) -> Dict[str, Any]:
         """Get memory topic information."""

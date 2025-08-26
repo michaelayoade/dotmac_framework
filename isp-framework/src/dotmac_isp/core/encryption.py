@@ -119,7 +119,9 @@ class EncryptionService:
             - Consider using Argon2 for password hashing instead
         """
         if salt is None:
-            salt = b"default_salt_change_in_production"  # TODO: Use os.urandom(16) in production
+            # Generate cryptographically secure random salt
+            import os
+            salt = os.urandom(16)  # Use secure random salt
         
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
@@ -249,7 +251,9 @@ class EncryptionService:
             >>> hashed = bcrypt.hash(password)
         """
         if salt is None:
-            salt = "default_salt_change_in_production"  # TODO: Use secrets.token_hex(16)
+            # Generate cryptographically secure random salt
+            import secrets
+            salt = secrets.token_hex(16)  # Use secure random salt
         
         password_salt = (password + salt).encode('utf-8')
         hashed = hashlib.sha256(password_salt).hexdigest()

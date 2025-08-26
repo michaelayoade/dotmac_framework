@@ -1,7 +1,7 @@
 """Omnichannel background tasks using existing Celery infrastructure."""
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional, Any
 from uuid import UUID
 
@@ -149,7 +149,7 @@ def monitor_sla_breaches():
             overdue_interactions = (
                 db.query(CommunicationInteraction)
                 .filter(
-                    CommunicationInteraction.sla_due_time <= datetime.utcnow(),
+                    CommunicationInteraction.sla_due_time <= datetime.now(timezone.utc),
                     CommunicationInteraction.status.in_(
                         [InteractionStatus.PENDING, InteractionStatus.IN_PROGRESS]
                     ),
@@ -242,7 +242,7 @@ def send_escalation_notification(
                 "escalation_id": escalation_id,
                 "trigger_type": trigger_type,
                 "reason": reason,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             },
             "channels": ["email", "slack"],  # Use existing notification channels
             "priority": "high",
@@ -271,7 +271,7 @@ def send_agent_assignment_notification(
             "recipient_id": agent_id,
             "data": {
                 "interaction_id": interaction_id,
-                "assigned_at": datetime.utcnow().isoformat(),
+                "assigned_at": datetime.now(timezone.utc).isoformat(),
             },
             "channels": ["push", "email"],
             "priority": "normal",
@@ -301,7 +301,7 @@ def update_agent_performance_metrics(
         from sqlalchemy import func
 
         if not metric_date:
-            metric_date = datetime.utcnow().date()
+            metric_date = datetime.now(timezone.utc).date()
         else:
             metric_date = datetime.fromisoformat(metric_date).date()
 
@@ -409,7 +409,7 @@ def update_channel_analytics(tenant_id: str, channel_id: str, metric_date: str =
         from sqlalchemy import func
 
         if not metric_date:
-            metric_date = datetime.utcnow().date()
+            metric_date = datetime.now(timezone.utc).date()
         else:
             metric_date = datetime.fromisoformat(metric_date).date()
 
@@ -593,7 +593,7 @@ def send_plugin_health_alert(tenant_id: str, channel_id: str, error_message: str
             "data": {
                 "channel_id": channel_id,
                 "error_message": error_message,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             },
             "channels": ["email", "slack"],
             "priority": "high",
@@ -615,7 +615,7 @@ def close_inactive_conversations():
         from dotmac_isp.modules.omnichannel.models_production import ConversationThread
 
         # Define inactivity threshold (e.g., 7 days)
-        inactivity_threshold = datetime.utcnow() - timedelta(days=7)
+        inactivity_threshold = datetime.now(timezone.utc) - timedelta(days=7)
 
         db = next(get_db())
         try:

@@ -1,6 +1,6 @@
 """Factories for service-related test data."""
 
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 from uuid import uuid4
 import factory
@@ -12,7 +12,7 @@ from .base import (
     TimestampMixin,
     AuditMixin,
     random_decimal,
-)
+, timezone)
 
 fake = Faker()
 
@@ -25,17 +25,17 @@ class ServicePlanFactory(BaseFactory, TenantMixin, TimestampMixin):
         model = None
     
     # Plan identification
-    plan_code = factory.LazyAttribute(lambda obj: fake.bothify("PLAN-???###"))
-    plan_name = factory.LazyAttribute(lambda obj: fake.catch_phrase())
+    plan_code = factory.LazyAttribute(lambda obj: fake.bothify("PLAN-???###")
+    plan_name = factory.LazyAttribute(lambda obj: fake.catch_phrase()
     
     # Plan details
     service_type = "internet"  # internet, voip, tv, bundle
-    description = factory.LazyAttribute(lambda obj: fake.text(max_nb_chars=200))
+    description = factory.LazyAttribute(lambda obj: fake.text(max_nb_chars=200)
     
     # Pricing
-    monthly_price = factory.LazyFunction(lambda: random_decimal(25.0, 300.0))
-    setup_fee = factory.LazyFunction(lambda: random_decimal(0.0, 150.0))
-    early_termination_fee = factory.LazyFunction(lambda: random_decimal(0.0, 200.0))
+    monthly_price = factory.LazyFunction(lambda: random_decimal(25.0, 300.0)
+    setup_fee = factory.LazyFunction(lambda: random_decimal(0.0, 150.0)
+    early_termination_fee = factory.LazyFunction(lambda: random_decimal(0.0, 200.0)
     
     # Service specifications (for internet)
     bandwidth_down = factory.LazyAttribute(lambda obj: fake.random_int(10, 1000) if obj.service_type == "internet" else None)
@@ -43,12 +43,12 @@ class ServicePlanFactory(BaseFactory, TenantMixin, TimestampMixin):
     data_allowance = factory.LazyAttribute(lambda obj: "unlimited")
     
     # Contract terms
-    contract_term_months = factory.LazyAttribute(lambda obj: fake.random_element([12, 24, 36]))
-    is_business_plan = factory.LazyAttribute(lambda obj: fake.boolean(chance_of_getting_true=30))
+    contract_term_months = factory.LazyAttribute(lambda obj: fake.random_element([12, 24, 36])
+    is_business_plan = factory.LazyAttribute(lambda obj: fake.boolean(chance_of_getting_true=30)
     
     # Availability
     is_available = True
-    available_from = factory.LazyFunction(lambda: date.today() - timedelta(days=365))
+    available_from = factory.LazyFunction(lambda: date.today() - timedelta(days=365)
     available_until = None
     
     @classmethod
@@ -87,38 +87,38 @@ class ServiceInstanceFactory(BaseFactory, TenantMixin, TimestampMixin, AuditMixi
         model = None
     
     # Service identification
-    service_id = factory.LazyAttribute(lambda obj: fake.bothify("SVC-######"))
-    customer_id = factory.LazyFunction(lambda: str(uuid4()))
-    service_plan_id = factory.LazyFunction(lambda: str(uuid4()))
+    service_id = factory.LazyAttribute(lambda obj: fake.bothify("SVC-######")
+    customer_id = factory.LazyFunction(lambda: str(uuid4())
+    service_plan_id = factory.LazyFunction(lambda: str(uuid4())
     
     # Service details
-    service_name = factory.LazyAttribute(lambda obj: fake.catch_phrase())
+    service_name = factory.LazyAttribute(lambda obj: fake.catch_phrase()
     service_type = "internet"
     
     # Status and lifecycle
     status = "active"
     provisioning_status = "completed"
-    activation_date = factory.LazyFunction(lambda: date.today() - timedelta(days=fake.random_int(1, 365)))
+    activation_date = factory.LazyFunction(lambda: date.today() - timedelta(days=fake.random_int(1, 365)
     suspension_date = None
     termination_date = None
     
     # Billing information
-    monthly_recurring_charge = factory.LazyFunction(lambda: random_decimal(25.0, 300.0))
+    monthly_recurring_charge = factory.LazyFunction(lambda: random_decimal(25.0, 300.0)
     billing_cycle = "monthly"
-    next_billing_date = factory.LazyFunction(lambda: date.today() + timedelta(days=30))
+    next_billing_date = factory.LazyFunction(lambda: date.today() + timedelta(days=30)
     
     # Technical specifications
-    bandwidth_down = factory.LazyAttribute(lambda obj: fake.random_int(25, 1000))
+    bandwidth_down = factory.LazyAttribute(lambda obj: fake.random_int(25, 1000)
     bandwidth_up = factory.LazyAttribute(lambda obj: obj.bandwidth_down // 10)
     static_ip_count = 0
     
     # Location and installation
-    installation_address = factory.LazyAttribute(lambda obj: fake.address())
+    installation_address = factory.LazyAttribute(lambda obj: fake.address()
     installation_date = factory.LazyAttribute(lambda obj: obj.activation_date)
-    technician_notes = factory.LazyAttribute(lambda obj: fake.text(max_nb_chars=500))
+    technician_notes = factory.LazyAttribute(lambda obj: fake.text(max_nb_chars=500)
     
     # Equipment
-    modem_serial = factory.LazyAttribute(lambda obj: fake.bothify("MDM-???######"))
+    modem_serial = factory.LazyAttribute(lambda obj: fake.bothify("MDM-???######")
     router_serial = factory.LazyAttribute(lambda obj: fake.bothify("RTR-???######") if fake.boolean() else None)
     
     # Support information
@@ -130,7 +130,7 @@ class ServiceInstanceFactory(BaseFactory, TenantMixin, TimestampMixin, AuditMixi
         service_data = kwargs.copy()
         service_data.update({
             'status': 'suspended',
-            'suspension_date': date.today() - timedelta(days=fake.random_int(1, 30)),
+            'suspension_date': date.today() - timedelta(days=fake.random_int(1, 30),
             'provisioning_status': 'suspended',
         })
         return cls.create(**service_data)
@@ -139,7 +139,7 @@ class ServiceInstanceFactory(BaseFactory, TenantMixin, TimestampMixin, AuditMixi
     def create_terminated(cls, **kwargs):
         """Create a terminated service instance."""
         service_data = kwargs.copy()
-        termination_date = date.today() - timedelta(days=fake.random_int(1, 90))
+        termination_date = date.today() - timedelta(days=fake.random_int(1, 90)
         service_data.update({
             'status': 'terminated',
             'termination_date': termination_date,
@@ -168,34 +168,34 @@ class ServiceChangeOrderFactory(BaseFactory, TenantMixin, TimestampMixin, AuditM
         model = None
     
     # Change order identification
-    change_order_number = factory.LazyAttribute(lambda obj: fake.bothify("CHG-######"))
-    service_instance_id = factory.LazyFunction(lambda: str(uuid4()))
-    customer_id = factory.LazyFunction(lambda: str(uuid4()))
+    change_order_number = factory.LazyAttribute(lambda obj: fake.bothify("CHG-######")
+    service_instance_id = factory.LazyFunction(lambda: str(uuid4())
+    customer_id = factory.LazyFunction(lambda: str(uuid4())
     
     # Change details
     change_type = "upgrade"  # upgrade, downgrade, suspension, termination, modification
-    requested_date = factory.LazyFunction(lambda: date.today())
-    scheduled_date = factory.LazyFunction(lambda: date.today() + timedelta(days=fake.random_int(1, 30)))
+    requested_date = factory.LazyFunction(lambda: date.today()
+    scheduled_date = factory.LazyFunction(lambda: date.today() + timedelta(days=fake.random_int(1, 30)
     completed_date = None
     
     # Change specifications
-    old_plan_id = factory.LazyFunction(lambda: str(uuid4()))
-    new_plan_id = factory.LazyFunction(lambda: str(uuid4()))
-    change_reason = factory.LazyAttribute(lambda obj: fake.sentence())
+    old_plan_id = factory.LazyFunction(lambda: str(uuid4())
+    new_plan_id = factory.LazyFunction(lambda: str(uuid4())
+    change_reason = factory.LazyAttribute(lambda obj: fake.sentence()
     
     # Status tracking
     status = "pending"  # pending, approved, scheduled, in_progress, completed, cancelled
-    approval_required = factory.LazyAttribute(lambda obj: fake.boolean(chance_of_getting_true=60))
+    approval_required = factory.LazyAttribute(lambda obj: fake.boolean(chance_of_getting_true=60)
     approved_by = factory.LazyFunction(lambda: str(uuid4()) if fake.boolean() else None)
     approval_date = None
     
     # Technical details
-    requires_site_visit = factory.LazyAttribute(lambda obj: fake.boolean(chance_of_getting_true=30))
-    estimated_duration_hours = factory.LazyAttribute(lambda obj: fake.random_int(1, 8))
+    requires_site_visit = factory.LazyAttribute(lambda obj: fake.boolean(chance_of_getting_true=30)
+    estimated_duration_hours = factory.LazyAttribute(lambda obj: fake.random_int(1, 8)
     
     # Financial impact
-    one_time_charge = factory.LazyFunction(lambda: random_decimal(0.0, 200.0))
-    monthly_charge_change = factory.LazyFunction(lambda: random_decimal(-100.0, 200.0))
+    one_time_charge = factory.LazyFunction(lambda: random_decimal(0.0, 200.0)
+    monthly_charge_change = factory.LazyFunction(lambda: random_decimal(-100.0, 200.0)
     
     @classmethod
     def create_upgrade(cls, **kwargs):
@@ -228,38 +228,38 @@ class ServiceOutageFactory(BaseFactory, TenantMixin, TimestampMixin):
         model = None
     
     # Outage identification
-    outage_id = factory.LazyAttribute(lambda obj: fake.bothify("OUT-######"))
+    outage_id = factory.LazyAttribute(lambda obj: fake.bothify("OUT-######")
     
     # Affected services
     service_instance_id = factory.LazyFunction(lambda: str(uuid4()) if fake.boolean() else None)
-    affected_customer_count = factory.LazyAttribute(lambda obj: fake.random_int(1, 1000))
+    affected_customer_count = factory.LazyAttribute(lambda obj: fake.random_int(1, 1000)
     
     # Outage details
-    outage_type = factory.LazyAttribute(lambda obj: fake.random_element(["planned", "unplanned"]))
-    severity = factory.LazyAttribute(lambda obj: fake.random_element(["low", "medium", "high", "critical"]))
+    outage_type = factory.LazyAttribute(lambda obj: fake.random_element(["planned", "unplanned"])
+    severity = factory.LazyAttribute(lambda obj: fake.random_element(["low", "medium", "high", "critical"])
     
     # Timeline
-    started_at = factory.LazyFunction(lambda: datetime.utcnow() - timedelta(hours=fake.random_int(1, 48)))
-    estimated_resolution = factory.LazyAttribute(lambda obj: obj.started_at + timedelta(hours=fake.random_int(1, 24)))
+    started_at = factory.LazyFunction(lambda: datetime.now(timezone.utc) - timedelta(hours=fake.random_int(1, 48)
+    estimated_resolution = factory.LazyAttribute(lambda obj: obj.started_at + timedelta(hours=fake.random_int(1, 24)
     resolved_at = None
     
     # Description and cause
-    title = factory.LazyAttribute(lambda obj: fake.catch_phrase())
-    description = factory.LazyAttribute(lambda obj: fake.text(max_nb_chars=500))
+    title = factory.LazyAttribute(lambda obj: fake.catch_phrase()
+    description = factory.LazyAttribute(lambda obj: fake.text(max_nb_chars=500)
     root_cause = factory.LazyAttribute(lambda obj: fake.sentence() if fake.boolean() else None)
     
     # Status
     status = "active"  # active, resolved, investigating
     
     # Geographic impact
-    affected_areas = factory.LazyAttribute(lambda obj: [fake.city() for _ in range(fake.random_int(1, 3))])
+    affected_areas = factory.LazyAttribute(lambda obj: [fake.city() for _ in range(fake.random_int(1, 3)])
     
     @classmethod
     def create_resolved(cls, **kwargs):
         """Create a resolved outage."""
         outage_data = kwargs.copy()
-        start_time = datetime.utcnow() - timedelta(hours=fake.random_int(2, 48))
-        resolution_time = start_time + timedelta(hours=fake.random_int(1, 12))
+        start_time = datetime.now(timezone.utc) - timedelta(hours=fake.random_int(2, 48)
+        resolution_time = start_time + timedelta(hours=fake.random_int(1, 12)
         
         outage_data.update({
             'status': 'resolved',

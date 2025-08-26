@@ -6,7 +6,7 @@ from typing import Dict, Any, List
 
 from dotmac_isp.core.celery_app import celery_app
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__, timezone)
 
 
 @celery_app.task(bind=True)
@@ -35,7 +35,7 @@ def send_service_outage_notification(
                     context={
                         "affected_services": affected_services,
                         "estimated_resolution": estimated_resolution,
-                        "timestamp": datetime.utcnow().isoformat(),
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
                     },
                 )
                 results.append(
@@ -59,7 +59,7 @@ def send_service_outage_notification(
             "affected_services": affected_services,
             "notifications_sent": len(results),
             "details": results,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     except Exception as e:
@@ -106,7 +106,7 @@ def send_maintenance_notification(
             "maintenance_type": maintenance_type,
             "scheduled_time": scheduled_time,
             "notifications_sent": len(results),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     except Exception as e:
@@ -159,7 +159,7 @@ def send_usage_alert(
             "usage_percentage": usage_percentage,
             "alert_level": alert_level,
             "email_task_id": task.id,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     except Exception as e:
@@ -186,7 +186,7 @@ def send_service_activation_notification(
             context={
                 "service_name": service_name,
                 "activation_details": activation_details,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             },
         )
 
@@ -194,7 +194,7 @@ def send_service_activation_notification(
             "customer_email": customer_email,
             "service_name": service_name,
             "email_task_id": task.id,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     except Exception as e:
@@ -224,7 +224,7 @@ def send_payment_confirmation(
                 "invoice_id": invoice_id,
                 "amount": amount,
                 "payment_method": payment_method,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             },
         )
 
@@ -233,7 +233,7 @@ def send_payment_confirmation(
             "invoice_id": invoice_id,
             "amount": amount,
             "email_task_id": task.id,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     except Exception as e:
@@ -261,7 +261,7 @@ def send_password_reset_notification(
             context={
                 "reset_link": reset_link,
                 "expires_in_minutes": expires_in_minutes,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             },
         )
 
@@ -270,7 +270,7 @@ def send_password_reset_notification(
             "reset_token": reset_token,
             "expires_in_minutes": expires_in_minutes,
             "email_task_id": task.id,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     except Exception as e:
@@ -332,7 +332,7 @@ def send_bulk_notification(
             "recipients_count": len(recipients),
             "tasks_queued": len(tasks),
             "job_id": result.id,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     except Exception as e:

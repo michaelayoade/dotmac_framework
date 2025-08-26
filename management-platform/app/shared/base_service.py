@@ -9,11 +9,11 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
 
-from ..core.exceptions import (
+from core.exceptions import (
     EntityNotFoundError, ValidationError, BusinessRuleError, ServiceError
 )
-from ..models.base import BaseModel
-from ..repositories.base import BaseRepository
+from models.base import BaseModel
+from repositories.base import BaseRepository
 
 ModelType = TypeVar("ModelType", bound=BaseModel)
 CreateSchemaType = TypeVar("CreateSchemaType")
@@ -102,7 +102,7 @@ class BaseManagementService(
             if hasattr(data, 'model_dump'):
                 entity_data = data.model_dump()
             elif hasattr(data, 'dict'):
-                entity_data = data.dict()
+                entity_data = data.model_dump()
             else:
                 entity_data = dict(data)
             
@@ -169,7 +169,7 @@ class BaseManagementService(
             if hasattr(data, 'model_dump'):
                 update_data = data.model_dump(exclude_unset=True)
             elif hasattr(data, 'dict'):
-                update_data = data.dict(exclude_unset=True)
+                update_data = data.model_dump(exclude_unset=True)
             else:
                 update_data = dict(data)
             

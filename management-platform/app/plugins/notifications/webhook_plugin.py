@@ -5,11 +5,12 @@ Webhook notification channel plugin.
 import logging
 import json
 from typing import Dict, Any, List
+from datetime import datetime, timezone
 import aiohttp
 import asyncio
 
-from ...core.plugins.interfaces import NotificationChannelPlugin
-from ...core.plugins.base import PluginMeta, PluginType
+from core.plugins.interfaces import NotificationChannelPlugin
+from core.plugins.base import PluginMeta, PluginType
 
 logger = logging.getLogger(__name__)
 
@@ -227,5 +228,4 @@ class WebhookNotificationPlugin(NotificationChannelPlugin):
     
     def _get_timestamp(self) -> str:
         """Get current timestamp in ISO format."""
-        from datetime import datetime
-        return datetime.utcnow().isoformat()
+        return datetime.now(timezone.utc).isoformat()

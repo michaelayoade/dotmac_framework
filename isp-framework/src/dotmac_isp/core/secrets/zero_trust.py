@@ -216,7 +216,7 @@ class DeviceVerifier:
     def _generate_fingerprint(self, context: SecurityContext) -> str:
         """Generate device fingerprint from context"""
         fingerprint_data = f"{context.user_agent}:{context.device_id}"
-        return base64.b64encode(fingerprint_data.encode()).decode()
+        return base64.b64encode(fingerprint_data.encode().decode())
 
     async def register_trusted_device(
         self, device_id: str, context: SecurityContext, reputation_score: float = 1.0

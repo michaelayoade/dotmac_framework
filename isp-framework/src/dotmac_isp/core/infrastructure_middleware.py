@@ -201,7 +201,7 @@ def create_monitoring_endpoints(app):
 
         # Return key metrics
         return {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "system": {
                 "cpu_percent": metrics_collector.get_metric("system.cpu.percent"),
                 "memory_percent": metrics_collector.get_metric("system.memory.percent"),
@@ -227,7 +227,7 @@ def create_monitoring_endpoints(app):
         """Get active alerts."""
         return {
             "alerts": alert_manager.get_active_alerts(),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     @monitoring_router.post("/alerts/{alert_id}/resolve")
@@ -264,7 +264,7 @@ def create_monitoring_endpoints(app):
         from dotmac_isp.core.tracing import tracing_service
 
         return {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "operations": tracing_service.get_performance_metrics(),
         }
 

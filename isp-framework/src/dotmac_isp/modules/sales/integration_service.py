@@ -23,7 +23,7 @@ from ..notifications.models import (
     NotificationPriority,
     NotificationStatus,
     NotificationChannel
-)
+, timezone)
 
 
 class SalesIntegrationService:
@@ -190,8 +190,8 @@ class SalesIntegrationService:
             "installation_date": conversion_data.get("requested_install_date"),
             "notes": f"Converted from sales opportunity {opportunity.opportunity_id} by {created_by}",
             # Set creation metadata
-            "created_at": datetime.utcnow(),
-            "updated_at": datetime.utcnow(),
+            "created_at": datetime.now(timezone.utc),
+            "updated_at": datetime.now(timezone.utc),
         }
 
         customer = Customer(**customer_data)
@@ -394,8 +394,8 @@ class SalesIntegrationService:
                         content=f"Notification for {notification_data['type']}",
                         template_data=notification_data['data'],
                         status=NotificationStatus.PENDING,
-                        scheduled_for=datetime.utcnow(),
-                        created_at=datetime.utcnow()
+                        scheduled_for=datetime.now(timezone.utc),
+                        created_at=datetime.now(timezone.utc)
                     )
                     self.db.add(notification)
             

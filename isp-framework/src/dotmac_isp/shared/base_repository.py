@@ -22,6 +22,7 @@ from .exceptions import (
     ValidationError,
     DatabaseError
 )
+from datetime import datetime, timezone
 from .models import Base, TenantMixin
 
 logger = logging.getLogger(__name__)
@@ -166,7 +167,7 @@ class BaseRepository(Generic[ModelType], ABC):
             
             # Update timestamp if supported
             if hasattr(entity, 'updated_at'):
-                entity.updated_at = datetime.utcnow()
+                entity.updated_at = datetime.now(timezone.utc)
             
             if commit:
                 self.db.commit()
@@ -204,7 +205,7 @@ class BaseRepository(Generic[ModelType], ABC):
             if hasattr(entity, 'is_deleted'):
                 entity.is_deleted = True
                 if hasattr(entity, 'deleted_at'):
-                    entity.deleted_at = datetime.utcnow()
+                    entity.deleted_at = datetime.now(timezone.utc)
             else:
                 # Hard delete
                 self.db.delete(entity)
@@ -352,7 +353,7 @@ class BaseRepository(Generic[ModelType], ABC):
                             setattr(entity, key, value)
                     
                     if hasattr(entity, 'updated_at'):
-                        entity.updated_at = datetime.utcnow()
+                        entity.updated_at = datetime.now(timezone.utc)
                     
                     updated_count += 1
             
@@ -502,7 +503,7 @@ class BaseTenantRepository(BaseRepository[ModelType]):
             # Add timestamp-based stats if supported
             if hasattr(self.model_class, 'created_at'):
                 # Entities created today
-                today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+                today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
                 today_count = query.filter(self.model_class.created_at >= today_start).count()
                 stats['created_today'] = today_count
                 

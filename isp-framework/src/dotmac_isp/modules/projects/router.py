@@ -4,7 +4,7 @@ logger = logging.getLogger(__name__)
 
 """Installation Project Management API endpoints."""
 
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from typing import List, Optional, Dict, Any
 from uuid import UUID
 
@@ -21,6 +21,7 @@ from ..notifications.models import (
     NotificationStatus,
     NotificationChannel
 )
+
 from uuid import uuid4
 from .models import (
     InstallationProject,
@@ -74,7 +75,7 @@ async def create_project(
 ):
     """Create a new installation project."""
 
-    project_dict = project_data.dict()
+    project_dict = project_data.model_dump()
     project_dict["tenant_id"] = tenant_id
 
     project = await service.create_project_from_opportunity(
@@ -171,12 +172,12 @@ async def update_project(
         raise HTTPException(status_code=404, detail="Project not found")
 
     # Update fields
-    update_data = project_update.dict(exclude_unset=True)
+    update_data = project_update.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         if hasattr(project, field):
             setattr(project, field, value)
 
-    project.updated_at = datetime.utcnow()
+    project.updated_at = datetime.now(timezone.utc)
     service.db.commit()
     service.db.refresh(project)
 
@@ -254,7 +255,7 @@ async def update_project_phase(
     old_status = phase.phase_status
 
     # Update fields
-    update_data = phase_update.dict(exclude_unset=True)
+    update_data = phase_update.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         if hasattr(phase, field):
             setattr(phase, field, value)
@@ -352,7 +353,7 @@ async def create_project_update(
         id=UUID(),
         tenant_id=tenant_id,
         project_id=project_id,
-        **update_data.dict(),
+        **update_data.model_dump(),
         created_by=current_user.username,
     )
 
@@ -528,7 +529,11 @@ async def get_project_dashboard(
     projects_by_type = {ptype.value: count for ptype, count in type_counts}
 
     # Calculate basic average completion time for completed projects
-    completed_project_query = query.filter(InstallationProject.project_status == ProjectStatus.COMPLETED)
+    completed_project_query = (service.db.query(InstallationProject)
+        .filter(and_(
+            InstallationProject.tenant_id == tenant_id,
+            InstallationProject.project_status == ProjectStatus.COMPLETED
+        )))
     completed_projects_list = completed_project_query.all()
     
     avg_completion_days = None
@@ -621,13 +626,13 @@ async def notify_phase_status_change(
             content=f"Phase {phase_id} status changed from {old_status.value} to {new_status.value}",
             template_data={"project_id": str(project_id), "phase_id": str(phase_id)},
             status=NotificationStatus.PENDING,
-            scheduled_for=datetime.utcnow(),
-            created_at=datetime.utcnow()
+            scheduled_for=datetime.now(timezone.utc),
+            created_at=datetime.now(timezone.utc)
         )
         db.add(notification)
         db.commit()
     except Exception as e:
-logger.info(f"Failed to create phase change notification: {e}")
+        logger.info(f"Failed to create phase change notification: {e}")
 
 
 async def notify_customer_project_update(project_id: UUID, update_id: UUID):
@@ -647,13 +652,13 @@ async def notify_customer_project_update(project_id: UUID, update_id: UUID):
             content=f"Your project {project_id} has been updated",
             template_data={"project_id": str(project_id), "update_id": str(update_id)},
             status=NotificationStatus.PENDING,
-            scheduled_for=datetime.utcnow(),
-            created_at=datetime.utcnow()
+            scheduled_for=datetime.now(timezone.utc),
+            created_at=datetime.now(timezone.utc)
         )
         db.add(notification)
         db.commit()
     except Exception as e:
-logger.info(f"Failed to create customer update notification: {e}")
+        logger.info(f"Failed to create customer update notification: {e}")
 
 
 async def notify_project_created(project_id: UUID, recipients: List[str]):
@@ -674,13 +679,13 @@ async def notify_project_created(project_id: UUID, recipients: List[str]):
                 content=f"Project {project_id} has been created and assigned",
                 template_data={"project_id": str(project_id)},
                 status=NotificationStatus.PENDING,
-                scheduled_for=datetime.utcnow(),
-                created_at=datetime.utcnow()
+                scheduled_for=datetime.now(timezone.utc),
+                created_at=datetime.now(timezone.utc)
             )
             db.add(notification)
         db.commit()
     except Exception as e:
-logger.info(f"Failed to create project creation notifications: {e}")
+        logger.info(f"Failed to create project creation notifications: {e}")
 
 
 async def send_custom_project_notification(
@@ -711,10 +716,10 @@ async def send_custom_project_notification(
                     "notification_type": notification_type
                 },
                 status=NotificationStatus.PENDING,
-                scheduled_for=datetime.utcnow(),
-                created_at=datetime.utcnow()
+                scheduled_for=datetime.now(timezone.utc),
+                created_at=datetime.now(timezone.utc)
             )
             db.add(notification)
         db.commit()
     except Exception as e:
-logger.info(f"Failed to create custom project notifications: {e}")
+        logger.info(f"Failed to create custom project notifications: {e}")

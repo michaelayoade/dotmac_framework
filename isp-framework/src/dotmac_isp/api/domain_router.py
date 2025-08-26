@@ -93,7 +93,7 @@ async def setup_custom_domain(
         )
         
         # Convert to dict format for response
-        records_dict = [record.dict() for record in required_records]
+        records_dict = [record.model_dump() for record in required_records]
         
         # Generate next steps instructions
         next_steps = [
@@ -297,7 +297,7 @@ async def get_dns_records_for_tenant(
         # Custom domain records if requested
         if custom_domain:
             custom_records = await dns_manager.get_required_dns_records(custom_domain, tenant_id)
-            result["custom_domain_records"] = [record.dict() for record in custom_records]
+            result["custom_domain_records"] = [record.model_dump() for record in custom_records]
         
         return result
         

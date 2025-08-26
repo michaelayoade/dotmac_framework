@@ -2,7 +2,7 @@
 
 from typing import List, Optional, Dict, Any
 from uuid import UUID, uuid4
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import and_, or_, func, desc, asc
@@ -12,14 +12,11 @@ from .models import (
     TicketComment,
     TicketAttachment,
     KnowledgeBaseArticle,
-    SLARule,
+    SLAPolicy,
     EscalationRule,
-    TicketStatus,
-    TicketPriority,
-    TicketType,
     TicketCategory,
-    EscalationStatus,
 )
+from dotmac_isp.shared.enums import Priority as TicketPriority, TicketStatus
 from dotmac_isp.shared.exceptions import NotFoundError, ConflictError, ValidationError
 
 
@@ -120,7 +117,7 @@ class TicketRepository:
             if hasattr(ticket, key):
                 setattr(ticket, key, value)
 
-        ticket.updated_at = datetime.utcnow()
+        ticket.updated_at = datetime.now(timezone.utc)
         self.db.commit()
         self.db.refresh(ticket)
         return ticket
@@ -159,7 +156,7 @@ class TicketRepository:
 
     def get_overdue_tickets(self) -> List[Ticket]:
         """Get overdue tickets."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         return (
             self.db.query(Ticket)
             .filter(
@@ -253,7 +250,7 @@ class TicketCommentRepository:
             if hasattr(comment, key):
                 setattr(comment, key, value)
 
-        comment.updated_at = datetime.utcnow()
+        comment.updated_at = datetime.now(timezone.utc)
         self.db.commit()
         self.db.refresh(comment)
         return comment
@@ -335,7 +332,7 @@ class KnowledgeBaseRepository:
         article = self.get_by_id(article_id)
         if article:
             article.view_count = (article.view_count or 0) + 1
-            article.last_viewed = datetime.utcnow()
+            article.last_viewed = datetime.now(timezone.utc)
             self.db.commit()
 
 
@@ -347,15 +344,15 @@ class SLARepository:
         self.db = db
         self.tenant_id = tenant_id
 
-    def get_active_rules(self) -> List[SLARule]:
+    def get_active_rules(self) -> List[SLAPolicy]:
         """Get all active SLA rules."""
         return (
-            self.db.query(SLARule)
+            self.db.query(SLAPolicy)
             .filter(
                 and_(
-                    SLARule.tenant_id == str(self.tenant_id),
-                    SLARule.is_deleted == False,
-                    SLARule.status == "active",
+                    SLAPolicy.tenant_id == str(self.tenant_id),
+                    SLAPolicy.is_deleted == False,
+                    SLAPolicy.status == "active",
                 )
             )
             .all()
@@ -363,23 +360,23 @@ class SLARepository:
 
     def get_rule_for_ticket(
         self, priority: TicketPriority, category: TicketCategory
-    ) -> Optional[SLARule]:
+    ) -> Optional[SLAPolicy]:
         """Get applicable SLA rule for a ticket."""
         return (
-            self.db.query(SLARule)
+            self.db.query(SLAPolicy)
             .filter(
                 and_(
-                    SLARule.tenant_id == str(self.tenant_id),
-                    SLARule.is_deleted == False,
-                    SLARule.status == "active",
-                    or_(SLARule.priority == priority, SLARule.priority.is_(None)),
-                    or_(SLARule.category == category, SLARule.category.is_(None)),
+                    SLAPolicy.tenant_id == str(self.tenant_id),
+                    SLAPolicy.is_deleted == False,
+                    SLAPolicy.status == "active",
+                    or_(SLAPolicy.priority == priority, SLAPolicy.priority.is_(None)),
+                    or_(SLAPolicy.category == category, SLAPolicy.category.is_(None)),
                 )
             )
             .order_by(
                 # More specific rules first
-                SLARule.priority.is_(None).asc(),
-                SLARule.category.is_(None).asc(),
+                SLAPolicy.priority.is_(None).asc(),
+                SLAPolicy.category.is_(None).asc(),
             )
             .first()
         )

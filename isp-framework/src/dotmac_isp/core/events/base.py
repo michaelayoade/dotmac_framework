@@ -15,7 +15,7 @@ from typing import Any, AsyncIterator, Dict, List, Optional
 from pydantic import BaseModel
 
 
-class AdapterConfig(BaseModel):
+class AdapterConfig(BaseModel, ConfigDict):
     """Base configuration for event adapters."""
 
     connection_string: str
@@ -23,10 +23,7 @@ class AdapterConfig(BaseModel):
     max_retries: int = 3
     retry_backoff_seconds: float = 1.0
 
-    class Config:
-        """Class for Config operations."""
-        extra = "allow"
-
+    model_config = ConfigDict(extra="allow")
 
 class EventRecord(BaseModel):
     """Event record model for adapter interface."""

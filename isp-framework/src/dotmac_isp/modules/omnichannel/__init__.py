@@ -16,7 +16,7 @@ __author__ = "DotMac ISP Framework"
 # ARCHITECTURE IMPROVEMENT: Explicit imports replace wildcard imports  
 from .models import (
     # Enums
-    ContactType, CommunicationChannel, InteractionType, InteractionStatus,
+    ContactType, InteractionType, InteractionStatus,
     AgentStatus, RoutingStrategy, EscalationTrigger,
     # Main models
     CustomerContact, ContactCommunicationChannel, CommunicationInteraction,

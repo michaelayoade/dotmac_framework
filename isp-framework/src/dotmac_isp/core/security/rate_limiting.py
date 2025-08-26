@@ -11,7 +11,7 @@ from dotmac_isp.core.exceptions import RateLimitExceededError
 class RateLimiter:
     """Rate limiter for API endpoints."""
     
-    def __init__(self, default_limit: int = 100, window_minutes: int = 1):
+    def __init__(self, default_limit: int = 100, window_minutes: int = 1, timezone=None):
         """  Init   operation."""
         self.default_limit = default_limit
         self.window_minutes = window_minutes
@@ -21,7 +21,7 @@ class RateLimiter:
     async def check_rate_limit(self, identifier: str, limit: Optional[int] = None) -> bool:
         """Check if request is within rate limit."""
         limit = limit or self.default_limit
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         window_start = now - timedelta(minutes=self.window_minutes)
         
         async with self._locks[identifier]:
@@ -44,7 +44,7 @@ class RateLimiter:
     def get_remaining_requests(self, identifier: str, limit: Optional[int] = None) -> int:
         """Get remaining requests for identifier."""
         limit = limit or self.default_limit
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         window_start = now - timedelta(minutes=self.window_minutes)
         
         # Clean old requests

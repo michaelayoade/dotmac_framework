@@ -17,7 +17,7 @@ Critical security vulnerabilities were discovered during code analysis:
 We decided to implement a comprehensive **Enterprise Secrets Management System** that:
 
 1. Eliminates all hardcoded secrets from codebase
-2. Integrates with HashiCorp Vault/OpenBao for secure secret storage
+2. Integrates with OpenBao for secure secret storage
 3. Provides automatic secret rotation capabilities
 4. Implements zero-trust security model for secret access
 5. Includes comprehensive audit trails for secret usage
@@ -62,7 +62,7 @@ class EnterpriseSecretsManager:
     """Comprehensive secrets management with enterprise features"""
     
     def __init__(self):
-        self.vault_client = VaultClient()
+        self.openbao_client = OpenBaoClient()
         self.encryption_key_manager = EncryptionKeyManager()
         self.audit_logger = SecretsAuditLogger()
         self.access_control = SecretsAccessControl()
@@ -79,10 +79,10 @@ class EnterpriseSecretsManager:
             self._audit_secret_access(secret_id, "environment", True)
             return env_value
         
-        # 3. Try Vault/OpenBao
-        if vault_secret := self.vault_client.get_secret(secret_id):
-            self._audit_secret_access(secret_id, "vault", True)
-            return vault_secret
+        # 3. Try OpenBao
+        if openbao_secret := self.openbao_client.get_secret(secret_id):
+            self._audit_secret_access(secret_id, "openbao", True)
+            return openbao_secret
         
         # 4. Fail securely (no dangerous defaults)
         self._audit_secret_access(secret_id, "failed", False)

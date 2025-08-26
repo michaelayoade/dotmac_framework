@@ -371,7 +371,7 @@ class TestLeadScoringEngine:
                 """Get Strategy Name operation."""
                 return "Failing Strategy"
         
-        self.engine.add_scoring_strategy(FailingStrategy())
+        self.engine.add_scoring_strategy(FailingStrategy()
         
         lead_data = {"budget": 1000}
         

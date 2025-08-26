@@ -5,6 +5,7 @@ Email SDK - verification (OTP), deliverability results.
 import secrets
 from typing import Any, Dict, List, Optional
 from uuid import UUID
+from datetime import datetime, timezone
 
 from ..core.exceptions import (
     VerificationError,
@@ -55,14 +56,14 @@ class EmailVerificationService:
             return False
 
         verification.attempts_count += 1
-        verification.last_attempt_at = verification.last_attempt_at.__class__.utcnow()
+        verification.last_attempt_at = datetime.now(timezone.utc)
 
         if not verification.is_valid():
             return False
 
         if verification.verification_code == code:
             verification.status = VerificationStatus.VERIFIED
-            verification.verified_at = verification.verified_at.__class__.utcnow()
+            verification.verified_at = datetime.now(timezone.utc)
             return True
 
         return False
@@ -92,11 +93,11 @@ class EmailSDK:
 
         # Simulate email sending
         verification.delivery_attempted_at = (
-            verification.delivery_attempted_at.__class__.utcnow()
+            datetime.now(timezone.utc)
         )
         verification.deliverability_status = DeliverabilityStatus.DELIVERED
         verification.delivery_confirmed_at = (
-            verification.delivery_confirmed_at.__class__.utcnow()
+            datetime.now(timezone.utc)
         )
 
         return {
@@ -191,5 +192,5 @@ class EmailSDK:
             "is_deliverable": deliverability_status == DeliverabilityStatus.DELIVERED,
             "deliverability_status": deliverability_status.value,
             "bounce_reason": None if is_valid_format else "Invalid email format",
-            "checked_at": verification.created_at.__class__.utcnow().isoformat(),
+            "checked_at": datetime.now(timezone.utc).isoformat(),
         }

@@ -387,7 +387,7 @@ def install_plugin(plugin_name):
     """Install a specific plugin."""
     if plugin_name not in PLUGIN_DEFINITIONS:
         logger.error(f"Unknown plugin: {plugin_name}")
-        logger.info(f"Available plugins: {', '.join(PLUGIN_DEFINITIONS.keys())}")
+        logger.info(f"Available plugins: {', '.join(PLUGIN_DEFINITIONS.keys()}")
         return False
     
     plugin_info = PLUGIN_DEFINITIONS[plugin_name]
@@ -418,7 +418,7 @@ def main():
     """Main entry point."""
     if len(sys.argv) != 2:
         print("Usage: python install_plugin.py <plugin_name>")
-        print(f"Available plugins: {', '.join(PLUGIN_DEFINITIONS.keys())}")
+        print(f"Available plugins: {', '.join(PLUGIN_DEFINITIONS.keys()}")
         sys.exit(1)
     
     plugin_name = sys.argv[1].lower()

@@ -319,7 +319,7 @@ class BaseServiceConfig(BaseSettings):
 
         # Basic validation (Pydantic handles this)
         try:
-            self.dict()  # Trigger validation
+            self.model_dump()  # Trigger validation
         except ValidationError as e:
             for error in e.errors():
                 field = ".".join(str(x) for x in error["loc"])
@@ -485,7 +485,7 @@ if __name__ == "__main__":
 
     # Print configuration (sanitized)
     print("\nLoaded configuration:")
-    for key, value in config.dict().items():
+    for key, value in config.model_dump().items():
         if "secret" in key.lower() or "password" in key.lower():
             print(f"  {key}: ***REDACTED***")
         else:

@@ -1,0 +1,2216 @@
+================================================================================
+MANAGEMENT PLATFORM SYNTAX ERROR REPORT
+================================================================================
+Files scanned: 312
+Files with issues: 233
+Total syntax errors: 180
+Total Pydantic issues: 99
+
+SYNTAX ERRORS:
+----------------------------------------
+
+scripts/security_check.py:
+  Line 58: closing parenthesis ')' does not match opening parenthesis '{' on line 54
+    Text: 'weak_crypto': r'(md5|sha1|des|rc4)[\(\.]')
+
+scripts/validate_test_config.py:
+  Line 85: unexpected indent
+    Text: ["python3", "-m", "pytest", "--collect-only", "--quiet"],
+
+scripts/setup_test_db.py:
+  Line 19: unmatched ')'
+    Text: port = int(os.getenv("DB_PORT", "5432"))))
+
+scripts/cost_monitor.py:
+  Line 92: unmatched ')'
+    Text: tenant_filter: Optional[str] = None) -> List[CostMetric]:
+
+tests/test_security.py:
+  Line 17: unmatched ')'
+    Text: , timezone)
+
+tests/test_multitenant_security.py:
+  Line 36: unexpected indent
+    Text: name="Tenant One Corp",
+
+tests/test_multi_tenant_validation.py:
+  Line 26: unmatched ')'
+    Text: , timezone)
+
+tests/test_infrastructure_resilience.py:
+  Line 56: unexpected indent
+    Text: name="Test Rollback Tenant",
+
+tests/test_performance.py:
+  Line 65: invalid syntax
+    Text: if existing_count < 500:
+
+tests/test_ai_safety_checks.py:
+  Line 43: invalid syntax. Perhaps you forgot a comma?
+    Text: mock_calc.return_value = case["base"] + Decimal(str(case["usage"] * 0.01)
+
+migrations/env.py:
+  Line 22: unmatched ')'
+    Text: )
+
+app/api/dashboard.py:
+  Line 38: unmatched ')'
+    Text: ):
+
+app/services/notification_service.py:
+  Line 33: unmatched ')'
+    Text: , timezone)
+
+app/services/user_management_service.py:
+  Line 30: unmatched ')'
+    Text: , timezone)
+
+app/services/plugin_version_manager.py:
+  Line 21: unmatched ')'
+    Text: , timezone)
+
+app/services/tenant_service.py:
+  Line 20: unmatched ')'
+    Text: , timezone)
+
+app/services/stripe_service.py:
+  Line 20: unmatched ')'
+    Text: , timezone)
+
+app/services/plugin_security_scanner.py:
+  Line 22: unmatched ')'
+    Text: , timezone)
+
+app/services/plugin_service.py:
+  Line 16: unmatched ')'
+    Text: , timezone)
+
+app/services/provisioning_service.py:
+  Line 72: unmatched ')'
+    Text: ) -> Dict[str, Any]:
+
+app/services/billing_service.py:
+  Line 17: unmatched ')'
+    Text: , timezone)
+
+app/services/dns_service.py:
+  Line 28: unmatched ')'
+    Text: , timezone)
+
+app/services/analytics_service.py:
+  Line 34: unmatched ')'
+    Text: , timezone)
+
+app/services/plugin_geo_analytics.py:
+  Line 19: unmatched ')'
+    Text: , timezone)
+
+app/services/deployment_service.py:
+  Line 18: unmatched ')'
+    Text: , timezone)
+
+app/repositories/billing.py:
+  Line 24: unmatched ')'
+    Text: , timezone)
+
+app/repositories/monitoring_additional.py:
+  Line 14: unmatched ')'
+    Text: , timezone)
+
+app/core/database.py:
+  Line 68: unmatched ')'
+    Text: ):
+
+app/core/observability.py:
+  Line 27: unmatched ')'
+    Text: )
+
+app/core/middleware.py:
+  Line 62: unmatched ')'
+    Text: )
+
+app/core/response.py:
+  Line 63: unexpected indent
+    Text: json_encoders={
+
+app/core/cache.py:
+  Line 63: unexpected indent
+    Text: self.redis_url,
+
+app/core/deps.py:
+  Line 22: unmatched ')'
+    Text: ) -> CurrentUser:
+
+app/core/monitoring.py:
+  Line 75: unexpected indent
+    Text: name=name,
+
+app/core/auth.py:
+  Line 23: unmatched ')'
+    Text: ) -> CurrentUser:
+
+app/core/logging.py:
+  Line 168: unmatched ')'
+    Text: ) -> None:
+
+app/core/sanitization.py:
+  Line 86: unexpected indent
+    Text: text,
+
+app/workers/tasks/notification_tasks.py:
+  Line 37: unexpected indent
+    Text: notification_uuid, "sending", "email_worker"
+
+app/workers/tasks/deployment_tasks.py:
+  Line 42: unexpected indent
+    Text: infrastructure_uuid, "provisioning", user_id
+
+app/workers/tasks/monitoring_tasks.py:
+  Line 84: unexpected indent
+    Text: rule, start_time, end_time
+
+app/plugins/notifications/slack_plugin.py:
+  Line 22: unexpected indent
+    Text: name="slack_notification",
+
+app/plugins/deployment/ssh_plugin.py:
+  Line 31: unexpected indent
+    Text: name="ssh_deployment",
+
+app/plugins/deployment/aws_plugin.py:
+  Line 24: unexpected indent
+    Text: name="aws_deployment",
+
+app/plugins/monitoring/prometheus_plugin.py:
+  Line 22: unexpected indent
+    Text: name="prometheus_monitoring",
+
+app/api/v1/billing.py:
+  Line 21: unmatched ')'
+    Text: )
+
+app/api/v1/docs.py:
+  Line 28: unmatched ')'
+    Text: , timezone)
+
+app/api/v1/tenant.py:
+  Line 24: unmatched ')'
+    Text: )
+
+app/api/v1/plugin.py:
+  Line 21: unmatched ')'
+    Text: )
+
+app/api/v1/admin.py:
+  Line 30: unmatched ')'
+    Text: , timezone)
+
+app/api/v1/deployment.py:
+  Line 21: unmatched ')'
+    Text: )
+
+app/api/v1/user_management.py:
+  Line 34: unmatched ')'
+    Text: , timezone)
+
+app/api/v1/portal.py:
+  Line 31: unmatched ')'
+    Text: , timezone)
+
+app/core/plugins/service_integration.py:
+  Line 18: unmatched ')'
+    Text: )
+
+backups_syntax_fixes/scripts/security_check.py:
+  Line 58: closing parenthesis ')' does not match opening parenthesis '{' on line 54
+    Text: 'weak_crypto': r'(md5|sha1|des|rc4)[\(\.]')
+
+backups_syntax_fixes/scripts/validate_test_config.py:
+  Line 85: unexpected indent
+    Text: ["python3", "-m", "pytest", "--collect-only", "--quiet"],
+
+backups_syntax_fixes/scripts/setup_test_db.py:
+  Line 19: unmatched ')'
+    Text: port = int(os.getenv("DB_PORT", "5432")))
+
+backups_syntax_fixes/scripts/cost_monitor.py:
+  Line 92: unmatched ')'
+    Text: tenant_filter: Optional[str] = None) -> List[CostMetric]:
+
+backups_syntax_fixes/tests/test_security.py:
+  Line 17: unmatched ')'
+    Text: , timezone)
+
+backups_syntax_fixes/tests/test_multitenant_security.py:
+  Line 36: unexpected indent
+    Text: name="Tenant One Corp",
+
+backups_syntax_fixes/tests/test_multi_tenant_validation.py:
+  Line 26: unmatched ')'
+    Text: , timezone)
+
+backups_syntax_fixes/tests/test_infrastructure_resilience.py:
+  Line 56: unexpected indent
+    Text: name="Test Rollback Tenant",
+
+backups_syntax_fixes/tests/test_performance.py:
+  Line 65: invalid syntax
+    Text: if existing_count < 500:
+
+backups_syntax_fixes/tests/test_ai_safety_checks.py:
+  Line 43: invalid syntax. Perhaps you forgot a comma?
+    Text: mock_calc.return_value = case["base"] + Decimal(str(case["usage"] * 0.01)
+
+backups_syntax_fixes/migrations/env.py:
+  Line 22: unmatched ')'
+    Text: )
+
+backups_syntax_fixes/app/api/dashboard.py:
+  Line 37: unmatched ')'
+    Text: ):
+
+backups_syntax_fixes/app/services/notification_service.py:
+  Line 33: unmatched ')'
+    Text: , timezone)
+
+backups_syntax_fixes/app/services/user_management_service.py:
+  Line 30: unmatched ')'
+    Text: , timezone)
+
+backups_syntax_fixes/app/services/plugin_version_manager.py:
+  Line 21: unmatched ')'
+    Text: , timezone)
+
+backups_syntax_fixes/app/services/tenant_service.py:
+  Line 20: unmatched ')'
+    Text: , timezone)
+
+backups_syntax_fixes/app/services/stripe_service.py:
+  Line 20: unmatched ')'
+    Text: , timezone)
+
+backups_syntax_fixes/app/services/plugin_security_scanner.py:
+  Line 22: unmatched ')'
+    Text: , timezone)
+
+backups_syntax_fixes/app/services/plugin_service.py:
+  Line 16: unmatched ')'
+    Text: , timezone)
+
+backups_syntax_fixes/app/services/provisioning_service.py:
+  Line 72: unmatched ')'
+    Text: ) -> Dict[str, Any]:
+
+backups_syntax_fixes/app/services/billing_service.py:
+  Line 17: unmatched ')'
+    Text: , timezone)
+
+backups_syntax_fixes/app/services/dns_service.py:
+  Line 28: unmatched ')'
+    Text: , timezone)
+
+backups_syntax_fixes/app/services/analytics_service.py:
+  Line 34: unmatched ')'
+    Text: , timezone)
+
+backups_syntax_fixes/app/services/plugin_geo_analytics.py:
+  Line 19: unmatched ')'
+    Text: , timezone)
+
+backups_syntax_fixes/app/services/deployment_service.py:
+  Line 18: unmatched ')'
+    Text: , timezone)
+
+backups_syntax_fixes/app/repositories/billing.py:
+  Line 24: unmatched ')'
+    Text: , timezone)
+
+backups_syntax_fixes/app/repositories/monitoring_additional.py:
+  Line 14: unmatched ')'
+    Text: , timezone)
+
+backups_syntax_fixes/app/core/database.py:
+  Line 68: unmatched ')'
+    Text: ):
+
+backups_syntax_fixes/app/core/observability.py:
+  Line 27: unmatched ')'
+    Text: )
+
+backups_syntax_fixes/app/core/middleware.py:
+  Line 62: unmatched ')'
+    Text: )
+
+backups_syntax_fixes/app/core/response.py:
+  Line 63: unexpected indent
+    Text: json_encoders={
+
+backups_syntax_fixes/app/core/cache.py:
+  Line 63: unexpected indent
+    Text: self.redis_url,
+
+backups_syntax_fixes/app/core/deps.py:
+  Line 22: unmatched ')'
+    Text: ) -> CurrentUser:
+
+backups_syntax_fixes/app/core/monitoring.py:
+  Line 75: unexpected indent
+    Text: name=name,
+
+backups_syntax_fixes/app/core/auth.py:
+  Line 23: unmatched ')'
+    Text: ) -> CurrentUser:
+
+backups_syntax_fixes/app/core/logging.py:
+  Line 168: unmatched ')'
+    Text: ) -> None:
+
+backups_syntax_fixes/app/core/sanitization.py:
+  Line 86: unexpected indent
+    Text: text,
+
+backups_syntax_fixes/app/workers/tasks/notification_tasks.py:
+  Line 37: unexpected indent
+    Text: notification_uuid, "sending", "email_worker"
+
+backups_syntax_fixes/app/workers/tasks/deployment_tasks.py:
+  Line 42: unexpected indent
+    Text: infrastructure_uuid, "provisioning", user_id
+
+backups_syntax_fixes/app/workers/tasks/monitoring_tasks.py:
+  Line 84: unexpected indent
+    Text: rule, start_time, end_time
+
+backups_syntax_fixes/app/plugins/notifications/slack_plugin.py:
+  Line 22: unexpected indent
+    Text: name="slack_notification",
+
+backups_syntax_fixes/app/plugins/deployment/ssh_plugin.py:
+  Line 31: unexpected indent
+    Text: name="ssh_deployment",
+
+backups_syntax_fixes/app/plugins/deployment/aws_plugin.py:
+  Line 24: unexpected indent
+    Text: name="aws_deployment",
+
+backups_syntax_fixes/app/plugins/monitoring/prometheus_plugin.py:
+  Line 22: unexpected indent
+    Text: name="prometheus_monitoring",
+
+backups_syntax_fixes/app/api/v1/billing.py:
+  Line 21: unmatched ')'
+    Text: )
+
+backups_syntax_fixes/app/api/v1/docs.py:
+  Line 28: unmatched ')'
+    Text: , timezone)
+
+backups_syntax_fixes/app/api/v1/tenant.py:
+  Line 24: unmatched ')'
+    Text: )
+
+backups_syntax_fixes/app/api/v1/plugin.py:
+  Line 21: unmatched ')'
+    Text: )
+
+backups_syntax_fixes/app/api/v1/admin.py:
+  Line 30: unmatched ')'
+    Text: , timezone)
+
+backups_syntax_fixes/app/api/v1/deployment.py:
+  Line 21: unmatched ')'
+    Text: )
+
+backups_syntax_fixes/app/api/v1/user_management.py:
+  Line 34: unmatched ')'
+    Text: , timezone)
+
+backups_syntax_fixes/app/api/v1/portal.py:
+  Line 31: unmatched ')'
+    Text: , timezone)
+
+backups_syntax_fixes/app/core/plugins/service_integration.py:
+  Line 18: unmatched ')'
+    Text: )
+
+backups_syntax_fixes/tests/behavior/test_saas_tenant_workflows.py:
+  Line 84: unmatched ')'
+    Text: ) -> SaaSTenant:
+
+backups_syntax_fixes/tests/property/test_saas_property_tests.py:
+  Line 30: unexpected indent
+    Text: min_value=Decimal('0.00'),
+
+backups_syntax_fixes/tests/ai_first/test_tenant_isolation_invariants.py:
+  Line 36: closing parenthesis ')' does not match opening parenthesis '['
+    Text: malicious_input_strategy = st.one_of([)
+
+backups_syntax_fixes/tests/ai_first/test_chaos_engineering_resilience.py:
+  Line 46: unmatched ')'
+    Text: , timezone):
+
+backups_syntax_fixes/tests/ai_first/test_revenue_protection_invariants.py:
+  Line 30: unexpected indent
+    Text: min_value=Decimal('0.00', timezone),
+
+backups_syntax_fixes/tests/ai_first/test_api_contract_validation.py:
+  Line 82: unexpected indent
+    Text: min_size=8, max_size=50,
+
+backups_syntax_fixes/tests/ai_first/test_customer_journey_behaviors.py:
+  Line 43: unmatched ')'
+    Text: , timezone):
+
+backups_syntax_fixes/tests/contracts/test_saas_api_contracts.py:
+  Line 578: unmatched ')'
+    Text: )
+
+backups_syntax_fixes/tests/revenue_protection/test_saas_billing_accuracy.py:
+  Line 92: unmatched ')'
+    Text: ) -> Dict[str, Any]:
+
+backups_syntax_fixes/migrations/versions/001_initial_schema.py:
+  Line 24: unexpected indent
+    Text: 'users',
+
+backups_syntax_fixes/migrations/versions/002_add_deployment_tables.py:
+  Line 24: unexpected indent
+    Text: 'infrastructure_templates',
+
+backups_syntax_fixes/migrations/versions/005_add_enum_types.py:
+  Line 24: unexpected indent
+    Text: 'pending', 'provisioning', 'deploying', 'running', 'updating',
+
+backups_syntax_fixes/portals/master_admin/api.py:
+  Line 22: unmatched ')'
+    Text: , timezone)
+
+backups_syntax_fixes/portals/reseller/api.py:
+  Line 32: unmatched ')'
+    Text: , timezone)
+
+backups_syntax_fixes/portals/tenant_admin/api.py:
+  Line 34: unmatched ')'
+    Text: , timezone)
+
+backups_syntax_fixes/src/mgmt/api/cross_platform_events.py:
+  Line 138: unexpected indent
+    Text: tenant_id=event.tenant_id,
+
+backups_syntax_fixes/src/mgmt/api/tenant_orchestration.py:
+  Line 17: unmatched ')'
+    Text: , ConfigDict, timezone)
+
+backups_syntax_fixes/src/mgmt/api/plugin_licensing_external.py:
+  Line 77: unmatched ')'
+    Text: ):
+
+backups_syntax_fixes/src/mgmt/api/config_validation.py:
+  Line 315: unmatched ')'
+    Text: )
+
+backups_syntax_fixes/src/mgmt/shared/audit_orchestrator.py:
+  Line 24: unmatched ')'
+    Text: , timezone)
+
+backups_syntax_fixes/src/mgmt/shared/coordinated_disaster_recovery.py:
+  Line 123: unmatched ')'
+    Text: ):
+
+backups_syntax_fixes/src/mgmt/sdks/core/utils.py:
+  Line 22: unmatched ')'
+    Text: ) -> Dict[str, str]:
+
+backups_syntax_fixes/src/mgmt/sdks/core/exceptions.py:
+  Line 25: unmatched ')'
+    Text: ):
+
+backups_syntax_fixes/src/mgmt/services/billing_saas/models.py:
+  Line 23: unmatched ')'
+    Text: , timezone)
+
+backups_syntax_fixes/src/mgmt/services/billing_saas/service.py:
+  Line 24: unmatched ')'
+    Text: , timezone)
+
+backups_syntax_fixes/src/mgmt/services/kubernetes_orchestrator/service.py:
+  Line 22: unmatched ')'
+    Text: , timezone)
+
+backups_syntax_fixes/src/mgmt/services/reseller_network/schemas.py:
+  Line 15: unmatched ')'
+    Text: , ConfigDict)
+
+backups_syntax_fixes/src/mgmt/services/reseller_network/models.py:
+  Line 22: unmatched ')'
+    Text: , timezone)
+
+backups_syntax_fixes/src/mgmt/services/reseller_network/reseller_service.py:
+  Line 26: unmatched ')'
+    Text: , timezone)
+
+backups_syntax_fixes/src/mgmt/services/plugin_licensing/service.py:
+  Line 17: unmatched ')'
+    Text: , timezone)
+
+backups_syntax_fixes/src/mgmt/services/cost_management/service.py:
+  Line 25: unmatched ')'
+    Text: , timezone)
+
+backups_syntax_fixes/src/mgmt/services/saas_monitoring/models.py:
+  Line 328: invalid syntax
+    Text: else:
+
+backups_syntax_fixes/src/mgmt/services/saas_monitoring/service.py:
+  Line 19: unmatched ')'
+    Text: , timezone)
+
+backups_syntax_fixes/src/mgmt/services/tenant_management/service.py:
+  Line 21: unmatched ')'
+    Text: , timezone)
+
+backups_syntax_fixes/src/mgmt/shared/auth/permissions.py:
+  Line 32: unexpected indent
+    Text: redis_settings.redis_url,
+
+backups_syntax_fixes/src/mgmt/shared/database/connections.py:
+  Line 23: unexpected indent
+    Text: "DATABASE_URL",
+
+backups_syntax_fixes/src/mgmt/shared/security/secrets_manager.py:
+  Line 26: unmatched ')'
+    Text: )
+
+tests/behavior/test_saas_tenant_workflows.py:
+  Line 84: unmatched ')'
+    Text: ) -> SaaSTenant:
+
+tests/property/test_saas_property_tests.py:
+  Line 30: unexpected indent
+    Text: min_value=Decimal('0.00'),
+
+tests/ai_first/test_tenant_isolation_invariants.py:
+  Line 36: closing parenthesis ')' does not match opening parenthesis '['
+    Text: malicious_input_strategy = st.one_of([)
+
+tests/ai_first/test_chaos_engineering_resilience.py:
+  Line 46: unmatched ')'
+    Text: , timezone):
+
+tests/ai_first/test_revenue_protection_invariants.py:
+  Line 30: unexpected indent
+    Text: min_value=Decimal('0.00', timezone),
+
+tests/ai_first/test_api_contract_validation.py:
+  Line 82: unexpected indent
+    Text: min_size=8, max_size=50,
+
+tests/ai_first/test_customer_journey_behaviors.py:
+  Line 43: unmatched ')'
+    Text: , timezone):
+
+tests/contracts/test_saas_api_contracts.py:
+  Line 578: unmatched ')'
+    Text: )
+
+tests/revenue_protection/test_saas_billing_accuracy.py:
+  Line 92: unmatched ')'
+    Text: ) -> Dict[str, Any]:
+
+migrations/versions/001_initial_schema.py:
+  Line 24: unexpected indent
+    Text: 'users',
+
+migrations/versions/002_add_deployment_tables.py:
+  Line 24: unexpected indent
+    Text: 'infrastructure_templates',
+
+migrations/versions/005_add_enum_types.py:
+  Line 24: unexpected indent
+    Text: 'pending', 'provisioning', 'deploying', 'running', 'updating',
+
+portals/master_admin/api.py:
+  Line 22: unmatched ')'
+    Text: , timezone)
+
+portals/reseller/api.py:
+  Line 32: unmatched ')'
+    Text: , timezone)
+
+portals/tenant_admin/api.py:
+  Line 34: unmatched ')'
+    Text: , timezone)
+
+src/mgmt/api/cross_platform_events.py:
+  Line 138: unexpected indent
+    Text: tenant_id=event.tenant_id,
+
+src/mgmt/api/tenant_orchestration.py:
+  Line 17: unmatched ')'
+    Text: , ConfigDict, timezone)
+
+src/mgmt/api/plugin_licensing_external.py:
+  Line 77: unmatched ')'
+    Text: ):
+
+src/mgmt/api/config_validation.py:
+  Line 315: unmatched ')'
+    Text: )
+
+src/mgmt/shared/audit_orchestrator.py:
+  Line 24: unmatched ')'
+    Text: , timezone)
+
+src/mgmt/shared/coordinated_disaster_recovery.py:
+  Line 123: unmatched ')'
+    Text: ):
+
+src/mgmt/sdks/core/utils.py:
+  Line 22: unmatched ')'
+    Text: ) -> Dict[str, str]:
+
+src/mgmt/sdks/core/exceptions.py:
+  Line 25: unmatched ')'
+    Text: ):
+
+src/mgmt/services/billing_saas/models.py:
+  Line 23: unmatched ')'
+    Text: , timezone)
+
+src/mgmt/services/billing_saas/service.py:
+  Line 24: unmatched ')'
+    Text: , timezone)
+
+src/mgmt/services/kubernetes_orchestrator/service.py:
+  Line 22: unmatched ')'
+    Text: , timezone)
+
+src/mgmt/services/reseller_network/schemas.py:
+  Line 15: unmatched ')'
+    Text: , ConfigDict)
+
+src/mgmt/services/reseller_network/models.py:
+  Line 22: unmatched ')'
+    Text: , timezone)
+
+src/mgmt/services/reseller_network/reseller_service.py:
+  Line 26: unmatched ')'
+    Text: , timezone)
+
+src/mgmt/services/plugin_licensing/service.py:
+  Line 17: unmatched ')'
+    Text: , timezone)
+
+src/mgmt/services/cost_management/service.py:
+  Line 25: unmatched ')'
+    Text: , timezone)
+
+src/mgmt/services/saas_monitoring/models.py:
+  Line 328: invalid syntax
+    Text: else:
+
+src/mgmt/services/saas_monitoring/service.py:
+  Line 19: unmatched ')'
+    Text: , timezone)
+
+src/mgmt/services/tenant_management/service.py:
+  Line 21: unmatched ')'
+    Text: , timezone)
+
+src/mgmt/shared/auth/permissions.py:
+  Line 32: unexpected indent
+    Text: redis_settings.redis_url,
+
+src/mgmt/shared/database/connections.py:
+  Line 23: unexpected indent
+    Text: "DATABASE_URL",
+
+src/mgmt/shared/security/secrets_manager.py:
+  Line 26: unmatched ')'
+    Text: )
+
+PYDANTIC V2 COMPATIBILITY ISSUES:
+----------------------------------------
+
+syntax_checker.py:
+  Line 48: Use .model_dump() instead of .dict()
+    Found: .dict()
+  Line 49: Use model_config instead of Config class
+    Found: Config:
+  Line 53: Use model_json_schema() instead of schema()
+    Found: schema()
+  Line 53: Use model_json_schema() instead of schema()
+    Found: schema()
+
+syntax_fixer.py:
+  Line 338: Use .model_dump() instead of .dict()
+    Found: .dict()
+  Line 354: Use model_config instead of Config class
+    Found: Config:
+  Line 343: Use field_validator instead of validator
+    Found: validator(
+  Line 345: Use field_validator instead of validator
+    Found: validator(
+  Line 341: Use model_json_schema() instead of schema()
+    Found: schema()
+  Line 341: Use model_json_schema() instead of schema()
+    Found: schema()
+  Line 341: Use model_json_schema() instead of schema()
+    Found: schema()
+
+app/config.py:
+  Line 115: Use field_validator instead of validator
+    Found: validator(
+  Line 124: Use field_validator instead of validator
+    Found: validator(
+  Line 137: Use field_validator instead of validator
+    Found: validator(
+
+app/schemas/tenant.py:
+  Line 33: Use field_validator instead of validator
+    Found: validator(
+  Line 41: Use field_validator instead of validator
+    Found: validator(
+  Line 47: Use field_validator instead of validator
+    Found: validator(
+  Line 55: Use field_validator instead of validator
+    Found: validator(
+  Line 76: Use field_validator instead of validator
+    Found: validator(
+  Line 86: Use field_validator instead of validator
+    Found: validator(
+  Line 94: Use field_validator instead of validator
+    Found: validator(
+
+app/schemas/user_management.py:
+  Line 23: Use field_validator instead of validator
+    Found: validator(
+  Line 42: Use field_validator instead of validator
+    Found: validator(
+  Line 62: Use field_validator instead of validator
+    Found: validator(
+
+app/schemas/analytics.py:
+  Line 59: Use field_validator instead of validator
+    Found: validator(
+  Line 80: Use field_validator instead of validator
+    Found: validator(
+
+app/core/response.py:
+  Line 298: Use .model_dump() instead of .dict()
+    Found: .dict()
+
+app/core/sanitization.py:
+  Line 348: Use field_validator instead of validator
+    Found: validator(
+  Line 350: Use field_validator instead of validator
+    Found: validator(
+  Line 352: Use field_validator instead of validator
+    Found: validator(
+  Line 355: Use field_validator instead of validator
+    Found: validator(
+  Line 357: Use field_validator instead of validator
+    Found: validator(
+  Line 359: Use field_validator instead of validator
+    Found: validator(
+  Line 362: Use field_validator instead of validator
+    Found: validator(
+  Line 364: Use field_validator instead of validator
+    Found: validator(
+  Line 366: Use field_validator instead of validator
+    Found: validator(
+  Line 369: Use field_validator instead of validator
+    Found: validator(
+  Line 371: Use field_validator instead of validator
+    Found: validator(
+  Line 373: Use field_validator instead of validator
+    Found: validator(
+  Line 376: Use field_validator instead of validator
+    Found: validator(
+  Line 378: Use field_validator instead of validator
+    Found: validator(
+  Line 380: Use field_validator instead of validator
+    Found: validator(
+
+backups_syntax_fixes/app/schemas/user_management.py:
+  Line 23: Use field_validator instead of validator
+    Found: validator(
+  Line 42: Use field_validator instead of validator
+    Found: validator(
+  Line 62: Use field_validator instead of validator
+    Found: validator(
+
+backups_syntax_fixes/app/schemas/analytics.py:
+  Line 59: Use field_validator instead of validator
+    Found: validator(
+  Line 80: Use field_validator instead of validator
+    Found: validator(
+
+backups_syntax_fixes/app/core/response.py:
+  Line 298: Use .model_dump() instead of .dict()
+    Found: .dict()
+
+backups_syntax_fixes/app/core/sanitization.py:
+  Line 348: Use field_validator instead of validator
+    Found: validator(
+  Line 350: Use field_validator instead of validator
+    Found: validator(
+  Line 352: Use field_validator instead of validator
+    Found: validator(
+  Line 355: Use field_validator instead of validator
+    Found: validator(
+  Line 357: Use field_validator instead of validator
+    Found: validator(
+  Line 359: Use field_validator instead of validator
+    Found: validator(
+  Line 362: Use field_validator instead of validator
+    Found: validator(
+  Line 364: Use field_validator instead of validator
+    Found: validator(
+  Line 366: Use field_validator instead of validator
+    Found: validator(
+  Line 369: Use field_validator instead of validator
+    Found: validator(
+  Line 371: Use field_validator instead of validator
+    Found: validator(
+  Line 373: Use field_validator instead of validator
+    Found: validator(
+  Line 376: Use field_validator instead of validator
+    Found: validator(
+  Line 378: Use field_validator instead of validator
+    Found: validator(
+  Line 380: Use field_validator instead of validator
+    Found: validator(
+
+backups_syntax_fixes/tests/contracts/test_saas_api_contracts.py:
+  Line 35: Use model_json_schema() instead of schema()
+    Found: schema()
+  Line 61: Use model_json_schema() instead of schema()
+    Found: schema()
+  Line 81: Use model_json_schema() instead of schema()
+    Found: schema()
+  Line 102: Use model_json_schema() instead of schema()
+    Found: schema()
+  Line 122: Use model_json_schema() instead of schema()
+    Found: schema()
+  Line 210: Use model_json_schema() instead of schema()
+    Found: schema()
+  Line 252: Use model_json_schema() instead of schema()
+    Found: schema()
+  Line 282: Use model_json_schema() instead of schema()
+    Found: schema()
+  Line 312: Use model_json_schema() instead of schema()
+    Found: schema()
+  Line 375: Use model_json_schema() instead of schema()
+    Found: schema()
+  Line 606: Use model_json_schema() instead of schema()
+    Found: schema()
+
+backups_syntax_fixes/src/mgmt/api/tenant_orchestration.py:
+  Line 49: Use field_validator instead of validator
+    Found: validator(
+
+backups_syntax_fixes/src/mgmt/shared/config.py:
+  Line 54: Use field_validator instead of validator
+    Found: validator(
+  Line 161: Use field_validator instead of validator
+    Found: validator(
+
+backups_syntax_fixes/src/mgmt/services/reseller_network/schemas.py:
+  Line 48: Use field_validator instead of validator
+    Found: validator(
+
+tests/contracts/test_saas_api_contracts.py:
+  Line 35: Use model_json_schema() instead of schema()
+    Found: schema()
+  Line 61: Use model_json_schema() instead of schema()
+    Found: schema()
+  Line 81: Use model_json_schema() instead of schema()
+    Found: schema()
+  Line 102: Use model_json_schema() instead of schema()
+    Found: schema()
+  Line 122: Use model_json_schema() instead of schema()
+    Found: schema()
+  Line 210: Use model_json_schema() instead of schema()
+    Found: schema()
+  Line 252: Use model_json_schema() instead of schema()
+    Found: schema()
+  Line 282: Use model_json_schema() instead of schema()
+    Found: schema()
+  Line 312: Use model_json_schema() instead of schema()
+    Found: schema()
+  Line 375: Use model_json_schema() instead of schema()
+    Found: schema()
+  Line 606: Use model_json_schema() instead of schema()
+    Found: schema()
+
+src/mgmt/api/tenant_orchestration.py:
+  Line 49: Use field_validator instead of validator
+    Found: validator(
+
+src/mgmt/shared/config.py:
+  Line 54: Use field_validator instead of validator
+    Found: validator(
+  Line 161: Use field_validator instead of validator
+    Found: validator(
+
+src/mgmt/shared/enhanced_config.py:
+  Line 362: Use field_validator instead of validator
+    Found: validator(
+  Line 424: Use field_validator instead of validator
+    Found: validator(
+  Line 529: Use field_validator instead of validator
+    Found: validator(
+  Line 590: Use field_validator instead of validator
+    Found: validator(
+  Line 610: Use field_validator instead of validator
+    Found: validator(
+  Line 619: Use field_validator instead of validator
+    Found: validator(
+
+src/mgmt/services/reseller_network/schemas.py:
+  Line 48: Use field_validator instead of validator
+    Found: validator(
+
+POSSIBLE MISSING PARENTHESES:
+----------------------------------------
+
+comprehensive_syntax_fixer.py:
+  Line 90: Possible missing parentheses in return statement
+    Text: return '\n'.join(lines), fixes
+  Line 115: Possible missing parentheses in return statement
+    Text: (r'return\s+([^)]+\([^)]+)\s*$', r'return \1)'),
+  Line 136: Possible missing parentheses in return statement
+    Text: return '\n'.join(lines), fixes
+  Line 163: Possible missing parentheses in return statement
+    Text: return '\n'.join(lines), fixes
+  Line 185: Possible missing parentheses in return statement
+    Text: return '\n'.join(lines), fixes
+  Line 199: Possible missing parentheses in return statement
+    Text: return content, fixes
+  Line 244: Possible missing parentheses in return statement
+    Text: return content, fixes
+
+syntax_checker.py:
+  Line 72: Possible missing parentheses in return statement
+    Text: (r'return [^,\n]*,[^,\n]*$', 'Possible missing parentheses in return statement'),
+
+syntax_fixer.py:
+  Line 127: Possible missing parentheses in return statement
+    Text: (r'return\s+(\w+\([^)]+)$', lambda m: f'return {m.group(1)})'),
+  Line 139: Possible missing parentheses in return statement
+    Text: return '\n'.join(lines), fixes
+  Line 159: Possible missing parentheses in return statement
+    Text: return '\n'.join(lines), fixes
+  Line 181: Possible missing parentheses in return statement
+    Text: return '\n'.join(lines), fixes
+  Line 200: Possible missing parentheses in return statement
+    Text: return '\n'.join(lines), fixes
+  Line 248: Possible missing parentheses in return statement
+    Text: return '\n'.join(lines), fixes
+  Line 262: Possible missing parentheses in return statement
+    Text: return content, fixes
+  Line 279: Possible missing parentheses in return statement
+    Text: return '\n'.join(lines), fixes
+  Line 293: Possible missing parentheses in return statement
+    Text: return content, fixes
+  Line 306: Possible missing parentheses in return statement
+    Text: return content, fixes
+  Line 324: Possible missing parentheses in return statement
+    Text: return '\n'.join(lines), fixes
+
+app/config.py:
+  Line 134: Possible missing parentheses in return statement
+    Text: return [origin.strip() for origin in v.split(',') if origin.strip()]
+  Line 157: Possible missing parentheses in return statement
+    Text: return self.database_url.replace("postgresql://", "postgresql+asyncpg://")
+
+app/run_server.py:
+  Line 38: Missing closing parenthesis in app method
+    Text: app.add_middleware(
+  Line 58: Possible missing parentheses in return statement
+    Text: return {"status": "healthy", "service": "management-platform"}
+
+app/main.py:
+  Line 131: Possible missing parentheses in return statement
+    Text: return {"registered_count": registered_count, "total_plugins": len(plugins_to_register)}
+  Line 200: Missing closing parenthesis in app method
+    Text: app.add_middleware(
+  Line 213: Missing closing parenthesis in app method
+    Text: app.add_middleware(
+  Line 293: Possible missing parentheses in return statement
+    Text: return PlainTextResponse(content=metrics_text, media_type="text/plain; charset=utf-8")
+
+scripts/security_check.py:
+  Line 147: Possible missing parentheses in return statement
+    Text: return recommendations.get(pattern_name, "Review and fix security issue")
+  Line 159: Possible missing parentheses in return statement
+    Text: return cwe_mapping.get(pattern_name, "")
+  Line 298: Possible missing parentheses in return statement
+    Text: return json.dumps([asdict(finding) for finding in self.findings], indent=2)
+
+tests/test_repositories.py:
+  Line 13: Missing closing parenthesis in app method
+    Text: from app.repositories.billing_additional import (
+
+tests/test_financial_logic.py:
+  Line 12: Missing closing parenthesis in app method
+    Text: from app.repositories.billing_additional import (
+  Line 16: Missing closing parenthesis in app method
+    Text: from app.models.billing import (
+  Line 20: Missing closing parenthesis in app method
+    Text: from app.schemas.billing import (
+
+tests/test_property_based.py:
+  Line 255: Possible missing parentheses in return statement
+    Text: return multipliers.get(tier, Decimal("1.0"))
+  Line 266: Possible missing parentheses in return statement
+    Text: return base_costs.get(tier, Decimal("29.00"))
+
+tests/test_performance.py:
+  Line 171: Possible missing parentheses in return statement
+    Text: return response.status_code, time.time()
+
+tests/test_ai_safety_checks.py:
+  Line 409: Possible missing parentheses in return statement
+    Text: return next_state in valid_transitions.get(current_state, [])
+  Line 417: Possible missing parentheses in return statement
+    Text: return f"tenant_{str(tenant_id).replace('-', '_')}"
+  Line 425: Possible missing parentheses in return statement
+    Text: return timestamp.replace(day=1), timestamp.replace(day=28)
+  Line 433: Possible missing parentheses in return statement
+    Text: return start, end
+
+migrations/env.py:
+  Line 49: Possible missing parentheses in return statement
+    Text: return os.getenv("DATABASE_URL", config.get_main_option("sqlalchemy.url")
+
+app/schemas/tenant.py:
+  Line 39: Possible missing parentheses in return statement
+    Text: return validate_safe_string(v, "tenant_name")
+  Line 84: Possible missing parentheses in return statement
+    Text: return validate_safe_string(v, "tenant_name")
+
+app/workers/celery_app.py:
+  Line 26: Missing closing parenthesis in app method
+    Text: celery_app.conf.update(
+
+app/utils/pagination.py:
+  Line 67: Possible missing parentheses in return statement
+    Text: return cls(data=data, pagination=pagination)
+  Line 105: Possible missing parentheses in return statement
+    Text: return PaginationParams(page=page, per_page=per_page)
+  Line 142: Possible missing parentheses in return statement
+    Text: return offset, per_page
+  Line 216: Possible missing parentheses in return statement
+    Text: return items, total
+
+app/api/dashboard.py:
+  Line 49: Possible missing parentheses in return statement
+    Text: return templates.TemplateResponse("dashboard.html", {)
+
+app/models/billing.py:
+  Line 109: Possible missing parentheses in return statement
+    Text: return f"<PricingPlan(name='{self.name}', type='{self.plan_type}')>"
+  Line 168: Possible missing parentheses in return statement
+    Text: return f"<Subscription(tenant_id='{self.tenant_id}', status='{self.status}')>"
+  Line 173: Possible missing parentheses in return statement
+    Text: return self.status in [SubscriptionStatus.TRIAL, SubscriptionStatus.ACTIVE]
+  Line 184: Possible missing parentheses in return statement
+    Text: return max(0, delta.days)
+  Line 248: Possible missing parentheses in return statement
+    Text: return f"<Invoice(number='{self.invoice_number}', status='{self.status}')>"
+  Line 258: Possible missing parentheses in return statement
+    Text: return self.due_date < datetime.now(timezone.utc) and self.status not in [InvoiceStatus.PAID, InvoiceStatus.CANCELLED]
+  Line 302: Possible missing parentheses in return statement
+    Text: return f"<Payment(amount_cents={self.amount_cents}, status='{self.status}')>"
+  Line 352: Possible missing parentheses in return statement
+    Text: return f"<UsageRecord(metric='{self.metric_name}', quantity={self.quantity})>"
+  Line 395: Possible missing parentheses in return statement
+    Text: return f"<Commission(reseller_id='{self.reseller_id}', amount_cents={self.commission_amount_cents})>"
+
+app/models/monitoring.py:
+  Line 90: Possible missing parentheses in return statement
+    Text: return f"<HealthCheck(name='{self.check_name}', status='{self.status}')>"
+  Line 218: Possible missing parentheses in return statement
+    Text: return self.severity in [AlertSeverity.CRITICAL, AlertSeverity.EMERGENCY]
+  Line 291: Possible missing parentheses in return statement
+    Text: return f"<SLARecord(tenant_id='{self.tenant_id}', period='{self.period_start}' to '{self.period_end}')>"
+
+app/models/tenant.py:
+  Line 67: Possible missing parentheses in return statement
+    Text: return self.status in [TenantStatus.ACTIVE.value, TenantStatus.MAINTENANCE.value]
+  Line 96: Possible missing parentheses in return statement
+    Text: return f"<TenantConfiguration(category='{self.category}', key='{self.key}')>"
+  Line 115: Possible missing parentheses in return statement
+    Text: return f"<TenantInvitation(email='{self.email}', role='{self.role}')>"
+
+app/models/user.py:
+  Line 75: Possible missing parentheses in return statement
+    Text: return f"<User(email='{self.email}', role='{self.role}')>"
+
+app/models/plugin.py:
+  Line 135: Possible missing parentheses in return statement
+    Text: return f"<Plugin(name='{self.name}', version='{self.version}')>"
+  Line 160: Possible missing parentheses in return statement
+    Text: return price_mapping.get(tier, Decimal(0))
+  Line 213: Possible missing parentheses in return statement
+    Text: return self.status in [LicenseStatus.TRIAL, LicenseStatus.ACTIVE]
+  Line 233: Possible missing parentheses in return statement
+    Text: return max(0, delta.days)
+  Line 240: Possible missing parentheses in return statement
+    Text: return min(100.0, (self.current_usage / self.usage_limit) * 100)
+
+app/models/deployment.py:
+  Line 99: Possible missing parentheses in return statement
+    Text: return f"<InfrastructureTemplate(name='{self.name}', provider='{self.cloud_provider}')>"
+  Line 194: Possible missing parentheses in return statement
+    Text: return f"<Deployment(name='{self.name}', status='{self.status}')>"
+  Line 272: Possible missing parentheses in return statement
+    Text: return f"<DeploymentEvent(type='{self.event_type}', deployment_id='{self.deployment_id}')>"
+  Line 301: Possible missing parentheses in return statement
+    Text: return f"<DeploymentResource(type='{self.resource_type}', name='{self.resource_name}')>"
+
+app/services/tenant_service.py:
+  Line 499: Possible missing parentheses in return statement
+    Text: return await self.tenant_repo.check_slug_availability(slug, exclude_id)
+
+app/services/stripe_service.py:
+  Line 286: Possible missing parentheses in return statement
+    Text: return {"status": "ignored", "event_type": event["type"]}
+  Line 343: Possible missing parentheses in return statement
+    Text: return {"status": "processed", "invoice_id": str(local_invoice.id)}
+  Line 346: Possible missing parentheses in return statement
+    Text: return {"status": "ignored", "reason": "invoice_not_found"}
+  Line 386: Possible missing parentheses in return statement
+    Text: return {"status": "processed", "invoice_id": str(local_invoice.id)}
+  Line 388: Possible missing parentheses in return statement
+    Text: return {"status": "ignored", "reason": "invoice_not_found"}
+  Line 424: Possible missing parentheses in return statement
+    Text: return {"status": "processed", "subscription_id": str(local_subscription.id)}
+  Line 426: Possible missing parentheses in return statement
+    Text: return {"status": "ignored", "reason": "subscription_not_found"}
+  Line 450: Possible missing parentheses in return statement
+    Text: return {"status": "processed", "subscription_id": str(local_subscription.id)}
+  Line 452: Possible missing parentheses in return statement
+    Text: return {"status": "ignored", "reason": "subscription_not_found"}
+  Line 464: Possible missing parentheses in return statement
+    Text: return {"status": "ignored", "reason": "invoice_already_exists"}
+  Line 486: Possible missing parentheses in return statement
+    Text: return {"status": "processed", "invoice_id": str(local_invoice.id)}
+  Line 488: Possible missing parentheses in return statement
+    Text: return {"status": "ignored", "reason": "no_matching_subscription"}
+  Line 505: Possible missing parentheses in return statement
+    Text: return status_mapping.get(stripe_status, SubscriptionStatus.PENDING)
+
+app/services/plugin_security_scanner.py:
+  Line 635: Possible missing parentheses in return statement
+    Text: return max(0, score)
+  Line 712: Possible missing parentheses in return statement
+    Text: return recommendations.get(risk_level, "Unknown risk level")
+
+app/services/provisioning_service.py:
+  Line 254: Possible missing parentheses in return statement
+    Text: return await self.tenant_repo.create(tenant_data, user_id)
+  Line 633: Possible missing parentheses in return statement
+    Text: return {"targets_configured": True, "scrape_interval": "30s"}
+
+app/services/api_documentation_service.py:
+  Line 596: Possible missing parentheses in return statement
+    Text: return instructions.get(language, {})
+  Line 623: Possible missing parentheses in return statement
+    Text: return quickstart.get(language, {})
+
+app/services/billing_service.py:
+  Line 199: Possible missing parentheses in return statement
+    Text: return max(proration_amount, Decimal("0.00")
+  Line 206: Possible missing parentheses in return statement
+    Text: return start_date.replace(year=start_date.year + 1, month=1)
+  Line 321: Possible missing parentheses in return statement
+    Text: return await self.invoice_repo.create(invoice_data, created_by)
+  Line 483: Possible missing parentheses in return statement
+    Text: return tier_pricing.get(tier, tier_pricing["micro"])
+  Line 548: Possible missing parentheses in return statement
+    Text: return round(refund_amount, 2)
+  Line 862: Possible missing parentheses in return statement
+    Text: return await self.subscription_repo.create(subscription_dict, created_by)
+  Line 887: Possible missing parentheses in return statement
+    Text: return await self.invoice_repo.create(invoice_data, created_by)
+  Line 937: Possible missing parentheses in return statement
+    Text: return {"mrr": float(total_mrr), "arr": float(arr)}
+
+app/services/plugin_resource_tracker.py:
+  Line 330: Possible missing parentheses in return statement
+    Text: return round(uptime, 2)
+  Line 408: Possible missing parentheses in return statement
+    Text: return {"trend": "no_data", "data": []}
+  Line 422: Possible missing parentheses in return statement
+    Text: return {"trend": "insufficient_data", "data": values}
+
+app/services/dns_service.py:
+  Line 640: Possible missing parentheses in return statement
+    Text: return ["ns1.dotmac.local", "ns2.dotmac.local"]
+  Line 705: Possible missing parentheses in return statement
+    Text: return await self._create_route53_record(zone, record)
+  Line 707: Possible missing parentheses in return statement
+    Text: return await self._create_cloudflare_record(zone, record)
+
+app/services/analytics_service.py:
+  Line 804: Possible missing parentheses in return statement
+    Text: return {"cohorts": [], "retention_rates": []}
+  Line 808: Possible missing parentheses in return statement
+    Text: return {"mrr": 50000, "arr": 600000}
+  Line 812: Possible missing parentheses in return statement
+    Text: return {"forecast": [], "confidence_interval": []}
+  Line 816: Possible missing parentheses in return statement
+    Text: return {"churn_rate": 5.2, "churn_reasons": []}
+  Line 832: Possible missing parentheses in return statement
+    Text: return {"total_storage_gb": 500, "backup_storage_gb": 200}
+  Line 852: Possible missing parentheses in return statement
+    Text: return {"requests_per_second": 100, "peak_rps": 500}
+
+app/services/plugin_geo_analytics.py:
+  Line 319: Possible missing parentheses in return statement
+    Text: return tenant_metadata.get('country', 'Unknown')
+  Line 321: Possible missing parentheses in return statement
+    Text: return tenant_metadata.get('region', 'Unknown')
+  Line 325: Possible missing parentheses in return statement
+    Text: return f"{city}, {country}"
+  Line 331: Possible missing parentheses in return statement
+    Text: return metadata.get('country', 'Unknown')
+  Line 333: Possible missing parentheses in return statement
+    Text: return metadata.get('region', 'Unknown')
+  Line 337: Possible missing parentheses in return statement
+    Text: return f"{city}, {country}"
+  Line 351: Possible missing parentheses in return statement
+    Text: return (float(lat), float(lng)
+  Line 363: Possible missing parentheses in return statement
+    Text: return (float(lat), float(lng)
+  Line 386: Possible missing parentheses in return statement
+    Text: return round(diversity, 3)
+
+app/services/infrastructure_service.py:
+  Line 704: Possible missing parentheses in return statement
+    Text: return {"status": "healthy", "resources": []}
+  Line 709: Possible missing parentheses in return statement
+    Text: return {"status": "healthy", "pods_ready": "2/2"}
+  Line 727: Possible missing parentheses in return statement
+    Text: return {"scaled": True, "new_instance_type": scale_config.get("instance_type")}
+
+app/services/deployment_service.py:
+  Line 1220: Possible missing parentheses in return statement
+    Text: return round(uptime_percentage, 2)
+
+app/repositories/billing.py:
+  Line 36: Possible missing parentheses in return statement
+    Text: return await self.get_by_field("slug", slug)
+  Line 51: Possible missing parentheses in return statement
+    Text: return await self.get_by_field("stripe_price_id", stripe_price_id)
+  Line 81: Possible missing parentheses in return statement
+    Text: return await self.get_by_field("stripe_subscription_id", stripe_subscription_id)
+  Line 130: Possible missing parentheses in return statement
+    Text: return await self.get_by_field("invoice_number", invoice_number)
+  Line 204: Possible missing parentheses in return statement
+    Text: return await self.update(invoice_id, update_data) is not None
+  Line 222: Possible missing parentheses in return statement
+    Text: return await self.get_by_field("stripe_payment_intent_id", stripe_payment_intent_id)
+
+app/repositories/deployment_additional.py:
+  Line 43: Possible missing parentheses in return statement
+    Text: return await self.list(filters={"tenant_id": tenant_id, "is_deleted": False})
+  Line 47: Possible missing parentheses in return statement
+    Text: return await self.list(filters={"status": "active", "is_deleted": False})
+  Line 73: Possible missing parentheses in return statement
+    Text: return await self.list(filters={"tenant_id": tenant_id, "is_deleted": False})
+
+app/repositories/plugin_additional.py:
+  Line 27: Possible missing parentheses in return statement
+    Text: return await self.get_by_field("name", name)
+  Line 102: Possible missing parentheses in return statement
+    Text: return await self.list(filters={"tenant_id": tenant_id, "is_deleted": False})
+  Line 106: Possible missing parentheses in return statement
+    Text: return await self.list(filters={"plugin_id": plugin_id, "is_deleted": False})
+  Line 127: Possible missing parentheses in return statement
+    Text: return await self.list(filters={"license_id": license_id, "is_deleted": False})
+  Line 131: Possible missing parentheses in return statement
+    Text: return await self.list(filters={"plugin_id": plugin_id, "is_deleted": False})
+  Line 205: Possible missing parentheses in return statement
+    Text: return await self.list(filters={"name": plugin_name, "is_deleted": False})
+
+app/repositories/tenant.py:
+  Line 31: Possible missing parentheses in return statement
+    Text: return await self.get_by_field("name", name)
+  Line 35: Possible missing parentheses in return statement
+    Text: return await self.get_by_field("slug", slug)
+  Line 39: Possible missing parentheses in return statement
+    Text: return await self.get_by_field("custom_domain", domain)
+  Line 378: Possible missing parentheses in return statement
+    Text: return await self.get_by_field("invitation_token", invitation_token)
+
+app/repositories/user.py:
+  Line 24: Possible missing parentheses in return statement
+    Text: return await self.get_by_field("email", email)
+  Line 28: Possible missing parentheses in return statement
+    Text: return await self.get_by_field("username", username)
+  Line 117: Possible missing parentheses in return statement
+    Text: return await self.get_by_field("session_token", session_token)
+  Line 159: Possible missing parentheses in return statement
+    Text: return await self.get_by_field("invitation_token", invitation_token)
+
+app/repositories/monitoring_additional.py:
+  Line 75: Possible missing parentheses in return statement
+    Text: return await self.count({"tenant_id": tenant_id, "is_deleted": False})
+
+app/shared/standard_router.py:
+  Line 31: Possible missing parentheses in return statement
+    Text: return await func(*args, **kwargs)
+  Line 90: Possible missing parentheses in return statement
+    Text: return await service.create(data, user_id)
+
+app/core/observability.py:
+  Line 376: Possible missing parentheses in return statement
+    Text: return [(0, {"status": "active"})]
+  Line 378: Possible missing parentheses in return statement
+    Text: return [(0, {"status": "unknown"})]
+  Line 384: Possible missing parentheses in return statement
+    Text: return [(0, {"currency": "USD"})]
+  Line 386: Possible missing parentheses in return statement
+    Text: return [(0, {"currency": "USD"})]
+  Line 392: Possible missing parentheses in return statement
+    Text: return [(5, {"pool": "main"})]
+  Line 394: Possible missing parentheses in return statement
+    Text: return [(0, {"pool": "main"})]
+  Line 719: Possible missing parentheses in return statement
+    Text: return await func(*args, **kwargs)
+  Line 731: Possible missing parentheses in return statement
+    Text: return func(*args, **kwargs)
+
+app/core/response.py:
+  Line 326: Possible missing parentheses in return statement
+    Text: return {k: ResponseOptimizer._serialize_datetime(v) for k, v in data.items()}
+  Line 486: Possible missing parentheses in return statement
+    Text: return ResponseBuilder.success(data=data, message=message)
+  Line 491: Possible missing parentheses in return statement
+    Text: return ResponseBuilder.success(data=data, message=message)
+
+app/core/cache.py:
+  Line 104: Possible missing parentheses in return statement
+    Text: return json.dumps(value, default=str).encode('utf-8')
+  Line 292: Possible missing parentheses in return statement
+    Text: return {"status": "unhealthy", "reason": "No Redis connection"}
+  Line 302: Possible missing parentheses in return statement
+    Text: return {"status": "unhealthy", "reason": "Data integrity check failed"}
+  Line 313: Possible missing parentheses in return statement
+    Text: return {"status": "unhealthy", "reason": str(e)}
+  Line 357: Possible missing parentheses in return statement
+    Text: return await func(*args, **kwargs)
+  Line 391: Possible missing parentheses in return statement
+    Text: return func(*args, **kwargs)
+  Line 470: Possible missing parentheses in return statement
+    Text: return await cache_manager.get(f"config:{tenant_id}", TenantCache.NAMESPACE)
+  Line 500: Possible missing parentheses in return statement
+    Text: return await cache_manager.get(f"permissions:{user_id}", UserCache.NAMESPACE)
+
+app/core/exceptions.py:
+  Line 239: Missing closing parenthesis in logger call
+    Text: logger.error(
+  Line 283: Missing closing parenthesis in logger call
+    Text: logger.warning(
+  Line 297: Missing closing parenthesis in logger call
+    Text: logger.error(
+  Line 328: Missing closing parenthesis in logger call
+    Text: logger.error(
+
+app/core/security.py:
+  Line 163: Possible missing parentheses in return statement
+    Text: return ROLE_PERMISSIONS.get(role, [])
+  Line 168: Possible missing parentheses in return statement
+    Text: return pwd_context.verify(plain_password, hashed_password)
+
+app/core/sanitization.py:
+  Line 312: Possible missing parentheses in return statement
+    Text: return InputSanitizer.validate_safe_input(v, field_name)
+  Line 351: Possible missing parentheses in return statement
+    Text: return validate_safe_string(v, field_name)
+  Line 407: Possible missing parentheses in return statement
+    Text: return func(*sanitized_args, **sanitized_kwargs)
+
+app/workers/tasks/notification_tasks.py:
+  Line 81: Possible missing parentheses in return statement
+    Text: return {"status": "delivered", "notification_id": notification_id}
+  Line 193: Possible missing parentheses in return statement
+    Text: return {"status": "delivered", "notification_id": notification_id}
+  Line 220: Possible missing parentheses in return statement
+    Text: return color_map.get(severity, "warning")
+  Line 282: Possible missing parentheses in return statement
+    Text: return {"status": "delivered", "notification_id": notification_id}
+  Line 378: Possible missing parentheses in return statement
+    Text: return {"retried": retried, "skipped": skipped}
+  Line 495: Possible missing parentheses in return statement
+    Text: return {"digests_sent": digests_sent, "digests_failed": digests_failed}
+
+app/workers/tasks/plugin_tasks.py:
+  Line 540: Possible missing parentheses in return statement
+    Text: return {"cleaned_up": cleaned_up, "failed": failed}
+
+app/workers/tasks/deployment_tasks.py:
+  Line 433: Possible missing parentheses in return statement
+    Text: return {"healthy": healthy_count, "unhealthy": unhealthy_count}
+  Line 472: Possible missing parentheses in return statement
+    Text: return {"cleaned_up": cleaned_up, "failed": failed}
+  Line 526: Possible missing parentheses in return statement
+    Text: return {"backed_up": backed_up, "failed": failed}
+  Line 542: Possible missing parentheses in return statement
+    Text: return await _check_aws_health(infrastructure, metadata)
+  Line 544: Possible missing parentheses in return statement
+    Text: return await _check_azure_health(infrastructure, metadata)
+  Line 546: Possible missing parentheses in return statement
+    Text: return await _check_gcp_health(infrastructure, metadata)
+  Line 548: Possible missing parentheses in return statement
+    Text: return await _check_digitalocean_health(infrastructure, metadata)
+  Line 550: Possible missing parentheses in return statement
+    Text: return await _check_kubernetes_health(infrastructure, metadata)
+  Line 552: Possible missing parentheses in return statement
+    Text: return await _check_docker_health(infrastructure, metadata)
+  Line 1102: Possible missing parentheses in return statement
+    Text: return await _backup_to_s3(deployment, backup_data)
+  Line 1104: Possible missing parentheses in return statement
+    Text: return await _backup_to_azure(deployment, backup_data)
+  Line 1106: Possible missing parentheses in return statement
+    Text: return await _backup_to_gcp(deployment, backup_data)
+  Line 1109: Possible missing parentheses in return statement
+    Text: return await _backup_to_local(deployment, backup_data)
+
+app/workers/tasks/monitoring_tasks.py:
+  Line 46: Possible missing parentheses in return statement
+    Text: return {"processed": len(metrics), "status": "success"}
+  Line 113: Possible missing parentheses in return statement
+    Text: return {"rules_evaluated": rules_evaluated, "alerts_triggered": alerts_triggered}
+  Line 333: Possible missing parentheses in return statement
+    Text: return {"checks_run": checks_run, "checks_failed": checks_failed}
+
+app/workers/tasks/billing_tasks.py:
+  Line 58: Possible missing parentheses in return statement
+    Text: return status_mapping.get(stripe_status, "unknown")
+  Line 138: Possible missing parentheses in return statement
+    Text: return {"processed": processed, "failed": failed}
+  Line 193: Possible missing parentheses in return statement
+    Text: return {"suspended": suspended, "notified": notified}
+  Line 242: Possible missing parentheses in return statement
+    Text: return {"generated": generated, "failed": failed}
+  Line 268: Possible missing parentheses in return statement
+    Text: return {"payment_id": str(payment.id), "status": "success"}
+  Line 341: Possible missing parentheses in return statement
+    Text: return {"synced": synced, "failed": failed}
+
+app/plugins/notifications/email_plugin.py:
+  Line 256: Possible missing parentheses in return statement
+    Text: return re.match(pattern, email) is not None
+
+app/plugins/deployment/ssh_plugin.py:
+  Line 654: Possible missing parentheses in return statement
+    Text: return {"containers": container_info, "status": "started"}
+
+app/plugins/deployment/aws_plugin.py:
+  Line 232: Possible missing parentheses in return statement
+    Text: return {"status": "unknown", "error": str(e)}
+
+app/plugins/monitoring/prometheus_plugin.py:
+  Line 170: Possible missing parentheses in return statement
+    Text: return {"status": "unknown", "error": "No health query specified"}
+  Line 194: Possible missing parentheses in return statement
+    Text: return {"status": "unhealthy", "error": "No data returned from health query"}
+  Line 196: Possible missing parentheses in return statement
+    Text: return {"status": "unknown", "error": f"Unsupported result type: {result_type}"}
+  Line 200: Possible missing parentheses in return statement
+    Text: return {"status": "error", "error": str(e)}
+  Line 262: Possible missing parentheses in return statement
+    Text: return aiohttp.BasicAuth(username, password)
+
+app/api/v1/billing.py:
+  Line 37: Possible missing parentheses in return statement
+    Text: return await service.create_billing_plan(plan_data, current_user.user_id)
+  Line 284: Possible missing parentheses in return statement
+    Text: return await service.process_payment(payment_data, current_user.user_id)
+
+app/api/v1/monitoring.py:
+  Line 92: Possible missing parentheses in return statement
+    Text: return {"status": "alive", "timestamp": "2024-01-01T00:00:00Z"}
+
+app/api/v1/plugin.py:
+  Line 37: Possible missing parentheses in return statement
+    Text: return await service.create_plugin(plugin_data, current_user.user_id)
+
+app/api/v1/deployment.py:
+  Line 37: Possible missing parentheses in return statement
+    Text: return await service.create_template(template_data, current_user.user_id)
+
+app/core/plugins/service_integration.py:
+  Line 266: Possible missing parentheses in return statement
+    Text: return await plugin.validate_template(template_content, template_type)
+  Line 437: Possible missing parentheses in return statement
+    Text: return {"success": True, "monthly_cost": cost}
+  Line 442: Possible missing parentheses in return statement
+    Text: return {"success": False, "error": f"No cost calculation plugin found for provider: {provider}"}
+  Line 446: Possible missing parentheses in return statement
+    Text: return {"success": False, "error": str(e)}
+
+app/core/plugins/registry.py:
+  Line 97: Possible missing parentheses in return statement
+    Text: return self._plugins_by_type.get(plugin_type, [])
+
+app/core/plugins/loader.py:
+  Line 68: Possible missing parentheses in return statement
+    Text: return plugin_class, config
+  Line 108: Possible missing parentheses in return statement
+    Text: return plugin_class, config
+  Line 133: Possible missing parentheses in return statement
+    Text: return plugin_class, config
+
+app/core/plugins/hooks.py:
+  Line 121: Possible missing parentheses in return statement
+    Text: return {hook_name: len(handlers) for hook_name, handlers in self._hooks.items()}
+  Line 125: Possible missing parentheses in return statement
+    Text: return self._plugin_hooks.get(plugin_name, [])
+
+backups_syntax_fixes/scripts/security_check.py:
+  Line 147: Possible missing parentheses in return statement
+    Text: return recommendations.get(pattern_name, "Review and fix security issue")
+  Line 159: Possible missing parentheses in return statement
+    Text: return cwe_mapping.get(pattern_name, "")
+  Line 298: Possible missing parentheses in return statement
+    Text: return json.dumps([asdict(finding) for finding in self.findings], indent=2)
+
+backups_syntax_fixes/tests/test_performance.py:
+  Line 171: Possible missing parentheses in return statement
+    Text: return response.status_code, time.time()
+
+backups_syntax_fixes/tests/test_ai_safety_checks.py:
+  Line 409: Possible missing parentheses in return statement
+    Text: return next_state in valid_transitions.get(current_state, [])
+  Line 417: Possible missing parentheses in return statement
+    Text: return f"tenant_{str(tenant_id).replace('-', '_')}"
+  Line 425: Possible missing parentheses in return statement
+    Text: return timestamp.replace(day=1), timestamp.replace(day=28)
+  Line 433: Possible missing parentheses in return statement
+    Text: return start, end
+
+backups_syntax_fixes/migrations/env.py:
+  Line 49: Possible missing parentheses in return statement
+    Text: return os.getenv("DATABASE_URL", config.get_main_option("sqlalchemy.url")
+
+backups_syntax_fixes/app/api/dashboard.py:
+  Line 48: Possible missing parentheses in return statement
+    Text: return templates.TemplateResponse("dashboard.html", {)
+
+backups_syntax_fixes/app/services/tenant_service.py:
+  Line 499: Possible missing parentheses in return statement
+    Text: return await self.tenant_repo.check_slug_availability(slug, exclude_id)
+
+backups_syntax_fixes/app/services/stripe_service.py:
+  Line 286: Possible missing parentheses in return statement
+    Text: return {"status": "ignored", "event_type": event["type"]}
+  Line 343: Possible missing parentheses in return statement
+    Text: return {"status": "processed", "invoice_id": str(local_invoice.id)}
+  Line 346: Possible missing parentheses in return statement
+    Text: return {"status": "ignored", "reason": "invoice_not_found"}
+  Line 386: Possible missing parentheses in return statement
+    Text: return {"status": "processed", "invoice_id": str(local_invoice.id)}
+  Line 388: Possible missing parentheses in return statement
+    Text: return {"status": "ignored", "reason": "invoice_not_found"}
+  Line 424: Possible missing parentheses in return statement
+    Text: return {"status": "processed", "subscription_id": str(local_subscription.id)}
+  Line 426: Possible missing parentheses in return statement
+    Text: return {"status": "ignored", "reason": "subscription_not_found"}
+  Line 450: Possible missing parentheses in return statement
+    Text: return {"status": "processed", "subscription_id": str(local_subscription.id)}
+  Line 452: Possible missing parentheses in return statement
+    Text: return {"status": "ignored", "reason": "subscription_not_found"}
+  Line 464: Possible missing parentheses in return statement
+    Text: return {"status": "ignored", "reason": "invoice_already_exists"}
+  Line 486: Possible missing parentheses in return statement
+    Text: return {"status": "processed", "invoice_id": str(local_invoice.id)}
+  Line 488: Possible missing parentheses in return statement
+    Text: return {"status": "ignored", "reason": "no_matching_subscription"}
+  Line 505: Possible missing parentheses in return statement
+    Text: return status_mapping.get(stripe_status, SubscriptionStatus.PENDING)
+
+backups_syntax_fixes/app/services/plugin_security_scanner.py:
+  Line 635: Possible missing parentheses in return statement
+    Text: return max(0, score)
+  Line 712: Possible missing parentheses in return statement
+    Text: return recommendations.get(risk_level, "Unknown risk level")
+
+backups_syntax_fixes/app/services/provisioning_service.py:
+  Line 254: Possible missing parentheses in return statement
+    Text: return await self.tenant_repo.create(tenant_data, user_id)
+  Line 633: Possible missing parentheses in return statement
+    Text: return {"targets_configured": True, "scrape_interval": "30s"}
+
+backups_syntax_fixes/app/services/billing_service.py:
+  Line 199: Possible missing parentheses in return statement
+    Text: return max(proration_amount, Decimal("0.00")
+  Line 206: Possible missing parentheses in return statement
+    Text: return start_date.replace(year=start_date.year + 1, month=1)
+  Line 321: Possible missing parentheses in return statement
+    Text: return await self.invoice_repo.create(invoice_data, created_by)
+  Line 483: Possible missing parentheses in return statement
+    Text: return tier_pricing.get(tier, tier_pricing["micro"])
+  Line 548: Possible missing parentheses in return statement
+    Text: return round(refund_amount, 2)
+  Line 862: Possible missing parentheses in return statement
+    Text: return await self.subscription_repo.create(subscription_dict, created_by)
+  Line 887: Possible missing parentheses in return statement
+    Text: return await self.invoice_repo.create(invoice_data, created_by)
+  Line 937: Possible missing parentheses in return statement
+    Text: return {"mrr": float(total_mrr), "arr": float(arr)}
+
+backups_syntax_fixes/app/services/dns_service.py:
+  Line 640: Possible missing parentheses in return statement
+    Text: return ["ns1.dotmac.local", "ns2.dotmac.local"]
+  Line 705: Possible missing parentheses in return statement
+    Text: return await self._create_route53_record(zone, record)
+  Line 707: Possible missing parentheses in return statement
+    Text: return await self._create_cloudflare_record(zone, record)
+
+backups_syntax_fixes/app/services/analytics_service.py:
+  Line 804: Possible missing parentheses in return statement
+    Text: return {"cohorts": [], "retention_rates": []}
+  Line 808: Possible missing parentheses in return statement
+    Text: return {"mrr": 50000, "arr": 600000}
+  Line 812: Possible missing parentheses in return statement
+    Text: return {"forecast": [], "confidence_interval": []}
+  Line 816: Possible missing parentheses in return statement
+    Text: return {"churn_rate": 5.2, "churn_reasons": []}
+  Line 832: Possible missing parentheses in return statement
+    Text: return {"total_storage_gb": 500, "backup_storage_gb": 200}
+  Line 852: Possible missing parentheses in return statement
+    Text: return {"requests_per_second": 100, "peak_rps": 500}
+
+backups_syntax_fixes/app/services/plugin_geo_analytics.py:
+  Line 319: Possible missing parentheses in return statement
+    Text: return tenant_metadata.get('country', 'Unknown')
+  Line 321: Possible missing parentheses in return statement
+    Text: return tenant_metadata.get('region', 'Unknown')
+  Line 325: Possible missing parentheses in return statement
+    Text: return f"{city}, {country}"
+  Line 331: Possible missing parentheses in return statement
+    Text: return metadata.get('country', 'Unknown')
+  Line 333: Possible missing parentheses in return statement
+    Text: return metadata.get('region', 'Unknown')
+  Line 337: Possible missing parentheses in return statement
+    Text: return f"{city}, {country}"
+  Line 351: Possible missing parentheses in return statement
+    Text: return (float(lat), float(lng)
+  Line 363: Possible missing parentheses in return statement
+    Text: return (float(lat), float(lng)
+  Line 386: Possible missing parentheses in return statement
+    Text: return round(diversity, 3)
+
+backups_syntax_fixes/app/services/deployment_service.py:
+  Line 1220: Possible missing parentheses in return statement
+    Text: return round(uptime_percentage, 2)
+
+backups_syntax_fixes/app/repositories/billing.py:
+  Line 36: Possible missing parentheses in return statement
+    Text: return await self.get_by_field("slug", slug)
+  Line 51: Possible missing parentheses in return statement
+    Text: return await self.get_by_field("stripe_price_id", stripe_price_id)
+  Line 81: Possible missing parentheses in return statement
+    Text: return await self.get_by_field("stripe_subscription_id", stripe_subscription_id)
+  Line 130: Possible missing parentheses in return statement
+    Text: return await self.get_by_field("invoice_number", invoice_number)
+  Line 204: Possible missing parentheses in return statement
+    Text: return await self.update(invoice_id, update_data) is not None
+  Line 222: Possible missing parentheses in return statement
+    Text: return await self.get_by_field("stripe_payment_intent_id", stripe_payment_intent_id)
+
+backups_syntax_fixes/app/repositories/monitoring_additional.py:
+  Line 75: Possible missing parentheses in return statement
+    Text: return await self.count({"tenant_id": tenant_id, "is_deleted": False})
+
+backups_syntax_fixes/app/core/observability.py:
+  Line 376: Possible missing parentheses in return statement
+    Text: return [(0, {"status": "active"})]
+  Line 378: Possible missing parentheses in return statement
+    Text: return [(0, {"status": "unknown"})]
+  Line 384: Possible missing parentheses in return statement
+    Text: return [(0, {"currency": "USD"})]
+  Line 386: Possible missing parentheses in return statement
+    Text: return [(0, {"currency": "USD"})]
+  Line 392: Possible missing parentheses in return statement
+    Text: return [(5, {"pool": "main"})]
+  Line 394: Possible missing parentheses in return statement
+    Text: return [(0, {"pool": "main"})]
+  Line 719: Possible missing parentheses in return statement
+    Text: return await func(*args, **kwargs)
+  Line 731: Possible missing parentheses in return statement
+    Text: return func(*args, **kwargs)
+
+backups_syntax_fixes/app/core/response.py:
+  Line 326: Possible missing parentheses in return statement
+    Text: return {k: ResponseOptimizer._serialize_datetime(v) for k, v in data.items()}
+  Line 486: Possible missing parentheses in return statement
+    Text: return ResponseBuilder.success(data=data, message=message)
+  Line 491: Possible missing parentheses in return statement
+    Text: return ResponseBuilder.success(data=data, message=message)
+
+backups_syntax_fixes/app/core/cache.py:
+  Line 104: Possible missing parentheses in return statement
+    Text: return json.dumps(value, default=str).encode('utf-8')
+  Line 292: Possible missing parentheses in return statement
+    Text: return {"status": "unhealthy", "reason": "No Redis connection"}
+  Line 302: Possible missing parentheses in return statement
+    Text: return {"status": "unhealthy", "reason": "Data integrity check failed"}
+  Line 313: Possible missing parentheses in return statement
+    Text: return {"status": "unhealthy", "reason": str(e)}
+  Line 357: Possible missing parentheses in return statement
+    Text: return await func(*args, **kwargs)
+  Line 391: Possible missing parentheses in return statement
+    Text: return func(*args, **kwargs)
+  Line 470: Possible missing parentheses in return statement
+    Text: return await cache_manager.get(f"config:{tenant_id}", TenantCache.NAMESPACE)
+  Line 500: Possible missing parentheses in return statement
+    Text: return await cache_manager.get(f"permissions:{user_id}", UserCache.NAMESPACE)
+
+backups_syntax_fixes/app/core/sanitization.py:
+  Line 312: Possible missing parentheses in return statement
+    Text: return InputSanitizer.validate_safe_input(v, field_name)
+  Line 351: Possible missing parentheses in return statement
+    Text: return validate_safe_string(v, field_name)
+  Line 407: Possible missing parentheses in return statement
+    Text: return func(*sanitized_args, **sanitized_kwargs)
+
+backups_syntax_fixes/app/workers/tasks/notification_tasks.py:
+  Line 81: Possible missing parentheses in return statement
+    Text: return {"status": "delivered", "notification_id": notification_id}
+  Line 193: Possible missing parentheses in return statement
+    Text: return {"status": "delivered", "notification_id": notification_id}
+  Line 220: Possible missing parentheses in return statement
+    Text: return color_map.get(severity, "warning")
+  Line 282: Possible missing parentheses in return statement
+    Text: return {"status": "delivered", "notification_id": notification_id}
+  Line 378: Possible missing parentheses in return statement
+    Text: return {"retried": retried, "skipped": skipped}
+  Line 495: Possible missing parentheses in return statement
+    Text: return {"digests_sent": digests_sent, "digests_failed": digests_failed}
+
+backups_syntax_fixes/app/workers/tasks/deployment_tasks.py:
+  Line 433: Possible missing parentheses in return statement
+    Text: return {"healthy": healthy_count, "unhealthy": unhealthy_count}
+  Line 472: Possible missing parentheses in return statement
+    Text: return {"cleaned_up": cleaned_up, "failed": failed}
+  Line 526: Possible missing parentheses in return statement
+    Text: return {"backed_up": backed_up, "failed": failed}
+  Line 542: Possible missing parentheses in return statement
+    Text: return await _check_aws_health(infrastructure, metadata)
+  Line 544: Possible missing parentheses in return statement
+    Text: return await _check_azure_health(infrastructure, metadata)
+  Line 546: Possible missing parentheses in return statement
+    Text: return await _check_gcp_health(infrastructure, metadata)
+  Line 548: Possible missing parentheses in return statement
+    Text: return await _check_digitalocean_health(infrastructure, metadata)
+  Line 550: Possible missing parentheses in return statement
+    Text: return await _check_kubernetes_health(infrastructure, metadata)
+  Line 552: Possible missing parentheses in return statement
+    Text: return await _check_docker_health(infrastructure, metadata)
+  Line 1102: Possible missing parentheses in return statement
+    Text: return await _backup_to_s3(deployment, backup_data)
+  Line 1104: Possible missing parentheses in return statement
+    Text: return await _backup_to_azure(deployment, backup_data)
+  Line 1106: Possible missing parentheses in return statement
+    Text: return await _backup_to_gcp(deployment, backup_data)
+  Line 1109: Possible missing parentheses in return statement
+    Text: return await _backup_to_local(deployment, backup_data)
+
+backups_syntax_fixes/app/workers/tasks/monitoring_tasks.py:
+  Line 46: Possible missing parentheses in return statement
+    Text: return {"processed": len(metrics), "status": "success"}
+  Line 113: Possible missing parentheses in return statement
+    Text: return {"rules_evaluated": rules_evaluated, "alerts_triggered": alerts_triggered}
+  Line 333: Possible missing parentheses in return statement
+    Text: return {"checks_run": checks_run, "checks_failed": checks_failed}
+
+backups_syntax_fixes/app/plugins/deployment/ssh_plugin.py:
+  Line 654: Possible missing parentheses in return statement
+    Text: return {"containers": container_info, "status": "started"}
+
+backups_syntax_fixes/app/plugins/deployment/aws_plugin.py:
+  Line 232: Possible missing parentheses in return statement
+    Text: return {"status": "unknown", "error": str(e)}
+
+backups_syntax_fixes/app/plugins/monitoring/prometheus_plugin.py:
+  Line 170: Possible missing parentheses in return statement
+    Text: return {"status": "unknown", "error": "No health query specified"}
+  Line 194: Possible missing parentheses in return statement
+    Text: return {"status": "unhealthy", "error": "No data returned from health query"}
+  Line 196: Possible missing parentheses in return statement
+    Text: return {"status": "unknown", "error": f"Unsupported result type: {result_type}"}
+  Line 200: Possible missing parentheses in return statement
+    Text: return {"status": "error", "error": str(e)}
+  Line 262: Possible missing parentheses in return statement
+    Text: return aiohttp.BasicAuth(username, password)
+
+backups_syntax_fixes/app/api/v1/billing.py:
+  Line 37: Possible missing parentheses in return statement
+    Text: return await service.create_billing_plan(plan_data, current_user.user_id)
+  Line 284: Possible missing parentheses in return statement
+    Text: return await service.process_payment(payment_data, current_user.user_id)
+
+backups_syntax_fixes/app/api/v1/plugin.py:
+  Line 37: Possible missing parentheses in return statement
+    Text: return await service.create_plugin(plugin_data, current_user.user_id)
+
+backups_syntax_fixes/app/api/v1/deployment.py:
+  Line 37: Possible missing parentheses in return statement
+    Text: return await service.create_template(template_data, current_user.user_id)
+
+backups_syntax_fixes/app/core/plugins/service_integration.py:
+  Line 266: Possible missing parentheses in return statement
+    Text: return await plugin.validate_template(template_content, template_type)
+  Line 437: Possible missing parentheses in return statement
+    Text: return {"success": True, "monthly_cost": cost}
+  Line 442: Possible missing parentheses in return statement
+    Text: return {"success": False, "error": f"No cost calculation plugin found for provider: {provider}"}
+  Line 446: Possible missing parentheses in return statement
+    Text: return {"success": False, "error": str(e)}
+
+backups_syntax_fixes/tests/property/test_saas_property_tests.py:
+  Line 85: Possible missing parentheses in return statement
+    Text: return st.integers(min_value=1, max_value=5).map(create_plan)
+
+backups_syntax_fixes/tests/ai_first/test_tenant_isolation_invariants.py:
+  Line 332: Possible missing parentheses in return statement
+    Text: return False, "Token expired"
+  Line 336: Possible missing parentheses in return statement
+    Text: return True, "Valid"
+  Line 338: Possible missing parentheses in return statement
+    Text: return False, "Invalid tenant"
+
+backups_syntax_fixes/tests/ai_first/test_chaos_engineering_resilience.py:
+  Line 72: Possible missing parentheses in return statement
+    Text: return await operation_func(*args, **kwargs)
+  Line 139: Possible missing parentheses in return statement
+    Text: return await original_api_call(*args, **kwargs)
+
+backups_syntax_fixes/portals/tenant_admin/api.py:
+  Line 237: Possible missing parentheses in return statement
+    Text: return {"message": "Configuration update scheduled", "maintenance_window": config_update.schedule_maintenance}
+
+backups_syntax_fixes/src/mgmt/api/plugin_licensing_external.py:
+  Line 194: Possible missing parentheses in return statement
+    Text: return {"status": "recorded", "message": "Usage recorded (no active subscription)"}
+  Line 258: Possible missing parentheses in return statement
+    Text: return {"status": "recorded", "timestamp": request.timestamp.isoformat()}
+
+backups_syntax_fixes/src/mgmt/api/config_validation.py:
+  Line 233: Possible missing parentheses in return statement
+    Text: return bool(re.match(pattern, domain) and not domain.startswith('.') and not domain.endswith('.')
+
+backups_syntax_fixes/src/mgmt/shared/coordinated_disaster_recovery.py:
+  Line 672: Possible missing parentheses in return statement
+    Text: return {"tenant_id": tenant_id, "status": "active"}
+  Line 676: Possible missing parentheses in return statement
+    Text: return {"healthy": True, "connection_pool_size": 10}
+  Line 684: Possible missing parentheses in return statement
+    Text: return {"healthy": True, "status": "operational"}
+  Line 688: Possible missing parentheses in return statement
+    Text: return {"consistent": True, "last_updated": datetime.now(timezone.utc).isoformat()}
+  Line 692: Possible missing parentheses in return statement
+    Text: return {"billing": {"gateway": "stripe"}, "features": {"analytics": True}}
+  Line 696: Possible missing parentheses in return statement
+    Text: return {"billing": {"gateway": "stripe"}, "features": {"analytics": True}}
+  Line 708: Possible missing parentheses in return statement
+    Text: return {"consistent": True, "billing_gateway": "stripe"}
+  Line 712: Possible missing parentheses in return statement
+    Text: return {"consistent": True, "active_plugins": ["advanced_analytics"]}
+  Line 716: Possible missing parentheses in return statement
+    Text: return {"success": True, "rollback_point": "2024-01-15T10:00:00Z"}
+  Line 724: Possible missing parentheses in return statement
+    Text: return {"success": True, "rebuilt_components": ["all"]}
+
+backups_syntax_fixes/src/mgmt/sdks/core/utils.py:
+  Line 70: Possible missing parentheses in return statement
+    Text: return {"content": response.text, "status_code": response.status_code}
+  Line 73: Possible missing parentheses in return statement
+    Text: return {"error": "Invalid JSON response", "content": response.text}
+  Line 257: Possible missing parentheses in return statement
+    Text: return datetime.fromisoformat(dt_str.replace('Z', '+00:00')
+
+backups_syntax_fixes/src/mgmt/sdks/core/exceptions.py:
+  Line 241: Possible missing parentheses in return statement
+    Text: return SDKConnectionError(error_message, original_error=error)
+  Line 243: Possible missing parentheses in return statement
+    Text: return SDKTimeoutError(error_message, original_error=error)
+  Line 245: Possible missing parentheses in return statement
+    Text: return SDKValidationError(error_message, original_error=error)
+  Line 247: Possible missing parentheses in return statement
+    Text: return SDKError(error_message, original_error=error)
+
+backups_syntax_fixes/src/mgmt/services/billing_saas/models.py:
+  Line 118: Possible missing parentheses in return statement
+    Text: return f"<PricingTier(tier_id='{self.tier_id}', name='{self.name}')>"
+  Line 194: Possible missing parentheses in return statement
+    Text: return f"<Subscription(subscription_id='{self.subscription_id}', status='{self.status}')>"
+  Line 279: Possible missing parentheses in return statement
+    Text: return f"<UsageRecord(tenant_id='{self.tenant_id}', date='{self.usage_date}')>"
+  Line 342: Possible missing parentheses in return statement
+    Text: return f"<Invoice(invoice_number='{self.invoice_number}', status='{self.status}')>"
+  Line 418: Possible missing parentheses in return statement
+    Text: return f"<CommissionRecord(commission_id='{self.commission_id}', reseller_id='{self.reseller_id}')>"
+  Line 485: Possible missing parentheses in return statement
+    Text: return f"<RevenueMetrics(date='{self.metric_date}', period='{self.aggregation_period}')>"
+
+backups_syntax_fixes/src/mgmt/services/billing_saas/service.py:
+  Line 106: Possible missing parentheses in return statement
+    Text: return pricing.get(tier, Decimal('99.00')
+
+backups_syntax_fixes/src/mgmt/services/reseller_network/models.py:
+  Line 289: Possible missing parentheses in return statement
+    Text: return self.stage not in [OpportunityStage.CLOSED_WON, OpportunityStage.CLOSED_LOST]
+
+backups_syntax_fixes/src/mgmt/services/reseller_network/reseller_service.py:
+  Line 475: Possible missing parentheses in return statement
+    Text: return to_status in valid_transitions.get(from_status, [])
+  Line 512: Possible missing parentheses in return statement
+    Text: return min(base_rate, Decimal("0.25")  # Cap at 25%
+  Line 522: Possible missing parentheses in return statement
+    Text: return await self._calculate_commission_rate(reseller, revenue_amount)
+
+backups_syntax_fixes/src/mgmt/services/plugin_licensing/service.py:
+  Line 242: Possible missing parentheses in return statement
+    Text: return False, "No active subscription found"
+  Line 245: Possible missing parentheses in return statement
+    Text: return False, f"Subscription is {subscription.status.value}"
+  Line 249: Possible missing parentheses in return statement
+    Text: return False, "Trial period has expired"
+  Line 260: Possible missing parentheses in return statement
+    Text: return False, f"Feature '{feature_name}' not included in subscription"
+  Line 263: Possible missing parentheses in return statement
+    Text: return False, f"Feature '{feature_name}' usage limit exceeded or expired"
+  Line 265: Possible missing parentheses in return statement
+    Text: return True, None
+  Line 269: Possible missing parentheses in return statement
+    Text: return False, f"Validation error: {str(e)}"
+
+backups_syntax_fixes/src/mgmt/services/saas_monitoring/models.py:
+  Line 211: Possible missing parentheses in return statement
+    Text: return self.severity in [AlertSeverity.CRITICAL, AlertSeverity.ERROR]
+
+backups_syntax_fixes/src/mgmt/services/saas_monitoring/service.py:
+  Line 564: Possible missing parentheses in return statement
+    Text: return is_compliant, violations if violations else None
+  Line 864: Possible missing parentheses in return statement
+    Text: return await self.perform_tenant_health_check(deployment.tenant_id, deployment)
+
+backups_syntax_fixes/src/mgmt/services/tenant_management/service.py:
+  Line 187: Possible missing parentheses in return statement
+    Text: return tenants, total_count
+
+backups_syntax_fixes/src/mgmt/shared/auth/permissions.py:
+  Line 335: Possible missing parentheses in return statement
+    Text: return await func(*args, **kwargs)
+  Line 352: Possible missing parentheses in return statement
+    Text: return await func(*args, **kwargs)
+  Line 417: Possible missing parentheses in return statement
+    Text: return await func(*args, **kwargs)
+  Line 500: Possible missing parentheses in return statement
+    Text: return f"tenant_{tenant_id.replace('-', '_')}"
+  Line 522: Possible missing parentheses in return statement
+    Text: return query.replace("WHERE", f"WHERE tenant_id = '{tenant_id}' AND")
+
+backups_syntax_fixes/src/mgmt/shared/database/connections.py:
+  Line 142: Possible missing parentheses in return statement
+    Text: return await self.session.execute(text(query), parameters or {})
+  Line 155: Possible missing parentheses in return statement
+    Text: return await self.session.execute(text(query), parameters or {})
+  Line 171: Possible missing parentheses in return statement
+    Text: return getattr(self.session, name)
+  Line 440: Possible missing parentheses in return statement
+    Text: return {"tenant_id": tenant_id, "error": str(e)}
+
+tests/property/test_saas_property_tests.py:
+  Line 85: Possible missing parentheses in return statement
+    Text: return st.integers(min_value=1, max_value=5).map(create_plan)
+
+tests/ai_first/test_tenant_isolation_invariants.py:
+  Line 332: Possible missing parentheses in return statement
+    Text: return False, "Token expired"
+  Line 336: Possible missing parentheses in return statement
+    Text: return True, "Valid"
+  Line 338: Possible missing parentheses in return statement
+    Text: return False, "Invalid tenant"
+
+tests/ai_first/test_chaos_engineering_resilience.py:
+  Line 72: Possible missing parentheses in return statement
+    Text: return await operation_func(*args, **kwargs)
+  Line 139: Possible missing parentheses in return statement
+    Text: return await original_api_call(*args, **kwargs)
+
+portals/tenant_admin/api.py:
+  Line 237: Possible missing parentheses in return statement
+    Text: return {"message": "Configuration update scheduled", "maintenance_window": config_update.schedule_maintenance}
+
+src/mgmt/sdks/__init__.py:
+  Line 219: Possible missing parentheses in return statement
+    Text: return TenantSDKContext(tenant_id, platform_registry)
+
+src/mgmt/api/plugin_licensing_external.py:
+  Line 194: Possible missing parentheses in return statement
+    Text: return {"status": "recorded", "message": "Usage recorded (no active subscription)"}
+  Line 258: Possible missing parentheses in return statement
+    Text: return {"status": "recorded", "timestamp": request.timestamp.isoformat()}
+
+src/mgmt/api/config_validation.py:
+  Line 233: Possible missing parentheses in return statement
+    Text: return bool(re.match(pattern, domain) and not domain.startswith('.') and not domain.endswith('.')
+
+src/mgmt/shared/coordinated_disaster_recovery.py:
+  Line 672: Possible missing parentheses in return statement
+    Text: return {"tenant_id": tenant_id, "status": "active"}
+  Line 676: Possible missing parentheses in return statement
+    Text: return {"healthy": True, "connection_pool_size": 10}
+  Line 684: Possible missing parentheses in return statement
+    Text: return {"healthy": True, "status": "operational"}
+  Line 688: Possible missing parentheses in return statement
+    Text: return {"consistent": True, "last_updated": datetime.now(timezone.utc).isoformat()}
+  Line 692: Possible missing parentheses in return statement
+    Text: return {"billing": {"gateway": "stripe"}, "features": {"analytics": True}}
+  Line 696: Possible missing parentheses in return statement
+    Text: return {"billing": {"gateway": "stripe"}, "features": {"analytics": True}}
+  Line 708: Possible missing parentheses in return statement
+    Text: return {"consistent": True, "billing_gateway": "stripe"}
+  Line 712: Possible missing parentheses in return statement
+    Text: return {"consistent": True, "active_plugins": ["advanced_analytics"]}
+  Line 716: Possible missing parentheses in return statement
+    Text: return {"success": True, "rollback_point": "2024-01-15T10:00:00Z"}
+  Line 724: Possible missing parentheses in return statement
+    Text: return {"success": True, "rebuilt_components": ["all"]}
+
+src/mgmt/shared/enhanced_config.py:
+  Line 517: Possible missing parentheses in return statement
+    Text: return [origin.strip() for origin in self.cors_origins.split(',') if origin.strip()]
+  Line 522: Possible missing parentheses in return statement
+    Text: return [host.strip() for host in self.allowed_hosts.split(',') if host.strip()]
+  Line 527: Possible missing parentheses in return statement
+    Text: return [fw.strip() for fw in self.compliance_frameworks.split(',') if fw.strip()]
+
+src/mgmt/sdks/tenant_management/tenant_management.py:
+  Line 356: Possible missing parentheses in return statement
+    Text: return [TenantResponse(**tenant) for tenant in paginated_tenants], total_count
+  Line 427: Missing closing parenthesis in logger call
+    Text: logger.info(
+
+src/mgmt/sdks/core/client.py:
+  Line 268: Possible missing parentheses in return statement
+    Text: return await f(*args, **kwargs)
+
+src/mgmt/sdks/core/utils.py:
+  Line 70: Possible missing parentheses in return statement
+    Text: return {"content": response.text, "status_code": response.status_code}
+  Line 73: Possible missing parentheses in return statement
+    Text: return {"error": "Invalid JSON response", "content": response.text}
+  Line 257: Possible missing parentheses in return statement
+    Text: return datetime.fromisoformat(dt_str.replace('Z', '+00:00')
+
+src/mgmt/sdks/core/exceptions.py:
+  Line 241: Possible missing parentheses in return statement
+    Text: return SDKConnectionError(error_message, original_error=error)
+  Line 243: Possible missing parentheses in return statement
+    Text: return SDKTimeoutError(error_message, original_error=error)
+  Line 245: Possible missing parentheses in return statement
+    Text: return SDKValidationError(error_message, original_error=error)
+  Line 247: Possible missing parentheses in return statement
+    Text: return SDKError(error_message, original_error=error)
+
+src/mgmt/services/billing_saas/models.py:
+  Line 118: Possible missing parentheses in return statement
+    Text: return f"<PricingTier(tier_id='{self.tier_id}', name='{self.name}')>"
+  Line 194: Possible missing parentheses in return statement
+    Text: return f"<Subscription(subscription_id='{self.subscription_id}', status='{self.status}')>"
+  Line 279: Possible missing parentheses in return statement
+    Text: return f"<UsageRecord(tenant_id='{self.tenant_id}', date='{self.usage_date}')>"
+  Line 342: Possible missing parentheses in return statement
+    Text: return f"<Invoice(invoice_number='{self.invoice_number}', status='{self.status}')>"
+  Line 418: Possible missing parentheses in return statement
+    Text: return f"<CommissionRecord(commission_id='{self.commission_id}', reseller_id='{self.reseller_id}')>"
+  Line 485: Possible missing parentheses in return statement
+    Text: return f"<RevenueMetrics(date='{self.metric_date}', period='{self.aggregation_period}')>"
+
+src/mgmt/services/billing_saas/service.py:
+  Line 106: Possible missing parentheses in return statement
+    Text: return pricing.get(tier, Decimal('99.00')
+
+src/mgmt/services/reseller_network/models.py:
+  Line 289: Possible missing parentheses in return statement
+    Text: return self.stage not in [OpportunityStage.CLOSED_WON, OpportunityStage.CLOSED_LOST]
+
+src/mgmt/services/reseller_network/reseller_service.py:
+  Line 475: Possible missing parentheses in return statement
+    Text: return to_status in valid_transitions.get(from_status, [])
+  Line 512: Possible missing parentheses in return statement
+    Text: return min(base_rate, Decimal("0.25")  # Cap at 25%
+  Line 522: Possible missing parentheses in return statement
+    Text: return await self._calculate_commission_rate(reseller, revenue_amount)
+
+src/mgmt/services/plugin_licensing/models.py:
+  Line 214: Possible missing parentheses in return statement
+    Text: return max(0, delta.days)
+  Line 401: Possible missing parentheses in return statement
+    Text: return f"<PluginLicenseHistory(action={self.action_type}, changed_at={self.changed_at})>"
+
+src/mgmt/services/plugin_licensing/service.py:
+  Line 242: Possible missing parentheses in return statement
+    Text: return False, "No active subscription found"
+  Line 245: Possible missing parentheses in return statement
+    Text: return False, f"Subscription is {subscription.status.value}"
+  Line 249: Possible missing parentheses in return statement
+    Text: return False, "Trial period has expired"
+  Line 260: Possible missing parentheses in return statement
+    Text: return False, f"Feature '{feature_name}' not included in subscription"
+  Line 263: Possible missing parentheses in return statement
+    Text: return False, f"Feature '{feature_name}' usage limit exceeded or expired"
+  Line 265: Possible missing parentheses in return statement
+    Text: return True, None
+  Line 269: Possible missing parentheses in return statement
+    Text: return False, f"Validation error: {str(e)}"
+
+src/mgmt/services/saas_monitoring/models.py:
+  Line 211: Possible missing parentheses in return statement
+    Text: return self.severity in [AlertSeverity.CRITICAL, AlertSeverity.ERROR]
+
+src/mgmt/services/saas_monitoring/service.py:
+  Line 564: Possible missing parentheses in return statement
+    Text: return is_compliant, violations if violations else None
+  Line 864: Possible missing parentheses in return statement
+    Text: return await self.perform_tenant_health_check(deployment.tenant_id, deployment)
+
+src/mgmt/services/tenant_management/models.py:
+  Line 111: Possible missing parentheses in return statement
+    Text: return self.status not in [TenantStatus.CANCELLED, TenantStatus.FAILED]
+
+src/mgmt/services/tenant_management/service.py:
+  Line 187: Possible missing parentheses in return statement
+    Text: return tenants, total_count
+
+src/mgmt/shared/auth/permissions.py:
+  Line 335: Possible missing parentheses in return statement
+    Text: return await func(*args, **kwargs)
+  Line 352: Possible missing parentheses in return statement
+    Text: return await func(*args, **kwargs)
+  Line 417: Possible missing parentheses in return statement
+    Text: return await func(*args, **kwargs)
+  Line 500: Possible missing parentheses in return statement
+    Text: return f"tenant_{tenant_id.replace('-', '_')}"
+  Line 522: Possible missing parentheses in return statement
+    Text: return query.replace("WHERE", f"WHERE tenant_id = '{tenant_id}' AND")
+
+src/mgmt/shared/database/connections.py:
+  Line 142: Possible missing parentheses in return statement
+    Text: return await self.session.execute(text(query), parameters or {})
+  Line 155: Possible missing parentheses in return statement
+    Text: return await self.session.execute(text(query), parameters or {})
+  Line 171: Possible missing parentheses in return statement
+    Text: return getattr(self.session, name)
+  Line 440: Possible missing parentheses in return statement
+    Text: return {"tenant_id": tenant_id, "error": str(e)}

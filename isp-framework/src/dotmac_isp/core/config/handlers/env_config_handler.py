@@ -22,7 +22,7 @@ class EnvConfigHandler(ConfigurationHandler):
         
         return ((config_path.suffix.lower() in env_extensions or 
                 config_path.name.lower() in env_names) and
-                self._is_file_readable(config_path))
+                self._is_file_readable(config_path)
     
     def handle(self, config_path: Path, context: ReloadContext) -> ReloadContext:
         """
@@ -108,8 +108,8 @@ class EnvConfigHandler(ConfigurationHandler):
         
         # Handle quoted values
         if len(value) >= 2:
-            if (value.startswith('"') and value.endswith('"')) or \
-               (value.startswith("'") and value.endswith("'")):
+            if (value.startswith('"') and value.endswith('"') or \
+               (value.startswith("'") and value.endswith("'"):
                 value = value[1:-1]
                 
                 # Handle escape sequences in double quotes

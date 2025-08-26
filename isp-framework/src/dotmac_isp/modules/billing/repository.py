@@ -20,6 +20,7 @@ from dotmac_isp.modules.billing.models import (
     PaymentMethod,
     BillingCycle,
 )
+from datetime import datetime, timezone
 from dotmac_isp.shared.exceptions import NotFoundError, ConflictError, ValidationError
 
 
@@ -106,10 +107,10 @@ class InvoiceRepository:
             return None
 
         invoice.status = status
-        invoice.updated_at = datetime.utcnow()
+        invoice.updated_at = datetime.now(timezone.utc)
 
         if status == InvoiceStatus.PAID:
-            invoice.paid_date = datetime.utcnow()
+            invoice.paid_date = datetime.now(timezone.utc)
 
         self.db.commit()
         self.db.refresh(invoice)
@@ -129,11 +130,11 @@ class InvoiceRepository:
         # Update status based on payment
         if invoice.amount_due <= 0:
             invoice.status = InvoiceStatus.PAID
-            invoice.paid_date = datetime.utcnow()
+            invoice.paid_date = datetime.now(timezone.utc)
         elif invoice.amount_paid > 0:
             invoice.status = InvoiceStatus.PARTIAL_PAID
 
-        invoice.updated_at = datetime.utcnow()
+        invoice.updated_at = datetime.now(timezone.utc)
 
         self.db.commit()
         self.db.refresh(invoice)
@@ -278,13 +279,13 @@ class PaymentRepository:
             return None
 
         payment.status = status
-        payment.updated_at = datetime.utcnow()
+        payment.updated_at = datetime.now(timezone.utc)
 
         if gateway_response:
             payment.gateway_response = gateway_response
 
         if status == PaymentStatus.COMPLETED:
-            payment.processed_date = datetime.utcnow()
+            payment.processed_date = datetime.now(timezone.utc)
 
         self.db.commit()
         self.db.refresh(payment)
@@ -377,7 +378,7 @@ class SubscriptionRepository:
             if hasattr(subscription, key):
                 setattr(subscription, key, value)
 
-        subscription.updated_at = datetime.utcnow()
+        subscription.updated_at = datetime.now(timezone.utc)
 
         self.db.commit()
         self.db.refresh(subscription)
@@ -449,7 +450,7 @@ class CreditNoteRepository:
         """Generate unique credit note number."""
         today = date.today()
         count = (
-            self.db.query(func.count(CreditNote.id))
+            self.db.query(func.count(CreditNote.id)
             .filter(
                 and_(
                     CreditNote.tenant_id == self.tenant_id,

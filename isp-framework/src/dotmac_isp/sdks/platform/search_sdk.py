@@ -32,8 +32,8 @@ logger = logging.getLogger(__name__)
 class SearchSDKConfig:
     """Search SDK configuration."""
 
-    def __init__(        ):
-            """Initialize operation."""
+    def __init__(self, *args, **kwargs):
+        """Initialize operation."""
         self.max_indexes_per_tenant = max_indexes_per_tenant
         self.max_documents_per_index = max_documents_per_index
         self.enable_query_caching = enable_query_caching
@@ -557,4 +557,4 @@ class SearchSDK:
         """Generate cache key for query."""
         query_data = query.model_dump(by_alias=True)
         # Simple hash of query parameters
-        return f"search:{hash(str(sorted(query_data.items())))}"
+        return f"search:{hash(str(sorted(query_data.items())))})"

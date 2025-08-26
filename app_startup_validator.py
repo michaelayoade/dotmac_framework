@@ -46,7 +46,7 @@ class AppStartupValidator:
                         content = f.read()
                     
                     # Try to parse the AST
-                    ast.parse(content, filename=str(py_file))
+                    ast.parse(content, filename=str(py_file)
                     
                 except SyntaxError as e:
                     syntax_errors.append({
@@ -78,7 +78,7 @@ class AppStartupValidator:
             
             # Add the component path to sys.path temporarily
             original_path = sys.path.copy()
-            sys.path.insert(0, str(info['path']))
+            sys.path.insert(0, str(info['path'])
             
             try:
                 # Try to import the main app module
@@ -274,7 +274,7 @@ def main():
     results = validator.run_comprehensive_validation()
     
     # Show detailed issues if any
-    if any(results.values()):
+    if any(results.values():
         print(f"\n📋 Detailed Issues:")
         
         for category, issues in results.items():

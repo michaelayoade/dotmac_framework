@@ -59,10 +59,10 @@ def customer_emails():
     """Generate realistic email addresses."""
     domains = st.sampled_from(['gmail.com', 'yahoo.com', 'company.com', 'isp.net'])
     usernames = st.text(
-        alphabet=st.characters(whitelist_categories=('Ll', 'Lu', 'Nd')), 
+        alphabet=st.characters(whitelist_categories=('Ll', 'Lu', 'Nd'), 
         min_size=3, 
         max_size=20
-    ).filter(lambda x: x.isalnum())
+    ).filter(lambda x: x.isalnum()
     
     return st.builds(
         lambda u, d: f"{u}@{d}",
@@ -119,13 +119,13 @@ def service_tiers():
                 min_value=Decimal('0.001'), 
                 max_value=Decimal('0.10'), 
                 places=6
-            ).example())
+            ).example()
         })
         
         return tiers
     
     return st.integers(min_value=2, max_value=5).flatmap(
-        lambda n: st.just(create_tiers(n))
+        lambda n: st.just(create_tiers(n)
     )
 
 
@@ -186,11 +186,11 @@ class TestBillingProperties:
         )
         
         # PROPERTY 1: Base charge is proportional to service days
-        expected_base = (base_rate * Decimal(service_days) / Decimal(billing_days)).quantize(Decimal('0.01'))
+        expected_base = (base_rate * Decimal(service_days) / Decimal(billing_days).quantize(Decimal('0.01')
         assert result['base_charge'] == expected_base
         
         # PROPERTY 2: Tax is calculated on base charge
-        expected_tax = (result['base_charge'] * tax_rate).quantize(Decimal('0.01'))
+        expected_tax = (result['base_charge'] * tax_rate).quantize(Decimal('0.01')
         assert result['tax_amount'] == expected_tax
         
         # PROPERTY 3: Total = base + tax
@@ -250,10 +250,10 @@ class TestCustomerDataProperties:
         email=customer_emails(),
         phone=phone_numbers(),
         name=st.text(
-            alphabet=st.characters(whitelist_categories=('Lu', 'Ll', 'Zs')),
+            alphabet=st.characters(whitelist_categories=('Lu', 'Ll', 'Zs'),
             min_size=2,
             max_size=100
-        ).filter(lambda x: len(x.strip()) >= 2)
+        ).filter(lambda x: len(x.strip() >= 2)
     )
     @settings(max_examples=500)
     def test_customer_data_validation_properties(self, email, phone, name):
@@ -268,7 +268,7 @@ class TestCustomerDataProperties:
         assert re.match(phone_pattern, phone), f"Invalid phone format: {phone}"
         
         # PROPERTY 3: Name should not be empty after stripping
-        assert len(name.strip()) >= 2, f"Name too short: '{name}'"
+        assert len(name.strip() >= 2, f"Name too short: '{name}'"
         
         # PROPERTY 4: No special characters in name that could cause issues
         dangerous_chars = ['<', '>', '&', '"', "'", ';', '(', ')', '{', '}']
@@ -323,7 +323,7 @@ class CustomerLifecycleStateMachine(RuleBasedStateMachine):
         assume(str(service_id) not in self.services)
         
         # Pick a random customer
-        customer_id = st.sampled_from(list(self.customers.keys())).example()
+        customer_id = st.sampled_from(list(self.customers.keys()).example()
         
         self.services[str(service_id)] = {
             'service_id': str(service_id),
@@ -342,7 +342,7 @@ class CustomerLifecycleStateMachine(RuleBasedStateMachine):
         assume(str(invoice_id) not in self.invoices)
         
         # Pick a random service
-        service_id = st.sampled_from(list(self.services.keys())).example()
+        service_id = st.sampled_from(list(self.services.keys()).example()
         service = self.services[service_id]
         customer_id = service['customer_id']
         
@@ -383,7 +383,7 @@ class CustomerLifecycleStateMachine(RuleBasedStateMachine):
     def customer_emails_unique(self):
         """INVARIANT: Customer emails must be unique."""
         emails = [customer['email'] for customer in self.customers.values()]
-        assert len(emails) == len(set(emails)), "Duplicate customer emails found"
+        assert len(emails) == len(set(emails), "Duplicate customer emails found"
 
 
 # Create test case from state machine
@@ -396,8 +396,8 @@ if __name__ == "__main__":
     
     # Test the property that charges are never negative
     for _ in range(100):
-        usage = st.decimals(min_value=Decimal('0.0'), max_value=Decimal('1000.0')).example()
-        rate = st.decimals(min_value=Decimal('0.01'), max_value=Decimal('1.0')).example()
+        usage = st.decimals(min_value=Decimal('0.0'), max_value=Decimal('1000.0').example()
+        rate = st.decimals(min_value=Decimal('0.01'), max_value=Decimal('1.0').example()
         
         charge = calculator.calculate_usage_charge(usage, rate)
         assert charge >= 0, f"Negative charge found: {charge}"

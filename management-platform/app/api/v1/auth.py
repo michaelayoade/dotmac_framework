@@ -197,7 +197,7 @@ async def update_profile(
     db: AsyncSession = Depends(get_db)
 ):
     """Update current user profile."""
-    from ...repositories.user import UserRepository
+    from repositories.user import UserRepository
     from uuid import UUID
     
     user_repo = UserRepository(db)

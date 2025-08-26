@@ -7,8 +7,8 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..models.plugin import Plugin, PluginCategory, PluginLicense
-from .base import BaseRepository
+from models.plugin import Plugin, PluginCategory, PluginLicense
+from repositories.base import BaseRepository
 
 
 class PluginCategoryRepository(BaseRepository[PluginCategory]):

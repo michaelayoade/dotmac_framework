@@ -18,7 +18,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from uuid import UUID, uuid4
 from decimal import Decimal
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Dict, Any
 from unittest.mock import Mock, AsyncMock, patch
 
@@ -35,7 +35,7 @@ from dotmac_isp.sdks.networking.radius_enhanced import RadiusAuthenticator
 class TestConcurrentAuthentication:
     """Test RADIUS authentication performance at ISP scale."""
     
-    async def test_concurrent_radius_authentication_1000_users(self, db_session):
+    async def test_concurrent_radius_authentication_1000_users(self, db_session, timezone):
         """Test 1000 concurrent PPPoE authentication requests."""
         start_time = time.time()
         
@@ -50,7 +50,7 @@ class TestConcurrentAuthentication:
                 last_name=f"{i}",
                 email=f"customer{i}@isp.com",
                 phone=f"+1555000{i:04d}",
-                created_at=datetime.utcnow()
+                created_at=datetime.now(timezone.utc)
             )
             customers.append(customer)
         
@@ -205,7 +205,7 @@ class TestBulkBillingOperations:
                 last_name=f"{i}",
                 email=f"customer{i}@isp.com",
                 phone=f"+1555{i:06d}",
-                created_at=datetime.utcnow() - timedelta(days=30)
+                created_at=datetime.now(timezone.utc) - timedelta(days=30)
             )
             customers.append(customer)
             
@@ -218,7 +218,7 @@ class TestBulkBillingOperations:
                 customer_id=customer.id,
                 service_plan_id=plan.id,
                 service_name=f"Internet Service {i}",
-                activation_date=datetime.utcnow() - timedelta(days=25),
+                activation_date=datetime.now(timezone.utc) - timedelta(days=25),
                 status=ServiceStatus.ACTIVE,
                 monthly_fee=plan.monthly_fee
             )
@@ -239,13 +239,13 @@ class TestBulkBillingOperations:
                     id=uuid4(),
                     tenant_id=service.tenant_id,
                     customer_id=service.customer_id,
-                    invoice_number=f"INV-{int(time.time())}-{service.id.hex[:8]}",
+                    invoice_number=f"INV-{int(time.time()}-{service.id.hex[:8]}",
                     subtotal=service.monthly_fee,
                     tax_amount=service.monthly_fee * Decimal('0.08875'),  # 8.875% tax
                     total_amount=service.monthly_fee * Decimal('1.08875'),
-                    due_date=(datetime.utcnow() + timedelta(days=30)).date(),
+                    due_date=(datetime.now(timezone.utc) + timedelta(days=30).date(),
                     status="pending",
-                    created_at=datetime.utcnow()
+                    created_at=datetime.now(timezone.utc)
                 )
                 invoices.append(invoice)
             
@@ -298,7 +298,7 @@ logger.info(f"Performance: Generated {total_invoices} invoices in {duration:.2f}
                 first_name=f"Customer",
                 last_name=f"{i}",
                 email=f"pay{i}@isp.com",
-                created_at=datetime.utcnow()
+                created_at=datetime.now(timezone.utc)
             )
             customers.append(customer)
             
@@ -311,7 +311,7 @@ logger.info(f"Performance: Generated {total_invoices} invoices in {duration:.2f}
                 card_brand="visa",
                 is_default=True,
                 is_active=True,
-                created_at=datetime.utcnow()
+                created_at=datetime.now(timezone.utc)
             )
             payment_methods.append(payment_method)
         
@@ -381,7 +381,7 @@ class TestNetworkMonitoringScale:
                 snmp_community="public",
                 location=f"Site-{i // 50}",
                 is_active=True,
-                created_at=datetime.utcnow()
+                created_at=datetime.now(timezone.utc)
             )
             devices.append(device)
         
@@ -429,7 +429,7 @@ class TestNetworkMonitoringScale:
                 
                 return {
                     "device_id": device.id,
-                    "timestamp": datetime.utcnow(),
+                    "timestamp": datetime.now(timezone.utc),
                     "system_info": system_info,
                     "interface_stats": interface_stats,
                     "status": "success"
@@ -466,7 +466,7 @@ logger.info(f"Performance: Polled {successful_polls} devices in {duration:.2f}s 
                 "event_type": "interface_down" if i % 10 == 0 else "high_cpu",
                 "severity": "critical" if i % 20 == 0 else "warning",
                 "message": f"Event {i}",
-                "timestamp": datetime.utcnow()
+                "timestamp": datetime.now(timezone.utc)
             }
             for i in range(500)
         ]
@@ -527,7 +527,7 @@ class TestServiceProvisioningPerformance:
                 first_name=f"NewCustomer",
                 last_name=f"{i}",
                 email=f"new{i}@isp.com",
-                created_at=datetime.utcnow()
+                created_at=datetime.now(timezone.utc)
             )
             customers.append(customer)
         
@@ -558,7 +558,7 @@ class TestServiceProvisioningPerformance:
                         tenant_id=customer.tenant_id,
                         customer_id=customer.id,
                         service_name=f"Internet Service {customer.customer_number}",
-                        activation_date=datetime.utcnow(),
+                        activation_date=datetime.now(timezone.utc),
                         status=ServiceStatus.ACTIVE,
                         monthly_fee=Decimal('49.99')
                     )
@@ -607,7 +607,7 @@ class TestPerformanceRegression:
                 first_name=f"Query",
                 last_name=f"{i}",
                 email=f"query{i}@isp.com",
-                created_at=datetime.utcnow() - timedelta(days=i % 365)
+                created_at=datetime.now(timezone.utc) - timedelta(days=i % 365)
             )
             for i in range(5000)
         ]
@@ -617,10 +617,10 @@ class TestPerformanceRegression:
         
         # Test various query patterns
         queries = [
-            ("Simple select", lambda: db_session.query(Customer).filter(Customer.tenant_id == UUID("550e8400-e29b-41d4-a716-446655440000")).limit(100).all()),
-            ("Email lookup", lambda: db_session.query(Customer).filter(Customer.email.like("%query1%")).all()),
-            ("Date range", lambda: db_session.query(Customer).filter(Customer.created_at >= datetime.utcnow() - timedelta(days=30)).all()),
-            ("Count query", lambda: db_session.query(Customer).filter(Customer.tenant_id == UUID("550e8400-e29b-41d4-a716-446655440000")).count())
+            ("Simple select", lambda: db_session.query(Customer).filter(Customer.tenant_id == UUID("550e8400-e29b-41d4-a716-446655440000").limit(100).all(),
+            ("Email lookup", lambda: db_session.query(Customer).filter(Customer.email.like("%query1%").all(),
+            ("Date range", lambda: db_session.query(Customer).filter(Customer.created_at >= datetime.now(timezone.utc) - timedelta(days=30).all(),
+            ("Count query", lambda: db_session.query(Customer).filter(Customer.tenant_id == UUID("550e8400-e29b-41d4-a716-446655440000").count()
         ]
         
         performance_results = {}

@@ -21,7 +21,7 @@ from httpx import AsyncClient, Response
 from jose import jwt
 
 # Skip E2E tests if not in appropriate environment
-API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
+API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000", timezone)
 DATABASE_URL = os.getenv("TEST_DATABASE_URL")
 
 pytestmark = pytest.mark.skipif(
@@ -68,11 +68,11 @@ def create_jwt_token(jwt_secret):
         to_encode = token_data.copy()
         
         if expires_delta:
-            expire = datetime.utcnow() + expires_delta
+            expire = datetime.now(timezone.utc) + expires_delta
         else:
-            expire = datetime.utcnow() + timedelta(hours=1)
+            expire = datetime.now(timezone.utc) + timedelta(hours=1)
         
-        to_encode.update({"exp": expire, "iat": datetime.utcnow()})
+        to_encode.update({"exp": expire, "iat": datetime.now(timezone.utc)})
         return jwt.encode(to_encode, jwt_secret, algorithm="HS256")
     
     return _create_token
@@ -271,7 +271,7 @@ class TestCustomerSearchAndFiltering:
         created_customers = []
         for customer_data in customers_data:
             response = await authenticated_client.post("/api/v1/customers", json=customer_data)
-            created_customers.append(response.json())
+            created_customers.append(response.json()
         
         # Search for specific customer
         search_email = "search_test_2@example.com"
@@ -488,7 +488,7 @@ class TestPerformanceAndLoad:
                     "first_name": f"PaginationUser{i}",
                     "last_name": "Test"
                 }
-                tasks.append(authenticated_client.post("/api/v1/customers", json=customer_data))
+                tasks.append(authenticated_client.post("/api/v1/customers", json=customer_data)
             
             await asyncio.gather(*tasks)
         

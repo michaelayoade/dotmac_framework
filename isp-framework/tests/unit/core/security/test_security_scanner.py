@@ -16,7 +16,7 @@ from dotmac_isp.core.security.security_scanner import (
     SecurityFinding,
     SecurityScanResult,
     create_pre_commit_hook
-)
+, timezone)
 from dotmac_isp.core.validation_types import ValidationSeverity, ValidationCategory
 
 
@@ -212,8 +212,8 @@ password: admin
     
     def test_security_scan_result_properties(self):
         """Test SecurityScanResult properties."""
-        start_time = datetime.utcnow()
-        end_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
+        end_time = datetime.now(timezone.utc)
         
         # Create sample findings
         critical_finding = SecurityFinding(

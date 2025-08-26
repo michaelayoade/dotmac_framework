@@ -10,16 +10,16 @@ from uuid import UUID
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..repositories.monitoring_additional import (
+from repositories.monitoring_additional import (
     MetricRepository, AlertRepository, HealthCheckRepository, SLARecordRepository
-)
-from ..schemas.monitoring import (
+, timezone)
+from schemas.monitoring import (
     MetricCreate, AlertRuleCreate, AlertRule, AlertCreate,
     NotificationChannel, NotificationChannelCreate, LogEntryCreate,
     SyntheticCheckCreate, MetricQuery, LogQuery
 )
-from ..models.monitoring import Alert, Metric, HealthCheck, SLARecord
-from ..core.plugins.service_integration import service_integration
+from models.monitoring import Alert, Metric, HealthCheck, SLARecord
+from core.plugins.service_integration import service_integration
 
 logger = logging.getLogger(__name__)
 
@@ -109,7 +109,7 @@ class MonitoringService:
             "status": "firing",
             "severity": rule.severity,
             "message": f"{rule.name}: {metric.metric_name} {rule.condition} {rule.threshold} (current: {metric.value})",
-            "started_at": datetime.utcnow(),
+            "started_at": datetime.now(timezone.utc),
             "labels": {**rule.labels, **metric.labels},
             "annotations": rule.annotations,
             "fingerprint": self._generate_alert_fingerprint(rule, metric)
@@ -127,7 +127,7 @@ class MonitoringService:
         import hashlib
         
         data = f"{rule.id}-{metric.service_name}-{metric.metric_name}-{metric.labels}"
-        return hashlib.md5(data.encode()).hexdigest()
+        return hashlib.md5(data.encode().hexdigest())
     
     async def _send_alert_notifications(self, alert: Alert):
         """Send notifications for an alert."""
@@ -197,7 +197,7 @@ class MonitoringService:
                 notification.id,
                 {
                     "status": "delivered",
-                    "delivered_at": datetime.utcnow()
+                    "delivered_at": datetime.now(timezone.utc)
                 },
                 "system"
             )
@@ -472,7 +472,7 @@ class MonitoringService:
         """Get health status for a specific service."""
         try:
             # Get recent metrics for the service
-            end_time = datetime.utcnow()
+            end_time = datetime.now(timezone.utc)
             start_time = end_time - timedelta(hours=1)
             
             # Get error rate
@@ -531,7 +531,7 @@ class MonitoringService:
     ) -> Dict[str, float]:
         """Get resource usage metrics for a service."""
         try:
-            end_time = datetime.utcnow()
+            end_time = datetime.now(timezone.utc)
             start_time = end_time - timedelta(minutes=5)
             
             metrics = {}
@@ -615,7 +615,7 @@ class MonitoringService:
             # Update alert status
             update_data = {
                 "status": "resolved",
-                "resolved_at": datetime.utcnow()
+                "resolved_at": datetime.now(timezone.utc)
             }
             
             if resolution_note:

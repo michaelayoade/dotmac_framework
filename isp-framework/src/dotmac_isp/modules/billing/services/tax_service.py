@@ -2,6 +2,7 @@
 
 from typing import Optional, List
 from decimal import Decimal
+from datetime import date
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
@@ -81,7 +82,7 @@ class TaxService:
             state_province=location.get('state_province') if location else None,
             city=location.get('city') if location else None,
             postal_code=location.get('postal_code') if location else None,
-            effective_from=location.get('effective_from') if location else date.today()
+            effective_from=location.get('effective_from') if location else None
         )
         
         self.db_session.add(tax_rate)

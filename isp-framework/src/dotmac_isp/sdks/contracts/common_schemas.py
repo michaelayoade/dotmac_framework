@@ -3,6 +3,7 @@
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
 from enum import Enum
+from pydantic import ConfigDict
 
 
 class ExecutionStatus(str, Enum):

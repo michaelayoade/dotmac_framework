@@ -552,9 +552,9 @@ class TestMixinCombinations:
         model = ConcreteModel()
 
         # All mixin methods should be available
-        assert callable(getattr(model, 'soft_delete'))
-        assert callable(getattr(model, 'restore'))
-        assert callable(getattr(model, 'change_status'))
+        assert callable(getattr(model, 'soft_delete')
+        assert callable(getattr(model, 'restore')
+        assert callable(getattr(model, 'change_status')
 
         # Test method chaining doesn't interfere
         with patch('dotmac_isp.shared.database.base.datetime') as mock_datetime:

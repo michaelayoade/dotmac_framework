@@ -11,7 +11,7 @@ from uuid import uuid4
 from uuid import UUID as PythonUUID
 from datetime import datetime
 from sqlalchemy.orm import Session
-from pydantic import BaseModel, ValidationError as PydanticValidationError
+from pydantic import BaseModel, ValidationError as PydanticValidationError, ConfigDict
 
 from dotmac_isp.shared.base_service import BaseService, BaseTenantService, BaseReadOnlyService
 from dotmac_isp.shared.base_repository import BaseRepository
@@ -20,8 +20,7 @@ from dotmac_isp.shared.exceptions import (
     EntityNotFoundError,
     ValidationError,
     BusinessRuleError,
-    ServiceError
-)
+    ServiceError)
 
 
 # Test model and schema classes
@@ -34,7 +33,7 @@ class TestModel(Base):
     __table_args__ = {"extend_existing": True}
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    name = Column(String(100))
+    name = Column(String(100)
     active = Column(Boolean, default=True)
     
     def __init__(self, **kwargs):
@@ -50,7 +49,7 @@ class TestTenantModel(Base, TenantMixin):
     __table_args__ = {"extend_existing": True}
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    name = Column(String(100))
+    name = Column(String(100)
     
     def __init__(self, **kwargs):
         """  Init   operation."""
@@ -77,9 +76,7 @@ class TestResponseSchema(BaseModel):
     name: str
     active: bool
     
-    class Config:
-        """Class for Config operations."""
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # Concrete service for testing
@@ -332,7 +329,7 @@ class TestBaseService:
         mock_entity = TestModel(id=entity_id, name="Protected", active=True)
         
         mock_repository.get_by_id_or_raise.return_value = mock_entity
-        service._validate_delete_rules = AsyncMock(side_effect=BusinessRuleError("Cannot delete"))
+        service._validate_delete_rules = AsyncMock(side_effect=BusinessRuleError("Cannot delete")
         
         # Test
         with pytest.raises(BusinessRuleError):

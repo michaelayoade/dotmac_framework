@@ -8,7 +8,7 @@ and tenant ISP Framework instances, ensuring complete system recovery with consi
 import asyncio
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from enum import Enum
 from typing import Dict, List, Optional, Any, Tuple
 from uuid import uuid4, UUID
@@ -21,7 +21,7 @@ from .enhanced_config import ManagementPlatformSettings
 from .security.secrets_manager import MultiTenantSecretsManager
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__, timezone)
 
 
 class DisasterType(str, Enum):
@@ -57,7 +57,7 @@ class PlatformHealth(BaseModel):
     is_healthy: bool
     health_score: float = Field(ge=0.0, le=1.0)
     issues: List[str] = Field(default_factory=list)
-    last_check: datetime = Field(default_factory=datetime.utcnow)
+    last_check: datetime = Field(default_factory=lambda: datetime.now(None))
     response_time_ms: Optional[float] = None
 
 
@@ -69,21 +69,21 @@ class DisasterIndicator(BaseModel):
     management_health: PlatformHealth
     isp_framework_health: PlatformHealth
     consistency_status: Dict[str, Any]
-    detected_at: datetime = Field(default_factory=datetime.utcnow)
+    detected_at: datetime = Field(default_factory=lambda: datetime.now(None))
     description: str
     affected_components: List[str]
 
 
 class CrossPlatformDisasterAssessment(BaseModel):
     """Assessment of cross-platform disaster status"""
-    assessment_id: str = Field(default_factory=lambda: f"assess_{uuid4()}")
+    assessment_id: str = Field(default_factory=lambda: f"assess_{uuid4(}")
     disaster_detected: bool
     affected_tenants: List[str]
     disaster_indicators: List[DisasterIndicator]
     overall_severity: DisasterSeverity
     recommended_recovery_strategy: RecoveryStrategy
     estimated_recovery_time: timedelta
-    assessment_timestamp: datetime = Field(default_factory=datetime.utcnow)
+    assessment_timestamp: datetime = Field(default_factory=lambda: datetime.now(None))
 
 
 class TenantRecoveryResult(BaseModel):
@@ -103,7 +103,7 @@ class CoordinatedRecoveryResult(BaseModel):
     tenant_results: Dict[str, TenantRecoveryResult]
     total_recovery_time: timedelta
     consistency_validated: bool
-    recovery_timestamp: datetime = Field(default_factory=datetime.utcnow)
+    recovery_timestamp: datetime = Field(default_factory=lambda: datetime.now(None))
 
 
 class CoordinatedDisasterRecovery:
@@ -114,12 +114,12 @@ class CoordinatedDisasterRecovery:
     with cross-platform consistency validation and audit trail generation.
     """
     
-    def __init__(
+    def __init__()
         self,
         settings: ManagementPlatformSettings,
         audit_orchestrator: CrossPlatformAuditOrchestrator,
         secrets_manager: MultiTenantSecretsManager,
-        db: AsyncSession
+    db: AsyncSession)
     ):
         self.settings = settings
         self.audit_orchestrator = audit_orchestrator
@@ -135,9 +135,9 @@ class CoordinatedDisasterRecovery:
         self.max_recovery_attempts = 3
         self.recovery_timeout = timedelta(minutes=30)
     
-    async def detect_cross_platform_disaster(
-        self, 
-        tenant_ids: Optional[List[str]] = None
+    async def detect_cross_platform_disaster(:)
+        self,
+    tenant_ids: Optional[List[str]] = None)
     ) -> CrossPlatformDisasterAssessment:
         """
         Detect disasters that affect multiple platforms
@@ -158,7 +158,7 @@ class CoordinatedDisasterRecovery:
         for tenant_id in tenant_ids:
             try:
                 # Check Management Platform tenant health
-                mgmt_health = await self.check_management_platform_tenant_health(tenant_id)
+)                mgmt_health = await self.check_management_platform_tenant_health(tenant_id)
                 
                 # Check tenant ISP Framework instance health
                 isp_health = await self.check_tenant_isp_framework_health(tenant_id)
@@ -167,7 +167,7 @@ class CoordinatedDisasterRecovery:
                 consistency = await self.validate_cross_platform_consistency(tenant_id)
                 
                 # Detect disaster indicators
-                indicators = await self._analyze_disaster_indicators(
+                indicators = await self._analyze_disaster_indicators()
                     tenant_id, mgmt_health, isp_health, consistency
                 )
                 
@@ -177,15 +177,15 @@ class CoordinatedDisasterRecovery:
                 logger.error(f"Error checking tenant {tenant_id}: {str(e)}")
                 # Treat check failure as a disaster indicator
                 disaster_indicators.append(
-                    DisasterIndicator(
+)                    DisasterIndicator()
                         tenant_id=tenant_id,
                         disaster_type=DisasterType.SERVICE_OUTAGE,
                         severity=DisasterSeverity.HIGH,
-                        management_health=PlatformHealth(
+                        management_health=PlatformHealth()
                             platform="management", is_healthy=False, 
                             health_score=0.0, issues=[f"Health check failed: {str(e)}"]
                         ),
-                        isp_framework_health=PlatformHealth(
+                        isp_framework_health=PlatformHealth()
                             platform="tenant_isp_framework", is_healthy=False,
                             health_score=0.0, issues=["Unable to reach tenant instance"]
                         ),
@@ -199,7 +199,7 @@ class CoordinatedDisasterRecovery:
         assessment = await self._create_disaster_assessment(disaster_indicators)
         
         # Log disaster assessment
-        await self.audit_orchestrator.log_cross_platform_event(
+        await self.audit_orchestrator.log_cross_platform_event()
             source="management_platform",
             target="disaster_recovery_system",
             tenant_id="all",
@@ -214,12 +214,12 @@ class CoordinatedDisasterRecovery:
         
         return assessment
     
-    async def execute_coordinated_recovery(
+    async def execute_coordinated_recovery(:)
         self,
         disaster_id: str,
         affected_tenants: List[str],
         recovery_strategy: RecoveryStrategy,
-        coordination_mode: str = "sequential"
+    coordination_mode: str = "sequential")
     ) -> CoordinatedRecoveryResult:
         """
         Execute disaster recovery across both platforms
@@ -235,11 +235,11 @@ class CoordinatedDisasterRecovery:
         """
         logger.info(f"Starting coordinated recovery for disaster {disaster_id}")
         
-        recovery_start = datetime.utcnow()
+        recovery_start = datetime.now(None)
         recovery_results = {}
         
         # Log recovery initiation
-        await self.audit_orchestrator.log_cross_platform_event(
+        await self.audit_orchestrator.log_cross_platform_event()
             source="management_platform",
             target="disaster_recovery_system",
             tenant_id="all",
@@ -256,18 +256,17 @@ class CoordinatedDisasterRecovery:
             # Execute recovery for all tenants in parallel
             recovery_tasks = [
                 self._execute_tenant_recovery(tenant_id, recovery_strategy, disaster_id)
-                for tenant_id in affected_tenants
-            ]
+                for tenant_id in affected_tenants ]
             
             tenant_results = await asyncio.gather(*recovery_tasks, return_exceptions=True)
             
             for tenant_id, result in zip(affected_tenants, tenant_results):
                 if isinstance(result, Exception):
-                    recovery_results[tenant_id] = TenantRecoveryResult(
+                    recovery_results[tenant_id] = TenantRecoveryResult()
                         tenant_id=tenant_id,
                         success=False,
                         recovery_actions=["recovery_failed"],
-                        recovery_time=datetime.utcnow() - recovery_start,
+                        recovery_time=datetime.now(None) - recovery_start,
                         validation_status={"recovery": False},
                         errors=[str(result)]
                     )
@@ -277,7 +276,7 @@ class CoordinatedDisasterRecovery:
         else:  # Sequential recovery
             for tenant_id in affected_tenants:
                 try:
-                    tenant_recovery = await self._execute_tenant_recovery(
+                    tenant_recovery = await self._execute_tenant_recovery()
                         tenant_id=tenant_id,
                         recovery_strategy=recovery_strategy,
                         disaster_id=disaster_id
@@ -298,30 +297,30 @@ class CoordinatedDisasterRecovery:
                         
                 except Exception as e:
                     logger.error(f"Recovery failed for tenant {tenant_id}: {str(e)}")
-                    recovery_results[tenant_id] = TenantRecoveryResult(
+                    recovery_results[tenant_id] = TenantRecoveryResult()
                         tenant_id=tenant_id,
                         success=False,
                         recovery_actions=["recovery_exception"],
-                        recovery_time=datetime.utcnow() - recovery_start,
+                        recovery_time=datetime.now(None) - recovery_start,
                         validation_status={"recovery": False},
                         errors=[str(e)]
                     )
         
         # Validate cross-platform consistency post-recovery
         consistency_validated = await self._validate_post_recovery_consistency(
-            list(recovery_results.keys())
+)            list(recovery_results.keys()
         )
         
-        total_recovery_time = datetime.utcnow() - recovery_start
+        total_recovery_time = datetime.now(None) - recovery_start
         
         # Determine overall recovery status
-        successful_recoveries = sum(1 for r in recovery_results.values() if r.success)
+        successful_recoveries = sum(1 for r in recovery_results.values( if r.success)
         overall_status = "completed" if successful_recoveries == len(affected_tenants) else "partial"
         
         if successful_recoveries == 0:
             overall_status = "failed"
         
-        coordinated_result = CoordinatedRecoveryResult(
+        coordinated_result = CoordinatedRecoveryResult()
             disaster_id=disaster_id,
             overall_status=overall_status,
             tenant_results=recovery_results,
@@ -330,7 +329,7 @@ class CoordinatedDisasterRecovery:
         )
         
         # Log recovery completion
-        await self.audit_orchestrator.log_cross_platform_event(
+        await self.audit_orchestrator.log_cross_platform_event()
             source="management_platform",
             target="disaster_recovery_system",
             tenant_id="all",
@@ -339,8 +338,8 @@ class CoordinatedDisasterRecovery:
                 "disaster_id": disaster_id,
                 "overall_status": overall_status,
                 "successful_recoveries": successful_recoveries,
-                "total_tenants": len(affected_tenants),
-                "recovery_time_seconds": total_recovery_time.total_seconds(),
+)                "total_tenants": len(affected_tenants),
+                "recovery_time_seconds": total_recovery_time.total_seconds(,
                 "consistency_validated": consistency_validated
             }
         )
@@ -349,7 +348,7 @@ class CoordinatedDisasterRecovery:
     
     async def check_management_platform_tenant_health(self, tenant_id: str) -> PlatformHealth:
         """Check health of Management Platform tenant configuration"""
-        start_time = datetime.utcnow()
+        start_time = datetime.now(None)
         issues = []
         health_score = 1.0
         
@@ -373,9 +372,9 @@ class CoordinatedDisasterRecovery:
                 issues.append("Tenant database connectivity issues")
                 health_score *= 0.7
             
-            response_time = (datetime.utcnow() - start_time).total_seconds() * 1000
+            response_time = (datetime.now(None) - start_time).total_seconds() * 1000
             
-            return PlatformHealth(
+            return PlatformHealth()
                 platform="management",
                 is_healthy=health_score >= self.health_threshold,
                 health_score=health_score,
@@ -384,17 +383,17 @@ class CoordinatedDisasterRecovery:
             )
             
         except Exception as e:
-            return PlatformHealth(
+            return PlatformHealth()
                 platform="management",
                 is_healthy=False,
                 health_score=0.0,
                 issues=[f"Health check failed: {str(e)}"],
-                response_time_ms=(datetime.utcnow() - start_time).total_seconds() * 1000
+                response_time_ms=(datetime.now(None) - start_time).total_seconds() * 1000
             )
     
     async def check_tenant_isp_framework_health(self, tenant_id: str) -> PlatformHealth:
         """Check health of tenant ISP Framework instance"""
-        start_time = datetime.utcnow()
+        start_time = datetime.now(None)
         issues = []
         health_score = 1.0
         
@@ -402,7 +401,7 @@ class CoordinatedDisasterRecovery:
             # Get tenant instance endpoint
             tenant_endpoint = await self._get_tenant_isp_framework_endpoint(tenant_id)
             if not tenant_endpoint:
-                return PlatformHealth(
+                return PlatformHealth()
                     platform="tenant_isp_framework",
                     is_healthy=False,
                     health_score=0.0,
@@ -422,9 +421,9 @@ class CoordinatedDisasterRecovery:
                 issues.append("Configuration inconsistency detected")
                 health_score *= 0.8
             
-            response_time = (datetime.utcnow() - start_time).total_seconds() * 1000
+            response_time = (datetime.now(None) - start_time).total_seconds() * 1000
             
-            return PlatformHealth(
+            return PlatformHealth()
                 platform="tenant_isp_framework",
                 is_healthy=health_score >= self.health_threshold and response_time < self.response_time_threshold,
                 health_score=health_score,
@@ -433,12 +432,12 @@ class CoordinatedDisasterRecovery:
             )
             
         except Exception as e:
-            return PlatformHealth(
+            return PlatformHealth()
                 platform="tenant_isp_framework",
                 is_healthy=False,
                 health_score=0.0,
                 issues=[f"Health check failed: {str(e)}"],
-                response_time_ms=(datetime.utcnow() - start_time).total_seconds() * 1000
+                response_time_ms=(datetime.now(None) - start_time).total_seconds() * 1000
             )
     
     async def validate_cross_platform_consistency(self, tenant_id: str) -> Dict[str, Any]:
@@ -459,16 +458,16 @@ class CoordinatedDisasterRecovery:
             }
             
             # Calculate overall consistency score
-            consistency_score = sum(
-                1 for check in consistency_checks.values() 
-                if check.get("consistent", False)
+            consistency_score = sum()
+                1 for check in consistency_checks.values( 
+)                if check.get("consistent", False)
             ) / len(consistency_checks)
             
             return {
                 "is_consistent": consistency_score >= self.consistency_threshold,
                 "consistency_score": consistency_score,
                 "checks": consistency_checks,
-                "validated_at": datetime.utcnow().isoformat()
+                "validated_at": datetime.now(None).isoformat()
             }
             
         except Exception as e:
@@ -477,17 +476,17 @@ class CoordinatedDisasterRecovery:
                 "is_consistent": False,
                 "consistency_score": 0.0,
                 "error": str(e),
-                "validated_at": datetime.utcnow().isoformat()
+                "validated_at": datetime.now(None).isoformat()
             }
     
-    async def _execute_tenant_recovery(
+    async def _execute_tenant_recovery(:)
         self, 
         tenant_id: str, 
         recovery_strategy: RecoveryStrategy,
-        disaster_id: str
+    disaster_id: str)
     ) -> TenantRecoveryResult:
         """Execute disaster recovery for a single tenant"""
-        recovery_start = datetime.utcnow()
+        recovery_start = datetime.now(None)
         recovery_actions = []
         validation_status = {}
         errors = []
@@ -533,7 +532,7 @@ class CoordinatedDisasterRecovery:
             post_recovery_validation = await self._validate_tenant_recovery(tenant_id)
             validation_status.update(post_recovery_validation)
             
-            success = all(validation_status.values()) and len(errors) == 0
+            success = all(validation_status.values( and len(errors) == 0)
             
         except Exception as e:
             logger.error(f"Tenant recovery failed for {tenant_id}: {str(e)}")
@@ -542,9 +541,9 @@ class CoordinatedDisasterRecovery:
             validation_status["recovery"] = False
             success = False
         
-        recovery_time = datetime.utcnow() - recovery_start
+        recovery_time = datetime.now(None) - recovery_start
         
-        return TenantRecoveryResult(
+        return TenantRecoveryResult()
             tenant_id=tenant_id,
             success=success,
             recovery_actions=recovery_actions,
@@ -559,12 +558,12 @@ class CoordinatedDisasterRecovery:
         # For now, return placeholder
         return ["tenant-123", "tenant-456", "tenant-789"]
     
-    async def _analyze_disaster_indicators(
+    async def _analyze_disaster_indicators(:)
         self,
         tenant_id: str,
         mgmt_health: PlatformHealth,
         isp_health: PlatformHealth,
-        consistency: Dict[str, Any]
+    consistency: Dict[str, Any])
     ) -> List[DisasterIndicator]:
         """Analyze platform health and consistency to identify disaster indicators"""
         indicators = []
@@ -573,7 +572,7 @@ class CoordinatedDisasterRecovery:
         if not mgmt_health.is_healthy or not isp_health.is_healthy:
             severity = DisasterSeverity.HIGH if mgmt_health.health_score < 0.3 else DisasterSeverity.MEDIUM
             indicators.append(
-                DisasterIndicator(
+)                DisasterIndicator()
                     tenant_id=tenant_id,
                     disaster_type=DisasterType.SERVICE_OUTAGE,
                     severity=severity,
@@ -588,7 +587,7 @@ class CoordinatedDisasterRecovery:
         # Check for configuration inconsistencies
         if not consistency.get("is_consistent", False):
             indicators.append(
-                DisasterIndicator(
+)                DisasterIndicator()
                     tenant_id=tenant_id,
                     disaster_type=DisasterType.CROSS_PLATFORM_INCONSISTENCY,
                     severity=DisasterSeverity.MEDIUM,
@@ -596,14 +595,14 @@ class CoordinatedDisasterRecovery:
                     isp_framework_health=isp_health,
                     consistency_status=consistency,
                     description=f"Cross-platform configuration inconsistency for tenant {tenant_id}",
-                    affected_components=list(consistency.get("checks", {}).keys())
+                    affected_components=list(consistency.get("checks", {}).keys()
                 )
             )
         
         # Check for potential security issues
         if "secret" in " ".join(mgmt_health.issues + isp_health.issues).lower():
             indicators.append(
-                DisasterIndicator(
+)                DisasterIndicator()
                     tenant_id=tenant_id,
                     disaster_type=DisasterType.SECRET_COMPROMISE,
                     severity=DisasterSeverity.CRITICAL,
@@ -617,9 +616,9 @@ class CoordinatedDisasterRecovery:
         
         return indicators
     
-    async def _create_disaster_assessment(
-        self, 
-        disaster_indicators: List[DisasterIndicator]
+    async def _create_disaster_assessment(:)
+        self,
+    disaster_indicators: List[DisasterIndicator])
     ) -> CrossPlatformDisasterAssessment:
         """Create comprehensive disaster assessment from indicators"""
         
@@ -657,7 +656,7 @@ class CoordinatedDisasterRecovery:
         
         estimated_recovery_time = base_time * complexity_multiplier * severity_multiplier
         
-        return CrossPlatformDisasterAssessment(
+        return CrossPlatformDisasterAssessment()
             disaster_detected=len(disaster_indicators) > 0,
             affected_tenants=affected_tenants,
             disaster_indicators=disaster_indicators,
@@ -685,7 +684,7 @@ class CoordinatedDisasterRecovery:
     
     async def _check_tenant_config_status(self, endpoint: str) -> Dict[str, Any]:
         """Check tenant configuration status"""
-        return {"consistent": True, "last_updated": datetime.utcnow().isoformat()}
+        return {"consistent": True, "last_updated": datetime.now(None).isoformat()}
     
     async def _get_management_platform_tenant_config(self, tenant_id: str) -> Dict[str, Any]:
         """Get tenant configuration from Management Platform"""
@@ -742,7 +741,7 @@ class CoordinatedDisasterRecovery:
     
     async def _escalate_recovery_failure(self, disaster_id: str, tenant_id: str):
         """Escalate recovery failure to operations team"""
-        await self.audit_orchestrator.log_cross_platform_event(
+        await self.audit_orchestrator.log_cross_platform_event()
             source="disaster_recovery_system",
             target="operations_team",
             tenant_id=tenant_id,

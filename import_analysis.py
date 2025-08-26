@@ -145,7 +145,7 @@ class ImportIssueAnalyzer:
                         'severity': 'HIGH',
                         'reason': f'Package {package} should be mocked in docs, not directly imported'
                     })
-                elif any(package in comp_specific for comp_specific in self.component_specific.values()):
+                elif any(package in comp_specific for comp_specific in self.component_specific.values():
                     # Component-specific import - check if it's in the right component
                     expected_components = []
                     for comp, packages in self.component_specific.items():

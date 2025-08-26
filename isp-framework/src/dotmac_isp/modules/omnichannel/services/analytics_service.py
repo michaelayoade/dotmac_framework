@@ -10,7 +10,7 @@ from dotmac_isp.shared.exceptions import EntityNotFoundError, ValidationError
 from ..schemas import OmnichannelDashboardStats
 from .base_service import BaseOmnichannelService
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__, timezone)
 
 
 class AnalyticsService(BaseOmnichannelService):
@@ -22,9 +22,9 @@ class AnalyticsService(BaseOmnichannelService):
         """Get comprehensive dashboard statistics."""
         try:
             if not date_from:
-                date_from = datetime.utcnow() - timedelta(days=30)
+                date_from = datetime.now(timezone.utc) - timedelta(days=30)
             if not date_to:
-                date_to = datetime.utcnow()
+                date_to = datetime.now(timezone.utc)
 
             logger.info(f"Generating dashboard stats from {date_from} to {date_to}")
 
@@ -84,9 +84,9 @@ class AnalyticsService(BaseOmnichannelService):
         """Get detailed agent performance report."""
         try:
             if not date_from:
-                date_from = datetime.utcnow() - timedelta(days=7)
+                date_from = datetime.now(timezone.utc) - timedelta(days=7)
             if not date_to:
-                date_to = datetime.utcnow()
+                date_to = datetime.now(timezone.utc)
 
             if agent_id:
                 agents = [await self.repository.get_agent(agent_id)]
@@ -157,9 +157,9 @@ class AnalyticsService(BaseOmnichannelService):
         """Get channel performance analytics."""
         try:
             if not date_from:
-                date_from = datetime.utcnow() - timedelta(days=30)
+                date_from = datetime.now(timezone.utc) - timedelta(days=30)
             if not date_to:
-                date_to = datetime.utcnow()
+                date_to = datetime.now(timezone.utc)
 
             # Get channel metrics
             channel_metrics = await self.repository.get_detailed_channel_stats(
@@ -208,9 +208,9 @@ class AnalyticsService(BaseOmnichannelService):
         """Get customer journey analytics."""
         try:
             if not date_from:
-                date_from = datetime.utcnow() - timedelta(days=90)
+                date_from = datetime.now(timezone.utc) - timedelta(days=90)
             if not date_to:
-                date_to = datetime.utcnow()
+                date_to = datetime.now(timezone.utc)
 
             # Get customer interactions
             interactions = await self.repository.get_customer_interactions(
@@ -386,4 +386,4 @@ class AnalyticsService(BaseOmnichannelService):
             channel_usage[channel] = channel_usage.get(channel, 0) + 1
 
         # Sort by usage frequency
-        return dict(sorted(channel_usage.items(), key=lambda x: x[1], reverse=True))
+        return dict(sorted(channel_usage.items(), key=lambda x: x[1], reverse=True)

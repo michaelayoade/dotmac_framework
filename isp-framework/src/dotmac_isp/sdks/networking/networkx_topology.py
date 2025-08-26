@@ -107,7 +107,7 @@ class NetworkXTopologyManager:
             raise TopologyError(f"Device not found: {device_id}")
 
         # Get connected devices before removal
-        connected_devices = list(self.graph.neighbors(device_id))
+        connected_devices = list(self.graph.neighbors(device_id)
 
         # Remove from NetworkX graph
         self.graph.remove_node(device_id)
@@ -117,9 +117,9 @@ class NetworkXTopologyManager:
 
         # Remove link attributes
         links_removed = []
-        for link_key in list(self.link_attributes.keys()):
+        for link_key in list(self.link_attributes.keys():
             if device_id in link_key:
-                links_removed.append(self.link_attributes.pop(link_key))
+                links_removed.append(self.link_attributes.pop(link_key)
 
         # Clear caches
         self._cached_results.clear()
@@ -271,7 +271,7 @@ class NetworkXTopologyManager:
         # Articulation points (cut vertices)
         articulation_points = set()
         if nx.is_connected(self.graph):
-            articulation_points = set(nx.articulation_points(self.graph))
+            articulation_points = set(nx.articulation_points(self.graph)
 
         # Calculate centrality scores for all nodes
         try:
@@ -334,7 +334,7 @@ class NetworkXTopologyManager:
         # Find bridge edges
         bridges = set()
         if nx.is_connected(self.graph):
-            bridges = set(nx.bridges(self.graph))
+            bridges = set(nx.bridges(self.graph)
 
         for edge in bridges:
             source, target = edge
@@ -364,8 +364,8 @@ class NetworkXTopologyManager:
             raise TopologyError(f"Node not found: {node_id}")
 
         # Create a copy of the graph without the failed node
-        temp_graph = self.graph.copy()
-        connected_before = list(self.graph.neighbors(node_id))
+        temp_graph = self.graph.model_copy()
+        connected_before = list(self.graph.neighbors(node_id)
         temp_graph.remove_node(node_id)
 
         # Analyze impact
@@ -379,9 +379,9 @@ class NetworkXTopologyManager:
 
         # Find connected components after failure
         if temp_graph.is_directed():
-            components = list(nx.weakly_connected_components(temp_graph))
+            components = list(nx.weakly_connected_components(temp_graph)
         else:
-            components = list(nx.connected_components(temp_graph))
+            components = list(nx.connected_components(temp_graph)
 
         # Find affected customers
         affected_customers = []
@@ -430,7 +430,7 @@ class NetworkXTopologyManager:
         try:
             # For NetworkX 2.8+, use k_shortest_paths
             if hasattr(nx, "shortest_simple_paths"):
-                paths = list(nx.shortest_simple_paths(self.graph, source, target))[:k]
+                paths = list(nx.shortest_simple_paths(self.graph, source, target)[:k]
             else:
                 # Fallback to all_simple_paths with limited results
                 all_paths = list(
@@ -505,7 +505,7 @@ class NetworkXTopologyManager:
         connectivity_score = resilience_analysis["connectivity_resilience"].get(
             "connectivity_score", 0.0
         )
-        critical_ratio = (len(critical_nodes) + len(critical_edges)) / (
+        critical_ratio = (len(critical_nodes) + len(critical_edges) / (
             self.graph.number_of_nodes() + self.graph.number_of_edges()
         )
         redundancy_score = max(0.0, 1.0 - critical_ratio)

@@ -15,7 +15,7 @@ from dotmac_isp.sdks.core.exceptions import SDKError
 class MetricService:
     """Service for handling metrics operations in the Services SDK."""
     
-    def __init__(self, db: Session):
+    def __init__(self, db: Session, timezone):
         """Initialize metrics service with database session."""
         self.db = db
         self._metrics_cache: Dict[str, Any] = {}
@@ -36,8 +36,8 @@ class MetricService:
                 "value": float(value),
                 "metric_type": metric_type,
                 "tags": tags or {},
-                "timestamp": timestamp or datetime.utcnow(),
-                "created_at": datetime.utcnow()
+                "timestamp": timestamp or datetime.now(timezone.utc),
+                "created_at": datetime.now(timezone.utc)
             }
             
             # Store in cache for now (in real implementation, this would go to database)
@@ -150,7 +150,7 @@ class MetricService:
     async def get_metrics_summary(self, time_window: timedelta = timedelta(hours=24)) -> Dict[str, Any]:
         """Get summary of metrics within time window."""
         try:
-            end_time = datetime.utcnow()
+            end_time = datetime.now(timezone.utc)
             start_time = end_time - time_window
             
             metrics = await self.query_metrics(

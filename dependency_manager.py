@@ -153,11 +153,11 @@ class SaaSDependencyManager:
         print("=" * 40)
         
         # Count remaining requirement files
-        remaining_req_files = list(self.root_path.rglob("requirements*.txt"))
+        remaining_req_files = list(self.root_path.rglob("requirements*.txt")
         remaining_req_files = [f for f in remaining_req_files if '.backup' not in str(f)]
         
         print(f"  📁 Requirement files: 9 → {len(remaining_req_files)}")
-        print(f"  📉 Reduction: {((9 - len(remaining_req_files)) / 9 * 100):.1f}%")
+        print(f"  📉 Reduction: {((9 - len(remaining_req_files) / 9 * 100):.1f}%")
         
         # Show inheritance structure
         print(f"\n📋 New Dependency Structure:")

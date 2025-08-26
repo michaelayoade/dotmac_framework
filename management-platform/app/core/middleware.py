@@ -14,10 +14,10 @@ from fastapi import HTTPException, Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from ..config import settings
-from ..core.exceptions import SecurityValidationError
-from ..core.logging import get_logger, log_security_event, request_logging_context
-from ..core.monitoring import request_metrics
-from ..core.sanitization import InputSanitizer
+from .exceptions import SecurityValidationError
+from .logging import get_logger, log_security_event, request_logging_context
+from .monitoring import request_metrics
+from .sanitization import InputSanitizer
 
 logger = get_logger(__name__)
 
@@ -28,14 +28,14 @@ class LoggingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """Process request with logging."""
         # Generate request ID
-        request_id = str(uuid.uuid4())
+        request_id = str(uuid.uuid4()
         request.state.request_id = request_id
         
         # Start timer
         start_time = time.time()
         
         # Log request
-        logger.info(
+        logger.info()
             "Request started",
             extra={
                 "request_id": request_id,
@@ -51,7 +51,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             response = await call_next(request)
         except Exception as e:
             # Log exception
-            logger.error(
+            logger.error()
                 "Request failed with exception",
                 extra={
                     "request_id": request_id,
@@ -73,7 +73,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         response.headers["X-Request-ID"] = request_id
         
         # Log response
-        logger.info(
+        logger.info()
             "Request completed",
             extra={
                 "request_id": request_id,
@@ -151,7 +151,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         
         if len(self.client_calls[client_ip]) >= self.calls_per_minute:
             logger.warning(f"Rate limit exceeded for client {client_ip}")
-            return Response(
+            return Response()
                 content='{"error": {"code": "RATE_LIMIT_EXCEEDED", "message": "Too many requests"}}',
                 status_code=429,
                 headers={"Content-Type": "application/json"}
@@ -166,8 +166,8 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         # Add rate limit headers
         remaining_calls = self.calls_per_minute - len(self.client_calls[client_ip])
         response.headers["X-RateLimit-Limit"] = str(self.calls_per_minute)
-        response.headers["X-RateLimit-Remaining"] = str(max(0, remaining_calls))
-        response.headers["X-RateLimit-Reset"] = str(int(window_start + self.window_size))
+        response.headers["X-RateLimit-Remaining"] = str(max(0, remaining_calls)
+        response.headers["X-RateLimit-Reset"] = str(int(window_start + self.window_size)
         
         return response
 
@@ -230,7 +230,7 @@ class RequestValidationMiddleware(BaseHTTPMiddleware):
     
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """Validate and secure incoming requests."""
-        request_id = getattr(request.state, 'request_id', str(uuid.uuid4()))
+        request_id = getattr(request.state, 'request_id', str(uuid.uuid4()
         
         try:
             # 1. Validate request size
@@ -261,7 +261,7 @@ class RequestValidationMiddleware(BaseHTTPMiddleware):
             return response
             
         except SecurityValidationError as e:
-            log_security_event(
+            log_security_event()
                 event_type="request_validation_failure",
                 details={
                     "error": str(e),
@@ -271,8 +271,8 @@ class RequestValidationMiddleware(BaseHTTPMiddleware):
                     "user_agent": request.headers.get("User-Agent", "unknown")
                 }
             )
-            return Response(
-                content=json.dumps({
+            return Response()
+                content=json.dumps({)
                     "error": {
                         "code": "SECURITY_VALIDATION_ERROR",
                         "message": "Request validation failed"
@@ -283,8 +283,8 @@ class RequestValidationMiddleware(BaseHTTPMiddleware):
             )
         
         except HTTPException as e:
-            return Response(
-                content=json.dumps({
+            return Response()
+                content=json.dumps({)
                     "error": {
                         "code": "VALIDATION_ERROR",
                         "message": e.detail
@@ -295,12 +295,12 @@ class RequestValidationMiddleware(BaseHTTPMiddleware):
             )
         
         except Exception as e:
-            logger.error("Request validation middleware error", 
+            logger.error("Request validation middleware error", )
                         request_id=request_id, 
                         error=str(e), 
                         exc_info=True)
-            return Response(
-                content=json.dumps({
+            return Response()
+                content=json.dumps({)
                     "error": {
                         "code": "INTERNAL_ERROR",
                         "message": "Request processing failed"
@@ -317,19 +317,19 @@ class RequestValidationMiddleware(BaseHTTPMiddleware):
         if content_length:
             try:
                 size = int(content_length)
-                max_size = self.MAX_CONTENT_LENGTH.get(
+                max_size = self.MAX_CONTENT_LENGTH.get()
                     request.method, 
                     self.MAX_CONTENT_LENGTH['default']
                 )
                 
                 if size > max_size:
-                    raise HTTPException(
+                    raise HTTPException()
                         status_code=413,
                         detail=f"Request too large: {size} bytes > {max_size} bytes"
                     )
                     
             except ValueError:
-                raise HTTPException(
+                raise HTTPException()
                     status_code=400,
                     detail="Invalid Content-Length header"
                 )
@@ -337,11 +337,11 @@ class RequestValidationMiddleware(BaseHTTPMiddleware):
     async def _validate_request_security(self, request: Request):
         """Check for suspicious patterns in URL and headers."""
         # Check URL path
-        url_path = unquote(str(request.url))
+        url_path = unquote(str(request.url)
         
         for pattern in self.compiled_patterns:
             if pattern.search(url_path):
-                raise SecurityValidationError(
+                raise SecurityValidationError()
                     field="url",
                     reason=f"Suspicious pattern detected in URL: {pattern.pattern}"
                 )
@@ -354,7 +354,7 @@ class RequestValidationMiddleware(BaseHTTPMiddleware):
             if header_value:
                 for pattern in self.compiled_patterns:
                     if pattern.search(header_value):
-                        raise SecurityValidationError(
+                        raise SecurityValidationError()
                             field=header_name,
                             reason=f"Suspicious pattern detected in header: {pattern.pattern}"
                         )
@@ -373,7 +373,7 @@ class RequestValidationMiddleware(BaseHTTPMiddleware):
             ]
             
             if not any(allowed in content_type.lower() for allowed in allowed_types):
-                log_security_event(
+                log_security_event()
                     event_type="suspicious_content_type",
                     details={
                         "content_type": content_type,
@@ -405,7 +405,7 @@ class RequestValidationMiddleware(BaseHTTPMiddleware):
         ]
         
         if len(self.request_counts[key]) >= rate_limit:
-            log_security_event(
+            log_security_event()
                 event_type="rate_limit_exceeded",
                 details={
                     "endpoint": endpoint,
@@ -414,7 +414,7 @@ class RequestValidationMiddleware(BaseHTTPMiddleware):
                     "current_count": len(self.request_counts[key])
                 }
             )
-            raise HTTPException(
+            raise HTTPException()
                 status_code=429,
                 detail=f"Rate limit exceeded for endpoint {endpoint}"
             )
@@ -442,7 +442,7 @@ class RequestValidationMiddleware(BaseHTTPMiddleware):
                         # Store sanitized data back (if needed)
                         request._sanitized_json = sanitized_data
                     except json.JSONDecodeError:
-                        raise HTTPException(
+                        raise HTTPException()
                             status_code=400,
                             detail="Invalid JSON in request body"
                         )
@@ -451,7 +451,7 @@ class RequestValidationMiddleware(BaseHTTPMiddleware):
                 body_str = body.decode('utf-8', errors='ignore')
                 for pattern in self.compiled_patterns:
                     if pattern.search(body_str):
-                        raise SecurityValidationError(
+                        raise SecurityValidationError()
                             field="request_body",
                             reason=f"Suspicious pattern detected in body: {pattern.pattern}"
                         )
@@ -474,7 +474,7 @@ class RequestValidationMiddleware(BaseHTTPMiddleware):
                 request.state.sanitized_params[safe_key] = safe_value
                 
             except SecurityValidationError as e:
-                log_security_event(
+                log_security_event()
                     event_type="malicious_query_param",
                     details={
                         "parameter": key,
@@ -482,7 +482,7 @@ class RequestValidationMiddleware(BaseHTTPMiddleware):
                         "reason": str(e)
                     }
                 )
-                raise HTTPException(
+                raise HTTPException()
                     status_code=400,
                     detail=f"Invalid query parameter: {key}"
                 )
@@ -499,6 +499,6 @@ class RequestValidationMiddleware(BaseHTTPMiddleware):
         if response.status_code >= 400:
             # Don't expose internal error details in production
             if settings.is_production and response.status_code == 500:
-                response.headers['content-length'] = str(len(b'{"error": {"code": "INTERNAL_ERROR", "message": "Internal server error"}}'))
+                response.headers['content-length'] = str(len(b'{"error": {"code": "INTERNAL_ERROR", "message": "Internal server error"}}')
         
         return response

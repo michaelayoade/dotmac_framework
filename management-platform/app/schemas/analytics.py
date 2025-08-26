@@ -9,7 +9,7 @@ from enum import Enum
 
 from pydantic import BaseModel, Field, validator
 
-from .common import BaseSchema
+from schemas.common import BaseSchema
 
 
 class AnalyticsTimeframe(str, Enum):
@@ -56,7 +56,7 @@ class AnalyticsFilter(BaseModel):
     operator: str = Field(..., description="Filter operator (eq, ne, gt, gte, lt, lte, in, not_in, like)")
     value: Union[str, int, float, List[Any]] = Field(..., description="Filter value")
     
-    @validator('operator')
+    @field_validator('operator')
     def validate_operator(cls, v):
         valid_operators = ['eq', 'ne', 'gt', 'gte', 'lt', 'lte', 'in', 'not_in', 'like']
         if v not in valid_operators:
@@ -77,7 +77,7 @@ class AnalyticsQuery(BaseModel):
     format: ReportFormat = Field(default=ReportFormat.JSON, description="Output format")
     save_report: bool = Field(default=False, description="Whether to save the report")
     
-    @validator('end_date')
+    @field_validator('end_date')
     def validate_dates(cls, v, values):
         if 'start_date' in values and v <= values['start_date']:
             raise ValueError("End date must be after start date")

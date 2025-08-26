@@ -8,7 +8,7 @@ from decimal import Decimal
 from ..core.websocket_manager import websocket_manager, WebSocketMessage, EventType
 from ..api.websocket_router import broadcast_billing_event
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__, timezone)
 
 
 class BillingEventManager:
@@ -37,14 +37,14 @@ class BillingEventManager:
             # Extract key payment information
             event_data = {
                 "payment_id": payment_data.get("id"),
-                "amount": float(payment_data.get("amount", 0)),
+                "amount": float(payment_data.get("amount", 0),
                 "currency": payment_data.get("currency", "USD"),
                 "payment_method": payment_data.get("payment_method"),
                 "status": payment_data.get("status"),
                 "customer_id": customer_id or payment_data.get("customer_id"),
                 "invoice_id": payment_data.get("invoice_id"),
                 "transaction_id": payment_data.get("transaction_id"),
-                "processed_at": payment_data.get("processed_at", datetime.utcnow().isoformat()),
+                "processed_at": payment_data.get("processed_at", datetime.now(timezone.utc).isoformat(),
                 "gateway": payment_data.get("gateway"),
             }
             
@@ -81,13 +81,13 @@ class BillingEventManager:
                 "invoice_id": invoice_data.get("id"),
                 "invoice_number": invoice_data.get("invoice_number"),
                 "customer_id": customer_id or invoice_data.get("customer_id"),
-                "total_amount": float(invoice_data.get("total_amount", 0)),
+                "total_amount": float(invoice_data.get("total_amount", 0),
                 "currency": invoice_data.get("currency", "USD"),
                 "status": invoice_data.get("status"),
                 "due_date": invoice_data.get("due_date"),
-                "generated_at": invoice_data.get("created_at", datetime.utcnow().isoformat()),
+                "generated_at": invoice_data.get("created_at", datetime.now(timezone.utc).isoformat(),
                 "billing_period": invoice_data.get("billing_period"),
-                "items_count": len(invoice_data.get("items", [])),
+                "items_count": len(invoice_data.get("items", []),
                 "pdf_url": invoice_data.get("pdf_url"),
             }
             
@@ -126,7 +126,7 @@ class BillingEventManager:
                 "entity_type": update_data.get("entity_type", "billing"),
                 "customer_id": customer_id or update_data.get("customer_id"),
                 "changes": update_data.get("changes", {}),
-                "updated_at": update_data.get("updated_at", datetime.utcnow().isoformat()),
+                "updated_at": update_data.get("updated_at", datetime.now(timezone.utc).isoformat(),
                 "message": update_data.get("message", "Billing information updated"),
             }
             
@@ -161,14 +161,14 @@ class BillingEventManager:
             # Extract key payment failure information
             event_data = {
                 "payment_id": payment_data.get("id"),
-                "amount": float(payment_data.get("amount", 0)),
+                "amount": float(payment_data.get("amount", 0),
                 "currency": payment_data.get("currency", "USD"),
                 "payment_method": payment_data.get("payment_method"),
                 "customer_id": customer_id or payment_data.get("customer_id"),
                 "invoice_id": payment_data.get("invoice_id"),
                 "failure_reason": payment_data.get("failure_reason"),
                 "failure_code": payment_data.get("failure_code"),
-                "failed_at": payment_data.get("failed_at", datetime.utcnow().isoformat()),
+                "failed_at": payment_data.get("failed_at", datetime.now(timezone.utc).isoformat(),
                 "retry_possible": payment_data.get("retry_possible", True),
                 "gateway": payment_data.get("gateway"),
             }
@@ -222,9 +222,9 @@ class BillingEventManager:
                 "change_type": subscription_data.get("change_type", "status_change"),
                 "effective_date": subscription_data.get("effective_date"),
                 "next_billing_date": subscription_data.get("next_billing_date"),
-                "monthly_amount": float(subscription_data.get("monthly_amount", 0)),
+                "monthly_amount": float(subscription_data.get("monthly_amount", 0),
                 "currency": subscription_data.get("currency", "USD"),
-                "changed_at": subscription_data.get("changed_at", datetime.utcnow().isoformat()),
+                "changed_at": subscription_data.get("changed_at", datetime.now(timezone.utc).isoformat(),
             }
             
             # Broadcast to billing updates subscribers
@@ -261,14 +261,14 @@ class BillingEventManager:
             # Extract key balance information
             event_data = {
                 "customer_id": customer_id or balance_data.get("customer_id"),
-                "previous_balance": float(balance_data.get("previous_balance", 0)),
-                "new_balance": float(balance_data.get("new_balance", 0)),
-                "change_amount": float(balance_data.get("change_amount", 0)),
+                "previous_balance": float(balance_data.get("previous_balance", 0),
+                "new_balance": float(balance_data.get("new_balance", 0),
+                "change_amount": float(balance_data.get("change_amount", 0),
                 "change_type": balance_data.get("change_type"),
                 "currency": balance_data.get("currency", "USD"),
                 "reference_id": balance_data.get("reference_id"),
                 "description": balance_data.get("description"),
-                "updated_at": balance_data.get("updated_at", datetime.utcnow().isoformat()),
+                "updated_at": balance_data.get("updated_at", datetime.now(timezone.utc).isoformat(),
             }
             
             # Broadcast to billing updates subscribers
@@ -344,7 +344,7 @@ async def notify_payment_failed(payment_record, failure_reason: str, tenant_id: 
         "customer_id": str(payment_record.customer_id) if payment_record.customer_id else None,
         "invoice_id": str(payment_record.invoice_id) if payment_record.invoice_id else None,
         "failure_reason": failure_reason,
-        "failed_at": datetime.utcnow().isoformat(),
+        "failed_at": datetime.now(timezone.utc).isoformat(),
         "retry_possible": True,  # Could be determined based on failure type
         "gateway": payment_record.gateway,
     }

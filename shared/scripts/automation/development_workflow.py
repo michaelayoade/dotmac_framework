@@ -386,7 +386,7 @@ repos:
         args: [-r, ., -f, json]
 """
                 with open(pre_commit_config, "w") as f:
-                    f.write(config_content.strip())
+                    f.write(config_content.strip()
 
             # Install pre-commit hooks
             install_cmd = ["pre-commit", "install"]
@@ -439,7 +439,7 @@ repos:
         logger.info("📋 Generating project report")
 
         report = {
-            "timestamp": str(datetime.now()),
+            "timestamp": str(datetime.now(),
             "services": {},
             "overall_health": "healthy"
         }
@@ -537,7 +537,7 @@ def main():
 
     if args.command == "report":
         report = workflow.generate_project_report()
-        print(json.dumps(report, indent=2))
+        print(json.dumps(report, indent=2)
         return 0
 
     return 1
@@ -545,4 +545,4 @@ def main():
 
 if __name__ == "__main__":
     from datetime import datetime
-    sys.exit(main())
+    sys.exit(main()

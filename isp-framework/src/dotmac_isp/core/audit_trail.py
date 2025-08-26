@@ -6,7 +6,7 @@ and system events to meet compliance requirements (GDPR, SOX, HIPAA, etc.).
 
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional, Any, Union
 from dataclasses import dataclass, asdict
 from enum import Enum
@@ -17,7 +17,7 @@ import hmac
 from sqlalchemy import Column, String, Text, DateTime, Boolean, Integer, text, Index
 from sqlalchemy.dialects.postgresql import UUID, JSONB, INET
 from sqlalchemy.orm import Session
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 from fastapi import Request
 
 from dotmac_isp.shared.database.base import Base, TenantModel
@@ -143,7 +143,7 @@ class AuditLog(TenantModel):
     signature = Column(String(512), nullable=True)  # HMAC signature
 
     # Timestamp (inherited from TenantModel)
-    timestamp = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
+    timestamp = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
 
 
 class DataChangeLog(TenantModel):
@@ -326,7 +326,7 @@ class AuditTrailManager:
             "source_system": context.source_system or "dotmac_isp",
             "correlation_id": context.correlation_id,
             "tenant_id": context.tenant_id,
-            "timestamp": datetime.utcnow(),
+            "timestamp": datetime.now(timezone.utc),
         }
 
         # Add compliance frameworks
@@ -348,7 +348,7 @@ class AuditTrailManager:
         if not data:
             return data
 
-        sanitized = data.copy()
+        sanitized = data.model_copy()
 
         for field in self.sensitive_fields:
             if field in sanitized:
@@ -593,7 +593,7 @@ class AuditTrailManager:
 
     def cleanup_old_audit_logs(self, days_to_keep: int = 2555) -> int:
         """Clean up old audit logs based on retention policy."""
-        cutoff_date = datetime.utcnow() - timedelta(days=days_to_keep)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=days_to_keep)
 
         try:
             with next(get_db()) as db:

@@ -4,7 +4,7 @@ import asyncio
 import logging
 import os
 import ssl
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 import subprocess
@@ -83,7 +83,7 @@ class SSLCertificateManager:
 
             issued_date = cert.not_valid_before
             expiry_date = cert.not_valid_after
-            days_until_expiry = (expiry_date - datetime.utcnow()).days
+            days_until_expiry = (expiry_date - datetime.now(timezone.utc)).days
 
             return CertificateInfo(
                 domain=domain,
@@ -127,8 +127,8 @@ class SSLCertificateManager:
                 .issuer_name(issuer)
                 .public_key(private_key.public_key())
                 .serial_number(x509.random_serial_number())
-                .not_valid_before(datetime.utcnow())
-                .not_valid_after(datetime.utcnow() + timedelta(days=365))
+                .not_valid_before(datetime.now(timezone.utc))
+                .not_valid_after(datetime.now(timezone.utc) + timedelta(days=365))
                 .add_extension(
                     x509.SubjectAlternativeName(
                         [
@@ -327,11 +327,11 @@ async def main():
             print(f"❌ Failed to renew certificate for {{domain}}")
     
     # Restart application if any certificates were renewed
-    if any(results.values()):
+    if any(results.values():
         print("Certificates were renewed, consider restarting the application")
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(main()
 '''
 
             with open(script_path, "w") as f:

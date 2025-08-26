@@ -14,9 +14,9 @@ import redis.asyncio as aioredis
 from pydantic import BaseModel
 
 from ..config import settings
-from ..core.logging import get_logger
+from .logging import get_logger
 
-logger = get_logger(__name__)
+logger = get_logger(__name__, timezone)
 
 
 class CacheConfig(BaseModel):
@@ -59,7 +59,7 @@ class CacheManager:
     async def init_connection(self):
         """Initialize Redis connection pool."""
         try:
-            self.redis_pool = aioredis.from_url(
+            self.redis_pool = aioredis.from_url()
                 self.redis_url,
                 max_connections=settings.redis_max_connections,
                 decode_responses=False,  # We handle encoding ourselves
@@ -90,7 +90,7 @@ class CacheManager:
         
         # Hash key if too long
         if len(full_key) > self.config.max_key_length:
-            key_hash = hashlib.sha256(full_key.encode()).hexdigest()
+            key_hash = hashlib.sha256(full_key.encode().hexdigest()
             full_key = f"{self.config.key_prefix}hashed:{key_hash}"
         
         return full_key
@@ -108,7 +108,7 @@ class CacheManager:
         if self.config.serializer == "pickle":
             return pickle.loads(data)
         else:
-            return json.loads(data.decode('utf-8'))
+            return json.loads(data.decode('utf-8')
     
     async def get(self, key: str, namespace: str = None, default: Any = None) -> Any:
         """Get value from cache."""
@@ -118,7 +118,7 @@ class CacheManager:
             # Check local cache first for critical data
             if cache_key in self._local_cache:
                 value, expiry = self._local_cache[cache_key]
-                if datetime.utcnow() < expiry:
+                if datetime.now(timezone.utc) < expiry:
                     self.stats.hits += 1
                     return value
                 else:
@@ -139,10 +139,10 @@ class CacheManager:
             
         except Exception as e:
             self.stats.errors += 1
-            logger.error("Cache get error", key=cache_key, error=str(e))
+            logger.error("Cache get error", key=cache_key, error=str(e)
             return default
     
-    async def set(
+    async def set():
         self, 
         key: str, 
         value: Any, 
@@ -159,11 +159,11 @@ class CacheManager:
             if local_cache:
                 if len(self._local_cache) >= self._local_cache_max_size:
                     # Remove oldest item
-                    oldest_key = min(self._local_cache.keys(), 
+                    oldest_key = min(self._local_cache.keys(), )
                                    key=lambda k: self._local_cache[k][1])
                     del self._local_cache[oldest_key]
                 
-                expiry = datetime.utcnow() + timedelta(seconds=ttl)
+                expiry = datetime.now(timezone.utc) + timedelta(seconds=ttl)
                 self._local_cache[cache_key] = (value, expiry)
             
             # Store in Redis
@@ -179,7 +179,7 @@ class CacheManager:
             
         except Exception as e:
             self.stats.errors += 1
-            logger.error("Cache set error", key=cache_key, error=str(e))
+            logger.error("Cache set error", key=cache_key, error=str(e)
             return False
     
     async def delete(self, key: str, namespace: str = None) -> bool:
@@ -195,14 +195,14 @@ class CacheManager:
             if self.redis_pool:
                 result = await self.redis_pool.delete(cache_key)
                 self.stats.deletes += 1
-                logger.debug("Cache delete", key=cache_key, found=bool(result))
+                logger.debug("Cache delete", key=cache_key, found=bool(result)
                 return bool(result)
             
             return False
             
         except Exception as e:
             self.stats.errors += 1
-            logger.error("Cache delete error", key=cache_key, error=str(e))
+            logger.error("Cache delete error", key=cache_key, error=str(e)
             return False
     
     async def delete_pattern(self, pattern: str, namespace: str = None) -> int:
@@ -221,7 +221,7 @@ class CacheManager:
             
         except Exception as e:
             self.stats.errors += 1
-            logger.error("Cache pattern delete error", pattern=search_pattern, error=str(e))
+            logger.error("Cache pattern delete error", pattern=search_pattern, error=str(e)
             return 0
     
     async def exists(self, key: str, namespace: str = None) -> bool:
@@ -231,7 +231,7 @@ class CacheManager:
         try:
             if cache_key in self._local_cache:
                 _, expiry = self._local_cache[cache_key]
-                if datetime.utcnow() < expiry:
+                if datetime.now(timezone.utc) < expiry:
                     return True
                 else:
                     del self._local_cache[cache_key]
@@ -243,7 +243,7 @@ class CacheManager:
             return False
             
         except Exception as e:
-            logger.error("Cache exists error", key=cache_key, error=str(e))
+            logger.error("Cache exists error", key=cache_key, error=str(e)
             return False
     
     async def increment(self, key: str, amount: int = 1, namespace: str = None) -> int:
@@ -258,7 +258,7 @@ class CacheManager:
             return amount
             
         except Exception as e:
-            logger.error("Cache increment error", key=cache_key, error=str(e))
+            logger.error("Cache increment error", key=cache_key, error=str(e)
             return 0
     
     async def expire(self, key: str, ttl: int, namespace: str = None) -> bool:
@@ -273,7 +273,7 @@ class CacheManager:
             return False
             
         except Exception as e:
-            logger.error("Cache expire error", key=cache_key, error=str(e))
+            logger.error("Cache expire error", key=cache_key, error=str(e)
             return False
     
     async def get_stats(self) -> CacheStats:
@@ -293,7 +293,7 @@ class CacheManager:
             
             # Test basic operations
             test_key = "health_check_test"
-            test_value = {"timestamp": datetime.utcnow().isoformat()}
+            test_value = {"timestamp": datetime.now(timezone.utc).isoformat()}
             
             await self.set(test_key, test_value, ttl=60)
             retrieved_value = await self.get(test_key)
@@ -305,7 +305,7 @@ class CacheManager:
             
             return {
                 "status": "healthy",
-                "stats": self.stats.dict(),
+                "stats": self.stats.model_dump(),
                 "local_cache_size": len(self._local_cache)
             }
             
@@ -329,7 +329,7 @@ async def get_cache_manager() -> CacheManager:
 
 
 # Decorators for caching
-def cached(
+def cached()
     ttl: int = 3600,
     namespace: str = None,
     key_builder: Callable = None,
@@ -347,7 +347,7 @@ def cached(
                 # Default key from function name and arguments
                 key_parts = [func.__name__]
                 key_parts.extend(str(arg) for arg in args)
-                key_parts.extend(f"{k}={v}" for k, v in sorted(kwargs.items()))
+                key_parts.extend(f"{k}={v}" for k, v in sorted(kwargs.items()
                 cache_key = ":".join(key_parts)
             
             cache_manager = await get_cache_manager()
@@ -380,7 +380,7 @@ def cached(
             else:
                 key_parts = [func.__name__]
                 key_parts.extend(str(arg) for arg in args)
-                key_parts.extend(f"{k}={v}" for k, v in sorted(kwargs.items()))
+                key_parts.extend(f"{k}={v}" for k, v in sorted(kwargs.items()
                 cache_key = ":".join(key_parts)
             
             async def _async_execution():
@@ -403,7 +403,7 @@ def cached(
                 
                 return result
             
-            return loop.run_until_complete(_async_execution())
+            return loop.run_until_complete(_async_execution()
         
         # Return appropriate wrapper
         if asyncio.iscoroutinefunction(func):
@@ -444,7 +444,7 @@ def cache_invalidate(namespace: str = None, pattern: str = None):
                 elif namespace:
                     await cache_manager.flush_namespace(namespace)
             
-            loop.run_until_complete(_invalidate())
+            loop.run_until_complete(_invalidate()
             
             return result
         
@@ -473,7 +473,7 @@ class TenantCache:
     async def set_tenant_config(tenant_id: str, config: Dict, ttl: int = None):
         """Cache tenant configuration."""
         cache_manager = await get_cache_manager()
-        await cache_manager.set(
+        await cache_manager.set()
             f"config:{tenant_id}", 
             config, 
             ttl or TenantCache.DEFAULT_TTL,
@@ -503,7 +503,7 @@ class UserCache:
     async def set_user_permissions(user_id: str, permissions: List, ttl: int = None):
         """Cache user permissions."""
         cache_manager = await get_cache_manager()
-        await cache_manager.set(
+        await cache_manager.set()
             f"permissions:{user_id}",
             permissions,
             ttl or UserCache.DEFAULT_TTL,

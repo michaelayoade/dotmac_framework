@@ -144,7 +144,7 @@ class TenantIsolationValidator:
                 mem_limit="1g",  # Resource limit
                 cpuset_cpus="0-3",  # CPU limit
             )
-            self.created_resources.append(("container", isp_container.id))
+            self.created_resources.append(("container", isp_container.id)
             
             tenant_info = {
                 "tenant_id": tenant_id,
@@ -227,7 +227,7 @@ class TenantIsolationValidator:
             
             # Try to connect to tenant2's postgres from tenant1's container
             result = container1.exec_run(
-                f"python -c 'import socket; s=socket.socket(); s.settimeout(5); s.connect((\"postgres-{tenant2['tenant_id']}\", 5432))'",
+                f"python -c 'import socket; s=socket.socket(); s.settimeout(5); s.connect((\"postgres-{tenant2['tenant_id']}\", 5432)'",
                 timeout=10
             )
             
@@ -241,7 +241,7 @@ class TenantIsolationValidator:
             container2 = self.docker_client.containers.get(tenant2["containers"]["isp_framework"]["id"])
             
             result = container2.exec_run(
-                f"python -c 'import socket; s=socket.socket(); s.settimeout(5); s.connect((\"redis-{tenant1['tenant_id']}\", 6379))'",
+                f"python -c 'import socket; s=socket.socket(); s.settimeout(5); s.connect((\"redis-{tenant1['tenant_id']}\", 6379)'",
                 timeout=10
             )
             
@@ -378,7 +378,7 @@ class TenantIsolationValidator:
                         results["tests"].append(f"✓ CPU limit set for {service} in tenant {tenant_id}: {cpu_set}")
                     
                     # Verify container is using assigned network only
-                    networks = list(container.attrs['NetworkSettings']['Networks'].keys())
+                    networks = list(container.attrs['NetworkSettings']['Networks'].keys()
                     expected_network = f"dotmac-tenant-{tenant_id}"
                     
                     if expected_network in networks and len(networks) == 1:
@@ -641,4 +641,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    exit(asyncio.run(main()))
+    exit(asyncio.run(main()

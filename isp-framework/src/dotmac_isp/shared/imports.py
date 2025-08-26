@@ -1,7 +1,7 @@
 """Standardized imports to reduce duplication across modules."""
 
 # Standard library imports
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 from typing import List, Optional, Dict, Any, Union, Tuple
 from uuid import uuid4, UUID
 from enum import Enum
@@ -197,7 +197,7 @@ def validate_uuid(uuid_str: str) -> str:
 # Common utility functions
 def utcnow() -> datetime:
     """Get current UTC datetime."""
-    return datetime.utcnow()
+    return datetime.now(timezone.utc)
 
 
 def today() -> date:

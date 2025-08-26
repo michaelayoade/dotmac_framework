@@ -726,7 +726,7 @@ async def collect_realtime_metrics():
         await asyncio.sleep(5)  # Update every 5 seconds
 
 if __name__ == "__main__":
-    asyncio.run(collect_realtime_metrics())
+    asyncio.run(collect_realtime_metrics()
 '''
         
         # Save real-time monitoring script
@@ -892,7 +892,7 @@ if __name__ == "__main__":
                 'rules': [
                     {
                         'alert': 'HighCPUUsage',
-                        'expr': f'100 - (avg by(instance) (rate(node_cpu_seconds_total{{mode="idle"}}[5m])) * 100) > {self.config["thresholds"]["cpu_critical"]}',
+                        'expr': f'100 - (avg by(instance) (rate(node_cpu_seconds_total{{mode="idle"}}[5m]) * 100) > {self.config["thresholds"]["cpu_critical"]}',
                         'for': '5m',
                         'labels': {'severity': 'critical'},
                         'annotations': {
@@ -902,7 +902,7 @@ if __name__ == "__main__":
                     },
                     {
                         'alert': 'HighMemoryUsage',
-                        'expr': f'(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > {self.config["thresholds"]["memory_critical"]}',
+                        'expr': f'(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100 > {self.config["thresholds"]["memory_critical"]}',
                         'for': '5m',
                         'labels': {'severity': 'critical'},
                         'annotations': {
@@ -912,7 +912,7 @@ if __name__ == "__main__":
                     },
                     {
                         'alert': 'HighDiskUsage',
-                        'expr': f'(1 - (node_filesystem_avail_bytes / node_filesystem_size_bytes)) * 100 > {self.config["thresholds"]["disk_critical"]}',
+                        'expr': f'(1 - (node_filesystem_avail_bytes / node_filesystem_size_bytes) * 100 > {self.config["thresholds"]["disk_critical"]}',
                         'for': '2m',
                         'labels': {'severity': 'critical'},
                         'annotations': {
@@ -1025,7 +1025,7 @@ Prometheus: http://localhost:9090
             'configuration': {
                 'metrics_retention': self.config['retention']['metrics_retention'],
                 'alerting_enabled': self.config['alerting']['enabled'],
-                'notification_channels': list(self.config['alerting']['channels'].keys())
+                'notification_channels': list(self.config['alerting']['channels'].keys()
             },
             'monitoring_targets': {
                 'backend_services': 7,
@@ -1084,7 +1084,7 @@ async def main():
         
         def signal_handler(signum, frame):
             logger.info("🛑 Received shutdown signal. Cleaning up...")
-            asyncio.create_task(monitoring_setup.cleanup_monitoring())
+            asyncio.create_task(monitoring_setup.cleanup_monitoring()
             sys.exit(0)
         
         signal.signal(signal.SIGINT, signal_handler)
@@ -1102,4 +1102,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(main()

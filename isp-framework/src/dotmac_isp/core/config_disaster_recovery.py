@@ -24,7 +24,7 @@ from .secrets_manager import get_secrets_manager
 from .config_encryption import get_config_encryption
 from .config_hotreload import get_config_hotreload, ReloadTrigger
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__, timezone)
 
 
 class DisasterType(str, Enum):
@@ -242,7 +242,7 @@ class ConfigurationDisasterRecovery:
             events_file = self.storage_path / "disaster_events.json"
             with open(events_file, "w") as f:
                 json.dump(
-                    {k: v.dict() for k, v in self.disaster_events.items()},
+                    {k: v.model_dump() for k, v in self.disaster_events.items()},
                     f,
                     indent=2,
                     default=str,
@@ -252,7 +252,7 @@ class ConfigurationDisasterRecovery:
             plans_file = self.storage_path / "recovery_plans.json"
             with open(plans_file, "w") as f:
                 json.dump(
-                    {k: v.dict() for k, v in self.recovery_plans.items()},
+                    {k: v.model_dump() for k, v in self.recovery_plans.items()},
                     f,
                     indent=2,
                     default=str,
@@ -262,7 +262,7 @@ class ConfigurationDisasterRecovery:
             executions_file = self.storage_path / "recovery_executions.json"
             with open(executions_file, "w") as f:
                 json.dump(
-                    {k: v.dict() for k, v in self.recovery_executions.items()},
+                    {k: v.model_dump() for k, v in self.recovery_executions.items()},
                     f,
                     indent=2,
                     default=str,
@@ -502,7 +502,7 @@ class ConfigurationDisasterRecovery:
         """Perform comprehensive health check."""
         try:
             health_data = {
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "configuration_valid": self._check_configuration_health(),
                 "secrets_accessible": self._check_secrets_accessibility(),
                 "backups_available": self._check_backup_availability(),
@@ -518,7 +518,7 @@ class ConfigurationDisasterRecovery:
 
             # Update baseline
             self._health_baseline = health_data
-            self._last_health_check = datetime.utcnow()
+            self._last_health_check = datetime.now(timezone.utc)
 
         except Exception as e:
             logger.error(f"Health check failed: {e}")
@@ -562,7 +562,7 @@ class ConfigurationDisasterRecovery:
 
             # Check if we have a recent backup (within last 24 hours)
             latest_backup = recent_backups[0]
-            age = datetime.utcnow() - latest_backup.created_at
+            age = datetime.now(timezone.utc) - latest_backup.created_at
             return age < timedelta(hours=24)
 
         except Exception as e:
@@ -658,13 +658,13 @@ class ConfigurationDisasterRecovery:
         Returns:
             Event ID
         """
-        event_id = f"disaster-{datetime.utcnow().strftime('%Y%m%d-%H%M%S-%f')}"
+        event_id = f"disaster-{datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S-%f')}"
 
         disaster_event = DisasterEvent(
             event_id=event_id,
             disaster_type=disaster_type,
             priority=priority,
-            detected_at=datetime.utcnow(),
+            detected_at=datetime.now(timezone.utc),
             description=description,
             affected_services=affected_services or [],
             affected_environments=affected_environments or [],
@@ -747,7 +747,7 @@ class ConfigurationDisasterRecovery:
         if plan_id not in self.recovery_plans:
             raise ValueError(f"Recovery plan not found: {plan_id}")
 
-        execution_id = f"recovery-{datetime.utcnow().strftime('%Y%m%d-%H%M%S-%f')}"
+        execution_id = f"recovery-{datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S-%f')}"
         plan = self.recovery_plans[plan_id]
 
         recovery_execution = RecoveryExecution(
@@ -755,7 +755,7 @@ class ConfigurationDisasterRecovery:
             event_id=event_id,
             plan_id=plan_id,
             status=RecoveryStatus.PENDING,
-            started_at=datetime.utcnow(),
+            started_at=datetime.now(timezone.utc),
             total_steps=len(plan.recovery_steps),
             executed_by=executed_by,
         )
@@ -794,7 +794,7 @@ class ConfigurationDisasterRecovery:
                         {
                             "step": step,
                             "result": step_result,
-                            "completed_at": datetime.utcnow().isoformat(),
+                            "completed_at": datetime.now(timezone.utc).isoformat(),
                         }
                     )
 
@@ -806,7 +806,7 @@ class ConfigurationDisasterRecovery:
                         {
                             "step": step,
                             "error": str(step_error),
-                            "failed_at": datetime.utcnow().isoformat(),
+                            "failed_at": datetime.now(timezone.utc).isoformat(),
                         }
                     )
 
@@ -831,7 +831,7 @@ class ConfigurationDisasterRecovery:
                     f"Recovery completed with validation failures: {execution_id}"
                 )
 
-            execution.completed_at = datetime.utcnow()
+            execution.completed_at = datetime.now(timezone.utc)
             execution.duration = execution.completed_at - execution.started_at
             execution.progress_percentage = 100.0
 
@@ -841,7 +841,7 @@ class ConfigurationDisasterRecovery:
             logger.error(f"Recovery execution failed: {execution_id} - {e}")
             execution.status = RecoveryStatus.FAILED
             execution.error_message = str(e)
-            execution.completed_at = datetime.utcnow()
+            execution.completed_at = datetime.now(timezone.utc)
             self._save_disaster_recovery_data()
 
     def _execute_recovery_step(

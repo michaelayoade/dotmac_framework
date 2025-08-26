@@ -17,7 +17,7 @@ else:
 
     class Task:
         """Class for Task operations."""
-        def __call__(self, *args, **kwargs):
+        def __call__(self, *args, timezone=None, **kwargs):
             """  Call   operation."""
             pass
 
@@ -73,7 +73,7 @@ def health_check(self):
             logger.error(f"Database health check failed: {e}")
 
         health_data = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "status": (
                 "healthy"
                 if "unhealthy" not in f"{redis_status}{db_status}"
@@ -107,7 +107,7 @@ def health_check(self):
     except Exception as e:
         logger.error(f"Health check failed: {e}")
         return {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "status": "unhealthy",
             "error": str(e),
         }
@@ -143,7 +143,7 @@ async def cleanup_expired_sessions(self):
         return {
             "cleaned_count": cleaned_count,
             "total_checked": len(keys),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     except Exception as e:
@@ -170,7 +170,7 @@ async def renew_ssl_certificates(self):
         return {
             "renewed": renewed_domains,
             "failed": failed_domains,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     except Exception as e:
@@ -222,7 +222,7 @@ async def send_channel_notification(
                 "status": "sent",
                 "message_id": result.get("message_id"),
                 "provider": result.get("provider"),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
         else:
             logger.error(f"Plugin system failed: {result.get('error')}")
@@ -264,7 +264,7 @@ async def send_customer_channel_notification(
                 "status": "sent",
                 "message_id": result.get("message_id"),
                 "provider": result.get("provider"),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
         else:
             logger.error(f"Customer notification failed: {result.get('error')}")
@@ -351,7 +351,7 @@ async def cleanup_cache_namespace(self, namespace: str, max_age_hours: int = 24)
         return {
             "namespace": namespace,
             "cleaned_count": cleaned_count,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     except Exception as e:
@@ -421,7 +421,7 @@ async def backup_database(self, backup_type: str = "incremental"):
         # For now, just log the operation
 
         backup_file = (
-            f"backup_{backup_type}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.sql"
+            f"backup_{backup_type}_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.sql"
         )
 
         # Simulate backup process
@@ -434,7 +434,7 @@ async def backup_database(self, backup_type: str = "incremental"):
         return {
             "backup_file": backup_file,
             "backup_type": backup_type,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "status": "completed",
         }
 
@@ -508,7 +508,7 @@ def system_metrics_collection(self):
         disk = psutil.disk_usage("/")
 
         metrics = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "cpu_percent": cpu_percent,
             "memory_percent": memory.percent,
             "memory_available_gb": memory.available / (1024**3),
@@ -524,7 +524,7 @@ def system_metrics_collection(self):
 
         # Store in time series (keep last 24 hours)
         metrics_key = (
-            f"system_metrics_history:{datetime.utcnow().strftime('%Y%m%d%H%M')}"
+            f"system_metrics_history:{datetime.now(timezone.utc).strftime('%Y%m%d%H%M')}"
         )
         cache_manager.set(metrics_key, metrics, 86400, "metrics")
 
@@ -548,7 +548,7 @@ def application_metrics_collection(self):
         redis_info = cache_manager.redis_client.info()
 
         app_metrics = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "redis_connected_clients": redis_info.get("connected_clients", 0),
             "redis_used_memory_mb": redis_info.get("used_memory", 0) / (1024**2),
             "redis_keyspace_hits": redis_info.get("keyspace_hits", 0),

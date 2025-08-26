@@ -1,6 +1,6 @@
 """Shared Pydantic schemas and base classes."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List, Any, Generic, TypeVar
 from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
@@ -119,7 +119,7 @@ class ErrorResponse(BaseSchema):
     error: str
     message: str
     details: Optional[dict] = None
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class SuccessResponse(BaseSchema):
@@ -128,7 +128,7 @@ class SuccessResponse(BaseSchema):
     success: bool = True
     message: str
     data: Optional[dict] = None
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class BulkOperationResponse(BaseSchema):
@@ -138,4 +138,4 @@ class BulkOperationResponse(BaseSchema):
     successful: int
     failed: int
     errors: list[str] = Field(default_factory=list)
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

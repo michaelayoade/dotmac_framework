@@ -6,7 +6,7 @@ from typing import Dict, Any
 
 from dotmac_isp.core.celery_app import celery_app
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__, timezone)
 
 
 @celery_app.task(bind=True)
@@ -28,8 +28,8 @@ def provision_internet_service(
             "service_plan_id": service_plan_id,
             "installation_date": installation_date,
             "status": "provisioned",
-            "service_id": f"svc_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
-            "timestamp": datetime.utcnow().isoformat(),
+            "service_id": f"svc_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
         logger.info(f"Internet service provisioned: {result['service_id']}")
@@ -56,7 +56,7 @@ def deactivate_service(self, service_id: str, reason: str):
             "service_id": service_id,
             "reason": reason,
             "status": "deactivated",
-            "deactivated_at": datetime.utcnow().isoformat(),
+            "deactivated_at": datetime.now(timezone.utc).isoformat(),
         }
 
         logger.info(f"Service deactivated: {service_id}")

@@ -25,14 +25,14 @@ class AIPropertyTestGenerator:
         return st.fixed_dictionaries({
             'customer_id': st.uuids(),
             'customer_number': st.text(
-                alphabet=st.characters(whitelist_categories=('Lu', 'Nd')), 
+                alphabet=st.characters(whitelist_categories=('Lu', 'Nd'), 
                 min_size=8, 
                 max_size=12
             ).map(lambda x: f"CUS-{x[:6]}"),
             'display_name': st.text(min_size=2, max_size=100),
             'email': st.emails(),
             'phone': st.text(
-                alphabet=st.characters(whitelist_categories=('Nd',)), 
+                alphabet=st.characters(whitelist_categories=('Nd',), 
                 min_size=10, 
                 max_size=15
             ).map(lambda x: f"+1-{x[:3]}-{x[3:6]}-{x[6:10]}"),
@@ -63,7 +63,7 @@ class AIPropertyTestGenerator:
             'bandwidth_mbps': st.integers(min_value=1, max_value=1000),
             'monthly_cost': st.decimals(min_value=9.99, max_value=999.99, places=2),
             'contract_length_months': st.integers(min_value=1, max_value=36),
-            'data_limit_gb': st.one_of(st.none(), st.integers(min_value=1, max_value=1000))
+            'data_limit_gb': st.one_of(st.none(), st.integers(min_value=1, max_value=1000)
         })
 
 
@@ -77,7 +77,7 @@ def property_test(
     Decorator for property-based tests that generates multiple test cases.
     
     Example:
-        @property_test(AIPropertyTestGenerator.generate_billing_data())
+        @property_test(AIPropertyTestGenerator.generate_billing_data()
         @pytest.mark.property_based
         def test_billing_calculation_properties(billing_data):
             # Test invariants that should always hold
@@ -156,7 +156,7 @@ class CustomerLifecycleStateMachine(RuleBasedStateMachine):
         if not self.customers:
             return  # Need customers before adding services
         
-        customer_id = next(iter(self.customers.keys()))
+        customer_id = next(iter(self.customers.keys())
         service_id = str(service_data['service_id'])
         
         self.services[service_id] = {
@@ -173,7 +173,7 @@ class CustomerLifecycleStateMachine(RuleBasedStateMachine):
 
 # Example property-based tests for critical business functions
 
-@property_test(AIPropertyTestGenerator.generate_billing_data())
+@property_test(AIPropertyTestGenerator.generate_billing_data()
 @pytest.mark.property_based
 @pytest.mark.revenue_critical
 def property_test_billing_never_negative(billing_data):
@@ -187,7 +187,7 @@ def property_test_billing_never_negative(billing_data):
     assert bill_amount >= 0, f"Negative bill generated: {bill_amount}"
 
 
-@property_test(AIPropertyTestGenerator.generate_customer_data())
+@property_test(AIPropertyTestGenerator.generate_customer_data()
 @pytest.mark.property_based
 @pytest.mark.data_safety
 def property_test_customer_data_integrity(customer_data):

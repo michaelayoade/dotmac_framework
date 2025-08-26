@@ -11,13 +11,14 @@ from dotmac_isp.shared.base_service import BaseTenantService
 from dotmac_isp.modules.identity import models, schemas
 from dotmac_isp.modules.identity.portal_id_generator import get_portal_id_generator
 from dotmac_isp.modules.identity.portal_service import PortalAccountService
+from dotmac_isp.sdks.identity.schemas import CustomerResponse as SDKCustomerResponse
 from dotmac_isp.shared.exceptions import (
     ServiceError,
     EntityNotFoundError,
     ValidationError,
     BusinessRuleError,
-    ConflictError,
-)
+    ConflictError)
+from datetime import datetime, timezone
 
 
 class CustomerService(BaseTenantService[models.Customer, schemas.CustomerCreate, schemas.CustomerUpdate, schemas.CustomerResponse]):
@@ -589,7 +590,7 @@ class IdentityService:
 
     def _build_customer_response(
         self,
-        sdk_customer: CustomerResponse,
+        sdk_customer: SDKCustomerResponse,
         original_data: schemas.CustomerCreate,
         customer_type_enum: Optional[models.CustomerType] = None,
         portal_id: Optional[str] = None,
@@ -621,7 +622,7 @@ class IdentityService:
         )
 
     def _build_customer_response_from_sdk(
-        self, sdk_customer: CustomerResponse
+        self, sdk_customer: SDKCustomerResponse
     ) -> schemas.CustomerResponse:
         """Build customer response from SDK response only."""
         return schemas.CustomerResponse(
@@ -1075,7 +1076,7 @@ class AuthService:
                 "user_id": user.id,
                 "token_hash": token_hash,
                 "token_type": "reset",
-                "expires_at": datetime.utcnow() + timedelta(hours=1),
+                "expires_at": datetime.now(timezone.utc) + timedelta(hours=1),
             }
             self.token_repo.create(token_data)
 
@@ -1168,14 +1169,14 @@ class AuthService:
                 3600
                 if token_type == "access"
                 else 86400 if token_type == "refresh" else 3600
-            )
+            , timezone)
 
         payload = {
             "user_id": str(user.id),
             "username": user.username,
             "token_type": token_type,
-            "exp": datetime.utcnow() + timedelta(seconds=expires_in),
-            "iat": datetime.utcnow(),
+            "exp": datetime.now(timezone.utc) + timedelta(seconds=expires_in),
+            "iat": datetime.now(timezone.utc),
             "tenant_id": str(user.tenant_id),
         }
 
@@ -1262,7 +1263,7 @@ class AuthService:
                 "user_id": user.id,
                 "token_hash": self._hash_token(access_token),
                 "token_type": "access",
-                "expires_at": datetime.utcnow() + timedelta(hours=1),
+                "expires_at": datetime.now(timezone.utc) + timedelta(hours=1),
                 "ip_address": ip_address,
                 "user_agent": user_agent,
             },
@@ -1270,7 +1271,7 @@ class AuthService:
                 "user_id": user.id,
                 "token_hash": self._hash_token(refresh_token),
                 "token_type": "refresh",
-                "expires_at": datetime.utcnow() + timedelta(days=7),
+                "expires_at": datetime.now(timezone.utc) + timedelta(days=7),
                 "ip_address": ip_address,
                 "user_agent": user_agent,
             },
@@ -1306,7 +1307,7 @@ class AuthService:
 
         # Lock account after 5 failed attempts for 30 minutes
         if failed_attempts >= 5:
-            update_data["locked_until"] = datetime.utcnow() + timedelta(minutes=30)
+            update_data["locked_until"] = datetime.now(timezone.utc) + timedelta(minutes=30)
 
         self.user_repo.update(user.id, update_data)
 
@@ -1318,4 +1319,4 @@ class AuthService:
 
     async def _update_last_login(self, user: models.User):
         """Update user's last login timestamp."""
-        self.user_repo.update(user.id, {"last_login": datetime.utcnow()})
+        self.user_repo.update(user.id, {"last_login": datetime.now(timezone.utc)})

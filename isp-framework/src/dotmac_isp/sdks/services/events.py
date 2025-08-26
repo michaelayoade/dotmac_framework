@@ -1,7 +1,7 @@
 """Events handling for services SDK."""
 
 from typing import Optional, Dict, Any, List, Callable
-from datetime import datetime
+from datetime import datetime, timezone
 import asyncio
 from enum import Enum
 
@@ -34,7 +34,7 @@ class Event:
         self.tenant_id = tenant_id
         self.data = data
         self.metadata = metadata or {}
-        self.timestamp = datetime.utcnow()
+        self.timestamp = datetime.now(timezone.utc)
         self.event_id = f"{event_type.value}_{tenant_id}_{int(self.timestamp.timestamp())}"
     
     def to_dict(self) -> Dict[str, Any]:

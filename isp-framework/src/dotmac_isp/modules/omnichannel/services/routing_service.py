@@ -36,9 +36,9 @@ class RoutingService(BaseOmnichannelService):
             # Create routing rule
             rule = await self.repository.create_routing_rule(
                 {
-                    **rule_data.dict(),
+                    **rule_data.model_dump(),
                     "tenant_id": self.tenant_id,
-                    "created_at": datetime.utcnow(),
+                    "created_at": datetime.now(timezone.utc),
                     "is_active": True,
                 }
             )
@@ -91,7 +91,7 @@ class RoutingService(BaseOmnichannelService):
                         "assigned_agent_id": routing_result.get("agent_id"),
                         "assigned_team_id": routing_result.get("team_id"),
                         "routing_rule_id": routing_result.get("rule_id"),
-                        "routed_at": datetime.utcnow(),
+                        "routed_at": datetime.now(timezone.utc),
                     },
                 )
 
@@ -203,7 +203,7 @@ class RoutingService(BaseOmnichannelService):
 
         # Update assignment timestamp
         await self.repository.update_agent(
-            agent.id, {"last_assignment_at": datetime.utcnow()}
+            agent.id, {"last_assignment_at": datetime.now(timezone.utc)}
         )
 
         return {"agent_id": agent.id, "team_id": team_id, "strategy": "round_robin"}
@@ -220,7 +220,7 @@ class RoutingService(BaseOmnichannelService):
 
         # Select agent with best skill match
         best_agent = max(
-            agents, key=lambda a: len(set(a.skills) & set(required_skills))
+            agents, key=lambda a: len(set(a.skills) & set(required_skills)
         )
 
         return {
@@ -242,7 +242,7 @@ class RoutingService(BaseOmnichannelService):
         agent_workloads = []
         for agent in agents:
             workload = await self.repository.get_agent_workload(agent.id)
-            agent_workloads.append((agent, workload))
+            agent_workloads.append((agent, workload)
 
         # Select agent with lowest workload
         best_agent, _ = min(agent_workloads, key=lambda x: x[1])

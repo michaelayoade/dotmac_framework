@@ -71,7 +71,7 @@ class CertificateInfo:
 
     def expires_soon(self, days: int = 30) -> bool:
         """Check if certificate expires within specified days"""
-        return utcnow() > (self.not_after - timedelta(days=days))
+        return utcnow() > (self.not_after - timedelta(days=days)
 
 
 class CertificateManager:
@@ -110,12 +110,12 @@ class CertificateManager:
             x509.CertificateBuilder()
             .subject_name(subject)
             .issuer_name(issuer)
-            .public_key(private_key.public_key())
-            .serial_number(x509.random_serial_number())
-            .not_valid_before(utcnow())
-            .not_valid_after(utcnow() + timedelta(days=3650))  # 10 years
+            .public_key(private_key.public_key()
+            .serial_number(x509.random_serial_number()
+            .not_valid_before(utcnow()
+            .not_valid_after(utcnow() + timedelta(days=3650)  # 10 years
             .add_extension(
-                x509.SubjectKeyIdentifier.from_public_key(private_key.public_key()),
+                x509.SubjectKeyIdentifier.from_public_key(private_key.public_key(),
                 critical=False,
             )
             .add_extension(
@@ -142,7 +142,7 @@ class CertificateManager:
                 ),
                 critical=True,
             )
-            .sign(private_key, hashes.SHA256(), default_backend())
+            .sign(private_key, hashes.SHA256(), default_backend()
         )
 
         # Store CA certificate and key
@@ -167,7 +167,7 @@ class CertificateManager:
             not_before=cert.not_valid_before_utc,
             not_after=cert.not_valid_after_utc,
             status=CertificateStatus.ACTIVE,
-            fingerprint=cert.fingerprint(hashes.SHA256()).hex(),
+            fingerprint=cert.fingerprint(hashes.SHA256().hex(),
             key_size=4096,
             signature_algorithm=cert.signature_algorithm_oid._name,
             san_dns=[],
@@ -196,7 +196,7 @@ class CertificateManager:
         ca_cert_pem = self.ca_certificates["root_ca"]
         ca_key_pem = self.private_keys["root_ca"]
 
-        ca_cert = x509.load_pem_x509_certificate(ca_cert_pem, default_backend())
+        ca_cert = x509.load_pem_x509_certificate(ca_cert_pem, default_backend()
         ca_private_key = serialization.load_pem_private_key(
             ca_key_pem, password=None, backend=default_backend()
         )
@@ -218,12 +218,12 @@ class CertificateManager:
             x509.CertificateBuilder()
             .subject_name(subject)
             .issuer_name(ca_cert.subject)
-            .public_key(private_key.public_key())
-            .serial_number(x509.random_serial_number())
-            .not_valid_before(utcnow())
-            .not_valid_after(utcnow() + timedelta(days=validity_days))
+            .public_key(private_key.public_key()
+            .serial_number(x509.random_serial_number()
+            .not_valid_before(utcnow()
+            .not_valid_after(utcnow() + timedelta(days=validity_days)
             .add_extension(
-                x509.SubjectKeyIdentifier.from_public_key(private_key.public_key()),
+                x509.SubjectKeyIdentifier.from_public_key(private_key.public_key(),
                 critical=False,
             )
             .add_extension(
@@ -267,7 +267,7 @@ class CertificateManager:
         if san_ip:
             import ipaddress
 
-            san_list.extend([x509.IPAddress(ipaddress.ip_address(ip)) for ip in san_ip])
+            san_list.extend([x509.IPAddress(ipaddress.ip_address(ip) for ip in san_ip])
 
         if san_list:
             cert_builder = cert_builder.add_extension(
@@ -276,7 +276,7 @@ class CertificateManager:
             )
 
         # Sign certificate
-        cert = cert_builder.sign(ca_private_key, hashes.SHA256(), default_backend())
+        cert = cert_builder.sign(ca_private_key, hashes.SHA256(), default_backend()
 
         # Generate certificate ID
         cert_id = f"server_{secrets.token_hex(8)}"
@@ -298,7 +298,7 @@ class CertificateManager:
             not_before=cert.not_valid_before_utc,
             not_after=cert.not_valid_after_utc,
             status=CertificateStatus.ACTIVE,
-            fingerprint=cert.fingerprint(hashes.SHA256()).hex(),
+            fingerprint=cert.fingerprint(hashes.SHA256().hex(),
             key_size=2048,
             signature_algorithm=cert.signature_algorithm_oid._name,
             san_dns=san_dns or [],
@@ -449,7 +449,7 @@ class TLSManager:
             return context
 
         except Exception as e:
-            logger.error("Failed to create TLS context", cert_id=cert_id, error=str(e))
+            logger.error("Failed to create TLS context", cert_id=cert_id, error=str(e)
             return None
 
     def create_client_context(

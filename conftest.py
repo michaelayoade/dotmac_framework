@@ -214,6 +214,13 @@ def temp_directory():
 
 
 @pytest.fixture
+def timezone():
+    """Provide timezone module for testing."""
+    from datetime import timezone as tz
+    return tz
+
+
+@pytest.fixture
 def mock_time():
     """Mock time for consistent testing."""
     from unittest.mock import patch
@@ -373,6 +380,5 @@ def pytest_runtest_setup(item):
 
 
 # Test timeout configuration
-def pytest_timeout_global_timeout():
-    """Set global timeout for all tests."""
-    return 300  # 5 minutes maximum per test
+# Note: pytest_timeout_global_timeout is not a valid pytest hook
+# Use pytest-timeout plugin configuration in pytest.ini instead

@@ -83,7 +83,7 @@ class AICodeDetector:
             'ai_indicators': [],
             'risky_changes': [],
             'business_critical': self._is_business_critical(file_path),
-            'content_hash': hashlib.sha256(content.encode()).hexdigest()[:16]
+            'content_hash': hashlib.sha256(content.encode().hexdigest()[:16]
         }
         
         # Check for AI comment patterns
@@ -215,7 +215,7 @@ class AICodeDetector:
                 'ai_generated_files': len([r for r in results if r.get('ai_confidence', 0) > 0.7]),
                 'potentially_ai_files': len([r for r in results if 0.3 < r.get('ai_confidence', 0) <= 0.7]),
                 'business_critical_changes': len([r for r in results if r.get('business_critical') and r.get('risky_changes')]),
-                'total_risky_changes': sum(len(r.get('risky_changes', [])) for r in results)
+                'total_risky_changes': sum(len(r.get('risky_changes', []) for r in results)
             },
             'high_risk_files': [
                 r for r in results 
@@ -293,7 +293,7 @@ logger.info(f"   Business Critical: {result['business_critical']}")
             if result['ai_indicators']:
 logger.info(f"   AI Indicators:")
                 for indicator in result['ai_indicators']:
-logger.info(f"     - {indicator['type']}: {indicator.get('matches', indicator.get('count', 1'))}")
+logger.info(f"     - {indicator['type']}: {indicator.get('matches', indicator.get('count', 1')}")
     
     # Exit with error if risky changes found and flag is set
     if args.fail_on_risk and summary['business_critical_changes'] > 0:

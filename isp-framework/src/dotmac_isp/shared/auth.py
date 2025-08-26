@@ -1,7 +1,7 @@
 """Secure authentication and authorization system."""
 
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, List, Union
 from uuid import UUID
 
@@ -52,12 +52,12 @@ def hash_password(password: str) -> str:
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     """Create JWT access token."""
-    to_encode = data.copy()
+    to_encode = data.model_copy()
 
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(
+        expire = datetime.now(timezone.utc) + timedelta(
             minutes=get_access_token_expire_minutes()
         )
 
@@ -68,8 +68,8 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 
 def create_refresh_token(data: dict) -> str:
     """Create JWT refresh token."""
-    to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(days=get_refresh_token_expire_days())
+    to_encode = data.model_copy()
+    expire = datetime.now(timezone.utc) + timedelta(days=get_refresh_token_expire_days())
     to_encode.update({"exp": expire, "type": "refresh"})
 
     return jwt.encode(to_encode, get_secret_key(), algorithm=get_algorithm())

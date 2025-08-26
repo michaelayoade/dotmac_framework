@@ -1,6 +1,6 @@
 """Compliance management API endpoints."""
 
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 from typing import List, Optional, Dict, Any
 from uuid import uuid4
 
@@ -30,19 +30,19 @@ router = APIRouter(prefix="/compliance", tags=["compliance"])
 
 def generate_assessment_id() -> str:
     """Generate a unique assessment ID."""
-    timestamp = int(datetime.utcnow().timestamp())
+    timestamp = int(datetime.now(timezone.utc).timestamp())
     return f"ASS-{timestamp}"
 
 
 def generate_finding_id() -> str:
     """Generate a unique finding ID."""
-    timestamp = int(datetime.utcnow().timestamp())
+    timestamp = int(datetime.now(timezone.utc).timestamp())
     return f"FND-{timestamp}"
 
 
 def generate_audit_id() -> str:
     """Generate a unique audit ID."""
-    timestamp = int(datetime.utcnow().timestamp())
+    timestamp = int(datetime.now(timezone.utc).timestamp())
     return f"AUD-{timestamp}"
 
 

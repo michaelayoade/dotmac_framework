@@ -504,7 +504,7 @@ class TestConfigValidationIntegration:
         # Test method signature compatibility
         import inspect
         sig = inspect.signature(orchestrator.validate_field)
-        param_names = list(sig.parameters.keys())
+        param_names = list(sig.parameters.keys()
         
         expected_params = ['field_path', 'field_value', 'rule', 'environment']
         assert len(param_names) == len(expected_params)

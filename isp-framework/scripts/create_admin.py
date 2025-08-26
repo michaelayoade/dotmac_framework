@@ -11,7 +11,7 @@ import os
 from getpass import getpass
 
 # Add src to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src')
 
 try:
     from dotmac_isp.core.database import get_async_session
@@ -66,7 +66,7 @@ logger.info(f"   Name: {first_name} {last_name}")
                 is_verified=True
             )
             
-            user = await user_service.create_user(user_data.dict())
+            user = await user_service.create_user(user_data.dict()
             
 logger.info(f"\n✅ Admin user created successfully!")
 logger.info(f"   📧 Email: {user.email}")
@@ -107,4 +107,4 @@ logger.info(f"   make setup-db")
 
 
 if __name__ == "__main__":
-    asyncio.run(create_admin_user())
+    asyncio.run(create_admin_user()

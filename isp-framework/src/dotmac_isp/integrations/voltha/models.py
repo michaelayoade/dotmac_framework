@@ -550,12 +550,12 @@ class VolthaAlert(TenantModel, AuditMixin):
         """Acknowledge the alert."""
         self.acknowledged = True
         self.acknowledged_by = user_id
-        self.acknowledged_at = datetime.utcnow()
+        self.acknowledged_at = datetime.now(timezone.utc)
 
     def clear(self):
         """Clear the alert."""
         self.state = "cleared"
-        self.cleared_at = datetime.utcnow()
+        self.cleared_at = datetime.now(timezone.utc)
 
     def __repr__(self):
         """  Repr   operation."""

@@ -2,7 +2,7 @@
 
 from typing import List, Optional, Dict, Any
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 import logging
 
@@ -18,8 +18,13 @@ logger = logging.getLogger(__name__)
 class PaymentService(IPaymentService):
     """Domain service for payment operations."""
 
-    def __init__(        ):
-            """Initialize operation."""
+    def __init__(
+        self,
+        payment_repo: PaymentRepository,
+        invoice_repo: InvoiceRepository,
+        tenant_id: UUID
+    ):
+        """Initialize operation."""
         self.payment_repo = payment_repo
         self.invoice_repo = invoice_repo
         self.tenant_id = tenant_id
@@ -47,7 +52,7 @@ class PaymentService(IPaymentService):
             payment_dict = {
                 "invoice_id": payment_data.invoice_id,
                 "amount": payment_data.amount,
-                "payment_date": datetime.utcnow(),
+                "payment_date": datetime.now(timezone.utc),
                 "payment_method": payment_data.payment_method,
                 "status": PaymentStatus.COMPLETED,
                 "transaction_id": external_result.get("transaction_id"),
@@ -100,7 +105,7 @@ class PaymentService(IPaymentService):
             refund_data = {
                 "status": PaymentStatus.REFUNDED,
                 "refund_amount": refund_amount,
-                "refund_date": datetime.utcnow(),
+                "refund_date": datetime.now(timezone.utc),
                 "refund_reason": reason,
                 "refund_transaction_id": external_result.get("refund_id"),
                 "processor_response": {
@@ -197,8 +202,8 @@ class PaymentService(IPaymentService):
                 # Manual payment methods
                 return {
                     "status": "success",
-                    "transaction_id": f"MANUAL_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
-                    "processed_at": datetime.utcnow().isoformat(),
+                    "transaction_id": f"MANUAL_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}",
+                    "processed_at": datetime.now(timezone.utc).isoformat(),
                 }
 
         except Exception as e:
@@ -212,10 +217,10 @@ class PaymentService(IPaymentService):
         # Simulate credit card processing
         return {
             "status": "success",
-            "transaction_id": f"CC_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
+            "transaction_id": f"CC_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}",
             "processor": "stripe",
             "card_last4": "4242",
-            "processed_at": datetime.utcnow().isoformat(),
+            "processed_at": datetime.now(timezone.utc).isoformat(),
         }
 
     async def _process_ach_payment(
@@ -225,10 +230,10 @@ class PaymentService(IPaymentService):
         # Simulate ACH processing
         return {
             "status": "success",
-            "transaction_id": f"ACH_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
+            "transaction_id": f"ACH_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}",
             "processor": "plaid",
             "account_last4": "1234",
-            "processed_at": datetime.utcnow().isoformat(),
+            "processed_at": datetime.now(timezone.utc).isoformat(),
         }
 
     async def _process_bank_transfer_payment(
@@ -238,9 +243,9 @@ class PaymentService(IPaymentService):
         # Simulate bank transfer processing
         return {
             "status": "success",
-            "transaction_id": f"WIRE_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
+            "transaction_id": f"WIRE_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}",
             "processor": "bank",
-            "processed_at": datetime.utcnow().isoformat(),
+            "processed_at": datetime.now(timezone.utc).isoformat(),
         }
 
     async def _process_external_refund(
@@ -252,11 +257,11 @@ class PaymentService(IPaymentService):
             # For now, we'll simulate the process
             return {
                 "status": "success",
-                "refund_id": f"REF_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
+                "refund_id": f"REF_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}",
                 "original_transaction_id": payment.transaction_id,
                 "refund_amount": str(refund_amount),
                 "reason": reason,
-                "processed_at": datetime.utcnow().isoformat(),
+                "processed_at": datetime.now(timezone.utc).isoformat(),
             }
 
         except Exception as e:
@@ -300,7 +305,7 @@ class PaymentService(IPaymentService):
             from ..models import InvoiceStatus
 
             update_data.update(
-                {"status": InvoiceStatus.PAID, "paid_date": datetime.utcnow()}
+                {"status": InvoiceStatus.PAID, "paid_date": datetime.now(timezone.utc)}
             )
 
         self.invoice_repo.update(invoice.id, update_data)

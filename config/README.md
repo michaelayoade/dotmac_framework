@@ -5,7 +5,7 @@
 ```
 config/
 ├── shared/           # Shared configurations across platforms
-│   ├── openbao.hcl  # OpenBao/Vault configuration
+│   ├── openbao.hcl  # OpenBao configuration
 │   ├── redis.conf   # Redis configuration
 │   └── nginx.conf   # Nginx configuration
 ├── development/     # Development-specific configs

@@ -332,7 +332,7 @@ class TestFeatureFlagsIntegration:
         # The method signature should be preserved
         import inspect
         sig = inspect.signature(sdk._evaluate_targeting_rule)
-        param_names = list(sig.parameters.keys())
+        param_names = list(sig.parameters.keys()
         
         expected_params = ['self', 'rule', 'user_context']
         assert len(param_names) == len(expected_params)

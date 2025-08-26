@@ -140,7 +140,7 @@ class JobMessage:
             "status": self.status.value,
             "attempt_count": self.attempt_count,
             "max_attempts": self.max_attempts,
-            "last_error": self.last_error.dict() if self.last_error else None,
+            "last_error": self.last_error.model_dump() if self.last_error else None,
             "error_count": len(self.error_history),
             "metadata": self.metadata,
         }
@@ -371,8 +371,15 @@ class DeadLetterQueue:
 class EnhancedJobQueue:
     """Enhanced job queue with all advanced features."""
 
-    def __init__(        ):
-            """Initialize operation."""
+    def __init__(
+        self,
+        name: str,
+        tenant_id: str,
+        visibility_timeout_seconds: int = 300,
+        max_concurrent_jobs: int = 10,
+        storage_adapter: Optional[Any] = None,
+    ):
+        """Initialize enhanced job queue."""
         self.name = name
         self.tenant_id = tenant_id
         self.visibility_timeout_seconds = visibility_timeout_seconds
@@ -587,7 +594,7 @@ class EnhancedJobQueue:
 
                 if self.storage_adapter:
                     await self.storage_adapter.update_job_status(
-                        job.job_id, JobStatus.DEAD_LETTER, error.dict()
+                        job.job_id, JobStatus.DEAD_LETTER, error.model_dump()
                     )
 
             else:
@@ -607,7 +614,7 @@ class EnhancedJobQueue:
 
                 if self.storage_adapter:
                     await self.storage_adapter.update_job_status(
-                        job.job_id, JobStatus.RETRYING, error.dict()
+                        job.job_id, JobStatus.RETRYING, error.model_dump()
                     )
 
                 logger.warning(
@@ -725,7 +732,7 @@ class EnhancedJobQueue:
             "dlq_stats": self.dead_letter_queue.get_stats(),
             "processing_jobs": len(self.processing_jobs),
             "completed_jobs": len(self.completed_jobs),
-            "metrics": self.metrics.copy(),
+            "metrics": self.metrics.model_copy(),
             "visibility_timeout_seconds": self.visibility_timeout_seconds,
             "max_concurrent_jobs": self.max_concurrent_jobs,
         }

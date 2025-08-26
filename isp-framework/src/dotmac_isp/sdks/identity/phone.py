@@ -5,6 +5,7 @@ Phone SDK - verification (OTP), SMS delivery.
 import secrets
 from typing import Any, Dict, List, Optional
 from uuid import UUID
+from datetime import datetime, timezone
 
 from ..core.exceptions import (
     VerificationError,
@@ -52,14 +53,14 @@ class PhoneVerificationService:
             return False
 
         verification.attempts_count += 1
-        verification.last_attempt_at = verification.last_attempt_at.__class__.utcnow()
+        verification.last_attempt_at = datetime.now(timezone.utc)
 
         if not verification.is_valid():
             return False
 
         if verification.verification_code == code:
             verification.status = VerificationStatus.VERIFIED
-            verification.verified_at = verification.verified_at.__class__.utcnow()
+            verification.verified_at = datetime.now(timezone.utc)
             return True
 
         return False
@@ -90,8 +91,8 @@ class PhoneSDK:
         )
 
         # Simulate SMS sending
-        verification.sms_sent_at = verification.sms_sent_at.__class__.utcnow()
-        verification.sms_delivered_at = verification.sms_delivered_at.__class__.utcnow()
+        verification.sms_sent_at = datetime.now(timezone.utc)
+        verification.sms_delivered_at = datetime.now(timezone.utc)
 
         return {
             "verification_id": str(verification.id),

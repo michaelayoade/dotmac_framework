@@ -24,7 +24,7 @@ async def create_monitoring_profile(
     db: Session = Depends(get_db),
 ):
     """Create a new monitoring profile."""
-    profile_data = profile.dict()
+    profile_data = profile.model_dump()
     profile_data["tenant_id"] = tenant_id
 
     db_profile = models.MonitoringProfile(**profile_data)
@@ -110,7 +110,7 @@ async def update_monitoring_profile(
     if not profile:
         raise HTTPException(status_code=404, detail="Monitoring profile not found")
 
-    update_data = profile_update.dict(exclude_unset=True)
+    update_data = profile_update.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(profile, field, value)
 
@@ -167,7 +167,7 @@ async def create_snmp_device(
     if not profile:
         raise HTTPException(status_code=404, detail="Monitoring profile not found")
 
-    device_data = device.dict()
+    device_data = device.model_dump()
     device_data["tenant_id"] = tenant_id
 
     db_device = models.SnmpDevice(**device_data)
@@ -248,7 +248,7 @@ async def update_snmp_device(
     if not device:
         raise HTTPException(status_code=404, detail="SNMP device not found")
 
-    update_data = device_update.dict(exclude_unset=True)
+    update_data = device_update.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(device, field, value)
 
@@ -318,7 +318,8 @@ async def get_device_metrics(
     else:
         # Default to last 24 hours if no end_time specified
         if not start_time:
-            start_time = datetime.utcnow() - timedelta(days=1)
+            from datetime import timezone
+            start_time = datetime.now(timezone.utc) - timedelta(days=1)
             query = query.filter(models.SnmpMetric.timestamp >= start_time)
 
     metrics = query.order_by(models.SnmpMetric.timestamp.desc()).limit(limit).all()
@@ -363,11 +364,12 @@ async def create_network_alert(
     db: Session = Depends(get_db),
 ):
     """Create a network alert."""
-    alert_data = alert.dict()
+    alert_data = alert.model_dump()
     alert_data["tenant_id"] = tenant_id
     alert_data["alert_id"] = str(uuid4())[:8]  # Short unique ID
-    alert_data["created_at"] = datetime.utcnow()
-    alert_data["updated_at"] = datetime.utcnow()
+    from datetime import timezone
+    alert_data["created_at"] = datetime.now(timezone.utc)
+    alert_data["updated_at"] = datetime.now(timezone.utc)
 
     db_alert = models.MonitoringAlert(**alert_data)
     db.add(db_alert)
@@ -455,7 +457,8 @@ async def acknowledge_alert(
         raise HTTPException(status_code=404, detail="Network alert not found")
 
     alert.acknowledge(tenant_id, comment)
-    alert.updated_at = datetime.utcnow()
+    from datetime import timezone
+    alert.updated_at = datetime.now(timezone.utc)
 
     db.commit()
     db.refresh(alert)
@@ -483,7 +486,8 @@ async def resolve_alert(
         raise HTTPException(status_code=404, detail="Network alert not found")
 
     alert.resolve(tenant_id, comment)
-    alert.updated_at = datetime.utcnow()
+    from datetime import timezone
+    alert.updated_at = datetime.now(timezone.utc)
 
     db.commit()
     db.refresh(alert)
@@ -511,7 +515,7 @@ async def create_alert_rule(
     if not profile:
         raise HTTPException(status_code=404, detail="Monitoring profile not found")
 
-    rule_data = rule.dict()
+    rule_data = rule.model_dump()
     rule_data["tenant_id"] = tenant_id
 
     db_rule = models.AlertRule(**rule_data)
@@ -583,7 +587,7 @@ async def update_alert_rule(
     if not rule:
         raise HTTPException(status_code=404, detail="Alert rule not found")
 
-    update_data = rule_update.dict(exclude_unset=True)
+    update_data = rule_update.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(rule, field, value)
 
@@ -650,7 +654,8 @@ async def get_device_availability(
     else:
         # Default to last 7 days if no end_time specified
         if not start_time:
-            start_time = datetime.utcnow() - timedelta(days=7)
+            from datetime import timezone
+            start_time = datetime.now(timezone.utc) - timedelta(days=7)
             query = query.filter(models.DeviceAvailability.timestamp >= start_time)
 
     availability = (

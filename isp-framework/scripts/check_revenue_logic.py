@@ -86,7 +86,7 @@ class RevenueLogicChecker:
         
         results = {
             'file': str(file_path),
-            'content_hash': hashlib.sha256(content.encode()).hexdigest()[:16],
+            'content_hash': hashlib.sha256(content.encode().hexdigest()[:16],
             'revenue_functions': [],
             'forbidden_operations': [],
             'suspicious_changes': [],
@@ -153,22 +153,22 @@ class RevenueLogicChecker:
         """Create hash of function signature for change detection."""
         signature_parts = [
             node.name,
-            str(len(node.args.args)),
+            str(len(node.args.args),
             str([arg.arg for arg in node.args.args]),
         ]
         if node.returns:
-            signature_parts.append(ast.dump(node.returns))
+            signature_parts.append(ast.dump(node.returns)
         
         signature_str = '|'.join(signature_parts)
-        return hashlib.md5(signature_str.encode()).hexdigest()[:8]
+        return hashlib.md5(signature_str.encode().hexdigest()[:8]
     
     def _hash_function_body(self, content: str, node: ast.FunctionDef) -> str:
         """Create hash of function body for change detection."""
         func_source = ast.get_source_segment(content, node)
         if func_source:
             # Normalize whitespace for consistent hashing
-            normalized = re.sub(r'\s+', ' ', func_source.strip())
-            return hashlib.md5(normalized.encode()).hexdigest()[:8]
+            normalized = re.sub(r'\s+', ' ', func_source.strip()
+            return hashlib.md5(normalized.encode().hexdigest()[:8]
         return "unknown"
     
     def _analyze_return_statements(self, node: ast.FunctionDef) -> Dict[str, Any]:
@@ -187,7 +187,7 @@ class RevenueLogicChecker:
                     if isinstance(child.value, ast.Constant):
                         if child.value.value == 0:
                             return_info['warning'] = 'Returns zero - potential revenue loss'
-                        elif isinstance(child.value.value, (int, float)) and child.value.value < 0:
+                        elif isinstance(child.value.value, (int, float) and child.value.value < 0:
                             return_info['warning'] = 'Returns negative value - critical issue'
                     
                     returns.append(return_info)
@@ -257,7 +257,7 @@ class RevenueLogicChecker:
             file_results = self.check_file(file_path)
             if (file_results.get('forbidden_operations') or 
                 file_results.get('suspicious_changes') or 
-                file_results.get('revenue_functions')):
+                file_results.get('revenue_functions'):
                 results.append(file_results)
         
         return results
@@ -306,8 +306,8 @@ class RevenueLogicChecker:
                 'files_checked': len(results),
                 'critical_risk_files': len(critical_files),
                 'high_risk_files': len(high_risk_files),
-                'total_revenue_functions': sum(len(r.get('revenue_functions', [])) for r in results),
-                'total_forbidden_operations': sum(len(r.get('forbidden_operations', [])) for r in results),
+                'total_revenue_functions': sum(len(r.get('revenue_functions', []) for r in results),
+                'total_forbidden_operations': sum(len(r.get('forbidden_operations', []) for r in results),
                 'status': 'CRITICAL' if critical_files else 'PASS'
             },
             'critical_issues': critical_files,

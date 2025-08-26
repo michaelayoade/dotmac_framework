@@ -463,7 +463,7 @@ class EncryptionService:
         iv = secrets.token_bytes(12)  # 96-bit IV for GCM
 
         # Create cipher
-        cipher = Cipher(algorithms.AES(key), modes.GCM(iv), backend=default_backend())
+        cipher = Cipher(algorithms.AES(key), modes.GCM(iv), backend=default_backend()
         encryptor = cipher.encryptor()
 
         # Encrypt data
@@ -502,7 +502,7 @@ class EncryptionService:
         encrypted_data = public_key.encrypt(
             data,
             padding.OAEP(
-                mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                mgf=padding.MGF1(algorithm=hashes.SHA256(),
                 algorithm=hashes.SHA256(),
                 label=None,
             ),
@@ -520,7 +520,7 @@ class EncryptionService:
         decrypted_data = private_key.decrypt(
             encrypted_data,
             padding.OAEP(
-                mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                mgf=padding.MGF1(algorithm=hashes.SHA256(),
                 algorithm=hashes.SHA256(),
                 label=None,
             ),
@@ -532,11 +532,11 @@ class EncryptionService:
     ) -> str:
         """Convenience method to encrypt string and return JSON"""
         encrypted_field = await self.encrypt(data, classification)
-        return encrypted_field.json()
+        return encrypted_field.model_dump_json()
 
     async def decrypt_string(self, encrypted_json: str) -> str:
         """Convenience method to decrypt from JSON string"""
-        encrypted_field = EncryptedField.parse_raw(encrypted_json)
+        encrypted_field = EncryptedField.model_validate_json(encrypted_json)
         decrypted_bytes = await self.decrypt(encrypted_field)
         return decrypted_bytes.decode("utf-8")
 
@@ -552,7 +552,7 @@ class EncryptionService:
         rotated_keys = []
         policy = self.policies[classification]
 
-        for key in list(self.key_manager.keys.values()):
+        for key in list(self.key_manager.keys.values():
             if key.is_active and not key.is_expired():
                 # Check if rotation is needed
                 age = utcnow() - key.created_at
@@ -584,7 +584,7 @@ class FieldEncryption:
         def new_init(self, **kwargs):
             """New Init operation."""
             # Encrypt sensitive fields before initialization
-            for field_name, field_info in cls.__fields__.items():
+            for field_name, field_info in cls.model_fields.items():
                 if hasattr(
                     field_info, "field_info"
                 ) and field_info.field_info.extra.get("encrypt"):
@@ -595,7 +595,7 @@ class FieldEncryption:
                                 str(kwargs[field_name]), self.classification
                             )
                         )
-                        kwargs[field_name] = encrypted_field.json()
+                        kwargs[field_name] = encrypted_field.model_dump_json()
 
             original_init(self, **kwargs)
 
@@ -669,17 +669,17 @@ class KeyRotationManager:
     async def check_rotation_schedule(self):
         """Check and execute scheduled key rotations."""
         now = utcnow()
-        for key_id, rotation_date in list(self._rotation_schedule.items()):
+        for key_id, rotation_date in list(self._rotation_schedule.items():
             if now >= rotation_date:
                 try:
                     await self.rotate_key(key_id)
                     del self._rotation_schedule[key_id]
                 except Exception as e:
-                    logger.error("Key rotation failed", key_id=key_id, error=str(e))
+                    logger.error("Key rotation failed", key_id=key_id, error=str(e)
 
     def get_rotation_status(self) -> dict[str, datetime]:
         """Get current rotation schedule."""
-        return self._rotation_schedule.copy()
+        return self._rotation_schedule.model_copy()
 
 
 # Example usage models

@@ -321,7 +321,7 @@ class DistributedRateLimiter:
                 headers={
                     "X-RateLimit-Limit": str(remaining),
                     "X-RateLimit-Remaining": str(remaining),
-                    "X-RateLimit-Reset": str(int(time.time() + 60)),
+                    "X-RateLimit-Reset": str(int(time.time() + 60),
                     "Retry-After": str(60)
                 }
             )

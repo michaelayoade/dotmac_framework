@@ -42,7 +42,7 @@ async def create_lead(
     """Create a new sales lead."""
     try:
         lead_service = LeadManagementService(db, str(current_user.tenant_id))
-        lead = await lead_service.create_lead(lead_data.dict())
+        lead = await lead_service.create_lead(lead_data.model_dump())
 
         # Convert to response format
         return schemas.LeadResponse(
@@ -226,7 +226,8 @@ async def get_lead(
 
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=f"Lead not found: {str(e)}"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Lead not found: {str(e)}"
         )
 
 
@@ -240,7 +241,7 @@ async def qualify_lead(
     """Qualify a lead using BANT criteria."""
     try:
         lead_service = LeadManagementService(db, str(current_user.tenant_id))
-        lead = await lead_service.qualify_lead(lead_id, qualification_data.dict())
+        lead = await lead_service.qualify_lead(lead_id, qualification_data.model_dump())
 
         return schemas.LeadResponse(
             id=lead.id,
@@ -295,7 +296,7 @@ async def convert_lead_to_opportunity(
     try:
         lead_service = LeadManagementService(db, str(current_user.tenant_id))
         opportunity = await lead_service.convert_lead_to_opportunity(
-            lead_id, opportunity_data.dict()
+            lead_id, opportunity_data.model_dump()
         )
 
         return schemas.OpportunityResponse(
@@ -347,7 +348,7 @@ async def create_opportunity(
             db, str(current_user.tenant_id)
         )
         opportunity = await opportunity_service.create_opportunity(
-            opportunity_data.dict()
+            opportunity_data.model_dump()
         )
 
         return schemas.OpportunityResponse(

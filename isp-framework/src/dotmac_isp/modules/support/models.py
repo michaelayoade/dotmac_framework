@@ -114,7 +114,7 @@ class Ticket(TenantModel):
             TicketStatus.RESOLVED,
             TicketStatus.CLOSED,
         ]:
-            return datetime.utcnow() > self.sla_due_date
+            return datetime.now(timezone.utc) > self.sla_due_date
         return False
 
 

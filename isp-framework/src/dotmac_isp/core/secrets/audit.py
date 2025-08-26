@@ -181,7 +181,7 @@ class AuditEvent(BaseModel):
 
     def to_json(self) -> str:
         """Convert to JSON string"""
-        return self.json(sort_keys=True, separators=(",", ":"))
+        return self.model_dump_json(sort_keys=True, separators=(",", ":"))
 
     def calculate_hash(self, previous_hash: str = "") -> str:
         """Calculate hash for tamper detection"""

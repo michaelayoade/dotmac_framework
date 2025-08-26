@@ -17,7 +17,7 @@ from tests.conftest import (
     management_platform_client,
     test_database,
     cleanup_test_data
-)
+, timezone)
 
 
 class TestCrossPlatformIntegration:
@@ -101,8 +101,8 @@ class TestCrossPlatformIntegration:
                 "customer_id": customer_id,
                 "service_id": service["service_id"],
                 "usage_gb": 150.5,
-                "billing_period_start": datetime.utcnow().isoformat(),
-                "billing_period_end": (datetime.utcnow() + timedelta(days=30)).isoformat()
+                "billing_period_start": datetime.now(timezone.utc).isoformat(),
+                "billing_period_end": (datetime.now(timezone.utc) + timedelta(days=30).isoformat()
             }
             
             usage_response = await isp_framework_client.post(
@@ -190,7 +190,7 @@ class TestCrossPlatformIntegration:
                     "bandwidth_utilization": 34.5,
                     "uptime_seconds": 864000
                 },
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
             
             metrics_response = await isp_framework_client.post(

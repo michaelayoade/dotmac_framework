@@ -13,7 +13,7 @@ fake = Faker()
 class BaseFactory(factory.Factory):
     """Base factory with common fields for all models."""
     
-    id = factory.LazyFunction(lambda: str(uuid4()))
+    id = factory.LazyFunction(lambda: str(uuid4())
     tenant_id = "00000000-0000-0000-0000-000000000001"  # Default test tenant
     created_at = factory.LazyFunction(datetime.utcnow)
     updated_at = factory.LazyFunction(datetime.utcnow)
@@ -42,14 +42,14 @@ class TimestampMixin:
 class AuditMixin:
     """Mixin for audit fields."""
     
-    created_by = factory.LazyFunction(lambda: str(uuid4()))
-    updated_by = factory.LazyFunction(lambda: str(uuid4()))
-    notes = factory.LazyAttribute(lambda obj: fake.text(max_nb_chars=200))
+    created_by = factory.LazyFunction(lambda: str(uuid4())
+    updated_by = factory.LazyFunction(lambda: str(uuid4())
+    notes = factory.LazyAttribute(lambda obj: fake.text(max_nb_chars=200)
 
 
 def random_decimal(min_value: float = 0.0, max_value: float = 1000.0, places: int = 2) -> Decimal:
     """Generate random decimal with specified precision."""
-    return Decimal(str(round(fake.pyfloat(min_value=min_value, max_value=max_value), places)))
+    return Decimal(str(round(fake.pyfloat(min_value=min_value, max_value=max_value), places)
 
 
 def random_phone() -> str:

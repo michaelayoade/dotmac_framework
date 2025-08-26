@@ -2,7 +2,7 @@
 # Inherits from unified requirements + ISP-specific additions
 
 # INHERIT shared dependencies (eliminates 90% duplication)
--r ../requirements-unified.txt
+-r ../requirements.txt
 
 # ===== ISP FRAMEWORK SPECIFIC =====
 # Only dependencies unique to tenant container operations

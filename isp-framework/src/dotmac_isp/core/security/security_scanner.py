@@ -20,7 +20,7 @@ import subprocess
 from typing import Dict, List, Any, Optional, Set, Tuple
 from pathlib import Path
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 
 from ..validation_types import ValidationSeverity, ValidationCategory
@@ -117,7 +117,7 @@ class SecurityScanner:
         Returns:
             Security scan results with findings
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         findings = []
         files_scanned = 0
         
@@ -141,7 +141,7 @@ class SecurityScanner:
             result = SecurityScanResult(
                 scan_type=SecurityScanType.HARDCODED_SECRETS,
                 started_at=start_time,
-                completed_at=datetime.utcnow(),
+                completed_at=datetime.now(timezone.utc),
                 total_files_scanned=files_scanned,
                 findings=findings,
                 scan_successful=True
@@ -151,7 +151,7 @@ class SecurityScanner:
             result = SecurityScanResult(
                 scan_type=SecurityScanType.HARDCODED_SECRETS,
                 started_at=start_time,
-                completed_at=datetime.utcnow(),
+                completed_at=datetime.now(timezone.utc),
                 total_files_scanned=files_scanned,
                 findings=findings,
                 scan_successful=False,
@@ -170,7 +170,7 @@ class SecurityScanner:
         Returns:
             Security scan results
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         findings = []
         
         try:
@@ -185,7 +185,7 @@ class SecurityScanner:
             result = SecurityScanResult(
                 scan_type=SecurityScanType.DEPENDENCY_VULNERABILITIES,
                 started_at=start_time,
-                completed_at=datetime.utcnow(),
+                completed_at=datetime.now(timezone.utc),
                 total_files_scanned=len(req_files),
                 findings=findings,
                 scan_successful=True
@@ -195,7 +195,7 @@ class SecurityScanner:
             result = SecurityScanResult(
                 scan_type=SecurityScanType.DEPENDENCY_VULNERABILITIES,
                 started_at=start_time,
-                completed_at=datetime.utcnow(),
+                completed_at=datetime.now(timezone.utc),
                 total_files_scanned=0,
                 findings=findings,
                 scan_successful=False,
@@ -218,7 +218,7 @@ class SecurityScanner:
         Returns:
             Security scan results
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         findings = []
         
         try:
@@ -236,7 +236,7 @@ class SecurityScanner:
             result = SecurityScanResult(
                 scan_type=SecurityScanType.CONFIGURATION_SECURITY,
                 started_at=start_time,
-                completed_at=datetime.utcnow(),
+                completed_at=datetime.now(timezone.utc),
                 total_files_scanned=files_scanned,
                 findings=findings,
                 scan_successful=True
@@ -246,7 +246,7 @@ class SecurityScanner:
             result = SecurityScanResult(
                 scan_type=SecurityScanType.CONFIGURATION_SECURITY,
                 started_at=start_time,
-                completed_at=datetime.utcnow(),
+                completed_at=datetime.now(timezone.utc),
                 total_files_scanned=0,
                 findings=findings,
                 scan_successful=False,
@@ -268,7 +268,7 @@ class SecurityScanner:
         Returns:
             Security scan results
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         findings = []
         files_scanned = 0
         
@@ -282,7 +282,7 @@ class SecurityScanner:
             result = SecurityScanResult(
                 scan_type=SecurityScanType.FILE_PERMISSIONS,
                 started_at=start_time,
-                completed_at=datetime.utcnow(),
+                completed_at=datetime.now(timezone.utc),
                 total_files_scanned=files_scanned,
                 findings=findings,
                 scan_successful=True
@@ -292,7 +292,7 @@ class SecurityScanner:
             result = SecurityScanResult(
                 scan_type=SecurityScanType.FILE_PERMISSIONS,
                 started_at=start_time,
-                completed_at=datetime.utcnow(),
+                completed_at=datetime.now(timezone.utc),
                 total_files_scanned=files_scanned,
                 findings=findings,
                 scan_successful=False,
@@ -347,7 +347,7 @@ class SecurityScanner:
             high_findings.extend(result.high_findings)
         
         report = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "project_root": str(self.project_root),
             "summary": {
                 "total_scans": len(self.scan_results),
@@ -412,7 +412,7 @@ def main():
             capture_output=True, text=True, check=True
         )
         
-        staged_files = [Path(f.strip()) for f in result.stdout.split('\\n') if f.strip()]
+        staged_files = [Path(f.strip() for f in result.stdout.split('\\n') if f.strip()]
         python_files = [f for f in staged_files if f.suffix == '.py']
         
         if not python_files:

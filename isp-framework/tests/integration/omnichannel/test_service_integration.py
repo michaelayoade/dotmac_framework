@@ -19,8 +19,8 @@ from dotmac_isp.modules.omnichannel.services import (
     RoutingService,
     AnalyticsService,
     OmnichannelOrchestrator
-)
-from dotmac_isp.modules.omnichannel.models import (
+, timezone)
+from dotmac_isp.modules.omnichannel.models_production import (
     CustomerContact,
     ContactType,
     CommunicationInteraction,
@@ -182,16 +182,16 @@ class TestOmnichannelServiceIntegration:
                 customer_id=uuid4(),
                 interaction_type=InteractionType.EMAIL,
                 status=InteractionStatus.RESOLVED,
-                created_at=datetime.utcnow() - timedelta(days=1),
-                resolved_at=datetime.utcnow()
+                created_at=datetime.now(timezone.utc) - timedelta(days=1),
+                resolved_at=datetime.now(timezone.utc)
             ),
             CommunicationInteraction(
                 id=uuid4(),
                 customer_id=uuid4(),
                 interaction_type=InteractionType.CHAT,
                 status=InteractionStatus.RESOLVED,
-                created_at=datetime.utcnow() - timedelta(hours=2),
-                resolved_at=datetime.utcnow() - timedelta(hours=1)
+                created_at=datetime.now(timezone.utc) - timedelta(hours=2),
+                resolved_at=datetime.now(timezone.utc) - timedelta(hours=1)
             )
         ]
         
@@ -248,9 +248,9 @@ class TestOmnichannelServiceIntegration:
     async def test_service_coordination_through_orchestrator(self, orchestrator):
         """Test that orchestrator properly coordinates between services."""
         # Mock all service methods
-        orchestrator.contact_service.create_customer_contact = Mock(return_value=uuid4())
+        orchestrator.contact_service.create_customer_contact = Mock(return_value=uuid4()
         orchestrator.agent_service.get_available_agents = Mock(return_value=[])
-        orchestrator.routing_service.create_routing_rule = Mock(return_value=uuid4())
+        orchestrator.routing_service.create_routing_rule = Mock(return_value=uuid4()
         orchestrator.analytics_service.calculate_agent_performance = Mock(return_value={})
         
         # Test coordinated operations
@@ -340,7 +340,7 @@ class TestServiceInteroperability:
         
         for method_name in expected_methods:
             assert hasattr(orchestrator, method_name)
-            assert callable(getattr(orchestrator, method_name))
+            assert callable(getattr(orchestrator, method_name)
     
     def test_service_dependency_injection(self, mock_db):
         """Test that services are properly injected into orchestrator."""

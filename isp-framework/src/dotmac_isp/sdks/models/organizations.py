@@ -2,7 +2,7 @@
 Organization-related models for SDKs.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Optional, Dict, Any, List
 from uuid import UUID, uuid4
@@ -72,8 +72,8 @@ class Organization:
         self.industry = kwargs.get('industry')
         self.size = kwargs.get('size')
         self.founded_date = kwargs.get('founded_date')
-        self.created_at = kwargs.get('created_at', datetime.utcnow())
-        self.updated_at = kwargs.get('updated_at', datetime.utcnow())
+        self.created_at = kwargs.get('created_at', datetime.now(timezone.utc))
+        self.updated_at = kwargs.get('updated_at', datetime.now(timezone.utc))
         self.metadata = kwargs.get('metadata') or {}
     
     def is_active(self) -> bool:
@@ -83,12 +83,12 @@ class Organization:
     def suspend(self) -> None:
         """Suspend the organization."""
         self.status = OrganizationStatus.SUSPENDED
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(timezone.utc)
     
     def activate(self) -> None:
         """Activate the organization."""
         self.status = OrganizationStatus.ACTIVE
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(timezone.utc)
 
 
 @dataclass
@@ -114,7 +114,7 @@ class OrganizationMember:
         self.user_id = kwargs.get('user_id')
         self.role = kwargs.get('role', MemberRole.MEMBER)
         self.is_active = kwargs.get('is_active', True)
-        self.joined_at = kwargs.get('joined_at', datetime.utcnow())
+        self.joined_at = kwargs.get('joined_at', datetime.now(timezone.utc))
         self.invited_at = kwargs.get('invited_at')
         self.invited_by = kwargs.get('invited_by')
         self.title = kwargs.get('title')

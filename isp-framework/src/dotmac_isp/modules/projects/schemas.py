@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field, validator
 from .models import ProjectType, ProjectStatus, PhaseStatus, MilestoneType
 
 
-class ProjectPhaseBase(BaseModel):
+class ProjectPhaseBase(BaseModel, ConfigDict):
     """Base project phase schema."""
 
     phase_name: str = Field(..., min_length=1, max_length=200)
@@ -60,9 +60,7 @@ class ProjectPhaseResponse(ProjectPhaseBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        """Class for Config operations."""
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ProjectMilestoneResponse(BaseModel):
@@ -82,9 +80,7 @@ class ProjectMilestoneResponse(BaseModel):
     completion_notes: Optional[str]
     created_at: datetime
 
-    class Config:
-        """Class for Config operations."""
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ProjectUpdateCreate(BaseModel):
@@ -115,9 +111,7 @@ class ProjectUpdateResponse(ProjectUpdateCreate):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        """Class for Config operations."""
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class InstallationProjectBase(BaseModel):
@@ -220,9 +214,7 @@ class InstallationProjectResponse(InstallationProjectBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        """Class for Config operations."""
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CustomerProjectSummary(BaseModel):
@@ -246,9 +238,7 @@ class CustomerProjectSummary(BaseModel):
     last_update: Optional[str]
     can_reschedule: bool = False
 
-    class Config:
-        """Class for Config operations."""
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ProjectTimelineResponse(BaseModel):
@@ -260,9 +250,7 @@ class ProjectTimelineResponse(BaseModel):
     recent_updates: List[ProjectUpdateResponse]
     upcoming_appointments: List[Dict[str, Any]] = Field(default_factory=list)
 
-    class Config:
-        """Class for Config operations."""
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ProjectDashboardResponse(BaseModel):
@@ -278,9 +266,7 @@ class ProjectDashboardResponse(BaseModel):
     customer_satisfaction_average: Optional[float]
     upcoming_milestones: List[ProjectMilestoneResponse]
 
-    class Config:
-        """Class for Config operations."""
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ProjectNotificationRequest(BaseModel):

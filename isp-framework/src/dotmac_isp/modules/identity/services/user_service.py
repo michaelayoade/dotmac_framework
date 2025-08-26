@@ -5,7 +5,7 @@ import secrets
 import string
 from typing import List, Optional, Dict, Any
 from uuid import UUID, uuid4
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.orm import Session
 
@@ -49,7 +49,7 @@ class UserService(BaseIdentityService):
                 "last_name": user_data.last_name,
                 "is_active": True,
                 "is_verified": False,
-                "created_at": datetime.utcnow(),
+                "created_at": datetime.now(timezone.utc),
             }
 
             # Create user
@@ -125,7 +125,7 @@ class UserService(BaseIdentityService):
             await self._validate_user_update(user_id, update_data)
 
             # Prepare update data
-            update_dict = update_data.dict(exclude_unset=True)
+            update_dict = update_data.model_dump(exclude_unset=True)
 
             # Hash new password if provided
             if "password" in update_dict:
@@ -183,7 +183,7 @@ class UserService(BaseIdentityService):
         """Verify user account."""
         try:
             db_user = self.user_repo.update(
-                user_id, {"is_verified": True, "verified_at": datetime.utcnow()}
+                user_id, {"is_verified": True, "verified_at": datetime.now(timezone.utc)}
             )
             if not db_user:
                 raise NotFoundError(f"User not found: {user_id}")
@@ -220,7 +220,7 @@ class UserService(BaseIdentityService):
                 user_id,
                 {
                     "password_hash": new_password_hash,
-                    "password_changed_at": datetime.utcnow(),
+                    "password_changed_at": datetime.now(timezone.utc),
                 },
             )
 
@@ -245,7 +245,7 @@ class UserService(BaseIdentityService):
                 user_id,
                 {
                     "password_hash": temp_password_hash,
-                    "password_changed_at": datetime.utcnow(),
+                    "password_changed_at": datetime.now(timezone.utc),
                     "force_password_change": True,
                 },
             )

@@ -264,7 +264,7 @@ class TestDatabaseSchemaContracts:
             FROM information_schema.columns
             WHERE table_name = 'customers'
             ORDER BY ordinal_position
-        """))
+        """)
 
         columns = {row[0]: {"type": row[1], "nullable": row[2]} for row in result}
 

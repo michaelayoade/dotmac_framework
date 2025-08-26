@@ -11,7 +11,7 @@ from .service import CustomerService
 class CustomerIntelligenceService:
     """Simple customer intelligence for immediate ROI."""
     
-    def __init__(self, db: Session, tenant_id: str):
+    def __init__(self, db: Session, tenant_id: str, timezone):
         self.db = db
         self.tenant_id = tenant_id
         self.customer_service = CustomerService(db, tenant_id)
@@ -40,7 +40,7 @@ class CustomerIntelligenceService:
             
             # Age-based adjustment (newer customers need more attention)
             if hasattr(customer, 'created_at'):
-                days_old = (datetime.utcnow() - customer.created_at).days
+                days_old = (datetime.now(timezone.utc) - customer.created_at).days
                 if days_old < 30:  # New customer
                     score = max(score - 10, 0)
             

@@ -13,7 +13,7 @@ from dotmac_isp.integrations.ansible.models import (
     DeviceInventory,
     ConfigurationTemplate,
     AutomationTask,
-)
+
 from dotmac_isp.integrations.ansible.schemas import (
     PlaybookCreate,
     PlaybookResponse,
@@ -23,7 +23,7 @@ from dotmac_isp.integrations.ansible.schemas import (
     InventoryResponse,
     TemplateCreate,
     TemplateResponse,
-)
+, timezone)
 from dotmac_isp.integrations.ansible.client import AnsibleClient
 
 router = APIRouter(prefix="/api/v1/ansible", tags=["Ansible Integration"])
@@ -33,9 +33,9 @@ router = APIRouter(prefix="/api/v1/ansible", tags=["Ansible Integration"])
 
 
 @router.post("/playbooks", response_model=PlaybookResponse)
-async def create_playbook(playbook: PlaybookCreate, db: AsyncSession = Depends(get_db)):
+async def create_playbook(playbook: PlaybookCreate, db: AsyncSession = Depends(get_db):
     """Create a new Ansible playbook."""
-    db_playbook = AnsiblePlaybook(**playbook.model_dump())
+    db_playbook = AnsiblePlaybook(**playbook.model_dump()
     db.add(db_playbook)
     await db.commit()
     await db.refresh(db_playbook)
@@ -55,10 +55,10 @@ async def list_playbooks(
     if playbook_type:
         filters.append(AnsiblePlaybook.playbook_type == playbook_type)
     if search:
-        filters.append(AnsiblePlaybook.name.ilike(f"%{search}%"))
+        filters.append(AnsiblePlaybook.name.ilike(f"%{search}%")
 
     if filters:
-        query = query.where(and_(*filters))
+        query = query.where(and_(*filters)
 
     result = await db.execute(query)
     playbooks = result.scalars().all()
@@ -131,7 +131,7 @@ async def list_playbook_executions(
     if status:
         query = query.where(PlaybookExecution.status == status)
 
-    query = query.order_by(PlaybookExecution.created_at.desc()).limit(limit)
+    query = query.order_by(PlaybookExecution.created_at.desc().limit(limit)
 
     result = await db.execute(query)
     executions = result.scalars().all()
@@ -147,7 +147,7 @@ async def create_inventory(
     inventory: InventoryCreate, db: AsyncSession = Depends(get_db)
 ):
     """Create a new device inventory."""
-    db_inventory = DeviceInventory(**inventory.model_dump())
+    db_inventory = DeviceInventory(**inventory.model_dump()
     db.add(db_inventory)
     await db.commit()
     await db.refresh(db_inventory)
@@ -191,7 +191,7 @@ async def validate_inventory(
         "inventory_id": inventory_id,
         "is_valid": is_valid,
         "errors": errors,
-        "validated_at": datetime.utcnow(),
+        "validated_at": datetime.now(timezone.utc),
     }
 
 
@@ -203,7 +203,7 @@ async def create_configuration_template(
     template: TemplateCreate, db: AsyncSession = Depends(get_db)
 ):
     """Create a new configuration template."""
-    db_template = ConfigurationTemplate(**template.model_dump())
+    db_template = ConfigurationTemplate(**template.model_dump()
     db.add(db_template)
     await db.commit()
     await db.refresh(db_template)
@@ -229,7 +229,7 @@ async def list_configuration_templates(
         filters.append(ConfigurationTemplate.vendor == vendor)
 
     if filters:
-        query = query.where(and_(*filters))
+        query = query.where(and_(*filters)
 
     result = await db.execute(query)
     templates = result.scalars().all()
@@ -252,7 +252,7 @@ async def list_all_executions(
     if status:
         query = query.where(PlaybookExecution.status == status)
 
-    query = query.order_by(PlaybookExecution.created_at.desc()).limit(limit)
+    query = query.order_by(PlaybookExecution.created_at.desc().limit(limit)
 
     result = await db.execute(query)
     executions = result.scalars().all()
@@ -296,7 +296,7 @@ async def cancel_execution(
 
     # Mark as cancelled
     execution.status = "cancelled"
-    execution.completed_at = datetime.utcnow()
+    execution.completed_at = datetime.now(timezone.utc)
     await db.commit()
 
     return {"message": "Execution cancelled successfully"}
@@ -306,16 +306,16 @@ async def cancel_execution(
 
 
 @router.get("/dashboard/summary")
-async def get_ansible_dashboard_summary(db: AsyncSession = Depends(get_db)):
+async def get_ansible_dashboard_summary(db: AsyncSession = Depends(get_db):
     """Get Ansible integration dashboard summary."""
     # Get total playbooks
-    total_playbooks_result = await db.execute(select(func.count(AnsiblePlaybook.id)))
+    total_playbooks_result = await db.execute(select(func.count(AnsiblePlaybook.id)
     total_playbooks = total_playbooks_result.scalar()
 
     # Get total executions in last 30 days
-    thirty_days_ago = datetime.utcnow().replace(day=datetime.utcnow().day - 30)
+    thirty_days_ago = datetime.now(timezone.utc).replace(day=datetime.now(timezone.utc).day - 30)
     recent_executions_result = await db.execute(
-        select(func.count(PlaybookExecution.id)).where(
+        select(func.count(PlaybookExecution.id).where(
             PlaybookExecution.created_at >= thirty_days_ago
         )
     )
@@ -334,7 +334,7 @@ async def get_ansible_dashboard_summary(db: AsyncSession = Depends(get_db)):
     status_counts = {row.status: row.count for row in status_counts_result}
 
     # Get success rate
-    total_recent = sum(status_counts.values())
+    total_recent = sum(status_counts.values()
     success_count = status_counts.get("success", 0)
     success_rate = (success_count / total_recent * 100) if total_recent > 0 else 0
 
@@ -343,7 +343,7 @@ async def get_ansible_dashboard_summary(db: AsyncSession = Depends(get_db)):
         "recent_executions": recent_executions,
         "status_counts": status_counts,
         "success_rate": round(success_rate, 2),
-        "timestamp": datetime.utcnow(),
+        "timestamp": datetime.now(timezone.utc),
     }
 
 

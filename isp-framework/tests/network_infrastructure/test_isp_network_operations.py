@@ -25,7 +25,7 @@ from dotmac_isp.modules.services.service import ServiceProvisioningService
 class TestRADIUSAuthenticationIntegration:
     """Test RADIUS authentication and accounting for customer internet access."""
     
-    async def test_customer_pppoe_authentication_success(self, db_session):
+    async def test_customer_pppoe_authentication_success(self, db_session, timezone):
         """Test successful PPPoE customer authentication via RADIUS."""
         radius_client = FreeRadiusClient()
         network_service = NetworkIntegrationService(db_session, "tenant_001")
@@ -229,7 +229,7 @@ class TestSNMPMonitoringIntegration:
             "bytes_in": 900_000_000,  # 900 Mbps of 1 Gbps = 90% utilization
             "bytes_out": 850_000_000, # 850 Mbps = 85% utilization
             "interface_speed": 1_000_000_000,  # 1 Gbps
-            "timestamp": datetime.utcnow()
+            "timestamp": datetime.now(timezone.utc)
         }
         
         # Configure alerting thresholds
@@ -425,7 +425,7 @@ class TestServiceProvisioningIntegration:
             "new_plan": "residential_fiber_500",
             "new_bandwidth_down": 500_000_000,  # 500 Mbps
             "new_bandwidth_up": 500_000_000,    # 500 Mbps
-            "effective_date": datetime.utcnow().date()
+            "effective_date": datetime.now(timezone.utc).date()
         }
         
         # Mock current service configuration
@@ -470,7 +470,7 @@ class TestServiceProvisioningIntegration:
             "service_id": "svc_overdue_001", 
             "suspension_reason": "overdue_payment",
             "suspension_type": "internet_only",  # Keep phone service active
-            "grace_period_end": datetime.utcnow() + timedelta(days=7)
+            "grace_period_end": datetime.now(timezone.utc) + timedelta(days=7)
         }
         
         # Current active service
@@ -533,7 +533,7 @@ class TestNetworkScalePerformance:
             }
             
             # Measure polling performance
-            start_time = datetime.utcnow()
+            start_time = datetime.now(timezone.utc)
             
             # Use asyncio.gather for concurrent polling
             polling_tasks = [
@@ -543,7 +543,7 @@ class TestNetworkScalePerformance:
             
             results = await asyncio.gather(*polling_tasks, return_exceptions=True)
             
-            end_time = datetime.utcnow()
+            end_time = datetime.now(timezone.utc)
             polling_duration = (end_time - start_time).total_seconds()
             
             # Performance requirements for ISP scale
@@ -578,7 +578,7 @@ class TestNetworkScalePerformance:
             }
             
             # Measure concurrent authentication performance
-            start_time = datetime.utcnow()
+            start_time = datetime.now(timezone.utc)
             
             auth_tasks = [
                 radius_client.authenticate(request)
@@ -587,7 +587,7 @@ class TestNetworkScalePerformance:
             
             results = await asyncio.gather(*auth_tasks, return_exceptions=True)
             
-            end_time = datetime.utcnow()
+            end_time = datetime.now(timezone.utc)
             auth_duration = (end_time - start_time).total_seconds()
             
             # Performance requirements

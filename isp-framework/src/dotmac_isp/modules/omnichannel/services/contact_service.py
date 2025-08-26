@@ -19,6 +19,7 @@ from ..schemas import (
     ContactCommunicationChannelUpdate,
 )
 from .base_service import BaseOmnichannelService
+from datetime import timezone
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +56,7 @@ class ContactService(BaseOmnichannelService):
 
             # Create contact
             contact = await self.repository.create_customer_contact(
-                {**contact_data.dict(), "tenant_id": self.tenant_id}
+                {**contact_data.model_dump(), "tenant_id": self.tenant_id}
             )
 
             logger.info(f"Created customer contact: {contact.id}")
@@ -88,7 +89,7 @@ class ContactService(BaseOmnichannelService):
 
             # Update contact
             updated_contact = await self.repository.update_customer_contact(
-                contact_id, update_data.dict(exclude_unset=True)
+                contact_id, update_data.model_dump(exclude_unset=True)
             )
 
             logger.info(f"Updated customer contact: {contact_id}")
@@ -137,7 +138,7 @@ class ContactService(BaseOmnichannelService):
 
             # Create channel
             channel = await self.repository.create_communication_channel(
-                {**channel_data.dict(), "tenant_id": self.tenant_id}
+                {**channel_data.model_dump(), "tenant_id": self.tenant_id}
             )
 
             logger.info(f"Created communication channel: {channel.id}")
@@ -170,7 +171,7 @@ class ContactService(BaseOmnichannelService):
 
             # Update verification status
             await self.repository.update_channel(
-                channel_id, {"is_verified": True, "verified_at": datetime.utcnow()}
+                channel_id, {"is_verified": True, "verified_at": datetime.now(timezone.utc)}
             )
 
             logger.info(f"Verified communication channel: {channel_id}")

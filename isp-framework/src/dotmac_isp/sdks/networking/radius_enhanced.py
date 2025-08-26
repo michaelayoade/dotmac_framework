@@ -95,7 +95,7 @@ class EnhancedRADIUSSDK:
                     local_user["openwisp_id"] = openwisp_user.get("id")
                 except OpenWISPRadiusError as e:
                     # Log warning but don't fail - local user still created
-logger.warning(f"Warning: Failed to create user in OpenWISP: {e}")
+                    logger.warning(f"Warning: Failed to create user in OpenWISP: {e}")
 
             return {
                 "username": local_user["username"],
@@ -226,7 +226,7 @@ logger.warning(f"Warning: Failed to create user in OpenWISP: {e}")
                 }
             )
         except OpenWISPRadiusError as e:
-logger.warning(f"Warning: OpenWISP accounting failed: {e}")
+            logger.warning(f"Warning: OpenWISP accounting failed: {e}")
 
         return {
             "record_id": record["record_id"],
@@ -494,7 +494,7 @@ logger.warning(f"Warning: OpenWISP disconnect failed: {e}")
         openwisp_healthy = await self.openwisp.health_check()
 
         # Get session count
-        active_sessions = len(await self.get_active_sessions())
+        active_sessions = len(await self.get_active_sessions()
 
         return {
             "database": "healthy" if db_healthy else "unhealthy",

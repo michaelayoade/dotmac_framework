@@ -42,7 +42,7 @@ class RelationshipRegistry:
             try:
                 configure_fn()
             except Exception as e:
-logger.warning(f"Warning: Failed to configure relationship: {e}")
+                logger.warning(f"Warning: Failed to configure relationship: {e}")
         
         self._configured = True
     

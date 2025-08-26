@@ -16,7 +16,7 @@ from dotmac_isp.modules.inventory.models import (
     EquipmentStatus,
     MovementType,
     ItemCondition,
-)
+, timezone)
 from dotmac_isp.shared.exceptions import (
     ServiceError,
     EntityNotFoundError,
@@ -78,7 +78,7 @@ class EquipmentService(BaseTenantService[Equipment, schemas.EquipmentCreate, sch
                 quantity=1,
                 warehouse_id=data.warehouse_id,
                 notes=f"Initial receipt of equipment {entity.model}"
-            ))
+            )
         except Exception as e:
             self._logger.error(f"Failed to create stock movement for equipment {entity.id}: {e}")
 
@@ -181,10 +181,10 @@ class StockMovementService(BaseTenantService[StockMovement, schemas.StockMovemen
             # Update equipment status based on movement type
             if entity.movement_type == MovementType.DEPLOYED:
                 await equipment_service.update(entity.equipment_id, 
-                    schemas.EquipmentUpdate(status=EquipmentStatus.DEPLOYED))
+                    schemas.EquipmentUpdate(status=EquipmentStatus.DEPLOYED)
             elif entity.movement_type == MovementType.RETURNED:
                 await equipment_service.update(entity.equipment_id, 
-                    schemas.EquipmentUpdate(status=EquipmentStatus.IN_STOCK))
+                    schemas.EquipmentUpdate(status=EquipmentStatus.IN_STOCK)
                 
         except Exception as e:
             self._logger.error(f"Failed to update equipment status for movement {entity.id}: {e}")
@@ -237,7 +237,7 @@ class InventoryService:
                     )
 
             # Create equipment
-            equipment_dict = equipment_data.dict()
+            equipment_dict = equipment_data.model_dump()
             equipment = self.equipment_repo.create(equipment_dict)
 
             # Create initial stock movement if in warehouse
@@ -389,7 +389,7 @@ class InventoryService:
     ) -> EquipmentType:
         """Create new equipment type."""
         try:
-            equipment_type_dict = equipment_type_data.dict()
+            equipment_type_dict = equipment_type_data.model_dump()
             return self.equipment_type_repo.create(equipment_type_dict)
         except Exception as e:
             raise ServiceError(f"Failed to create equipment type: {str(e)}")
@@ -413,7 +413,7 @@ class InventoryService:
     ) -> Warehouse:
         """Create new warehouse."""
         try:
-            warehouse_dict = warehouse_data.dict()
+            warehouse_dict = warehouse_data.model_dump()
             return self.warehouse_repo.create(warehouse_dict)
         except Exception as e:
             raise ServiceError(f"Failed to create warehouse: {str(e)}")
@@ -435,7 +435,7 @@ class InventoryService:
     async def create_vendor(self, vendor_data: schemas.VendorCreate) -> Vendor:
         """Create new vendor."""
         try:
-            vendor_dict = vendor_data.dict()
+            vendor_dict = vendor_data.model_dump()
             return self.vendor_repo.create(vendor_dict)
         except Exception as e:
             raise ServiceError(f"Failed to create vendor: {str(e)}")
@@ -510,7 +510,7 @@ class InventoryService:
             "warehouse_name": warehouse.name,
             "total_equipment": total_count,
             "summary_by_type": summary,
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
         }
 
     async def get_equipment_availability(self) -> Dict[str, Any]:
@@ -548,7 +548,7 @@ class InventoryService:
                 if availability["total"] > 0
                 else 0
             ),
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
         }
 
     # Private helper methods
@@ -564,7 +564,7 @@ class InventoryService:
         movement_data = {
             "equipment_id": equipment_id,
             "movement_type": movement_type,
-            "movement_date": datetime.utcnow(),
+            "movement_date": datetime.now(timezone.utc),
             "from_warehouse_id": from_warehouse_id,
             "to_warehouse_id": to_warehouse_id,
             "notes": notes,
@@ -660,7 +660,7 @@ class EquipmentTrackingService:
             if equipment.status == EquipmentStatus.DEPLOYED:
                 metrics["deployed_equipment"] += 1
                 if equipment.deployment_date:
-                    age_days = (datetime.utcnow() - equipment.deployment_date).days
+                    age_days = (datetime.now(timezone.utc) - equipment.deployment_date).days
                     deployment_ages.append(age_days)
             elif equipment.status in [
                 EquipmentStatus.AVAILABLE,

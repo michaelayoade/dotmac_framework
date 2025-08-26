@@ -290,7 +290,7 @@ class AISafetyPipeline:
                             import re
                             if re.search(rule["pattern"], content, re.IGNORECASE):
                                 violations.append({
-                                    "file": str(py_file.relative_to(self.project_root)),
+                                    "file": str(py_file.relative_to(self.project_root),
                                     "rule": rule["rule"],
                                     "severity": rule["severity"]
                                 })
@@ -473,7 +473,7 @@ logger.info(f"    {status_emoji.get(result.status, '❓')} {result.message}")
         """Extract number of tests run from pytest output"""
         import re
         match = re.search(r'(\d+) passed', output)
-        return int(match.group(1)) if match else 0
+        return int(match.group(1) if match else 0
     
     def _parse_revenue_failures(self, output: str) -> List[Dict[str, str]]:
         """Parse revenue protection failures from pytest output"""

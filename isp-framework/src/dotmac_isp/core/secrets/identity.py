@@ -135,8 +135,8 @@ class Session:
 class TokenValidator:
     """JWT token validation service"""
 
-    def __init__(        ):
-            """Initialize operation."""
+    def __init__(self, issuer: str, audience: str, public_key: str):
+        """Initialize operation."""
         self.issuer = issuer
         self.audience = audience
         self.public_key = public_key
@@ -146,7 +146,7 @@ class TokenValidator:
         """Validate JWT token"""
         try:
             # Check if token is revoked
-            token_hash = hashlib.sha256(token.encode()).hexdigest()
+            token_hash = hashlib.sha256(token.encode().hexdigest()
             if token_hash in self.revoked_tokens:
                 logger.warning("Revoked token used", token_hash=token_hash[:16])
                 return None
@@ -169,22 +169,22 @@ class TokenValidator:
             claims = TokenClaims.from_dict(payload)
 
             # Additional validation
-            if claims.exp < int(time.time()):
+            if claims.exp < int(time.time():
                 logger.warning("Expired token used", sub=claims.sub)
                 return None
 
             return claims
 
         except jwt.InvalidTokenError as e:
-            logger.warning("Invalid token", error=str(e))
+            logger.warning("Invalid token", error=str(e)
             return None
         except Exception as e:
-            logger.error("Token validation error", error=str(e))
+            logger.error("Token validation error", error=str(e)
             return None
 
     def revoke_token(self, token: str) -> None:
         """Revoke a token"""
-        token_hash = hashlib.sha256(token.encode()).hexdigest()
+        token_hash = hashlib.sha256(token.encode().hexdigest()
         self.revoked_tokens.add(token_hash)
         logger.info("Token revoked", token_hash=token_hash[:16])
 
@@ -291,7 +291,7 @@ class SessionManager:
             if session_id in user_sessions:
                 user_sessions.remove(session_id)
 
-        logger.info("Expired sessions cleaned up", count=len(expired_sessions))
+        logger.info("Expired sessions cleaned up", count=len(expired_sessions)
         return len(expired_sessions)
 
     def _generate_session_id(self) -> str:
@@ -308,7 +308,7 @@ class SessionManager:
             for session_id in user_session_ids:
                 session = self.sessions.get(session_id)
                 if session and session.is_active():
-                    sessions_with_activity.append((session_id, session.last_activity))
+                    sessions_with_activity.append((session_id, session.last_activity)
 
             # Sort by last activity (oldest first)
             sessions_with_activity.sort(key=lambda x: x[1])
@@ -410,7 +410,7 @@ class IdentityProvider:
         )
 
         # Store refresh token hash in session
-        session.refresh_token_hash = hashlib.sha256(refresh_token.encode()).hexdigest()
+        session.refresh_token_hash = hashlib.sha256(refresh_token.encode().hexdigest()
 
         logger.info(
             "User authenticated",
@@ -423,7 +423,7 @@ class IdentityProvider:
             "access_token": access_token,
             "refresh_token": refresh_token,
             "token_type": "Bearer",
-            "expires_in": int(self.access_token_lifetime.total_seconds()),
+            "expires_in": int(self.access_token_lifetime.total_seconds(),
             "session_id": session.session_id,
         }
 
@@ -436,13 +436,13 @@ class IdentityProvider:
         tenant_id: str | None = None,
     ) -> str:
         """Generate JWT access token"""
-        now = int(time.time())
+        now = int(time.time()
 
         claims = TokenClaims(
             sub=user_id,
             iss=self.issuer,
             aud=self.audience,
-            exp=now + int(self.access_token_lifetime.total_seconds()),
+            exp=now + int(self.access_token_lifetime.total_seconds(),
             iat=now,
             jti=secrets.token_urlsafe(16),
             scope="read write",
@@ -464,13 +464,13 @@ class IdentityProvider:
 
     def _generate_refresh_token(self, user_id: str, session_id: str) -> str:
         """Generate refresh token"""
-        now = int(time.time())
+        now = int(time.time()
 
         claims = TokenClaims(
             sub=user_id,
             iss=self.issuer,
             aud=self.audience,
-            exp=now + int(self.refresh_token_lifetime.total_seconds()),
+            exp=now + int(self.refresh_token_lifetime.total_seconds(),
             iat=now,
             jti=secrets.token_urlsafe(16),
             scope="refresh",
@@ -504,7 +504,7 @@ class IdentityProvider:
             return None
 
         # Verify refresh token hash
-        refresh_token_hash = hashlib.sha256(refresh_token.encode()).hexdigest()
+        refresh_token_hash = hashlib.sha256(refresh_token.encode().hexdigest()
         if session.refresh_token_hash != refresh_token_hash:
             logger.warning("Refresh token hash mismatch", session_id=claims.session_id)
             return None
@@ -525,7 +525,7 @@ class IdentityProvider:
         return {
             "access_token": access_token,
             "token_type": "Bearer",
-            "expires_in": int(self.access_token_lifetime.total_seconds()),
+            "expires_in": int(self.access_token_lifetime.total_seconds(),
         }
 
     def logout(self, session_id: str) -> bool:

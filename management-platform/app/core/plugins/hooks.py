@@ -7,7 +7,7 @@ from typing import Dict, List, Any, Callable, Optional
 from collections import defaultdict
 import asyncio
 
-from .base import BasePlugin, PluginError
+from base import BasePlugin, PluginError
 
 logger = logging.getLogger(__name__)
 

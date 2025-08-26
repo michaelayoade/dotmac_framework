@@ -11,7 +11,7 @@ from ...plugins.notifications.webhook_plugin import WebhookNotificationPlugin
 from ...plugins.notifications.slack_plugin import SlackNotificationPlugin
 from ...plugins.deployment.aws_plugin import AWSDeploymentPlugin
 from ...plugins.monitoring.prometheus_plugin import PrometheusMonitoringPlugin
-from ..config import settings
+from ...config import settings
 
 logger = logging.getLogger(__name__)
 

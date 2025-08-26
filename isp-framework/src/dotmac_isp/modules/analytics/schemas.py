@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 from enum import Enum
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 from dotmac_isp.shared.schemas import TenantModelSchema
 
@@ -19,10 +19,7 @@ class MetricDataPoint(BaseModel):
     )
     metadata: Optional[Dict[str, Any]] = Field(None, description="Additional metadata")
 
-    class Config:
-        """Class for Config operations."""
-        json_encoders = {datetime: lambda v: v.isoformat()}
-
+    model_config = ConfigDict(json_encoders={datetime: lambda v: v.isoformat()})
 
 class MetricType(str, Enum):
     """Available metric types for analytics."""
@@ -93,10 +90,7 @@ class ServiceAnalyticsResponse(BaseModel):
         None, description="Service uptime percentage"
     )
 
-    class Config:
-        """Class for Config operations."""
-        json_encoders = {datetime: lambda v: v.isoformat()}
-
+    model_config = ConfigDict(json_encoders={datetime: lambda v: v.isoformat()})
 
 class ServiceMetricsRequest(BaseModel):
     """Request schema for service metrics."""
@@ -111,10 +105,7 @@ class ServiceMetricsRequest(BaseModel):
         "daily", description="Data granularity (hourly, daily, weekly)"
     )
 
-    class Config:
-        """Class for Config operations."""
-        json_encoders = {datetime: lambda v: v.isoformat()}
-
+    model_config = ConfigDict(json_encoders={datetime: lambda v: v.isoformat()})
 
 class CustomReportRequest(BaseModel):
     """Request schema for custom reports."""
@@ -130,10 +121,7 @@ class CustomReportRequest(BaseModel):
     format: str = Field("json", description="Output format (json, csv, pdf)")
     include_charts: bool = Field(True, description="Include charts in report")
 
-    class Config:
-        """Class for Config operations."""
-        json_encoders = {datetime: lambda v: v.isoformat()}
-
+    model_config = ConfigDict(json_encoders={datetime: lambda v: v.isoformat()})
 
 class CustomReportResponse(BaseModel):
     """Response schema for custom reports."""
@@ -146,10 +134,7 @@ class CustomReportResponse(BaseModel):
     expires_at: Optional[datetime] = Field(None, description="Report expiration")
     download_url: Optional[str] = Field(None, description="Download URL for report")
 
-    class Config:
-        """Class for Config operations."""
-        json_encoders = {datetime: lambda v: v.isoformat()}
-
+    model_config = ConfigDict(json_encoders={datetime: lambda v: v.isoformat()})
 
 class RealTimeMetricsResponse(BaseModel):
     """Response schema for real-time metrics."""
@@ -164,10 +149,7 @@ class RealTimeMetricsResponse(BaseModel):
         None, description="Network throughput stats"
     )
 
-    class Config:
-        """Class for Config operations."""
-        json_encoders = {datetime: lambda v: v.isoformat()}
-
+    model_config = ConfigDict(json_encoders={datetime: lambda v: v.isoformat()})
 
 class MetricCreate(MetricBase):
     """Schema for creating metrics."""
@@ -198,9 +180,7 @@ class MetricResponse(MetricBase):
     created_at: datetime = Field(..., description="Creation timestamp")
     updated_at: Optional[datetime] = Field(None, description="Last update timestamp")
 
-    class Config:
-        """Class for Config operations."""
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MetricValueBase(BaseModel):
@@ -225,9 +205,7 @@ class MetricValueResponse(MetricValueBase):
     metric_id: str = Field(..., description="Metric ID")
     tenant_id: str = Field(..., description="Tenant ID")
 
-    class Config:
-        """Class for Config operations."""
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ReportBase(BaseModel):
@@ -278,9 +256,7 @@ class ReportResponse(ReportBase):
     created_at: datetime = Field(..., description="Creation timestamp")
     updated_at: Optional[datetime] = Field(None, description="Last update timestamp")
 
-    class Config:
-        """Class for Config operations."""
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DashboardBase(BaseModel):
@@ -326,9 +302,7 @@ class DashboardResponse(DashboardBase):
     created_at: datetime = Field(..., description="Creation timestamp")
     updated_at: Optional[datetime] = Field(None, description="Last update timestamp")
 
-    class Config:
-        """Class for Config operations."""
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class WidgetBase(BaseModel):
@@ -378,9 +352,7 @@ class WidgetResponse(WidgetBase):
     created_at: datetime = Field(..., description="Creation timestamp")
     updated_at: Optional[datetime] = Field(None, description="Last update timestamp")
 
-    class Config:
-        """Class for Config operations."""
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class AlertBase(BaseModel):
@@ -433,9 +405,7 @@ class AlertResponse(AlertBase):
     created_at: datetime = Field(..., description="Creation timestamp")
     updated_at: Optional[datetime] = Field(None, description="Last update timestamp")
 
-    class Config:
-        """Class for Config operations."""
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DataSourceBase(BaseModel):
@@ -483,9 +453,7 @@ class DataSourceResponse(DataSourceBase):
     created_at: datetime = Field(..., description="Creation timestamp")
     updated_at: Optional[datetime] = Field(None, description="Last update timestamp")
 
-    class Config:
-        """Class for Config operations."""
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class AnalyticsOverviewResponse(BaseModel):

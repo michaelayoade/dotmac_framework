@@ -41,10 +41,10 @@ class AgentService(BaseOmnichannelService):
             # Create agent
             agent = await self.repository.create_agent(
                 {
-                    **agent_data.dict(),
+                    **agent_data.model_dump(),
                     "tenant_id": self.tenant_id,
                     "status": AgentStatus.OFFLINE,
-                    "created_at": datetime.utcnow(),
+                    "created_at": datetime.now(timezone.utc),
                 }
             )
 
@@ -80,14 +80,14 @@ class AgentService(BaseOmnichannelService):
             update_data = {
                 "status": status,
                 "status_message": message,
-                "last_activity_at": datetime.utcnow(),
+                "last_activity_at": datetime.now(timezone.utc),
             }
 
             # Set online/offline timestamps
             if status == AgentStatus.AVAILABLE:
-                update_data["online_since"] = datetime.utcnow()
+                update_data["online_since"] = datetime.now(timezone.utc)
             elif status == AgentStatus.OFFLINE:
-                update_data["offline_since"] = datetime.utcnow()
+                update_data["offline_since"] = datetime.now(timezone.utc)
                 update_data["online_since"] = None
 
             await self.repository.update_agent(agent_id, update_data)
@@ -115,9 +115,9 @@ class AgentService(BaseOmnichannelService):
             # Create team
             team = await self.repository.create_team(
                 {
-                    **team_data.dict(),
+                    **team_data.model_dump(),
                     "tenant_id": self.tenant_id,
-                    "created_at": datetime.utcnow(),
+                    "created_at": datetime.now(timezone.utc),
                 }
             )
 
@@ -145,7 +145,7 @@ class AgentService(BaseOmnichannelService):
 
             # Update agent team assignment
             await self.repository.update_agent(
-                agent_id, {"team_id": team_id, "assigned_to_team_at": datetime.utcnow()}
+                agent_id, {"team_id": team_id, "assigned_to_team_at": datetime.now(timezone.utc)}
             )
 
             logger.info(f"Assigned agent to team: {agent_id} -> {team_id}")
@@ -255,7 +255,7 @@ class AgentService(BaseOmnichannelService):
                 "activity_type": "STATUS_CHANGE",
                 "old_value": old_status,
                 "new_value": new_status,
-                "timestamp": datetime.utcnow(),
+                "timestamp": datetime.now(timezone.utc),
                 "tenant_id": self.tenant_id,
             }
         )
@@ -269,7 +269,7 @@ class AgentService(BaseOmnichannelService):
                 "agent_id": agent_id,
                 **schedule_data,
                 "tenant_id": self.tenant_id,
-                "created_at": datetime.utcnow(),
+                "created_at": datetime.now(timezone.utc),
             }
         )
 

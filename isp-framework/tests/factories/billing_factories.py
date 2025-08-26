@@ -27,15 +27,15 @@ class InvoiceFactory(BaseFactory, TenantMixin, TimestampMixin):
     
     # Invoice identification
     invoice_number = factory.LazyFunction(invoice_number_generator)
-    customer_id = factory.LazyFunction(lambda: str(uuid4()))
+    customer_id = factory.LazyFunction(lambda: str(uuid4())
     
     # Invoice dates
-    invoice_date = factory.LazyFunction(lambda: date.today())
-    due_date = factory.LazyFunction(lambda: date.today() + timedelta(days=30))
+    invoice_date = factory.LazyFunction(lambda: date.today()
+    due_date = factory.LazyFunction(lambda: date.today() + timedelta(days=30)
     
     # Financial information
-    subtotal = factory.LazyFunction(lambda: random_decimal(50.0, 500.0))
-    tax_amount = factory.LazyAttribute(lambda obj: obj.subtotal * Decimal('0.085'))
+    subtotal = factory.LazyFunction(lambda: random_decimal(50.0, 500.0)
+    tax_amount = factory.LazyAttribute(lambda obj: obj.subtotal * Decimal('0.085')
     discount_amount = Decimal('0.00')
     total_amount = factory.LazyAttribute(
         lambda obj: obj.subtotal + obj.tax_amount - obj.discount_amount
@@ -44,7 +44,7 @@ class InvoiceFactory(BaseFactory, TenantMixin, TimestampMixin):
     # Status and metadata
     status = "draft"
     currency = "USD"
-    notes = factory.LazyAttribute(lambda obj: fake.text(max_nb_chars=200))
+    notes = factory.LazyAttribute(lambda obj: fake.text(max_nb_chars=200)
     
     # Payment tracking
     paid_amount = Decimal('0.00')
@@ -84,12 +84,12 @@ class InvoiceLineItemFactory(BaseFactory, TenantMixin, TimestampMixin):
         """Class for Meta operations."""
         model = None
     
-    invoice_id = factory.LazyFunction(lambda: str(uuid4()))
+    invoice_id = factory.LazyFunction(lambda: str(uuid4())
     
     # Item details
-    description = factory.LazyAttribute(lambda obj: fake.catch_phrase())
+    description = factory.LazyAttribute(lambda obj: fake.catch_phrase()
     quantity = Decimal('1.00')
-    unit_price = factory.LazyFunction(lambda: random_decimal(10.0, 200.0))
+    unit_price = factory.LazyFunction(lambda: random_decimal(10.0, 200.0)
     line_total = factory.LazyAttribute(lambda obj: obj.quantity * obj.unit_price)
     
     # Tax information
@@ -97,7 +97,7 @@ class InvoiceLineItemFactory(BaseFactory, TenantMixin, TimestampMixin):
     tax_amount = factory.LazyAttribute(lambda obj: obj.line_total * obj.tax_rate)
     
     # Service reference
-    service_instance_id = factory.LazyFunction(lambda: str(uuid4()))
+    service_instance_id = factory.LazyFunction(lambda: str(uuid4())
 
 
 class PaymentFactory(BaseFactory, TenantMixin, TimestampMixin):
@@ -109,18 +109,18 @@ class PaymentFactory(BaseFactory, TenantMixin, TimestampMixin):
     
     # Payment identification
     payment_number = factory.LazyFunction(payment_number_generator)
-    invoice_id = factory.LazyFunction(lambda: str(uuid4()))
+    invoice_id = factory.LazyFunction(lambda: str(uuid4())
     
     # Payment details
-    amount = factory.LazyFunction(lambda: random_decimal(50.0, 500.0))
-    payment_date = factory.LazyFunction(lambda: date.today())
+    amount = factory.LazyFunction(lambda: random_decimal(50.0, 500.0)
+    payment_date = factory.LazyFunction(lambda: date.today()
     payment_method = "credit_card"
     status = "completed"
     
     # Payment processing
     transaction_id = factory.LazyAttribute(lambda obj: f"TXN_{fake.bothify('??##??##')}")
     reference_number = factory.LazyAttribute(lambda obj: f"REF_{fake.bothify('###???###')}")
-    notes = factory.LazyAttribute(lambda obj: fake.text(max_nb_chars=100))
+    notes = factory.LazyAttribute(lambda obj: fake.text(max_nb_chars=100)
     
     # Failure information
     failure_reason = None
@@ -154,18 +154,18 @@ class SubscriptionFactory(BaseFactory, TenantMixin, TimestampMixin):
         """Class for Meta operations."""
         model = None
     
-    customer_id = factory.LazyFunction(lambda: str(uuid4()))
-    service_instance_id = factory.LazyFunction(lambda: str(uuid4()))
+    customer_id = factory.LazyFunction(lambda: str(uuid4())
+    service_instance_id = factory.LazyFunction(lambda: str(uuid4())
     
     # Subscription details
     billing_cycle = "monthly"
-    amount = factory.LazyFunction(lambda: random_decimal(25.0, 200.0))
+    amount = factory.LazyFunction(lambda: random_decimal(25.0, 200.0)
     currency = "USD"
     
     # Dates
-    start_date = factory.LazyFunction(lambda: date.today())
+    start_date = factory.LazyFunction(lambda: date.today()
     end_date = None  # Ongoing subscription
-    next_billing_date = factory.LazyFunction(lambda: date.today() + timedelta(days=30))
+    next_billing_date = factory.LazyFunction(lambda: date.today() + timedelta(days=30)
     
     # Status
     is_active = True
@@ -199,17 +199,17 @@ class BillingAccountFactory(BaseFactory, TenantMixin, TimestampMixin):
         """Class for Meta operations."""
         model = None
     
-    customer_id = factory.LazyFunction(lambda: str(uuid4()))
+    customer_id = factory.LazyFunction(lambda: str(uuid4())
     
     # Account details
-    account_name = factory.LazyAttribute(lambda obj: fake.catch_phrase())
+    account_name = factory.LazyAttribute(lambda obj: fake.catch_phrase()
     is_primary = True
     
     # Payment method details
     payment_method = "credit_card"
-    card_last_four = factory.LazyFunction(lambda: str(fake.random_int(1000, 9999)))
+    card_last_four = factory.LazyFunction(lambda: str(fake.random_int(1000, 9999)
     card_expiry = factory.LazyFunction(lambda: f"{fake.random_int(1, 12):02d}/{fake.random_int(2025, 2030)}")
-    bank_name = factory.LazyAttribute(lambda obj: fake.company())
+    bank_name = factory.LazyAttribute(lambda obj: fake.company()
     account_number_masked = factory.LazyFunction(lambda: f"****{fake.random_int(1000, 9999)}")
     
     # External payment processor references
@@ -234,12 +234,12 @@ class TaxRateFactory(BaseFactory, TenantMixin, TimestampMixin):
     
     # Geographic applicability
     country_code = "US"
-    state_province = factory.LazyAttribute(lambda obj: fake.state_abbr())
-    city = factory.LazyAttribute(lambda obj: fake.city())
+    state_province = factory.LazyAttribute(lambda obj: fake.state_abbr()
+    city = factory.LazyAttribute(lambda obj: fake.city()
     postal_code = None
     
     # Effective dates
-    effective_from = factory.LazyFunction(lambda: date.today() - timedelta(days=365))
+    effective_from = factory.LazyFunction(lambda: date.today() - timedelta(days=365)
     effective_to = None
     
     is_active = True
@@ -254,13 +254,13 @@ class CreditNoteFactory(BaseFactory, TenantMixin, TimestampMixin):
     
     # Credit note identification
     credit_note_number = factory.LazyFunction(lambda: f"CN-{fake.bothify('####')}")
-    customer_id = factory.LazyFunction(lambda: str(uuid4()))
-    invoice_id = factory.LazyFunction(lambda: str(uuid4()))
+    customer_id = factory.LazyFunction(lambda: str(uuid4())
+    invoice_id = factory.LazyFunction(lambda: str(uuid4())
     
     # Credit note details
-    amount = factory.LazyFunction(lambda: random_decimal(10.0, 100.0))
-    reason = factory.LazyAttribute(lambda obj: fake.sentence())
-    credit_date = factory.LazyFunction(lambda: date.today())
+    amount = factory.LazyFunction(lambda: random_decimal(10.0, 100.0)
+    reason = factory.LazyAttribute(lambda obj: fake.sentence()
+    credit_date = factory.LazyFunction(lambda: date.today()
     
     # Status
     is_applied = False
@@ -276,15 +276,15 @@ class ReceiptFactory(BaseFactory, TenantMixin, TimestampMixin):
     
     # Receipt identification
     receipt_number = factory.LazyFunction(lambda: f"RCP-{fake.bothify('######')}")
-    payment_id = factory.LazyFunction(lambda: str(uuid4()))
+    payment_id = factory.LazyFunction(lambda: str(uuid4())
     
     # Receipt details
     issued_at = factory.LazyFunction(datetime.utcnow)
-    amount = factory.LazyFunction(lambda: random_decimal(50.0, 500.0))
+    amount = factory.LazyFunction(lambda: random_decimal(50.0, 500.0)
     payment_method = "credit_card"
     
     # Customer and invoice information (denormalized)
-    customer_name = factory.LazyAttribute(lambda obj: fake.name())
+    customer_name = factory.LazyAttribute(lambda obj: fake.name()
     invoice_number = factory.LazyFunction(invoice_number_generator)
 
 
@@ -296,13 +296,13 @@ class LateFeeFactory(BaseFactory, TenantMixin, TimestampMixin):
         model = None
     
     # Late fee identification
-    invoice_id = factory.LazyFunction(lambda: str(uuid4()))
-    customer_id = factory.LazyFunction(lambda: str(uuid4()))
+    invoice_id = factory.LazyFunction(lambda: str(uuid4())
+    customer_id = factory.LazyFunction(lambda: str(uuid4())
     
     # Fee details
-    fee_amount = factory.LazyFunction(lambda: random_decimal(15.0, 50.0))
-    fee_date = factory.LazyFunction(lambda: date.today())
-    days_overdue = factory.LazyFunction(lambda: str(fake.random_int(15, 90)))
+    fee_amount = factory.LazyFunction(lambda: random_decimal(15.0, 50.0)
+    fee_date = factory.LazyFunction(lambda: date.today()
+    days_overdue = factory.LazyFunction(lambda: str(fake.random_int(15, 90)
     
     # Status
     is_waived = False

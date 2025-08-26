@@ -2,7 +2,7 @@
 Plugin licensing and management models.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 from enum import Enum
 from typing import Optional
@@ -173,7 +173,7 @@ class PluginLicense(BaseModel):
     status = Column(SQLEnum(LicenseStatus), default=LicenseStatus.TRIAL, nullable=False, index=True)
     
     # License period
-    activated_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    activated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     expires_at = Column(DateTime, nullable=True, index=True)
     trial_ends_at = Column(DateTime, nullable=True)
     
@@ -221,7 +221,7 @@ class PluginLicense(BaseModel):
     def is_expired(self) -> bool:
         """Check if license is expired."""
         if self.expires_at:
-            return datetime.utcnow() > self.expires_at
+            return datetime.now(timezone.utc) > self.expires_at
         return False
     
     @property
@@ -229,7 +229,7 @@ class PluginLicense(BaseModel):
         """Calculate days until expiry."""
         if not self.expires_at:
             return -1
-        delta = self.expires_at - datetime.utcnow()
+        delta = self.expires_at - datetime.now(timezone.utc)
         return max(0, delta.days)
     
     @property
@@ -242,7 +242,7 @@ class PluginLicense(BaseModel):
     def activate(self, license_key: str = None) -> None:
         """Activate license."""
         self.status = LicenseStatus.ACTIVE
-        self.activated_at = datetime.utcnow()
+        self.activated_at = datetime.now(timezone.utc)
         if license_key:
             self.license_key = license_key
     
@@ -280,7 +280,7 @@ class PluginUsage(BaseModel):
     plugin_id = Column(UUID(as_uuid=True), ForeignKey("plugins.id"), nullable=False, index=True)
     
     # Usage details
-    usage_date = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    usage_date = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False, index=True)
     usage_type = Column(String(100), nullable=False, index=True)  # api_call, feature_use, etc.
     quantity = Column(Integer, default=1, nullable=False)
     

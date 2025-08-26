@@ -3,12 +3,12 @@
 import asyncio
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional, Type, Union
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class PluginStatus(Enum):
@@ -73,9 +73,9 @@ class PluginInfo:
         if self.permissions_required is None:
             self.permissions_required = []
         if self.created_at is None:
-            self.created_at = datetime.utcnow()
+            self.created_at = datetime.now(timezone.utc)
         if self.updated_at is None:
-            self.updated_at = datetime.utcnow()
+            self.updated_at = datetime.now(timezone.utc)
 
 
 class PluginConfig(BaseModel):
@@ -96,21 +96,18 @@ class PluginConfig(BaseModel):
     metrics_enabled: bool = True
     logging_enabled: bool = True
 
-    class Config:
-        """Class for Config operations."""
-        extra = "allow"
-
+    model_config = ConfigDict(extra="allow")
 
 class PluginContext:
     """Plugin execution context."""
 
-    def __init__(        ):
-            """Initialize operation."""
+    def __init__(self, tenant_id: str, user_id: Optional[str] = None, request_id: Optional[str] = None):
+        """Initialize operation."""
         self.tenant_id = tenant_id
         self.user_id = user_id
         self.request_id = request_id or str(uuid4())
         self.metadata: Dict[str, Any] = {}
-        self.started_at = datetime.utcnow()
+        self.started_at = datetime.now(timezone.utc)
 
     def add_metadata(self, key: str, value: Any):
         """Add metadata to context."""
@@ -236,7 +233,7 @@ class BasePlugin(ABC):
         return {
             "status": self.status.value,
             "healthy": self.status in [PluginStatus.ACTIVE, PluginStatus.INACTIVE],
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     async def get_metrics(self) -> Dict[str, Any]:
@@ -248,7 +245,7 @@ class BasePlugin(ABC):
         return {
             "status": self.status.value,
             "uptime_seconds": (
-                (datetime.utcnow() - self._context.started_at).total_seconds()
+                (datetime.now(timezone.utc) - self._context.started_at).total_seconds()
                 if self._context
                 else 0
             ),

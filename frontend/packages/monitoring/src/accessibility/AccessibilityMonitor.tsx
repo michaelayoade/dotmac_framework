@@ -6,7 +6,7 @@
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import axe, { AxeResults, Result } from 'axe-core';
+import axe, { AxeResults, type Result } from 'axe-core';
 
 // Accessibility issue types
 export interface AccessibilityIssue {
@@ -17,8 +17,8 @@ export interface AccessibilityIssue {
   helpUrl: string;
   nodes: {
     html: string;
-    target: string[];
-    failureSummary?: string;
+    target: string[] | any;
+    failureSummary?: string | undefined;
   }[];
 }
 
@@ -72,38 +72,36 @@ export function AccessibilityMonitor({
     setIsRunning(true);
 
     try {
-      const config = {
-        rules: rules
-          ? Object.fromEntries(rules.map((rule) => [rule, { enabled: true }]))
-          : undefined,
+      const config: any = {
+        ...(rules ? { rules: Object.fromEntries(rules.map((rule) => [rule, { enabled: true }])) } : {}),
         tags: tags,
       };
 
-      const results: AxeResults = await axe.run(containerRef.current, config);
+      const results: any = await axe.run(containerRef.current, config);
 
       // Transform results into our format
-      const violations: AccessibilityIssue[] = results.violations.map((violation) => ({
+      const violations: AccessibilityIssue[] = results.violations.map((violation: any) => ({
         id: violation.id,
         impact: violation.impact as 'minor' | 'moderate' | 'serious' | 'critical',
         description: violation.description,
         help: violation.help,
         helpUrl: violation.helpUrl,
-        nodes: violation.nodes.map((node) => ({
+        nodes: violation.nodes.map((node: any) => ({
           html: node.html,
-          target: node.target,
+          target: Array.isArray(node.target) ? node.target : [String(node.target)],
           failureSummary: node.failureSummary,
         })),
       }));
 
-      const incomplete: AccessibilityIssue[] = results.incomplete.map((incomplete) => ({
+      const incomplete: AccessibilityIssue[] = results.incomplete.map((incomplete: any) => ({
         id: incomplete.id,
         impact: incomplete.impact as 'minor' | 'moderate' | 'serious' | 'critical',
         description: incomplete.description,
         help: incomplete.help,
         helpUrl: incomplete.helpUrl,
-        nodes: incomplete.nodes.map((node) => ({
+        nodes: incomplete.nodes.map((node: any) => ({
           html: node.html,
-          target: node.target,
+          target: Array.isArray(node.target) ? node.target : [String(node.target)],
           failureSummary: node.failureSummary,
         })),
       }));
@@ -210,37 +208,35 @@ export function useAccessibilityTesting(componentName?: string) {
       try {
         const { rules, tags = ['wcag2a', 'wcag2aa', 'wcag21aa'] } = options;
 
-        const config = {
-          rules: rules
-            ? Object.fromEntries(rules.map((rule) => [rule, { enabled: true }]))
-            : undefined,
+        const config: any = {
+          ...(rules ? { rules: Object.fromEntries(rules.map((rule) => [rule, { enabled: true }])) } : {}),
           tags: tags,
         };
 
-        const results: AxeResults = await axe.run(element, config);
+        const results: any = await axe.run(element, config);
 
-        const violations: AccessibilityIssue[] = results.violations.map((violation) => ({
+        const violations: AccessibilityIssue[] = results.violations.map((violation: any) => ({
           id: violation.id,
           impact: violation.impact as 'minor' | 'moderate' | 'serious' | 'critical',
           description: violation.description,
           help: violation.help,
           helpUrl: violation.helpUrl,
-          nodes: violation.nodes.map((node) => ({
+          nodes: violation.nodes.map((node: any) => ({
             html: node.html,
-            target: node.target,
+            target: Array.isArray(node.target) ? node.target : [String(node.target)],
             failureSummary: node.failureSummary,
           })),
         }));
 
-        const incomplete: AccessibilityIssue[] = results.incomplete.map((incomplete) => ({
+        const incomplete: AccessibilityIssue[] = results.incomplete.map((incomplete: any) => ({
           id: incomplete.id,
           impact: incomplete.impact as 'minor' | 'moderate' | 'serious' | 'critical',
           description: incomplete.description,
           help: incomplete.help,
           helpUrl: incomplete.helpUrl,
-          nodes: incomplete.nodes.map((node) => ({
+          nodes: incomplete.nodes.map((node: any) => ({
             html: node.html,
-            target: node.target,
+            target: Array.isArray(node.target) ? node.target : [String(node.target)],
             failureSummary: node.failureSummary,
           })),
         }));
@@ -290,7 +286,7 @@ export function withAccessibilityMonitoring<P extends object>(
 
     return (
       <AccessibilityMonitor {...options} componentName={componentName}>
-        <Component {...props} ref={ref} />
+        <Component {...(props as P)} ref={ref} />
       </AccessibilityMonitor>
     );
   });
@@ -335,7 +331,7 @@ export class AccessibilityAggregator {
 
   getLatestReport(componentName?: string): AccessibilityReport | null {
     const reports = this.getReports(componentName);
-    return reports.length > 0 ? reports[reports.length - 1] : null;
+    return reports.length > 0 ? reports[reports.length - 1] ?? null : null;
   }
 
   getSummaryStats(): {
@@ -445,9 +441,9 @@ function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   return result
     ? {
-        r: parseInt(result[1], 16),
-        g: parseInt(result[2], 16),
-        b: parseInt(result[3], 16),
+        r: parseInt(result[1] ?? '0', 16),
+        g: parseInt(result[2] ?? '0', 16),
+        b: parseInt(result[3] ?? '0', 16),
       }
     : null;
 }

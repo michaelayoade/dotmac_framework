@@ -2,7 +2,7 @@
 Tests for vault authentication strategies.
 
 REFACTORED: Tests for the strategy pattern implementation that replaced
-the 14-complexity if-elif chain in VaultClient._authenticate.
+the 14-complexity if-elif chain in OpenBaoClient._authenticate.
 """
 
 import pytest
@@ -27,13 +27,13 @@ class MockVaultConfig:
     def __init__(self, **kwargs):
         """  Init   operation."""
         self.auth_method = kwargs.get('auth_method', 'token')
-        self.token = SecretStr(kwargs.get('token', '')) if kwargs.get('token') else None
-        self.role_id = SecretStr(kwargs.get('role_id', '')) if kwargs.get('role_id') else None
-        self.secret_id = SecretStr(kwargs.get('secret_id', '')) if kwargs.get('secret_id') else None
+        self.token = SecretStr(kwargs.get('token', '') if kwargs.get('token') else None
+        self.role_id = SecretStr(kwargs.get('role_id', '') if kwargs.get('role_id') else None
+        self.secret_id = SecretStr(kwargs.get('secret_id', '') if kwargs.get('secret_id') else None
         self.kubernetes_role = kwargs.get('kubernetes_role')
         self.aws_role = kwargs.get('aws_role')
         self.ldap_username = kwargs.get('ldap_username')
-        self.ldap_password = SecretStr(kwargs.get('ldap_password', '')) if kwargs.get('ldap_password') else None
+        self.ldap_password = SecretStr(kwargs.get('ldap_password', '') if kwargs.get('ldap_password') else None
 
 
 class TestAuthStrategies:
@@ -175,7 +175,7 @@ class TestAuthStrategies:
         )
         
         # Mock reading service account token
-        with patch("builtins.open", mock_open(read_data="jwt-token-123")):
+        with patch("builtins.open", mock_open(read_data="jwt-token-123"):
             result = strategy.authenticate(client, config)
         
         assert result == "k8s-token-123"
@@ -210,7 +210,7 @@ class TestAuthStrategies:
         )
         
         # Mock FileNotFoundError when reading token
-        with patch("builtins.open", side_effect=FileNotFoundError()):
+        with patch("builtins.open", side_effect=FileNotFoundError():
             with pytest.raises(ValueError, match="Service account token not found"):
                 strategy.authenticate(client, config)
 
@@ -465,7 +465,7 @@ class TestAuthEngineFactory:
         engine = create_vault_auth_engine()
         
         assert isinstance(engine, VaultAuthenticationEngine)
-        assert len(engine.get_supported_auth_methods()) == 5  # All standard methods
+        assert len(engine.get_supported_auth_methods() == 5  # All standard methods
         
         # Test basic functionality
         client = Mock()
@@ -514,7 +514,7 @@ class TestComplexityReduction:
                 client.auth.kubernetes.login.return_value = {
                     "auth": {"client_token": "k8s-token"}
                 }
-                with patch("builtins.open", mock_open(read_data="jwt-token")):
+                with patch("builtins.open", mock_open(read_data="jwt-token"):
                     result = engine.authenticate(client, config)
                     assert result is not None
                 continue
@@ -531,22 +531,22 @@ class TestComplexityReduction:
             assert result is not None, f"Failed for auth method {auth_method}"
         
         # Verify all 5 auth methods work without complex if-elif logic
-        assert len(engine.get_supported_auth_methods()) == 5
+        assert len(engine.get_supported_auth_methods() == 5
 
 
-class TestIntegrationWithVaultClient:
+class TestIntegrationWithOpenBaoClient:
     """Test integration with vault client module."""
 
     @patch('dotmac_isp.core.secrets.vault_auth_strategies.create_vault_auth_engine')
-    def test_vault_client_uses_strategy(self, mock_create_engine):
-        """Test that VaultClient uses new strategy pattern."""
+    def test_openbao_client_uses_strategy(self, mock_create_engine):
+        """Test that OpenBaoClient uses new strategy pattern."""
         # Setup mock engine
         mock_engine = Mock()
         mock_engine.authenticate.return_value = 'test-token'
         mock_create_engine.return_value = mock_engine
         
-        # Import and test (this would normally be done in the actual vault_client.py)
-        from dotmac_isp.core.secrets.vault_client import VaultClient, VaultConfig
+        # Import and test (this would normally be done in the actual openbao_client.py)
+# OpenBaoClient removed - using OpenBaoClient instead
         
         client = Mock()
         client.is_authenticated.return_value = True
@@ -557,7 +557,7 @@ class TestIntegrationWithVaultClient:
         )
         
         # Simulate calling the refactored _authenticate method
-        vault_client = VaultClient(config)
+        openbao_client = OpenBaoClient(config)
         
         # The authenticate method should have been called on the strategy engine
         # This test validates the integration pattern is correct

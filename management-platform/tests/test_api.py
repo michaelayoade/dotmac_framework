@@ -29,7 +29,7 @@ class TestAuthEndpoints:
         )
         
         assert response.status_code == 201
-        data = response.json()
+        data = response.model_dump_json()
         assert data["email"] == "apitest@example.com"
         assert data["full_name"] == "API Test User"
         assert data["role"] == "tenant_user"
@@ -64,7 +64,7 @@ class TestAuthEndpoints:
         response = client.post("/api/v1/auth/login", json=login_data)
         
         assert response.status_code == 200
-        data = response.json()
+        data = response.model_dump_json()
         assert "access_token" in data
         assert "refresh_token" in data
         assert data["user"]["email"] == test_user.email
@@ -79,7 +79,7 @@ class TestAuthEndpoints:
         response = client.post("/api/v1/auth/login", json=login_data)
         
         assert response.status_code == 401
-        data = response.json()
+        data = response.model_dump_json()
         assert "Invalid credentials" in data["detail"]
     
     def test_protected_endpoint_no_token(self, client: TestClient):
@@ -95,7 +95,7 @@ class TestAuthEndpoints:
         response = client.get("/api/v1/auth/me", headers=headers)
         
         assert response.status_code == 200
-        data = response.json()
+        data = response.model_dump_json()
         assert "user_id" in data
         assert "email" in data
 
@@ -120,7 +120,7 @@ class TestTenantEndpoints:
         response = client.post("/api/v1/tenants", json=tenant_data, headers=headers)
         
         assert response.status_code == 201
-        data = response.json()
+        data = response.model_dump_json()
         
         # The response follows ResponseBuilder format with 'data' containing the tenant
         assert data["status"] == "success"
@@ -149,7 +149,7 @@ class TestTenantEndpoints:
         response = client.get("/api/v1/tenants", headers=headers)
         
         assert response.status_code == 200
-        data = response.json()
+        data = response.model_dump_json()
         assert "tenants" in data
         assert "total" in data
         assert isinstance(data["tenants"], list)
@@ -161,7 +161,7 @@ class TestTenantEndpoints:
         response = client.get(f"/api/v1/tenants/{test_tenant.id}", headers=headers)
         
         assert response.status_code == 200
-        data = response.json()
+        data = response.model_dump_json()
         assert data["id"] == str(test_tenant.id)
         assert data["name"] == test_tenant.name
     
@@ -181,7 +181,7 @@ class TestTenantEndpoints:
         )
         
         assert response.status_code == 200
-        data = response.json()
+        data = response.model_dump_json()
         assert data["display_name"] == "Updated via API"
         assert data["description"] == "Updated description"
     
@@ -219,7 +219,7 @@ class TestBillingEndpoints:
         )
         
         assert response.status_code == 201
-        data = response.json()
+        data = response.model_dump_json()
         assert data["plan_name"] == "premium"
         assert data["tenant_id"] == str(test_tenant.id)
         assert data["status"] == "active"
@@ -231,7 +231,7 @@ class TestBillingEndpoints:
         response = client.get(f"/api/v1/billing/overview/{test_tenant.id}", headers=headers)
         
         assert response.status_code == 200
-        data = response.json()
+        data = response.model_dump_json()
         assert "tenant_id" in data
         assert "current_subscription" in data
         assert "total_invoices" in data
@@ -243,7 +243,7 @@ class TestBillingEndpoints:
         response = client.get(f"/api/v1/billing/{test_tenant.id}/invoices", headers=headers)
         
         assert response.status_code == 200
-        data = response.json()
+        data = response.model_dump_json()
         assert isinstance(data, list)
 
 
@@ -256,7 +256,7 @@ class TestHealthEndpoints:
         response = client.get("/api/v1/health")
         
         assert response.status_code == 200
-        data = response.json()
+        data = response.model_dump_json()
         assert data["status"] == "healthy"
         assert "timestamp" in data
         assert "version" in data
@@ -266,7 +266,7 @@ class TestHealthEndpoints:
         response = client.get("/api/v1/health/database")
         
         assert response.status_code == 200
-        data = response.json()
+        data = response.model_dump_json()
         assert data["status"] == "healthy"
         assert "response_time" in data
     

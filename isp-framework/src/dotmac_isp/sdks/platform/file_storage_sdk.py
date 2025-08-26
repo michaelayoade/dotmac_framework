@@ -37,7 +37,6 @@ class FileStorageSDKConfig:
     """File Storage SDK configuration."""
 
     def __init__(  # noqa: PLR0913
-        """  Init   operation."""
         self,
         default_provider: StorageProvider = StorageProvider.MINIO,
         max_file_size_bytes: int = 100 * 1024 * 1024,  # 100MB
@@ -49,6 +48,7 @@ class FileStorageSDKConfig:
         enable_virus_scanning: bool = False,
         enable_thumbnail_generation: bool = False,
     ):
+        """Initialize file storage SDK configuration."""
         self.default_provider = default_provider
         self.max_file_size_bytes = max_file_size_bytes
         self.allowed_content_types = allowed_content_types

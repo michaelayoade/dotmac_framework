@@ -27,7 +27,7 @@ from ..contracts.common_schemas import (
     TimeoutPolicy,
     ErrorInfo,
     Priority,
-)
+    ConfigDict)
 
 logger = structlog.get_logger(__name__)
 
@@ -87,10 +87,7 @@ class JobDefinition(BaseModel):
     tenant_id: str = Field(..., description="Tenant identifier")
     metadata: OperationMetadata = Field(default_factory=OperationMetadata)
 
-    class Config:
-        """Class for Config operations."""
-        extra = "allow"
-
+    model_config = ConfigDict(extra="allow")
 
 @dataclass
 class JobExecution:
@@ -124,8 +121,8 @@ class JobExecution:
             "priority": self.priority.value,
             "input_data": self.input_data,
             "output_data": self.output_data,
-            "context": self.context.dict() if self.context else None,
-            "error": self.error.dict() if self.error else None,
+            "context": self.context.model_dump() if self.context else None,
+            "error": self.error.model_dump() if self.error else None,
             "created_at": self.created_at.isoformat(),
             "scheduled_at": (
                 self.scheduled_at.isoformat() if self.scheduled_at else None
@@ -142,8 +139,13 @@ class JobExecution:
 class JobQueue:
     """Job queue implementation with priority and delay support."""
 
-    def __init__(        ):
-            """Initialize operation."""
+    def __init__(
+        self,
+        name: str,
+        queue_type: str = "default",
+        max_size: int = 1000,
+    ):
+        """Initialize job queue."""
         self.name = name
         self.queue_type = queue_type
         self.max_size = max_size

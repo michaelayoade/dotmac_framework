@@ -114,7 +114,7 @@ def remove_plugin_config(plugin_name):
         if config_file.exists():
             try:
                 config_file.unlink()
-                files_removed.append(str(config_file))
+                files_removed.append(str(config_file)
             except Exception as e:
 logger.warning(f"Warning: Could not remove {config_file}: {e}")
     
@@ -157,7 +157,7 @@ logger.info(f"Plugin '{plugin_name}' is available but not installed.")
 logger.info("Use 'make list-plugins' to see installed plugins.")
         else:
 logger.info(f"Unknown plugin: {plugin_name}")
-logger.info(f"Available plugins: {', '.join(plugin_definitions.keys())}")
+logger.info(f"Available plugins: {', '.join(plugin_definitions.keys()}")
         return False
     
     plugin_info = plugin_definitions.get(plugin_name, {})
@@ -201,11 +201,11 @@ def main():
 logger.info("Usage: python remove_plugin.py <plugin_name>")
         
         if installed_plugins:
-logger.info(f"\nInstalled plugins: {', '.join(installed_plugins.keys())}")
+logger.info(f"\nInstalled plugins: {', '.join(installed_plugins.keys()}")
         else:
 logger.info("\nNo plugins are currently installed.")
         
-logger.info(f"Available plugins: {', '.join(plugin_definitions.keys())}")
+logger.info(f"Available plugins: {', '.join(plugin_definitions.keys()}")
         sys.exit(1)
     
     plugin_name = sys.argv[1].lower()

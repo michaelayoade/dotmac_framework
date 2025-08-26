@@ -150,7 +150,7 @@ def contract_test_get_customers(validator):
     
     # Contract: Response should be valid JSON
     data = response.json()
-    assert isinstance(data, (list, dict))
+    assert isinstance(data, (list, dict)
     
     # Contract: If list, each item should match customer schema
     if isinstance(data, list) and data:

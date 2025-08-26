@@ -23,6 +23,7 @@ from .models import (
     ServiceStatus,
     ProvisioningStatus,
 )
+
 from .service import ServiceProvisioningService, ServicePlanService
 from dotmac_isp.shared.exceptions import NotFoundError, ValidationError, ServiceError
 from .customer_intelligence_service import CustomerServiceIntelligenceService
@@ -383,5 +384,5 @@ async def health_check():
     return {
         "status": "healthy",
         "module": "services",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     }

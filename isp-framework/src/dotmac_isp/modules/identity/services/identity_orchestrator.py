@@ -205,7 +205,7 @@ class IdentityOrchestrator:
             # Create user account if user data provided
             user_response = None
             if user_data:
-                user_data_dict = user_data.copy()
+                user_data_dict = user_data.model_copy()
                 user_data_dict["customer_id"] = customer_response.id
                 user_response = await self.user_service.create_user(
                     schemas.UserCreate(**user_data_dict)

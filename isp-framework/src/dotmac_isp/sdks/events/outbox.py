@@ -19,7 +19,7 @@ from typing import Any, Dict, List, Optional
 import structlog
 from sqlalchemy import Column, DateTime, Integer, String, Text
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 from sqlalchemy.future import select
 from sqlalchemy.orm import sessionmaker
 

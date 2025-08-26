@@ -14,15 +14,15 @@ from sqlalchemy import select, update
 from kubernetes import client, config
 from kubernetes.client.rest import ApiException
 
-from ..core.exceptions import InfrastructureError, ValidationError
-from ..core.logging import get_logger
-from ..models.infrastructure import InfrastructureTemplate, InfrastructureDeployment
-from ..schemas.infrastructure import (
+from core.exceptions import InfrastructureError, ValidationError
+from core.logging import get_logger
+from models.infrastructure import InfrastructureTemplate, InfrastructureDeployment
+from schemas.infrastructure import (
     InfrastructureRequest,
     InfrastructureStatus,
     KubernetesConfig,
     CloudResourceConfig
-)
+, timezone)
 
 logger = get_logger(__name__)
 
@@ -108,7 +108,7 @@ class InfrastructureService:
                 "kubernetes_resources": k8s_resources,
                 "network_config": network_config,
                 "monitoring_config": monitoring_config,
-                "provisioned_at": datetime.utcnow().isoformat()
+                "provisioned_at": datetime.now(timezone.utc).isoformat()
             }
             
         except Exception as e:
@@ -176,7 +176,7 @@ class InfrastructureService:
             return {
                 "deployment_id": str(deployment_id),
                 "status": InfrastructureStatus.DEPROVISIONED,
-                "deprovisioned_at": datetime.utcnow().isoformat()
+                "deprovisioned_at": datetime.now(timezone.utc).isoformat()
             }
             
         except Exception as e:
@@ -277,7 +277,7 @@ class InfrastructureService:
                 deployment_id,
                 {
                     "scaling_history": {
-                        "timestamp": datetime.utcnow().isoformat(),
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
                         "user_id": user_id,
                         "config": scale_config,
                         "results": {
@@ -294,7 +294,7 @@ class InfrastructureService:
                     "kubernetes": k8s_scaling_result,
                     "cloud": cloud_scaling_result
                 },
-                "scaled_at": datetime.utcnow().isoformat()
+                "scaled_at": datetime.now(timezone.utc).isoformat()
             }
             
         except Exception as e:
@@ -354,12 +354,12 @@ class InfrastructureService:
             name=request.name,
             description=request.description,
             status=InfrastructureStatus.PROVISIONING,
-            configuration=request.dict(),
+            configuration=request.model_dump(),
             resource_limits=request.resource_limits or {},
             metadata={
                 "created_by": user_id,
                 "template_name": template.name,
-                "provisioning_started": datetime.utcnow().isoformat()
+                "provisioning_started": datetime.now(timezone.utc).isoformat()
             }
         )
         
@@ -497,7 +497,7 @@ class InfrastructureService:
         metadata: Optional[Dict[str, Any]] = None
     ) -> None:
         """Update deployment status and metadata."""
-        update_data = {"status": status, "updated_at": datetime.utcnow()}
+        update_data = {"status": status, "updated_at": datetime.now(timezone.utc)}
         
         if metadata:
             # Merge with existing metadata

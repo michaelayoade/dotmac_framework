@@ -55,7 +55,7 @@ class ASTNodeEvaluator:
         """Evaluate comparison operations."""
         left = self.evaluate_node(node.left)
 
-        for i, (comparator, op) in enumerate(zip(node.comparators, node.ops)):
+        for i, (comparator, op) in enumerate(zip(node.comparators, node.ops):
             right = self.evaluate_node(comparator)
 
             if type(op) not in self.OPERATORS:
@@ -163,7 +163,7 @@ class SafeExpressionEvaluator:
             logger.warning(
                 f"Expression evaluation failed: {expression}",
                 error=str(e),
-                context_keys=list(context.keys()),
+                context_keys=list(context.keys(),
             )
             return False
 

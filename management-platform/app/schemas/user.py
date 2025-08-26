@@ -8,7 +8,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
-from .common import BaseResponse
+from schemas.common import BaseResponse
 
 
 class UserBase(BaseModel):

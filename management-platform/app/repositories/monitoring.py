@@ -7,8 +7,8 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..models.monitoring import Alert, HealthCheck, Metric, SLARecord
-from .base import BaseRepository
+from models.monitoring import Alert, HealthCheck, Metric, SLARecord
+from repositories.base import BaseRepository
 
 
 class HealthCheckRepository(BaseRepository[HealthCheck]):

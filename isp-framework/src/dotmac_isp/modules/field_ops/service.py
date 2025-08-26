@@ -34,7 +34,7 @@ from dotmac_isp.shared.exceptions import (
 
 def generate_work_order_number() -> str:
     """Generate a unique work order number."""
-    timestamp = int(datetime.utcnow().timestamp())
+    timestamp = int(datetime.now(timezone.utc).timestamp())
     random_chars = "".join(
         secrets.choice(string.ascii_uppercase + string.digits) for _ in range(4)
     )
@@ -43,7 +43,7 @@ def generate_work_order_number() -> str:
 
 def generate_appointment_id() -> str:
     """Generate a unique appointment ID."""
-    timestamp = int(datetime.utcnow().timestamp())
+    timestamp = int(datetime.now(timezone.utc).timestamp()
     return f"APT-{timestamp}"
 
 
@@ -208,14 +208,14 @@ class WorkOrderService:
                 status == WorkOrderStatus.IN_PROGRESS
                 and not work_order.actual_start_time
             ):
-                update_data["actual_start_time"] = datetime.utcnow()
+                update_data["actual_start_time"] = datetime.now(timezone.utc)
             elif status == WorkOrderStatus.COMPLETED:
-                update_data["actual_end_time"] = datetime.utcnow()
+                update_data["actual_end_time"] = datetime.now(timezone.utc)
                 update_data["progress_percentage"] = 100
                 if completion_notes:
                     update_data["completion_notes"] = completion_notes
             elif status == WorkOrderStatus.CANCELLED:
-                update_data["cancelled_at"] = datetime.utcnow()
+                update_data["cancelled_at"] = datetime.now(timezone.utc)
 
             updated_work_order = self.work_order_repo.update(work_order_id, update_data)
             return schemas.WorkOrder.from_orm(updated_work_order)
@@ -238,7 +238,7 @@ class WorkOrderService:
         """Get field operations dashboard statistics."""
         try:
             status_counts = self.work_order_repo.count_by_status()
-            overdue_count = len(self.work_order_repo.get_overdue_work_orders())
+            overdue_count = len(self.work_order_repo.get_overdue_work_orders()
 
             # Get active technicians count
             active_technicians = len(

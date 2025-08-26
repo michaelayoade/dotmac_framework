@@ -43,7 +43,7 @@ AuditTrail = Mock
 class TestMultiTenantDataIsolation:
     """Test complete data isolation between tenants."""
     
-    def test_tenant_data_isolation_customers(self, db_session):
+    def test_tenant_data_isolation_customers(self, db_session, timezone):
         """Test that tenant A cannot access tenant B customer data."""
         
         tenant_a_id = UUID("11111111-1111-1111-1111-111111111111")
@@ -59,7 +59,7 @@ class TestMultiTenantDataIsolation:
             email="alice@tenant-a.com",
             phone="+15551234567",
             ssn="123-45-6789",  # Sensitive data
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         
         customer_b = Customer(
@@ -71,7 +71,7 @@ class TestMultiTenantDataIsolation:
             email="bob@tenant-b.com", 
             phone="+15559876543",
             ssn="987-65-4321",  # Sensitive data
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         
         db_session.add_all([customer_a, customer_b])
@@ -100,7 +100,7 @@ class TestMultiTenantDataIsolation:
         try:
             result = db_session.execute(text(
                 "SELECT * FROM customers WHERE email LIKE '%tenant%'"
-            )).fetchall()
+            ).fetchall()
             
             # If RLS is properly configured, this should only return current tenant's data
             # or raise an access denied error
@@ -125,7 +125,7 @@ class TestMultiTenantDataIsolation:
             first_name="Alice",
             last_name="Billing",
             email="alice.billing@tenant-a.com",
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         
         customer_b = Customer(
@@ -135,7 +135,7 @@ class TestMultiTenantDataIsolation:
             first_name="Bob", 
             last_name="Billing",
             email="bob.billing@tenant-b.com",
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         
         db_session.add_all([customer_a, customer_b])
@@ -150,9 +150,9 @@ class TestMultiTenantDataIsolation:
             subtotal=Decimal('99.99'),
             tax_amount=Decimal('8.87'),
             total_amount=Decimal('108.86'),
-            due_date=datetime.utcnow().date() + timedelta(days=30),
+            due_date=datetime.now(timezone.utc).date() + timedelta(days=30),
             status="pending",
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         
         invoice_b = Invoice(
@@ -163,9 +163,9 @@ class TestMultiTenantDataIsolation:
             subtotal=Decimal('199.99'),
             tax_amount=Decimal('17.74'),
             total_amount=Decimal('217.73'),
-            due_date=datetime.utcnow().date() + timedelta(days=30),
+            due_date=datetime.now(timezone.utc).date() + timedelta(days=30),
             status="pending",
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         
         # Create payment methods with sensitive card data
@@ -179,7 +179,7 @@ class TestMultiTenantDataIsolation:
             card_expiry="12/25",
             is_default=True,
             is_active=True,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         
         payment_b = PaymentMethod(
@@ -192,7 +192,7 @@ class TestMultiTenantDataIsolation:
             card_expiry="08/26",
             is_default=True,
             is_active=True,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         
         db_session.add_all([invoice_a, invoice_b, payment_a, payment_b])
@@ -244,7 +244,7 @@ class TestRBACSecurityControls:
             tenant_id=tenant_id,
             role_name="admin",
             permissions=["billing:read", "billing:write", "customer:read", "customer:write"],
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         
         readonly_role = Role(
@@ -252,7 +252,7 @@ class TestRBACSecurityControls:
             tenant_id=tenant_id,
             role_name="readonly",
             permissions=["billing:read", "customer:read"],
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         
         billing_role = Role(
@@ -260,7 +260,7 @@ class TestRBACSecurityControls:
             tenant_id=tenant_id,
             role_name="billing",
             permissions=["billing:read", "billing:write"],
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         
         db_session.add_all([admin_role, readonly_role, billing_role])
@@ -273,7 +273,7 @@ class TestRBACSecurityControls:
             email="admin@test.com",
             role_id=admin_role.id,
             is_active=True,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         
         readonly_user = User(
@@ -283,7 +283,7 @@ class TestRBACSecurityControls:
             email="readonly@test.com", 
             role_id=readonly_role.id,
             is_active=True,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         
         billing_user = User(
@@ -293,7 +293,7 @@ class TestRBACSecurityControls:
             email="billing@test.com",
             role_id=billing_role.id,
             is_active=True,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         
         db_session.add_all([admin_user, readonly_user, billing_user])
@@ -331,7 +331,7 @@ class TestRBACSecurityControls:
             tenant_id=tenant_id,
             role_name="limited",
             permissions=["customer:read"],
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         
         # Create privileged role that user should not access
@@ -340,7 +340,7 @@ class TestRBACSecurityControls:
             tenant_id=tenant_id,
             role_name="privileged",
             permissions=["billing:read", "billing:write", "customer:read", "customer:write", "admin:all"],
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         
         db_session.add_all([limited_role, privileged_role])
@@ -352,7 +352,7 @@ class TestRBACSecurityControls:
             email="limited@test.com",
             role_id=limited_role.id,
             is_active=True,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         
         db_session.add(limited_user)
@@ -401,7 +401,7 @@ class TestDataEncryptionCompliance:
             phone="+15551112222",
             # These fields should be encrypted at the application layer
             ssn=field_encryption.encrypt(sensitive_data["ssn"]),
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         
         db_session.add(customer)
@@ -431,7 +431,7 @@ class TestDataEncryptionCompliance:
             encrypted_card_number=field_encryption.encrypt(sensitive_data["credit_card"]),
             is_default=True,
             is_active=True,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         
         db_session.add(payment_method)
@@ -498,7 +498,7 @@ class TestGDPRComplianceControls:
             zip_code="90210",
             ssn="111-22-3333",
             date_of_birth=datetime(1985, 6, 15).date(),
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         
         db_session.add(customer)
@@ -512,9 +512,9 @@ class TestGDPRComplianceControls:
             subtotal=Decimal('49.99'),
             tax_amount=Decimal('4.44'),
             total_amount=Decimal('54.43'),
-            due_date=datetime.utcnow().date() + timedelta(days=30),
+            due_date=datetime.now(timezone.utc).date() + timedelta(days=30),
             status="pending",
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         
         payment_method = PaymentMethod(
@@ -526,7 +526,7 @@ class TestGDPRComplianceControls:
             card_brand="visa",
             is_default=True,
             is_active=True,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         
         db_session.add_all([invoice, payment_method])
@@ -588,7 +588,7 @@ class TestGDPRComplianceControls:
             email="jane.forget@test.com",
             phone="+15559998888",
             ssn="999-88-7777",
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         
         db_session.add(customer)
@@ -602,7 +602,7 @@ class TestGDPRComplianceControls:
             mock_delete.return_value = {
                 "deleted": True,
                 "anonymized_records": 1,
-                "deletion_date": datetime.utcnow().isoformat()
+                "deletion_date": datetime.now(timezone.utc).isoformat()
             }
             
             gdpr_service = MockGDPRService()
@@ -642,7 +642,7 @@ class TestAuditTrailCompliance:
             first_name="Audited",
             last_name="Customer",
             email="audit@test.com",
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         
         db_session.add(customer)
@@ -691,7 +691,7 @@ class TestAuditTrailCompliance:
             last_name="Name",
             email="original@test.com",
             phone="+15551111111",
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         
         db_session.add(customer)
@@ -764,7 +764,7 @@ class TestSecurityIncidentResponse:
                         "description": "Multiple failed login attempts from same IP",
                         "ip_address": "192.168.1.100",
                         "user_id": "suspicious@test.com",
-                        "timestamp": datetime.utcnow().isoformat(),
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
                         "details": {
                             "failed_attempts": 15,
                             "time_window": "5_minutes",
@@ -845,7 +845,7 @@ class TestSecurityPerformanceBaseline:
             username="perf@test.com",
             email="perf@test.com",
             is_active=True,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         
         db_session.add(user)

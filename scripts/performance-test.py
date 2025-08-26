@@ -278,7 +278,7 @@ class PerformanceTester:
         start_time = time.time()
         
         while time.time() - start_time < duration_seconds:
-            cpu_samples.append(psutil.cpu_percent(interval=1))
+            cpu_samples.append(psutil.cpu_percent(interval=1)
             
             memory = psutil.virtual_memory()
             memory_samples.append(memory.percent)
@@ -555,4 +555,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    exit(asyncio.run(main()))
+    exit(asyncio.run(main())

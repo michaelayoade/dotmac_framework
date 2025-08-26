@@ -24,7 +24,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 
 # Skip tests if no database URL provided
-DATABASE_URL = os.getenv("TEST_DATABASE_URL", os.getenv("DATABASE_URL"))
+DATABASE_URL = os.getenv("TEST_DATABASE_URL", os.getenv("DATABASE_URL")
 pytestmark = pytest.mark.skipif(
     not DATABASE_URL,
     reason="DATABASE_URL not provided for integration tests"
@@ -48,7 +48,7 @@ class DatabaseCustomerRepository:
         """
         
         now = datetime.now(timezone.utc)
-        customer_id = customer_data.get('id', str(uuid4()))
+        customer_id = customer_data.get('id', str(uuid4())
         
         row = await self.db.fetchrow(
             query,
@@ -59,7 +59,7 @@ class DatabaseCustomerRepository:
             customer_data['last_name'],
             customer_data.get('phone'),
             customer_data.get('status', 'active'),
-            Decimal(str(customer_data.get('balance', '0.00'))),
+            Decimal(str(customer_data.get('balance', '0.00'),
             customer_data.get('created_at', now),
             now
         )
@@ -92,7 +92,7 @@ class DatabaseCustomerRepository:
         
         # Always update the updated_at field
         set_clauses.append(f"updated_at = ${param_count}")
-        values.append(datetime.now(timezone.utc))
+        values.append(datetime.now(timezone.utc)
         param_count += 1
         
         # Add WHERE clause parameters
@@ -176,21 +176,21 @@ async def setup_test_schema(db_transaction):
             updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
             UNIQUE(email, tenant_id)
         )
-    """))
+    """)
     
     # Create indexes
     await db_transaction.execute(text("""
         CREATE INDEX IF NOT EXISTS idx_customers_tenant_id ON customers(tenant_id)
-    """))
+    """)
     await db_transaction.execute(text("""
         CREATE INDEX IF NOT EXISTS idx_customers_email_tenant ON customers(email, tenant_id)
-    """))
+    """)
     
     await db_transaction.commit()
     yield
     
     # Cleanup - truncate table
-    await db_transaction.execute(text("TRUNCATE TABLE customers"))
+    await db_transaction.execute(text("TRUNCATE TABLE customers")
     await db_transaction.commit()
 
 
@@ -424,7 +424,7 @@ class TestCustomerRepositoryListOperations:
         
         # Verify ordering (newest first)
         emails = [c['email'] for c in customers]
-        expected_emails = [f'user{i}@example.com' for i in reversed(range(5))]
+        expected_emails = [f'user{i}@example.com' for i in reversed(range(5)]
         assert emails == expected_emails
     
     async def test_list_customers_pagination(self, repository):
@@ -529,7 +529,7 @@ class TestDatabasePerformance:
         tenant_id = 'perf-tenant'
         
         def create_customers():
-            return asyncio.run(self._bulk_create_customers(repository, tenant_id, 100))
+            return asyncio.run(self._bulk_create_customers(repository, tenant_id, 100)
         
         result = benchmark(create_customers)
         assert result == 100  # Number of customers created
@@ -545,10 +545,10 @@ class TestDatabasePerformance:
                 'last_name': 'Test',
                 'balance': str(i * 10.50)
             }
-            tasks.append(repository.create(customer_data))
+            tasks.append(repository.create(customer_data)
         
         results = await asyncio.gather(*tasks, return_exceptions=True)
-        success_count = sum(1 for r in results if not isinstance(r, Exception))
+        success_count = sum(1 for r in results if not isinstance(r, Exception)
         return success_count
     
     async def test_query_performance_with_index(self, repository):
@@ -590,13 +590,13 @@ class TestTransactionHandling:
             await db_connection.execute(text("""
                 INSERT INTO customers (id, tenant_id, email, first_name, last_name)
                 VALUES ('test-tx-1', 'tx-tenant', 'tx1@example.com', 'TX', 'User1')
-            """))
+            """)
             
             # This should fail due to unique constraint (same email)
             await db_connection.execute(text("""
                 INSERT INTO customers (id, tenant_id, email, first_name, last_name)
                 VALUES ('test-tx-2', 'tx-tenant', 'tx1@example.com', 'TX', 'User2')
-            """))
+            """)
             
             await transaction.commit()
         except Exception:
@@ -605,7 +605,7 @@ class TestTransactionHandling:
         # Verify no customers were created (rollback successful)
         result = await db_connection.execute(text("""
             SELECT COUNT(*) FROM customers WHERE tenant_id = 'tx-tenant'
-        """))
+        """)
         count = result.scalar()
         assert count == 0
 
@@ -618,8 +618,8 @@ async def cleanup_test_data(db_connection):
     
     # Clean up any test data
     try:
-        await db_connection.execute(text("DELETE FROM customers WHERE tenant_id LIKE 'test-%'"))
-        await db_connection.execute(text("DELETE FROM customers WHERE tenant_id LIKE '%-tenant%'"))
+        await db_connection.execute(text("DELETE FROM customers WHERE tenant_id LIKE 'test-%'")
+        await db_connection.execute(text("DELETE FROM customers WHERE tenant_id LIKE '%-tenant%'")
         await db_connection.commit()
     except Exception:
         # Ignore cleanup errors

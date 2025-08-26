@@ -16,6 +16,7 @@ from fastapi import (
     UploadFile,
     File,
 )
+
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
@@ -26,6 +27,7 @@ from dotmac_isp.modules.support.service import (
     SupportTicketService,
     KnowledgeBaseService,
 )
+from datetime import timezone
 from dotmac_isp.shared.exceptions import NotFoundError, ValidationError, ServiceError
 
 router = APIRouter(prefix="/support", tags=["support"])
@@ -34,7 +36,7 @@ support_router = router  # Export with expected name
 
 def generate_ticket_number() -> str:
     """Generate a unique ticket number."""
-    timestamp = int(datetime.utcnow().timestamp())
+    timestamp = int(datetime.now(timezone.utc).timestamp())
     random_chars = "".join(
         secrets.choice(string.ascii_uppercase + string.digits) for _ in range(4)
     )
@@ -91,9 +93,9 @@ async def list_tickets(
         query = query.filter(models.Ticket.customer_id == customer_id)
     if overdue_only:
         query = query.filter(
-            models.Ticket.sla_due_date < datetime.utcnow(),
+            models.Ticket.sla_due_date < datetime.now(timezone.utc),
             models.Ticket.status.notin_(
-                [models.TicketStatus.RESOLVED, models.TicketStatus.CLOSED]
+                [schemas.TicketStatus.RESOLVED, schemas.TicketStatus.CLOSED]
             ),
         )
 
@@ -149,21 +151,21 @@ async def update_ticket(
     if not ticket:
         raise HTTPException(status_code=404, detail="Ticket not found")
 
-    update_data = ticket_update.dict(exclude_unset=True)
+    update_data = ticket_update.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(ticket, field, value)
 
     # Update status-specific timestamps
     if "status" in update_data:
         if (
-            update_data["status"] == models.TicketStatus.RESOLVED
+            update_data["status"] == schemas.TicketStatus.RESOLVED
             and not ticket.resolved_at
         ):
-            ticket.resolved_at = datetime.utcnow()
+            ticket.resolved_at = datetime.now(timezone.utc)
         elif (
-            update_data["status"] == models.TicketStatus.CLOSED and not ticket.closed_at
+            update_data["status"] == schemas.TicketStatus.CLOSED and not ticket.closed_at
         ):
-            ticket.closed_at = datetime.utcnow()
+            ticket.closed_at = datetime.now(timezone.utc)
 
     db.commit()
     db.refresh(ticket)
@@ -218,7 +220,7 @@ async def create_ticket_comment(
     if not ticket:
         raise HTTPException(status_code=404, detail="Ticket not found")
 
-    comment_data = comment.dict()
+    comment_data = comment.model_dump()
     comment_data["tenant_id"] = tenant_id
     comment_data["ticket_id"] = ticket_id
 
@@ -227,7 +229,7 @@ async def create_ticket_comment(
 
     # Update first response time if this is the first response
     if not ticket.first_response_at and not comment.is_internal:
-        ticket.first_response_at = datetime.utcnow()
+        ticket.first_response_at = datetime.now(timezone.utc)
 
     db.commit()
     db.refresh(db_comment)
@@ -285,7 +287,7 @@ async def update_ticket_comment(
     if not comment:
         raise HTTPException(status_code=404, detail="Comment not found")
 
-    update_data = comment_update.dict(exclude_unset=True)
+    update_data = comment_update.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(comment, field, value)
 
@@ -391,7 +393,7 @@ async def create_kb_category(
     db: Session = Depends(get_db),
 ):
     """Create a knowledge base category."""
-    category_data = category.dict()
+    category_data = category.model_dump()
     category_data["tenant_id"] = tenant_id
 
     db_category = models.KnowledgeBaseCategory(**category_data)
@@ -485,7 +487,7 @@ async def update_kb_category(
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
 
-    update_data = category_update.dict(exclude_unset=True)
+    update_data = category_update.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(category, field, value)
 
@@ -521,14 +523,14 @@ async def create_kb_article(
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
 
-    article_data = article.dict()
+    article_data = article.model_dump()
     article_data["tenant_id"] = tenant_id
     article_data["author_id"] = (
         tenant_id  # In real implementation, get from authenticated user
     )
 
     if article.is_published:
-        article_data["published_at"] = datetime.utcnow()
+        article_data["published_at"] = datetime.now(timezone.utc)
 
     db_article = models.KnowledgeBaseArticle(**article_data)
     db.add(db_article)
@@ -628,7 +630,7 @@ async def update_kb_article(
     if not article:
         raise HTTPException(status_code=404, detail="Article not found")
 
-    update_data = article_update.dict(exclude_unset=True)
+    update_data = article_update.model_dump(exclude_unset=True)
 
     # Handle publication status change
     if (
@@ -636,7 +638,7 @@ async def update_kb_article(
         and update_data["is_published"]
         and not article.published_at
     ):
-        update_data["published_at"] = datetime.utcnow()
+        update_data["published_at"] = datetime.now(timezone.utc)
 
     # Set last updated by
     update_data["last_updated_by"] = (
@@ -659,7 +661,7 @@ async def create_sla_policy(
     db: Session = Depends(get_db),
 ):
     """Create an SLA policy."""
-    policy_data = policy.dict()
+    policy_data = policy.model_dump()
     policy_data["tenant_id"] = tenant_id
 
     # If this is set as default, unset other defaults
@@ -734,7 +736,7 @@ async def update_sla_policy(
     if not policy:
         raise HTTPException(status_code=404, detail="SLA policy not found")
 
-    update_data = policy_update.dict(exclude_unset=True)
+    update_data = policy_update.model_dump(exclude_unset=True)
 
     # If this is set as default, unset other defaults
     if update_data.get("is_default"):
@@ -764,7 +766,7 @@ async def get_support_dashboard(
         db.query(models.Ticket)
         .filter(
             models.Ticket.tenant_id == tenant_id,
-            models.Ticket.status == models.TicketStatus.OPEN,
+            models.Ticket.status == schemas.TicketStatus.OPEN,
         )
         .count()
     )
@@ -772,7 +774,7 @@ async def get_support_dashboard(
         db.query(models.Ticket)
         .filter(
             models.Ticket.tenant_id == tenant_id,
-            models.Ticket.status == models.TicketStatus.IN_PROGRESS,
+            models.Ticket.status == schemas.TicketStatus.IN_PROGRESS,
         )
         .count()
     )
@@ -780,7 +782,7 @@ async def get_support_dashboard(
         db.query(models.Ticket)
         .filter(
             models.Ticket.tenant_id == tenant_id,
-            models.Ticket.status == models.TicketStatus.RESOLVED,
+            models.Ticket.status == schemas.TicketStatus.RESOLVED,
         )
         .count()
     )
@@ -790,9 +792,9 @@ async def get_support_dashboard(
         db.query(models.Ticket)
         .filter(
             models.Ticket.tenant_id == tenant_id,
-            models.Ticket.sla_due_date < datetime.utcnow(),
+            models.Ticket.sla_due_date < datetime.now(timezone.utc),
             models.Ticket.status.notin_(
-                [models.TicketStatus.RESOLVED, models.TicketStatus.CLOSED]
+                [schemas.TicketStatus.RESOLVED, schemas.TicketStatus.CLOSED]
             ),
         )
         .count()
@@ -803,9 +805,9 @@ async def get_support_dashboard(
         db.query(models.Ticket)
         .filter(
             models.Ticket.tenant_id == tenant_id,
-            models.Ticket.priority == models.TicketPriority.CRITICAL,
+            models.Ticket.priority == schemas.TicketPriority.CRITICAL,
             models.Ticket.status.notin_(
-                [models.TicketStatus.RESOLVED, models.TicketStatus.CLOSED]
+                [schemas.TicketStatus.RESOLVED, schemas.TicketStatus.CLOSED]
             ),
         )
         .count()
@@ -929,8 +931,8 @@ async def bulk_ticket_operation(
     for ticket in tickets:
         try:
             if operation.operation == "close":
-                ticket.status = models.TicketStatus.CLOSED
-                ticket.closed_at = datetime.utcnow()
+                ticket.status = schemas.TicketStatus.CLOSED
+                ticket.closed_at = datetime.now(timezone.utc)
             elif operation.operation == "assign":
                 if "assigned_to" in operation.parameters:
                     ticket.assigned_to = operation.parameters["assigned_to"]

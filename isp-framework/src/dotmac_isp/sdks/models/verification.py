@@ -51,7 +51,7 @@ class EmailVerification:
         self.verification_token = kwargs.get('verification_token')
         self.status = kwargs.get('status', VerificationStatus.PENDING)
         self.deliverability_status = kwargs.get('deliverability_status', DeliverabilityStatus.UNKNOWN)
-        self.created_at = kwargs.get('created_at', datetime.utcnow())
+        self.created_at = kwargs.get('created_at', datetime.now(timezone.utc))
         self.verified_at = kwargs.get('verified_at')
         # Default expiry: 24 hours from creation
         self.expires_at = kwargs.get('expires_at', self.created_at + timedelta(hours=24))
@@ -60,7 +60,7 @@ class EmailVerification:
     
     def is_expired(self) -> bool:
         """Check if verification has expired."""
-        return self.expires_at and datetime.utcnow() > self.expires_at
+        return self.expires_at and datetime.now(timezone.utc) > self.expires_at
     
     def can_retry(self) -> bool:
         """Check if verification can be retried."""
@@ -69,7 +69,7 @@ class EmailVerification:
     def mark_verified(self) -> None:
         """Mark verification as verified."""
         self.status = VerificationStatus.VERIFIED
-        self.verified_at = datetime.utcnow()
+        self.verified_at = datetime.now(timezone.utc)
     
     def mark_failed(self) -> None:
         """Mark verification as failed."""
@@ -97,7 +97,7 @@ class PhoneVerification:
         self.phone_number = kwargs.get('phone_number')
         self.verification_code = kwargs.get('verification_code')
         self.status = kwargs.get('status', VerificationStatus.PENDING)
-        self.created_at = kwargs.get('created_at', datetime.utcnow())
+        self.created_at = kwargs.get('created_at', datetime.now(timezone.utc))
         self.verified_at = kwargs.get('verified_at')
         # Default expiry: 15 minutes from creation
         self.expires_at = kwargs.get('expires_at', self.created_at + timedelta(minutes=15))
@@ -106,7 +106,7 @@ class PhoneVerification:
     
     def is_expired(self) -> bool:
         """Check if verification has expired."""
-        return self.expires_at and datetime.utcnow() > self.expires_at
+        return self.expires_at and datetime.now(timezone.utc) > self.expires_at
     
     def can_retry(self) -> bool:
         """Check if verification can be retried."""
@@ -115,7 +115,7 @@ class PhoneVerification:
     def mark_verified(self) -> None:
         """Mark verification as verified."""
         self.status = VerificationStatus.VERIFIED
-        self.verified_at = datetime.utcnow()
+        self.verified_at = datetime.now(timezone.utc)
     
     def mark_failed(self) -> None:
         """Mark verification as failed."""

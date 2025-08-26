@@ -13,7 +13,7 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 
 from dotmac_isp.modules.omnichannel.services.contact_service import ContactService
-from dotmac_isp.modules.omnichannel.models import (
+from dotmac_isp.modules.omnichannel.models_production import (
     CustomerContact,
     ContactCommunicationChannel,
     ContactType,
@@ -357,7 +357,7 @@ class TestContactService:
         ]
         
         mock_entities = [
-            CustomerContact(id=uuid4(), **data.dict())
+            CustomerContact(id=uuid4(), **data.dict()
             for data in contacts_data
         ]
         

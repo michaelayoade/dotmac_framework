@@ -26,8 +26,8 @@ logger = logging.getLogger(__name__)
 class CacheSDKConfig:
     """Configuration for Cache SDK."""
 
-    def __init__(        ):
-            """Initialize operation."""
+    def __init__(self, *args, **kwargs):
+        """Initialize operation."""
         self.redis_url = redis_url
         self.default_namespace = default_namespace
         # Use default_ttl if provided, otherwise use default_ttl_seconds
@@ -55,8 +55,8 @@ class CacheSDK:
     - Comprehensive error handling and logging
     """
 
-    def __init__(        ):
-            """Initialize operation."""
+    def __init__(self, *args, **kwargs):
+        """Initialize operation."""
         # Use config if provided, otherwise create default config
         self.config = config or CacheSDKConfig()
         self.redis_client = redis_client

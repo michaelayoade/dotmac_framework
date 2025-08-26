@@ -10,21 +10,21 @@ from uuid import UUID, uuid4
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..core.security import (
+from core.security import (
     CurrentUser,
     create_access_token,
     create_refresh_token,
     decode_token,
     get_password_hash,
-    verify_password,
+    verify_password
 )
-from ..models.user import User
-from ..repositories.user import (
+from models.user import User
+from repositories.user import (
     UserInvitationRepository,
     UserRepository,
     UserSessionRepository,
 )
-from ..schemas.user import (
+from schemas.user import (
     UserCreate,
     UserInvitationAccept,
     UserInvitationCreate,
@@ -63,7 +63,7 @@ class AuthService:
                 detail="User account is locked due to too many failed attempts"
             )
         
-        if not verify_password(password, user.password_hash):
+        if not verify_password(password, user.hashed_password):
             # Increment failed login attempts
             await self.user_repo.increment_failed_login(user.id)
             
@@ -108,7 +108,7 @@ class AuthService:
         refresh_token = create_refresh_token({"sub": str(user.id)})
         
         # Create session record
-        expires_at = datetime.utcnow() + timedelta(
+        expires_at = datetime.now(timezone.utc) + timedelta(
             days=30 if login_data.remember_me else 7
         )
         
@@ -122,7 +122,7 @@ class AuthService:
         })
         
         # Create response
-        from ..schemas.user import UserResponse
+        from schemas.user import UserResponse
         
         # Convert user data to include user_id field
         user_data = {
@@ -259,7 +259,7 @@ class AuthService:
             "tenant_id": invitation_data.tenant_id,
             "invitation_token": invitation_token,
             "invited_by": invited_by_id,
-            "expires_at": datetime.utcnow() + timedelta(days=7),
+            "expires_at": datetime.now(timezone.utc) + timedelta(days=7),
             "message": invitation_data.message
         })
         
@@ -322,7 +322,7 @@ class AuthService:
             user_id,
             {
                 "password_hash": hashed_password,
-                "password_changed_at": datetime.utcnow()
+                "password_changed_at": datetime.now(timezone.utc)
             }
         )
         

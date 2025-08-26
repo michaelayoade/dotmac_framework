@@ -128,7 +128,7 @@ class FieldEncryption:
         if not PYDANTIC_AVAILABLE:
             raise ImportError("Pydantic not available")
 
-        model_dict = model.dict() if hasattr(model, "dict") else model.model_dump()
+        model_dict = model.model_dump() if hasattr(model, "dict") else model.model_dump()
 
         for field_name, classification in field_classifications.items():
             if field_name in model_dict and model_dict[field_name] is not None:
@@ -142,7 +142,7 @@ class FieldEncryption:
                     field_value, classification
                 )
                 model_dict[field_name] = (
-                    encrypted_field.dict()
+                    encrypted_field.model_dump()
                     if hasattr(encrypted_field, "dict")
                     else encrypted_field.model_dump()
                 )
@@ -170,7 +170,7 @@ class FieldEncryption:
         if not PYDANTIC_AVAILABLE:
             raise ImportError("Pydantic not available")
 
-        model_dict = model.dict() if hasattr(model, "dict") else model.model_dump()
+        model_dict = model.model_dump() if hasattr(model, "dict") else model.model_dump()
         target_types = target_types or {}
 
         for field_name in field_names:
@@ -214,7 +214,7 @@ class FieldEncryption:
             return []
 
         encrypted_fields = []
-        model_dict = model.dict() if hasattr(model, "dict") else model.model_dump()
+        model_dict = model.model_dump() if hasattr(model, "dict") else model.model_dump()
 
         for field_name, field_value in model_dict.items():
             if isinstance(field_value, dict):

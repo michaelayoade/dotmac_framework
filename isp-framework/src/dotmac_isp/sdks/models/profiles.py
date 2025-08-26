@@ -2,7 +2,7 @@
 Profile-related models for SDKs.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Optional, Dict, Any
 from uuid import UUID, uuid4
@@ -62,8 +62,8 @@ class UserProfile:
         self.visibility = kwargs.get('visibility', ProfileVisibility.PRIVATE)
         self.status = kwargs.get('status', ProfileStatus.ACTIVE)
         self.preferences = kwargs.get('preferences') or {}
-        self.created_at = kwargs.get('created_at', datetime.utcnow())
-        self.updated_at = kwargs.get('updated_at', datetime.utcnow())
+        self.created_at = kwargs.get('created_at', datetime.now(timezone.utc))
+        self.updated_at = kwargs.get('updated_at', datetime.now(timezone.utc))
         self.last_active_at = kwargs.get('last_active_at')
     
     def get_full_name(self) -> str:
@@ -87,12 +87,12 @@ class UserProfile:
     
     def update_last_active(self) -> None:
         """Update last active timestamp."""
-        self.last_active_at = datetime.utcnow()
+        self.last_active_at = datetime.now(timezone.utc)
     
     def set_preference(self, key: str, value: Any) -> None:
         """Set a preference value."""
         self.preferences[key] = value
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(timezone.utc)
     
     def get_preference(self, key: str, default: Any = None) -> Any:
         """Get a preference value."""
@@ -101,14 +101,14 @@ class UserProfile:
     def activate(self) -> None:
         """Activate the profile."""
         self.status = ProfileStatus.ACTIVE
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(timezone.utc)
     
     def deactivate(self) -> None:
         """Deactivate the profile."""
         self.status = ProfileStatus.INACTIVE
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(timezone.utc)
     
     def suspend(self) -> None:
         """Suspend the profile."""
         self.status = ProfileStatus.SUSPENDED
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(timezone.utc)

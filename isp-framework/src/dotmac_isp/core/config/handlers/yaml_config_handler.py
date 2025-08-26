@@ -19,7 +19,7 @@ class YamlConfigHandler(ConfigurationHandler):
         """Check if this is a YAML configuration file."""
         yaml_extensions = {'.yaml', '.yml'}
         return (config_path.suffix.lower() in yaml_extensions and 
-                self._is_file_readable(config_path))
+                self._is_file_readable(config_path)
     
     def handle(self, config_path: Path, context: ReloadContext) -> ReloadContext:
         """
@@ -120,7 +120,7 @@ class YamlConfigHandler(ConfigurationHandler):
             self._get_dict_depth(value, depth + 1) 
             for value in d.values() 
             if isinstance(value, dict)
-        ) if any(isinstance(value, dict) for value in d.values()) else depth + 1
+        ) if any(isinstance(value, dict) for value in d.values() else depth + 1
     
     def _validate_yaml_security(self, config_data: Dict[str, Any], config_path: Path) -> None:
         """Validate YAML for potential security issues."""

@@ -10,9 +10,10 @@ from uuid import UUID
 from celery import current_task
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
-from ...core.config import settings
-from ...services.plugin_service import PluginService
-from ...workers.celery_app import celery_app
+from core.config import settings
+from services.plugin_service import PluginService
+from workers.celery_app import celery_app
+from datetime import timezone
 
 logger = logging.getLogger(__name__)
 
@@ -225,13 +226,13 @@ def update_plugin(self, installation_id: str, target_version: str, user_id: str)
                     )
                 
                 # Update installation version
-                from datetime import datetime
+                from datetime import datetime, timezone
                 await service.installation_repo.update(
                     installation_uuid,
                     {
                         "installed_version": target_version,
                         "status": "installed",
-                        "last_updated": datetime.utcnow()
+                        "last_updated": datetime.now(timezone.utc)
                     },
                     user_id
                 )
@@ -518,7 +519,7 @@ def cleanup_plugin_events(self, retention_days: int = 30):
             try:
                 service = PluginService(db)
                 
-                cutoff_date = datetime.utcnow() - timedelta(days=retention_days)
+                cutoff_date = datetime.now(timezone.utc) - timedelta(days=retention_days)
                 
                 # Get old processed events
                 old_events = await service.event_repo.get_old_processed_events(cutoff_date)
@@ -564,7 +565,7 @@ def generate_plugin_analytics(self, plugin_id: str):
                 # Store analytics in Redis cache for real-time access
                 import redis
                 redis_client = redis.from_url(os.getenv("REDIS_URL", "redis://localhost:6379"))
-                cache_key = f"plugin_analytics:{plugin_id}:{datetime.utcnow().date()}"
+                cache_key = f"plugin_analytics:{plugin_id}:{datetime.now(timezone.utc).date()}"
                 redis_client.setex(cache_key, 86400, str(analytics))  # Cache for 24 hours
                 
                 logger.info(f"Plugin analytics generated for {plugin_id}")

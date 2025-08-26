@@ -4,7 +4,7 @@ import json
 import logging
 import logging.config
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict
 import traceback
 
@@ -16,7 +16,7 @@ class JSONFormatter(logging.Formatter):
         """Format log record as JSON."""
         # Base log entry
         log_entry = {
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
             "level": record.levelname,
             "logger": record.name,
             "message": record.getMessage(),

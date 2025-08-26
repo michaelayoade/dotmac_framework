@@ -12,7 +12,7 @@ from app.repositories.tenant import TenantRepository
 from app.repositories.user import UserRepository
 from app.repositories.billing_additional import (
     SubscriptionRepository, InvoiceRepository, PaymentRepository
-)
+, timezone)
 from app.models.tenant import Tenant
 from app.models.user import User
 
@@ -375,7 +375,7 @@ class TestBillingRepositories:
             "amount": 99.99,
             "currency": "USD",
             "status": "pending",
-            "due_date": datetime.utcnow()
+            "due_date": datetime.now(timezone.utc)
         }
         
         invoice = await invoice_repo.create(invoice_data, "test-admin")

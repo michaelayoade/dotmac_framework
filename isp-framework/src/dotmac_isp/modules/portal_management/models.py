@@ -144,7 +144,7 @@ class PortalAccount(TenantModel):
     def is_locked(self) -> bool:
         """Check if account is currently locked."""
         if self.locked_until:
-            return datetime.utcnow() < self.locked_until
+            return datetime.now(timezone.utc) < self.locked_until
         return False
 
     @property
@@ -164,14 +164,14 @@ class PortalAccount(TenantModel):
 
         expiry_days = 90  # Could be configurable per tenant
         expiry_date = self.password_changed_at + timedelta(days=expiry_days)
-        return datetime.utcnow() > expiry_date
+        return datetime.now(timezone.utc) > expiry_date
 
     def lock_account(self, duration_minutes: int = 30, reason: str = None):
         """Lock the account for specified duration."""
-        self.locked_until = datetime.utcnow() + timedelta(minutes=duration_minutes)
+        self.locked_until = datetime.now(timezone.utc) + timedelta(minutes=duration_minutes)
         self.status = PortalAccountStatus.LOCKED.value
         if reason:
-            self.security_notes = f"{datetime.utcnow().isoformat()}: Locked - {reason}\n{self.security_notes or ''}"
+            self.security_notes = f"{datetime.now(timezone.utc).isoformat()}: Locked - {reason}\n{self.security_notes or ''}"
 
     def unlock_account(self, admin_id: Optional[UUID] = None):
         """Unlock the account."""
@@ -180,12 +180,12 @@ class PortalAccount(TenantModel):
         self.status = PortalAccountStatus.ACTIVE.value
         if admin_id:
             self.last_modified_by_admin_id = admin_id
-            self.security_notes = f"{datetime.utcnow().isoformat()}: Unlocked by admin\n{self.security_notes or ''}"
+            self.security_notes = f"{datetime.now(timezone.utc).isoformat()}: Unlocked by admin\n{self.security_notes or ''}"
 
     def record_failed_login(self):
         """Record a failed login attempt."""
         self.failed_login_attempts += 1
-        self.last_failed_login = datetime.utcnow()
+        self.last_failed_login = datetime.now(timezone.utc)
 
         # Auto-lock after 5 failed attempts
         if self.failed_login_attempts >= 5:
@@ -194,7 +194,7 @@ class PortalAccount(TenantModel):
     def record_successful_login(self):
         """Record a successful login."""
         self.failed_login_attempts = 0
-        self.last_successful_login = datetime.utcnow()
+        self.last_successful_login = datetime.now(timezone.utc)
         self.locked_until = None
 
 
@@ -240,7 +240,7 @@ class PortalSession(TenantModel):
     @property
     def is_expired(self) -> bool:
         """Check if session is expired."""
-        return datetime.utcnow() > self.expires_at
+        return datetime.now(timezone.utc) > self.expires_at
 
     @property
     def is_valid(self) -> bool:
@@ -253,19 +253,19 @@ class PortalSession(TenantModel):
         if self.logout_at:
             end_time = self.logout_at
         else:
-            end_time = datetime.utcnow()
+            end_time = datetime.now(timezone.utc)
 
         return int((end_time - self.login_at).total_seconds() / 60)
 
     def extend_session(self, minutes: int = 30):
         """Extend session expiration time."""
-        self.expires_at = datetime.utcnow() + timedelta(minutes=minutes)
-        self.last_activity = datetime.utcnow()
+        self.expires_at = datetime.now(timezone.utc) + timedelta(minutes=minutes)
+        self.last_activity = datetime.now(timezone.utc)
 
     def terminate_session(self, reason: str = "manual"):
         """Terminate the session."""
         self.is_active = False
-        self.logout_at = datetime.utcnow()
+        self.logout_at = datetime.now(timezone.utc)
         self.logout_reason = reason
 
 

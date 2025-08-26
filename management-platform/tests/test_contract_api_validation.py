@@ -32,7 +32,7 @@ class TestTenantAPIContracts:
         
         # THEN: Response should match expected schema
         if response.status_code == 201:
-            data = response.json()
+            data = response.model_dump_json()
             
             # Contract: Response must include these fields
             required_fields = ["id", "name", "display_name", "status", "tier", "created_at"]
@@ -78,7 +78,7 @@ class TestTenantAPIContracts:
             assert response.status_code == 422, f"Expected 422 for invalid request: {invalid_request}"
             
             # Contract: Error response should include validation details
-            error_data = response.json()
+            error_data = response.model_dump_json()
             assert "detail" in error_data, "Error response must include detail"
     
     def test_get_tenant_response_schema(self, client, test_tenant):
@@ -88,7 +88,7 @@ class TestTenantAPIContracts:
         
         # THEN: Response should match schema
         if response.status_code == 200:
-            data = response.json()
+            data = response.model_dump_json()
             
             # Contract: Required fields in response
             required_fields = [
@@ -134,7 +134,7 @@ class TestBillingAPIContracts:
         
         # THEN: Response should match billing contract
         if response.status_code == 201:
-            data = response.json()
+            data = response.model_dump_json()
             
             # Contract: Billing response schema
             required_fields = [
@@ -174,7 +174,7 @@ class TestBillingAPIContracts:
         
         # THEN: Invoice should match contract
         if response.status_code == 201:
-            invoice = response.json()
+            invoice = response.model_dump_json()
             
             # Contract: Invoice structure
             assert "invoice_number" in invoice, "Invoice must have number"
@@ -216,7 +216,7 @@ class TestPluginLicensingAPIContracts:
         
         # THEN: Response should match plugin contract
         if response.status_code == 200:
-            data = response.json()
+            data = response.model_dump_json()
             
             # Contract: Plugin activation response
             required_fields = [
@@ -258,7 +258,7 @@ class TestPluginLicensingAPIContracts:
         
         # THEN: Usage tracking should follow contract
         if response.status_code == 201:
-            data = response.json()
+            data = response.model_dump_json()
             
             # Contract: Usage record structure
             assert "usage_id" in data, "Usage record must have ID"
@@ -309,7 +309,7 @@ class TestDeploymentAPIContracts:
         
         # THEN: Deployment should match contract
         if response.status_code == 201:
-            deployment = response.json()
+            deployment = response.model_dump_json()
             
             # Contract: Deployment response structure
             required_fields = [
@@ -343,7 +343,7 @@ class TestDeploymentAPIContracts:
         
         # THEN: Status should follow contract (even if deployment doesn't exist)
         if response.status_code == 200:
-            status = response.json()
+            status = response.model_dump_json()
             
             # Contract: Status response structure
             required_fields = [
@@ -364,7 +364,7 @@ class TestDeploymentAPIContracts:
         
         elif response.status_code == 404:
             # Contract: 404 should include proper error structure
-            error = response.json()
+            error = response.model_dump_json()
             assert "detail" in error, "404 error must include detail"
 
 
@@ -382,7 +382,7 @@ class TestMonitoringAPIContracts:
         # THEN: Health check should follow contract
         assert response.status_code == 200, "Health check should always return 200"
         
-        data = response.json()
+        data = response.model_dump_json()
         
         # Contract: Health check structure
         required_fields = ["status", "timestamp", "version"]
@@ -423,7 +423,7 @@ class TestMonitoringAPIContracts:
         
         # THEN: Tenant health should follow contract
         if response.status_code == 200:
-            health = response.json()
+            health = response.model_dump_json()
             
             # Contract: Tenant health structure
             required_fields = [

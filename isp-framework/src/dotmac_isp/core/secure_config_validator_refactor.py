@@ -55,7 +55,7 @@ def refactored_validate_field(self, field_path, field_value, rule, environment=N
                 elif isinstance(child, ast.BoolOp):
                     complexity += len(child.values) - 1
             
-logger.info(f"Method complexity: {complexity}")
+            logger.info(f"Method complexity: {complexity}")
             return complexity
 
 if __name__ == "__main__":

@@ -7,7 +7,7 @@ and policy-based access control for maintaining data integrity and business logi
 import logging
 import re
 from datetime import datetime, timedelta
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from typing import Dict, List, Optional, Any, Callable, Type, Union
 from dataclasses import dataclass
 from enum import Enum
@@ -535,7 +535,7 @@ class BusinessRuleEngine:
         """Get recorded rule violations, optionally filtered by severity."""
         if severity:
             return [v for v in self.rule_violations if v.severity == severity]
-        return self.rule_violations.copy()
+        return self.rule_violations.model_copy()
 
     def clear_violations(self):
         """Clear recorded rule violations."""
@@ -583,7 +583,7 @@ def create_database_constraints():
                 -- Account status must be valid
                 ALTER TABLE customers 
                 ADD CONSTRAINT IF NOT EXISTS account_status_check 
-                CHECK (account_status IN ('pending', 'active', 'suspended', 'cancelled'));
+                CHECK (account_status IN ('pending', 'active', 'suspended', 'cancelled');
             """
                 )
             )
@@ -594,7 +594,7 @@ def create_database_constraints():
                 -- Customer type must be valid
                 ALTER TABLE customers 
                 ADD CONSTRAINT IF NOT EXISTS customer_type_check 
-                CHECK (customer_type IN ('residential', 'business', 'enterprise'));
+                CHECK (customer_type IN ('residential', 'business', 'enterprise');
             """
                 )
             )
@@ -641,7 +641,7 @@ def create_database_constraints():
                     -- Service billing cycle validation
                     ALTER TABLE services 
                     ADD CONSTRAINT IF NOT EXISTS billing_cycle_check 
-                    CHECK (billing_cycle IN ('monthly', 'quarterly', 'annually'));
+                    CHECK (billing_cycle IN ('monthly', 'quarterly', 'annually');
                 """
                     )
                 )

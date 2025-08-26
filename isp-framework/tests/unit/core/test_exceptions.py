@@ -288,7 +288,7 @@ class TestExceptionHandlers:
         request = MagicMock(spec=Request)
         request.state = MagicMock()
         # Simulate missing request_id
-        type(request.state).request_id = MagicMock(side_effect=AttributeError())
+        type(request.state).request_id = MagicMock(side_effect=AttributeError()
         return request
 
     @pytest.mark.asyncio

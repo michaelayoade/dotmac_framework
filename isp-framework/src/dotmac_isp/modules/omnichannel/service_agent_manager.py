@@ -45,12 +45,12 @@ class AgentManager:
                 )
 
             # Create agent
-            agent_dict = agent_data.dict()
+            agent_dict = agent_data.model_dump()
             agent_dict.update(
                 {
                     "tenant_id": self.tenant_id,
                     "status": agent_data.status or AgentStatus.INACTIVE,
-                    "created_at": datetime.utcnow(),
+                    "created_at": datetime.now(timezone.utc),
                 }
             )
 
@@ -77,14 +77,14 @@ class AgentManager:
             update_data = {
                 "status": status,
                 "status_message": message,
-                "updated_at": datetime.utcnow(),
+                "updated_at": datetime.now(timezone.utc),
             }
 
             # Record status change timestamp
             if status == AgentStatus.ONLINE:
-                update_data["last_online_at"] = datetime.utcnow()
+                update_data["last_online_at"] = datetime.now(timezone.utc)
             elif status == AgentStatus.OFFLINE:
-                update_data["last_offline_at"] = datetime.utcnow()
+                update_data["last_offline_at"] = datetime.now(timezone.utc)
 
             await self.repository.update_agent(agent_id, update_data)
 
@@ -101,9 +101,9 @@ class AgentManager:
             logger.info(f"Creating team: {team_data.name}")
 
             # Create team
-            team_dict = team_data.dict()
+            team_dict = team_data.model_dump()
             team_dict.update(
-                {"tenant_id": self.tenant_id, "created_at": datetime.utcnow()}
+                {"tenant_id": self.tenant_id, "created_at": datetime.now(timezone.utc)}
             )
 
             team = await self.repository.create_team(team_dict)
@@ -130,7 +130,7 @@ class AgentManager:
 
             # Update agent's team assignment
             await self.repository.update_agent(
-                agent_id, {"team_id": team_id, "updated_at": datetime.utcnow()}
+                agent_id, {"team_id": team_id, "updated_at": datetime.now(timezone.utc)}
             )
 
             logger.info(f"Assigned agent {agent_id} to team {team_id}")

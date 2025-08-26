@@ -107,7 +107,7 @@ class TestInvoiceRepository:
         
         # Mock IntegrityError on commit
         mock_db_session.add = Mock()
-        mock_db_session.commit = Mock(side_effect=IntegrityError(None, None, None))
+        mock_db_session.commit = Mock(side_effect=IntegrityError(None, None, None)
         mock_db_session.rollback = Mock()
         
         with pytest.raises(ConflictError):
@@ -440,14 +440,14 @@ class TestRepositoryErrorHandling:
         mock_db_session.query.side_effect = Exception("Database connection error")
         
         with pytest.raises(Exception):
-            repo.get_by_id(uuid4())
+            repo.get_by_id(uuid4()
 
     def test_transaction_rollback_on_error(self, mock_db_session, tenant_id, sample_invoice_data):
         """Test transaction rollback on error."""
         repo = InvoiceRepository(mock_db_session, tenant_id)
         
         mock_db_session.add = Mock()
-        mock_db_session.commit = Mock(side_effect=IntegrityError(None, None, None))
+        mock_db_session.commit = Mock(side_effect=IntegrityError(None, None, None)
         mock_db_session.rollback = Mock()
         
         with pytest.raises(ConflictError):

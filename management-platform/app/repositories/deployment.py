@@ -7,8 +7,8 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..models.deployment import InfrastructureTemplate, Deployment
-from .base import BaseRepository
+from models.deployment import InfrastructureTemplate, Deployment
+from repositories.base import BaseRepository
 
 
 class InfrastructureTemplateRepository(BaseRepository[InfrastructureTemplate]):

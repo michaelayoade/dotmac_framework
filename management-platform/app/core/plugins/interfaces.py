@@ -7,7 +7,7 @@ from typing import Dict, Any, List, Optional
 from uuid import UUID
 from decimal import Decimal
 
-from .base import BasePlugin, TenantAwarePlugin, BillablePlugin, PluginMeta, PluginType
+from base import BasePlugin, TenantAwarePlugin, BillablePlugin, PluginMeta, PluginType
 
 
 class MonitoringProviderPlugin(BasePlugin):

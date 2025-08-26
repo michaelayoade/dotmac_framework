@@ -24,7 +24,7 @@ from datetime import datetime, timedelta
 class TestRadiusPerformanceDemo:
     """Demo: Test RADIUS authentication performance at ISP scale."""
     
-    async def test_concurrent_authentication_performance(self):
+    async def test_concurrent_authentication_performance(self, timezone):
         """Demo: Test 100 concurrent RADIUS authentications."""
         
         class MockRadiusAuthenticator:
@@ -103,7 +103,7 @@ class TestBillingPerformanceDemo:
                     "customer_id": customer_id,
                     "amount": amount,
                     "status": "generated",
-                    "created_at": datetime.utcnow()
+                    "created_at": datetime.now(timezone.utc)
                 }
             
             def generate_batch(self, customers: List[dict]) -> List[dict]:
@@ -334,7 +334,7 @@ class TestPerformanceRegressionDemo:
                         "email": f"customer{i}@isp.com",
                         "status": "active" if i % 10 != 0 else "inactive",
                         "plan": "residential" if i % 5 != 0 else "business",
-                        "created_at": datetime.utcnow() - timedelta(days=i % 365)
+                        "created_at": datetime.now(timezone.utc) - timedelta(days=i % 365)
                     }
                     for i in range(10000)
                 ]
@@ -389,7 +389,7 @@ class TestPerformanceRegressionDemo:
             )
         
         # Overall performance validation
-        total_query_time = sum(r["duration"] for r in performance_results.values())
+        total_query_time = sum(r["duration"] for r in performance_results.values()
         assert total_query_time < 0.05, f"Total query time {total_query_time:.3f}s too high"
         
 logger.info("✅ Performance: Query performance baselines met")
@@ -410,7 +410,7 @@ logger.info(f"  {query_name}: {metrics['duration']:.3f}s ({metrics['result_count
                     customer = {
                         "id": f"PROC-{i:06d}",
                         "data": f"Customer data {i}" * 10,  # Some memory usage
-                        "processed_at": datetime.utcnow()
+                        "processed_at": datetime.now(timezone.utc)
                     }
                     customers.append(customer)
                     

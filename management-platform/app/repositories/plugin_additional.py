@@ -9,11 +9,11 @@ from datetime import datetime
 from sqlalchemy import select, and_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..models.plugin import (
+from models.plugin import (
     Plugin, PluginLicense, PluginUsage
 )
-from ..schemas.plugin import PluginSearchRequest
-from .base import BaseRepository
+from schemas.plugin import PluginSearchRequest
+from repositories.base import BaseRepository
 
 
 class PluginRepository(BaseRepository[Plugin]):

@@ -2,7 +2,7 @@
 Billing and subscription models.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 from enum import Enum
 from typing import Optional
@@ -180,7 +180,7 @@ class Subscription(BaseModel):
     @property
     def days_until_renewal(self) -> int:
         """Calculate days until next renewal."""
-        delta = self.current_period_end - datetime.utcnow()
+        delta = self.current_period_end - datetime.now(timezone.utc)
         return max(0, delta.days)
     
     def cancel(self, reason: str = None, at_period_end: bool = True) -> None:
@@ -189,7 +189,7 @@ class Subscription(BaseModel):
             self.cancel_at_period_end = True
         else:
             self.status = SubscriptionStatus.CANCELLED
-            self.cancelled_at = datetime.utcnow()
+            self.cancelled_at = datetime.now(timezone.utc)
         self.cancel_reason = reason
     
     def reactivate(self) -> None:
@@ -223,7 +223,7 @@ class Invoice(BaseModel):
     amount_due_cents = Column(Integer, nullable=False)
     
     # Invoice dates
-    invoice_date = Column(DateTime, default=datetime.utcnow, nullable=False)
+    invoice_date = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     due_date = Column(DateTime, nullable=False)
     paid_at = Column(DateTime, nullable=True)
     
@@ -255,7 +255,7 @@ class Invoice(BaseModel):
     @property
     def is_overdue(self) -> bool:
         """Check if invoice is overdue."""
-        return self.due_date < datetime.utcnow() and self.status not in [InvoiceStatus.PAID, InvoiceStatus.CANCELLED]
+        return self.due_date < datetime.now(timezone.utc) and self.status not in [InvoiceStatus.PAID, InvoiceStatus.CANCELLED]
     
     @property
     def is_paid(self) -> bool:
@@ -265,7 +265,7 @@ class Invoice(BaseModel):
     def mark_paid(self, payment_date: datetime = None) -> None:
         """Mark invoice as paid."""
         self.status = InvoiceStatus.PAID
-        self.paid_at = payment_date or datetime.utcnow()
+        self.paid_at = payment_date or datetime.now(timezone.utc)
         self.amount_paid_cents = self.total_cents
 
 
@@ -309,12 +309,12 @@ class Payment(BaseModel):
     def mark_succeeded(self, processed_at: datetime = None) -> None:
         """Mark payment as succeeded."""
         self.status = PaymentStatus.SUCCEEDED
-        self.processed_at = processed_at or datetime.utcnow()
+        self.processed_at = processed_at or datetime.now(timezone.utc)
     
     def mark_failed(self, reason: str, failed_at: datetime = None) -> None:
         """Mark payment as failed."""
         self.status = PaymentStatus.FAILED
-        self.failed_at = failed_at or datetime.utcnow()
+        self.failed_at = failed_at or datetime.now(timezone.utc)
         self.failure_reason = reason
 
 
@@ -379,7 +379,7 @@ class Commission(BaseModel):
     # Commission period
     period_start = Column(DateTime, nullable=False)
     period_end = Column(DateTime, nullable=False)
-    earned_date = Column(DateTime, default=datetime.utcnow, nullable=False)
+    earned_date = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     
     # Payment details
     paid_at = Column(DateTime, nullable=True)
@@ -407,5 +407,5 @@ class Commission(BaseModel):
     def mark_paid(self, payment_reference: str = None, paid_at: datetime = None) -> None:
         """Mark commission as paid."""
         self.status = CommissionStatus.PAID
-        self.paid_at = paid_at or datetime.utcnow()
+        self.paid_at = paid_at or datetime.now(timezone.utc)
         self.payment_reference = payment_reference

@@ -9,8 +9,8 @@ import aiosmtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-from ...core.plugins.interfaces import NotificationChannelPlugin
-from ...core.plugins.base import PluginMeta, PluginType
+from core.plugins.interfaces import NotificationChannelPlugin
+from core.plugins.base import PluginMeta, PluginType
 
 logger = logging.getLogger(__name__)
 

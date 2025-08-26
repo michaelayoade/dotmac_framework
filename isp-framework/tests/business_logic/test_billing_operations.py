@@ -53,7 +53,7 @@ class TestInvoiceGeneration:
         
         # Generate invoice for current month
         billing_period_start = date.today().replace(day=1)
-        billing_period_end = (billing_period_start + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+        billing_period_end = (billing_period_start + timedelta(days=32).replace(day=1) - timedelta(days=1)
         
         invoice_request = InvoiceCreateRequest(
             customer_id=customer.id,
@@ -167,7 +167,7 @@ class TestInvoiceGeneration:
         
         # Billing period is full month
         billing_start = date.today().replace(day=1)
-        billing_end = (billing_start + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+        billing_end = (billing_start + timedelta(days=32).replace(day=1) - timedelta(days=1)
         
         with patch.object(billing_service, '_calculate_proration') as mock_proration:
             # Mock proration calculation (service active for ~half month)
@@ -731,7 +731,7 @@ class TestTaxCalculation:
             
             # Verify tax calculation
             expected_tax = invoice_amount * tax_rates['total_rate']
-            assert tax_calculation.tax_amount == expected_tax.quantize(Decimal('0.01'))
+            assert tax_calculation.tax_amount == expected_tax.quantize(Decimal('0.01')
             assert tax_calculation.tax_rate == Decimal('0.08')
             assert len(tax_calculation.tax_breakdown) == 2  # State + Local
     
@@ -787,7 +787,7 @@ class TestTaxCalculation:
             
             # Tax should be calculated based on service location (NJ)
             expected_tax = invoice_amount * nj_tax_rates['total_rate']
-            assert tax_calculation.tax_amount == expected_tax.quantize(Decimal('0.01'))
+            assert tax_calculation.tax_amount == expected_tax.quantize(Decimal('0.01')
             assert tax_calculation.jurisdiction == 'NJ'
 
 
@@ -900,7 +900,7 @@ class TestBillingIntegrationWorkflows:
         
         # 2. Generate first invoice (prorated for activation date)
         billing_period_start = date.today().replace(day=1)
-        billing_period_end = (billing_period_start + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+        billing_period_end = (billing_period_start + timedelta(days=32).replace(day=1) - timedelta(days=1)
         
         with patch.object(billing_service, '_calculate_prorated_amount') as mock_prorate:
             mock_prorate.return_value = Decimal('48.38')  # Prorated amount

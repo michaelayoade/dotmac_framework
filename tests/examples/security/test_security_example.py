@@ -26,7 +26,7 @@ from jose import jwt
 
 
 # Security test configuration
-API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
+API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000", timezone)
 JWT_SECRET = os.getenv("JWT_SECRET_KEY", "test-secret-key")
 
 
@@ -47,8 +47,8 @@ def valid_token():
         "tenant_id": "security-tenant",
         "role": "user",
         "permissions": ["customer:read", "customer:create"],
-        "exp": datetime.utcnow() + timedelta(hours=1),
-        "iat": datetime.utcnow()
+        "exp": datetime.now(timezone.utc) + timedelta(hours=1),
+        "iat": datetime.now(timezone.utc)
     }
     return jwt.encode(payload, JWT_SECRET, algorithm="HS256")
 
@@ -62,8 +62,8 @@ def expired_token():
         "tenant_id": "security-tenant",
         "role": "user",
         "permissions": ["customer:read"],
-        "exp": datetime.utcnow() - timedelta(hours=1),  # Expired
-        "iat": datetime.utcnow() - timedelta(hours=2)
+        "exp": datetime.now(timezone.utc) - timedelta(hours=1),  # Expired
+        "iat": datetime.now(timezone.utc) - timedelta(hours=2)
     }
     return jwt.encode(payload, JWT_SECRET, algorithm="HS256")
 
@@ -77,8 +77,8 @@ def tampered_token():
         "tenant_id": "hacker-tenant",
         "role": "admin",
         "permissions": ["*"],
-        "exp": datetime.utcnow() + timedelta(hours=1),
-        "iat": datetime.utcnow()
+        "exp": datetime.now(timezone.utc) + timedelta(hours=1),
+        "iat": datetime.now(timezone.utc)
     }
     # Use wrong secret to create invalid signature
     return jwt.encode(payload, "wrong-secret", algorithm="HS256")
@@ -161,7 +161,7 @@ class TestAuthenticationSecurity:
         headers = {"Authorization": f"Bearer {valid_token}"}
         response = await security_client.get("/api/v1/customers", headers=headers)
         # Should not be 401 due to format (might be 403, 404, etc.)
-        assert response.status_code != 401 or "bearer" not in str(response.json()).lower()
+        assert response.status_code != 401 or "bearer" not in str(response.json().lower()
 
 
 @pytest.mark.security
@@ -177,7 +177,7 @@ class TestAuthorizationSecurity:
             "role": "user",
             "permissions": ["customer:read"],
             "tenant_id": "test-tenant",
-            "exp": datetime.utcnow() + timedelta(hours=1)
+            "exp": datetime.now(timezone.utc) + timedelta(hours=1)
         }, JWT_SECRET)
         
         admin_token = jwt.encode({
@@ -185,7 +185,7 @@ class TestAuthorizationSecurity:
             "role": "admin", 
             "permissions": ["customer:read", "customer:create", "customer:update", "customer:delete"],
             "tenant_id": "test-tenant",
-            "exp": datetime.utcnow() + timedelta(hours=1)
+            "exp": datetime.now(timezone.utc) + timedelta(hours=1)
         }, JWT_SECRET)
         
         # Test user trying to create customer (should fail)
@@ -223,14 +223,14 @@ class TestAuthorizationSecurity:
             "sub": "user1-id",
             "tenant_id": "tenant-1",
             "permissions": ["customer:read", "customer:create"],
-            "exp": datetime.utcnow() + timedelta(hours=1)
+            "exp": datetime.now(timezone.utc) + timedelta(hours=1)
         }, JWT_SECRET)
         
         tenant2_token = jwt.encode({
             "sub": "user2-id", 
             "tenant_id": "tenant-2",
             "permissions": ["customer:read", "customer:create"],
-            "exp": datetime.utcnow() + timedelta(hours=1)
+            "exp": datetime.now(timezone.utc) + timedelta(hours=1)
         }, JWT_SECRET)
         
         # Create customer in tenant 1
@@ -315,7 +315,7 @@ class TestInputValidationSecurity:
             "<script>alert('XSS')</script>",
             "javascript:alert('XSS')",
             "<img src=x onerror=alert('XSS')>",
-            "';alert(String.fromCharCode(88,83,83))//';alert(String.fromCharCode(88,83,83))//",
+            "';alert(String.fromCharCode(88,83,83)//';alert(String.fromCharCode(88,83,83)//",
             "<svg onload=alert('XSS')>"
         ]
         
@@ -466,13 +466,13 @@ class TestSessionSecurity:
         for i in range(10):
             payload = {
                 "sub": f"user-{i}",
-                "exp": datetime.utcnow() + timedelta(hours=1)
+                "exp": datetime.now(timezone.utc) + timedelta(hours=1)
             }
             token = jwt.encode(payload, JWT_SECRET)
             tokens.append(token)
         
         # Tokens should be different
-        assert len(set(tokens)) == len(tokens), "All tokens should be unique"
+        assert len(set(tokens) == len(tokens), "All tokens should be unique"
         
         # Tokens should have reasonable length
         for token in tokens:
@@ -485,8 +485,8 @@ class TestSessionSecurity:
             "sub": "expiry-test-user",
             "tenant_id": "test-tenant",
             "permissions": ["customer:read"],
-            "exp": datetime.utcnow() + timedelta(seconds=1),
-            "iat": datetime.utcnow()
+            "exp": datetime.now(timezone.utc) + timedelta(seconds=1),
+            "iat": datetime.now(timezone.utc)
         }
         short_lived_token = jwt.encode(payload, JWT_SECRET)
         
@@ -568,7 +568,7 @@ class TestCryptographicSecurity:
     def test_jwt_algorithm_security(self):
         """Test JWT uses secure algorithms."""
         # Create token with secure algorithm
-        payload = {"sub": "test", "exp": datetime.utcnow() + timedelta(hours=1)}
+        payload = {"sub": "test", "exp": datetime.now(timezone.utc) + timedelta(hours=1)}
         
         # Should use HS256 or better
         token = jwt.encode(payload, JWT_SECRET, algorithm="HS256")
@@ -678,7 +678,7 @@ def generate_malicious_payloads() -> List[str]:
 
 
 @pytest.mark.security
-@pytest.mark.parametrize("payload", generate_malicious_payloads())
+@pytest.mark.parametrize("payload", generate_malicious_payloads()
 @pytest.mark.asyncio
 async def test_malicious_payload_protection(security_client, valid_token, payload):
     """Test protection against various malicious payloads."""

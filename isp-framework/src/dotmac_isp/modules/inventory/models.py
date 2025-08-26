@@ -348,7 +348,7 @@ class StockItem(TenantModel, AuditMixin):
     def turnover_days(self) -> Optional[int]:
         """Calculate days since last movement."""
         if self.last_movement_date:
-            return (datetime.utcnow() - self.last_movement_date).days
+            return (datetime.now(timezone.utc) - self.last_movement_date).days
         return None
 
     def __repr__(self):

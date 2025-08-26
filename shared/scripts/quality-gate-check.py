@@ -343,7 +343,7 @@ class QualityGateChecker:
                 root = tree.getroot()
                 coverage_elem = root.find(".//coverage")
                 if coverage_elem is not None:
-                    return float(coverage_elem.get("line-rate", 0)) * 100
+                    return float(coverage_elem.get("line-rate", 0) * 100
         except Exception:
             pass
         
@@ -473,8 +473,8 @@ class QualityGateChecker:
             )
             
             if result.returncode == 0:
-                bandit_output = json.loads(result.stdout.decode())
-                issue_count = len(bandit_output.get('results', []))
+                bandit_output = json.loads(result.stdout.decode()
+                issue_count = len(bandit_output.get('results', [])
                 
                 max_issues = self.config.get('security', {}).get('bandit', {}).get('max_issues', 0)
                 bandit_passed = issue_count <= max_issues
@@ -503,7 +503,7 @@ class QualityGateChecker:
                 return True
             else:
                 try:
-                    safety_output = json.loads(result.stdout.decode())
+                    safety_output = json.loads(result.stdout.decode()
                     vuln_count = len(safety_output)
                     print(f"  ❌ Safety: FAILED ({vuln_count} vulnerabilities)")
                 except json.JSONDecodeError:
@@ -559,7 +559,7 @@ class QualityGateChecker:
     def _get_test_results(self) -> Dict:
         """Get test execution results."""
         # Try to parse JUnit XML results
-        junit_files = list(Path(".").glob("**/junit*.xml"))
+        junit_files = list(Path(".").glob("**/junit*.xml")
         
         if junit_files:
             # Parse most recent junit file
@@ -567,10 +567,10 @@ class QualityGateChecker:
                 tree = ET.parse(junit_files[0])
                 root = tree.getroot()
                 
-                test_count = int(root.get("tests", 0))
-                failure_count = int(root.get("failures", 0))
-                error_count = int(root.get("errors", 0))
-                time_taken = float(root.get("time", 0))
+                test_count = int(root.get("tests", 0)
+                failure_count = int(root.get("failures", 0)
+                error_count = int(root.get("errors", 0)
+                time_taken = float(root.get("time", 0)
                 
                 return {
                     "total_tests": test_count,
@@ -594,7 +594,7 @@ class QualityGateChecker:
         """Check docstring coverage percentage."""
         # Simplified implementation - count Python files with docstrings
         try:
-            python_files = list(Path(".").rglob("*.py"))
+            python_files = list(Path(".").rglob("*.py")
             files_with_docstrings = 0
             
             for py_file in python_files:
@@ -610,7 +610,7 @@ class QualityGateChecker:
                     continue
             
             if len(python_files) > 0:
-                return (files_with_docstrings / len(python_files)) * 100
+                return (files_with_docstrings / len(python_files) * 100
         except Exception:
             pass
         

@@ -8,8 +8,9 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..models.user import User, UserSession, UserInvitation
-from .base import BaseRepository
+from models.user import User, UserSession, UserInvitation
+from repositories.base import BaseRepository
+from datetime import timezone
 
 
 class UserRepository(BaseRepository[User]):
@@ -69,7 +70,7 @@ class UserRepository(BaseRepository[User]):
         return await self.update(
             user_id,
             {
-                "last_login": datetime.utcnow(),
+                "last_login": datetime.now(timezone.utc),
                 "login_count": User.login_count + 1,
                 "failed_login_attempts": 0,
                 "locked_until": None
@@ -89,7 +90,7 @@ class UserRepository(BaseRepository[User]):
         return await self.update(
             user_id,
             {
-                "locked_until": datetime.utcnow() + timedelta(minutes=duration_minutes),
+                "locked_until": datetime.now(timezone.utc) + timedelta(minutes=duration_minutes),
                 "failed_login_attempts": User.failed_login_attempts + 1
             }
         ) is not None
@@ -141,7 +142,7 @@ class UserSessionRepository(BaseRepository[UserSession]):
         
         query = (
             delete(UserSession)
-            .where(UserSession.expires_at < datetime.utcnow())
+            .where(UserSession.expires_at < datetime.now(timezone.utc))
         )
         result = await self.db.execute(query)
         return result.rowcount
@@ -189,7 +190,7 @@ class UserInvitationRepository(BaseRepository[UserInvitation]):
             invitation_id,
             {
                 "is_accepted": True,
-                "accepted_at": datetime.utcnow(),
+                "accepted_at": datetime.now(timezone.utc),
                 "accepted_by": user_id
             }
         ) is not None
@@ -201,7 +202,7 @@ class UserInvitationRepository(BaseRepository[UserInvitation]):
         
         query = (
             delete(UserInvitation)
-            .where(UserInvitation.expires_at < datetime.utcnow())
+            .where(UserInvitation.expires_at < datetime.now(timezone.utc))
             .where(UserInvitation.is_accepted == False)
         )
         result = await self.db.execute(query)

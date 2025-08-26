@@ -404,7 +404,7 @@ class TestUserService:
     async def test_get_user_not_implemented(self, user_service):
         """Test user retrieval throws NotImplementedError."""
         with pytest.raises(NotImplementedError):
-            await user_service.get_user(uuid4())
+            await user_service.get_user(uuid4()
 
     @pytest.mark.unit
     async def test_update_user_not_implemented(self, user_service):
@@ -418,7 +418,7 @@ class TestUserService:
     async def test_delete_user_not_implemented(self, user_service):
         """Test user deletion throws NotImplementedError."""
         with pytest.raises(NotImplementedError):
-            await user_service.delete_user(uuid4())
+            await user_service.delete_user(uuid4()
 
     @pytest.mark.unit
     async def test_list_users_not_implemented(self, user_service):

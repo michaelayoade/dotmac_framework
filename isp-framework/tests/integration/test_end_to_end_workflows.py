@@ -28,7 +28,7 @@ from dotmac_isp.modules.field_ops.service import FieldOperationsService
 class TestCompleteCustomerLifecycle:
     """Test complete customer lifecycle from signup to service delivery."""
     
-    async def test_residential_customer_onboarding_workflow(self, db_session):
+    async def test_residential_customer_onboarding_workflow(self, db_session, timezone):
         """Test complete onboarding workflow for residential customer."""
         
         # Initialize services
@@ -185,7 +185,7 @@ class TestCompleteCustomerLifecycle:
         }
         
         # All onboarding steps must complete successfully
-        assert all(onboarding_status.values()), f"Onboarding failed: {onboarding_status}"
+        assert all(onboarding_status.values(), f"Onboarding failed: {onboarding_status}"
 
     async def test_service_installation_and_activation_workflow(self, db_session):
         """Test service installation and activation workflow."""
@@ -326,7 +326,7 @@ class TestCompleteCustomerLifecycle:
         }
         
         # All activation steps must complete successfully
-        assert all(activation_status.values()), f"Service activation failed: {activation_status}"
+        assert all(activation_status.values(), f"Service activation failed: {activation_status}"
 
 
 @pytest.mark.integration
@@ -353,7 +353,7 @@ class TestServiceOutageResponseWorkflow:
             "alarm_type": "device_unreachable",
             "severity": "critical",
             "affected_services": 150,  # Number of customers affected
-            "detection_time": datetime.utcnow()
+            "detection_time": datetime.now(timezone.utc)
         }
         
         with patch.object(monitoring_service, 'detect_network_outage') as mock_detect:
@@ -418,7 +418,7 @@ class TestServiceOutageResponseWorkflow:
             mock_dispatch.return_value = {
                 "repair_order_id": mock_repair_order_id,
                 "technicians_dispatched": 2,
-                "estimated_arrival": datetime.utcnow() + timedelta(minutes=45),
+                "estimated_arrival": datetime.now(timezone.utc) + timedelta(minutes=45),
                 "repair_priority": "emergency",
                 "escalation_level": 3
             }
@@ -437,7 +437,7 @@ class TestServiceOutageResponseWorkflow:
         with patch.object(monitoring_service, 'confirm_service_restoration') as mock_restore:
             mock_restore.return_value = {
                 "service_restored": True,
-                "restoration_time": datetime.utcnow(),
+                "restoration_time": datetime.now(timezone.utc),
                 "customers_restored": 150,
                 "service_quality_verified": True,
                 "outage_duration_minutes": 127
@@ -502,7 +502,7 @@ class TestServiceOutageResponseWorkflow:
         }
         
         # Complete outage response workflow must execute successfully
-        assert all(response_completeness.values()), f"Outage response incomplete: {response_completeness}"
+        assert all(response_completeness.values(), f"Outage response incomplete: {response_completeness}"
 
 
 @pytest.mark.integration  
@@ -675,7 +675,7 @@ class TestBillingAndPaymentIntegration:
         }
         
         # Complete billing cycle must execute successfully
-        assert all(billing_cycle_status.values()), f"Billing cycle incomplete: {billing_cycle_status}"
+        assert all(billing_cycle_status.values(), f"Billing cycle incomplete: {billing_cycle_status}"
 
 
 if __name__ == "__main__":

@@ -438,7 +438,7 @@ def _generate_invoice(self, customer: AIGeneratedCustomer, service: AIGeneratedS
     total_amount = round(subtotal + tax_amount, 2)
     
     return {
-        "invoice_id": str(uuid.uuid4())[:8].upper(),
+        "invoice_id": str(uuid.uuid4()[:8].upper(),
         "customer_id": customer.customer_id,
         "service_id": service.service_id,
         "issue_date": datetime.now(),

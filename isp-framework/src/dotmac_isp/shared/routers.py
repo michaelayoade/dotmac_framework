@@ -3,6 +3,7 @@
 from typing import Type, TypeVar, Generic, List, Optional, Any, Dict
 from abc import ABC, abstractmethod
 from uuid import uuid4
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Path
 from sqlalchemy.orm import Session
@@ -79,7 +80,7 @@ class BaseCRUDRouter(
     ) -> ModelType:
         """Create a new item."""
         # Prepare data with tenant_id and unique ID
-        item_dict = item_data.dict()
+        item_dict = item_data.model_dump()
         item_dict["tenant_id"] = tenant_id
         item_dict["id"] = str(uuid4())
 
@@ -160,7 +161,7 @@ class BaseCRUDRouter(
         """Update an existing item."""
         db_item = await self._get_item(item_id, db, tenant_id)
 
-        update_data = item_update.dict(exclude_unset=True) if item_update else {}
+        update_data = item_update.model_dump(exclude_unset=True) if item_update else {}
         update_data = self.prepare_update_data(update_data, db_item, db, tenant_id)
 
         # Validate update
@@ -171,9 +172,7 @@ class BaseCRUDRouter(
 
         # Update timestamp if available
         if hasattr(db_item, "updated_at"):
-            from datetime import datetime
-
-            db_item.updated_at = datetime.utcnow()
+            db_item.updated_at = datetime.now(timezone.utc)
 
         db.commit()
         db.refresh(db_item)
@@ -283,7 +282,7 @@ class BaseStatusRouter(
         if hasattr(db_item, "updated_at"):
             from datetime import datetime
 
-            db_item.updated_at = datetime.utcnow()
+            db_item.updated_at = datetime.now(timezone.utc)
 
         db.commit()
         db.refresh(db_item)
@@ -391,7 +390,7 @@ def generate_unique_code(prefix: str) -> str:
     """Generate a unique code with timestamp."""
     from datetime import datetime
 
-    timestamp = int(datetime.utcnow().timestamp())
+    timestamp = int(datetime.now(timezone.utc).timestamp())
     return f"{prefix}-{timestamp}"
 
 
@@ -399,7 +398,7 @@ def generate_sequential_number(prefix: str, sequence_field: str) -> str:
     """Generate a sequential number (to be implemented with database sequences)."""
     from datetime import datetime
 
-    timestamp = int(datetime.utcnow().timestamp())
+    timestamp = int(datetime.now(timezone.utc).timestamp())
     return f"{prefix}-{timestamp}"
 
 

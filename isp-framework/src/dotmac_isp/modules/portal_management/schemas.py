@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import Optional, List
 from uuid import UUID
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, ConfigDict
 from enum import Enum
 
 from .models import PortalAccountStatus, PortalAccountType
@@ -78,9 +78,7 @@ class PortalAccountResponse(PortalAccountBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        """Class for Config operations."""
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PortalLoginRequest(BaseModel):
@@ -206,9 +204,7 @@ class PortalSessionResponse(BaseModel):
     is_active: bool
     duration_minutes: int
 
-    class Config:
-        """Class for Config operations."""
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PortalSecurityEventResponse(BaseModel):
@@ -225,9 +221,7 @@ class PortalSecurityEventResponse(BaseModel):
     flagged_as_suspicious: bool
     created_at: datetime
 
-    class Config:
-        """Class for Config operations."""
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PortalAccountAdminCreate(PortalAccountCreate):
@@ -288,9 +282,7 @@ class PortalAnalyticsResponse(BaseModel):
     top_locations: List[dict] = []  # Country/city usage stats
     security_alerts_count: int
 
-    class Config:
-        """Class for Config operations."""
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PortalPreferencesBase(BaseModel):
@@ -344,9 +336,7 @@ class PortalPreferences(PortalPreferencesBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
 
-    class Config:
-        """Class for Config operations."""
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PortalSession(BaseModel):
@@ -363,9 +353,7 @@ class PortalSession(BaseModel):
     created_at: datetime
     updated_at: Optional[datetime] = None
 
-    class Config:
-        """Class for Config operations."""
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PortalAccount(PortalAccountBase):
@@ -383,6 +371,4 @@ class PortalAccount(PortalAccountBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
 
-    class Config:
-        """Class for Config operations."""
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

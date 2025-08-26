@@ -23,8 +23,8 @@ class Bind9Provider:
         
     def get_next_serial(self) -> str:
         """Generate next DNS serial number"""
-        from datetime import datetime
-        base_serial = datetime.now().strftime("%Y%m%d")
+        from datetime import datetime, timezone
+        base_serial = datetime.now(timezone.utc).strftime("%Y%m%d")
         
         if os.path.exists(self.serial_file):
             with open(self.serial_file, 'r') as f:

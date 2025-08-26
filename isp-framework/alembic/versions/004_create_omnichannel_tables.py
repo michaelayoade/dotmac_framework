@@ -25,12 +25,12 @@ def upgrade():
     routing_strategy_enum = sa.Enum('ROUND_ROBIN', 'LEAST_BUSY', 'SKILL_BASED', 'PRIORITY_BASED', 'GEOGRAPHIC', 'CUSTOMER_HISTORY', name='routingstrategy')
     escalation_trigger_enum = sa.Enum('TIME_BASED', 'PRIORITY_BASED', 'KEYWORD_BASED', 'SENTIMENT_BASED', 'CUSTOMER_TIER', 'AGENT_REQUEST', name='escalationtrigger')
     
-    contact_type_enum.create(op.get_bind())
-    interaction_type_enum.create(op.get_bind())
-    interaction_status_enum.create(op.get_bind())
-    agent_status_enum.create(op.get_bind())
-    routing_strategy_enum.create(op.get_bind())
-    escalation_trigger_enum.create(op.get_bind())
+    contact_type_enum.create(op.get_bind()
+    interaction_type_enum.create(op.get_bind()
+    interaction_status_enum.create(op.get_bind()
+    agent_status_enum.create(op.get_bind()
+    routing_strategy_enum.create(op.get_bind()
+    escalation_trigger_enum.create(op.get_bind()
 
     # 1. Registered Channels (Plugin Registry)
     op.create_table('omnichannel_registered_channels',
@@ -76,17 +76,17 @@ def upgrade():
         sa.Column('contact_type', contact_type_enum, nullable=False),
         sa.Column('first_name', sa.String(100), nullable=False),
         sa.Column('last_name', sa.String(100), nullable=False),
-        sa.Column('display_name', sa.String(200)),
-        sa.Column('email_primary', sa.String(255)),
-        sa.Column('phone_primary', sa.String(50)),
+        sa.Column('display_name', sa.String(200),
+        sa.Column('email_primary', sa.String(255),
+        sa.Column('phone_primary', sa.String(50),
         sa.Column('is_active', sa.Boolean, default=True),
         sa.Column('is_primary', sa.Boolean, default=False),
         sa.Column('preferred_language', sa.String(10), default='en'),
         sa.Column('timezone', sa.String(50), default='UTC'),
         sa.Column('allow_marketing', sa.Boolean, default=False),
         sa.Column('allow_notifications', sa.Boolean, default=True),
-        sa.Column('quiet_hours_start', sa.String(8)),
-        sa.Column('quiet_hours_end', sa.String(8)),
+        sa.Column('quiet_hours_start', sa.String(8),
+        sa.Column('quiet_hours_end', sa.String(8),
         sa.Column('created_at', sa.DateTime, nullable=False),
         sa.Column('updated_at', sa.DateTime, nullable=False),
         sa.Column('deleted_at', sa.DateTime),
@@ -100,7 +100,7 @@ def upgrade():
         sa.Column('contact_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('omnichannel_customer_contacts.id'), nullable=False),
         sa.Column('registered_channel_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('omnichannel_registered_channels.id'), nullable=False),
         sa.Column('channel_address', sa.String(500), nullable=False),
-        sa.Column('channel_display_name', sa.String(200)),
+        sa.Column('channel_display_name', sa.String(200),
         sa.Column('is_verified', sa.Boolean, default=False),
         sa.Column('is_preferred', sa.Boolean, default=False),
         sa.Column('is_active', sa.Boolean, default=True),
@@ -118,11 +118,11 @@ def upgrade():
         sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True),
         sa.Column('tenant_id', postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column('user_id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('employee_id', sa.String(50)),
+        sa.Column('employee_id', sa.String(50),
         sa.Column('display_name', sa.String(200), nullable=False),
         sa.Column('email', sa.String(255), nullable=False),
-        sa.Column('phone', sa.String(50)),
-        sa.Column('avatar_url', sa.String(500)),
+        sa.Column('phone', sa.String(50),
+        sa.Column('avatar_url', sa.String(500),
         sa.Column('status', agent_status_enum, default='OFFLINE'),
         sa.Column('max_concurrent_interactions', sa.Integer, default=5),
         sa.Column('current_workload', sa.Integer, default=0),
@@ -185,7 +185,7 @@ def upgrade():
         sa.Column('tenant_id', postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column('contact_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('omnichannel_customer_contacts.id'), nullable=False),
         sa.Column('registered_channel_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('omnichannel_registered_channels.id'), nullable=False),
-        sa.Column('thread_subject', sa.String(500)),
+        sa.Column('thread_subject', sa.String(500),
         sa.Column('thread_reference', sa.String(100), unique=True, nullable=False),
         sa.Column('first_interaction_at', sa.DateTime),
         sa.Column('last_interaction_at', sa.DateTime),
@@ -207,16 +207,16 @@ def upgrade():
         sa.Column('interaction_reference', sa.String(100), unique=True, nullable=False),
         sa.Column('contact_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('omnichannel_customer_contacts.id'), nullable=False),
         sa.Column('channel_info_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('omnichannel_contact_channels.id'), nullable=False),
-        sa.Column('conversation_thread_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('omnichannel_conversation_threads.id')),
+        sa.Column('conversation_thread_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('omnichannel_conversation_threads.id'),
         sa.Column('interaction_type', interaction_type_enum, nullable=False),
         sa.Column('status', interaction_status_enum, default='PENDING'),
-        sa.Column('subject', sa.String(500)),
+        sa.Column('subject', sa.String(500),
         sa.Column('content', sa.Text, nullable=False),
         sa.Column('content_type', sa.String(50), default='text'),
-        sa.Column('channel_message_id', sa.String(200)),
+        sa.Column('channel_message_id', sa.String(200),
         sa.Column('channel_metadata', postgresql.JSONB, default=dict),
-        sa.Column('assigned_agent_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('omnichannel_agents.id')),
-        sa.Column('assigned_team_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('omnichannel_agent_teams.id')),
+        sa.Column('assigned_agent_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('omnichannel_agents.id'),
+        sa.Column('assigned_team_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('omnichannel_agent_teams.id'),
         sa.Column('priority_level', sa.Integer, default=3),
         sa.Column('interaction_start', sa.DateTime),
         sa.Column('first_response_time', sa.DateTime),
@@ -241,14 +241,14 @@ def upgrade():
         sa.Column('description', sa.Text),
         sa.Column('is_active', sa.Boolean, default=True),
         sa.Column('priority', sa.Integer, default=5),
-        sa.Column('channel_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('omnichannel_registered_channels.id')),
+        sa.Column('channel_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('omnichannel_registered_channels.id'),
         sa.Column('priority_condition', sa.Integer),
-        sa.Column('customer_tier_condition', sa.String(50)),
+        sa.Column('customer_tier_condition', sa.String(50),
         sa.Column('time_condition', postgresql.JSONB),
         sa.Column('keyword_conditions', postgresql.JSONB, default=list),
-        sa.Column('language_condition', sa.String(10)),
-        sa.Column('target_team_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('omnichannel_agent_teams.id')),
-        sa.Column('target_agent_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('omnichannel_agents.id')),
+        sa.Column('language_condition', sa.String(10),
+        sa.Column('target_team_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('omnichannel_agent_teams.id'),
+        sa.Column('target_agent_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('omnichannel_agents.id'),
         sa.Column('priority_override', sa.Integer),
         sa.Column('sla_override_minutes', sa.Integer),
         sa.Column('created_at', sa.DateTime, nullable=False),
@@ -266,13 +266,13 @@ def upgrade():
         sa.Column('content', sa.Text, nullable=False),
         sa.Column('content_type', sa.String(50), default='text'),
         sa.Column('is_internal', sa.Boolean, default=False),
-        sa.Column('channel_message_id', sa.String(200)),
+        sa.Column('channel_message_id', sa.String(200),
         sa.Column('delivery_status', sa.String(50), default='pending'),
         sa.Column('delivery_timestamp', sa.DateTime),
         sa.Column('delivery_metadata', postgresql.JSONB, default=dict),
         sa.Column('response_time_seconds', sa.Integer),
         sa.Column('attachments', postgresql.JSONB, default=list),
-        sa.Column('template_used', sa.String(100)),
+        sa.Column('template_used', sa.String(100),
         sa.Column('created_at', sa.DateTime, nullable=False),
         sa.Column('updated_at', sa.DateTime, nullable=False),
         sa.Column('deleted_at', sa.DateTime),
@@ -287,9 +287,9 @@ def upgrade():
         sa.Column('escalation_level', sa.Integer, nullable=False),
         sa.Column('trigger_type', escalation_trigger_enum, nullable=False),
         sa.Column('trigger_reason', sa.Text, nullable=False),
-        sa.Column('escalated_from_agent_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('omnichannel_agents.id')),
-        sa.Column('escalated_to_agent_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('omnichannel_agents.id')),
-        sa.Column('escalated_to_team_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('omnichannel_agent_teams.id')),
+        sa.Column('escalated_from_agent_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('omnichannel_agents.id'),
+        sa.Column('escalated_to_agent_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('omnichannel_agents.id'),
+        sa.Column('escalated_to_team_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('omnichannel_agent_teams.id'),
         sa.Column('escalated_at', sa.DateTime),
         sa.Column('resolved_at', sa.DateTime),
         sa.Column('is_resolved', sa.Boolean, default=False),
@@ -461,9 +461,9 @@ def downgrade():
     op.drop_table('omnichannel_registered_channels')
     
     # Drop enums
-    sa.Enum(name='escalationtrigger').drop(op.get_bind())
-    sa.Enum(name='routingstrategy').drop(op.get_bind())
-    sa.Enum(name='agentstatus').drop(op.get_bind())
-    sa.Enum(name='interactionstatus').drop(op.get_bind())
-    sa.Enum(name='interactiontype').drop(op.get_bind())
-    sa.Enum(name='contacttype').drop(op.get_bind())
+    sa.Enum(name='escalationtrigger').drop(op.get_bind()
+    sa.Enum(name='routingstrategy').drop(op.get_bind()
+    sa.Enum(name='agentstatus').drop(op.get_bind()
+    sa.Enum(name='interactionstatus').drop(op.get_bind()
+    sa.Enum(name='interactiontype').drop(op.get_bind()
+    sa.Enum(name='contacttype').drop(op.get_bind()

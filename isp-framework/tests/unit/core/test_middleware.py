@@ -106,7 +106,7 @@ class TestRequestLoggingMiddleware:
     @pytest.mark.asyncio
     async def test_dispatch_exception_handling(self, middleware, mock_request):
         """Test exception handling in dispatch."""
-        call_next = AsyncMock(side_effect=Exception("Test exception"))
+        call_next = AsyncMock(side_effect=Exception("Test exception")
 
         with patch('dotmac_isp.core.middleware.time.time') as mock_time, \
              patch('dotmac_isp.core.middleware.uuid.uuid4') as mock_uuid:
@@ -179,7 +179,7 @@ class TestTenantIsolationMiddleware:
     async def test_dispatch_with_header_tenant_id(self, middleware, mock_request):
         """Test tenant ID extraction from headers."""
         mock_request.headers.get.return_value = "tenant-123"
-        call_next = AsyncMock(return_value=MagicMock())
+        call_next = AsyncMock(return_value=MagicMock()
 
         with patch('dotmac_isp.core.middleware.logger') as mock_logger:
             await middleware.dispatch(mock_request, call_next)
@@ -192,7 +192,7 @@ class TestTenantIsolationMiddleware:
         """Test tenant ID extraction from path parameters."""
         mock_request.headers.get.return_value = None  # No header
         mock_request.path_params = {"tenant_id": "tenant-456"}
-        call_next = AsyncMock(return_value=MagicMock())
+        call_next = AsyncMock(return_value=MagicMock()
 
         with patch('dotmac_isp.core.middleware.logger') as mock_logger:
             await middleware.dispatch(mock_request, call_next)
@@ -205,7 +205,7 @@ class TestTenantIsolationMiddleware:
         """Test when no tenant ID is found."""
         mock_request.headers.get.return_value = None
         mock_request.path_params = {}
-        call_next = AsyncMock(return_value=MagicMock())
+        call_next = AsyncMock(return_value=MagicMock()
 
         with patch('dotmac_isp.core.middleware.logger') as mock_logger:
             await middleware.dispatch(mock_request, call_next)
@@ -219,7 +219,7 @@ class TestTenantIsolationMiddleware:
         """Test that header tenant ID takes priority over path parameter."""
         mock_request.headers.get.return_value = "header-tenant"
         mock_request.path_params = {"tenant_id": "path-tenant"}
-        call_next = AsyncMock(return_value=MagicMock())
+        call_next = AsyncMock(return_value=MagicMock()
 
         await middleware.dispatch(mock_request, call_next)
 
@@ -231,7 +231,7 @@ class TestTenantIsolationMiddleware:
         """Test when path_params doesn't have get method."""
         mock_request.headers.get.return_value = None
         mock_request.path_params = "not-a-dict"  # No get method
-        call_next = AsyncMock(return_value=MagicMock())
+        call_next = AsyncMock(return_value=MagicMock()
 
         await middleware.dispatch(mock_request, call_next)
 
@@ -242,7 +242,7 @@ class TestTenantIsolationMiddleware:
     async def test_dispatch_exception_propagation(self, middleware, mock_request):
         """Test that exceptions from call_next are propagated."""
         mock_request.headers.get.return_value = "tenant-123"
-        call_next = AsyncMock(side_effect=Exception("Downstream error"))
+        call_next = AsyncMock(side_effect=Exception("Downstream error")
 
         with pytest.raises(Exception, match="Downstream error"):
             await middleware.dispatch(mock_request, call_next)
@@ -324,7 +324,7 @@ class TestSecurityHeadersMiddleware:
     async def test_dispatch_exception_propagation(self, middleware):
         """Test that exceptions from call_next are propagated."""
         mock_request = MagicMock(spec=Request)
-        call_next = AsyncMock(side_effect=Exception("Downstream error"))
+        call_next = AsyncMock(side_effect=Exception("Downstream error")
 
         with pytest.raises(Exception, match="Downstream error"):
             await middleware.dispatch(mock_request, call_next)
@@ -455,7 +455,7 @@ class TestMiddlewareIntegration:
             # Execute middleware stack (in reverse order as they would be executed)
             result = await logging_middleware.dispatch(mock_request, 
                 lambda req: tenant_middleware.dispatch(req,
-                    lambda req: security_middleware.dispatch(req, final_call_next)))
+                    lambda req: security_middleware.dispatch(req, final_call_next))
 
             # Verify all middleware effects (UUID is sliced to first 8 chars)
             assert mock_request.state.request_id == "test-uui"  # First 8 chars of mock UUID
@@ -517,7 +517,7 @@ class TestMiddlewareErrorCases:
         mock_request.client = None
         mock_request.state = MagicMock()
 
-        call_next = AsyncMock(return_value=MagicMock())
+        call_next = AsyncMock(return_value=MagicMock()
 
         with patch('dotmac_isp.core.middleware.uuid.uuid4') as mock_uuid, \
              patch('dotmac_isp.core.middleware.time.time'):
@@ -536,7 +536,7 @@ class TestMiddlewareErrorCases:
         mock_request = MagicMock(spec=Request)
         mock_response = MagicMock()
         # Make headers assignment raise exception
-        mock_response.headers.__setitem__ = MagicMock(side_effect=Exception("Immutable headers"))
+        mock_response.headers.__setitem__ = MagicMock(side_effect=Exception("Immutable headers")
         
         call_next = AsyncMock(return_value=mock_response)
 
@@ -568,7 +568,7 @@ class TestMiddlewareErrorCases:
             mock_request.path_params = path_params
             mock_request.state = MagicMock()
 
-            call_next = AsyncMock(return_value=MagicMock())
+            call_next = AsyncMock(return_value=MagicMock()
 
             if path_params is None:
                 # Should handle gracefully when path_params is None

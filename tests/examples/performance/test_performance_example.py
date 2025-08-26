@@ -52,7 +52,7 @@ class TestModelPerformance:
         from typing import Optional
         
         class Customer(BaseModel):
-            id: Optional[str] = Field(default_factory=lambda: str(uuid4()))
+            id: Optional[str] = Field(default_factory=lambda: str(uuid4())
             email: str
             first_name: str
             last_name: str
@@ -73,7 +73,7 @@ class TestModelPerformance:
         from typing import Optional
         
         class Customer(BaseModel):
-            id: Optional[str] = Field(default_factory=lambda: str(uuid4()))
+            id: Optional[str] = Field(default_factory=lambda: str(uuid4())
             email: str
             first_name: str
             last_name: str
@@ -153,7 +153,7 @@ class TestDatabasePerformance:
             await conn.close()
         
         def sync_connect():
-            return asyncio.run(connect_to_database())
+            return asyncio.run(connect_to_database()
         
         benchmark(sync_connect)
         
@@ -179,7 +179,7 @@ class TestDatabasePerformance:
                 await conn.close()
         
         def sync_query():
-            return asyncio.run(run_simple_query())
+            return asyncio.run(run_simple_query()
         
         result = benchmark(sync_query)
         assert result == 1
@@ -205,7 +205,7 @@ class TestAsyncPerformance:
             return await asyncio.gather(*tasks)
         
         def run_test():
-            return asyncio.run(run_concurrent_operations())
+            return asyncio.run(run_concurrent_operations()
         
         result = benchmark(run_test)
         assert len(result) == 10

@@ -228,7 +228,7 @@ class TestConfigurationHandlerChain:
                     "database": "testdb",
                     "username": "testuser"
                 }
-            }))
+            })
             
             # ENV config file
             env_file = temp_path / "config.env"
@@ -261,7 +261,7 @@ class TestConfigurationHandlerChain:
             json_file = temp_path / "config.json"
             json_file.write_text(json.dumps({
                 "incomplete": "config"
-            }))
+            })
             
             context = chain.process_configurations(
                 config_paths=[json_file],
@@ -391,7 +391,7 @@ class TestConfigurationIntegration:
                 },
                 "redis": {"host": "localhost", "port": 6379},
                 "api": {"host": "127.0.0.1", "port": 8000}
-            }))
+            })
             
             # Create hot-reload system
             hot_reload = ConfigurationHotReload(
@@ -421,7 +421,7 @@ class TestConfigurationIntegration:
                     "database": "appdb",
                     "username": "appuser"
                 }
-            }))
+            })
             
             # YAML file  
             files['yaml'] = temp_path / "services.yaml"
@@ -434,13 +434,13 @@ class TestConfigurationIntegration:
                     "host": "0.0.0.0",
                     "port": 8080
                 }
-            }))
+            })
             
             # ENV file
             files['env'] = temp_path / ".env"
             files['env'].write_text("APP_ENV=production\nDEBUG=false\n")
             
-            config_paths = list(files.values())
+            config_paths = list(files.values()
             
             context = chain.process_configurations(
                 config_paths=config_paths,
@@ -484,7 +484,7 @@ class TestPerformanceImprovement:
                 "api": {"host": "127.0.0.1", "port": 8000}
             })
             
-            config_file.write_text(json.dumps(large_config))
+            config_file.write_text(json.dumps(large_config)
             
             # Time multiple processing operations
             start_time = time.time()

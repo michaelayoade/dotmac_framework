@@ -6,7 +6,7 @@ ensuring all models across the framework can be properly joined and migrated tog
 
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy import String, DateTime, Boolean, Text, UUID, func
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 import uuid
 
@@ -59,7 +59,7 @@ class SoftDeleteMixin:
     def soft_delete(self) -> None:
         """Mark the record as soft deleted."""
         self.is_deleted = True
-        self.deleted_at = datetime.utcnow()
+        self.deleted_at = datetime.now(timezone.utc)
 
     def restore(self) -> None:
         """Restore a soft deleted record."""
@@ -103,7 +103,7 @@ class StatusMixin:
         """Change the status of the record."""
         self.status = new_status
         self.status_reason = reason
-        self.status_changed_at = datetime.utcnow()
+        self.status_changed_at = datetime.now(timezone.utc)
 
 
 class AuditMixin:

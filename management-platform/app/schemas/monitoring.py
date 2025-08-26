@@ -8,7 +8,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field, validator
 
-from .common import BaseSchema, PaginatedResponse
+from schemas.common import BaseSchema, PaginatedResponse
 
 
 class MetricBase(BaseModel):

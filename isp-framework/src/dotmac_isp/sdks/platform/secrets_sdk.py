@@ -72,8 +72,8 @@ class SecretExpiredError(SecretsError):
 class SecretsSDKConfig:
     """Secrets SDK configuration."""
 
-    def __init__(        ):
-            """Initialize operation."""
+    def __init__(self, *args, **kwargs):
+        """Initialize operation."""
         self.master_encryption_key = master_encryption_key
         self.cache_ttl = cache_ttl
         self.enable_caching = enable_caching
@@ -704,7 +704,7 @@ class SecretsSDK:
         context: RequestContext | None = None,
     ) -> SecretAuditResponse:
         """Get secret access audit log."""
-        entries = self._access_logs.copy()
+        entries = self._access_logs.model_copy()
 
         # Apply filters
         if request.secret_id:

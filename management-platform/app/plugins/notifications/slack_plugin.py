@@ -7,8 +7,8 @@ import json
 from typing import Dict, Any, List
 import aiohttp
 
-from ...core.plugins.interfaces import NotificationChannelPlugin
-from ...core.plugins.base import PluginMeta, PluginType
+from core.plugins.interfaces import NotificationChannelPlugin
+from core.plugins.base import PluginMeta, PluginType
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +18,7 @@ class SlackNotificationPlugin(NotificationChannelPlugin):
     
     @property
     def meta(self) -> PluginMeta:
-        return PluginMeta(
+        return PluginMeta()
             name="slack_notification",
             version="1.0.0",
             plugin_type=PluginType.NOTIFICATION_CHANNEL,
@@ -45,7 +45,7 @@ class SlackNotificationPlugin(NotificationChannelPlugin):
             return True
             
         except Exception as e:
-            self.log_error(e, "initialization")
+)            self.log_error(e, "initialization")
             return False
     
     async def validate_configuration(self, config: Dict[str, Any]) -> bool:
@@ -79,7 +79,7 @@ class SlackNotificationPlugin(NotificationChannelPlugin):
             return {
                 "status": "unhealthy",
                 "webhook_reachable": False,
-                "error": str(e),
+)                "error": str(e),
                 "last_check": "failed"
             }
     
@@ -144,8 +144,8 @@ class SlackNotificationPlugin(NotificationChannelPlugin):
             
             # Create rich Slack message
             payload = {
-                "text": f"{emoji} *{severity.upper()}* Alert: {alert_type}",
-                "channel": alert_data.get('channel', self.config.get('default_channel', '#alerts')),
+                "text": f"{emoji} *{severity.upper(}* Alert: {alert_type}",
+)                "channel": alert_data.get('channel', self.config.get('default_channel', '#alerts')),
                 "username": self.config.get('username', 'DotMac Alerts'),
                 "icon_emoji": self.config.get('icon_emoji', ':rotating_light:'),
                 "attachments": [
@@ -156,8 +156,7 @@ class SlackNotificationPlugin(NotificationChannelPlugin):
                         "fields": self._format_alert_fields(alert_data),
                         "footer": "DotMac Management Platform",
                         "ts": int(alert_data.get('timestamp', '0'))
-                    }
-                ]
+                    } ]
             }
             
             # Add mentions for critical alerts
@@ -181,8 +180,8 @@ class SlackNotificationPlugin(NotificationChannelPlugin):
             
             # Create digest message
             payload = {
-                "text": f"📊 DotMac Platform {digest_type.title()} Digest - {period}",
-                "channel": digest_data.get('channel', self.config.get('default_channel', '#general')),
+                "text": f"📊 DotMac Platform {digest_type.title(} Digest - {period}",
+)                "channel": digest_data.get('channel', self.config.get('default_channel', '#general')),
                 "username": self.config.get('username', 'DotMac Platform'),
                 "icon_emoji": ":chart_with_upwards_trend:",
                 "blocks": self._format_digest_blocks(digest_data)
@@ -197,10 +196,10 @@ class SlackNotificationPlugin(NotificationChannelPlugin):
     def validate_recipient(self, recipient: str) -> bool:
         """Validate Slack channel or user format."""
         # Slack channels start with #, users with @
-        return (recipient.startswith('#') or 
+        return (recipient.startswith('#') or )
                 recipient.startswith('@') or 
                 recipient.startswith('C') or  # Channel ID
-                recipient.startswith('U'))    # User ID
+                recipient.startswith('U')    # User ID
     
     def get_channel_type(self) -> str:
         """Return channel type."""
@@ -218,21 +217,21 @@ class SlackNotificationPlugin(NotificationChannelPlugin):
             "icon_emoji": ":white_check_mark:"
         }
         
-        async with aiohttp.ClientSession() as session:
-            async with session.post(self.config['webhook_url'], json=test_payload) as response:
+        async with aiohttp.ClientSession( as session:
+)            async with session.post(self.config['webhook_url'], json=test_payload) as response:
                 if response.status != 200:
                     raise Exception(f"Webhook test failed with status {response.status}")
     
     async def _send_webhook_message(self, payload: Dict[str, Any]) -> bool:
         """Send message to Slack webhook."""
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.post(self.config['webhook_url'], json=payload) as response:
+            async with aiohttp.ClientSession( as session:
+)                async with session.post(self.config['webhook_url'], json=payload) as response:
                     if response.status == 200:
                         return True
                     else:
-                        error_text = await response.text()
-                        logger.error(f"Slack webhook failed: {response.status} - {error_text}")
+                        error_text = await response.text(
+)                        logger.error(f"Slack webhook failed: {response.status} - {error_text}")
                         return False
                         
         except Exception as e:
@@ -245,14 +244,14 @@ class SlackNotificationPlugin(NotificationChannelPlugin):
         
         # Add common fields
         if 'tenant_id' in alert_data:
-            fields.append({
+            fields.append({)
                 "title": "Tenant",
                 "value": str(alert_data['tenant_id']),
                 "short": True
             })
         
         if 'source' in alert_data:
-            fields.append({
+            fields.append({)
                 "title": "Source",
                 "value": alert_data['source'],
                 "short": True
@@ -260,8 +259,8 @@ class SlackNotificationPlugin(NotificationChannelPlugin):
         
         # Add custom fields
         details = alert_data.get('details', {})
-        for key, value in details.items():
-            fields.append({
+        for key, value in details.items(:
+)            fields.append({)
                 "title": key.replace('_', ' ').title(),
                 "value": str(value),
                 "short": True
@@ -274,7 +273,7 @@ class SlackNotificationPlugin(NotificationChannelPlugin):
         blocks = []
         
         # Header block
-        blocks.append({
+        blocks.append({)
             "type": "header",
             "text": {
                 "type": "plain_text",
@@ -285,8 +284,8 @@ class SlackNotificationPlugin(NotificationChannelPlugin):
         # Summary section
         summary = digest_data.get('summary', {})
         if summary:
-            summary_text = "\n".join([f"• *{k}:* {v}" for k, v in summary.items()])
-            blocks.append({
+            summary_text = "\n".join([f"• *{k}:* {v}" for k, v in summary.items(])
+            blocks.append({)
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
@@ -297,7 +296,7 @@ class SlackNotificationPlugin(NotificationChannelPlugin):
         # Sections
         sections = digest_data.get('sections', [])
         for section in sections:
-            blocks.append({
+            blocks.append({)
                 "type": "section",
                 "text": {
                     "type": "mrkdwn", 

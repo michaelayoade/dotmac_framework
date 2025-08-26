@@ -4,19 +4,20 @@ Tenant repository for multi-tenant operations.
 
 from typing import Optional, List, Dict, Any
 from uuid import UUID
+from datetime import datetime, timezone
 
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from ..models.tenant import (
+from models.tenant import (
     Tenant, 
     TenantConfiguration, 
     TenantInvitation,
     TenantStatus
 )
-from ..models.billing import UsageRecord  # Using billing model for usage metrics
-from .base import BaseRepository
+from models.billing import UsageRecord  # Using billing model for usage metrics
+from repositories.base import BaseRepository
 
 
 class TenantRepository(BaseRepository[Tenant]):
@@ -130,7 +131,7 @@ class TenantRepository(BaseRepository[Tenant]):
         tenants = {t.id: t for t in result.scalars().all()}
         
         # Get user counts for all tenants in one query
-        from ..models.user import User
+        from models.user import User
         user_counts_query = select(
             User.tenant_id,
             func.count(User.id).label('user_count')
@@ -143,7 +144,7 @@ class TenantRepository(BaseRepository[Tenant]):
         user_counts = {row.tenant_id: row.user_count for row in result}
         
         # Get subscription info for all tenants in one query
-        from ..models.billing import Subscription
+        from models.billing import Subscription
         subscriptions_query = select(
             Subscription.tenant_id,
             Subscription.status,
@@ -420,7 +421,7 @@ class TenantInvitationRepository(BaseRepository[TenantInvitation]):
             invitation_id,
             {
                 "is_accepted": True,
-                "accepted_at": datetime.utcnow(),
+                "accepted_at": datetime.now(timezone.utc),
                 "accepted_by": user_id
             }
         ) is not None
@@ -491,7 +492,7 @@ class TenantUsageRepository(BaseRepository[UsageRecord]):
             "subscription_id": subscription_id,
             "metric_name": metric_name,
             "quantity": quantity,
-            "timestamp": datetime.utcnow(),
+            "timestamp": datetime.now(timezone.utc),
             "metadata": metadata
         }
         

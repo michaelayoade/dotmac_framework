@@ -129,7 +129,7 @@ export function useNonce(): string | null {
       const content = metaCSP.getAttribute('content');
       if (content) {
         const match = content.match(/'nonce-([^']+)'/);
-        return match ? match[1] : null;
+        return match ? match[1] || null : null;
       }
     }
   }

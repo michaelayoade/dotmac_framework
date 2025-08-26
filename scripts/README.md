@@ -24,7 +24,7 @@ This directory contains operational and maintenance scripts for the DotMac platf
 - **`generate-secure-env.sh`** - Generate secure environment configurations
 
 ### Development & Testing
-- **`generate-api-docs.py`** - Generate API documentation
+- **`generate_api_docs.py`** - Generate API documentation
 - **`test-observability-pipeline.sh`** - Test monitoring pipeline
 - **`validate-ai-workflow.sh`** - Validate AI integration workflows
 - **`validate-service-standards.py`** - Validate service compliance
@@ -54,10 +54,10 @@ This directory contains operational and maintenance scripts for the DotMac platf
 | Category | Purpose | Examples |
 |----------|---------|----------|
 | **Security** | SSL, certificates, validation | `generate_postgres_ssl.sh` |
-| **Database** | PostgreSQL setup, replication | `setup_pg_auto_failover.sh` |
+| **Database** | PostgreSQL setup, replication | `setup_pg_replication.sh` |
 | **Deployment** | Production deployment | `deploy-production.sh` |
 | **Monitoring** | Health checks, observability | `health-check.sh` |
-| **Development** | Documentation, testing | `generate-api-docs.py` |
+| **Development** | Documentation, testing | `generate_api_docs.py` |
 
 ## Best Practices
 

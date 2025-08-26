@@ -7,7 +7,7 @@ import mimetypes
 import os
 import tempfile
 import uuid
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from decimal import Decimal
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union, BinaryIO
@@ -28,7 +28,7 @@ import pandas as pd
 from fastapi import UploadFile, HTTPException
 import aiofiles
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__, timezone)
 
 
 @dataclass
@@ -150,7 +150,7 @@ class PDFGenerator:
             ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
             ('FONTSIZE', (0, 0), (-1, -1), 10),
             ('GRID', (0, 0), (-1, -1), 1, colors.black)
-        ]))
+        ])
         story.append(invoice_table)
         story.append(Spacer(1, 20))
         
@@ -176,8 +176,8 @@ class PDFGenerator:
             items_data.append([
                 item.get('description', ''),
                 str(item.get('quantity', 0)),
-                f"${float(item.get('unit_price', 0)):.2f}",
-                f"${float(item.get('total', 0)):.2f}"
+                f"${float(item.get('unit_price', 0):.2f}",
+                f"${float(item.get('total', 0):.2f}"
             ])
         
         # Add totals
@@ -204,9 +204,9 @@ class PDFGenerator:
             ('BACKGROUND', (0, -3), (-1, -1), colors.lightgrey),
             ('FONTNAME', (0, -3), (-1, -1), 'Helvetica-Bold'),
             ('GRID', (0, -3), (-1, -1), 1, colors.black),
-        ]))
+        ])
         story.append(items_table)
-        story.append(Spacer(1, 30))
+        story.append(Spacer(1, 30)
         
         # Payment information
         payment_info = invoice_data.get('payment_info', {})
@@ -214,14 +214,14 @@ class PDFGenerator:
             story.append(Paragraph("Payment Information:", header_style))
             payment_text = f"""
             Payment Terms: {payment_info.get('terms', 'Net 30')}<br/>
-            Payment Methods: {', '.join(payment_info.get('methods', ['Bank Transfer', 'Credit Card']))}<br/>
+            Payment Methods: {', '.join(payment_info.get('methods', ['Bank Transfer', 'Credit Card'])}<br/>
             """
             story.append(Paragraph(payment_text, styles['Normal']))
             story.append(Spacer(1, 20))
         
         # Footer
-        story.append(HRFlowable(width="100%", thickness=1, color=colors.black))
-        story.append(Spacer(1, 10))
+        story.append(HRFlowable(width="100%", thickness=1, color=colors.black)
+        story.append(Spacer(1, 10)
         footer_text = "Thank you for your business!"
         story.append(Paragraph(footer_text, styles['Normal']))
         
@@ -260,19 +260,19 @@ class PDFGenerator:
         story.append(Spacer(1, 20))
         
         # Report metadata
-        generated_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        generated_date = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
         story.append(Paragraph(f"Generated: {generated_date}", styles['Normal']))
-        story.append(Spacer(1, 10))
+        story.append(Spacer(1, 10)
         
         # Report content
         content = report_data.get('content', [])
         for section in content:
             if section.get('type') == 'heading':
                 story.append(Paragraph(section['text'], styles['Heading2']))
-                story.append(Spacer(1, 12))
+                story.append(Spacer(1, 12)
             elif section.get('type') == 'paragraph':
-                story.append(Paragraph(section['text'], styles['Normal']))
-                story.append(Spacer(1, 12))
+                story.append(Paragraph(section['text'], styles['Normal'])
+                story.append(Spacer(1, 12)
             elif section.get('type') == 'table':
                 table_data = section['data']
                 table = Table(table_data)
@@ -285,9 +285,9 @@ class PDFGenerator:
                     ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
                     ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
                     ('GRID', (0, 0), (-1, -1), 1, colors.black)
-                ]))
+                ])
                 story.append(table)
-                story.append(Spacer(1, 12))
+                story.append(Spacer(1, 12)
         
         doc.build(story)
         
@@ -328,7 +328,7 @@ class CSVExporter:
         
         # Determine columns
         if not columns:
-            columns = list(data[0].keys())
+            columns = list(data[0].keys()
         
         with open(output_path, 'w', newline='', encoding='utf-8') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=columns)
@@ -339,11 +339,11 @@ class CSVExporter:
                 cleaned_row = {}
                 for key in columns:
                     value = row.get(key, '')
-                    if isinstance(value, (datetime, date)):
+                    if isinstance(value, (datetime, date):
                         cleaned_row[key] = value.isoformat()
                     elif isinstance(value, Decimal):
                         cleaned_row[key] = str(value)
-                    elif isinstance(value, (dict, list)):
+                    elif isinstance(value, (dict, list):
                         cleaned_row[key] = str(value)
                     else:
                         cleaned_row[key] = value
@@ -414,8 +414,8 @@ class CSVExporter:
                 
                 for cell in column:
                     try:
-                        if len(str(cell.value)) > max_length:
-                            max_length = len(str(cell.value))
+                        if len(str(cell.value) > max_length:
+                            max_length = len(str(cell.value)
                     except:
                         pass
                 
@@ -475,7 +475,7 @@ class FileUploadManager:
         await self._validate_file(file, category)
         
         # Generate file ID and path
-        file_id = str(uuid.uuid4())
+        file_id = str(uuid.uuid4()
         file_extension = Path(file.filename).suffix.lower()
         stored_filename = f"{file_id}{file_extension}"
         stored_path = self.upload_directory / tenant_id / stored_filename
@@ -504,7 +504,7 @@ class FileUploadManager:
                 stored_path=str(stored_path),
                 mime_type=mime_type,
                 size_bytes=file_size,
-                uploaded_at=datetime.utcnow(),
+                uploaded_at=datetime.now(timezone.utc),
                 tenant_id=tenant_id,
                 user_id=user_id,
                 category=category,
@@ -545,7 +545,7 @@ class FileUploadManager:
         file_extension = Path(file.filename).suffix.lower()
         
         if category:
-            allowed_extensions = self.allowed_extensions.get(category, set())
+            allowed_extensions = self.allowed_extensions.get(category, set()
             if file_extension not in allowed_extensions:
                 raise HTTPException(
                     status_code=400,

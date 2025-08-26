@@ -385,7 +385,7 @@ class DatabaseIndexManager:
                             )
                             sql = f"""
                                 CREATE INDEX {index_name} ON {rec.table_name} 
-                                USING gin(to_tsvector('english', {tsvector_expr}))
+                                USING gin(to_tsvector('english', {tsvector_expr})
                             """
                         else:
                             sql = f"""
@@ -432,7 +432,7 @@ class DatabaseIndexManager:
                 SELECT 
                     tablename,
                     indexname,
-                    pg_size_pretty(pg_relation_size(indexrelid)) as size,
+                    pg_size_pretty(pg_relation_size(indexrelid) as size,
                     pg_relation_size(indexrelid) as size_bytes
                 FROM pg_stat_user_indexes 
                 ORDER BY pg_relation_size(indexrelid) DESC;
@@ -548,7 +548,7 @@ class SearchOptimizer:
         # Build SQL query
         sql = f"""
             SELECT *, 
-                   ts_rank(to_tsvector('english', {fields_expr}), to_tsquery('english', :search_terms)) as rank
+                   ts_rank(to_tsvector('english', {fields_expr}), to_tsquery('english', :search_terms) as rank
             FROM {search_query.table_name}
             WHERE to_tsvector('english', {fields_expr}) @@ to_tsquery('english', :search_terms)
         """

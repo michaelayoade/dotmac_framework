@@ -26,6 +26,7 @@ from ..contracts.common_schemas import (
     RetryPolicy,
     TimeoutPolicy,
     ErrorInfo,
+    ConfigDict
 )
 
 logger = structlog.get_logger(__name__)
@@ -101,10 +102,7 @@ class SagaStep(BaseModel):
         default_factory=dict, description="Step-specific data"
     )
 
-    class Config:
-        """Class for Config operations."""
-        extra = "allow"
-
+    model_config = ConfigDict(extra="allow")
 
 class SagaDefinition(BaseModel):
     """Saga definition with steps and compensation logic."""
@@ -147,10 +145,7 @@ class SagaDefinition(BaseModel):
 
         return v
 
-    class Config:
-        """Class for Config operations."""
-        extra = "allow"
-
+    model_config = ConfigDict(extra="allow")
 
 @dataclass
 class SagaStepExecution:
@@ -179,7 +174,7 @@ class SagaStepExecution:
             "compensation_result": self.compensation_result,
             "input_data": self.input_data,
             "output_data": self.output_data,
-            "error": self.error.dict() if self.error else None,
+            "error": self.error.model_dump() if self.error else None,
             "started_at": self.started_at.isoformat() if self.started_at else None,
             "completed_at": (
                 self.completed_at.isoformat() if self.completed_at else None
@@ -221,14 +216,14 @@ class SagaExecution:
             "status": self.status.value,
             "input_data": self.input_data,
             "output_data": self.output_data,
-            "context": self.context.dict() if self.context else None,
+            "context": self.context.model_dump() if self.context else None,
             "step_executions": {
                 k: v.to_dict() for k, v in self.step_executions.items()
             },
             "completed_steps": list(self.completed_steps),
             "failed_steps": list(self.failed_steps),
             "compensated_steps": list(self.compensated_steps),
-            "error": self.error.dict() if self.error else None,
+            "error": self.error.model_dump() if self.error else None,
             "started_at": self.started_at.isoformat() if self.started_at else None,
             "completed_at": (
                 self.completed_at.isoformat() if self.completed_at else None
@@ -416,7 +411,7 @@ class SagaEngine:
         self, step: SagaStep, context: ExecutionContext
     ) -> Dict[str, Any]:
         """Prepare input data for step execution."""
-        input_data = step.step_data.copy()
+        input_data = step.step_data.model_copy()
 
         # Apply input mapping
         for target_field, source_field in step.input_mapping.items():
@@ -489,7 +484,7 @@ class SagaSDK:
             context = ExecutionContext(
                 execution_id=execution_id,
                 tenant_id=self.tenant_id,
-                variables=input_data.copy(),
+                variables=input_data.model_copy(),
             )
         else:
             context.execution_id = execution_id
@@ -532,7 +527,7 @@ class SagaSDK:
 
             # Execute steps in dependency order
             executed_steps = []
-            remaining_steps = saga_def.steps.copy()
+            remaining_steps = saga_def.steps.model_copy()
 
             while remaining_steps and saga_execution.status == SagaStatus.RUNNING:
                 # Find steps ready to execute
@@ -578,7 +573,7 @@ class SagaSDK:
             # Complete saga or start compensation
             if saga_execution.status == SagaStatus.RUNNING:
                 saga_execution.status = SagaStatus.COMPLETED
-                saga_execution.output_data = saga_execution.context.variables.copy()
+                saga_execution.output_data = saga_execution.context.variables.model_copy()
                 saga_execution.completed_at = datetime.now(timezone.utc)
             else:
                 # Execute compensation

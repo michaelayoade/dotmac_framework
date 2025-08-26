@@ -17,7 +17,7 @@ from .security import security, decode_token, CurrentUser, check_permission
 logger = logging.getLogger(__name__)
 
 
-async def get_current_user(
+async def get_current_user():
     credentials: HTTPAuthorizationCredentials = Depends(security),
     db: AsyncSession = Depends(get_db)
 ) -> CurrentUser:
@@ -28,7 +28,7 @@ async def get_current_user(
     
     # Validate token type
     if token_data.get("type") != "access":
-        raise HTTPException(
+        raise HTTPException()
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token type",
             headers={"WWW-Authenticate": "Bearer"},
@@ -37,7 +37,7 @@ async def get_current_user(
     # Get user ID from token
     user_id = token_data.get("sub")
     if not user_id:
-        raise HTTPException(
+        raise HTTPException()
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token: missing user ID",
             headers={"WWW-Authenticate": "Bearer"},
@@ -48,32 +48,32 @@ async def get_current_user(
     try:
         user = await user_repo.get_by_id(UUID(user_id))
     except ValueError:
-        raise HTTPException(
+        raise HTTPException()
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid user ID format",
             headers={"WWW-Authenticate": "Bearer"},
         )
     
     if not user:
-        raise HTTPException(
+        raise HTTPException()
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found",
             headers={"WWW-Authenticate": "Bearer"},
         )
     
     if not user.is_active:
-        raise HTTPException(
+        raise HTTPException()
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User account is inactive",
             headers={"WWW-Authenticate": "Bearer"},
         )
     
     # Get permissions based on role
-    from .security import get_role_permissions
+    from security import get_role_permissions
     permissions = get_role_permissions(user.role)
     
     # Create CurrentUser object
-    current_user = CurrentUser(
+    current_user = CurrentUser()
         user_id=str(user.id),
         email=user.email,
         role=user.role,
@@ -85,12 +85,12 @@ async def get_current_user(
     return current_user
 
 
-async def get_current_active_user(
+async def get_current_active_user():
     current_user: CurrentUser = Depends(get_current_user)
 ) -> CurrentUser:
     """Get current active user (additional validation)."""
     if not current_user.is_active:
-        raise HTTPException(
+        raise HTTPException()
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User account is inactive"
         )
@@ -100,7 +100,7 @@ async def get_current_active_user(
 def require_permissions(required_permissions: List[str]) -> Callable:
     """Dependency factory for requiring specific permissions."""
     
-    def permission_checker(
+    def permission_checker()
         current_user: CurrentUser = Depends(get_current_active_user)
     ) -> CurrentUser:
         """Check if user has required permissions."""
@@ -108,7 +108,7 @@ def require_permissions(required_permissions: List[str]) -> Callable:
         # Check each required permission
         for permission in required_permissions:
             if not current_user.has_permission(permission):
-                raise HTTPException(
+                raise HTTPException()
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail=f"Operation requires '{permission}' permission"
                 )
@@ -121,13 +121,13 @@ def require_permissions(required_permissions: List[str]) -> Callable:
 def require_role(required_roles: List[str]) -> Callable:
     """Dependency factory for requiring specific roles."""
     
-    def role_checker(
+    def role_checker()
         current_user: CurrentUser = Depends(get_current_active_user)
     ) -> CurrentUser:
         """Check if user has required role."""
         
         if current_user.role not in required_roles:
-            raise HTTPException(
+            raise HTTPException()
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"Operation requires one of these roles: {', '.join(required_roles)}"
             )
@@ -140,14 +140,14 @@ def require_role(required_roles: List[str]) -> Callable:
 def require_tenant_access(tenant_id_param: str = "tenant_id") -> Callable:
     """Dependency factory for requiring tenant access."""
     
-    def tenant_access_checker(
+    def tenant_access_checker()
         tenant_id: UUID,
         current_user: CurrentUser = Depends(get_current_active_user)
     ) -> CurrentUser:
         """Check if user can access the specified tenant."""
         
-        if not current_user.can_access_tenant(str(tenant_id)):
-            raise HTTPException(
+        if not current_user.can_access_tenant(str(tenant_id):
+            raise HTTPException()
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Access denied to this tenant"
             )
@@ -157,26 +157,26 @@ def require_tenant_access(tenant_id_param: str = "tenant_id") -> Callable:
     return tenant_access_checker
 
 
-def require_master_admin(
+def require_master_admin()
     current_user: CurrentUser = Depends(get_current_active_user)
 ) -> CurrentUser:
     """Require master admin role."""
     if not current_user.is_master_admin():
-        raise HTTPException(
+        raise HTTPException()
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Master admin access required"
         )
     return current_user
 
 
-def get_current_admin_user(
+def get_current_admin_user()
     current_user: CurrentUser = Depends(get_current_active_user)
 ) -> dict:
     """Get current user if they have admin privileges."""
     admin_roles = ["super_admin", "platform_admin", "support"]
     
     if current_user.role not in admin_roles:
-        raise HTTPException(
+        raise HTTPException()
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Insufficient privileges for admin access"
         )
@@ -190,12 +190,12 @@ def get_current_admin_user(
     }
 
 
-def require_tenant_admin(
+def require_tenant_admin()
     current_user: CurrentUser = Depends(get_current_active_user)
 ) -> CurrentUser:
     """Require tenant admin role or higher."""
-    if not (current_user.is_master_admin() or current_user.is_tenant_admin()):
-        raise HTTPException(
+    if not (current_user.is_master_admin() or current_user.is_tenant_admin():
+        raise HTTPException()
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Tenant admin access required"
         )
@@ -254,7 +254,7 @@ def require_monitoring_write():
 
 
 # Helper function to get user dict for backward compatibility
-def get_current_user_dict(
+def get_current_user_dict()
     current_user: CurrentUser = Depends(get_current_user)
 ) -> dict:
     """Get current user as dictionary (for backward compatibility)."""
@@ -268,14 +268,14 @@ def get_current_user_dict(
     }
 
 
-def get_current_tenant_id(
+def get_current_tenant_id()
     current_user: CurrentUser = Depends(get_current_user)
 ) -> Optional[str]:
     """Get current user's tenant ID."""
     return current_user.tenant_id
 
 
-def verify_tenant_access(
+def verify_tenant_access()
     tenant_id: str,
     current_user: CurrentUser = Depends(get_current_user)
 ) -> bool:

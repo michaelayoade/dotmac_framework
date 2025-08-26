@@ -226,7 +226,7 @@ class ScheduleCalculationEngine:
         if not strategy:
             logger.error("Unknown schedule type",
                         schedule_type=schedule.schedule_type,
-                        schedule_id=getattr(schedule, 'id', 'unknown'))
+                        schedule_id=getattr(schedule, 'id', 'unknown')
             return None
         
         # Step 3: Calculate using strategy (Complexity: 1)
@@ -246,19 +246,19 @@ class ScheduleCalculationEngine:
                         schedule_id=getattr(schedule, 'id', 'unknown'),
                         schedule_type=schedule.schedule_type,
                         strategy=strategy.get_strategy_name(),
-                        error=str(e))
+                        error=str(e)
             return None
     
     def get_supported_schedule_types(self) -> list:
         """Get list of supported schedule types."""
-        return list(self.strategies.keys())
+        return list(self.strategies.keys()
     
     def add_custom_strategy(self, schedule_type: str, strategy: ScheduleCalculationStrategy) -> None:
         """Add a custom schedule calculation strategy."""
         self.strategies[schedule_type] = strategy
         logger.info("Added custom schedule strategy",
                    schedule_type=schedule_type,
-                   strategy_name=strategy.get_strategy_name())
+                   strategy_name=strategy.get_strategy_name()
     
     def remove_strategy(self, schedule_type: str) -> bool:
         """Remove a schedule calculation strategy."""

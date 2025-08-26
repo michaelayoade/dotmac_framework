@@ -13,10 +13,10 @@ import json
 import asyncio
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from ..repositories.plugin_additional import (
+from repositories.plugin_additional import (
     PluginResourceUsageRepository,
     PluginInstallationRepository
-)
+, timezone)
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +47,7 @@ class PluginResourceTracker:
                 "plugin_installation_id": installation_id,
                 "tenant_id": installation.tenant_id,
                 "plugin_id": installation.plugin_id,
-                "timestamp": datetime.utcnow(),
+                "timestamp": datetime.now(timezone.utc),
                 "cpu_usage_percent": resource_data.get("cpu_usage_percent", 0.0),
                 "memory_usage_mb": resource_data.get("memory_usage_mb", 0.0),
                 "disk_usage_mb": resource_data.get("disk_usage_mb", 0.0),
@@ -80,7 +80,7 @@ class PluginResourceTracker:
         """Get resource usage summary for a plugin installation."""
         try:
             # Calculate time range
-            end_time = datetime.utcnow()
+            end_time = datetime.now(timezone.utc)
             if time_range == "1h":
                 start_time = end_time - timedelta(hours=1)
             elif time_range == "24h":
@@ -178,7 +178,7 @@ class PluginResourceTracker:
                 }
             
             # Calculate time range
-            end_time = datetime.utcnow()
+            end_time = datetime.now(timezone.utc)
             if time_range == "24h":
                 start_time = end_time - timedelta(hours=24)
             elif time_range == "7d":
@@ -302,7 +302,7 @@ class PluginResourceTracker:
                     "message": alert["message"],
                     "threshold_value": alert["threshold"],
                     "actual_value": alert["actual"],
-                    "timestamp": datetime.utcnow(),
+                    "timestamp": datetime.now(timezone.utc),
                     "acknowledged": False
                 }
                 await self._create_alert(alert_record)
@@ -379,7 +379,7 @@ class PluginResourceTracker:
     async def cleanup_old_usage_data(self, retention_days: int = 90):
         """Clean up old resource usage data."""
         try:
-            cutoff_date = datetime.utcnow() - timedelta(days=retention_days)
+            cutoff_date = datetime.now(timezone.utc) - timedelta(days=retention_days)
             deleted_count = await self.usage_repo.delete_older_than(cutoff_date)
             
             logger.info(f"Cleaned up {deleted_count} old resource usage records")
@@ -397,7 +397,7 @@ class PluginResourceTracker:
     ) -> Dict[str, Any]:
         """Get resource usage trends for a plugin."""
         try:
-            end_time = datetime.utcnow()
+            end_time = datetime.now(timezone.utc)
             start_time = end_time - timedelta(days=days)
             
             usage_data = await self.usage_repo.get_by_installation_and_timerange(

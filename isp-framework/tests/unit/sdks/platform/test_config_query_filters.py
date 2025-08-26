@@ -414,7 +414,7 @@ class TestConfigQueryIntegration:
         # For now, just verify method signature is preserved
         import inspect
         sig = inspect.signature(sdk._matches_query)
-        param_names = list(sig.parameters.keys())
+        param_names = list(sig.parameters.keys()
         
         expected_params = ['self', 'config', 'query']
         assert len(param_names) == len(expected_params)

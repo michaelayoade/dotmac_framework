@@ -2,7 +2,7 @@
 Tenant management database models for multi-tenant ISP customer management.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Dict, Any, Optional
 from uuid import UUID, uuid4
@@ -64,8 +64,8 @@ class Tenant(Base):
     
     # Tenant status and lifecycle
     status = Column(SQLEnum(TenantStatus), nullable=False, default=TenantStatus.PENDING)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     activated_at = Column(DateTime, nullable=True)
     suspended_at = Column(DateTime, nullable=True)
     cancelled_at = Column(DateTime, nullable=True)
@@ -131,8 +131,8 @@ class TenantConfiguration(Base):
     
     # Configuration metadata
     is_active = Column(Boolean, nullable=False, default=True)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     created_by = Column(String(255), nullable=True)  # User ID who created the config
     
     # Relationships
@@ -181,8 +181,8 @@ class TenantDeployment(Base):
     application_config = Column(JSON, nullable=True)
     
     # Metadata
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     
     # Relationships
     tenant = relationship("Tenant", back_populates="deployments")
@@ -225,7 +225,7 @@ class TenantUsageMetrics(Base):
     platform_cost_cents = Column(Integer, nullable=True)
     
     # Metadata
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
     
     # Relationships
     tenant = relationship("Tenant")

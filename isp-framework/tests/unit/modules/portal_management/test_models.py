@@ -11,7 +11,7 @@ from dotmac_isp.modules.portal_management.models import (
     PortalAccount,
     PortalSession,
     PortalLoginAttempt,
-)
+, timezone)
 
 
 class TestPortalAccountStatus:
@@ -107,7 +107,7 @@ class TestPortalAccount:
         
         # Generate multiple IDs to test uniqueness (statistically)
         ids = [PortalAccount._generate_portal_id() for _ in range(100)]
-        assert len(set(ids)) == len(ids)  # All should be unique
+        assert len(set(ids) == len(ids)  # All should be unique
     
     @patch('dotmac_isp.modules.portal_management.models.datetime')
     def test_is_locked_property_not_locked(self, mock_datetime):
@@ -324,7 +324,7 @@ class TestPortalAccount:
             tenant_id=uuid4(),
             portal_id="TEST1234",
             password_hash="hashed",
-            locked_until=datetime.utcnow() + timedelta(hours=1),
+            locked_until=datetime.now(timezone.utc) + timedelta(hours=1),
             failed_login_attempts=5,
             status=PortalAccountStatus.LOCKED.value,
             security_notes="Previous notes\n"

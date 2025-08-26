@@ -8,7 +8,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field, EmailStr
 
-from .common import BaseSchema
+from schemas.common import BaseSchema
 
 
 class TenantProfile(BaseModel):

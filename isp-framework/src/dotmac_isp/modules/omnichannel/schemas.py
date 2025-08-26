@@ -5,12 +5,11 @@ from typing import Dict, List, Optional, Any, Union
 from uuid import UUID
 from enum import Enum
 
-from pydantic import BaseModel, Field, validator, root_validator
+from pydantic import BaseModel, Field, validator, root_validator, ConfigDict
 
 from dotmac_isp.shared.schemas import TenantModelSchema
 from .models import (
     ContactType,
-    CommunicationChannel,
     InteractionType,
     InteractionStatus,
     AgentStatus,
@@ -25,15 +24,7 @@ from .models import (
 class OmnichannelBaseSchema(BaseModel):
     """Base schema for omnichannel objects."""
 
-    class Config:
-        """Class for Config operations."""
-        use_enum_values = True
-        arbitrary_types_allowed = True
-        json_encoders = {
-            datetime: lambda v: v.isoformat(),
-            UUID: lambda v: str(v),
-        }
-
+    model_config = ConfigDict(use_enum_values=True, arbitrary_types_allowed=True, json_encoders={})
 
 # ===== CONTACT MANAGEMENT SCHEMAS =====
 

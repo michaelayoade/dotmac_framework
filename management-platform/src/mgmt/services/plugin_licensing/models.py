@@ -1,7 +1,7 @@
 """Database models for plugin licensing integration."""
 
 import enum
-from datetime import datetime, date
+from datetime import datetime, timezone, date
 from typing import Optional, Dict, Any, List
 from uuid import uuid4
 from sqlalchemy import Column, String, Boolean, Text, Integer, DateTime, Enum, JSON, ForeignKey, UniqueConstraint, Index, Date
@@ -134,7 +134,7 @@ class PluginSubscription(TenantModel):
     tier = Column(Enum(PluginTier), nullable=False, index=True)
     
     # License period
-    starts_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
+    starts_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
     expires_at = Column(DateTime(timezone=True), nullable=True, index=True)
     auto_renewal = Column(Boolean, default=True, nullable=False)
     
@@ -188,7 +188,7 @@ class PluginSubscription(TenantModel):
         if self.status != LicenseStatus.ACTIVE:
             return False
         
-        if self.expires_at and datetime.utcnow() > self.expires_at:
+        if self.expires_at and datetime.now(timezone.utc) > self.expires_at:
             return False
             
         return True
@@ -199,7 +199,7 @@ class PluginSubscription(TenantModel):
         if not self.is_trial:
             return False
             
-        if self.trial_ends_at and datetime.utcnow() > self.trial_ends_at:
+        if self.trial_ends_at and datetime.now(timezone.utc) > self.trial_ends_at:
             return False
             
         return True
@@ -210,7 +210,7 @@ class PluginSubscription(TenantModel):
         if not self.expires_at:
             return None
             
-        delta = self.expires_at - datetime.utcnow()
+        delta = self.expires_at - datetime.now(timezone.utc)
         return max(0, delta.days)
     
     def check_usage_limit(self, metric: str, requested_usage: int = 1) -> bool:
@@ -232,7 +232,7 @@ class PluginSubscription(TenantModel):
             self.current_usage = {}
             
         self.current_usage[metric] = self.current_usage.get(metric, 0) + amount
-        self.last_usage_update = datetime.utcnow()
+        self.last_usage_update = datetime.now(timezone.utc)
 
 
 class LicenseEntitlement(TenantModel):
@@ -267,7 +267,7 @@ class LicenseEntitlement(TenantModel):
     feature_metadata = Column(JSONB, nullable=True)
     
     # Validity period
-    valid_from = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
+    valid_from = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
     valid_until = Column(DateTime(timezone=True), nullable=True)
     
     # Usage tracking
@@ -283,7 +283,7 @@ class LicenseEntitlement(TenantModel):
         if not self.is_enabled:
             return False
             
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         
         if now < self.valid_from:
             return False
@@ -380,7 +380,7 @@ class PluginLicenseHistory(TenantModel):
     # Change context
     reason = Column(Text, nullable=True)
     changed_by_user_id = Column(UUID(as_uuid=True), nullable=True)
-    changed_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow, index=True)
+    changed_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc), index=True)
     
     # Previous and new values
     previous_config = Column(JSONB, nullable=True)

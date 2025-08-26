@@ -200,7 +200,7 @@ class TwilioSMSPlugin(PluginInterface):
         try:
             # Parse Twilio form data
             if isinstance(webhook_data.get("body"), bytes):
-                parsed_data = parse_qs(webhook_data["body"].decode())
+                parsed_data = parse_qs(webhook_data["body"].decode()
                 data = {k: v[0] if v else "" for k, v in parsed_data.items()}
             else:
                 data = webhook_data

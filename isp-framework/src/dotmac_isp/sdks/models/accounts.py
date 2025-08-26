@@ -52,7 +52,7 @@ class MFAFactor:
         self.name = kwargs.get('name')
         self.is_active = kwargs.get('is_active', True)
         self.is_verified = kwargs.get('is_verified', False)
-        self.created_at = kwargs.get('created_at', datetime.utcnow())
+        self.created_at = kwargs.get('created_at', datetime.now(timezone.utc))
         self.last_used_at = kwargs.get('last_used_at')
         self.metadata = kwargs.get('metadata') or {}
 
@@ -79,8 +79,8 @@ class Account:
         self.email = kwargs.get('email')
         self.status = kwargs.get('status', AccountStatus.PENDING_VERIFICATION)
         self.is_verified = kwargs.get('is_verified', False)
-        self.created_at = kwargs.get('created_at', datetime.utcnow())
-        self.updated_at = kwargs.get('updated_at', datetime.utcnow())
+        self.created_at = kwargs.get('created_at', datetime.now(timezone.utc))
+        self.updated_at = kwargs.get('updated_at', datetime.now(timezone.utc))
         self.last_login_at = kwargs.get('last_login_at')
         self.failed_login_attempts = kwargs.get('failed_login_attempts', 0)
         self.locked_until = kwargs.get('locked_until')
@@ -88,13 +88,13 @@ class Account:
     def is_locked(self) -> bool:
         """Check if account is currently locked."""
         if self.locked_until:
-            return datetime.utcnow() < self.locked_until
+            return datetime.now(timezone.utc) < self.locked_until
         return self.status == AccountStatus.LOCKED
     
     def lock_account(self, duration_minutes: int = 30) -> None:
         """Lock account for specified duration."""
         self.status = AccountStatus.LOCKED
-        self.locked_until = datetime.utcnow() + datetime.timedelta(minutes=duration_minutes)
+        self.locked_until = datetime.now(timezone.utc) + datetime.timedelta(minutes=duration_minutes)
     
     def unlock_account(self) -> None:
         """Unlock account."""

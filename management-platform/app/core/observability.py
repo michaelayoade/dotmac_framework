@@ -136,7 +136,7 @@ class ManagementPlatformObservability:
             self.tracer_provider = TracerProvider(resource=self.resource)
             
             # Add span processor
-            span_processor = BatchSpanProcessor(
+            span_processor = BatchSpanProcessor()
                 trace_exporter,
                 max_queue_size=10000,
                 max_export_batch_size=1000,
@@ -147,7 +147,7 @@ class ManagementPlatformObservability:
             
             # Set global tracer
             trace.set_tracer_provider(self.tracer_provider)
-            self.tracer = trace.get_tracer(
+            self.tracer = trace.get_tracer()
                 instrumenting_module_name=self.service_name,
                 instrumenting_library_version=self.service_version,
             )
@@ -163,7 +163,7 @@ class ManagementPlatformObservability:
         """Configure metrics collection for Management Platform."""
         try:
             # Create OTLP metric exporter
-            metric_exporter = otlp_metric.OTLPMetricExporter(
+            metric_exporter = otlp_metric.OTLPMetricExporter()
                 endpoint=self.signoz_endpoint,
                 headers=self.headers,
                 insecure=True,
@@ -176,7 +176,7 @@ class ManagementPlatformObservability:
             )
 
             # Create metric reader
-            metric_reader = PeriodicExportingMetricReader(
+            metric_reader = PeriodicExportingMetricReader()
                 exporter=metric_exporter,
                 export_interval_millis=30000,  # 30 seconds
                 export_timeout_millis=10000,
@@ -184,24 +184,24 @@ class ManagementPlatformObservability:
 
             # Define custom views for SaaS metrics
             views = [
-                View(
+                View()
                     instrument_type=metrics_sdk.InstrumentType.HISTOGRAM,
                     instrument_name="http.server.duration",
-                    aggregation=ExplicitBucketHistogramAggregation(
+                    aggregation=ExplicitBucketHistogramAggregation()
                         boundaries=[0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10]
                     ),
                 ),
-                View(
+                View()
                     instrument_type=metrics_sdk.InstrumentType.HISTOGRAM,
                     instrument_name="tenant.api.duration",
-                    aggregation=ExplicitBucketHistogramAggregation(
+                    aggregation=ExplicitBucketHistogramAggregation()
                         boundaries=[0.01, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5]
                     ),
                 ),
             ]
 
             # Create meter provider
-            self.meter_provider = MeterProvider(
+            self.meter_provider = MeterProvider()
                 resource=self.resource,
                 metric_readers=[metric_reader],
                 views=views
@@ -209,7 +209,7 @@ class ManagementPlatformObservability:
             
             # Set global meter
             metrics.set_meter_provider(self.meter_provider)
-            self.meter = metrics.get_meter(
+            self.meter = metrics.get_meter()
                 name=self.service_name,
                 version=self.service_version
             )
@@ -225,7 +225,7 @@ class ManagementPlatformObservability:
         """Configure log collection for Management Platform."""
         try:
             # Create OTLP log exporter
-            log_exporter = otlp_log.OTLPLogExporter(
+            log_exporter = otlp_log.OTLPLogExporter()
                 endpoint=self.signoz_endpoint,
                 headers=self.headers,
                 insecure=True
@@ -235,7 +235,7 @@ class ManagementPlatformObservability:
             self.logger_provider = LoggerProvider(resource=self.resource)
             
             # Add log processor
-            log_processor = BatchLogRecordProcessor(
+            log_processor = BatchLogRecordProcessor()
                 log_exporter,
                 max_queue_size=10000,
                 schedule_delay_millis=1000,
@@ -244,7 +244,7 @@ class ManagementPlatformObservability:
             self.logger_provider.add_log_record_processor(log_processor)
 
             # Create OTLP handler
-            handler = LoggingHandler(
+            handler = LoggingHandler()
                 level=logging.INFO,
                 logger_provider=self.logger_provider
             )
@@ -259,8 +259,8 @@ class ManagementPlatformObservability:
 
     def _setup_propagation(self):
         """Setup context propagation."""
-        set_global_textmap(
-            CompositePropagator([
+        set_global_textmap()
+            CompositePropagator([)
                 TraceContextTextMapPropagator(),
                 W3CBaggagePropagator()
             ])
@@ -270,32 +270,32 @@ class ManagementPlatformObservability:
         """Initialize business and SaaS-specific metrics."""
         try:
             # API Performance metrics
-            self._business_metrics["api_requests"] = self.meter.create_counter(
+            self._business_metrics["api_requests"] = self.meter.create_counter()
                 name="api.requests.total",
                 description="Total API requests",
                 unit="1",
             )
             
-            self._business_metrics["api_duration"] = self.meter.create_histogram(
+            self._business_metrics["api_duration"] = self.meter.create_histogram()
                 name="api.request.duration",
                 description="API request duration",
                 unit="ms",
             )
             
             # Tenant metrics
-            self._business_metrics["tenant_operations"] = self.meter.create_counter(
+            self._business_metrics["tenant_operations"] = self.meter.create_counter()
                 name="tenant.operations.total",
                 description="Tenant operations count",
                 unit="1",
             )
             
-            self._business_metrics["tenant_api_calls"] = self.meter.create_counter(
+            self._business_metrics["tenant_api_calls"] = self.meter.create_counter()
                 name="tenant.api.calls",
                 description="API calls per tenant",
                 unit="1",
             )
             
-            self._business_metrics["active_tenants"] = self.meter.create_observable_gauge(
+            self._business_metrics["active_tenants"] = self.meter.create_observable_gauge()
                 name="tenant.active.count",
                 callbacks=[self._get_active_tenants_count],
                 description="Number of active tenants",
@@ -303,13 +303,13 @@ class ManagementPlatformObservability:
             )
             
             # Revenue metrics
-            self._business_metrics["subscription_revenue"] = self.meter.create_counter(
+            self._business_metrics["subscription_revenue"] = self.meter.create_counter()
                 name="revenue.subscription.total",
                 description="Total subscription revenue",
                 unit="USD",
             )
             
-            self._business_metrics["mrr"] = self.meter.create_observable_gauge(
+            self._business_metrics["mrr"] = self.meter.create_observable_gauge()
                 name="revenue.mrr",
                 callbacks=[self._get_mrr],
                 description="Monthly Recurring Revenue",
@@ -317,46 +317,46 @@ class ManagementPlatformObservability:
             )
             
             # Billing metrics
-            self._business_metrics["billing_events"] = self.meter.create_counter(
+            self._business_metrics["billing_events"] = self.meter.create_counter()
                 name="billing.events.total",
                 description="Billing events processed",
                 unit="1",
             )
             
-            self._business_metrics["payment_failures"] = self.meter.create_counter(
+            self._business_metrics["payment_failures"] = self.meter.create_counter()
                 name="payment.failures.total",
                 description="Payment failures",
                 unit="1",
             )
             
             # Plugin metrics
-            self._business_metrics["plugin_installations"] = self.meter.create_counter(
+            self._business_metrics["plugin_installations"] = self.meter.create_counter()
                 name="plugin.installations.total",
                 description="Plugin installations",
                 unit="1",
             )
             
-            self._business_metrics["plugin_revenue"] = self.meter.create_counter(
+            self._business_metrics["plugin_revenue"] = self.meter.create_counter()
                 name="plugin.revenue.total",
                 description="Plugin revenue",
                 unit="USD",
             )
             
             # Deployment metrics
-            self._business_metrics["deployments"] = self.meter.create_counter(
+            self._business_metrics["deployments"] = self.meter.create_counter()
                 name="deployment.operations.total",
                 description="Deployment operations",
                 unit="1",
             )
             
-            self._business_metrics["deployment_duration"] = self.meter.create_histogram(
+            self._business_metrics["deployment_duration"] = self.meter.create_histogram()
                 name="deployment.duration",
                 description="Deployment duration",
                 unit="ms",
             )
             
             # System health metrics
-            self._business_metrics["database_connections"] = self.meter.create_observable_gauge(
+            self._business_metrics["database_connections"] = self.meter.create_observable_gauge()
                 name="database.connections.active",
                 callbacks=[self._get_db_connections],
                 description="Active database connections",
@@ -399,7 +399,7 @@ class ManagementPlatformObservability:
             # Custom request hook for tenant context
             def request_hook(span, scope):
                 if span and span.is_recording():
-                    headers = dict(scope.get("headers", []))
+                    headers = dict(scope.get("headers", [])
                     
                     # Extract tenant context
                     tenant_id = headers.get(b"x-tenant-id", b"system").decode()
@@ -426,10 +426,10 @@ class ManagementPlatformObservability:
                     
                     # Set span status
                     if status_code >= 400:
-                        span.set_status(Status(StatusCode.ERROR, f"HTTP {status_code}"))
+                        span.set_status(Status(StatusCode.ERROR, f"HTTP {status_code}")
                     
                     # Record business metrics
-                    self.record_api_request(
+                    self.record_api_request()
                         method=span.attributes.get("http.method", "GET"),
                         endpoint=span.attributes.get("http.target", "/"),
                         status_code=status_code,
@@ -439,7 +439,7 @@ class ManagementPlatformObservability:
 
             # Temporarily commented out for initial deployment - add back later
             # # Instrument FastAPI
-            # FastAPIInstrumentor.instrument_app(
+            # FastAPIInstrumentor.instrument_app()
             #     app,
             #     server_request_hook=request_hook,
             #     client_response_hook=response_hook,
@@ -467,7 +467,7 @@ class ManagementPlatformObservability:
         except Exception as e:
             logger.error(f"Failed to instrument FastAPI: {e}")
 
-    def record_api_request(self, method: str, endpoint: str, status_code: int, 
+    def record_api_request(self, method: str, endpoint: str, status_code: int)
                           tenant_id: str, duration_ms: float):
         """Record API request metrics."""
         try:
@@ -491,7 +491,7 @@ class ManagementPlatformObservability:
         except Exception as e:
             logger.error(f"Failed to record API metrics: {e}")
 
-    def record_tenant_operation(self, operation: str, tenant_id: str, 
+    def record_tenant_operation(self, operation: str, tenant_id: str)
                                success: bool = True, **kwargs):
         """Record tenant operations for SaaS monitoring."""
         try:
@@ -507,19 +507,19 @@ class ManagementPlatformObservability:
             self._business_metrics["tenant_operations"].add(1, attributes)
             
             # Create span for important operations
-            with self.tracer.start_as_current_span(
+            with self.tracer.start_as_current_span()
                 f"tenant.{operation}",
                 kind=SpanKind.INTERNAL,
                 attributes=attributes
             ) as span:
                 span.add_event(f"tenant_{operation}", attributes=attributes)
                 if not success:
-                    span.set_status(Status(StatusCode.ERROR, f"Tenant {operation} failed"))
+                    span.set_status(Status(StatusCode.ERROR, f"Tenant {operation} failed")
                     
         except Exception as e:
             logger.error(f"Failed to record tenant operation: {e}")
 
-    def record_revenue(self, amount: float, currency: str = "USD", 
+    def record_revenue(self, amount: float, currency: str = "USD")
                       revenue_type: str = "subscription", tenant_id: str = None):
         """Record revenue metrics for business intelligence."""
         try:
@@ -538,7 +538,7 @@ class ManagementPlatformObservability:
                 self._business_metrics["plugin_revenue"].add(amount, attributes)
                 
             # Create high-value span for revenue events
-            with self.tracer.start_as_current_span(
+            with self.tracer.start_as_current_span()
                 f"revenue.{revenue_type}",
                 kind=SpanKind.INTERNAL,
                 attributes={**attributes, "amount": amount}
@@ -548,7 +548,7 @@ class ManagementPlatformObservability:
         except Exception as e:
             logger.error(f"Failed to record revenue: {e}")
 
-    def record_billing_event(self, event_type: str, tenant_id: str, 
+    def record_billing_event(self, event_type: str, tenant_id: str)
                            success: bool = True, amount: float = None):
         """Record billing events."""
         try:
@@ -570,7 +570,7 @@ class ManagementPlatformObservability:
         except Exception as e:
             logger.error(f"Failed to record billing event: {e}")
 
-    def record_deployment(self, operation: str, tenant_id: str, success: bool = True, 
+    def record_deployment(self, operation: str, tenant_id: str, success: bool = True)
                          duration_ms: float = None):
         """Record deployment operations."""
         try:
@@ -601,7 +601,7 @@ class ManagementPlatformObservability:
         if tenant_id:
             operation_attributes["tenant.id"] = tenant_id
             
-        with self.tracer.start_as_current_span(
+        with self.tracer.start_as_current_span()
             f"business.{operation}",
             kind=SpanKind.INTERNAL,
             attributes=operation_attributes
@@ -609,10 +609,10 @@ class ManagementPlatformObservability:
             start_time = time.time()
             try:
                 yield span
-                span.set_status(Status(StatusCode.OK))
+                span.set_status(Status(StatusCode.OK)
             except Exception as e:
                 span.record_exception(e)
-                span.set_status(Status(StatusCode.ERROR, str(e)))
+                span.set_status(Status(StatusCode.ERROR, str(e)
                 raise
             finally:
                 duration_ms = (time.time() - start_time) * 1000

@@ -14,7 +14,7 @@ from pydantic import Field, validator
 from pydantic_settings import BaseSettings
 
 
-class SecuritySettings(BaseSettings):
+class SecuritySettings(BaseSettings, ConfigDict):
     """Security-related configuration settings."""
     
     # JWT Configuration
@@ -51,16 +51,13 @@ class SecuritySettings(BaseSettings):
         description="Content Security Policy header"
     )
     
-    @validator('jwt_secret_key')
+    @field_validator('jwt_secret_key')
     def validate_jwt_secret(cls, v):
         if v == "your-secret-key-here" or len(v) < 32:
             raise ValueError("JWT secret key must be at least 32 characters and not default value")
         return v
     
-    class Config:
-        env_prefix = "SECURITY_"
-        case_sensitive = False
-
+    model_config = ConfigDict(env_prefix="SECURITY_", case_sensitive=False)
 
 class DatabaseSettings(BaseSettings):
     """Database configuration settings."""
@@ -78,10 +75,7 @@ class DatabaseSettings(BaseSettings):
     enable_row_level_security: bool = Field(default=True, description="Enable PostgreSQL RLS")
     tenant_schema_isolation: bool = Field(default=True, description="Use schema-based tenant isolation")
     
-    class Config:
-        env_prefix = "DATABASE_"
-        case_sensitive = False
-
+    model_config = ConfigDict(env_prefix="DATABASE_", case_sensitive=False)
 
 class RedisSettings(BaseSettings):
     """Redis configuration settings."""
@@ -101,10 +95,7 @@ class RedisSettings(BaseSettings):
     cache_ttl_seconds: int = Field(default=3600, description="Default cache TTL")
     session_cache_ttl_seconds: int = Field(default=28800, description="Session cache TTL")
     
-    class Config:
-        env_prefix = "REDIS_"
-        case_sensitive = False
-
+    model_config = ConfigDict(env_prefix="REDIS_", case_sensitive=False)
 
 class OpenBaoSettings(BaseSettings):
     """OpenBao secrets management configuration."""
@@ -121,10 +112,7 @@ class OpenBaoSettings(BaseSettings):
     # Audit
     audit_enabled: bool = Field(default=True, description="Enable OpenBao audit logging")
     
-    class Config:
-        env_prefix = "OPENBAO_"
-        case_sensitive = False
-
+    model_config = ConfigDict(env_prefix="OPENBAO_", case_sensitive=False)
 
 class MonitoringSettings(BaseSettings):
     """Monitoring and observability configuration."""
@@ -146,10 +134,7 @@ class MonitoringSettings(BaseSettings):
     metrics_enabled: bool = Field(default=True, description="Enable metrics collection")
     metrics_port: int = Field(default=9090, description="Metrics server port")
     
-    class Config:
-        env_prefix = "MONITORING_"
-        case_sensitive = False
-
+    model_config = ConfigDict(env_prefix="MONITORING_", case_sensitive=False)
 
 class ApplicationSettings(BaseSettings):
     """General application configuration."""
@@ -173,17 +158,14 @@ class ApplicationSettings(BaseSettings):
     max_request_size: int = Field(default=10 * 1024 * 1024, description="Max request size in bytes")
     request_timeout_seconds: int = Field(default=30, description="Request timeout seconds")
     
-    @validator('environment')
+    @field_validator('environment')
     def validate_environment(cls, v):
         allowed = ['development', 'staging', 'production', 'testing']
         if v not in allowed:
             raise ValueError(f"Environment must be one of: {allowed}")
         return v
     
-    class Config:
-        env_prefix = "APP_"
-        case_sensitive = False
-
+    model_config = ConfigDict(env_prefix="APP_", case_sensitive=False)
 
 class ExternalServicesSettings(BaseSettings):
     """External service integration configuration."""
@@ -209,10 +191,7 @@ class ExternalServicesSettings(BaseSettings):
     azure_client_secret: Optional[str] = Field(default=None, description="Azure client secret")
     gcp_service_account_json: Optional[str] = Field(default=None, description="GCP service account JSON")
     
-    class Config:
-        env_prefix = "EXTERNAL_"
-        case_sensitive = False
-
+    model_config = ConfigDict(env_prefix="EXTERNAL_", case_sensitive=False)
 
 class Settings(BaseSettings):
     """Main settings class that aggregates all configuration."""
@@ -225,10 +204,7 @@ class Settings(BaseSettings):
     app: ApplicationSettings = Field(default_factory=ApplicationSettings)
     external: ExternalServicesSettings = Field(default_factory=ExternalServicesSettings)
     
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-
+    model_config = ConfigDict(env_file=".env", env_file_encoding="utf-8")
 
 @lru_cache()
 def get_settings() -> Settings:

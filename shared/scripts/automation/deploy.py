@@ -95,10 +95,10 @@ class DotMacDeployer:
         checks = [
             ("Docker daemon", self._check_docker),
             ("Docker Compose", self._check_docker_compose),
-            ("Required images", lambda: self._check_required_images(config)),
-            ("Environment config", lambda: self._check_environment_config(config)),
-            ("Database connectivity", lambda: self._check_database_connectivity(config)),
-            ("Redis connectivity", lambda: self._check_redis_connectivity(config)),
+            ("Required images", lambda: self._check_required_images(config),
+            ("Environment config", lambda: self._check_environment_config(config),
+            ("Database connectivity", lambda: self._check_database_connectivity(config),
+            ("Redis connectivity", lambda: self._check_redis_connectivity(config),
             ("Disk space", self._check_disk_space),
             ("Network connectivity", self._check_network_connectivity),
         ]
@@ -390,11 +390,11 @@ class DotMacDeployer:
         logger.info("🔍 Validating deployment")
 
         validation_checks = [
-            ("Service health", lambda: self._check_service_health(config)),
-            ("Database connectivity", lambda: self._validate_database_connection(config)),
-            ("Redis connectivity", lambda: self._validate_redis_connection(config)),
-            ("API endpoints", lambda: self._validate_api_endpoints(config)),
-            ("Inter-service communication", lambda: self._validate_service_communication(config)),
+            ("Service health", lambda: self._check_service_health(config),
+            ("Database connectivity", lambda: self._validate_database_connection(config),
+            ("Redis connectivity", lambda: self._validate_redis_connection(config),
+            ("API endpoints", lambda: self._validate_api_endpoints(config),
+            ("Inter-service communication", lambda: self._validate_service_communication(config),
         ]
 
         failed_validations = []
@@ -637,4 +637,4 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(main()

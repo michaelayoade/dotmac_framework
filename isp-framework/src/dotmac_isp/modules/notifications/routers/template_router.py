@@ -13,8 +13,8 @@ from ..models import NotificationTemplate, NotificationChannel, NotificationType
 from ..schemas import (
     NotificationTemplateCreate,
     NotificationTemplateUpdate,
-    NotificationTemplateResponse,
-)
+    NotificationTemplateResponse)
+from datetime import datetime, timezone
 
 router = APIRouter()
 
@@ -30,8 +30,8 @@ async def create_template(
         template = NotificationTemplate(
             id=str(uuid4()),
             tenant_id=tenant_id,
-            **template_data.dict(),
-            created_at=datetime.utcnow(),
+            **template_data.model_dump(),
+            created_at=datetime.now(timezone.utc),
             is_active=True,
         )
 
@@ -160,10 +160,10 @@ async def update_template(
         )
 
     # Update fields
-    for field, value in update_data.dict(exclude_unset=True).items():
+    for field, value in update_data.model_dump(exclude_unset=True).items():
         setattr(template, field, value)
 
-    template.updated_at = datetime.utcnow()
+    template.updated_at = datetime.now(timezone.utc)
 
     db.commit()
     db.refresh(template)
@@ -231,7 +231,7 @@ async def activate_template(
         )
 
     template.is_active = True
-    template.updated_at = datetime.utcnow()
+    template.updated_at = datetime.now(timezone.utc)
 
     db.commit()
 
@@ -260,7 +260,7 @@ async def deactivate_template(
         )
 
     template.is_active = False
-    template.updated_at = datetime.utcnow()
+    template.updated_at = datetime.now(timezone.utc)
 
     db.commit()
 

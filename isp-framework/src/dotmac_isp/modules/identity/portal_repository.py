@@ -9,6 +9,7 @@ from sqlalchemy import and_, or_, func
 import hashlib
 import secrets
 
+from datetime import datetime, timezone
 from dotmac_isp.modules.portal_management.models import (
     PortalAccount,
     PortalAccountType,
@@ -103,7 +104,7 @@ class PortalAccountRepository:
                 if hasattr(account, key):
                     setattr(account, key, value)
 
-            account.updated_at = datetime.utcnow()
+            account.updated_at = datetime.now(timezone.utc)
             self.db.commit()
             self.db.refresh(account)
             return account
@@ -126,7 +127,7 @@ class PortalAccountRepository:
             return False
 
         account.password_hash = password_hash
-        account.password_changed_at = datetime.utcnow()
+        account.password_changed_at = datetime.now(timezone.utc)
         account.must_change_password = force_change
         account.password_reset_token = None
         account.password_reset_expires = None
@@ -139,7 +140,7 @@ class PortalAccountRepository:
         if account.status == PortalAccountStatus.LOCKED.value:
             account.status = PortalAccountStatus.ACTIVE.value
 
-        account.updated_at = datetime.utcnow()
+        account.updated_at = datetime.now(timezone.utc)
         self.db.commit()
         return True
 
@@ -152,10 +153,10 @@ class PortalAccountRepository:
             return False
 
         account.password_reset_token = token
-        account.password_reset_expires = datetime.utcnow() + timedelta(
+        account.password_reset_expires = datetime.now(timezone.utc) + timedelta(
             minutes=expires_minutes
         )
-        account.updated_at = datetime.utcnow()
+        account.updated_at = datetime.now(timezone.utc)
 
         self.db.commit()
         return True
@@ -167,7 +168,7 @@ class PortalAccountRepository:
             .filter(
                 and_(
                     PortalAccount.password_reset_token == token,
-                    PortalAccount.password_reset_expires > datetime.utcnow(),
+                    PortalAccount.password_reset_expires > datetime.now(timezone.utc),
                     PortalAccount.tenant_id == self.tenant_id,
                     PortalAccount.is_deleted == False,
                 )
@@ -185,7 +186,7 @@ class PortalAccountRepository:
             raise ValidationError("Portal Account is already active")
 
         account.status = PortalAccountStatus.ACTIVE.value
-        account.updated_at = datetime.utcnow()
+        account.updated_at = datetime.now(timezone.utc)
 
         self.db.commit()
         return True
@@ -200,7 +201,7 @@ class PortalAccountRepository:
             raise ValidationError("Portal Account is already suspended")
 
         account.status = PortalAccountStatus.SUSPENDED.value
-        account.updated_at = datetime.utcnow()
+        account.updated_at = datetime.now(timezone.utc)
 
         self.db.commit()
         return True
@@ -212,8 +213,8 @@ class PortalAccountRepository:
             return False
 
         account.status = PortalAccountStatus.LOCKED.value
-        account.locked_until = datetime.utcnow() + timedelta(minutes=lockout_minutes)
-        account.updated_at = datetime.utcnow()
+        account.locked_until = datetime.now(timezone.utc) + timedelta(minutes=lockout_minutes)
+        account.updated_at = datetime.now(timezone.utc)
 
         self.db.commit()
         return True
@@ -231,7 +232,7 @@ class PortalAccountRepository:
         if account.status == PortalAccountStatus.LOCKED.value:
             account.status = PortalAccountStatus.ACTIVE.value
 
-        account.updated_at = datetime.utcnow()
+        account.updated_at = datetime.now(timezone.utc)
 
         self.db.commit()
         return True
@@ -249,7 +250,7 @@ class PortalAccountRepository:
         else:
             account.increment_failed_login(max_attempts)
 
-        account.updated_at = datetime.utcnow()
+        account.updated_at = datetime.now(timezone.utc)
         self.db.commit()
         return True
 
@@ -306,8 +307,8 @@ class PortalAccountRepository:
             return False
 
         account.is_deleted = True
-        account.deleted_at = datetime.utcnow()
-        account.updated_at = datetime.utcnow()
+        account.deleted_at = datetime.now(timezone.utc)
+        account.updated_at = datetime.now(timezone.utc)
 
         self.db.commit()
         return True

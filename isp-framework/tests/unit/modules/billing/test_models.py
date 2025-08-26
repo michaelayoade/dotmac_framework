@@ -8,7 +8,7 @@ from uuid import uuid4, UUID
 from dotmac_isp.modules.billing.models import (
     Invoice, InvoiceLineItem, Payment, CreditNote, Receipt, Subscription,
     InvoiceStatus, PaymentStatus, PaymentMethod, BillingCycle, TaxType
-)
+, timezone)
 
 
 @pytest.mark.unit
@@ -133,7 +133,7 @@ class TestPaymentModel:
             tenant_id=uuid4(),
             invoice_id=uuid4(),
             amount=Decimal('108.50'),
-            payment_date=datetime.utcnow(),
+            payment_date=datetime.now(timezone.utc),
             payment_method=PaymentMethod.CREDIT_CARD,
             status=PaymentStatus.COMPLETED,
             transaction_id="TXN123456",

@@ -165,11 +165,11 @@ def test_revenue_critical_modules_integrity():
                 code = py_file.read_text()
                 
                 # Pattern-based analysis
-                pattern_risks = analyzer.analyze_code_for_revenue_risks(code, str(py_file))
+                pattern_risks = analyzer.analyze_code_for_revenue_risks(code, str(py_file)
                 all_risks.extend(pattern_risks)
                 
                 # AST-based analysis
-                ast_risks = analyzer.analyze_ast_for_revenue_risks(code, str(py_file))
+                ast_risks = analyzer.analyze_ast_for_revenue_risks(code, str(py_file)
                 all_risks.extend(ast_risks)
                 
             except Exception as e:
@@ -362,7 +362,7 @@ def test_ai_code_markers_presence():
                     has_ai_marker = any(marker in content for marker in ai_markers)
                     
                     if not has_ai_marker and len(content) > 1000:  # Substantial files only
-                        unmarked_revenue_files.append(str(py_file))
+                        unmarked_revenue_files.append(str(py_file)
     
     # This is a warning rather than failure - helps track AI modifications
     if unmarked_revenue_files:

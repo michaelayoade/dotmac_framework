@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Dict, Any
 
 # Add src to Python path
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+sys.path.insert(0, str(Path(__file__).parent.parent / "src")
 
 from dotmac_isp.plugins.core.manager import PluginManager
 from dotmac_isp.plugins.core.registry import PluginRegistry
@@ -57,7 +57,7 @@ async def demonstrate_voltha_integration():
         "redis": None,     # Mock
     })
     
-    plugin_manager = PluginManager(registry, plugin_api.get_service("logger"))
+    plugin_manager = PluginManager(registry, plugin_api.get_service("logger")
     await plugin_manager.start()
     
     # Load VOLTHA plugin
@@ -112,7 +112,7 @@ async def demonstrate_analytics_events():
         "redis": None,     # Mock
     })
     
-    plugin_manager = PluginManager(registry, plugin_api.get_service("logger"))
+    plugin_manager = PluginManager(registry, plugin_api.get_service("logger")
     await plugin_manager.start()
     
     # Load Analytics Events plugin
@@ -270,4 +270,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(main()

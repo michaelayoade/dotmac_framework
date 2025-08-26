@@ -175,12 +175,12 @@ class AITestDataFactory:
         # AI-weighted tier selection
         if not tier:
             tier = random.choices(
-                list(self.customer_patterns["tier_distribution"].keys()),
-                weights=list(self.customer_patterns["tier_distribution"].values())
+                list(self.customer_patterns["tier_distribution"].keys(),
+                weights=list(self.customer_patterns["tier_distribution"].values()
             )[0]
         
         # Generate customer attributes based on AI patterns
-        customer_id = str(uuid.uuid4())
+        customer_id = str(uuid.uuid4()
         customer_number = self._generate_customer_number()
         
         # AI-informed name generation based on tier
@@ -233,7 +233,7 @@ class AITestDataFactory:
     def generate_service_for_customer(self, customer: AIGeneratedCustomer) -> AIGeneratedService:
         """Generate AI-realistic service for a specific customer"""
         
-        service_id = str(uuid.uuid4())
+        service_id = str(uuid.uuid4()
         
         # AI-selected bandwidth based on customer tier and usage pattern
         bandwidth_options = self.service_patterns["bandwidth_tiers"][customer.tier]
@@ -254,7 +254,7 @@ class AITestDataFactory:
         
         # Select bandwidth tier with AI adjustment
         target_bandwidth = int(max(bandwidth_options) * bandwidth_multiplier)
-        bandwidth_mbps = min(bandwidth_options, key=lambda x: abs(x - target_bandwidth))
+        bandwidth_mbps = min(bandwidth_options, key=lambda x: abs(x - target_bandwidth)
         
         # AI-calculated pricing
         monthly_cost = self._calculate_ai_pricing(customer.tier, bandwidth_mbps)
@@ -319,10 +319,10 @@ class AITestDataFactory:
         customers = []
         for _ in range(count):
             tier = random.choices(
-                list(tier_distribution.keys()),
-                weights=list(tier_distribution.values())
+                list(tier_distribution.keys(),
+                weights=list(tier_distribution.values()
             )[0]
-            customers.append(self.generate_customer(tier))
+            customers.append(self.generate_customer(tier)
         
         return customers
     
@@ -365,7 +365,7 @@ class AITestDataFactory:
         elif credit_score > 750:
             base_risk -= 0.1
         
-        return max(0.0, min(1.0, base_risk + random.uniform(-0.05, 0.05)))
+        return max(0.0, min(1.0, base_risk + random.uniform(-0.05, 0.05)
     
     def _calculate_lifetime_value(self, tier: CustomerTier, credit_score: int, churn_risk: float) -> float:
         """AI-estimated customer lifetime value"""

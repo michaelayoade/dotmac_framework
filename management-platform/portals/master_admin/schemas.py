@@ -2,7 +2,7 @@
 Pydantic schemas for Master Admin Portal API requests and responses.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, Optional, List, Union
 from uuid import UUID
 from decimal import Decimal
@@ -104,7 +104,7 @@ class PlatformOverviewResponse(BaseModel):
     platform_health_score: int = Field(..., ge=0, le=100, description="Overall platform health")
     active_incidents: int = Field(0, ge=0, description="Number of active incidents")
     
-    generated_at: datetime = Field(default_factory=datetime.utcnow)
+    generated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class TenantOnboardingStep(BaseModel):

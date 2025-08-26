@@ -1,0 +1,127 @@
+{
+  "timestamp": "2025-08-25T15:44:33+02:00",
+  "summary": {
+    "passed": 16,
+    "warnings": 8,
+    "failed": 1,
+    "total": 25
+  },
+  "results": {
+    "firewall": {
+      "ufw_installed": {
+        "status": "pass",
+        "message": "UFW is installed"
+      },
+      "ufw_active": {
+        "status": "fail",
+        "message": "UFW is not active"
+      }
+    },
+    "ssh_hardening": {
+      "ssh_config_exists": {
+        "status": "pass",
+        "message": "SSH config file exists"
+      },
+      "root_login_disabled": {
+        "status": "warn",
+        "message": "Root login is disabled - not found in config"
+      },
+      "password_auth_disabled": {
+        "status": "warn",
+        "message": "Password authentication disabled - not found in config"
+      },
+      "empty_passwords_disabled": {
+        "status": "pass",
+        "message": "Empty passwords not permitted"
+      },
+      "x11_forwarding_disabled": {
+        "status": "pass",
+        "message": "X11 forwarding disabled"
+      },
+      "protocol_2": {
+        "status": "warn",
+        "message": "SSH Protocol 2 enforced - not found in config"
+      },
+      "max_auth_tries": {
+        "status": "pass",
+        "message": "Max authentication tries configured"
+      },
+      "ssh_service_running": {
+        "status": "pass",
+        "message": "SSH service is running"
+      }
+    },
+    "fail2ban": {
+      "fail2ban_installed": {
+        "status": "warn",
+        "message": "fail2ban not installed"
+      }
+    },
+    "audit_logging": {
+      "auditd_installed": {
+        "status": "warn",
+        "message": "auditd not installed"
+      }
+    },
+    "docker_security": {
+      "docker_installed": {
+        "status": "pass",
+        "message": "Docker is installed: Docker version 28.3.2, build 578ccf6"
+      },
+      "docker_config_exists": {
+        "status": "warn",
+        "message": "Docker daemon config not found"
+      },
+      "container_status": {
+        "status": "pass",
+        "message": "6 containers running"
+      }
+    },
+    "file_integrity": {
+      "aide_installed": {
+        "status": "warn",
+        "message": "AIDE not installed"
+      }
+    },
+    "system_limits": {
+      "limits_config_exists": {
+        "status": "pass",
+        "message": "Security limits config exists"
+      },
+      "limit_nofile": {
+        "status": "pass",
+        "message": "nofile limits configured"
+      },
+      "limit_nproc": {
+        "status": "pass",
+        "message": "nproc limits configured"
+      },
+      "limit_core": {
+        "status": "pass",
+        "message": "core limits configured"
+      },
+      "sysctl_security_exists": {
+        "status": "warn",
+        "message": "Security sysctl config not found"
+      }
+    },
+    "log_rotation": {
+      "logrotate_installed": {
+        "status": "pass",
+        "message": "logrotate is installed"
+      },
+      "logrotate_config_exists": {
+        "status": "pass",
+        "message": "logrotate config exists"
+      },
+      "logrotate_d_exists": {
+        "status": "pass",
+        "message": "logrotate.d with 16 configs"
+      },
+      "logrotate_cron": {
+        "status": "pass",
+        "message": "logrotate cron job: /etc/cron.daily/logrotate"
+      }
+    }
+  }
+}

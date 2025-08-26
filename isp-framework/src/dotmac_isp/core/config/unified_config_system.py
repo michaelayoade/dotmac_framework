@@ -194,7 +194,7 @@ class UnifiedConfigSystem:
                 integration.mark_error(error_msg)
                 logger.error("Integration initialization exception",
                            integration_type=integration_type,
-                           error=str(e))
+                           error=str(e)
                 return False
         
         logger.info("Unified configuration system initialization complete")
@@ -203,7 +203,7 @@ class UnifiedConfigSystem:
     def _get_initialization_order(self) -> List[IntegrationType]:
         """Get initialization order based on dependencies."""
         order = []
-        remaining = set(self.integrations.keys())
+        remaining = set(self.integrations.keys()
         
         while remaining:
             # Find integrations with satisfied dependencies
@@ -259,14 +259,14 @@ class UnifiedConfigSystem:
             self._config_handlers = ConfigurationHandlerChain()
             
             logger.info("Configuration validation engine initialized",
-                       strategies_count=len(self._validation_engine.strategies))
+                       strategies_count=len(self._validation_engine.strategies)
             return True
             
         except ImportError as e:
-            logger.error("Failed to import config validation components", error=str(e))
+            logger.error("Failed to import config validation components", error=str(e)
             return False
         except Exception as e:
-            logger.error("Config validation initialization failed", error=str(e))
+            logger.error("Config validation initialization failed", error=str(e)
             return False
     
     async def _initialize_sales_scoring(self, integration: SystemIntegration) -> bool:
@@ -280,15 +280,15 @@ class UnifiedConfigSystem:
             self._sales_scoring_engine = create_lead_scoring_engine(weighted=weighted)
             
             logger.info("Sales scoring engine initialized",
-                       strategies_count=len(self._sales_scoring_engine.get_active_strategies()),
+                       strategies_count=len(self._sales_scoring_engine.get_active_strategies(),
                        weighted=weighted)
             return True
             
         except ImportError as e:
-            logger.error("Failed to import sales scoring components", error=str(e))
+            logger.error("Failed to import sales scoring components", error=str(e)
             return False
         except Exception as e:
-            logger.error("Sales scoring initialization failed", error=str(e))
+            logger.error("Sales scoring initialization failed", error=str(e)
             return False
     
     async def _initialize_workflow_automation(self, integration: SystemIntegration) -> bool:
@@ -300,14 +300,14 @@ class UnifiedConfigSystem:
             self._condition_engine = create_condition_engine()
             
             logger.info("Workflow condition engine initialized",
-                       operators_count=len(self._condition_engine.get_supported_operators()))
+                       operators_count=len(self._condition_engine.get_supported_operators())
             return True
             
         except ImportError as e:
-            logger.error("Failed to import workflow condition components", error=str(e))
+            logger.error("Failed to import workflow condition components", error=str(e)
             return False
         except Exception as e:
-            logger.error("Workflow condition initialization failed", error=str(e))
+            logger.error("Workflow condition initialization failed", error=str(e)
             return False
     
     async def _initialize_scheduler(self, integration: SystemIntegration) -> bool:
@@ -319,14 +319,14 @@ class UnifiedConfigSystem:
             self._schedule_engine = create_schedule_engine()
             
             logger.info("Schedule calculation engine initialized",
-                       schedule_types_count=len(self._schedule_engine.get_supported_schedule_types()))
+                       schedule_types_count=len(self._schedule_engine.get_supported_schedule_types())
             return True
             
         except ImportError as e:
-            logger.error("Failed to import schedule calculation components", error=str(e))
+            logger.error("Failed to import schedule calculation components", error=str(e)
             return False
         except Exception as e:
-            logger.error("Schedule calculation initialization failed", error=str(e))
+            logger.error("Schedule calculation initialization failed", error=str(e)
             return False
     
     async def _initialize_vault_authentication(self, integration: SystemIntegration) -> bool:
@@ -338,14 +338,14 @@ class UnifiedConfigSystem:
             self._vault_auth_engine = create_vault_auth_engine()
             
             logger.info("Vault authentication engine initialized",
-                       auth_methods_count=len(self._vault_auth_engine.get_supported_auth_methods()))
+                       auth_methods_count=len(self._vault_auth_engine.get_supported_auth_methods())
             return True
             
         except ImportError as e:
-            logger.error("Failed to import vault auth components", error=str(e))
+            logger.error("Failed to import vault auth components", error=str(e)
             return False
         except Exception as e:
-            logger.error("Vault auth initialization failed", error=str(e))
+            logger.error("Vault auth initialization failed", error=str(e)
             return False
     
     def get_system_status(self) -> Dict[str, Any]:
@@ -558,7 +558,7 @@ async def initialize_unified_system(service_name: str = "dotmac_framework") -> b
             return False
             
     except Exception as e:
-        logger.error("Failed to initialize unified system", error=str(e))
+        logger.error("Failed to initialize unified system", error=str(e)
         return False
 
 
@@ -589,12 +589,12 @@ if __name__ == "__main__":
             
             if args.status:
                 status = system.get_system_status()
-                print(json.dumps(status, indent=2, default=str))
+                print(json.dumps(status, indent=2, default=str)
             
             if args.health:
                 health = await system.validate_system_health()
-                print(json.dumps(health, indent=2, default=str))
+                print(json.dumps(health, indent=2, default=str)
         else:
             parser.print_help()
     
-    asyncio.run(main())
+    asyncio.run(main()

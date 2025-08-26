@@ -17,7 +17,7 @@ from fastapi.testclient import TestClient
 
 # Add src directory to Python path
 src_path = Path(__file__).parent.parent / "src"
-sys.path.insert(0, str(src_path))
+sys.path.insert(0, str(src_path)
 
 from dotmac_isp.main import app
 from dotmac_isp.core.database import Base, get_async_db, get_db
@@ -152,7 +152,7 @@ async def create_test_database():
             )
             if not result.fetchone():
                 # Create database
-                await conn.execute(text(f'CREATE DATABASE "{pg_database}"'))
+                await conn.execute(text(f'CREATE DATABASE "{pg_database}"')
 logger.info(f"Created test database: {pg_database}")
         await engine.dispose()
     except Exception as e:
@@ -182,7 +182,7 @@ async def drop_test_database():
                 {"database": pg_database}
             )
             # Drop database
-            await conn.execute(text(f'DROP DATABASE IF EXISTS "{pg_database}"'))
+            await conn.execute(text(f'DROP DATABASE IF EXISTS "{pg_database}"')
 logger.info(f"Dropped test database: {pg_database}")
         await engine.dispose()
     except Exception as e:
@@ -308,7 +308,7 @@ async def validate_postgresql_connection():
     try:
         create_test_engines()
         async with test_engine_async.connect() as conn:
-            result = await conn.execute(text("SELECT version()"))
+            result = await conn.execute(text("SELECT version()")
             version = result.fetchone()[0]
 logger.info(f"PostgreSQL connection successful: {version}")
             return True

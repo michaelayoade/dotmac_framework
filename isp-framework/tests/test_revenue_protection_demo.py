@@ -21,7 +21,7 @@ import random
 class TestBillingCalculationAccuracyDemo:
     """Demo: Test billing calculations to 6 decimal places for revenue protection."""
     
-    def test_usage_based_billing_precision_edge_cases(self):
+    def test_usage_based_billing_precision_edge_cases(self, timezone):
         """Demo: Test usage calculations with extreme precision requirements."""
         
         # Mock billing service for demonstration
@@ -76,8 +76,8 @@ logger.info(f"✅ Revenue Protection: All {len(test_cases)} precision edge cases
             def _calculate_prorated_fee(self, monthly_fee: Decimal, days_in_period: int, 
                                       total_days: int) -> Decimal:
                 """Calculate prorated fee with extreme precision."""
-                daily_rate = monthly_fee / Decimal(str(total_days))
-                prorated = daily_rate * Decimal(str(days_in_period))
+                daily_rate = monthly_fee / Decimal(str(total_days)
+                prorated = daily_rate * Decimal(str(days_in_period)
                 return prorated.quantize(Decimal('0.000001'), rounding=ROUND_HALF_UP)
         
         billing_service = MockBillingService()
@@ -252,7 +252,7 @@ logger.info("✅ Revenue Protection: Discount stacking validation passed")
                                 amount: Decimal, details: dict):
                 """Log billing events for audit compliance."""
                 log_entry = {
-                    'timestamp': datetime.utcnow(),
+                    'timestamp': datetime.now(timezone.utc),
                     'event_type': event_type,
                     'customer_id': customer_id,
                     'amount': amount,

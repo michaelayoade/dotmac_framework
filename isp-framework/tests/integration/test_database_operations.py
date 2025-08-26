@@ -283,7 +283,7 @@ class TestComplexQueriesAndRelationships:
             invoice_number="INV_REL001",
             customer_id=customer.id,
             billing_period_start=date.today().replace(day=1),
-            billing_period_end=(date.today().replace(day=1) + timedelta(days=32)).replace(day=1) - timedelta(days=1),
+            billing_period_end=(date.today().replace(day=1) + timedelta(days=32).replace(day=1) - timedelta(days=1),
             subtotal=Decimal('499.98'),
             tax_amount=Decimal('50.00'),
             total_amount=Decimal('549.98'),

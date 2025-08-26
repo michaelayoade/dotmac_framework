@@ -23,7 +23,7 @@ import signal
 from dotmac_isp.core.management_platform_client import get_management_client
 from dotmac_isp.core.config.handlers import create_configuration_handler_chain, ReloadContext, ReloadStatus as HandlerReloadStatus
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__, timezone)
 
 
 class ReloadTrigger(str, Enum):
@@ -193,7 +193,7 @@ class ConfigurationHotReload:
     def _calculate_checksum(self, config_data: Dict[str, Any]) -> str:
         """Calculate checksum for configuration data."""
         config_str = json.dumps(config_data, sort_keys=True, default=str)
-        return hashlib.sha256(config_str.encode()).hexdigest()
+        return hashlib.sha256(config_str.encode().hexdigest()
 
     def _setup_signal_handlers(self):
         """Setup signal handlers for emergency operations."""
@@ -219,7 +219,7 @@ class ConfigurationHotReload:
     def _signal_emergency_rollback(self, signum, frame):
         """Handle emergency rollback signal."""
         logger.warning("Received emergency rollback signal (SIGUSR2)")
-        asyncio.create_task(self.emergency_rollback())
+        asyncio.create_task(self.emergency_rollback()
 
     def start_file_watching(self):
         """Start watching configuration files for changes."""
@@ -293,14 +293,14 @@ class ConfigurationHotReload:
                 raise RuntimeError("Reload already in progress")
 
             # Generate event
-            event_id = f"reload-{datetime.utcnow().strftime('%Y%m%d-%H%M%S-%f')}"
+            event_id = f"reload-{datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S-%f')}"
 
             reload_event = ReloadEvent(
                 event_id=event_id,
                 trigger=trigger,
                 scope=scope,
                 status=ReloadStatus.PENDING,
-                started_at=datetime.utcnow(),
+                started_at=datetime.now(timezone.utc),
                 config_paths=config_paths or [str(p) for p in self.config_paths],
                 triggered_by=triggered_by,
                 emergency_mode=emergency,
@@ -361,7 +361,7 @@ class ConfigurationHotReload:
             
             if not context.has_changes():
                 reload_event.status = ReloadStatus.COMPLETED
-                reload_event.completed_at = datetime.utcnow()
+                reload_event.completed_at = datetime.now(timezone.utc)
                 logger.info(f"No configuration changes detected for {reload_event.event_id}")
                 return
                 
@@ -369,11 +369,11 @@ class ConfigurationHotReload:
             for changed_key in context.changed_keys:
                 if ':' in changed_key:
                     source, key = changed_key.split(':', 1)
-                    old_value = str(context.original_config.get(source, {}).get(key, ""))
-                    new_value = str(context.new_config.get(key, ""))
+                    old_value = str(context.original_config.get(source, {}).get(key, "")
+                    new_value = str(context.new_config.get(key, "")
                     
-                    reload_event.old_values_hash[changed_key] = hashlib.sha256(old_value.encode()).hexdigest()
-                    reload_event.new_values_hash[changed_key] = hashlib.sha256(new_value.encode()).hexdigest()
+                    reload_event.old_values_hash[changed_key] = hashlib.sha256(old_value.encode().hexdigest()
+                    reload_event.new_values_hash[changed_key] = hashlib.sha256(new_value.encode().hexdigest()
 
             # Step 3: Apply validated configuration (Complexity: 1)
             # Cross-platform validation with Management Platform
@@ -385,7 +385,7 @@ class ConfigurationHotReload:
 
             # Store rollback data
             if self.rollback_enabled:
-                reload_event.rollback_data = self.current_config.copy()
+                reload_event.rollback_data = self.current_config.model_copy()
 
             # Apply new configuration (convert to expected format)
             config_by_path = {}
@@ -404,7 +404,7 @@ class ConfigurationHotReload:
             end_time = time.time()
             reload_event.reload_duration_ms = (end_time - start_time) * 1000
             reload_event.status = ReloadStatus.COMPLETED
-            reload_event.completed_at = datetime.utcnow()
+            reload_event.completed_at = datetime.now(timezone.utc)
 
             self._update_reload_stats(reload_event)
 
@@ -419,7 +419,7 @@ class ConfigurationHotReload:
         except Exception as e:
             reload_event.status = ReloadStatus.FAILED
             reload_event.error_message = str(e)
-            reload_event.completed_at = datetime.utcnow()
+            reload_event.completed_at = datetime.now(timezone.utc)
 
             logger.error(
                 f"Configuration reload failed for {reload_event.event_id}: {e}"
@@ -493,7 +493,7 @@ class ConfigurationHotReload:
             await self._apply_configuration(reload_event.rollback_data, reload_event)
 
             # Restore state
-            self.current_config = reload_event.rollback_data.copy()
+            self.current_config = reload_event.rollback_data.model_copy()
             for config_path_str, config_data in self.current_config.items():
                 self.config_checksums[config_path_str] = self._calculate_checksum(
                     config_data
@@ -533,7 +533,7 @@ class ConfigurationHotReload:
 
                 # Use emergency config if available
                 if self._emergency_config:
-                    self.current_config = self._emergency_config.copy()
+                    self.current_config = self._emergency_config.model_copy()
                     logger.info("Emergency configuration activated")
 
         except Exception as e:
@@ -570,11 +570,11 @@ class ConfigurationHotReload:
 
     def get_current_config(self) -> Dict[str, Any]:
         """Get current configuration."""
-        return self.current_config.copy()
+        return self.current_config.model_copy()
 
     def get_reload_stats(self) -> Dict[str, Any]:
         """Get reload statistics."""
-        return self.reload_stats.copy()
+        return self.reload_stats.model_copy()
 
     def is_emergency_mode(self) -> bool:
         """Check if system is in emergency mode."""
@@ -582,7 +582,7 @@ class ConfigurationHotReload:
 
     def set_emergency_config(self, config: Dict[str, Any]):
         """Set emergency fallback configuration."""
-        self._emergency_config = config.copy()
+        self._emergency_config = config.model_copy()
         logger.info("Emergency configuration set")
 
     async def _validate_with_management_platform(

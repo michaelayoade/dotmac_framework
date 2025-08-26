@@ -129,18 +129,7 @@ echo
 echo "5. PostgreSQL Auto-Failover Setup"
 echo "──────────────────────────────────"
 
-if [ -f "$PROJECT_ROOT/scripts/setup_pg_auto_failover.sh" ]; then
-    echo -e "${GREEN}✓${NC} Auto-failover setup script found"
-    
-    read -p "Run PostgreSQL auto-failover setup? (y/n): " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        chmod +x "$PROJECT_ROOT/scripts/setup_pg_auto_failover.sh"
-        sudo bash "$PROJECT_ROOT/scripts/setup_pg_auto_failover.sh"
-    fi
-else
-    echo -e "${RED}✗${NC} Auto-failover setup script not found"
-fi
+echo -e "${YELLOW}ℹ${NC} PostgreSQL auto-failover handled by Kubernetes orchestration"
 
 echo
 
@@ -197,7 +186,7 @@ files=(
     "$PROJECT_ROOT/certs/dev/server.crt"
     "$PROJECT_ROOT/nginx/nginx.conf"
     "$PROJECT_ROOT/isp-framework/src/dotmac_isp/core/rate_limiter.py"
-    "$PROJECT_ROOT/scripts/setup_pg_auto_failover.sh"
+    ""
     "$PROJECT_ROOT/isp-framework/src/dotmac_isp/core/db_monitoring.py"
 )
 

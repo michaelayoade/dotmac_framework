@@ -1,6 +1,6 @@
 """Inventory management API endpoints."""
 
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from typing import List, Optional
 from uuid import UUID
 
@@ -42,7 +42,7 @@ async def create_equipment(
     """Create new equipment."""
     try:
         service = InventoryService(db, tenant_id)
-        equipment = await service.create_equipment(equipment_data.dict())
+        equipment = await service.create_equipment(equipment_data.model_dump())
         return equipment
     except ConflictError as e:
         raise HTTPException(status_code=409, detail=str(e))
@@ -189,7 +189,7 @@ async def create_equipment_type(
     """Create new equipment type."""
     try:
         service = InventoryService(db, tenant_id)
-        equipment_type = await service.create_equipment_type(equipment_type_data.dict())
+        equipment_type = await service.create_equipment_type(equipment_type_data.model_dump())
         return equipment_type
     except ConflictError as e:
         raise HTTPException(status_code=409, detail=str(e))
@@ -224,7 +224,7 @@ async def create_warehouse(
     """Create new warehouse."""
     try:
         service = InventoryService(db, tenant_id)
-        warehouse = await service.create_warehouse(warehouse_data.dict())
+        warehouse = await service.create_warehouse(warehouse_data.model_dump())
         return warehouse
     except ConflictError as e:
         raise HTTPException(status_code=409, detail=str(e))
@@ -257,7 +257,7 @@ async def create_vendor(
     """Create new vendor."""
     try:
         service = InventoryService(db, tenant_id)
-        vendor = await service.create_vendor(vendor_data.dict())
+        vendor = await service.create_vendor(vendor_data.model_dump())
         return vendor
     except ConflictError as e:
         raise HTTPException(status_code=409, detail=str(e))
@@ -294,7 +294,7 @@ async def create_stock_movement(
     """Create stock movement."""
     try:
         service = InventoryService(db, tenant_id)
-        movement = await service.create_stock_movement(movement_data.dict())
+        movement = await service.create_stock_movement(movement_data.model_dump())
         return movement
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -347,5 +347,5 @@ async def health_check():
     return {
         "status": "healthy",
         "module": "inventory",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     }

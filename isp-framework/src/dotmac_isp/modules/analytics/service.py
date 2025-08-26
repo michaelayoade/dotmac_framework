@@ -17,7 +17,7 @@ from .models import (
     MetricType,
     ReportType,
     AlertSeverity,
-)
+, timezone)
 from . import schemas
 from dotmac_isp.shared.exceptions import (
     ServiceError,
@@ -96,7 +96,7 @@ class ReportService(BaseTenantService[Report, schemas.ReportCreate, schemas.Repo
         try:
             if entity.is_scheduled:
                 from .tasks import schedule_report_generation
-                schedule_report_generation.delay(str(entity.id), str(self.tenant_id))
+                schedule_report_generation.delay(str(entity.id), str(self.tenant_id)
                 
         except Exception as e:
             self._logger.error(f"Failed to schedule report generation for {entity.id}: {e}")
@@ -163,7 +163,7 @@ class AlertService(BaseTenantService[Alert, schemas.AlertCreate, schemas.AlertUp
         try:
             if entity.is_active:
                 from .tasks import setup_alert_monitoring
-                setup_alert_monitoring.delay(str(entity.id), str(self.tenant_id))
+                setup_alert_monitoring.delay(str(entity.id), str(self.tenant_id)
                 
         except Exception as e:
             self._logger.error(f"Failed to setup monitoring for alert {entity.id}: {e}")
@@ -451,7 +451,7 @@ class AnalyticsService:
 
             executive_report = {
                 "report_id": str(uuid4()),
-                "generated_at": datetime.utcnow(),
+                "generated_at": datetime.now(timezone.utc),
                 "period": summary.get("period", {}),
                 "executive_summary": {
                     "key_achievements": [
@@ -507,7 +507,7 @@ class AnalyticsService:
                 "report_id": str(uuid4()),
                 "report_type": report_request.report_type,
                 "title": report_request.title,
-                "generated_at": datetime.utcnow(),
+                "generated_at": datetime.now(timezone.utc),
                 "generated_by": report_request.generated_by,
                 "period": {
                     "start_date": report_request.start_date,
@@ -532,7 +532,7 @@ class AnalyticsService:
     async def get_real_time_metrics(self) -> schemas.RealTimeMetricsResponse:
         """Get real-time system metrics."""
         try:
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             today = now.date()
 
             # Get today's metrics
@@ -599,13 +599,13 @@ class AnalyticsService:
                 elif metric_name == "revenue":
                     value = 125000 + (current_date - start_date).days * 850
                 elif metric_name == "network_uptime":
-                    value = 99.5 + (hash(str(current_date)) % 100) / 1000
+                    value = 99.5 + (hash(str(current_date) % 100) / 1000
                 else:
                     value = 100.0
 
                 data_points.append(
                     schemas.MetricDataPoint(
-                        timestamp=datetime.combine(current_date, datetime.min.time()),
+                        timestamp=datetime.combine(current_date, datetime.min.time(),
                         value=value,
                         metadata={"interval": interval},
                     )

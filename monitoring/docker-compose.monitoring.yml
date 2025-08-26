@@ -1,0 +1,252 @@
+# Monitoring Stack for DotMac Framework
+version: '3.8'
+
+services:
+  # Prometheus - Metrics collection and storage
+  prometheus:
+    image: prom/prometheus:v2.40.0
+    container_name: dotmac-prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alert_rules/:/etc/prometheus/alert_rules/:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - dotmac-network
+    restart: unless-stopped
+    depends_on:
+      - node-exporter
+      - cadvisor
+
+  # Alertmanager - Alert routing and notification
+  alertmanager:
+    image: prom/alertmanager:v0.25.0
+    container_name: dotmac-alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+      - '--web.external-url=http://localhost:9093'
+    volumes:
+      - ./alertmanager/alertmanager-flexible.yml:/etc/alertmanager/alertmanager.yml:ro
+      - ./alertmanager/templates/:/etc/alertmanager/templates/:ro
+      - alertmanager_data:/alertmanager
+    ports:
+      - "9093:9093"
+    networks:
+      - dotmac-network
+    restart: unless-stopped
+    env_file:
+      - .env.monitoring
+
+  # Grafana - Visualization and dashboards
+  grafana:
+    image: grafana/grafana:9.3.0
+    container_name: dotmac-grafana
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+    ports:
+      - "3000:3000"
+    networks:
+      - dotmac-network
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+
+  # Node Exporter - System metrics
+  node-exporter:
+    image: prom/node-exporter:v1.5.0
+    container_name: dotmac-node-exporter
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    ports:
+      - "9100:9100"
+    networks:
+      - dotmac-network
+    restart: unless-stopped
+
+  # cAdvisor - Container metrics
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.46.0
+    container_name: dotmac-cadvisor
+    privileged: true
+    devices:
+      - /dev/kmsg:/dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+      - /cgroup:/cgroup:ro
+    ports:
+      - "8080:8080"
+    networks:
+      - dotmac-network
+    restart: unless-stopped
+
+  # PostgreSQL Exporter - Database metrics
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.11.1
+    container_name: dotmac-postgres-exporter
+    environment:
+      - DATA_SOURCE_NAME=postgresql://dotmac_admin:${POSTGRES_PASSWORD}@postgres-shared:5432/postgres?sslmode=disable
+    ports:
+      - "9187:9187"
+    networks:
+      - dotmac-network
+    restart: unless-stopped
+    depends_on:
+      - postgres-shared
+
+  # Redis Exporter - Cache metrics
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.45.0
+    container_name: dotmac-redis-exporter
+    environment:
+      - REDIS_ADDR=redis://:${REDIS_PASSWORD}@redis-shared:6379
+    ports:
+      - "9121:9121"
+    networks:
+      - dotmac-network
+    restart: unless-stopped
+    depends_on:
+      - redis-shared
+
+  # SNMP Exporter - Network device metrics (ISP-specific)
+  snmp-exporter:
+    image: prom/snmp-exporter:v0.21.0
+    container_name: dotmac-snmp-exporter
+    volumes:
+      - ./snmp/snmp.yml:/etc/snmp_exporter/snmp.yml:ro
+    ports:
+      - "9116:9116"
+    networks:
+      - dotmac-network
+    restart: unless-stopped
+
+  # Blackbox Exporter - Endpoint monitoring
+  blackbox-exporter:
+    image: prom/blackbox-exporter:v0.22.0
+    container_name: dotmac-blackbox-exporter
+    volumes:
+      - ./blackbox/blackbox.yml:/etc/blackbox_exporter/config.yml:ro
+    ports:
+      - "9115:9115"
+    networks:
+      - dotmac-network
+    restart: unless-stopped
+
+  # Jaeger - Distributed tracing (alternative to SignOz)
+  jaeger:
+    image: jaegertracing/all-in-one:1.41
+    container_name: dotmac-jaeger
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    ports:
+      - "16686:16686"  # Jaeger UI
+      - "14268:14268"  # Jaeger collector HTTP
+      - "14250:14250"  # Jaeger collector gRPC
+      - "4317:4317"    # OTLP gRPC
+      - "4318:4318"    # OTLP HTTP
+    networks:
+      - dotmac-network
+    restart: unless-stopped
+
+  # Loki - Log aggregation
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: dotmac-loki
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./loki/loki.yml:/etc/loki/local-config.yaml:ro
+      - loki_data:/loki
+    ports:
+      - "3100:3100"
+    networks:
+      - dotmac-network
+    restart: unless-stopped
+
+  # Promtail - Log shipping to Loki
+  promtail:
+    image: grafana/promtail:2.9.0
+    container_name: dotmac-promtail
+    command: -config.file=/etc/promtail/config.yml
+    volumes:
+      - ./promtail/promtail.yml:/etc/promtail/config.yml:ro
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    networks:
+      - dotmac-network
+    restart: unless-stopped
+    depends_on:
+      - loki
+
+  # Elasticsearch - Log storage and search (alternative to Loki)
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.5.0
+    container_name: dotmac-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    networks:
+      - dotmac-network
+    restart: unless-stopped
+
+  # Kibana - Log visualization (pairs with Elasticsearch)
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.5.0
+    container_name: dotmac-kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    networks:
+      - dotmac-network
+    restart: unless-stopped
+    depends_on:
+      - elasticsearch
+
+volumes:
+  prometheus_data:
+    name: dotmac-prometheus-data
+  alertmanager_data:
+    name: dotmac-alertmanager-data
+  grafana_data:
+    name: dotmac-grafana-data
+  loki_data:
+    name: dotmac-loki-data
+  elasticsearch_data:
+    name: dotmac-elasticsearch-data
+
+networks:
+  dotmac-network:
+    external: true
+    name: dotmac-network

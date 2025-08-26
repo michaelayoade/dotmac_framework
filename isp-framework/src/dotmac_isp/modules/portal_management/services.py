@@ -22,6 +22,7 @@ from .models import (
     PortalLoginAttempt,
     PortalAccountStatus,
 )
+from datetime import timezone
 from .schemas import (
     PortalAccountCreate,
     PortalAccountUpdate,
@@ -173,7 +174,7 @@ class PortalAccountService:
             timezone_preference=account_data.timezone_preference,
             session_timeout_minutes=account_data.session_timeout_minutes,
             created_by_admin_id=created_by_admin_id,
-            password_changed_at=datetime.utcnow(),
+            password_changed_at=datetime.now(timezone.utc),
         )
 
         self.db.add(portal_account)
@@ -227,7 +228,7 @@ class PortalAccountService:
             return None
 
         # Update fields
-        for field, value in update_data.dict(exclude_unset=True).items():
+        for field, value in update_data.model_dump(exclude_unset=True).items():
             setattr(account, field, value)
 
         if admin_id:
@@ -262,7 +263,7 @@ class PortalAccountService:
 
         # Update password
         account.password_hash = new_password_hash
-        account.password_changed_at = datetime.utcnow()
+        account.password_changed_at = datetime.now(timezone.utc)
         account.must_change_password = False
 
         # Update password history
@@ -284,7 +285,7 @@ class PortalAccountService:
 
         # Set reset token and expiration (1 hour)
         account.password_reset_token = token_hash
-        account.password_reset_expires = datetime.utcnow() + timedelta(hours=1)
+        account.password_reset_expires = datetime.now(timezone.utc) + timedelta(hours=1)
 
         self.db.commit()
 
@@ -302,7 +303,7 @@ class PortalAccountService:
                 and_(
                     PortalAccount.tenant_id == tenant_id,
                     PortalAccount.password_reset_token == token_hash,
-                    PortalAccount.password_reset_expires > datetime.utcnow(),
+                    PortalAccount.password_reset_expires > datetime.now(timezone.utc),
                     PortalAccount.is_deleted == False,
                 )
             )
@@ -314,7 +315,7 @@ class PortalAccountService:
 
         # Update password
         account.password_hash = pwd_context.hash(new_password)
-        account.password_changed_at = datetime.utcnow()
+        account.password_changed_at = datetime.now(timezone.utc)
         account.password_reset_token = None
         account.password_reset_expires = None
         account.must_change_password = False
@@ -355,7 +356,7 @@ class PortalAccountService:
             #             img.save(img_io, 'PNG')
             #             img_io.seek(0)
 
-            #             qr_code_data = base64.b64encode(img_io.read()).decode()
+            #             qr_code_data = base64.b64encode(img_io.read().decode()
             #             qr_code_url = f"data:image/png;base64,{qr_code_data}"
 
             # Generate backup codes
@@ -401,7 +402,7 @@ class PortalAccountService:
 
         if admin_id:
             account.last_modified_by_admin_id = admin_id
-            account.security_notes = f"{datetime.utcnow().isoformat()}: 2FA disabled by admin\n{account.security_notes or ''}"
+            account.security_notes = f"{datetime.now(timezone.utc).isoformat()}: 2FA disabled by admin\n{account.security_notes or ''}"
 
         self.db.commit()
 
@@ -696,7 +697,7 @@ class PortalAuthService:
                     PortalSession.tenant_id == tenant_id,
                     PortalSession.portal_account_id == account_id,
                     PortalSession.is_active == True,
-                    PortalSession.expires_at > datetime.utcnow(),
+                    PortalSession.expires_at > datetime.now(timezone.utc),
                 )
             )
             .all()
@@ -746,7 +747,7 @@ class PortalAuthService:
             ip_address=ip_address,
             user_agent=user_agent,
             device_fingerprint=device_fingerprint,
-            expires_at=datetime.utcnow() + timedelta(minutes=expires_in_minutes),
+            expires_at=datetime.now(timezone.utc) + timedelta(minutes=expires_in_minutes),
         )
 
         self.db.add(session)
@@ -765,9 +766,9 @@ class PortalAuthService:
             "tenant_id": str(account.tenant_id),
             "session_id": str(session.id),
             "account_type": account.account_type,
-            "exp": datetime.utcnow()
+            "exp": datetime.now(timezone.utc)
             + timedelta(minutes=self.settings.access_token_expire_minutes),
-            "iat": datetime.utcnow(),
+            "iat": datetime.now(timezone.utc),
             "type": "access",
         }
 
@@ -783,9 +784,9 @@ class PortalAuthService:
             "sub": str(account.id),
             "session_id": str(session.id),
             "tenant_id": str(account.tenant_id),
-            "exp": datetime.utcnow()
+            "exp": datetime.now(timezone.utc)
             + timedelta(days=self.settings.refresh_token_expire_days),
-            "iat": datetime.utcnow(),
+            "iat": datetime.now(timezone.utc),
             "type": "refresh",
         }
 

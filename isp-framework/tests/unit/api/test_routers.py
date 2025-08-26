@@ -236,7 +236,7 @@ class TestIntegrationScenarios:
         
         mock_import.side_effect = import_side_effect
         
-        with patch('dotmac_isp.api.routers.getattr', return_value=MagicMock()):
+        with patch('dotmac_isp.api.routers.getattr', return_value=MagicMock():
             # Should not raise exceptions despite mixed results
             _register_module_routers(app)
     
@@ -246,7 +246,7 @@ class TestIntegrationScenarios:
         
         with patch('dotmac_isp.api.routers.logger') as mock_logger:
             # Test with all imports failing
-            with patch('builtins.__import__', side_effect=ImportError()):
+            with patch('builtins.__import__', side_effect=ImportError():
                 _register_module_routers(app)
                 
                 # Should have debug calls for ImportError
@@ -260,7 +260,7 @@ class TestIntegrationScenarios:
         initial_routes = len(app.router.routes)
         
         # With no available modules, should not add routes
-        with patch('builtins.__import__', side_effect=ImportError()):
+        with patch('builtins.__import__', side_effect=ImportError():
             register_routers(app)
             
         # Routes should be unchanged (except for built-in routes)

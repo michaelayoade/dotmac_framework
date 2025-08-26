@@ -5,7 +5,7 @@ Background tasks for billing operations.
 import logging
 import asyncio
 import aiohttp
-from datetime import date, timedelta
+from datetime import date, timedelta, timezone
 from decimal import Decimal
 from typing import Dict, Any, Optional
 from uuid import UUID
@@ -13,9 +13,9 @@ from uuid import UUID
 from celery import current_task
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
-from ...core.config import settings
-from ...services.billing_service import BillingService
-from ...workers.celery_app import celery_app
+from core.config import settings
+from services.billing_service import BillingService
+from workers.celery_app import celery_app
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +41,7 @@ async def sync_payment_with_provider(payment) -> str:
             
             async with session.get(url, headers=headers) as response:
                 if response.status == 200:
-                    data = await response.json()
+                    data = await response.model_dump_json()
                     stripe_status = data.get("status", "unknown")
                     
                     # Map Stripe statuses to our internal statuses
@@ -91,7 +91,7 @@ async def send_tenant_notification(
         # 4. Slack/Teams integration for admin notifications
         
         # For now, we'll use the notification service
-        from ...services.notification_service import NotificationService
+        from services.notification_service import NotificationService
         
         async with async_session() as session:
             notification_service = NotificationService(session)
@@ -259,7 +259,7 @@ def process_payment(self, payment_data: Dict[str, Any]):
                 service = BillingService(db)
                 
                 # Process the payment
-                from ...schemas.billing import PaymentCreate
+                from schemas.billing import PaymentCreate
                 payment_create = PaymentCreate(**payment_data)
                 
                 payment = await service.process_payment(payment_create, "system")
@@ -384,7 +384,7 @@ def export_billing_report(self, tenant_id: str, report_type: str, start_date: st
                     "report_type": report_type,
                     "period": f"{start} to {end}",
                     "record_count": len(data),
-                    "generated_at": datetime.utcnow().isoformat()
+                    "generated_at": datetime.now(timezone.utc).isoformat()
                 }
                 
                 logger.info(f"Billing report exported: {report_type} for tenant {tenant_id}")

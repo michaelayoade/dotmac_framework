@@ -407,7 +407,7 @@ class CSRFProtectionMiddleware(BaseHTTPMiddleware):
             client_ip = self._get_client_ip(request)
             user_agent = request.headers.get("user-agent", "")
             session_data = f"{client_ip}:{user_agent}"
-            session_id = hashlib.sha256(session_data.encode()).hexdigest()[:16]
+            session_id = hashlib.sha256(session_data.encode().hexdigest()[:16])
 
         return session_id
 

@@ -250,7 +250,7 @@ class RLSPolicyManager:
                 ip_address inet,
                 user_agent text,
                 timestamp timestamptz DEFAULT NOW(),
-                CONSTRAINT audit_log_operation_check CHECK (operation IN ('INSERT', 'UPDATE', 'DELETE'))
+                CONSTRAINT audit_log_operation_check CHECK (operation IN ('INSERT', 'UPDATE', 'DELETE')
             );
         """
             )

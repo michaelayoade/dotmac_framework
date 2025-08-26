@@ -20,7 +20,7 @@ import threading
 from concurrent.futures import ThreadPoolExecutor
 import tempfile
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__, timezone)
 
 
 class BackupType(str, Enum):
@@ -228,7 +228,7 @@ class ConfigurationBackup:
             backup_metadata_file = self.metadata_path / "backups.json"
             with open(backup_metadata_file, "w") as f:
                 json.dump(
-                    {k: v.dict() for k, v in self.backup_metadata.items()},
+                    {k: v.model_dump() for k, v in self.backup_metadata.items()},
                     f,
                     indent=2,
                     default=str,
@@ -238,7 +238,7 @@ class ConfigurationBackup:
             restore_metadata_file = self.metadata_path / "restores.json"
             with open(restore_metadata_file, "w") as f:
                 json.dump(
-                    {k: v.dict() for k, v in self.restore_points.items()},
+                    {k: v.model_dump() for k, v in self.restore_points.items()},
                     f,
                     indent=2,
                     default=str,
@@ -248,7 +248,7 @@ class ConfigurationBackup:
             schedules_file = self.metadata_path / "schedules.json"
             with open(schedules_file, "w") as f:
                 json.dump(
-                    {k: v.dict() for k, v in self.backup_schedules.items()},
+                    {k: v.model_dump() for k, v in self.backup_schedules.items()},
                     f,
                     indent=2,
                     default=str,
@@ -290,7 +290,7 @@ class ConfigurationBackup:
 
     def _generate_backup_id(self, backup_type: BackupType) -> str:
         """Generate unique backup ID."""
-        timestamp = datetime.utcnow().strftime("%Y%m%d-%H%M%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
         return f"{backup_type.value}-{timestamp}"
 
     def _calculate_checksum(self, file_path: Path) -> str:
@@ -334,7 +334,7 @@ class ConfigurationBackup:
                 backup_id=backup_id,
                 backup_type=backup_type,
                 status=BackupStatus.PENDING,
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(timezone.utc),
                 environments=environments or ["all"],
                 services=services or ["all"],
                 config_count=self._count_configs(config_data),
@@ -369,9 +369,9 @@ class ConfigurationBackup:
             ) as tmp_file:
                 json.dump(
                     {
-                        "backup_metadata": metadata.dict(),
+                        "backup_metadata": metadata.model_dump(),
                         "config_data": config_data,
-                        "created_at": datetime.utcnow().isoformat(),
+                        "created_at": datetime.now(timezone.utc).isoformat(),
                     },
                     tmp_file,
                     indent=2,
@@ -414,7 +414,7 @@ class ConfigurationBackup:
 
             # Update metadata
             metadata.status = BackupStatus.COMPLETED
-            metadata.completed_at = datetime.utcnow()
+            metadata.completed_at = datetime.now(timezone.utc)
 
             # Verify backup if requested
             if self._verify_backup(backup_id):
@@ -502,14 +502,14 @@ class ConfigurationBackup:
             )
 
         # Generate restore ID
-        restore_id = f"restore-{datetime.utcnow().strftime('%Y%m%d-%H%M%S')}"
+        restore_id = f"restore-{datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S')}"
 
         # Create restore point
         restore_point = RestorePoint(
             restore_id=restore_id,
             backup_id=backup_id,
             restore_type=restore_type,
-            requested_at=datetime.utcnow(),
+            requested_at=datetime.now(timezone.utc),
             requested_by=requested_by,
             environments=target_environments or backup_metadata.environments,
             services=target_services or backup_metadata.services,
@@ -560,7 +560,7 @@ class ConfigurationBackup:
             # Store restored configuration
             restore_point.restored_configs = filtered_config
             restore_point.status = "completed"
-            restore_point.completed_at = datetime.utcnow()
+            restore_point.completed_at = datetime.now(timezone.utc)
             restore_point.progress = 100.0
 
             # Verify restore
@@ -641,7 +641,7 @@ class ConfigurationBackup:
     def cleanup_old_backups(self, retention_days: Optional[int] = None):
         """Clean up old backups based on retention policy."""
         retention_days = retention_days or 90
-        cutoff_date = datetime.utcnow() - timedelta(days=retention_days)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=retention_days)
 
         deleted_count = 0
         for backup_id, metadata in list(self.backup_metadata.items()):
@@ -675,14 +675,14 @@ class ConfigurationBackup:
                 return {"status": "failed", "message": "Backup verification failed"}
 
             # Test restore (dry run)
-            restore_id = f"test-{datetime.utcnow().strftime('%Y%m%d-%H%M%S')}"
+            restore_id = f"test-{datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S')}"
 
             # Create test restore point
             test_restore = RestorePoint(
                 restore_id=restore_id,
                 backup_id=backup_id,
                 restore_type="test",
-                requested_at=datetime.utcnow(),
+                requested_at=datetime.now(timezone.utc),
                 requested_by="disaster_recovery_test",
                 environments=["test"],
                 services=["test"],
@@ -695,7 +695,7 @@ class ConfigurationBackup:
             # Update backup metadata with test results
             metadata = self.backup_metadata[backup_id]
             metadata.recovery_tested = True
-            metadata.last_test_date = datetime.utcnow()
+            metadata.last_test_date = datetime.now(timezone.utc)
             metadata.test_status = (
                 "passed" if test_restore.verification_passed else "failed"
             )

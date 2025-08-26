@@ -7,16 +7,16 @@ import logging
 from typing import Dict, Any, List, Optional
 from uuid import UUID
 
-from .registry import plugin_registry
-from .hooks import hook_manager, HookNames
-from .interfaces import (
+from registry import plugin_registry
+from hooks import hook_manager, HookNames
+from interfaces import ()
     MonitoringProviderPlugin,
     DeploymentProviderPlugin, 
     NotificationChannelPlugin,
     PaymentProviderPlugin,
     BillingCalculatorPlugin
 )
-from .base import PluginType
+from base import PluginType
 
 logger = logging.getLogger(__name__)
 
@@ -29,12 +29,12 @@ class PluginServiceIntegration:
         self.hooks = hook_manager
     
     # Notification Service Integration
-    async def send_notification(
+    async def send_notification(:)
         self, 
         channel_type: str, 
         message: str, 
-        recipients: List[str], 
-        options: Dict[str, Any] = None
+        recipients: List[str],
+    options: Dict[str, Any] = None)
     ) -> bool:
         """Send notification via plugin-based channels."""
         try:
@@ -52,8 +52,8 @@ class PluginServiceIntegration:
             
             for plugin in notification_plugins:
                 if isinstance(plugin, NotificationChannelPlugin):
-                    if plugin.get_channel_type() == channel_type:
-                        success = await plugin.send_notification(message, recipients, options)
+                    if plugin.get_channel_type( == channel_type:
+)                        success = await plugin.send_notification(message, recipients, options)
                         
                         # Trigger after hook
                         context["success"] = success
@@ -66,16 +66,16 @@ class PluginServiceIntegration:
             
         except Exception as e:
             logger.error(f"Failed to send notification via plugins: {e}")
-            await self.hooks.trigger_hook(HookNames.NOTIFICATION_FAILED, {
+            await self.hooks.trigger_hook(HookNames.NOTIFICATION_FAILED, {)
                 "error": str(e),
                 "channel_type": channel_type
             })
             return False
     
-    async def send_alert_via_plugins(
+    async def send_alert_via_plugins(:)
         self, 
-        alert_data: Dict[str, Any], 
-        channels: List[str] = None
+        alert_data: Dict[str, Any],
+    channels: List[str] = None)
     ) -> Dict[str, bool]:
         """Send alert via multiple plugin channels."""
         results = {}
@@ -89,15 +89,14 @@ class PluginServiceIntegration:
             
             # Use all available channels if none specified
             if not channels:
-                channels = [plugin.get_channel_type() for plugin in notification_plugins 
-                           if isinstance(plugin, NotificationChannelPlugin)]
+                channels = [plugin.get_channel_type( for plugin in notification_plugins  if isinstance(plugin, NotificationChannelPlugin)])
             
             # Send via each channel
             for channel in channels:
                 for plugin in notification_plugins:
                     if isinstance(plugin, NotificationChannelPlugin):
-                        if plugin.get_channel_type() == channel:
-                            recipients = alert_data.get('recipients', {}).get(channel, [])
+                        if plugin.get_channel_type( == channel:
+)                            recipients = alert_data.get('recipients', {}).get(channel, [])
                             if recipients:
                                 success = await plugin.send_alert(alert_data, recipients)
                                 results[channel] = success
@@ -125,7 +124,7 @@ class PluginServiceIntegration:
                             all_metrics.extend(metrics)
                             
                             # Trigger metric collected hook
-                            await self.hooks.trigger_hook(HookNames.METRIC_COLLECTED, {
+                            await self.hooks.trigger_hook(HookNames.METRIC_COLLECTED, {)
                                 "provider": plugin.meta.name,
                                 "metrics_count": len(metrics),
                                 "source_config": source_config
@@ -156,7 +155,7 @@ class PluginServiceIntegration:
                             
                             # Trigger hook if health check failed
                             if health_result.get('status') != 'healthy':
-                                await self.hooks.trigger_hook(HookNames.HEALTH_CHECK_FAILED, {
+                                await self.hooks.trigger_hook(HookNames.HEALTH_CHECK_FAILED, {)
                                     "target_id": target_id,
                                     "provider": plugin.meta.name,
                                     "health_result": health_result
@@ -170,15 +169,15 @@ class PluginServiceIntegration:
             return {}
     
     # Deployment Service Integration
-    async def provision_infrastructure_via_plugin(
+    async def provision_infrastructure_via_plugin(:)
         self, 
-        provider: str, 
-        infrastructure_config: Dict[str, Any]
+        provider: str,
+    infrastructure_config: Dict[str, Any])
     ) -> Dict[str, Any]:
         """Provision infrastructure via deployment provider plugin."""
         try:
             # Trigger before hook
-            await self.hooks.trigger_hook(HookNames.BEFORE_PROVISION_INFRASTRUCTURE, {
+            await self.hooks.trigger_hook(HookNames.BEFORE_PROVISION_INFRASTRUCTURE, {)
                 "provider": provider,
                 "config": infrastructure_config
             })
@@ -188,11 +187,11 @@ class PluginServiceIntegration:
             
             for plugin in deployment_plugins:
                 if isinstance(plugin, DeploymentProviderPlugin):
-                    if provider in plugin.get_supported_providers():
-                        result = await plugin.provision_infrastructure(infrastructure_config)
+                    if provider in plugin.get_supported_providers(:
+)                        result = await plugin.provision_infrastructure(infrastructure_config)
                         
                         # Trigger after hook
-                        await self.hooks.trigger_hook(HookNames.AFTER_PROVISION_INFRASTRUCTURE, {
+                        await self.hooks.trigger_hook(HookNames.AFTER_PROVISION_INFRASTRUCTURE, {)
                             "provider": provider,
                             "result": result
                         })
@@ -203,22 +202,22 @@ class PluginServiceIntegration:
             
         except Exception as e:
             logger.error(f"Failed to provision infrastructure via plugin: {e}")
-            await self.hooks.trigger_hook(HookNames.INFRASTRUCTURE_FAILED, {
+            await self.hooks.trigger_hook(HookNames.INFRASTRUCTURE_FAILED, {)
                 "provider": provider,
                 "error": str(e)
             })
             raise
     
-    async def deploy_application_via_plugin(
+    async def deploy_application_via_plugin(:)
         self, 
         provider: str,
-        app_config: Dict[str, Any], 
-        infrastructure_id: str
+        app_config: Dict[str, Any],
+    infrastructure_id: str)
     ) -> Dict[str, Any]:
         """Deploy application via deployment provider plugin."""
         try:
             # Trigger before hook
-            await self.hooks.trigger_hook(HookNames.BEFORE_DEPLOYMENT, {
+            await self.hooks.trigger_hook(HookNames.BEFORE_DEPLOYMENT, {)
                 "provider": provider,
                 "app_config": app_config,
                 "infrastructure_id": infrastructure_id
@@ -229,11 +228,11 @@ class PluginServiceIntegration:
             
             for plugin in deployment_plugins:
                 if isinstance(plugin, DeploymentProviderPlugin):
-                    if provider in plugin.get_supported_providers():
-                        result = await plugin.deploy_application(app_config, infrastructure_id)
+                    if provider in plugin.get_supported_providers(:
+)                        result = await plugin.deploy_application(app_config, infrastructure_id)
                         
                         # Trigger after hook
-                        await self.hooks.trigger_hook(HookNames.AFTER_DEPLOYMENT, {
+                        await self.hooks.trigger_hook(HookNames.AFTER_DEPLOYMENT, {)
                             "provider": provider,
                             "result": result
                         })
@@ -244,17 +243,17 @@ class PluginServiceIntegration:
             
         except Exception as e:
             logger.error(f"Failed to deploy application via plugin: {e}")
-            await self.hooks.trigger_hook(HookNames.DEPLOYMENT_FAILED, {
+            await self.hooks.trigger_hook(HookNames.DEPLOYMENT_FAILED, {)
                 "provider": provider,
                 "error": str(e)
             })
             raise
     
-    async def validate_template_via_plugin(
+    async def validate_template_via_plugin(:)
         self, 
         provider: str,
-        template_content: Dict[str, Any], 
-        template_type: str
+        template_content: Dict[str, Any],
+    template_type: str)
     ) -> bool:
         """Validate template via deployment provider plugin."""
         try:
@@ -262,8 +261,8 @@ class PluginServiceIntegration:
             
             for plugin in deployment_plugins:
                 if isinstance(plugin, DeploymentProviderPlugin):
-                    if provider in plugin.get_supported_providers():
-                        return await plugin.validate_template(template_content, template_type)
+                    if provider in plugin.get_supported_providers(:
+)                        return await plugin.validate_template(template_content, template_type)
             
             logger.warning(f"No plugin found for template validation: {provider}")
             return False
@@ -273,19 +272,19 @@ class PluginServiceIntegration:
             return False
     
     # Payment Service Integration
-    async def process_payment_via_plugin(
+    async def process_payment_via_plugin(:)
         self, 
         provider: str,
         amount: Any, 
-        payment_method: Dict[str, Any], 
-        metadata: Dict[str, Any] = None
+        payment_method: Dict[str, Any],
+    metadata: Dict[str, Any] = None)
     ) -> Dict[str, Any]:
         """Process payment via payment provider plugin."""
         try:
             from decimal import Decimal
             
             # Trigger before hook
-            await self.hooks.trigger_hook(HookNames.BEFORE_PAYMENT_PROCESSING, {
+            await self.hooks.trigger_hook(HookNames.BEFORE_PAYMENT_PROCESSING, {)
                 "provider": provider,
                 "amount": amount,
                 "payment_method": payment_method
@@ -298,11 +297,11 @@ class PluginServiceIntegration:
                 if isinstance(plugin, PaymentProviderPlugin):
                     if plugin.meta.name == provider:
                         result = await plugin.process_payment(
-                            Decimal(str(amount)), payment_method, metadata or {}
+)                            Decimal(str(amount)), payment_method, metadata or {}
                         )
                         
                         # Trigger after hook
-                        await self.hooks.trigger_hook(HookNames.AFTER_PAYMENT_PROCESSING, {
+                        await self.hooks.trigger_hook(HookNames.AFTER_PAYMENT_PROCESSING, {)
                             "provider": provider,
                             "result": result
                         })
@@ -313,25 +312,25 @@ class PluginServiceIntegration:
             
         except Exception as e:
             logger.error(f"Failed to process payment via plugin: {e}")
-            await self.hooks.trigger_hook(HookNames.PAYMENT_FAILED, {
+            await self.hooks.trigger_hook(HookNames.PAYMENT_FAILED, {)
                 "provider": provider,
                 "error": str(e)
             })
             raise
     
     # Billing Service Integration
-    async def calculate_billing_via_plugin(
+    async def calculate_billing_via_plugin(:)
         self,
         calculator_name: str,
         usage_data: List[Dict[str, Any]],
-        billing_plan: Dict[str, Any]
+    billing_plan: Dict[str, Any])
     ) -> Any:
         """Calculate billing via billing calculator plugin."""
         try:
             from decimal import Decimal
             
             # Trigger before hook
-            await self.hooks.trigger_hook(HookNames.BEFORE_BILLING_CALCULATION, {
+            await self.hooks.trigger_hook(HookNames.BEFORE_BILLING_CALCULATION, {)
                 "calculator": calculator_name,
                 "usage_data": usage_data,
                 "billing_plan": billing_plan
@@ -346,7 +345,7 @@ class PluginServiceIntegration:
                         result = await plugin.calculate_usage_cost(usage_data, billing_plan)
                         
                         # Trigger after hook
-                        await self.hooks.trigger_hook(HookNames.AFTER_BILLING_CALCULATION, {
+                        await self.hooks.trigger_hook(HookNames.AFTER_BILLING_CALCULATION, {)
                             "calculator": calculator_name,
                             "result": result
                         })
@@ -393,17 +392,17 @@ class PluginServiceIntegration:
         
         # Add type-specific capabilities
         if isinstance(plugin, DeploymentProviderPlugin):
-            capabilities.update({
-                "supported_providers": plugin.get_supported_providers(),
-                "supported_orchestrators": plugin.get_supported_orchestrators()
+            capabilities.update({)
+                "supported_providers": plugin.get_supported_providers(,
+)                "supported_orchestrators": plugin.get_supported_orchestrators()
             })
         elif isinstance(plugin, NotificationChannelPlugin):
-            capabilities.update({
-                "channel_type": plugin.get_channel_type(),
-                "supported_message_types": plugin.get_supported_message_types()
+            capabilities.update({)
+                "channel_type": plugin.get_channel_type(,
+)                "supported_message_types": plugin.get_supported_message_types()
             })
         elif isinstance(plugin, MonitoringProviderPlugin):
-            capabilities.update({
+            capabilities.update({)
                 "supported_channels": plugin.get_supported_channels()
             })
         
@@ -418,10 +417,10 @@ class PluginServiceIntegration:
         
         return capabilities
     
-    async def calculate_infrastructure_cost_via_plugin(
+    async def calculate_infrastructure_cost_via_plugin(:)
         self, 
-        provider: str, 
-        infrastructure_config: Dict[str, Any]
+        provider: str,
+    infrastructure_config: Dict[str, Any])
     ) -> Dict[str, Any]:
         """Calculate infrastructure cost via deployment provider plugin."""
         try:
@@ -430,9 +429,9 @@ class PluginServiceIntegration:
             
             for plugin in deployment_plugins:
                 if isinstance(plugin, DeploymentProviderPlugin):
-                    if provider in plugin.get_supported_providers():
+                    if provider in plugin.get_supported_providers(:)
                         # Check if plugin has cost calculation capability
-                        if hasattr(plugin, 'calculate_infrastructure_cost'):
+)                        if hasattr(plugin, 'calculate_infrastructure_cost'):
                             cost = await plugin.calculate_infrastructure_cost(infrastructure_config)
                             return {"success": True, "monthly_cost": cost}
                         else:

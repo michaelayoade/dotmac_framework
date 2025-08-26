@@ -120,7 +120,7 @@ class DatabaseSDK:
             query, params = self._add_tenant_filter(query, params)
 
             with self.get_session() as session:
-                session.execute(text(query), params or ())
+                session.execute(text(query), params or {})
                 session.commit()
                 return True
         except Exception as e:
@@ -135,7 +135,7 @@ class DatabaseSDK:
             query, params = self._add_tenant_filter(query, params)
 
             async with self.get_async_session() as session:
-                await session.execute(text(query), params or ())
+                await session.execute(text(query), params or {})
                 await session.commit()
                 return True
         except Exception as e:

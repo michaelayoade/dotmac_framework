@@ -104,7 +104,7 @@ class Metric(TenantModel):
         if not self.values:
             return {"trend": "stable", "change_percent": 0.0}
 
-        current_time = datetime.utcnow()
+        current_time = datetime.now(timezone.utc)
         period_start = current_time.replace(hour=current_time.hour - period_hours)
 
         recent_values = [v for v in self.values if v.timestamp >= period_start]
@@ -396,7 +396,7 @@ class Alert(TenantModel):
         # Increase priority for recently triggered alerts
         if self.last_triggered:
             hours_since = (
-                datetime.utcnow() - self.last_triggered
+                datetime.now(timezone.utc) - self.last_triggered
             ).total_seconds() / 3600
             if hours_since < 1:
                 base_score += 1
@@ -409,7 +409,7 @@ class Alert(TenantModel):
 
     def trigger_alert(self) -> Dict[str, Any]:
         """Trigger the alert and update state."""
-        self.last_triggered = datetime.utcnow()
+        self.last_triggered = datetime.now(timezone.utc)
         self.trigger_count += 1
 
         return {
@@ -456,7 +456,7 @@ class DataSource(TenantModel):
         return {
             "status": "success",
             "latency_ms": 150,
-            "last_tested": datetime.utcnow(),
+            "last_tested": datetime.now(timezone.utc),
             "error": None,
         }
 

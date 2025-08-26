@@ -8,25 +8,37 @@ from typing import AsyncGenerator, Optional
 
 from sqlalchemy import event, text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import Pool
 
-from .config import settings
+from config import settings
 
 logger = logging.getLogger(__name__)
 
-# Create async engine with optimized connection pooling
-engine = create_async_engine(
-    settings.get_database_url(async_driver=True),
-    pool_size=settings.database_pool_size,
-    max_overflow=settings.database_max_overflow,
-    pool_timeout=settings.database_pool_timeout,
-    pool_recycle=settings.database_pool_recycle,
-    pool_pre_ping=settings.database_pool_pre_ping,
-    echo=settings.database_echo,
-    future=True,
-)
+# Create async engine with conditional connection pooling
+database_url = settings.get_database_url(async_driver=True)
+
+# Configure engine based on database type
+if "sqlite" in database_url.lower():
+    # SQLite doesn't support connection pooling
+    engine = create_async_engine(
+        database_url,
+        echo=settings.database_echo,
+        future=True,
+    )
+else:
+    # PostgreSQL and other databases support connection pooling
+    engine = create_async_engine(
+        database_url,
+        pool_size=settings.database_pool_size,
+        max_overflow=settings.database_max_overflow,
+        pool_timeout=settings.database_pool_timeout,
+        pool_recycle=settings.database_pool_recycle,
+        pool_pre_ping=settings.database_pool_pre_ping,
+        echo=settings.database_echo,
+        future=True,
+    )
 
 # Create session maker
 async_session_maker = sessionmaker(
@@ -94,7 +106,7 @@ async def init_database():
     """Initialize database tables."""
     async with engine.begin() as conn:
         # Import all models to ensure they are registered
-        from .models import tenant, billing, deployment, plugin, monitoring, user  # noqa
+        from models import tenant, billing, deployment, plugin, monitoring, user  # noqa
         
         # Tables are now created via migrations, so we skip create_all
         # await conn.run_sync(Base.metadata.create_all)

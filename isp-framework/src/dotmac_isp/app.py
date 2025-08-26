@@ -1,11 +1,28 @@
 """FastAPI application factory for the DotMac ISP Framework."""
 
 import logging
+import sys
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
+
+# Add shared components to path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "shared"))
+
+from startup.error_handling import (
+    create_startup_manager,
+    StartupPhase,
+    StartupErrorSeverity,
+    managed_startup,
+    initialize_database_with_retry,
+    initialize_cache_with_retry,
+    initialize_observability_with_retry
+)
+from health.comprehensive_checks import setup_health_checker
+from health.endpoints import add_health_endpoints, add_startup_status_endpoint
 
 from dotmac_isp.api.routers import register_routers
 from dotmac_isp.core.audit_middleware import (
@@ -43,23 +60,38 @@ except ImportError as e:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Application lifespan manager with enterprise SDK initialization."""
+    """Application lifespan manager with standardized error handling."""
     settings = get_settings()
+    
+    async with managed_startup(
+        service_name="DotMac ISP Framework",
+        fail_on_critical=True,
+        fail_on_high_severity=False
+    ) as startup_manager:
+        
+        # Initialize cache with retry
+        async def init_cache():
+            cache_manager = get_cache_manager()
+            return cache_manager
+            
+        cache_result = await initialize_cache_with_retry(init_cache, startup_manager)
+        if cache_result.success:
+            logging.info("✅ Redis cache connection established")
+            app.state.cache_manager = cache_result.metadata.get("result")
+        else:
+            startup_manager.add_warning("Cache initialization failed - running without cache")
 
-    # Startup
-    try:
-        # Initialize database
-        # await init_database()  # Will be enabled when needed
+        # Initialize database with retry
+        database_result = await initialize_database_with_retry(init_database, startup_manager)
+        if database_result.success:
+            logging.info("✅ Database initialized successfully")
+        else:
+            startup_manager.add_warning("Database initialization failed - some features may not work")
 
-        # Initialize Redis cache
-        cache_manager = get_cache_manager()
-        logging.info("✅ Redis cache connection established")
-
-        # Initialize SignOz observability
-        signoz_telemetry = None
+        # Initialize SignOz observability with retry
         if SIGNOZ_AVAILABLE and init_signoz:
-            try:
-                signoz_telemetry = init_signoz(
+            async def init_signoz_observability():
+                return init_signoz(
                     service_name="dotmac-isp-framework",
                     service_version="1.0.0",
                     environment=settings.environment,
@@ -79,71 +111,115 @@ async def lifespan(app: FastAPI):
                         "plugin.system": "enabled"
                     }
                 )
+            
+            observability_result = await initialize_observability_with_retry(
+                init_signoz_observability, startup_manager
+            )
+            
+            if observability_result.success:
+                app.state.signoz_telemetry = observability_result.metadata.get("result")
                 logging.info("✅ SignOz observability initialized with full telemetry")
-                
-                # Store reference for FastAPI instrumentation
-                app.state.signoz_telemetry = signoz_telemetry
-                
-            except Exception as e:
-                logging.warning(f"⚠️  SignOz initialization failed: {e}")
-                signoz_telemetry = None
+            else:
+                startup_manager.add_warning("SignOz observability initialization failed")
 
-        # Initialize infrastructure (monitoring, metrics, tracing)
-        await startup_infrastructure()
+        # Initialize infrastructure with retry
+        infrastructure_result = await startup_manager.execute_with_retry(
+            operation=startup_infrastructure,
+            phase=StartupPhase.MIDDLEWARE,
+            component="Infrastructure Middleware",
+            severity=StartupErrorSeverity.HIGH,
+            max_retries=2
+        )
+        
+        if infrastructure_result.success:
+            logging.info("✅ Infrastructure middleware initialized")
 
-        # Initialize security systems
-        try:
-            # Initialize Row Level Security policies
-            initialize_rls()
-            logging.info("🔒 Row Level Security policies initialized")
-
-            # Initialize business rules and constraints
-            initialize_business_rules()
-            logging.info("📋 Business rules and constraints initialized")
-
-            # Initialize audit system
-            # initialize_audit_system()  # Temporarily disabled to fix SQLAlchemy mapper conflicts
-            # logging.info("📋 Audit trail system initialized")
-
-            # Initialize search optimization
-            search_optimization = initialize_search_optimization()
-            logging.info("🔍 Search optimization system initialized")
-
-        except Exception as e:
-            logging.error(f"⚠️  Security system initialization failed: {e}")
-            # Continue startup even if security initialization fails
+        # Initialize security systems with individual error handling
+        security_components = [
+            ("Row Level Security", initialize_rls, StartupErrorSeverity.HIGH),
+            ("Business Rules", initialize_business_rules, StartupErrorSeverity.MEDIUM),
+            ("Search Optimization", initialize_search_optimization, StartupErrorSeverity.MEDIUM)
+        ]
+        
+        for component_name, init_func, severity in security_components:
+            result = await startup_manager.execute_with_retry(
+                operation=init_func,
+                phase=StartupPhase.SECURITY,
+                component=component_name,
+                severity=severity,
+                max_retries=1
+            )
+            
+            if result.success:
+                logging.info(f"🔒 {component_name} initialized")
+            else:
+                startup_manager.add_warning(f"{component_name} initialization failed")
 
         # Initialize SSL certificates if enabled
         if hasattr(settings, "ssl_enabled") and settings.ssl_enabled:
-            ssl_success = await initialize_ssl()
-            if ssl_success:
+            ssl_result = await startup_manager.execute_with_retry(
+                operation=initialize_ssl,
+                phase=StartupPhase.SECURITY,
+                component="SSL Certificates",
+                severity=StartupErrorSeverity.MEDIUM,
+                max_retries=1
+            )
+            
+            if ssl_result.success:
                 logging.info("✅ SSL certificates initialized")
             else:
-                logging.warning("⚠️  SSL certificate initialization had issues")
+                startup_manager.add_warning("SSL certificate initialization failed")
 
-        # Test Celery connection
-        try:
-            # Send a test task to verify Celery is working
+        # Initialize Celery task queue
+        async def test_celery():
             result = celery_app.send_task("dotmac_isp.core.tasks.health_check")
+            return result
+            
+        celery_result = await startup_manager.execute_with_retry(
+            operation=test_celery,
+            phase=StartupPhase.BACKGROUND_TASKS,
+            component="Celery Task Queue",
+            severity=StartupErrorSeverity.HIGH,
+            max_retries=2
+        )
+        
+        if celery_result.success:
             logging.info("✅ Celery task queue connection established")
-        except Exception as e:
-            logging.warning(f"⚠️  Celery connection failed: {e}")
 
         # Initialize WebSocket manager for real-time updates
-        try:
+        async def init_websocket():
             from dotmac_isp.core.websocket_manager import websocket_manager
             from dotmac_isp.core.billing_events import register_billing_event_handlers
             
             await websocket_manager.start()
             await register_billing_event_handlers()
+            return websocket_manager
+            
+        websocket_result = await startup_manager.execute_with_retry(
+            operation=init_websocket,
+            phase=StartupPhase.BACKGROUND_TASKS,
+            component="WebSocket Manager",
+            severity=StartupErrorSeverity.MEDIUM,
+            max_retries=1
+        )
+        
+        if websocket_result.success:
             logging.info("🔌 WebSocket manager and billing events initialized")
-        except Exception as e:
-            logging.error(f"⚠️  WebSocket manager initialization failed: {e}")
+            app.state.websocket_manager = websocket_result.metadata.get("result")
 
+        # Set up comprehensive health checks
+        health_checker = setup_health_checker(
+            service_name="DotMac ISP Framework",
+            cache_client=getattr(app.state, 'cache_manager', None),
+            additional_filesystem_paths=["logs", "uploads", "static"]
+        )
+        app.state.health_checker = health_checker
+        startup_manager.add_metadata("health_checks_registered", len(health_checker.health_checks))
+        
         logging.info("🚀 DotMac ISP Framework startup complete")
-
-    except Exception as e:
-        logging.error(f"❌ Startup error: {e}")
+        
+        # Store startup manager for shutdown
+        app.state.startup_manager = startup_manager
 
     yield
 
@@ -218,6 +294,10 @@ def create_app() -> FastAPI:
 
     # Monitoring endpoints (/health, /metrics, /alerts, etc.)
     create_monitoring_endpoints(app)
+    
+    # Add comprehensive health check endpoints
+    add_health_endpoints(app)
+    add_startup_status_endpoint(app)
 
     # Register API routes
     register_routers(app)

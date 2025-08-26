@@ -3,7 +3,7 @@
 import hashlib
 import random
 import string
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
@@ -48,11 +48,11 @@ def create_access_token(
     data: Dict[str, Any], expires_delta: Optional[timedelta] = None
 ) -> str:
     """Create a JWT access token."""
-    to_encode = data.copy()
+    to_encode = data.model_copy()
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(
+        expire = datetime.now(timezone.utc) + timedelta(
             minutes=settings.access_token_expire_minutes
         )
 
@@ -62,8 +62,8 @@ def create_access_token(
 
 def create_refresh_token(data: Dict[str, Any]) -> str:
     """Create a JWT refresh token."""
-    to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(days=settings.refresh_token_expire_days)
+    to_encode = data.model_copy()
+    expire = datetime.now(timezone.utc) + timedelta(days=settings.refresh_token_expire_days)
     to_encode.update({"exp": expire, "type": "refresh"})
     return jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
 
@@ -133,14 +133,14 @@ def mask_sensitive_data(data: str, visible_chars: int = 4) -> str:
 
 def generate_invoice_number(prefix: str = "INV") -> str:
     """Generate unique invoice number."""
-    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
     random_suffix = generate_random_string(4).upper()
     return f"{prefix}-{timestamp}-{random_suffix}"
 
 
 def generate_ticket_number(prefix: str = "TKT") -> str:
     """Generate unique ticket number."""
-    timestamp = datetime.now().strftime("%Y%m%d")
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d")
     random_suffix = generate_random_string(6).upper()
     return f"{prefix}-{timestamp}-{random_suffix}"
 

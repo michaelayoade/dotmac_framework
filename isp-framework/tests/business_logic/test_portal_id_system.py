@@ -36,7 +36,7 @@ class TestPortalIDGeneration:
         # Test admin portal ID generation
         admin_portal_id = await service.generate_portal_id("admin")
         assert admin_portal_id.startswith("ADMIN_PORTAL_")
-        assert len(admin_portal_id.split("_")) == 3
+        assert len(admin_portal_id.split("_") == 3
         assert admin_portal_id.split("_")[2].isdigit()
         
         # Test customer portal ID generation

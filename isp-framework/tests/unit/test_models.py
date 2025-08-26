@@ -13,7 +13,7 @@ from dotmac_isp.shared.models import (
     StatusMixin,
     AddressMixin,
     ContactMixin,
-)
+, timezone)
 from dotmac_isp.modules.identity.models import (
     User,
     Customer,
@@ -124,7 +124,7 @@ class TestIdentityModels:
         assert user.is_locked is False
         
         # Test with locked_until in the future
-        user.locked_until = datetime.utcnow()
+        user.locked_until = datetime.now(timezone.utc)
         # Can't test exact lock status as it depends on timing
         assert hasattr(user, 'is_locked')
     
@@ -192,7 +192,7 @@ class TestBillingModels:
         
         # Test with past due date
         from datetime import timedelta
-        invoice.due_date = date.today() - timedelta(days=1)
+        invoice.due_date = date.today(, timezone) - timedelta(days=1)
         assert invoice.is_overdue is True
         
         # Test paid invoice is not overdue

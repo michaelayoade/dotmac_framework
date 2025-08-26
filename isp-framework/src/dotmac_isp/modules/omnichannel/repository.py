@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session, selectinload, joinedload
 from sqlalchemy import and_, or_, func, text, desc, asc, distinct
 from sqlalchemy.exc import IntegrityError, NoResultFound
 
+from datetime import timezone
 from dotmac_isp.shared.exceptions import (
     EntityNotFoundError,
     DatabaseError,
@@ -150,7 +151,7 @@ class OmnichannelRepository:
                 if hasattr(contact, key):
                     setattr(contact, key, value)
 
-            contact.updated_at = datetime.utcnow()
+            contact.updated_at = datetime.now(timezone.utc)
             self.db.commit()
             self.db.refresh(contact)
 

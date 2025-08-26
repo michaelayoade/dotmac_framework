@@ -20,7 +20,7 @@ from dotmac_isp.modules.omnichannel.query_builders.filter_builders import (
     DateRangeFilter,
     TextSearchFilter,
 )
-from dotmac_isp.modules.omnichannel.models import InteractionStatus, CommunicationChannel
+from dotmac_isp.modules.omnichannel.models_production import InteractionStatus, CommunicationChannel
 
 
 @pytest.mark.unit
@@ -46,10 +46,10 @@ class TestQueryBuilders:
         
         # Test fluent interface
         result_builder = (builder
-                         .filter_by_customer(uuid4())
+                         .filter_by_customer(uuid4()
                          .filter_by_status(InteractionStatus.PENDING)
                          .sort_by('created_at', 'desc')
-                         .paginate(1, 20))
+                         .paginate(1, 20)
         
         # Should return self for chaining
         assert result_builder is builder
@@ -246,7 +246,7 @@ class TestComplexityReduction:
         from dotmac_isp.modules.omnichannel.repository import OmnichannelRepository
         
         # The new method should be much simpler
-        repo = OmnichannelRepository(Mock(), uuid4())
+        repo = OmnichannelRepository(Mock(), uuid4()
         
         # Should use the new query builder internally
         assert hasattr(repo, 'search_interactions')
@@ -269,7 +269,7 @@ class TestComplexityReduction:
         
         # Should have clear parameters
         expected_params = ['session', 'tenant_id', 'filters', 'sort_field', 'sort_direction', 'page', 'per_page']
-        actual_params = list(sig.parameters.keys())
+        actual_params = list(sig.parameters.keys()
         
         assert len(actual_params) == len(expected_params)
         for param in expected_params:

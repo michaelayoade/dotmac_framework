@@ -9,7 +9,7 @@ from dotmac_isp.shared.schemas import TenantModelSchema, ContactSchema, AddressS
 from dotmac_isp.modules.identity.models import UserRole, CustomerType, AccountStatus
 
 # Import SDK schemas to avoid duplication
-from dotmac_isp.sdks.identity import (
+from dotmac_isp.sdks.identity.schemas import (
     CustomerCreate as SDKCustomerCreate,
     CustomerUpdate as SDKCustomerUpdate,
     CustomerResponse as SDKCustomerResponse,

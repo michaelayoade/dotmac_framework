@@ -2,7 +2,7 @@
 
 import json
 import pickle
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Optional, Union, Dict, List
 from functools import wraps
 import hashlib
@@ -445,8 +445,8 @@ class SessionManager:
         """Create a new session."""
         session_data = {
             "user_id": user_id,
-            "created_at": datetime.utcnow().isoformat(),
-            "last_accessed": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "last_accessed": datetime.now(timezone.utc).isoformat(),
             **(data or {}),
         }
 
@@ -460,7 +460,7 @@ class SessionManager:
 
         if session_data:
             # Update last accessed time
-            session_data["last_accessed"] = datetime.utcnow().isoformat()
+            session_data["last_accessed"] = datetime.now(timezone.utc).isoformat()
             self.cache.set(
                 f"session:{session_id}", session_data, self.default_ttl, self.namespace
             )
@@ -473,7 +473,7 @@ class SessionManager:
 
         if session_data:
             session_data.update(data)
-            session_data["last_accessed"] = datetime.utcnow().isoformat()
+            session_data["last_accessed"] = datetime.now(timezone.utc).isoformat()
             return self.cache.set(
                 f"session:{session_id}", session_data, self.default_ttl, self.namespace
             )
