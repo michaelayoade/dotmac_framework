@@ -474,6 +474,45 @@ mprofile_*.dat
 docs/doc-env/
 **/quality_test_env*/
 
+# Temporary fix and analysis scripts
+fix_*.py
+analyze_*.py
+check_*.py
+test_*_fixes.py
+*_syntax_fixer.py
+*_comprehensive_fix.py
+validate_*_fixes.py
+simple_*.py
+quick_*.py
+resolve_*.py
+update_*_comprehensive.py
+
+# Temporary analysis files
+*_analysis.md
+*_analysis.json
+*_report.json
+*_summary.md
+*_fixes_summary.md
+
+# Temporary deployment files
+deploy_remote.*
+deploy_to_remote.*
+docker-compose.remote.yml
+deployment_config.json
+
+# Branch protection setup files (temporary)
+setup_branch_protection.*
+
+# Backup directories
+**/backups_*/
+**/backups_final/
+
+# Development lock files (keep requirements-dev.txt)
+requirements-dev.lock
+
+# Type checking configs (temporary)
+pyrightconfig.json
+
 # =============================================================================
 # WHITELIST (files to explicitly include despite patterns above)
 # =============================================================================
