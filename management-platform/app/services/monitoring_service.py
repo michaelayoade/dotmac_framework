@@ -652,3 +652,57 @@ class MonitoringService:
         except Exception as e:
             logger.error(f"Failed to create synthetic check: {e}")
             return False
+
+    async def get_tenant_health_status(self, tenant_id: str) -> Dict[str, Any]:
+        """Get current health status for a tenant."""
+        try:
+            # Mock health data - in production this would query actual monitoring systems
+            return {
+                "health_score": 95,
+                "uptime_percentage": 99.95,
+                "avg_response_time_ms": 185,
+                "error_rate_percentage": 0.02,
+                "cpu_usage_percentage": 45.2,
+                "memory_usage_percentage": 68.7,
+                "storage_usage_percentage": 67.5,
+                "database_status": "healthy",
+                "cache_status": "healthy", 
+                "queue_status": "healthy",
+                "api_status": "healthy",
+                "active_alerts": 0,
+                "last_health_check": datetime.utcnow()
+            }
+        except Exception as e:
+            logger.error(f"Error getting health status for tenant {tenant_id}: {e}")
+            return {
+                "health_score": 0,
+                "status": "error",
+                "last_health_check": datetime.utcnow()
+            }
+
+    async def get_detailed_health_status(self, tenant_id: str) -> Dict[str, Any]:
+        """Get detailed health status with additional metrics."""
+        basic_health = await self.get_tenant_health_status(tenant_id)
+        
+        # Add additional detailed metrics
+        basic_health.update({
+            "detailed_metrics": {
+                "database_connections": {"active": 8, "idle": 12, "total": 20},
+                "cache_hit_rate": 0.89,
+                "queue_sizes": {"background_jobs": 5, "email": 2, "webhooks": 0},
+                "disk_usage_gb": 67.5,
+                "network_io_mbps": {"inbound": 12.5, "outbound": 8.3}
+            },
+            "recent_events": [
+                {
+                    "timestamp": datetime.utcnow() - timedelta(hours=2),
+                    "event": "Backup completed successfully"
+                },
+                {
+                    "timestamp": datetime.utcnow() - timedelta(hours=8),
+                    "event": "Scheduled maintenance completed"
+                }
+            ]
+        })
+        
+        return basic_health

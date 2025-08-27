@@ -13,7 +13,7 @@ from urllib.parse import unquote
 from fastapi import HTTPException, Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from ..config import settings
+from config import settings
 from .exceptions import SecurityValidationError
 from .logging import get_logger, log_security_event, request_logging_context
 from .monitoring import request_metrics
@@ -80,7 +80,6 @@ class LoggingMiddleware(BaseHTTPMiddleware):
                 "status_code": response.status_code,
                 "duration_ms": duration_ms,
             }
-        )
         
         return response
 
@@ -151,11 +150,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         
         if len(self.client_calls[client_ip]) >= self.calls_per_minute:
             logger.warning(f"Rate limit exceeded for client {client_ip}")
-            return Response()
-                content='{"error": {"code": "RATE_LIMIT_EXCEEDED", "message": "Too many requests"}}',
+            return Response(content='{"error": {"code": "RATE_LIMIT_EXCEEDED", "message": "Too many requests")}',
                 status_code=429,
                 headers={"Content-Type": "application/json"}
-            )
         
         # Add current request
         self.client_calls[client_ip].append(current_time)
@@ -270,45 +267,35 @@ class RequestValidationMiddleware(BaseHTTPMiddleware):
                     "client_ip": request.client.host if request.client else "unknown",
                     "user_agent": request.headers.get("User-Agent", "unknown")
                 }
-            )
-            return Response()
-                content=json.dumps({)
+            return Response(content=json.dumps({)
                     "error": {
                         "code": "SECURITY_VALIDATION_ERROR",
                         "message": "Request validation failed"
-                    }
                 }),
                 status_code=400,
                 headers={"Content-Type": "application/json"}
-            )
         
         except HTTPException as e:
-            return Response()
-                content=json.dumps({)
+            return Response(content=json.dumps({)
                     "error": {
                         "code": "VALIDATION_ERROR",
                         "message": e.detail
-                    }
                 }),
                 status_code=e.status_code,
                 headers={"Content-Type": "application/json"}
-            )
         
         except Exception as e:
             logger.error("Request validation middleware error", )
                         request_id=request_id, 
                         error=str(e), 
                         exc_info=True)
-            return Response()
-                content=json.dumps({)
+            return Response(content=json.dumps({)
                     "error": {
                         "code": "INTERNAL_ERROR",
                         "message": "Request processing failed"
-                    }
                 }),
                 status_code=500,
                 headers={"Content-Type": "application/json"}
-            )
     
     async def _validate_request_size(self, request: Request):
         """Validate request content length."""
@@ -320,19 +307,16 @@ class RequestValidationMiddleware(BaseHTTPMiddleware):
                 max_size = self.MAX_CONTENT_LENGTH.get()
                     request.method, 
                     self.MAX_CONTENT_LENGTH['default']
-                )
                 
                 if size > max_size:
                     raise HTTPException()
                         status_code=413,
                         detail=f"Request too large: {size} bytes > {max_size} bytes"
-                    )
                     
             except ValueError:
                 raise HTTPException()
                     status_code=400,
                     detail="Invalid Content-Length header"
-                )
     
     async def _validate_request_security(self, request: Request):
         """Check for suspicious patterns in URL and headers."""
@@ -344,7 +328,6 @@ class RequestValidationMiddleware(BaseHTTPMiddleware):
                 raise SecurityValidationError()
                     field="url",
                     reason=f"Suspicious pattern detected in URL: {pattern.pattern}"
-                )
         
         # Check critical headers
         suspicious_headers = ['User-Agent', 'Referer', 'X-Forwarded-For']
@@ -357,7 +340,6 @@ class RequestValidationMiddleware(BaseHTTPMiddleware):
                         raise SecurityValidationError()
                             field=header_name,
                             reason=f"Suspicious pattern detected in header: {pattern.pattern}"
-                        )
     
     async def _validate_content_type(self, request: Request):
         """Validate request content type."""
@@ -380,7 +362,6 @@ class RequestValidationMiddleware(BaseHTTPMiddleware):
                         "path": str(request.url),
                         "method": request.method
                     }
-                )
     
     async def _apply_endpoint_rate_limiting(self, request: Request):
         """Apply endpoint-specific rate limiting."""
@@ -413,11 +394,9 @@ class RequestValidationMiddleware(BaseHTTPMiddleware):
                     "rate_limit": rate_limit,
                     "current_count": len(self.request_counts[key])
                 }
-            )
             raise HTTPException()
                 status_code=429,
                 detail=f"Rate limit exceeded for endpoint {endpoint}"
-            )
         
         # Add current request
         self.request_counts[key].append(current_time)
@@ -445,7 +424,6 @@ class RequestValidationMiddleware(BaseHTTPMiddleware):
                         raise HTTPException()
                             status_code=400,
                             detail="Invalid JSON in request body"
-                        )
                 
                 # Check for suspicious patterns in raw body
                 body_str = body.decode('utf-8', errors='ignore')
@@ -454,7 +432,6 @@ class RequestValidationMiddleware(BaseHTTPMiddleware):
                         raise SecurityValidationError()
                             field="request_body",
                             reason=f"Suspicious pattern detected in body: {pattern.pattern}"
-                        )
                         
             except UnicodeDecodeError:
                 # Body is binary data, skip text-based validation
@@ -481,11 +458,9 @@ class RequestValidationMiddleware(BaseHTTPMiddleware):
                         "value": value[:100] + "..." if len(value) > 100 else value,
                         "reason": str(e)
                     }
-                )
                 raise HTTPException()
                     status_code=400,
                     detail=f"Invalid query parameter: {key}"
-                )
     
     async def _secure_response(self, response: Response):
         """Add security measures to response."""

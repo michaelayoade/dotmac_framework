@@ -196,12 +196,14 @@ export default function CommissionsPage() {
 
   const handleApprovePayment = async (paymentId: string) => {
     try {
-      // TODO: Call API to approve payment
+      // For now, just update the UI - backend integration to be completed later
       setPayments(prev => prev.map(payment => 
         payment.id === paymentId 
           ? { ...payment, status: 'APPROVED' }
           : payment
       ));
+      
+      console.log('Payment approved (UI update only):', paymentId);
     } catch (error) {
       console.error('Failed to approve payment:', error);
     }
@@ -209,6 +211,7 @@ export default function CommissionsPage() {
 
   const handleBulkAction = async (action: 'approve' | 'process' | 'export') => {
     try {
+      // For now, just update the UI - backend integration to be completed later
       switch (action) {
         case 'approve':
           setPayments(prev => prev.map(payment => 
@@ -216,22 +219,33 @@ export default function CommissionsPage() {
               ? { ...payment, status: 'APPROVED' }
               : payment
           ));
+          console.log('Bulk approval (UI update only):', selectedPayments);
           break;
+
         case 'process':
           setPayments(prev => prev.map(payment => 
             selectedPayments.includes(payment.id) && payment.status === 'APPROVED'
               ? { ...payment, status: 'PAID', payment_date: new Date().toISOString() }
               : payment
           ));
+          console.log('Bulk processing (UI update only):', selectedPayments);
           break;
+
         case 'export':
-          // TODO: Export selected payments
-          console.log('Exporting payments:', selectedPayments);
+          console.log('Export action (placeholder):', selectedPayments);
+          alert('Export functionality will be available soon');
           break;
       }
+      
       setSelectedPayments([]);
     } catch (error) {
       console.error(`Failed to ${action} payments:`, error);
+    }
+  };
+
+  const showNotification = (type: 'success' | 'error' | 'info', title: string, message: string) => {
+    if ('addNotification' in window) {
+      (window as any).addNotification({ type, title, message });
     }
   };
 

@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
-import { AdminLayout } from '../../../components/layout/AdminLayout';
+import AdminLayout from '../../../components/layout/AdminLayout';
 import { ServicesManagement } from '../../../components/services/ServicesManagement';
+import type { ServiceType, ServiceStatus } from '../../../types/billing';
 
 interface SearchParams {
   page?: string;
@@ -111,8 +112,8 @@ async function getServices(searchParams: SearchParams) {
       id: 'SVC-001',
       name: 'Fiber 100Mbps Residential',
       category: 'Internet',
-      type: 'residential',
-      status: 'active',
+      type: 'residential' as ServiceType,
+      status: 'active' as ServiceStatus,
       description: 'High-speed fiber internet for residential customers',
       pricing: {
         monthly: 79.99,
@@ -153,8 +154,8 @@ async function getServices(searchParams: SearchParams) {
       id: 'SVC-002',
       name: 'Business 500Mbps',
       category: 'Internet',
-      type: 'business',
-      status: 'active',
+      type: 'business' as ServiceType,
+      status: 'active' as ServiceStatus,
       description: 'Professional internet service with SLA guarantee',
       pricing: {
         monthly: 199.99,
@@ -196,8 +197,8 @@ async function getServices(searchParams: SearchParams) {
       id: 'SVC-003',
       name: 'Enterprise 1Gbps',
       category: 'Internet',
-      type: 'enterprise',
-      status: 'active',
+      type: 'enterprise' as ServiceType,
+      status: 'active' as ServiceStatus,
       description: 'Enterprise-grade connectivity with dedicated support',
       pricing: {
         monthly: 499.99,
@@ -244,8 +245,8 @@ async function getServices(searchParams: SearchParams) {
       id: 'SVC-004',
       name: 'VoIP Business Phone',
       category: 'Voice',
-      type: 'business',
-      status: 'active',
+      type: 'business' as ServiceType,
+      status: 'active' as ServiceStatus,
       description: 'Cloud-based business phone system with advanced features',
       pricing: {
         monthly: 29.99,
@@ -346,7 +347,7 @@ async function getServices(searchParams: SearchParams) {
       id: 'WF-001',
       name: 'Standard Residential Provisioning',
       type: 'provisioning',
-      status: 'active',
+      status: 'active' as ServiceStatus,
       steps: [
         { id: 1, name: 'Customer Validation', automated: true, duration: '5 minutes' },
         { id: 2, name: 'Address Verification', automated: true, duration: '2 minutes' },
@@ -365,7 +366,7 @@ async function getServices(searchParams: SearchParams) {
       id: 'WF-002',
       name: 'Business Service Provisioning',
       type: 'provisioning',
-      status: 'active',
+      status: 'active' as ServiceStatus,
       steps: [
         { id: 1, name: 'Business Validation', automated: true, duration: '10 minutes' },
         { id: 2, name: 'Credit Check', automated: true, duration: '15 minutes' },
@@ -403,7 +404,7 @@ async function getServices(searchParams: SearchParams) {
 
   if (searchParams.category) {
     filtered = filtered.filter(
-      (service) => service.category.toLowerCase() === searchParams.category.toLowerCase()
+      (service) => service.category.toLowerCase() === searchParams.category!.toLowerCase()
     );
   }
 

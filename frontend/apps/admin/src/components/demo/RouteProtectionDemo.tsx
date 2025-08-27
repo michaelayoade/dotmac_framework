@@ -8,7 +8,7 @@ import {
   RouteGuard,
   usePermissions,
 } from '@dotmac/headless';
-import { Card } from '@dotmac/styled-components/admin';
+import { Card } from '../ui/Card';
 import { AlertTriangle, CheckCircle, Shield, XCircle } from 'lucide-react';
 
 export function RouteProtectionDemo() {

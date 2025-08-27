@@ -11,15 +11,15 @@ from fastapi import APIRouter, Depends, Query, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_, or_
 
-from ...database import get_db, database_transaction
-from ...core.auth import get_current_admin_user, AdminRole
-from ...core.exceptions import ValidationError, DatabaseError
-from ...models.tenant import Tenant
-from ...models.user import User
-from ...models.billing import Subscription, Invoice, Payment
-from ...models.infrastructure import InfrastructureDeployment
-from ...models.notifications import NotificationLog
-from ...schemas.admin import (
+from database import get_db, database_transaction
+from core.auth import get_current_admin_user, AdminRole
+from core.exceptions import ValidationError, DatabaseError
+from models.tenant import Tenant
+from models.user import User
+from models.billing import Subscription, Invoice, Payment
+from models.infrastructure import InfrastructureDeployment
+from models.notifications import NotificationLog
+from schemas.admin import (
     AdminDashboardStats,
     TenantOverview,
     SystemHealth,
@@ -28,17 +28,16 @@ from ...schemas.admin import (
     InfrastructureMetrics,
     NotificationMetrics
 , timezone)
-from ...services.tenant_service import TenantService
-from ...services.billing_service import BillingService
-from ...services.infrastructure_service import InfrastructureService
-from ...services.notification_service import NotificationService
+from services.tenant_service import TenantService
+from services.billing_service import BillingService
+from services.infrastructure_service import InfrastructureService
+from services.notification_service import NotificationService
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
 
 @router.get("/dashboard/stats", response_model=AdminDashboardStats)
-async def get_dashboard_stats():
-    current_admin: Dict = Depends(get_current_admin_user),
+async def get_dashboard_stats(current_admin): Dict = Depends(get_current_admin_user),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -57,8 +56,6 @@ async def get_dashboard_stats():
                 func.count(Tenant.id).filter(Tenant.created_at >= thirty_days_ago).label("new_this_month"),
                 func.count(Tenant.id).filter(Tenant.is_active == True).label("active"),
                 func.count(Tenant.id).filter(Tenant.is_active == False).label("inactive")
-            )
-        )
         tenant_stats = tenant_result.one()
         
         # Get user statistics
@@ -67,8 +64,6 @@ async def get_dashboard_stats():
                 func.count(User.id).label("total"),
                 func.count(User.id).filter(User.created_at >= seven_days_ago).label("new_this_week"),
                 func.count(User.id).filter(User.last_login >= seven_days_ago).label("active_this_week")
-            )
-        )
         user_stats = user_result.one()
         
         # Get subscription statistics
@@ -78,8 +73,6 @@ async def get_dashboard_stats():
                 func.count(Subscription.id).filter(Subscription.status == "active").label("active"),
                 func.count(Subscription.id).filter(Subscription.status == "trialing").label("trial"),
                 func.count(Subscription.id).filter(Subscription.status == "cancelled").label("cancelled")
-            )
-        )
         subscription_stats = subscription_result.one()
         
         # Get revenue statistics
@@ -89,8 +82,6 @@ async def get_dashboard_stats():
                 func.coalesce(func.sum(Payment.amount).filter(Payment.processed_at >= thirty_days_ago), 0).label("revenue_this_month"),
                 func.count(Payment.id).filter(Payment.status == "completed").label("successful_payments"),
                 func.count(Payment.id).filter(Payment.status == "failed").label("failed_payments")
-            )
-        )
         revenue_stats = revenue_result.one()
         
         # Get infrastructure statistics
@@ -100,8 +91,6 @@ async def get_dashboard_stats():
                 func.count(InfrastructureDeployment.id).filter(InfrastructureDeployment.status == "active").label("active_deployments"),
                 func.count(InfrastructureDeployment.id).filter(InfrastructureDeployment.status == "provisioning").label("provisioning"),
                 func.count(InfrastructureDeployment.id).filter(InfrastructureDeployment.status == "failed").label("failed_deployments")
-            )
-        )
         infrastructure_stats = infrastructure_result.one()
         
         # Get notification statistics
@@ -111,18 +100,15 @@ async def get_dashboard_stats():
                 func.count(NotificationLog.id).filter(NotificationLog.sent_at >= seven_days_ago).label("sent_this_week"),
                 func.count(NotificationLog.id).filter(NotificationLog.status == "delivered").label("delivered"),
                 func.count(NotificationLog.id).filter(NotificationLog.status == "failed").label("failed")
-            )
-        )
         notification_stats = notification_result.one()
         
-        return AdminDashboardStats()
-            tenants={
+        return AdminDashboardStats(tenants={
                 "total": tenant_stats.total,
                 "new_this_month": tenant_stats.new_this_month,
                 "active": tenant_stats.active,
                 "inactive": tenant_stats.inactive,
                 "growth_rate": (tenant_stats.new_this_month / max(tenant_stats.total - tenant_stats.new_this_month, 1) * 100
-            },
+            ),
             users={
                 "total": user_stats.total,
                 "new_this_week": user_stats.new_this_week,
@@ -158,18 +144,15 @@ async def get_dashboard_stats():
                 "delivery_rate": (notification_stats.delivered / max(notification_stats.total_sent, 1) * 100
             },
             last_updated=now
-        )
         
     except Exception as e:
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get dashboard stats: {str(e)}"
-        )
 
 
 @router.get("/tenants/overview")
-async def get_tenants_overview():
-    current_admin: Dict = Depends(get_current_admin_user),
+async def get_tenants_overview(current_admin): Dict = Depends(get_current_admin_user),
     limit: int = Query(default=50, le=100),
     offset: int = Query(default=0, ge=0),
     status_filter: Optional[str] = Query(default=None),
@@ -196,8 +179,6 @@ async def get_tenants_overview():
                 or_()
                     Tenant.name.ilike(search_term),
                     Tenant.domain.ilike(search_term)
-                )
-            )
         
         # Execute paginated query
         result = await db.execute(query.limit(limit).offset(offset)
@@ -216,8 +197,6 @@ async def get_tenants_overview():
                 or_()
                     Tenant.name.ilike(search_term),
                     Tenant.domain.ilike(search_term)
-                )
-            )
         
         total_result = await db.execute(count_query)
         total_count = total_result.scalar()
@@ -231,19 +210,16 @@ async def get_tenants_overview():
                     Subscription.tenant_id == tenant.id,
                     Subscription.status == "active"
                 ).limit(1)
-            )
             subscription = subscription_result.scalar_one_or_none()
             
             # Get user count
             user_count_result = await db.execute()
                 select(func.count(User.id).where(User.tenant_id == tenant.id)
-            )
             user_count = user_count_result.scalar()
             
             # Get last activity
             last_activity_result = await db.execute()
                 select(func.max(User.last_login).where(User.tenant_id == tenant.id)
-            )
             last_activity = last_activity_result.scalar()
             
             tenant_list.append({)
@@ -273,12 +249,10 @@ async def get_tenants_overview():
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get tenants overview: {str(e)}"
-        )
 
 
 @router.get("/tenants/{tenant_id}/details")
-async def get_tenant_details():
-    tenant_id: UUID,
+async def get_tenant_details(tenant_id): UUID,
     current_admin: Dict = Depends(get_current_admin_user),
     db: AsyncSession = Depends(get_db)
 ):
@@ -289,43 +263,36 @@ async def get_tenant_details():
         # Get tenant
         tenant_result = await db.execute()
             select(Tenant).where(Tenant.id == tenant_id)
-        )
         tenant = tenant_result.scalar_one_or_none()
         
         if not tenant:
             raise HTTPException()
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Tenant not found"
-            )
         
         # Get users
         users_result = await db.execute()
             select(User).where(User.tenant_id == tenant_id).order_by(User.created_at.desc()
-        )
         users = users_result.scalars().all()
         
         # Get subscriptions
         subscriptions_result = await db.execute()
             select(Subscription).where(Subscription.tenant_id == tenant_id).order_by(Subscription.created_at.desc()
-        )
         subscriptions = subscriptions_result.scalars().all()
         
         # Get recent invoices
         invoices_result = await db.execute()
             select(Invoice).where(Invoice.tenant_id == tenant_id).order_by(Invoice.created_at.desc().limit(10)
-        )
         invoices = invoices_result.scalars().all()
         
         # Get infrastructure deployments
         deployments_result = await db.execute()
             select(InfrastructureDeployment).where(InfrastructureDeployment.tenant_id == tenant_id)
-        )
         deployments = deployments_result.scalars().all()
         
         # Calculate statistics
         total_revenue_result = await db.execute()
             select(func.coalesce(func.sum(Payment.amount), 0).join(Invoice).where(Invoice.tenant_id == tenant_id)
-        )
         total_revenue = total_revenue_result.scalar()
         
         return {
@@ -397,12 +364,10 @@ async def get_tenant_details():
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get tenant details: {str(e)}"
-        )
 
 
 @router.post("/tenants/{tenant_id}/actions/suspend")
-async def suspend_tenant():
-    tenant_id: UUID,
+async def suspend_tenant(tenant_id): UUID,
     reason: str,
     current_admin: Dict = Depends(get_current_admin_user),
     db: AsyncSession = Depends(get_db)
@@ -415,14 +380,12 @@ async def suspend_tenant():
             # Get tenant
             tenant_result = await session.execute()
                 select(Tenant).where(Tenant.id == tenant_id)
-            )
             tenant = tenant_result.scalar_one_or_none()
             
             if not tenant:
                 raise HTTPException()
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Tenant not found"
-                )
             
             # Update tenant status
             tenant.is_active = False
@@ -436,7 +399,6 @@ async def suspend_tenant():
             # Deactivate all users
             await session.execute()
                 select(User).where(User.tenant_id == tenant_id).update({"is_active": False})
-            )
             
             await session.commit()
             
@@ -454,12 +416,10 @@ async def suspend_tenant():
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to suspend tenant: {str(e)}"
-        )
 
 
 @router.post("/tenants/{tenant_id}/actions/reactivate")
-async def reactivate_tenant():
-    tenant_id: UUID,
+async def reactivate_tenant(tenant_id): UUID,
     current_admin: Dict = Depends(get_current_admin_user),
     db: AsyncSession = Depends(get_db)
 ):
@@ -471,14 +431,12 @@ async def reactivate_tenant():
             # Get tenant
             tenant_result = await session.execute()
                 select(Tenant).where(Tenant.id == tenant_id)
-            )
             tenant = tenant_result.scalar_one_or_none()
             
             if not tenant:
                 raise HTTPException()
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Tenant not found"
-                )
             
             # Update tenant status
             tenant.is_active = True
@@ -491,7 +449,6 @@ async def reactivate_tenant():
             # Reactivate all users (they can choose to deactivate individually if needed)
             await session.execute()
                 select(User).where(User.tenant_id == tenant_id).update({"is_active": True})
-            )
             
             await session.commit()
             
@@ -508,12 +465,10 @@ async def reactivate_tenant():
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to reactivate tenant: {str(e)}"
-        )
 
 
 @router.get("/system/health")
-async def get_system_health():
-    current_admin: Dict = Depends(get_current_admin_user),
+async def get_system_health(current_admin): Dict = Depends(get_current_admin_user),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -534,9 +489,6 @@ async def get_system_health():
                 and_()
                     InfrastructureDeployment.status == "failed",
                     InfrastructureDeployment.updated_at >= error_threshold
-                )
-            )
-        )
         failed_deployments = failed_deployments_result.scalar()
         
         # Get failed notifications
@@ -545,9 +497,6 @@ async def get_system_health():
                 and_()
                     NotificationLog.status == "failed",
                     NotificationLog.created_at >= error_threshold
-                )
-            )
-        )
         failed_notifications = failed_notifications_result.scalar()
         
         # Get failed payments
@@ -556,9 +505,6 @@ async def get_system_health():
                 and_()
                     Payment.status == "failed",
                     Payment.created_at >= error_threshold
-                )
-            )
-        )
         failed_payments = failed_payments_result.scalar()
         
         # Determine overall health status
@@ -617,8 +563,7 @@ async def get_system_health():
 
 
 @router.get("/analytics/revenue")
-async def get_revenue_analytics():
-    current_admin: Dict = Depends(get_current_admin_user),
+async def get_revenue_analytics(current_admin): Dict = Depends(get_current_admin_user),
     start_date: Optional[datetime] = Query(default=None),
     end_date: Optional[datetime] = Query(default=None),
     granularity: str = Query(default="daily", regex="^(daily|weekly|monthly)$"),
@@ -644,7 +589,6 @@ async def get_revenue_analytics():
                 Payment.processed_at >= start_date,
                 Payment.processed_at <= end_date,
                 Payment.status == "completed"
-            )
         ).order_by(Payment.processed_at)
         
         result = await db.execute(revenue_query)
@@ -703,12 +647,10 @@ async def get_revenue_analytics():
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get revenue analytics: {str(e)}"
-        )
 
 
 @router.get("/logs/activity")
-async def get_activity_logs():
-    current_admin: Dict = Depends(get_current_admin_user),
+async def get_activity_logs(current_admin): Dict = Depends(get_current_admin_user),
     limit: int = Query(default=100, le=1000),
     offset: int = Query(default=0, ge=0),
     level: Optional[str] = Query(default=None),
@@ -763,4 +705,3 @@ async def get_activity_logs():
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get activity logs: {str(e)}"
-        )

@@ -87,7 +87,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Log successful login
       securityMonitor.logAuth(SecurityEventType.LOGIN_SUCCESS, true, {
         userId: userData.id,
-        tenantId: userData.tenant_id,
+        tenantId: userData.tenantId,
         role: userData.role,
         timestamp: new Date().toISOString(),
       });
@@ -115,7 +115,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Log logout attempt
       securityMonitor.logAuth(SecurityEventType.LOGOUT, true, {
         userId: user?.id,
-        tenantId: user?.tenant_id,
+        tenantId: user?.tenantId,
         timestamp: new Date().toISOString(),
       });
       
@@ -143,7 +143,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Log successful token refresh
       securityMonitor.logAuth(SecurityEventType.TOKEN_REFRESH, true, {
         userId: user?.id,
-        tenantId: user?.tenant_id,
+        tenantId: user?.tenantId,
         timestamp: new Date().toISOString(),
       });
     } catch (error) {

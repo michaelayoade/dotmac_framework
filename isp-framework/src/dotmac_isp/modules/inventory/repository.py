@@ -2,7 +2,7 @@
 
 from typing import List, Optional, Dict, Any
 from uuid import UUID, uuid4
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import and_, or_, func
@@ -15,7 +15,7 @@ from dotmac_isp.modules.inventory.models import (
     StockMovement,
     EquipmentStatus,
     MovementType,
-, timezone)
+)
 from dotmac_isp.shared.exceptions import NotFoundError, ConflictError, ValidationError
 
 

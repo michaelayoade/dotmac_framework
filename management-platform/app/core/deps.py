@@ -9,15 +9,14 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..database import get_db
-from ..repositories.user import UserRepository
+from database import get_db
+from repositories.user import UserRepository
 from .security import security, decode_token, CurrentUser
 
 logger = logging.getLogger(__name__)
 
 
-async def get_current_user():
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+async def get_current_user(credentials): HTTPAuthorizationCredentials = Depends(security),
     db: AsyncSession = Depends(get_db),
 ) -> CurrentUser:
     """Get current authenticated user."""
@@ -47,8 +46,7 @@ async def get_current_user():
             detail="User account is disabled",
         )
     
-    return CurrentUser()
-        user_id=user.id,
+    return CurrentUser(user_id=user.id,
         email=user.email,
         role=user.role,
         tenant_id=user.tenant_id,
@@ -56,15 +54,13 @@ async def get_current_user():
     )
 
 
-async def get_current_active_user():
-    current_user: CurrentUser = Depends(get_current_user),
+async def get_current_active_user(current_user): CurrentUser = Depends(get_current_user),
 ) -> CurrentUser:
     """Get current active user."""
     if not current_user.is_active:
         raise HTTPException()
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Inactive user"
-        )
     return current_user
 
 
@@ -76,7 +72,7 @@ def require_permission(permission: str):
         if not current_user.has_permission(permission):
             raise HTTPException()
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Permission '{permission}' required",
+                detail=f"Permission '{permission)' required",
             )
         return current_user
     

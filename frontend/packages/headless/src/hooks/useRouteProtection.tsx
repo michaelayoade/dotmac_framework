@@ -362,8 +362,8 @@ export function useRouteProtection(): RouteProtectionResult {
 
   const checkFeatureAccess = useCallback(
     (config: RouteConfig): RouteProtectionResult | null =>
-      AccessValidators.checkFeatureAccess(config, hasFeature, currentPortal),
-    [currentPortal]
+      AccessValidators.checkFeatureAccess(config, _hasFeature, currentPortal),
+    [_hasFeature, currentPortal]
   );
 
   // Check if user has access to route
@@ -482,7 +482,7 @@ export function useCustomRouteProtection(config: Omit<RouteConfig, 'path'>): Rou
 
     const featureResult = AccessValidators.checkFeatureAccess(
       routeConfig,
-      hasFeature,
+      _hasFeature,
       currentPortal
     );
     if (featureResult) {
@@ -490,7 +490,7 @@ export function useCustomRouteProtection(config: Omit<RouteConfig, 'path'>): Rou
     }
 
     return { isAllowed: true, isLoading: false };
-  }, [pathname, config, user, currentPortal, checkAnyRole, hasAnyPermission]);
+  }, [pathname, config, user, currentPortal, checkAnyRole, hasAnyPermission, _hasFeature]);
 
   useEffect(() => {
     if (authLoading) {

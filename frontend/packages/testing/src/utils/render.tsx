@@ -6,16 +6,19 @@
  */
 
 import React from 'react';
-import { render as rtlRender, RenderOptions, RenderResult } from '@testing-library/react';
-import { axe, toHaveNoViolations } from 'jest-axe';
+import { render as rtlRender } from '@testing-library/react';
+import type { RenderOptions, RenderResult } from '@testing-library/react';
+import { axe } from 'jest-axe';
 import userEvent from '@testing-library/user-event';
 
 // Extend Jest matchers
-expect.extend(toHaveNoViolations);
+if (typeof expect !== 'undefined' && typeof expect.extend === 'function') {
+  // Note: toHaveNoViolations should be imported from jest-axe setup
+}
 
 // Test providers and wrappers
 interface TestProvidersProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   theme?: 'light' | 'dark';
   portal?: 'admin' | 'customer' | 'reseller';
   mockApis?: boolean;
@@ -96,7 +99,7 @@ export function render(
       </TestProviders>
     );
 
-    return wrapper ? React.createElement(wrapper, {}, content) : content;
+    return wrapper ? React.createElement(wrapper, { children: content }) : content;
   };
 
   // Render component
@@ -252,7 +255,7 @@ export async function renderComprehensive(
 // Re-export testing library utilities
 export * from '@testing-library/react';
 export { userEvent };
-export { axe, toHaveNoViolations };
+export { axe } from 'jest-axe';
 
 // Custom queries and utilities
 export const queries = {

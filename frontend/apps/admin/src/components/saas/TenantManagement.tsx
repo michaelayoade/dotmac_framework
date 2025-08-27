@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useAuthToken } from '../../hooks/useSSRSafeStorage';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -92,6 +93,7 @@ interface OnboardingRequest {
 }
 
 export function TenantManagement() {
+  const [authToken, , tokenLoading] = useAuthToken();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -122,8 +124,10 @@ export function TenantManagement() {
   });
 
   useEffect(() => {
-    fetchTenants();
-  }, [currentPage, searchQuery, statusFilter, tierFilter]);
+    if (authToken && !tokenLoading) {
+      fetchTenants();
+    }
+  }, [authToken, tokenLoading, currentPage, searchQuery, statusFilter, tierFilter]);
 
   const fetchTenants = async () => {
     try {
@@ -139,7 +143,7 @@ export function TenantManagement() {
 
       const response = await fetch(`/api/v1/master-admin/tenants?${params}`, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+          Authorization: `Bearer ${authToken}`,
         },
       });
 
@@ -163,7 +167,7 @@ export function TenantManagement() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+          Authorization: `Bearer ${authToken}`,
         },
         body: JSON.stringify({ status: newStatus, reason }),
       });
@@ -185,7 +189,7 @@ export function TenantManagement() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+          Authorization: `Bearer ${authToken}`,
         },
         body: JSON.stringify(onboardingData),
       });

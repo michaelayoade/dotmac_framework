@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
-import { AdminLayout } from '../../../components/layout/AdminLayout';
-import { SkeletonDashboard } from '@dotmac/primitives';
+import AdminLayout from '../../../components/layout/AdminLayout';
+import { Skeleton } from '../../../components/ui/Skeleton';
 import { DashboardMetrics } from '../../../components/dashboard/DashboardMetrics';
 import { RecentActivity } from '../../../components/dashboard/RecentActivity';
 import { SystemStatus } from '../../../components/dashboard/SystemStatus';
@@ -17,7 +17,17 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        <Suspense fallback={<SkeletonDashboard />}>
+        <Suspense fallback={
+          <div className="space-y-6">
+            <Skeleton className="h-32 w-full" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <Skeleton className="h-24 w-full" />
+              <Skeleton className="h-24 w-full" />
+              <Skeleton className="h-24 w-full" />
+            </div>
+            <Skeleton className="h-96 w-full" />
+          </div>
+        }>
           <DashboardContent />
         </Suspense>
       </div>
@@ -196,15 +206,11 @@ async function fetchSystemStatus() {
   await new Promise((resolve) => setTimeout(resolve, 200));
 
   return {
-    core_network: 'operational',
-    fiber_infrastructure: 'operational',
-    bgp_routing: 'operational',
-    dhcp_dns: 'operational',
-    billing_system: 'operational',
-    customer_portal: 'operational',
-    noc_monitoring: 'operational',
-    provisioning: 'maintenance',
-    field_management: 'operational',
-    peering_connections: 'degraded',
+    api: 'operational',
+    database: 'operational',
+    cache: 'operational',
+    network: 'degraded',
+    billing: 'operational',
+    support: 'operational',
   };
 }

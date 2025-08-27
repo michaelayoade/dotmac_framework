@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useAuthToken } from '../../../hooks/useSSRSafeStorage';
 import { Card, CardContent, CardHeader, CardTitle } from '../../ui/Card';
 import { Button } from '../../ui/Button';
 import { CreditCard, DollarSign, FileText, TrendingUp, Clock, AlertCircle } from 'lucide-react';
@@ -22,6 +23,7 @@ interface BillingStats {
 }
 
 export function BillingManagement() {
+  const [authToken, , tokenLoading] = useAuthToken();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [stats, setStats] = useState<BillingStats>({
     total_revenue: 0,
@@ -32,10 +34,13 @@ export function BillingManagement() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchBillingData();
-  }, []);
+    if (authToken && !tokenLoading) {
+      fetchBillingData();
+    }
+  }, [authToken, tokenLoading]);
 
   const fetchBillingData = async () => {
+    if (!authToken || tokenLoading) return;
     setLoading(true);
 
     // Demo data that serves as fallback
@@ -76,10 +81,10 @@ export function BillingManagement() {
     try {
       const [invoicesResponse, statsResponse] = await Promise.all([
         fetch('/api/isp/billing/invoices', {
-          headers: { Authorization: `Bearer ${localStorage.getItem('isp-admin-token')}` },
+          headers: { Authorization: `Bearer ${authToken}` },
         }),
         fetch('/api/isp/billing/stats', {
-          headers: { Authorization: `Bearer ${localStorage.getItem('isp-admin-token')}` },
+          headers: { Authorization: `Bearer ${authToken}` },
         }),
       ]);
 

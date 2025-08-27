@@ -281,6 +281,17 @@ class SecureTokenManager {
       payload,
     };
   }
+
+  /**
+   * Stub for auto-refresh setup - in production, this would be handled by server actions
+   */
+  setupAutoRefresh(
+    _refreshFn: (token: string) => Promise<TokenPair>,
+    _onAuthFailure: () => Promise<void>
+  ): () => void {
+    // Return a cleanup function (no-op for stub)
+    return () => {};
+  }
 }
 
 // Export singleton instance

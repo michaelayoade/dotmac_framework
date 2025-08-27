@@ -1,25 +1,25 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
 import { Card } from '@dotmac/styled-components/customer';
 import {
-  MessageSquare,
-  X,
-  Send,
-  Paperclip,
-  Smile,
-  MinusCircle,
-  Phone,
-  Video,
-  MoreHorizontal,
-  User,
+  AlertCircle,
   Bot,
   CheckCheck,
   Clock,
-  AlertCircle,
-  Minimize2,
   Maximize2,
+  MessageSquare,
+  Minimize2,
+  MinusCircle,
+  MoreHorizontal,
+  Paperclip,
+  Phone,
+  Send,
+  Smile,
+  User,
+  Video,
+  X,
 } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
 interface ChatMessage {
   id: string;
@@ -110,13 +110,13 @@ export function LiveChatWidget() {
       type: 'text',
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    setMessages(prev => [...prev, userMessage]);
     setNewMessage('');
 
     // Simulate message delivery
     setTimeout(() => {
-      setMessages((prev) =>
-        prev.map((msg) => (msg.id === userMessage.id ? { ...msg, status: 'delivered' } : msg))
+      setMessages(prev =>
+        prev.map(msg => (msg.id === userMessage.id ? { ...msg, status: 'delivered' } : msg))
       );
     }, 1000);
 
@@ -137,10 +137,10 @@ export function LiveChatWidget() {
         agentName: mockAgent.name,
         agentAvatar: mockAgent.avatar,
       };
-      setMessages((prev) => [...prev, agentResponse]);
+      setMessages(prev => [...prev, agentResponse]);
 
       if (!isOpen) {
-        setUnreadCount((prev) => prev + 1);
+        setUnreadCount(prev => prev + 1);
       }
     }, 3000);
   };
@@ -166,12 +166,12 @@ export function LiveChatWidget() {
   const getStatusIcon = (status?: string) => {
     switch (status) {
       case 'sending':
-        return <Clock className='h-3 w-3 text-gray-400' />;
+        return <Clock className="h-3 w-3 text-gray-400" />;
       case 'sent':
       case 'delivered':
-        return <CheckCheck className='h-3 w-3 text-gray-400' />;
+        return <CheckCheck className="h-3 w-3 text-gray-400" />;
       case 'read':
-        return <CheckCheck className='h-3 w-3 text-blue-500' />;
+        return <CheckCheck className="h-3 w-3 text-blue-500" />;
       default:
         return null;
     }
@@ -185,11 +185,11 @@ export function LiveChatWidget() {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className='fixed bottom-4 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg transition-all hover:bg-blue-700 hover:shadow-xl'
+        className="fixed bottom-4 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg transition-all hover:bg-blue-700 hover:shadow-xl"
       >
-        <MessageSquare className='h-6 w-6' />
+        <MessageSquare className="h-6 w-6" />
         {unreadCount > 0 && (
-          <span className='absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white'>
+          <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
             {unreadCount}
           </span>
         )}
@@ -203,33 +203,33 @@ export function LiveChatWidget() {
         isMinimized ? 'h-12' : 'h-96'
       } w-80 sm:w-96`}
     >
-      <Card className='flex h-full flex-col overflow-hidden shadow-2xl'>
+      <Card className="flex h-full flex-col overflow-hidden shadow-2xl">
         {/* Chat Header */}
-        <div className='flex items-center justify-between bg-blue-600 p-4 text-white'>
-          <div className='flex items-center space-x-3'>
-            <div className='relative'>
-              <div className='h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center'>
-                <User className='h-4 w-4' />
+        <div className="flex items-center justify-between bg-blue-600 p-4 text-white">
+          <div className="flex items-center space-x-3">
+            <div className="relative">
+              <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center">
+                <User className="h-4 w-4" />
               </div>
-              <div className='absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-green-500'></div>
+              <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-green-500"></div>
             </div>
             <div>
-              <h3 className='font-medium text-sm'>{mockAgent.name}</h3>
-              <p className='text-xs text-blue-100'>{mockAgent.title}</p>
+              <h3 className="font-medium text-sm">{mockAgent.name}</h3>
+              <p className="text-xs text-blue-100">{mockAgent.title}</p>
             </div>
           </div>
-          <div className='flex items-center space-x-2'>
+          <div className="flex items-center space-x-2">
             <button
               onClick={() => setIsMinimized(!isMinimized)}
-              className='rounded p-1 hover:bg-blue-700 transition-colors'
+              className="rounded p-1 hover:bg-blue-700 transition-colors"
             >
-              {isMinimized ? <Maximize2 className='h-4 w-4' /> : <Minimize2 className='h-4 w-4' />}
+              {isMinimized ? <Maximize2 className="h-4 w-4" /> : <Minimize2 className="h-4 w-4" />}
             </button>
             <button
               onClick={() => setIsOpen(false)}
-              className='rounded p-1 hover:bg-blue-700 transition-colors'
+              className="rounded p-1 hover:bg-blue-700 transition-colors"
             >
-              <X className='h-4 w-4' />
+              <X className="h-4 w-4" />
             </button>
           </div>
         </div>
@@ -237,8 +237,8 @@ export function LiveChatWidget() {
         {!isMinimized && (
           <>
             {/* Chat Messages */}
-            <div className='flex-1 overflow-y-auto p-4 space-y-4'>
-              {messages.map((message) => (
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {messages.map(message => (
                 <div
                   key={message.id}
                   className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
@@ -247,11 +247,11 @@ export function LiveChatWidget() {
                     className={`flex max-w-xs lg:max-w-md items-end space-x-2 ${message.sender === 'user' ? 'flex-row-reverse space-x-reverse' : 'flex-row'}`}
                   >
                     {message.sender !== 'user' && (
-                      <div className='h-6 w-6 rounded-full bg-gray-300 flex-shrink-0 flex items-center justify-center'>
+                      <div className="h-6 w-6 rounded-full bg-gray-300 flex-shrink-0 flex items-center justify-center">
                         {message.sender === 'bot' ? (
-                          <Bot className='h-3 w-3 text-gray-600' />
+                          <Bot className="h-3 w-3 text-gray-600" />
                         ) : (
-                          <User className='h-3 w-3 text-gray-600' />
+                          <User className="h-3 w-3 text-gray-600" />
                         )}
                       </div>
                     )}
@@ -263,7 +263,7 @@ export function LiveChatWidget() {
                             : 'bg-gray-100 text-gray-900'
                         }`}
                       >
-                        <p className='text-sm'>{message.content}</p>
+                        <p className="text-sm">{message.content}</p>
                       </div>
                       <div
                         className={`flex items-center mt-1 space-x-1 text-xs text-gray-500 ${
@@ -280,20 +280,20 @@ export function LiveChatWidget() {
 
               {/* Typing Indicator */}
               {isAgentTyping && (
-                <div className='flex justify-start'>
-                  <div className='flex items-end space-x-2'>
-                    <div className='h-6 w-6 rounded-full bg-gray-300 flex-shrink-0 flex items-center justify-center'>
-                      <User className='h-3 w-3 text-gray-600' />
+                <div className="flex justify-start">
+                  <div className="flex items-end space-x-2">
+                    <div className="h-6 w-6 rounded-full bg-gray-300 flex-shrink-0 flex items-center justify-center">
+                      <User className="h-3 w-3 text-gray-600" />
                     </div>
-                    <div className='bg-gray-100 rounded-lg px-4 py-2'>
-                      <div className='flex space-x-1'>
-                        <div className='w-2 h-2 bg-gray-400 rounded-full animate-bounce' />
+                    <div className="bg-gray-100 rounded-lg px-4 py-2">
+                      <div className="flex space-x-1">
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
                         <div
-                          className='w-2 h-2 bg-gray-400 rounded-full animate-bounce'
+                          className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
                           style={{ animationDelay: '0.1s' }}
                         />
                         <div
-                          className='w-2 h-2 bg-gray-400 rounded-full animate-bounce'
+                          className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
                           style={{ animationDelay: '0.2s' }}
                         />
                       </div>
@@ -307,13 +307,13 @@ export function LiveChatWidget() {
 
             {/* Quick Replies */}
             {messages.length === 1 && (
-              <div className='px-4 pb-2'>
-                <div className='flex flex-wrap gap-2'>
+              <div className="px-4 pb-2">
+                <div className="flex flex-wrap gap-2">
                   {quickReplies.map((reply, index) => (
                     <button
                       key={index}
                       onClick={() => handleQuickReply(reply)}
-                      className='rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-700 hover:bg-gray-200 transition-colors'
+                      className="rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-700 hover:bg-gray-200 transition-colors"
                     >
                       {reply}
                     </button>
@@ -323,48 +323,48 @@ export function LiveChatWidget() {
             )}
 
             {/* Message Input */}
-            <div className='border-t bg-white p-4'>
-              <div className='flex items-center space-x-2'>
-                <div className='flex-1 flex items-center space-x-2 rounded-full border border-gray-300 bg-white px-4 py-2'>
+            <div className="border-t bg-white p-4">
+              <div className="flex items-center space-x-2">
+                <div className="flex-1 flex items-center space-x-2 rounded-full border border-gray-300 bg-white px-4 py-2">
                   <input
                     ref={inputRef}
-                    type='text'
+                    type="text"
                     value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && sendMessage(newMessage)}
-                    placeholder='Type your message...'
-                    className='flex-1 border-none outline-none text-sm'
+                    onChange={e => setNewMessage(e.target.value)}
+                    onKeyPress={e => e.key === 'Enter' && sendMessage(newMessage)}
+                    placeholder="Type your message..."
+                    className="flex-1 border-none outline-none text-sm"
                   />
-                  <div className='flex items-center space-x-1'>
-                    <button className='p-1 text-gray-400 hover:text-gray-600 transition-colors'>
-                      <Paperclip className='h-4 w-4' />
+                  <div className="flex items-center space-x-1">
+                    <button className="p-1 text-gray-400 hover:text-gray-600 transition-colors">
+                      <Paperclip className="h-4 w-4" />
                     </button>
-                    <button className='p-1 text-gray-400 hover:text-gray-600 transition-colors'>
-                      <Smile className='h-4 w-4' />
+                    <button className="p-1 text-gray-400 hover:text-gray-600 transition-colors">
+                      <Smile className="h-4 w-4" />
                     </button>
                   </div>
                 </div>
                 <button
                   onClick={() => sendMessage(newMessage)}
                   disabled={!newMessage.trim()}
-                  className='rounded-full bg-blue-600 p-2 text-white hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed'
+                  className="rounded-full bg-blue-600 p-2 text-white hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
                 >
-                  <Send className='h-4 w-4' />
+                  <Send className="h-4 w-4" />
                 </button>
               </div>
 
               {/* Action Buttons */}
-              <div className='flex items-center justify-center mt-3 space-x-4'>
-                <button className='flex items-center space-x-1 text-xs text-gray-600 hover:text-gray-800 transition-colors'>
-                  <Phone className='h-3 w-3' />
+              <div className="flex items-center justify-center mt-3 space-x-4">
+                <button className="flex items-center space-x-1 text-xs text-gray-600 hover:text-gray-800 transition-colors">
+                  <Phone className="h-3 w-3" />
                   <span>Call</span>
                 </button>
-                <button className='flex items-center space-x-1 text-xs text-gray-600 hover:text-gray-800 transition-colors'>
-                  <Video className='h-3 w-3' />
+                <button className="flex items-center space-x-1 text-xs text-gray-600 hover:text-gray-800 transition-colors">
+                  <Video className="h-3 w-3" />
                   <span>Video</span>
                 </button>
-                <button className='flex items-center space-x-1 text-xs text-gray-600 hover:text-gray-800 transition-colors'>
-                  <MoreHorizontal className='h-3 w-3' />
+                <button className="flex items-center space-x-1 text-xs text-gray-600 hover:text-gray-800 transition-colors">
+                  <MoreHorizontal className="h-3 w-3" />
                   <span>More</span>
                 </button>
               </div>

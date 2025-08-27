@@ -402,7 +402,7 @@ def process_plugin_updates(self):
                         
                         # Send update notification to tenant
                         # Send notification via notification service
-                        from app.workers.tasks.notification_tasks import send_email_notification
+                        from workers.tasks.notification_tasks import send_email_notification
                         send_email_notification.delay(
                             tenant_id=str(plugin_install.tenant_id),
                             subject=f"Plugin Updated: {plugin_metadata['name']}",

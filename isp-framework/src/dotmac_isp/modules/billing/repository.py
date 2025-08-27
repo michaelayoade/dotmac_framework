@@ -450,7 +450,7 @@ class CreditNoteRepository:
         """Generate unique credit note number."""
         today = date.today()
         count = (
-            self.db.query(func.count(CreditNote.id)
+            self.db.query(func.count(CreditNote.id))
             .filter(
                 and_(
                     CreditNote.tenant_id == self.tenant_id,

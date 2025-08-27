@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { SalesTools } from '../../../components/sales/SalesTools';
+import { SalesTools } from "../../../components/sales/SalesTools";
 
 export default function SalesToolsPage() {
-  return <SalesTools />;
+	return <SalesTools />;
 }

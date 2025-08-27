@@ -29,9 +29,8 @@ class PluginGeoAnalytics:
         self.installation_repo = PluginInstallationRepository(db)
         self.plugin_repo = PluginRepository(db)
     
-    async def get_plugin_geographic_distribution():
-        self,
-        plugin_id: UUID,
+    async def get_plugin_geographic_distribution(self,
+        plugin_id): UUID,
         granularity: str = "country"
     ) -> Dict[str, Any]:
         """Get geographic distribution for a specific plugin."""
@@ -116,9 +115,8 @@ class PluginGeoAnalytics:
             logger.error(f"Failed to get geographic distribution: {e}")
             return {"error": str(e)}
     
-    async def get_marketplace_geographic_overview():
-        self,
-        granularity: str = "country"
+    async def get_marketplace_geographic_overview(self,
+        granularity): str = "country"
     ) -> Dict[str, Any]:
         """Get geographic overview of all plugin installations in the marketplace."""
         try:
@@ -166,7 +164,6 @@ class PluginGeoAnalytics:
                 stats["installation_timeline"] = sorted()
                     stats["installation_timeline"],
                     key=lambda x: x["date"]
-                )
                 
                 geographic_overview[location] = {
                     "total_installations": stats["total_installations"],
@@ -174,7 +171,7 @@ class PluginGeoAnalytics:
                     "unique_tenants": len(stats["unique_tenants"]),
                     "plugin_categories": dict(stats["plugin_categories"]),
                     "recent_installations": stats["installation_timeline"][-5:],  # Last 5
-                    "market_diversity_score": self._calculate_diversity_score(stats)
+                    "market_diversity_score": self._calculate_diversity_score(stats}
                 }
             
             # Market penetration analysis
@@ -192,15 +189,13 @@ class PluginGeoAnalytics:
                 "global_insights": global_insights,
                 "top_markets": self._get_top_markets(geographic_overview),
                 "generated_at": datetime.now(timezone.utc).isoformat()
-            )
             
         except Exception as e:
             logger.error(f"Failed to get marketplace geographic overview: {e}")
             return {"error": str(e)}
     
-    async def get_regional_plugin_preferences():
-        self,
-        region: str,
+    async def get_regional_plugin_preferences(self,
+        region): str,
         granularity: str = "country"
     ) -> Dict[str, Any]:
         """Get plugin preferences and trends for a specific region."""
@@ -394,35 +389,35 @@ class PluginGeoAnalytics:
             "medium_penetration": [],
             "low_penetration": [],
             "emerging_markets": []
-        )
+        }
         
         for location, stats in geographic_overview.items():
             penetration_rate = stats["total_installations"] / total_installations * 100
             
             if penetration_rate >= 10:
-                penetration_analysis["high_penetration"].append({)
+                penetration_analysis["high_penetration"].append({}
                     "location": location,
                     "penetration_rate": round(penetration_rate, 2),
                     "installations": stats["total_installations"]
-                })
+                }}
             elif penetration_rate >= 2:
-                penetration_analysis["medium_penetration"].append({)
+                penetration_analysis["medium_penetration"].append({}
                     "location": location,
                     "penetration_rate": round(penetration_rate, 2),
                     "installations": stats["total_installations"]
-                })
+                }}
             elif penetration_rate >= 0.5:
-                penetration_analysis["low_penetration"].append({)
+                penetration_analysis["low_penetration"].append({}
                     "location": location,
                     "penetration_rate": round(penetration_rate, 2),
                     "installations": stats["total_installations"]
-                })
+                }}
             else:
-                penetration_analysis["emerging_markets"].append({)
+                penetration_analysis["emerging_markets"].append({}
                     "location": location,
                     "penetration_rate": round(penetration_rate, 2),
                     "installations": stats["total_installations"]
-                })
+                }}
         
         return penetration_analysis
     
@@ -435,22 +430,22 @@ class PluginGeoAnalytics:
         
         # Top market insight
         top_market = max(distribution.items(), key=lambda x: x[1]["installation_count"])
-        insights.append(f"Top market: {top_market[0]} with {top_market[1]['installation_count']} installations")
+        insights.append(f"Top market: {top_market[0]} with {top_market[1]['installation_count']} installations"}
         
         # Market concentration
-        total_installations = sum(data["installation_count"] for data in distribution.values()
+        total_installations = sum(data["installation_count"] for data in distribution.values(}
         top_3_markets = sorted(distribution.items(), key=lambda x: x[1]["installation_count"], reverse=True)[:3]
         top_3_concentration = sum(data[1]["installation_count"] for data in top_3_markets) / total_installations * 100
         
         if top_3_concentration > 70:
-            insights.append(f"High market concentration: Top 3 markets account for {top_3_concentration:.1f}% of installations")
+            insights.append(f"High market concentration: Top 3 markets account for {top_3_concentration:.1f}% of installations"}
         elif top_3_concentration < 30:
-            insights.append(f"Well-distributed adoption: Top 3 markets account for only {top_3_concentration:.1f}% of installations")
+            insights.append(f"Well-distributed adoption: Top 3 markets account for only {top_3_concentration:.1f}% of installations"}
         
         # Growth opportunity
-        single_installation_markets = sum(1 for data in distribution.values() if data["installation_count"] == 1)
+        single_installation_markets = sum(1 for data in distribution.values() if data["installation_count"] == 1}
         if single_installation_markets > len(distribution) * 0.3:
-            insights.append(f"Growth opportunity: {single_installation_markets} markets have only 1 installation")
+            insights.append(f"Growth opportunity: {single_installation_markets} markets have only 1 installation"}
         
         return insights
     
@@ -461,28 +456,28 @@ class PluginGeoAnalytics:
         if not overview:
             return ["No marketplace data available."]
         
-        total_locations = len(overview)
-        insights.append(f"Plugin marketplace active in {total_locations} locations")
+        total_locations = len(overview}
+        insights.append(f"Plugin marketplace active in {total_locations} locations"}
         
         # Market maturity analysis
-        mature_markets = sum(1 for stats in overview.values() if stats["total_installations"] >= 10)
+        mature_markets = sum(1 for stats in overview.values() if stats["total_installations"] >= 10}
         maturity_rate = mature_markets / total_locations * 100
         
         if maturity_rate > 50:
-            insights.append(f"Mature marketplace: {mature_markets} ({maturity_rate:.1f}%) locations have 10+ installations")
+            insights.append(f"Mature marketplace: {mature_markets} ({maturity_rate:.1f}%) locations have 10+ installations"}
         else:
-            insights.append(f"Developing marketplace: Only {mature_markets} ({maturity_rate:.1f}%) locations have 10+ installations")
+            insights.append(f"Developing marketplace: Only {mature_markets} ({maturity_rate:.1f}%) locations have 10+ installations"}
         
         # Diversity analysis
         avg_diversity = sum(stats["market_diversity_score"] for stats in overview.values() / total_locations
         if avg_diversity > 0.5:
-            insights.append(f"High plugin diversity across markets (avg score: {avg_diversity:.2f})")
+            insights.append(f"High plugin diversity across markets (avg score: {avg_diversity:.2f})"}
         else:
-            insights.append(f"Limited plugin diversity across markets (avg score: {avg_diversity:.2f})")
+            insights.append(f"Limited plugin diversity across markets (avg score: {avg_diversity:.2f})"}
         
         return insights
     
-    def _generate_regional_insights()
+    def _generate_regional_insights(}
         self,
         plugin_stats: Dict[str, Any],
         category_stats: Dict[str, int]
@@ -495,33 +490,33 @@ class PluginGeoAnalytics:
         
         # Most popular plugin
         most_popular = max(plugin_stats.items(), key=lambda x: x[1]["installation_count"])
-        insights.append(f"Most popular plugin: {most_popular[1]['plugin_name']} with {most_popular[1]['installation_count']} installations")
+        insights.append(f"Most popular plugin: {most_popular[1]['plugin_name']} with {most_popular[1]['installation_count']} installations"}
         
         # Category preferences
         if category_stats:
             top_category = max(category_stats.items(), key=lambda x: x[1])
-            insights.append(f"Preferred category: {top_category[0]} ({top_category[1]} installations)")
+            insights.append(f"Preferred category: {top_category[0]} ({top_category[1]} installations)"}
         
         # Market concentration
-        total_installations = sum(stats["installation_count"] for stats in plugin_stats.values()
+        total_installations = sum(stats["installation_count"] for stats in plugin_stats.values(}
         top_plugin_share = most_popular[1]["installation_count"] / total_installations * 100
         
         if top_plugin_share > 30:
-            insights.append(f"Market dominated by single plugin ({top_plugin_share:.1f}% market share)")
+            insights.append(f"Market dominated by single plugin ({top_plugin_share:.1f}% market share)"}
         else:
-            insights.append(f"Diverse plugin adoption (top plugin has {top_plugin_share:.1f}% share)")
+            insights.append(f"Diverse plugin adoption (top plugin has {top_plugin_share:.1f}% share)"}
         
         return insights
     
     def _get_top_markets(self, overview: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Get top markets by various metrics."""
-        by_installations = sorted()
+        by_installations = sorted(}
             overview.items(),
             key=lambda x: x[1]["total_installations"],
             reverse=True
         )[:5]
         
-        by_diversity = sorted()
+        by_diversity = sorted(}
             overview.items(),
             key=lambda x: x[1]["market_diversity_score"],
             reverse=True

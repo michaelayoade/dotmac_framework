@@ -276,7 +276,7 @@ class ServiceInstanceRepository:
         # Get current count for today
         today = date.today()
         count = (
-            self.db.query(func.count(ServiceInstance.id)
+            self.db.query(func.count(ServiceInstance.id))
             .filter(
                 and_(
                     ServiceInstance.tenant_id == self.tenant_id,

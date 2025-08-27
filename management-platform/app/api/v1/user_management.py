@@ -11,12 +11,12 @@ from fastapi import APIRouter, Depends, Query, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_, or_
 
-from ...database import get_db, database_transaction
-from ...core.auth import get_current_admin_user, require_permissions, require_role
-from ...core.exceptions import ValidationError, AuthenticationError, AuthorizationError
-from ...models.user import User
-from ...models.tenant import Tenant
-from ...schemas.user_management import (
+from database import get_db, database_transaction
+from core.auth import get_current_admin_user, require_permissions, require_role
+from core.exceptions import ValidationError, AuthenticationError, AuthorizationError
+from models.user import User
+from models.tenant import Tenant
+from schemas.user_management import (
     UserCreate,
     UserUpdate,
     UserInvite,
@@ -32,7 +32,7 @@ from ...schemas.user_management import (
     TwoFactorSetup,
     UserBulkOperation
 , timezone)
-from ...services.user_management_service import UserManagementService, UserRole, Permission, ROLE_PERMISSIONS
+from services.user_management_service import UserManagementService, UserRole, Permission, ROLE_PERMISSIONS
 
 router = APIRouter(prefix="/user-management", tags=["user-management"])
 
@@ -53,7 +53,6 @@ async def create_user(:)
             raise HTTPException()
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Insufficient permissions to create users"
-            )
         
         # Platform admins can create users for any tenant
         # Tenant admins can only create users for their own tenant
@@ -64,14 +63,12 @@ async def create_user(:)
                 raise HTTPException()
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Cannot create users for other tenants"
-                )
         
         user_service = UserManagementService(db)
         result = await user_service.create_user()
             user_data=user_data,
             created_by=current_admin["user_id"],
             tenant_id=tenant_id
-        )
         
         return result
         
@@ -79,12 +76,10 @@ async def create_user(:)
         raise HTTPException()
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
-        )
     except Exception as e:
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create user: {str(e)}"
-        )
 
 
 @router.get("/users/{user_id}", response_model=UserProfile)
@@ -102,18 +97,15 @@ async def get_user(:)
             raise HTTPException()
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Insufficient permissions to read user data"
-            )
         
         result = await db.execute(
 )            select(User).where(User.id == user_id)
-        )
         user = result.scalar_one_or_none()
         
         if not user:
-)            raise HTTPException()
+    )            raise HTTPException()
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found"
-            )
         
         # Tenant admins can only view users in their tenant
         if current_admin["role"] not in ["super_admin", "platform_admin", "support"]:
@@ -121,10 +113,8 @@ async def get_user(:)
                 raise HTTPException()
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Cannot view users from other tenants"
-                )
         
-        return UserProfile()
-            user_id=user.id,
+        return UserProfile(user_id=user.id,
             email=user.email,
             full_name=user.full_name,
             role=user.role,
@@ -135,15 +125,13 @@ async def get_user(:)
             created_at=user.created_at,
             updated_at=user.updated_at,
             metadata=user.metadata
-        )
         
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get user: {str(e)}"
-        )
+            detail=f"Failed to get user: {str(e))"
 
 
 @router.put("/users/{user_id}", response_model=Dict[str, Any])
@@ -162,19 +150,16 @@ async def update_user(:)
             raise HTTPException()
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Insufficient permissions to update users"
-            )
         
         # Get existing user to check tenant access
         result = await db.execute(
 )            select(User).where(User.id == user_id)
-        )
         user = result.scalar_one_or_none()
         
         if not user:
-)            raise HTTPException()
+    )            raise HTTPException()
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found"
-            )
         
         # Tenant admins can only update users in their tenant
         if current_admin["role"] not in ["super_admin", "platform_admin"]:
@@ -182,14 +167,12 @@ async def update_user(:)
                 raise HTTPException()
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Cannot update users from other tenants"
-                )
         
         user_service = UserManagementService(db)
         result = await user_service.update_user()
             user_id=user_id,
             user_update=user_update,
             updated_by=current_admin["user_id"]
-        )
         
         return result
         
@@ -199,12 +182,10 @@ async def update_user(:)
         raise HTTPException()
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
-        )
     except Exception as e:
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to update user: {str(e)}"
-        )
 
 
 @router.delete("/users/{user_id}")
@@ -223,26 +204,22 @@ async def delete_user(:)
             raise HTTPException()
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Insufficient permissions to delete users"
-            )
         
         # Get existing user to check tenant access
         result = await db.execute(
 )            select(User).where(User.id == user_id)
-        )
         user = result.scalar_one_or_none()
         
         if not user:
-)            raise HTTPException()
+    )            raise HTTPException()
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found"
-            )
         
         # Prevent self-deletion
         if str(user_id) == current_admin["user_id"]:
             raise HTTPException()
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Cannot delete your own account"
-            )
         
         # Tenant admins can only delete users in their tenant
         if current_admin["role"] not in ["super_admin", "platform_admin"]:
@@ -250,14 +227,12 @@ async def delete_user(:)
                 raise HTTPException()
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Cannot delete users from other tenants"
-                )
         
         user_service = UserManagementService(db)
         result = await user_service.delete_user()
             user_id=user_id,
             deleted_by=current_admin["user_id"],
             soft_delete=soft_delete
-        )
         
         return result
         
@@ -267,12 +242,10 @@ async def delete_user(:)
         raise HTTPException()
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
-        )
     except Exception as e:
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to delete user: {str(e)}"
-        )
 
 
 @router.get("/users")
@@ -295,7 +268,6 @@ async def list_users(:)
             raise HTTPException()
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Insufficient permissions to list users"
-            )
         
         # Build query filters
         filters = []
@@ -321,8 +293,6 @@ async def list_users(:)
 )                or_()
                     User.email.ilike(search_term),
                     User.full_name.ilike(search_term)
-                )
-            )
         
         # Build and execute query
         query = select(User).where(and_(*filters).order_by(User.created_at.desc(
@@ -367,7 +337,6 @@ async def list_users(:)
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to list users: {str(e)}"
-        )
 
 
 @router.post("/users/invite")
@@ -386,7 +355,6 @@ async def invite_user(:)
             raise HTTPException()
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Insufficient permissions to invite users"
-            )
         
         # Determine target tenant
         if current_admin["role"] not in ["super_admin", "platform_admin"]:
@@ -397,7 +365,6 @@ async def invite_user(:)
             invitation=invitation,
             invited_by=current_admin["user_id"],
             tenant_id=tenant_id
-        )
         
         return result
         
@@ -405,12 +372,10 @@ async def invite_user(:)
         raise HTTPException()
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
-        )
     except Exception as e:
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to invite user: {str(e)}"
-        )
 
 
 @router.post("/users/accept-invitation")
@@ -426,7 +391,6 @@ async def accept_invitation(:)
         result = await user_service.accept_invitation()
             invitation_token=acceptance.invitation_token,
             password=acceptance.password
-        )
         
         return result
         
@@ -434,12 +398,10 @@ async def accept_invitation(:)
         raise HTTPException()
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
-        )
     except Exception as e:
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to accept invitation: {str(e)}"
-        )
 
 
 @router.post("/users/{user_id}/reset-password")
@@ -458,19 +420,16 @@ async def reset_user_password(:)
             raise HTTPException()
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Insufficient permissions to reset passwords"
-            )
         
         # Get user to check tenant access
         result = await db.execute(
 )            select(User).where(User.id == user_id)
-        )
         user = result.scalar_one_or_none()
         
         if not user:
-)            raise HTTPException()
+    )            raise HTTPException()
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found"
-            )
         
         # Tenant admins can only reset passwords for users in their tenant
         if current_admin["role"] not in ["super_admin", "platform_admin"]:
@@ -478,13 +437,11 @@ async def reset_user_password(:)
                 raise HTTPException()
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Cannot reset passwords for users in other tenants"
-                )
         
         user_service = UserManagementService(db)
         result = await user_service.reset_password()
             email=user.email,
             new_password=password_reset.new_password
-        )
         
         return result
         
@@ -494,12 +451,10 @@ async def reset_user_password(:)
         raise HTTPException()
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
-        )
     except Exception as e:
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to reset password: {str(e)}"
-        )
 
 
 @router.get("/users/{user_id}/permissions")
@@ -517,7 +472,6 @@ async def get_user_permissions(:)
             raise HTTPException()
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Insufficient permissions to view user permissions"
-            )
         
         user_service = UserManagementService(db)
         result = await user_service.get_user_permissions(user_id)
@@ -528,12 +482,10 @@ async def get_user_permissions(:)
         raise HTTPException()
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
-        )
     except Exception as e:
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get user permissions: {str(e)}"
-        )
 
 
 @router.post("/users/{user_id}/permissions/assign")
@@ -552,14 +504,12 @@ async def assign_permissions(:)
             raise HTTPException()
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Only super admins can assign custom permissions"
-            )
         
         user_service = UserManagementService(db)
         result = await user_service.assign_permissions()
             user_id=user_id,
             permissions=assignment.permissions,
             assigned_by=current_admin["user_id"]
-        )
         
         return result
         
@@ -567,12 +517,10 @@ async def assign_permissions(:)
         raise HTTPException()
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
-        )
     except Exception as e:
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to assign permissions: {str(e)}"
-        )
 
 
 @router.post("/users/{user_id}/permissions/revoke")
@@ -591,14 +539,12 @@ async def revoke_permissions(:)
             raise HTTPException()
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Only super admins can revoke custom permissions"
-            )
         
         user_service = UserManagementService(db)
         result = await user_service.revoke_permissions()
             user_id=user_id,
             permissions=revocation.permissions,
             revoked_by=current_admin["user_id"]
-        )
         
         return result
         
@@ -606,12 +552,10 @@ async def revoke_permissions(:)
         raise HTTPException()
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
-        )
     except Exception as e:
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to revoke permissions: {str(e)}"
-        )
 
 
 @router.get("/roles", response_model=List[RoleDefinition])
@@ -633,7 +577,6 @@ async def get_roles(:)
                 description=f"{role.value} role with specific permissions",
                 permissions=[p.value for p in permissions],
                 is_system_role=True
-            )
         
         return roles
         
@@ -641,7 +584,6 @@ async def get_roles(:)
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get roles: {str(e)}"
-        )
 
 
 @router.get("/permissions")
@@ -672,13 +614,11 @@ async def get_permissions(:)
         return {
             "permissions": permissions,
             "categories": list(set(p["category"] for p in permissions)
-        )
         
     except Exception as e:
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get permissions: {str(e)}"
-        )
 
 
 @router.get("/statistics", response_model=UserStatistics)
@@ -696,7 +636,6 @@ async def get_user_statistics(:)
             raise HTTPException()
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Insufficient permissions to view user statistics"
-            )
         
         # Build filters based on admin role
         filters = []
@@ -709,14 +648,11 @@ async def get_user_statistics(:)
         # Get basic counts
         total_result = await db.execute(
 )            select(func.count(User.id).where(and_(*filters)
-        )
         total_users = total_result.scalar()
         
 )        active_result = await db.execute()
             select(func.count(User.id).where())
                 and_(User.is_active == True, *filters)
-            )
-        )
         active_users = active_result.scalar()
         
         # Get users by role
@@ -724,8 +660,7 @@ async def get_user_statistics(:)
             select(User.role, func.count(User.id).where())
                 and_(*filters)
             ).group_by(User.role)
-        )
-        users_by_role = {role: count for role, count in role_result.all(})
+        users_by_role = {role: count for role, count in role_result.all(}}
         
 )        # Get users by tenant (only for platform admins)
         users_by_tenant = {}
@@ -734,9 +669,8 @@ async def get_user_statistics(:)
 )                select(User.tenant_id, func.count(User.id).where()
                     and_(*filters)
                 ).group_by(User.tenant_id)
-            )
             users_by_tenant = {
-                str(tenant_id): count for tenant_id, count in tenant_result.all()
+                str(tenant_id): count for tenant_id, count in tenant_result.all(}
                 if tenant_id is not None
             }
         
@@ -747,9 +681,6 @@ async def get_user_statistics(:)
                 and_()
                     User.last_login >= recent_login_threshold,
                     *filters
-                )
-            )
-        )
         recent_logins = recent_result.scalar()
         
         # Get pending invitations
@@ -759,13 +690,9 @@ async def get_user_statistics(:)
                     User.is_active == False,
                     User.metadata.contains({"status": "invited"}),
                     *filters
-                )
-            )
-        )
         pending_invitations = pending_result.scalar()
         
-)        return UserStatistics()
-            total_users=total_users,
+)        return UserStatistics(total_users=total_users,
             active_users=active_users,
             inactive_users=total_users - active_users,
             users_by_role=users_by_role,
@@ -774,15 +701,13 @@ async def get_user_statistics(:)
             pending_invitations=pending_invitations,
             locked_accounts=0,  # Would need to implement account locking
             last_updated=datetime.now(None)
-        )
         
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get user statistics: {str(e)}"
-        )
+            detail=f"Failed to get user statistics: {str(e))"
 
 
 @router.post("/users/bulk-operation")
@@ -808,14 +733,12 @@ async def bulk_user_operation(:)
             raise HTTPException()
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"Insufficient permissions for operation: {operation.operation}"
-            )
         
         # Only super admins can perform bulk operations
         if current_admin["role"] not in ["super_admin"]:
             raise HTTPException()
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Only super admins can perform bulk operations"
-            )
         
         results = []
         errors = []
@@ -831,7 +754,6 @@ async def bulk_user_operation(:)
                         user_id=user_id,
 )                        user_update=UserUpdate(is_active=True),
                         updated_by=current_admin["user_id"]
-                    )
                     results.append(result)
                     successful += 1
                     
@@ -840,7 +762,6 @@ async def bulk_user_operation(:)
                         user_id=user_id,
 )                        user_update=UserUpdate(is_active=False),
                         updated_by=current_admin["user_id"]
-                    )
                     results.append(result)
                     successful += 1
                     
@@ -849,7 +770,6 @@ async def bulk_user_operation(:)
                         user_id=user_id,
                         deleted_by=current_admin["user_id"],
 )                        soft_delete=operation.parameters.get("soft_delete", True)
-                    )
                     results.append(result)
                     successful += 1
                     
@@ -862,7 +782,6 @@ async def bulk_user_operation(:)
                         user_id=user_id,
 )                        user_update=UserUpdate(role=new_role),
                         updated_by=current_admin["user_id"]
-                    )
                     results.append(result)
                     successful += 1
                     
@@ -891,9 +810,7 @@ async def bulk_user_operation(:)
         raise HTTPException()
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
-        )
     except Exception as e:
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Bulk operation failed: {str(e)}"
-        )

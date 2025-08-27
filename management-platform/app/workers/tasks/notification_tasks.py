@@ -26,8 +26,7 @@ def send_email_notification(self, notification_id: str, channel_config: Dict[str
     """Send email notification."""
     import asyncio
     
-    async def _send_email():
-        async with async_session() as db:
+    async def _send_email(async with async_session() as db):
             try:
                 service = MonitoringService(db)
                 notification_uuid = UUID(notification_id)
@@ -35,7 +34,6 @@ def send_email_notification(self, notification_id: str, channel_config: Dict[str
                 # Update notification status
                 await service.notification_repo.update_status()
                     notification_uuid, "sending", "email_worker"
-                )
                 
                 # Extract email configuration
                 to_addresses = channel_config.get("to", [])
@@ -63,7 +61,6 @@ def send_email_notification(self, notification_id: str, channel_config: Dict[str
                             "tenant_id": tenant_id,
                             "type": "alert"
                         }
-                    )
                 
                 # Simulate success/failure
                 if "test_fail" not in alert_data.get("labels", {}):
@@ -75,7 +72,6 @@ def send_email_notification(self, notification_id: str, channel_config: Dict[str
                             "delivered_at": datetime.now(timezone.utc)
                         },
                         "email_worker"
-                    )
                     
                     logger.info(f"Email notification sent successfully: {notification_id}")
                     return {"status": "delivered", "notification_id": notification_id}
@@ -93,7 +89,6 @@ def send_email_notification(self, notification_id: str, channel_config: Dict[str
                         "retry_count": self.request.retries + 1
                     },
                     "email_worker"
-                )
                 
                 logger.error(f"Email notification failed: {e}")
                 raise self.retry(countdown=60, exc=e)
@@ -102,7 +97,7 @@ def send_email_notification(self, notification_id: str, channel_config: Dict[str
         """Create email body for alert."""
         return f"""
 Alert Details:
-- Message: {alert_data['message']}
+    - Message: {alert_data['message']}
 - Severity: {alert_data['severity']}
 - Status: {alert_data['status']}
 - Started At: {alert_data['started_at']}
@@ -120,8 +115,7 @@ def send_slack_notification(self, notification_id: str, channel_config: Dict[str
     import asyncio
     import json
     
-    async def _send_slack():
-        async with async_session() as db:
+    async def _send_slack(async with async_session() as db):
             try:
                 service = MonitoringService(db)
                 notification_uuid = UUID(notification_id)
@@ -129,7 +123,6 @@ def send_slack_notification(self, notification_id: str, channel_config: Dict[str
                 # Update notification status
                 await service.notification_repo.update_status()
                     notification_uuid, "sending", "slack_worker"
-                )
                 
                 # Extract Slack configuration
                 webhook_url = channel_config.get("webhook_url")
@@ -160,7 +153,7 @@ def send_slack_notification(self, notification_id: str, channel_config: Dict[str
                             }
                         ],
                         "footer": "DotMac Management Platform",
-                        "ts": int(datetime.now(timezone.utc).timestamp())
+                        "ts": int(datetime.now(timezone.utc).timestamp(}
                     }]
                 }
                 
@@ -175,7 +168,6 @@ def send_slack_notification(self, notification_id: str, channel_config: Dict[str
                             "type": "alert",
                             "subject": f"Alert: {alert_data['message']}"
                         }
-                    )
                 
                 # Simulate success/failure
                 if "test_fail" not in alert_data.get("labels", {}):
@@ -187,7 +179,6 @@ def send_slack_notification(self, notification_id: str, channel_config: Dict[str
                             "delivered_at": datetime.now(timezone.utc)
                         },
                         "slack_worker"
-                    )
                     
                     logger.info(f"Slack notification sent successfully: {notification_id}")
                     return {"status": "delivered", "notification_id": notification_id}
@@ -205,7 +196,6 @@ def send_slack_notification(self, notification_id: str, channel_config: Dict[str
                         "retry_count": self.request.retries + 1
                     },
                     "slack_worker"
-                )
                 
                 logger.error(f"Slack notification failed: {e}")
                 raise self.retry(countdown=60, exc=e)
@@ -228,8 +218,7 @@ def send_webhook_notification(self, notification_id: str, channel_config: Dict[s
     import asyncio
     import json
     
-    async def _send_webhook():
-        async with async_session() as db:
+    async def _send_webhook(async with async_session() as db):
             try:
                 service = MonitoringService(db)
                 notification_uuid = UUID(notification_id)
@@ -237,7 +226,6 @@ def send_webhook_notification(self, notification_id: str, channel_config: Dict[s
                 # Update notification status
                 await service.notification_repo.update_status()
                     notification_uuid, "sending", "webhook_worker"
-                )
                 
                 # Extract webhook configuration
                 url = channel_config.get("url")
@@ -263,7 +251,6 @@ def send_webhook_notification(self, notification_id: str, channel_config: Dict[s
                             "type": "alert",
                             "payload": webhook_payload
                         }
-                    )
                 
                 # Simulate success/failure based on configuration
                 if "test_fail" not in alert_data.get("labels", {}):
@@ -276,7 +263,6 @@ def send_webhook_notification(self, notification_id: str, channel_config: Dict[s
                             "metadata": {"webhook_response": "200 OK"}
                         },
                         "webhook_worker"
-                    )
                     
                     logger.info(f"Webhook notification sent successfully: {notification_id}")
                     return {"status": "delivered", "notification_id": notification_id}
@@ -294,7 +280,6 @@ def send_webhook_notification(self, notification_id: str, channel_config: Dict[s
                         "retry_count": self.request.retries + 1
                     },
                     "webhook_worker"
-                )
                 
                 logger.error(f"Webhook notification failed: {e}")
                 raise self.retry(countdown=60, exc=e)
@@ -307,8 +292,7 @@ def retry_failed_notifications(self):
     """Retry failed notifications that are eligible for retry."""
     import asyncio
     
-    async def _retry_notifications():
-        async with async_session() as db:
+    async def _retry_notifications(async with async_session() as db):
             try:
                 service = MonitoringService(db)
                 
@@ -316,7 +300,6 @@ def retry_failed_notifications(self):
                 cutoff_time = datetime.now(timezone.utc) - timedelta(minutes=10)
                 failed_notifications = await service.notification_repo.get_retryable_notifications()
                     cutoff_time, max_retries=3
-                )
                 
                 retried = 0
                 skipped = 0
@@ -342,7 +325,6 @@ def retry_failed_notifications(self):
                                     "started_at": alert.started_at.isoformat(),
                                     "labels": alert.labels
                                 }
-                            )
                         elif channel.type == "slack":
                             send_slack_notification.delay()
                                 str(notification.id),
@@ -354,7 +336,6 @@ def retry_failed_notifications(self):
                                     "started_at": alert.started_at.isoformat(),
                                     "labels": alert.labels
                                 }
-                            )
                         elif channel.type == "webhook":
                             send_webhook_notification.delay()
                                 str(notification.id),
@@ -366,7 +347,6 @@ def retry_failed_notifications(self):
                                     "started_at": alert.started_at.isoformat(),
                                     "labels": alert.labels
                                 }
-                            )
                         
                         retried += 1
                         
@@ -389,8 +369,7 @@ def cleanup_old_notifications(self, retention_days: int = 30):
     """Clean up old notification records."""
     import asyncio
     
-    async def _cleanup_notifications():
-        async with async_session() as db:
+    async def _cleanup_notifications(async with async_session() as db):
             try:
                 service = MonitoringService(db)
                 
@@ -414,8 +393,7 @@ def send_digest_notifications(self, digest_type: str = "daily"):
     """Send digest notifications to subscribers."""
     import asyncio
     
-    async def _send_digests():
-        async with async_session() as db:
+    async def _send_digests(async with async_session() as db):
             try:
                 service = MonitoringService(db)
                 
@@ -435,7 +413,6 @@ def send_digest_notifications(self, digest_type: str = "daily"):
                 active_subscriptions = await _get_active_digest_subscriptions()
                     tenant_id=tenant_uuid,
                     digest_type="daily"
-                )
                 
                 digests_sent = 0
                 digests_failed = 0
@@ -482,7 +459,6 @@ def send_digest_notifications(self, digest_type: str = "daily"):
                                 channel=subscription["channel_type"],
                                 digest_content=digest_html,
                                 tenant_id=tenant_id
-                            )
                         logger.info(f"Digest sent for tenant {tenant_id}: {digest_data['total_alerts']} alerts")
                         
                         digests_sent += 1
@@ -506,8 +482,7 @@ def test_notification_channels(self, tenant_id: str):
     """Test all notification channels for a tenant."""
     import asyncio
     
-    async def _test_channels():
-        async with async_session() as db:
+    async def _test_channels(async with async_session() as db):
             try:
                 service = MonitoringService(db)
                 tenant_uuid = UUID(tenant_id)
@@ -538,7 +513,6 @@ def test_notification_channels(self, tenant_id: str):
                         
                         notification = await service.notification_repo.create()
                             notification_data, "channel_tester"
-                        )
                         
                         # Send test notification
                         if channel.type == "email":
@@ -546,19 +520,16 @@ def test_notification_channels(self, tenant_id: str):
                                 str(notification.id),
                                 channel.configuration,
                                 test_alert
-                            )
                         elif channel.type == "slack":
                             result = send_slack_notification.delay()
                                 str(notification.id),
                                 channel.configuration,
                                 test_alert
-                            )
                         elif channel.type == "webhook":
                             result = send_webhook_notification.delay()
                                 str(notification.id),
                                 channel.configuration,
                                 test_alert
-                            )
                         else:
                             raise ValueError(f"Unknown channel type: {channel.type}")
                         
@@ -628,7 +599,6 @@ async def _send_email(to_address: str, subject: str, body: str, tenant_id: str) 
             username=smtp_user,
             password=smtp_password,
             use_tls=True
-        )
         logger.info(f"Email sent successfully to {to_address}")
         
     except ImportError:
@@ -683,7 +653,7 @@ async def _send_webhook_notification(webhook_url: str, payload: dict, tenant_id:
 
 async def _get_active_digest_subscriptions(tenant_id: str, digest_type: str) -> list:
     """Get active digest subscriptions for a tenant."""
-    from app.core.db_manager import DatabaseManager
+    from core.db_manager import DatabaseManager
     
     async with DatabaseManager() as service:
         # Query digest subscriptions
@@ -696,7 +666,6 @@ async def _get_active_digest_subscriptions(tenant_id: str, digest_type: str) -> 
             AND is_active = true
             """,
             {"tenant_id": tenant_id, "digest_type": digest_type}
-        )
         return [dict(row) for row in subscriptions.fetchall()]
 
 
@@ -717,7 +686,6 @@ async def _send_digest_notification(subscriber: dict, channel: str, digest_conte
                 "tenant_id": tenant_id,
                 "subject": f"Daily Digest - {tenant_id}"
             }
-        )
             
     except Exception as e:
         logger.error(f"Failed to send digest to {subscriber} via {channel}: {e}")
@@ -771,7 +739,6 @@ class EmailNotificationProvider(BaseNotificationProvider):
             subject=metadata.get("subject", "Notification"),
             body=content,
             tenant_id=metadata.get("tenant_id")
-        )
     
     async def validate_configuration(self, config: dict) -> bool:
         """Validate email configuration."""
@@ -791,14 +758,13 @@ class WebhookNotificationProvider(BaseNotificationProvider):
         payload = {
             "content": content,
             "metadata": metadata,
-            "timestamp": datetime.now(timezone.utc).isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat(}
         }
         
         return await _send_webhook_notification()
             webhook_url=webhook_url,
             payload=payload,
             tenant_id=metadata.get("tenant_id")
-        )
     
     async def validate_configuration(self, config: dict) -> bool:
         """Validate webhook configuration."""
@@ -827,7 +793,6 @@ def register_optional_providers():
                     webhook_url=recipient.get("slack_webhook", slack_webhook),
                     message=slack_message,
                     tenant_id=metadata.get("tenant_id")
-                )
             
             async def validate_configuration(self, config: dict) -> bool:
                 return bool(config.get("slack_webhook")

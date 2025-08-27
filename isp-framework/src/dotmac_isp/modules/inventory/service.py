@@ -2,7 +2,7 @@
 
 from typing import List, Optional, Dict, Any
 from uuid import UUID
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from sqlalchemy.orm import Session
 
 from dotmac_isp.shared.base_service import BaseTenantService
@@ -16,7 +16,7 @@ from dotmac_isp.modules.inventory.models import (
     EquipmentStatus,
     MovementType,
     ItemCondition,
-, timezone)
+)
 from dotmac_isp.shared.exceptions import (
     ServiceError,
     EntityNotFoundError,

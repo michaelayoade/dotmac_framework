@@ -5,8 +5,23 @@
  * security validation, and performance monitoring
  */
 
-import { axe, AxeResults } from 'jest-axe';
-import type { MatcherFunction } from 'expect';
+import { axe } from 'jest-axe';
+
+// Define matcher function type locally since expect types may not be available
+interface MatcherResult {
+  pass: boolean;
+  message(): string;
+}
+
+type MatcherFunction<T extends any[]> = (received: any, ...expected: T) => MatcherResult | Promise<MatcherResult>;
+
+// Define AxeResults type locally since it's not exported by jest-axe
+interface AxeResults {
+  violations: any[];
+  passes: any[];
+  incomplete: any[];
+  inapplicable: any[];
+}
 
 // Extend Jest expect interface
 declare global {
@@ -156,7 +171,7 @@ const toHaveValidMarkup: MatcherFunction<[]> = function (received: HTMLElement) 
   // Basic validation - this is simplified
   const tagNames = openTags.map((tag) => {
     const match = tag.match(/<(\w+)/);
-    return match ? match[1] : '';
+    return match?.[1] ?? '';
   });
 
   const selfClosingTags = ['img', 'br', 'hr', 'input', 'meta', 'link', 'area', 'base'];
@@ -193,7 +208,7 @@ const toHaveValidMarkup: MatcherFunction<[]> = function (received: HTMLElement) 
 /**
  * Check if component is responsive (simplified check)
  */
-const toBeResponsive: MatcherFunction<[]> = async function (received: HTMLElement) {
+const toBeResponsive: MatcherFunction<[]> = async function (received: HTMLElement | Document) {
   const issues: string[] = [];
 
   // Check for fixed widths that might break responsiveness
@@ -203,7 +218,7 @@ const toBeResponsive: MatcherFunction<[]> = async function (received: HTMLElemen
   }
 
   // Check for viewport meta tag if this is a document
-  if (received instanceof Document) {
+  if (typeof Document !== 'undefined' && received instanceof Document) {
     const viewportMeta = received.querySelector('meta[name="viewport"]');
     if (!viewportMeta) {
       issues.push('Missing viewport meta tag');
@@ -212,9 +227,12 @@ const toBeResponsive: MatcherFunction<[]> = async function (received: HTMLElemen
 
   // Check for elements that might overflow
   const wideElements = Array.from(received.querySelectorAll('*')).filter((el) => {
-    const styles = window.getComputedStyle(el);
-    const width = parseFloat(styles.width);
-    return width > 1200; // Arbitrary threshold
+    if (typeof window !== 'undefined' && window.getComputedStyle) {
+      const styles = window.getComputedStyle(el);
+      const width = parseFloat(styles.width);
+      return width > 1200; // Arbitrary threshold
+    }
+    return false;
   });
 
   if (wideElements.length > 0) {
@@ -289,7 +307,8 @@ const toPassSecurityAudit: MatcherFunction<[]> = function (received: HTMLElement
   const forms = received.querySelectorAll('form');
   forms.forEach((form, index) => {
     const csrfToken = form.querySelector('input[name*="csrf"], input[name*="token"]');
-    if (!csrfToken && form.method?.toLowerCase() === 'post') {
+    const method = form.getAttribute('method');
+    if (!csrfToken && method?.toLowerCase() === 'post') {
       securityIssues.push(`Form ${index + 1} missing CSRF protection`);
     }
   });
@@ -312,7 +331,8 @@ const toPassSecurityAudit: MatcherFunction<[]> = function (received: HTMLElement
 };
 
 // Register all matchers
-expect.extend({
+if (typeof expect !== 'undefined') {
+  expect.extend({
   toBeAccessible,
   toHaveNoSecurityViolations,
   toBePerformant,
@@ -321,7 +341,8 @@ expect.extend({
   toHaveLoadedWithoutErrors,
   toMatchVisualSnapshot,
   toPassSecurityAudit,
-});
+  });
+}
 
 export {
   toBeAccessible,

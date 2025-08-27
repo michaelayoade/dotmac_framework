@@ -1,0 +1,13 @@
+{
+  "*.{ts,tsx,js,jsx}": [
+    "biome check --write",
+    "biome format --write",
+    "jest --passWithNoTests --findRelatedTests"
+  ],
+  "*.{md,json,yml,yaml}": [
+    "biome format --write"
+  ],
+  "*.{css,scss}": [
+    "biome format --write"
+  ]
+}

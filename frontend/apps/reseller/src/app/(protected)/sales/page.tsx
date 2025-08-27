@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { SalesDashboard } from '../../../components/dashboard/SalesDashboard';
+import { SalesDashboard } from "../../../components/dashboard/SalesDashboard";
 
 export default function SalesPage() {
-  return <SalesDashboard />;
+	return <SalesDashboard />;
 }

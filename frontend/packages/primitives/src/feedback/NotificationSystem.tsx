@@ -1,79 +1,485 @@
-/**
- * Advanced notification system with toast notifications, alerts, and notification center
- */
-'use client';
+import React, { createContext, useContext, useReducer, useEffect, useRef, useCallback, useMemo } from 'react';
 
-import { cva, type VariantProps } from 'class-variance-authority';
-import { clsx } from 'clsx';
-import type React from 'react';
-import { createContext, forwardRef, useCallback, useContext, useEffect, useState } from 'react';
+export type NotificationType = 'success' | 'error' | 'warning' | 'info' | 'system';
+export type NotificationPriority = 'low' | 'medium' | 'high' | 'critical';
+export type NotificationChannel = 'browser' | 'websocket' | 'email' | 'sms' | 'push';
 
-// Notification types
 export interface Notification {
   id: string;
-  type: 'info' | 'success' | 'warning' | 'error';
+  type: NotificationType;
+  priority: NotificationPriority;
   title: string;
-  message?: string;
-  duration?: number; // in milliseconds, 0 for persistent
-  actions?: NotificationAction[];
-  dismissible?: boolean;
-  icon?: React.ReactNode;
-  metadata?: Record<string, unknown>;
+  message: string;
+  channel: NotificationChannel[];
   timestamp: Date;
-  read?: boolean;
-  persistent?: boolean;
+  read: boolean;
+  persistent: boolean;
+  actions?: NotificationAction[];
+  metadata?: Record<string, any>;
+  expiresAt?: Date;
+  userId?: string;
+  tenantId?: string;
 }
 
 export interface NotificationAction {
+  id: string;
   label: string;
-  action: () => void;
-  variant?: 'primary' | 'secondary' | 'destructive';
+  type: 'primary' | 'secondary' | 'danger';
+  handler: (notification: Notification) => void | Promise<void>;
 }
 
-// Toast notification variants
-const toastVariants = cva('toast-notification', {
-  variants: {
-    type: {
-      info: 'toast-info',
-      success: 'toast-success',
-      warning: 'toast-warning',
-      error: 'toast-error',
-    },
-    position: {
-      'top-right': 'position-top-right',
-      'top-left': 'position-top-left',
-      'top-center': 'position-top-center',
-      'bottom-right': 'position-bottom-right',
-      'bottom-left': 'position-bottom-left',
-      'bottom-center': 'position-bottom-center',
-    },
-    size: {
-      sm: 'toast-sm',
-      md: 'toast-md',
-      lg: 'toast-lg',
-    },
-  },
-  defaultVariants: {
-    type: 'info',
-    position: 'top-right',
-    size: 'md',
-  },
-});
-
-// Notification context
-interface NotificationContextType {
+export interface NotificationState {
   notifications: Notification[];
-  addNotification: (notification: Omit<Notification, 'id' | 'timestamp'>) => string;
+  unreadCount: number;
+  isConnected: boolean;
+  settings: NotificationSettings;
+}
+
+export interface NotificationSettings {
+  enableBrowser: boolean;
+  enableWebSocket: boolean;
+  enableEmail: boolean;
+  enableSMS: boolean;
+  enablePush: boolean;
+  soundEnabled: boolean;
+  maxNotifications: number;
+  autoHideDelay: number;
+  priorities: Record<NotificationPriority, boolean>;
+  channels: Record<NotificationChannel, boolean>;
+}
+
+type NotificationAction_Type = 
+  | { type: 'ADD_NOTIFICATION'; payload: Notification }
+  | { type: 'REMOVE_NOTIFICATION'; payload: string }
+  | { type: 'MARK_READ'; payload: string }
+  | { type: 'MARK_ALL_READ' }
+  | { type: 'CLEAR_ALL' }
+  | { type: 'UPDATE_SETTINGS'; payload: Partial<NotificationSettings> }
+  | { type: 'SET_CONNECTION_STATUS'; payload: boolean }
+  | { type: 'CLEANUP_EXPIRED' };
+
+interface NotificationContextType {
+  state: NotificationState;
+  addNotification: (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => void;
   removeNotification: (id: string) => void;
-  clearNotifications: () => void;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
-  getUnreadCount: () => number;
+  clearAll: () => void;
+  updateSettings: (settings: Partial<NotificationSettings>) => void;
+  connect: () => void;
+  disconnect: () => void;
+}
+
+const defaultSettings: NotificationSettings = {
+  enableBrowser: true,
+  enableWebSocket: true,
+  enableEmail: false,
+  enableSMS: false,
+  enablePush: false,
+  soundEnabled: true,
+  maxNotifications: 100,
+  autoHideDelay: 5000,
+  priorities: {
+    low: true,
+    medium: true,
+    high: true,
+    critical: true,
+  },
+  channels: {
+    browser: true,
+    websocket: true,
+    email: false,
+    sms: false,
+    push: false,
+  },
+};
+
+const initialState: NotificationState = {
+  notifications: [],
+  unreadCount: 0,
+  isConnected: false,
+  settings: defaultSettings,
+};
+
+function notificationReducer(
+  state: NotificationState,
+  action: NotificationAction_Type
+): NotificationState {
+  switch (action.type) {
+    case 'ADD_NOTIFICATION': {
+      const notification = action.payload;
+      const notifications = [notification, ...state.notifications].slice(
+        0,
+        state.settings.maxNotifications
+      );
+      
+      return {
+        ...state,
+        notifications,
+        unreadCount: state.unreadCount + (notification.read ? 0 : 1),
+      };
+    }
+
+    case 'REMOVE_NOTIFICATION': {
+      const notifications = state.notifications.filter(n => n.id !== action.payload);
+      const removedNotification = state.notifications.find(n => n.id === action.payload);
+      const unreadCount = removedNotification && !removedNotification.read 
+        ? state.unreadCount - 1 
+        : state.unreadCount;
+
+      return {
+        ...state,
+        notifications,
+        unreadCount: Math.max(0, unreadCount),
+      };
+    }
+
+    case 'MARK_READ': {
+      const notifications = state.notifications.map(n =>
+        n.id === action.payload ? { ...n, read: true } : n
+      );
+      const notification = state.notifications.find(n => n.id === action.payload);
+      const unreadCount = notification && !notification.read 
+        ? state.unreadCount - 1 
+        : state.unreadCount;
+
+      return {
+        ...state,
+        notifications,
+        unreadCount: Math.max(0, unreadCount),
+      };
+    }
+
+    case 'MARK_ALL_READ': {
+      return {
+        ...state,
+        notifications: state.notifications.map(n => ({ ...n, read: true })),
+        unreadCount: 0,
+      };
+    }
+
+    case 'CLEAR_ALL': {
+      return {
+        ...state,
+        notifications: [],
+        unreadCount: 0,
+      };
+    }
+
+    case 'UPDATE_SETTINGS': {
+      return {
+        ...state,
+        settings: { ...state.settings, ...action.payload },
+      };
+    }
+
+    case 'SET_CONNECTION_STATUS': {
+      return {
+        ...state,
+        isConnected: action.payload,
+      };
+    }
+
+    case 'CLEANUP_EXPIRED': {
+      const now = new Date();
+      const notifications = state.notifications.filter(n => 
+        !n.expiresAt || n.expiresAt > now
+      );
+      const expiredCount = state.notifications.length - notifications.length;
+      const expiredUnread = state.notifications
+        .filter(n => n.expiresAt && n.expiresAt <= now && !n.read)
+        .length;
+
+      return {
+        ...state,
+        notifications,
+        unreadCount: Math.max(0, state.unreadCount - expiredUnread),
+      };
+    }
+
+    default:
+      return state;
+  }
 }
 
 const NotificationContext = createContext<NotificationContextType | null>(null);
 
-export function useNotifications() {
+export interface NotificationProviderProps {
+  children: React.ReactNode;
+  websocketUrl?: string;
+  apiKey?: string;
+  userId?: string;
+  tenantId?: string;
+  onError?: (error: Error) => void;
+}
+
+export function NotificationProvider({
+  children,
+  websocketUrl,
+  apiKey,
+  userId,
+  tenantId,
+  onError,
+}: NotificationProviderProps) {
+  const [state, dispatch] = useReducer(notificationReducer, initialState);
+  const websocketRef = useRef<WebSocket | null>(null);
+  const cleanupIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const soundRef = useRef<HTMLAudioElement | null>(null);
+
+  // Generate unique notification ID
+  const generateId = useCallback(() => {
+    return `notification_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  }, []);
+
+  // Play notification sound
+  const playNotificationSound = useCallback((type: NotificationType) => {
+    if (!state.settings.soundEnabled) return;
+
+    try {
+      // Create audio element if not exists
+      if (!soundRef.current) {
+        soundRef.current = new Audio();
+        soundRef.current.preload = 'auto';
+      }
+
+      // Different sounds for different types
+      const soundMap: Record<NotificationType, string> = {
+        success: '/sounds/notification-success.wav',
+        error: '/sounds/notification-error.wav',
+        warning: '/sounds/notification-warning.wav',
+        info: '/sounds/notification-info.wav',
+        system: '/sounds/notification-system.wav',
+      };
+
+      soundRef.current.src = soundMap[type] || soundMap.info;
+      soundRef.current.volume = 0.6;
+      soundRef.current.play().catch(() => {
+        // Ignore audio play errors (user interaction required)
+      });
+    } catch (error) {
+      console.warn('Failed to play notification sound:', error);
+    }
+  }, [state.settings.soundEnabled]);
+
+  // Show browser notification
+  const showBrowserNotification = useCallback(async (notification: Notification) => {
+    if (!state.settings.enableBrowser || !('Notification' in window)) return;
+
+    try {
+      let permission = Notification.permission;
+
+      if (permission === 'default') {
+        permission = await Notification.requestPermission();
+      }
+
+      if (permission === 'granted') {
+        const browserNotification = new Notification(notification.title, {
+          body: notification.message,
+          icon: `/icons/notification-${notification.type}.png`,
+          badge: '/icons/badge.png',
+          tag: notification.id,
+          requireInteraction: notification.priority === 'critical',
+          timestamp: notification.timestamp.getTime(),
+        });
+
+        browserNotification.onclick = () => {
+          window.focus();
+          dispatch({ type: 'MARK_READ', payload: notification.id });
+          browserNotification.close();
+        };
+
+        // Auto-close after delay (except for critical notifications)
+        if (notification.priority !== 'critical' && state.settings.autoHideDelay > 0) {
+          setTimeout(() => {
+            browserNotification.close();
+          }, state.settings.autoHideDelay);
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to show browser notification:', error);
+    }
+  }, [state.settings]);
+
+  // WebSocket connection management
+  const connect = useCallback(() => {
+    if (!websocketUrl || !state.settings.enableWebSocket) return;
+
+    try {
+      if (websocketRef.current?.readyState === WebSocket.OPEN) return;
+
+      const ws = new WebSocket(websocketUrl);
+      websocketRef.current = ws;
+
+      ws.onopen = () => {
+        dispatch({ type: 'SET_CONNECTION_STATUS', payload: true });
+        
+        // Send authentication if provided
+        if (apiKey || userId) {
+          ws.send(JSON.stringify({
+            type: 'auth',
+            apiKey,
+            userId,
+            tenantId,
+          }));
+        }
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          
+          if (data.type === 'notification') {
+            const notification: Notification = {
+              ...data.notification,
+              id: generateId(),
+              timestamp: new Date(data.notification.timestamp || Date.now()),
+              read: false,
+            };
+            
+            dispatch({ type: 'ADD_NOTIFICATION', payload: notification });
+          }
+        } catch (error) {
+          console.error('Failed to parse WebSocket message:', error);
+        }
+      };
+
+      ws.onclose = () => {
+        dispatch({ type: 'SET_CONNECTION_STATUS', payload: false });
+        
+        // Reconnect after delay
+        setTimeout(() => {
+          if (state.settings.enableWebSocket) {
+            connect();
+          }
+        }, 5000);
+      };
+
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        onError?.(new Error('WebSocket connection failed'));
+        dispatch({ type: 'SET_CONNECTION_STATUS', payload: false });
+      };
+
+    } catch (error) {
+      console.error('Failed to establish WebSocket connection:', error);
+      onError?.(error as Error);
+    }
+  }, [websocketUrl, state.settings.enableWebSocket, apiKey, userId, tenantId, onError, generateId]);
+
+  const disconnect = useCallback(() => {
+    if (websocketRef.current) {
+      websocketRef.current.close();
+      websocketRef.current = null;
+    }
+    dispatch({ type: 'SET_CONNECTION_STATUS', payload: false });
+  }, []);
+
+  // Add notification
+  const addNotification = useCallback((
+    notificationData: Omit<Notification, 'id' | 'timestamp' | 'read'>
+  ) => {
+    const notification: Notification = {
+      ...notificationData,
+      id: generateId(),
+      timestamp: new Date(),
+      read: false,
+    };
+
+    // Check if notification should be shown based on settings
+    const shouldShow = state.settings.priorities[notification.priority] &&
+                      notification.channel.some(ch => state.settings.channels[ch]);
+
+    if (!shouldShow) return;
+
+    dispatch({ type: 'ADD_NOTIFICATION', payload: notification });
+
+    // Handle different notification channels
+    if (notification.channel.includes('browser')) {
+      showBrowserNotification(notification);
+    }
+
+    // Play sound for high priority notifications
+    if (['high', 'critical'].includes(notification.priority)) {
+      playNotificationSound(notification.type);
+    }
+
+  }, [generateId, state.settings, showBrowserNotification, playNotificationSound]);
+
+  // Other actions
+  const removeNotification = useCallback((id: string) => {
+    dispatch({ type: 'REMOVE_NOTIFICATION', payload: id });
+  }, []);
+
+  const markAsRead = useCallback((id: string) => {
+    dispatch({ type: 'MARK_READ', payload: id });
+  }, []);
+
+  const markAllAsRead = useCallback(() => {
+    dispatch({ type: 'MARK_ALL_READ' });
+  }, []);
+
+  const clearAll = useCallback(() => {
+    dispatch({ type: 'CLEAR_ALL' });
+  }, []);
+
+  const updateSettings = useCallback((settings: Partial<NotificationSettings>) => {
+    dispatch({ type: 'UPDATE_SETTINGS', payload: settings });
+  }, []);
+
+  // Setup cleanup interval for expired notifications
+  useEffect(() => {
+    cleanupIntervalRef.current = setInterval(() => {
+      dispatch({ type: 'CLEANUP_EXPIRED' });
+    }, 60000); // Check every minute
+
+    return () => {
+      if (cleanupIntervalRef.current) {
+        clearInterval(cleanupIntervalRef.current);
+      }
+    };
+  }, []);
+
+  // Auto-connect on mount
+  useEffect(() => {
+    if (websocketUrl && state.settings.enableWebSocket) {
+      connect();
+    }
+
+    return () => {
+      disconnect();
+    };
+  }, [websocketUrl, state.settings.enableWebSocket, connect, disconnect]);
+
+  const contextValue = useMemo<NotificationContextType>(() => ({
+    state,
+    addNotification,
+    removeNotification,
+    markAsRead,
+    markAllAsRead,
+    clearAll,
+    updateSettings,
+    connect,
+    disconnect,
+  }), [
+    state,
+    addNotification,
+    removeNotification,
+    markAsRead,
+    markAllAsRead,
+    clearAll,
+    updateSettings,
+    connect,
+    disconnect,
+  ]);
+
+  return (
+    <NotificationContext.Provider value={contextValue}>
+      {children}
+    </NotificationContext.Provider>
+  );
+}
+
+export function useNotifications(): NotificationContextType {
   const context = useContext(NotificationContext);
   if (!context) {
     throw new Error('useNotifications must be used within a NotificationProvider');
@@ -81,550 +487,258 @@ export function useNotifications() {
   return context;
 }
 
-// Notification provider
-interface NotificationProviderProps {
-  children: React.ReactNode;
-  maxNotifications?: number;
-  defaultDuration?: number;
+// Notification display components
+export interface NotificationListProps {
+  className?: string;
+  maxVisible?: number;
+  position?: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left';
+  showActions?: boolean;
+  onNotificationClick?: (notification: Notification) => void;
 }
 
-export function NotificationProvider({
-  children,
-  maxNotifications = 100,
-  defaultDuration = 5000,
-}: NotificationProviderProps) {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+export function NotificationList({
+  className = '',
+  maxVisible = 5,
+  position = 'top-right',
+  showActions = true,
+  onNotificationClick,
+}: NotificationListProps) {
+  const { state, removeNotification, markAsRead } = useNotifications();
 
-  const generateId = () => Math.random().toString(36).substr(2, 9);
+  const visibleNotifications = useMemo(() => {
+    return state.notifications
+      .filter(n => !n.persistent || !n.read)
+      .slice(0, maxVisible);
+  }, [state.notifications, maxVisible]);
 
-  const removeNotification = useCallback((id: string) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
-  }, []);
-
-  const addNotification = useCallback(
-    (notification: Omit<Notification, 'id' | 'timestamp'>) => {
-      const id = generateId();
-      const newNotification: Notification = {
-        ...notification,
-        id,
-        timestamp: new Date(),
-        duration: notification.duration ?? defaultDuration,
-        dismissible: notification.dismissible ?? true,
-        read: false,
-      };
-
-      setNotifications((prev) => {
-        const updated = [newNotification, ...prev];
-        return updated.slice(0, maxNotifications);
-      });
-
-      // Auto-dismiss if duration is set
-      if (newNotification.duration && newNotification.duration > 0) {
-        setTimeout(() => {
-          removeNotification(id);
-        }, newNotification.duration);
-      }
-
-      return id;
-    },
-    [defaultDuration, maxNotifications, removeNotification, generateId]
-  );
-
-  const clearNotifications = useCallback(() => {
-    setNotifications([]);
-  }, []);
-
-  const markAsRead = useCallback((id: string) => {
-    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
-  }, []);
-
-  const markAllAsRead = useCallback(() => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-  }, []);
-
-  const getUnreadCount = useCallback(() => {
-    return notifications.filter((n) => !n.read).length;
-  }, [notifications]);
-
-  const value: NotificationContextType = {
-    notifications,
-    addNotification,
-    removeNotification,
-    clearNotifications,
-    markAsRead,
-    markAllAsRead,
-    getUnreadCount,
+  const positionClasses = {
+    'top-right': 'fixed top-4 right-4 z-50',
+    'top-left': 'fixed top-4 left-4 z-50',
+    'bottom-right': 'fixed bottom-4 right-4 z-50',
+    'bottom-left': 'fixed bottom-4 left-4 z-50',
   };
 
-  return <NotificationContext.Provider value={value}>{children}</NotificationContext.Provider>;
-}
-
-// Toast notification component
-interface ToastNotificationProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof toastVariants> {
-  notification: Notification;
-  onDismiss?: () => void;
-  showTimestamp?: boolean;
-}
-
-const ToastNotification = forwardRef<HTMLDivElement, ToastNotificationProps>(
-  (
-    { notification, onDismiss, showTimestamp = false, _type, position, size, className, ...props },
-    ref
-  ) => {
-    const [isVisible, setIsVisible] = useState(false);
-    const [isExiting, setIsExiting] = useState(false);
-
-    useEffect(() => {
-      // Entrance animation
-      const timer = setTimeout(() => setIsVisible(true), 10);
-      return () => clearTimeout(timer);
-    }, []);
-
-    const handleDismiss = () => {
-      if (!notification.dismissible) {
-        return;
-      }
-
-      setIsExiting(true);
-      setTimeout(() => {
-        onDismiss?.();
-      }, 300); // Animation duration
-    };
-
-    const getIcon = () => {
-      if (notification.icon) {
-        return notification.icon;
-      }
-
-      switch (notification.type) {
-        case 'success':
-          return '✅';
-        case 'warning':
-          return '⚠️';
-        case 'error':
-          return '❌';
-        default:
-          return 'ℹ️';
-      }
-    };
-
-    const formatTimestamp = (date: Date) => {
-      const now = new Date();
-      const diff = now.getTime() - date.getTime();
-      const minutes = Math.floor(diff / 60000);
-
-      if (minutes < 1) {
-        return 'Just now';
-      }
-      if (minutes < 60) {
-        return `${minutes}m ago`;
-      }
-      const hours = Math.floor(minutes / 60);
-      if (hours < 24) {
-        return `${hours}h ago`;
-      }
-      return date.toLocaleDateString();
-    };
-
-    return (
-      <div
-        ref={ref}
-        className={clsx(
-          toastVariants({ type: notification.type, position, size }),
-          {
-            'toast-visible': isVisible,
-            'toast-exiting': isExiting,
-          },
-          className
-        )}
-        {...props}
-      >
-        <div className='toast-content'>
-          <div className='toast-icon'>{getIcon()}</div>
-
-          <div className='toast-body'>
-            <div className='toast-title'>{notification.title}</div>
-            {notification.message ? (
-              <div className='toast-message'>{notification.message}</div>
-            ) : null}
-
-            {showTimestamp ? (
-              <div className='toast-timestamp'>{formatTimestamp(notification.timestamp)}</div>
-            ) : null}
-
-            {notification.actions && notification.actions.length > 0 ? (
-              <div className='toast-actions'>
-                {notification.actions.map((action, index) => (
-                  <button
-                    type='button'
-                    key={`item-${index}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      action.action();
-                    }}
-                    className={clsx('toast-action-button', action.variant)}
-                  >
-                    {action.label}
-                  </button>
-                ))}
-              </div>
-            ) : null}
-          </div>
-
-          {notification.dismissible ? (
-            <button
-              type='button'
-              onClick={handleDismiss}
-              onKeyDown={(e) => e.key === 'Enter' && handleDismiss}
-              className='toast-dismiss'
-              aria-label='Dismiss notification'
-            >
-              ✕
-            </button>
-          ) : null}
-        </div>
-
-        {notification.duration && notification.duration > 0 ? (
-          <div className='toast-progress'>
-            <div
-              className='toast-progress-bar'
-              style={{
-                animation: `toast-progress ${notification.duration}ms linear`,
-              }}
-            />
-          </div>
-        ) : null}
-      </div>
-    );
-  }
-);
-
-// Toast container component
-interface ToastContainerProps {
-  position?:
-    | 'top-right'
-    | 'top-left'
-    | 'top-center'
-    | 'bottom-right'
-    | 'bottom-left'
-    | 'bottom-center';
-  maxVisible?: number;
-  spacing?: number;
-}
-
-export function ToastContainer({
-  position = 'top-right',
-  maxVisible = 5,
-  spacing = 8,
-}: ToastContainerProps) {
-  const { notifications, _removeNotification } = useNotifications();
-
-  // Only show toast notifications (non-persistent)
-  const toastNotifications = notifications.filter((n) => !n.persistent).slice(0, maxVisible);
-
-  if (toastNotifications.length === 0) {
-    return null;
-  }
-
   return (
-    <div
-      className={clsx('toast-container', `position-${position}`)}
-      style={{ gap: `${spacing}px` }}
-    >
-      {toastNotifications.map((notification, index) => (
-        <ToastNotification
+    <div className={`${positionClasses[position]} space-y-2 ${className}`}>
+      {visibleNotifications.map((notification) => (
+        <NotificationItem
           key={notification.id}
           notification={notification}
-          position={position}
-          onDismiss={() => removeNotification(notification.id)}
-          style={{
-            zIndex: 1000 - index,
-          }}
+          showActions={showActions}
+          onClose={() => removeNotification(notification.id)}
+          onRead={() => markAsRead(notification.id)}
+          onClick={() => onNotificationClick?.(notification)}
         />
       ))}
     </div>
   );
 }
 
-// Notification center component
-interface NotificationCenterProps extends React.HTMLAttributes<HTMLDivElement> {
-  maxHeight?: number;
-  showFilters?: boolean;
-  onNotificationClick?: (notification: Notification) => void;
+interface NotificationItemProps {
+  notification: Notification;
+  showActions: boolean;
+  onClose: () => void;
+  onRead: () => void;
+  onClick: () => void;
 }
 
-export const NotificationCenter = forwardRef<HTMLDivElement, NotificationCenterProps>(
-  ({ className, maxHeight = 400, showFilters = true, onNotificationClick, ...props }, _ref) => {
-    const {
-      notifications,
-      removeNotification,
-      clearNotifications,
-      markAsRead,
-      markAllAsRead,
-      getUnreadCount,
-    } = useNotifications();
+function NotificationItem({
+  notification,
+  showActions,
+  onClose,
+  onRead,
+  onClick,
+}: NotificationItemProps) {
+  const typeStyles = {
+    success: 'bg-green-50 border-green-200 text-green-800',
+    error: 'bg-red-50 border-red-200 text-red-800',
+    warning: 'bg-yellow-50 border-yellow-200 text-yellow-800',
+    info: 'bg-blue-50 border-blue-200 text-blue-800',
+    system: 'bg-gray-50 border-gray-200 text-gray-800',
+  };
 
-    const [filter, setFilter] = useState<'all' | 'unread'>('all');
-    const [typeFilter, setTypeFilter] = useState<'all' | Notification['type']>('all');
+  const priorityIcons = {
+    low: '📢',
+    medium: '⚠️',
+    high: '🔔',
+    critical: '🚨',
+  };
 
-    const filteredNotifications = notifications.filter((n) => {
-      if (filter === 'unread' && n.read) {
-        return false;
-      }
-      if (typeFilter !== 'all' && n.type !== typeFilter) {
-        return false;
-      }
-      return true;
-    });
-
-    const _HandleNotificationClick = (notification: Notification) => {
-      if (!notification.read) {
-        markAsRead(notification.id);
-      }
-      onNotificationClick?.(notification);
-    };
-
-    const formatTime = (date: Date) => {
-      return date.toLocaleString();
-    };
-
-    const getIcon = (type: Notification['type']) => {
-      switch (type) {
-        case 'success':
-          return '✅';
-        case 'warning':
-          return '⚠️';
-        case 'error':
-          return '❌';
-        default:
-          return 'ℹ️';
-      }
-    };
-
-    return (
-      <div ref={ref} className={clsx('notification-center', className)} {...props}>
-        <div className='notification-center-header'>
-          <h3 className='notification-center-title'>
-            Notifications
-            {getUnreadCount() > 0 && <span className='unread-badge'>{getUnreadCount()}</span>}
-          </h3>
-
-          <div className='notification-center-actions'>
-            {getUnreadCount() > 0 && (
-              <button
-                type='button'
-                onClick={markAllAsRead}
-                onKeyDown={(e) => e.key === 'Enter' && markAllAsRead}
-                className='action-button'
-              >
-                Mark all read
-              </button>
-            )}
-            <button
-              type='button'
-              onClick={clearNotifications}
-              onKeyDown={(e) => e.key === 'Enter' && clearNotifications}
-              className='action-button'
-            >
-              Clear all
-            </button>
+  return (
+    <div
+      className={`
+        max-w-sm p-4 border rounded-lg shadow-lg cursor-pointer transition-all duration-300
+        ${typeStyles[notification.type]}
+        ${!notification.read ? 'ring-2 ring-blue-500 ring-opacity-30' : ''}
+      `}
+      onClick={onClick}
+    >
+      <div className="flex items-start justify-between">
+        <div className="flex items-start space-x-2 flex-1">
+          <span className="text-lg">{priorityIcons[notification.priority]}</span>
+          <div className="flex-1 min-w-0">
+            <h4 className="font-semibold text-sm truncate">
+              {notification.title}
+            </h4>
+            <p className="text-sm mt-1 break-words">
+              {notification.message}
+            </p>
+            <p className="text-xs mt-2 opacity-70">
+              {notification.timestamp.toLocaleTimeString()}
+            </p>
           </div>
         </div>
-
-        {showFilters ? (
-          <div className='notification-filters'>
-            <div className='filter-group'>
-              <button
-                type='button'
-                onClick={() => setFilter('all')}
-                className={clsx('filter-button', { active: filter === 'all' })}
-              >
-                All ({notifications.length})
-              </button>
-              <button
-                type='button'
-                onClick={() => setFilter('unread')}
-                className={clsx('filter-button', { active: filter === 'unread' })}
-              >
-                Unread ({getUnreadCount()})
-              </button>
-            </div>
-
-            <div className='filter-group'>
-              <select
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value as unknown)}
-                className='type-filter'
-              >
-                <option value='all'>All types</option>
-                <option value='info'>Info</option>
-                <option value='success'>Success</option>
-                <option value='warning'>Warning</option>
-                <option value='error'>Error</option>
-              </select>
-            </div>
-          </div>
-        ) : null}
-
-        <div className='notification-list' style={{ maxHeight: `${maxHeight}px` }}>
-          {filteredNotifications.length === 0 ? (
-            <div className='empty-notifications'>
-              <span className='empty-icon'>🔔</span>
-              <span>No notifications</span>
-            </div>
-          ) : (
-            filteredNotifications.map((notification) => (
-              <div
-                key={notification.id}
-                className={clsx('notification-item', {
-                  unread: !notification.read,
-                  [`type-${notification.type}`]: true,
-                })}
-                onClick={() => HandleNotificationClick(notification)}
-                onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.click()}
-                role='button'
-                tabIndex={0}
-              >
-                <div className='notification-icon'>
-                  {notification.icon || getIcon(notification.type)}
-                </div>
-
-                <div className='notification-content'>
-                  <div className='notification-title'>
-                    {notification.title}
-                    {!notification.read && <span className='unread-dot' />}
-                  </div>
-
-                  {notification.message ? (
-                    <div className='notification-message'>{notification.message}</div>
-                  ) : null}
-
-                  <div className='notification-meta'>
-                    <span className='notification-time'>{formatTime(notification.timestamp)}</span>
-                    <span className={clsx('notification-type', `type-${notification.type}`)}>
-                      {notification.type}
-                    </span>
-                  </div>
-
-                  {notification.actions && notification.actions.length > 0 ? (
-                    <div className='notification-actions'>
-                      {notification.actions.map((action, index) => (
-                        <button
-                          type='button'
-                          key={`item-${index}`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            action.action();
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              e.stopPropagation();
-                              action.action();
-                            }
-                          }}
-                          className={clsx('notification-action-button', action.variant)}
-                        >
-                          {action.label}
-                        </button>
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
-
-                <button
-                  type='button'
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removeNotification(notification.id);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.stopPropagation();
-                      removeNotification(notification.id);
-                    }
-                  }}
-                  className='notification-remove'
-                  aria-label='Remove notification'
-                >
-                  ✕
-                </button>
-              </div>
-            ))
+        
+        <div className="flex items-center space-x-1 ml-2">
+          {!notification.read && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onRead();
+              }}
+              className="text-xs bg-white bg-opacity-50 hover:bg-opacity-75 px-2 py-1 rounded"
+              title="Mark as read"
+            >
+              ✓
+            </button>
           )}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }}
+            className="text-xs bg-white bg-opacity-50 hover:bg-opacity-75 px-2 py-1 rounded"
+            title="Close"
+          >
+            ✕
+          </button>
         </div>
       </div>
-    );
-  }
-);
 
-// Notification bell icon component
-interface NotificationBellProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  size?: 'sm' | 'md' | 'lg';
+      {showActions && notification.actions && notification.actions.length > 0 && (
+        <div className="flex space-x-2 mt-3 pt-3 border-t border-current border-opacity-20">
+          {notification.actions.map((action) => (
+            <button
+              key={action.id}
+              onClick={(e) => {
+                e.stopPropagation();
+                action.handler(notification);
+              }}
+              className={`
+                text-xs px-3 py-1 rounded transition-colors
+                ${action.type === 'primary' ? 'bg-blue-600 text-white hover:bg-blue-700' : ''}
+                ${action.type === 'secondary' ? 'bg-gray-300 text-gray-700 hover:bg-gray-400' : ''}
+                ${action.type === 'danger' ? 'bg-red-600 text-white hover:bg-red-700' : ''}
+              `}
+            >
+              {action.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Notification badge component
+export interface NotificationBadgeProps {
+  className?: string;
   showCount?: boolean;
   maxCount?: number;
 }
 
-export const NotificationBell = forwardRef<HTMLButtonElement, NotificationBellProps>(
-  ({ className, size = 'md', showCount = true, maxCount = 99, ...props }, _ref) => {
-    const { getUnreadCount } = useNotifications();
-    const unreadCount = getUnreadCount();
+export function NotificationBadge({
+  className = '',
+  showCount = true,
+  maxCount = 99,
+}: NotificationBadgeProps) {
+  const { state } = useNotifications();
 
-    return (
-      <button
-        type='button'
-        ref={ref}
-        className={clsx('notification-bell', `size-${size}`, className)}
-        {...props}
-      >
-        <span className='bell-icon'>🔔</span>
-        {showCount && unreadCount > 0 ? (
-          <span className='notification-count'>
-            {unreadCount > maxCount ? `${maxCount}+` : unreadCount}
-          </span>
-        ) : null}
-      </button>
-    );
+  if (state.unreadCount === 0) {
+    return null;
   }
-);
 
-// Hook for easier toast creation
-export function useToast() {
-  const { addNotification } = useNotifications();
+  const displayCount = state.unreadCount > maxCount ? `${maxCount}+` : state.unreadCount;
 
-  const toast = useCallback(
-    (
-      type: Notification['type'],
-      title: string,
-      message?: string,
-      options?: Partial<Omit<Notification, 'id' | 'timestamp' | 'type' | 'title' | 'message'>>
-    ) => {
-      return addNotification({
-        type,
-        title,
-        message,
-        ...options,
-      });
-    },
-    [addNotification]
+  return (
+    <span
+      className={`
+        inline-flex items-center justify-center px-2 py-1 text-xs font-bold 
+        leading-none text-white bg-red-600 rounded-full ${className}
+      `}
+    >
+      {showCount ? displayCount : ''}
+    </span>
   );
+}
+
+// Main NotificationSystem component that combines provider and list
+export interface NotificationSystemProps {
+  children: React.ReactNode;
+  maxNotifications?: number;
+  defaultDuration?: number;
+  position?: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left';
+}
+
+function NotificationSystem({
+  children,
+  maxNotifications = 10,
+  defaultDuration = 5000,
+  position = 'top-right',
+}: NotificationSystemProps) {
+  return (
+    <NotificationProvider maxNotifications={maxNotifications} defaultDuration={defaultDuration}>
+      {children}
+      <NotificationList position={position} />
+    </NotificationProvider>
+  );
+}
+
+// Convenience hook that aliases useNotifications for compatibility
+export function useToast() {
+  const { addNotification, removeNotification, clearNotifications } = useNotifications();
+  
+  const toast = useCallback((message: string, options?: Partial<Omit<Notification, 'id' | 'timestamp' | 'read'>>) => {
+    return addNotification({
+      title: options?.title || 'Notification',
+      message,
+      type: options?.type || 'info',
+      priority: options?.priority || 'medium',
+      channel: options?.channel || ['browser'],
+      persistent: options?.persistent || false,
+      actions: options?.actions,
+      metadata: options?.metadata,
+      expiresAt: options?.expiresAt,
+      userId: options?.userId,
+      tenantId: options?.tenantId,
+    });
+  }, [addNotification]);
+
+  const success = useCallback((message: string, title?: string) => {
+    return toast(message, { type: 'success', title: title || 'Success' });
+  }, [toast]);
+
+  const error = useCallback((message: string, title?: string) => {
+    return toast(message, { type: 'error', title: title || 'Error' });
+  }, [toast]);
+
+  const warning = useCallback((message: string, title?: string) => {
+    return toast(message, { type: 'warning', title: title || 'Warning' });
+  }, [toast]);
+
+  const info = useCallback((message: string, title?: string) => {
+    return toast(message, { type: 'info', title: title || 'Info' });
+  }, [toast]);
 
   return {
-    success: (title: string, message?: string, options?: unknown) =>
-      toast('success', title, message, options),
-    error: (title: string, message?: string, options?: unknown) =>
-      toast('error', title, message, options),
-    warning: (title: string, message?: string, options?: unknown) =>
-      toast('warning', title, message, options),
-    info: (title: string, message?: string, options?: unknown) =>
-      toast('info', title, message, options),
-    custom: toast,
+    toast,
+    success,
+    error,
+    warning,
+    info,
+    dismiss: removeNotification,
+    clear: clearNotifications,
   };
 }
 
-ToastNotification.displayName = 'ToastNotification';
-NotificationCenter.displayName = 'NotificationCenter';
-NotificationBell.displayName = 'NotificationBell';
-
-export { ToastNotification };
+export default NotificationSystem;

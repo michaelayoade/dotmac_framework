@@ -19,13 +19,21 @@ interface AuthState {
 }
 
 interface AuthActions {
-  setAuth: (user: User, sessionId?: string, csrfToken?: string) => Promise<void>;
+  setAuth: (user: User, tokens?: TokenPair, sessionId?: string, csrfToken?: string) => Promise<void>;
   clearAuth: () => Promise<void>;
   updateUser: (updates: Partial<User>) => void;
   requireMFA: () => void;
   completeMFA: () => void;
   updateLastActivity: () => void;
   isSessionValid: () => boolean;
+  getValidToken: () => Promise<string | null>;
+  refreshTokens: (refreshFn: (token: string) => Promise<{ accessToken: string; refreshToken: string }>) => Promise<boolean>;
+}
+
+interface TokenPair {
+  accessToken: string;
+  refreshToken: string;
+  expiresAt: number;
 }
 
 type AuthStore = AuthState & AuthActions;
@@ -47,12 +55,21 @@ export const useAuthStore = create<AuthStore>()(
     (set, get) => ({
       ...initialState,
 
-      setAuth: async (user, sessionId, csrfToken) => {
+      setAuth: async (user, tokens, sessionId, csrfToken) => {
         // Initialize CSRF protection if token provided
         if (csrfToken) {
           csrfProtection.storeToken(csrfToken);
         } else {
           await csrfProtection.initialize();
+        }
+
+        // Store tokens securely (in practice, would use httpOnly cookies)
+        if (tokens) {
+          secureStorage.setItem('auth_tokens', JSON.stringify({
+            accessToken: tokens.accessToken,
+            refreshToken: tokens.refreshToken,
+            expiresAt: tokens.expiresAt,
+          }));
         }
 
         // Generate session ID if not provided
@@ -73,6 +90,9 @@ export const useAuthStore = create<AuthStore>()(
         try {
           // Clear CSRF protection
           csrfProtection.clearToken();
+
+          // Clear auth tokens
+          secureStorage.removeItem('auth_tokens');
 
           // Clear all secure storage (non-sensitive data only)
           secureStorage.clear();
@@ -121,6 +141,49 @@ export const useAuthStore = create<AuthStore>()(
         const timeSinceLastActivity = now - lastActivity;
 
         return timeSinceLastActivity < SESSION_TIMEOUT;
+      },
+
+      getValidToken: async () => {
+        try {
+          const tokensData = secureStorage.getItem('auth_tokens');
+          if (!tokensData) return null;
+
+          const tokens = JSON.parse(tokensData);
+          const now = Date.now();
+          
+          // Check if token is expired
+          if (now >= tokens.expiresAt) {
+            return null;
+          }
+
+          return tokens.accessToken;
+        } catch {
+          return null;
+        }
+      },
+
+      refreshTokens: async (refreshFn) => {
+        try {
+          const tokensData = secureStorage.getItem('auth_tokens');
+          if (!tokensData) return false;
+
+          const tokens = JSON.parse(tokensData);
+          if (!tokens.refreshToken) return false;
+
+          const newTokens = await refreshFn(tokens.refreshToken);
+          
+          // Store new tokens
+          secureStorage.setItem('auth_tokens', JSON.stringify({
+            accessToken: newTokens.accessToken,
+            refreshToken: newTokens.refreshToken,
+            expiresAt: Date.now() + 15 * 60 * 1000, // 15 minutes
+          }));
+
+          set({ lastActivity: Date.now() });
+          return true;
+        } catch {
+          return false;
+        }
       },
     }),
     {

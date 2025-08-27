@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { CustomerManagementAdvanced } from '../../../components/customers/CustomerManagementAdvanced';
+import { CustomerManagementAdvanced } from "../../../components/customers/CustomerManagementAdvanced";
 
 export default function CustomersAdvancedPage() {
-  return <CustomerManagementAdvanced />;
+	return <CustomerManagementAdvanced />;
 }

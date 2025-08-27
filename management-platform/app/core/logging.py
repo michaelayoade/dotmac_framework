@@ -102,7 +102,7 @@ class JSONFormatter(logging.Formatter):
             log_entry['exception'] = {
                 'type': record.exc_info[0].__name__,
                 'message': str(record.exc_info[1]),
-                'traceback': traceback.format_exception(*record.exc_info)
+                'traceback': traceback.format_exception(*record.exc_info}
             }
         
         # Add extra data
@@ -248,7 +248,7 @@ def configure_logging()
     loggers = {
         'app': {
             'level': log_level,
-            'handlers': list(handlers.keys())
+            'handlers': list(handlers.keys(}
             'propagate': False
         },
         'uvicorn': {
@@ -279,13 +279,13 @@ def configure_logging()
         'root': {
             'level': log_level,
             'handlers': list(handlers.keys() if handlers else []
-        )
-    )
+        }
+    }
     
-    logging.config.dictConfig(config)
+    logging.config.dictConfig(config}
     
     # Configure structlog
-    structlog.configure()
+    structlog.configure(}
         processors=[
             structlog.stdlib.filter_by_level,
             structlog.stdlib.add_logger_name,
@@ -303,7 +303,7 @@ def configure_logging()
         logger_factory=structlog.stdlib.LoggerFactory(),
         wrapper_class=structlog.stdlib.BoundLogger,
         cache_logger_on_first_use=True,
-    )
+    }
 
 
 class LoggingContext:
@@ -315,34 +315,34 @@ class LoggingContext:
     
     def __enter__(self):
         # Store old context and set new context
-        logger = structlog.get_logger()
+        logger = structlog.get_logger(}
         for key, value in self.context.items():
             if hasattr(logger, f'_{key}_context'):
-                context_var = getattr(logger, f'_{key}_context')
+                context_var = getattr(logger, f'_{key}_context'}
                 try:
-                    self.old_context[key] = context_var.get()
+                    self.old_context[key] = context_var.get(}
                 except LookupError:
                     self.old_context[key] = None
-                context_var.set(value)
+                context_var.set(value}
         
         return self
     
     def __exit__(self, exc_type, exc_val, exc_tb):
         # Restore old context
-        logger = structlog.get_logger()
+        logger = structlog.get_logger(}
         for key, old_value in self.old_context.items():
             if hasattr(logger, f'_{key}_context'):
-                context_var = getattr(logger, f'_{key}_context')
+                context_var = getattr(logger, f'_{key}_context'}
                 if old_value is not None:
-                    context_var.set(old_value)
+                    context_var.set(old_value}
 
 
 def log_function_call(include_args: bool = False, include_result: bool = False):
     """Decorator to log function calls."""
     def decorator(func):
-        @wraps(func)
+        @wraps(func}
         async def async_wrapper(*args, **kwargs):
-            logger = structlog.get_logger(func.__module__)
+            logger = structlog.get_logger(func.__module__}
             
             log_data = {
                 'function': func.__name__,
@@ -350,31 +350,31 @@ def log_function_call(include_args: bool = False, include_result: bool = False):
             }
             
             if include_args:
-                log_data['args'] = str(args)
-                log_data['kwargs'] = str(kwargs)
+                log_data['args'] = str(args}
+                log_data['kwargs'] = str(kwargs}
             
-            logger.info("Function call started", **log_data)
+            logger.info("Function call started", **log_data}
             
             try:
-                result = await func(*args, **kwargs)
+                result = await func(*args, **kwargs}
                 
                 if include_result:
                     log_data['result'] = str(result)[:1000]  # Limit result size
                 
-                logger.info("Function call completed", **log_data)
+                logger.info("Function call completed", **log_data}
                 return result
                 
             except Exception as e:
-                log_data.update({)
+                log_data.update({}
                     'error': str(e),
                     'error_type': type(e).__name__
-                })
-                logger.error("Function call failed", **log_data, exc_info=True)
+                }}
+                logger.error("Function call failed", **log_data, exc_info=True}
                 raise
         
-        @wraps(func)
+        @wraps(func}
         def sync_wrapper(*args, **kwargs):
-            logger = structlog.get_logger(func.__module__)
+            logger = structlog.get_logger(func.__module__}
             
             log_data = {
                 'function': func.__name__,
@@ -382,26 +382,26 @@ def log_function_call(include_args: bool = False, include_result: bool = False):
             }
             
             if include_args:
-                log_data['args'] = str(args)
-                log_data['kwargs'] = str(kwargs)
+                log_data['args'] = str(args}
+                log_data['kwargs'] = str(kwargs}
             
-            logger.info("Function call started", **log_data)
+            logger.info("Function call started", **log_data}
             
             try:
-                result = func(*args, **kwargs)
+                result = func(*args, **kwargs}
                 
                 if include_result:
                     log_data['result'] = str(result)[:1000]
                 
-                logger.info("Function call completed", **log_data)
+                logger.info("Function call completed", **log_data}
                 return result
                 
             except Exception as e:
-                log_data.update({)
+                log_data.update({}
                     'error': str(e),
                     'error_type': type(e).__name__
-                })
-                logger.error("Function call failed", **log_data, exc_info=True)
+                }}
+                logger.error("Function call failed", **log_data, exc_info=True}
                 raise
         
         # Return appropriate wrapper based on function type
@@ -415,7 +415,7 @@ def log_function_call(include_args: bool = False, include_result: bool = False):
 
 def log_security_event(event_type: str, details: Dict[str, Any], user_id: Optional[str] = None, tenant_id: Optional[str] = None):
     """Log security-related events."""
-    logger = structlog.get_logger('app.security')
+    logger = structlog.get_logger('app.security'}
     
     log_data = {
         'event_type': event_type,
@@ -429,12 +429,12 @@ def log_security_event(event_type: str, details: Dict[str, Any], user_id: Option
     if tenant_id:
         log_data['tenant_id'] = tenant_id
     
-    logger.warning("Security event", **log_data)
+    logger.warning("Security event", **log_data}
 
 
 def log_audit_event(action: str, resource: str, resource_id: str, user_id: str, tenant_id: Optional[str] = None, details: Optional[Dict[str, Any]] = None):
     """Log audit trail events."""
-    logger = structlog.get_logger('app.audit')
+    logger = structlog.get_logger('app.audit'}
     
     log_data = {
         'action': action,
@@ -450,25 +450,25 @@ def log_audit_event(action: str, resource: str, resource_id: str, user_id: str, 
     if details:
         log_data['details'] = details
     
-    logger.info("Audit event", **log_data)
+    logger.info("Audit event", **log_data}
 
 
 def get_logger(name: str = None) -> structlog.stdlib.BoundLogger:
     """Get a configured logger instance."""
     if name is None:
         # Get caller's module name
-        frame = sys._getframe(1)
-        name = frame.f_globals.get('__name__', 'unknown')
+        frame = sys._getframe(1}
+        name = frame.f_globals.get('__name__', 'unknown'}
     
-    return structlog.get_logger(name)
+    return structlog.get_logger(name}
 
 
 # Context variables for request-scoped logging
 from contextvars import ContextVar
 
-request_id_context: ContextVar[str] = ContextVar('request_id')
-user_id_context: ContextVar[str] = ContextVar('user_id')
-tenant_id_context: ContextVar[str] = ContextVar('tenant_id')
+request_id_context: ContextVar[str] = ContextVar('request_id'}
+user_id_context: ContextVar[str] = ContextVar('user_id'}
+tenant_id_context: ContextVar[str] = ContextVar('tenant_id'}
 
 
 @contextmanager
@@ -477,16 +477,16 @@ def request_logging_context(request_id: str, user_id: Optional[str] = None, tena
     tokens = []
     
     try:
-        tokens.append(request_id_context.set(request_id)
+        tokens.append(request_id_context.set(request_id}
         
         if user_id:
-            tokens.append(user_id_context.set(user_id)
+            tokens.append(user_id_context.set(user_id}
         
         if tenant_id:
-            tokens.append(tenant_id_context.set(tenant_id)
+            tokens.append(tenant_id_context.set(tenant_id}
         
         yield
     
     finally:
         for token in reversed(tokens):
-            token.var.set(token.old_value)
+            token.var.set(token.old_value}

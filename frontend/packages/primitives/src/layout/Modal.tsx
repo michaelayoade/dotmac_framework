@@ -6,7 +6,7 @@
 
 import { cva, type VariantProps } from 'class-variance-authority';
 import { clsx } from 'clsx';
-import React, { forwardRef, useCallback, useEffect, useState } from 'react';
+import React, { forwardRef, useCallback, useEffect, useState, useId } from 'react';
 
 // Modal variants
 const modalVariants = cva('modal-container', {
@@ -88,7 +88,6 @@ export const ModalFocusUtils = {
 
 // Modal state management hook
 export const useModalState = (defaultOpen = false, onOpenChange?: (open: boolean) => void) => {
-  const _id = useId();
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const [previousFocus, setPreviousFocus] = useState<HTMLElement | null>(null);
 
@@ -131,7 +130,7 @@ export interface ModalBackdropProps extends React.HTMLAttributes<HTMLDivElement>
 
 export const ModalBackdrop = forwardRef<HTMLDivElement, ModalBackdropProps>(
   ({ className, onClick, closeOnClick = true, ...props }, ref) => {
-    // const id = useId(); // Removed - can't use hooks in objects
+    const id = useId();
     const handleClick = useCallback(
       (e: React.MouseEvent) => {
         if (closeOnClick && e.target === e.currentTarget) {
@@ -167,7 +166,6 @@ export interface ModalContentProps
 export const ModalContent = forwardRef<HTMLDivElement, ModalContentProps>(
   (
     {
-      // const id = useId(); // Removed - can't use hooks in objects
       className,
       children,
       size,
@@ -180,6 +178,7 @@ export const ModalContent = forwardRef<HTMLDivElement, ModalContentProps>(
     },
     ref
   ) => {
+    const id = useId();
     const contentRef = React.useRef<HTMLDivElement>(null);
     const combinedRef = (ref as React.RefObject<HTMLDivElement>) || contentRef;
 
@@ -244,7 +243,6 @@ export interface ModalHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export const ModalHeader = forwardRef<HTMLDivElement, ModalHeaderProps>(
   ({ className, as: Component = 'div', children, ...props }, ref) => {
-    // const id = useId(); // Removed - can't use hooks in objects
     return (
       <Component ref={ref} className={clsx('modal-header', className)} {...props}>
         {children}
@@ -260,8 +258,7 @@ export interface ModalTitleProps extends React.HTMLAttributes<HTMLHeadingElement
 
 export const ModalTitle = forwardRef<HTMLHeadingElement, ModalTitleProps>(
   ({ className, as: Component = 'h2', children, ...props }, ref) => {
-    // const id = useId(); // Removed - can't use hooks in objects
-    const id = 'modal'; // Temporary id
+    const id = useId();
     return (
       <Component
         ref={ref}
@@ -280,8 +277,7 @@ export const ModalDescription = forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLParagraphElement>
 >(({ className, children, ...props }, ref) => {
-  // const id = useId(); // Removed - can't use hooks in objects
-  const id = 'modal'; // Temporary id
+  const id = useId();
   return (
     <p
       ref={ref}
@@ -297,8 +293,7 @@ export const ModalDescription = forwardRef<
 // Modal body component
 export const ModalBody = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, children, ...props }, ref) => {
-    // const id = useId(); // Removed - can't use hooks in objects
-    const id = 'modal'; // Temporary id
+    const id = useId();
     return (
       <div
         ref={ref}
@@ -315,8 +310,7 @@ export const ModalBody = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDiv
 // Modal footer component
 export const ModalFooter = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, children, ...props }, ref) => {
-    // const id = useId(); // Removed - can't use hooks in objects
-    const id = 'modal'; // Temporary id
+    const id = useId();
     return (
       <div
         ref={ref}
@@ -337,7 +331,7 @@ export interface ModalTriggerProps extends React.ButtonHTMLAttributes<HTMLButton
 
 export const ModalTrigger = forwardRef<HTMLButtonElement, ModalTriggerProps>(
   ({ className, children, onClick, asChild = false, ...props }, ref) => {
-    // const id = useId(); // Removed - can't use hooks in objects
+    const id = useId();
     if (asChild && React.isValidElement(children)) {
       return React.cloneElement(children, {
         ...children.props,
@@ -373,13 +367,13 @@ export interface ModalProps {
 }
 
 export const Modal: React.FC<ModalProps> = ({
-  // const id = useId(); // Removed - can't use hooks in objects
   open: controlledOpen,
   defaultOpen = false,
   onOpenChange,
   children,
 }) => {
-  const { isOpen: uncontrolledOpen, open, _close } = useModalState(defaultOpen, onOpenChange);
+  const id = useId();
+  const { isOpen: uncontrolledOpen, open, close } = useModalState(defaultOpen, onOpenChange);
 
   // Use controlled state if provided, otherwise use internal state
   const isOpen = controlledOpen !== undefined ? controlledOpen : uncontrolledOpen;

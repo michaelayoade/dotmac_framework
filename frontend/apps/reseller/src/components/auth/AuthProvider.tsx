@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import { useAuthStore } from '@dotmac/headless';
-import { type ReactNode, useEffect } from 'react';
+import { useAuthStore } from "@dotmac/headless";
+import { type ReactNode, useEffect } from "react";
 
 interface AuthProviderProps {
-  children: ReactNode;
+	children: ReactNode;
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const { initializeAuth } = useAuthStore();
+	const { initializeAuth } = useAuthStore();
 
-  useEffect(() => {
-    initializeAuth();
-  }, [initializeAuth]);
+	useEffect(() => {
+		initializeAuth();
+	}, [initializeAuth]);
 
-  return <>{children}</>;
+	return <>{children}</>;
 }

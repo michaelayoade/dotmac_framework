@@ -26,8 +26,7 @@ def provision_infrastructure(self, infrastructure_id: str, user_id: str):
     """Provision infrastructure asynchronously."""
     import asyncio
     
-    async def _provision_infrastructure():
-        async with async_session() as db:
+    async def _provision_infrastructure(async with async_session() as db):
             try:
                 service = DeploymentService(db)
                 infrastructure_uuid = UUID(infrastructure_id)
@@ -40,14 +39,12 @@ def provision_infrastructure(self, infrastructure_id: str, user_id: str):
                 # Update status to provisioning
                 await service.infrastructure_repo.update_status()
                     infrastructure_uuid, "provisioning", user_id
-                )
                 
                 # Log start
                 await service._log_deployment_event()
                     None, "infrastructure_provisioning_started",
                     f"Starting infrastructure provisioning for {infrastructure.name}",
                     user_id
-                )
                 
                 # TODO: Integrate with actual infrastructure providers
                 # For now, simulate provisioning
@@ -63,13 +60,11 @@ def provision_infrastructure(self, infrastructure_id: str, user_id: str):
                 current_task.update_state()
                     state="PROGRESS",
                     meta={"current": 0, "total": len(steps), "status": "Starting"}
-                )
                 
                 for i, (step_key, step_description) in enumerate(steps):
                     await service._log_deployment_event()
                         None, f"infrastructure_{step_key}",
                         step_description, user_id
-                    )
                     
                     # Simulate step execution
                     await asyncio.sleep(2)
@@ -81,7 +76,6 @@ def provision_infrastructure(self, infrastructure_id: str, user_id: str):
                             "total": len(steps),
                             "status": step_description
                         }
-                    )
                 
                 # Update infrastructure with provisioned resources
                 resources = {
@@ -104,13 +98,11 @@ def provision_infrastructure(self, infrastructure_id: str, user_id: str):
                         "endpoints": endpoints
                     },
                     user_id
-                )
                 
                 await service._log_deployment_event()
                     None, "infrastructure_provisioning_completed",
                     f"Infrastructure provisioning completed for {infrastructure.name}",
                     user_id
-                )
                 
                 logger.info(f"Infrastructure provisioned successfully: {infrastructure_id}")
                 return {
@@ -124,13 +116,11 @@ def provision_infrastructure(self, infrastructure_id: str, user_id: str):
                 # Update status to failed
                 await service.infrastructure_repo.update_status()
                     UUID(infrastructure_id), "failed", user_id
-                )
                 
                 await service._log_deployment_event()
                     None, "infrastructure_provisioning_failed",
                     f"Infrastructure provisioning failed: {str(e)}",
                     user_id
-                )
                 
                 logger.error(f"Infrastructure provisioning failed: {e}")
                 raise self.retry(countdown=60, exc=e)
@@ -143,8 +133,7 @@ def deploy_service(self, deployment_id: str, user_id: str):
     """Deploy a service asynchronously."""
     import asyncio
     
-    async def _deploy_service():
-        async with async_session() as db:
+    async def _deploy_service(async with async_session() as db):
             try:
                 service = DeploymentService(db)
                 deployment_uuid = UUID(deployment_id)
@@ -157,14 +146,12 @@ def deploy_service(self, deployment_id: str, user_id: str):
                 # Update status to deploying
                 await service.deployment_repo.update_status()
                     deployment_uuid, "deploying", user_id
-                )
                 
                 # Log start
                 await service._log_deployment_event()
                     deployment_uuid, "service_deployment_started",
                     f"Starting service deployment for {deployment.name}",
                     user_id
-                )
                 
                 # Deployment steps
                 steps = [
@@ -179,13 +166,11 @@ def deploy_service(self, deployment_id: str, user_id: str):
                 current_task.update_state()
                     state="PROGRESS",
                     meta={"current": 0, "total": len(steps), "status": "Starting deployment"}
-                )
                 
                 for i, (step_key, step_description) in enumerate(steps):
                     await service._log_deployment_event()
                         deployment_uuid, f"deployment_{step_key}",
                         step_description, user_id
-                    )
                     
                     # Simulate step execution
                     await asyncio.sleep(3)
@@ -197,7 +182,6 @@ def deploy_service(self, deployment_id: str, user_id: str):
                             "total": len(steps),
                             "status": step_description
                         }
-                    )
                 
                 # Create service instance
                 from datetime import datetime
@@ -232,13 +216,11 @@ def deploy_service(self, deployment_id: str, user_id: str):
                         "deployed_at": datetime.now(timezone.utc)
                     },
                     user_id
-                )
                 
                 await service._log_deployment_event()
                     deployment_uuid, "service_deployment_completed",
                     f"Service deployment completed for {deployment.name}",
                     user_id
-                )
                 
                 logger.info(f"Service deployed successfully: {deployment_id}")
                 return {
@@ -252,13 +234,11 @@ def deploy_service(self, deployment_id: str, user_id: str):
                 # Update status to failed
                 await service.deployment_repo.update_status()
                     UUID(deployment_id), "failed", user_id
-                )
                 
                 await service._log_deployment_event()
                     UUID(deployment_id), "service_deployment_failed",
                     f"Service deployment failed: {str(e)}",
                     user_id
-                )
                 
                 logger.error(f"Service deployment failed: {e}")
                 raise self.retry(countdown=60, exc=e)
@@ -271,8 +251,7 @@ def scale_service(self, deployment_id: str, service_name: str, target_instances:
     """Scale a service asynchronously."""
     import asyncio
     
-    async def _scale_service():
-        async with async_session() as db:
+    async def _scale_service(async with async_session() as db):
             try:
                 service = DeploymentService(db)
                 deployment_uuid = UUID(deployment_id)
@@ -282,7 +261,6 @@ def scale_service(self, deployment_id: str, service_name: str, target_instances:
                     deployment_uuid, "service_scaling_started",
                     f"Starting to scale {service_name} to {target_instances} instances",
                     user_id
-                )
                 
                 # Get service instance
                 services = await service.service_repo.get_by_deployment(deployment_uuid)
@@ -327,7 +305,6 @@ def scale_service(self, deployment_id: str, service_name: str, target_instances:
                     await service._log_deployment_event()
                         deployment_uuid, "service_scaling_progress",
                         step, user_id
-                    )
                     
                     current_task.update_state()
                         state="PROGRESS",
@@ -336,7 +313,6 @@ def scale_service(self, deployment_id: str, service_name: str, target_instances:
                             "total": len(steps),
                             "status": step
                         }
-                    )
                     
                     await asyncio.sleep(2)
                 
@@ -352,13 +328,11 @@ def scale_service(self, deployment_id: str, service_name: str, target_instances:
                         }
                     },
                     user_id
-                )
                 
                 await service._log_deployment_event()
                     deployment_uuid, "service_scaling_completed",
                     f"Successfully scaled {service_name} to {target_instances} instances",
                     user_id
-                )
                 
                 logger.info(f"Service scaled successfully: {service_name} to {target_instances} instances")
                 return {
@@ -373,7 +347,6 @@ def scale_service(self, deployment_id: str, service_name: str, target_instances:
                     UUID(deployment_id), "service_scaling_failed",
                     f"Service scaling failed: {str(e)}",
                     user_id
-                )
                 
                 logger.error(f"Service scaling failed: {e}")
                 raise self.retry(countdown=60, exc=e)
@@ -386,8 +359,7 @@ def check_infrastructure_health(self):
     """Check health of all infrastructure periodically."""
     import asyncio
     
-    async def _check_health():
-        async with async_session() as db:
+    async def _check_health(async with async_session() as db):
             try:
                 service = DeploymentService(db)
                 
@@ -408,19 +380,16 @@ def check_infrastructure_health(self):
                             # Update infrastructure health status
                             await service.infrastructure_repo.update_health_status()
                                 infrastructure.id, "healthy", "health_check_task"
-                            )
                         else:
                             unhealthy_count += 1
                             
                             # Update infrastructure health status
                             await service.infrastructure_repo.update_health_status()
                                 infrastructure.id, "unhealthy", "health_check_task"
-                            )
                             
                             # Log unhealthy infrastructure with details
                             logger.info()
                                 f"Infrastructure {infrastructure.id} is unhealthy: {health_result['details']}")
-                            )
                             
                             # Trigger alerts for unhealthy infrastructure
                             await _trigger_infrastructure_alert(infrastructure, health_result)
@@ -516,7 +485,6 @@ def backup_deployment_configs(self, tenant_id: str = None):
                             deployment.id, 
                             {"last_backup_at": datetime.now(timezone.utc).isoformat()},
                             "backup_task"
-                        )
                         
                     except Exception as e:
                         logger.error(f"Failed to backup deployment {deployment.id}: {e}")
@@ -588,7 +556,6 @@ async def _check_aws_health(infrastructure, metadata: Dict) -> Dict[str, Any]:
             aws_access_key_id=aws_access_key,
             aws_secret_access_key=aws_secret_key,
             region_name=region
-        )
         
         checks = []
         all_healthy = True
@@ -632,7 +599,6 @@ async def _check_aws_health(infrastructure, metadata: Dict) -> Dict[str, Any]:
                     aws_access_key_id=aws_access_key,
                     aws_secret_access_key=aws_secret_key,
                     region_name=region
-                )
                 
                 response = elbv2.describe_load_balancers(LoadBalancerArns=load_balancer_arns)
                 
@@ -1059,7 +1025,7 @@ async def _trigger_infrastructure_alert(infrastructure, health_result: Dict[str,
             "details": health_result["details"],
             "failed_checks": [
                 check for check in health_result.get("checks", [])
-                if not check.get("healthy", False)
+                if not check.get("healthy", False}
             ]
         }
         
@@ -1127,7 +1093,7 @@ async def _prepare_backup_data(deployment, deployment_service) -> dict:
                 "backup_version": "1.0",
                 "backup_timestamp": datetime.now(timezone.utc).isoformat(),
                 "deployment_id": str(deployment.id),
-                "tenant_id": str(deployment.tenant_id)
+                "tenant_id": str(deployment.tenant_id}
             },
             "deployment": {
                 "id": str(deployment.id),
@@ -1203,7 +1169,6 @@ async def _backup_to_s3(deployment, backup_data: dict) -> bool:
             aws_access_key_id=aws_access_key,
             aws_secret_access_key=aws_secret_key,
             region_name=region
-        )
         
         # Create backup key path
         timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d/%H-%M-%S")
@@ -1222,7 +1187,6 @@ async def _backup_to_s3(deployment, backup_data: dict) -> bool:
                 'tenant-id': str(deployment.tenant_id),
                 'backup-timestamp': backup_data["metadata"]["backup_timestamp"]
             }
-        )
         
         logger.info(f"Backup uploaded to S3: s3://{bucket_name}/{backup_key}")
         return True
@@ -1259,7 +1223,6 @@ async def _backup_to_azure(deployment, backup_data: dict) -> bool:
         blob_client = blob_service_client.get_blob_client()
             container=container_name,
             blob=blob_name
-        )
         
         blob_client.upload_blob()
             backup_json.encode('utf-8'),
@@ -1270,7 +1233,6 @@ async def _backup_to_azure(deployment, backup_data: dict) -> bool:
                 'tenant_id': str(deployment.tenant_id),
                 'backup_timestamp': backup_data["metadata"]["backup_timestamp"]
             }
-        )
         
         logger.info(f"Backup uploaded to Azure Blob: {container_name}/{blob_name}")
         return True
@@ -1315,7 +1277,6 @@ async def _backup_to_gcp(deployment, backup_data: dict) -> bool:
         blob.upload_from_string()
             backup_json,
             content_type='application/json'
-        )
         
         logger.info(f"Backup uploaded to GCS: gs://{bucket_name}/{blob_name}")
         return True
@@ -1343,7 +1304,6 @@ async def _backup_to_local(deployment, backup_data: dict) -> bool:
             str(deployment.tenant_id),
             str(deployment.id),
             timestamp
-        )
         
         os.makedirs(backup_path, exist_ok=True)
         

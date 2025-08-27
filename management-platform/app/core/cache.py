@@ -13,7 +13,7 @@ import asyncio
 import redis.asyncio as aioredis
 from pydantic import BaseModel
 
-from ..config import settings
+from config import settings
 from .logging import get_logger
 
 logger = get_logger(__name__, timezone)
@@ -66,7 +66,6 @@ class CacheManager:
                 socket_keepalive=True,
                 socket_keepalive_options={},
                 health_check_interval=30
-            )
             
             # Test connection
             await self.redis_pool.ping()
@@ -142,9 +141,8 @@ class CacheManager:
             logger.error("Cache get error", key=cache_key, error=str(e)
             return default
     
-    async def set():
-        self, 
-        key: str, 
+    async def set(self, 
+        key): str, 
         value: Any, 
         ttl: int = None, 
         namespace: str = None,
@@ -383,11 +381,10 @@ def cached()
                 key_parts.extend(f"{k}={v}" for k, v in sorted(kwargs.items()
                 cache_key = ":".join(key_parts)
             
-            async def _async_execution():
-                cache_manager = await get_cache_manager()
+            async def _async_execution(cache_manager = await get_cache_manager()
                 
                 # Check condition if provided
-                if condition and not condition(*args, **kwargs):
+                if condition and not condition(*args, **kwargs)):
                     return func(*args, **kwargs)
                 
                 # Try to get from cache
@@ -436,10 +433,9 @@ def cache_invalidate(namespace: str = None, pattern: str = None):
             
             loop = asyncio.get_event_loop()
             
-            async def _invalidate():
-                cache_manager = await get_cache_manager()
+            async def _invalidate(cache_manager = await get_cache_manager()
                 
-                if pattern:
+                if pattern):
                     await cache_manager.delete_pattern(pattern, namespace)
                 elif namespace:
                     await cache_manager.flush_namespace(namespace)
@@ -478,7 +474,6 @@ class TenantCache:
             config, 
             ttl or TenantCache.DEFAULT_TTL,
             TenantCache.NAMESPACE
-        )
     
     @staticmethod
     async def invalidate_tenant(tenant_id: str):
@@ -509,7 +504,6 @@ class UserCache:
             ttl or UserCache.DEFAULT_TTL,
             UserCache.NAMESPACE,
             local_cache=True  # Cache permissions locally for faster access
-        )
     
     @staticmethod
     async def invalidate_user(user_id: str):

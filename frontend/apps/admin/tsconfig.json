@@ -1,23 +1,63 @@
 {
   "extends": "@dotmac/typescript-config/nextjs.json",
   "compilerOptions": {
+    "noEmit": true,
+    "skipLibCheck": true,
+    "allowJs": true,
+    "noImplicitAny": true,
+    "strict": true,
     "plugins": [
       {
         "name": "next"
       }
     ],
     "paths": {
-      "@/*": ["./src/*"],
-      "@/components/*": ["./src/components/*"],
-      "@/app/*": ["./src/app/*"],
-      "@dotmac/headless": ["../../packages/headless/src"],
-      "@dotmac/headless/*": ["../../packages/headless/src/*"],
-      "@dotmac/styled-components/admin": ["../../packages/styled-components/src/admin"],
-      "@dotmac/styled-components/admin/*": ["../../packages/styled-components/src/admin/*"],
-      "@dotmac/primitives": ["../../packages/primitives/src"],
-      "@dotmac/primitives/*": ["../../packages/primitives/src/*"]
-    }
+      "@/*": [
+        "./src/*"
+      ],
+      "@/components/*": [
+        "./src/components/*"
+      ],
+      "@/app/*": [
+        "./src/app/*"
+      ],
+      "@/lib/*": [
+        "./src/lib/*"
+      ],
+      "@/stores/*": [
+        "./src/stores/*"
+      ],
+      "@/types/*": [
+        "./src/types/*"
+      ],
+      "@dotmac/headless": [
+        "../../packages/headless/src"
+      ],
+      "@dotmac/headless/*": [
+        "../../packages/headless/src/*"
+      ],
+      "@dotmac/styled-components/admin": [
+        "../../packages/styled-components/src/admin"
+      ],
+      "@dotmac/styled-components/admin/*": [
+        "../../packages/styled-components/src/admin/*"
+      ],
+      "@dotmac/primitives": [
+        "../../packages/primitives/src"
+      ],
+      "@dotmac/primitives/*": [
+        "../../packages/primitives/src/*"
+      ]
+    },
+    "strictNullChecks": true
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }

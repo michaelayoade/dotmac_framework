@@ -2,6 +2,7 @@
 
 import { useISPTenant, useISPModules } from '@dotmac/headless';
 import { useState, useEffect } from 'react';
+import { useAuthToken } from '../../hooks/useSSRSafeStorage';
 import {
   Building,
   Users,
@@ -14,12 +15,14 @@ import {
   UserX,
 } from 'lucide-react';
 
-import { AdminLayout } from '../layout/AdminLayout';
+import AdminLayout from '../layout/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 
 export function AdminDashboard() {
   const [churnAlerts, setChurnAlerts] = useState<any>(null);
+  const [authToken, , tokenLoading] = useAuthToken();
+  
   const {
     session,
     isLoading,
@@ -46,10 +49,12 @@ export function AdminDashboard() {
   }, [session]);
 
   const fetchChurnAlerts = async () => {
+    if (!authToken || tokenLoading) return;
+    
     try {
       const response = await fetch('/api/isp/identity/intelligence/churn-alerts', {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('isp-admin-token')}`,
+          Authorization: `Bearer ${authToken}`,
         },
       });
 

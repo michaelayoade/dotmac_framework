@@ -9,20 +9,8 @@ This portal provides self-service interface for ISP customers including:
 - Instance scaling and backup management
 """
 
-from .api import tenant_admin_router
-from .schemas import (
-    TenantInstanceOverview,
-    InstanceConfigurationUpdate,
-    UsageMetricsResponse,
-    BillingPortalResponse,
-    SupportTicketCreate,
-)
+from .router import tenant_admin_api_router as tenant_admin_router
 
 __all__ = [
     "tenant_admin_router",
-    "TenantInstanceOverview",
-    "InstanceConfigurationUpdate", 
-    "UsageMetricsResponse",
-    "BillingPortalResponse",
-    "SupportTicketCreate",
 ]

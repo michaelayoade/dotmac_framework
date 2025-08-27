@@ -4,6 +4,11 @@ import './globals.css';
 
 import { TenantAuthProvider } from '@/components/auth/TenantAuthProvider';
 import { ToastProvider } from '@dotmac/primitives';
+import { PageErrorBoundary } from '@/components/error/ErrorBoundary';
+import { setupGlobalErrorHandlers } from '@/lib/error-handling';
+import { initializePerformanceMonitoring } from '@/lib/performance-monitoring';
+import { initializeAssetOptimization } from '@/lib/asset-optimization';
+import { preloadCriticalData } from '@/lib/caching-strategies';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -22,14 +27,24 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // Set up global error handlers and performance optimizations
+  if (typeof window !== 'undefined') {
+    setupGlobalErrorHandlers();
+    initializePerformanceMonitoring();
+    initializeAssetOptimization();
+    preloadCriticalData();
+  }
+
   return (
     <html lang="en">
       <body className={inter.className}>
-        <TenantAuthProvider>
-          <ToastProvider>
-            {children}
-          </ToastProvider>
-        </TenantAuthProvider>
+        <PageErrorBoundary name="RootLayout">
+          <TenantAuthProvider>
+            <ToastProvider>
+              {children}
+            </ToastProvider>
+          </TenantAuthProvider>
+        </PageErrorBoundary>
       </body>
     </html>
   );

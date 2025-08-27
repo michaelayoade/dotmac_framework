@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense, useState } from 'react';
-import { AdminLayout } from '../../../components/layout/AdminLayout';
+import AdminLayout from '../../../components/layout/AdminLayout';
 import { CustomersTable } from '../../../components/customers/CustomersTable';
 import { AddCustomerButton } from '../../../components/customers/AddCustomerButton';
 import { CustomerDensityHeatmap } from '@dotmac/mapping';
@@ -153,6 +153,7 @@ export default function CustomersPage() {
                 heatmapType='density'
                 gridSize={0.01}
                 className='h-full'
+                onAreaSelect={(area: any) => console.log('Selected area:', area)}
                 config={{
                   defaultCenter: { latitude: 47.6062, longitude: -122.3321 },
                   defaultZoom: 11,

@@ -27,8 +27,6 @@ class MetricRepository(BaseRepository[Metric]):
             and_()
                 self.model.timestamp <= cutoff_date,
                 self.model.is_deleted == False
-            )
-        )
         result = await self.db.execute(stmt)
         old_metrics = result.scalars().all()
         
@@ -46,8 +44,6 @@ class MetricRepository(BaseRepository[Metric]):
                 self.model.timestamp >= start_time,
                 self.model.timestamp <= end_time,
                 self.model.is_deleted == False
-            )
-        )
         result = await self.db.execute(stmt)
         return result.scalars().all()
     
@@ -57,8 +53,6 @@ class MetricRepository(BaseRepository[Metric]):
             and_()
                 self.model.tenant_id == tenant_id,
                 self.model.is_deleted == False
-            )
-        )
         result = await self.db.execute(stmt)
         return [row[0] for row in result.fetchall()]
     
@@ -66,7 +60,6 @@ class MetricRepository(BaseRepository[Metric]):
         """Get tenants that have services."""
         stmt = select(distinct(self.model.tenant_id).where()
             self.model.is_deleted == False
-        )
         result = await self.db.execute(stmt)
         return [row[0] for row in result.fetchall()]
     
@@ -84,7 +77,6 @@ class MetricRepository(BaseRepository[Metric]):
                 self.model.timestamp >= start_time,
                 self.model.timestamp <= end_time,
                 self.model.is_deleted == False
-            )
         ).order_by(self.model.timestamp)
         result = await self.db.execute(stmt)
         return result.scalars().all()
@@ -109,7 +101,6 @@ class AlertRepository(BaseRepository[Alert]):
             alert_id, 
             {"status": "resolved", "resolved_at": datetime.now(timezone.utc)}, 
             resolved_by
-        )
 
 
 class HealthCheckRepository(BaseRepository[HealthCheck]):

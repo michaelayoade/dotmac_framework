@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { generateNonce } from '@dotmac/headless/utils/csp';
+import { generateNonce } from '@/lib/csp-utils';
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const cookieStore = cookies();
     

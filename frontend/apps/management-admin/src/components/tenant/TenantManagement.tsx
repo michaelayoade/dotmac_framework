@@ -19,6 +19,8 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { useToast } from '@/components/ui/Toast';
 import { tenantApi, billingApi, monitoringApi } from '@/lib/api';
 import { Tenant, TenantStatus } from '@/types/tenant';
+import { useAppNavigation, routes } from '@/lib/navigation';
+import { InlineErrorBoundary } from '@/components/ErrorBoundary/QueryErrorBoundary';
 
 interface TenantManagementProps {
   showCreateButton?: boolean;
@@ -37,6 +39,7 @@ export function TenantManagement({
   
   const { success, error } = useToast();
   const queryClient = useQueryClient();
+  const { push } = useAppNavigation();
 
   // Fetch tenants
   const { data: tenantsData, isLoading: tenantsLoading, error: fetchError } = useQuery({
@@ -121,15 +124,15 @@ export function TenantManagement({
       change: '+12%',
       changeType: 'positive',
       icon: UsersIcon,
-      href: '/tenants',
+      href: routes.tenants.list,
     },
     {
       name: 'Active Tenants',
-      value: tenantsData?.tenants?.filter(t => t.status === TenantStatus.ACTIVE).length || 0,
+      value: tenantsData?.tenants?.filter((t: Tenant) => t.status === TenantStatus.ACTIVE).length || 0,
       change: '+5%',
       changeType: 'positive',
       icon: CheckCircleIcon,
-      href: '/tenants?status=active',
+      href: `${routes.tenants.list}?status=active`,
     },
     {
       name: 'System Health',
@@ -137,15 +140,15 @@ export function TenantManagement({
       change: healthData?.overall_status === 'healthy' ? 'All systems operational' : 'Needs attention',
       changeType: healthData?.overall_status === 'healthy' ? 'positive' : 'negative',
       icon: healthData?.overall_status === 'healthy' ? CheckCircleIcon : ExclamationTriangleIcon,
-      href: '/monitoring',
+      href: routes.monitoring,
     },
     {
       name: 'Pending Setup',
-      value: tenantsData?.tenants?.filter(t => t.status === TenantStatus.PENDING).length || 0,
+      value: tenantsData?.tenants?.filter((t: Tenant) => t.status === TenantStatus.PENDING).length || 0,
       change: 'Require attention',
-      changeType: tenantsData?.tenants?.some(t => t.status === TenantStatus.PENDING) ? 'negative' : 'neutral',
+      changeType: tenantsData?.tenants?.some((t: Tenant) => t.status === TenantStatus.PENDING) ? 'negative' : 'neutral',
       icon: ExclamationTriangleIcon,
-      href: '/tenants?status=pending',
+      href: `${routes.tenants.list}?status=pending`,
     },
   ] : [];
 
@@ -153,14 +156,15 @@ export function TenantManagement({
     <div className="space-y-6">
       {/* Stats Cards */}
       {showStats && !compact && (
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {stats.map((item) => {
+        <InlineErrorBoundary fallbackMessage="Unable to load tenant statistics">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {stats.map((item) => {
             const Icon = item.icon;
             return (
               <div
                 key={item.name}
                 className="card hover:shadow-md transition-shadow cursor-pointer"
-                onClick={() => window.location.href = item.href}
+                onClick={() => push(item.href)}
               >
                 <div className="card-content">
                   <div className="flex items-center">
@@ -203,7 +207,8 @@ export function TenantManagement({
               </div>
             );
           })}
-        </div>
+          </div>
+        </InlineErrorBoundary>
       )}
 
       {/* Tenant Management Section */}
@@ -226,7 +231,7 @@ export function TenantManagement({
                 <button
                   type="button"
                   className="btn-primary"
-                  onClick={() => window.location.href = '/tenants/new'}
+                  onClick={() => push(routes.tenants.new)}
                 >
                   <PlusIcon className="h-4 w-4 mr-2" />
                   Create Tenant
@@ -305,7 +310,7 @@ export function TenantManagement({
                   <button
                     type="button"
                     className="btn-primary"
-                    onClick={() => window.location.href = '/tenants/new'}
+                    onClick={() => push(routes.tenants.new)}
                   >
                     <PlusIcon className="h-4 w-4 mr-2" />
                     Create Your First Tenant
@@ -326,7 +331,7 @@ export function TenantManagement({
                 </tr>
               </thead>
               <tbody className="table-body">
-                {tenantsData?.tenants?.map((tenant) => (
+                {tenantsData?.tenants?.map((tenant: Tenant) => (
                   <tr key={tenant.id} className="hover:bg-gray-50">
                     <td className="table-cell">
                       <div>
@@ -382,7 +387,7 @@ export function TenantManagement({
                           type="button"
                           className="text-primary-600 hover:text-primary-900"
                           title="View Details"
-                          onClick={() => window.location.href = `/tenants/${tenant.id}`}
+                          onClick={() => push(routes.tenants.view(tenant.id))}
                         >
                           <EyeIcon className="h-4 w-4" />
                         </button>
@@ -390,7 +395,7 @@ export function TenantManagement({
                           type="button"
                           className="text-gray-600 hover:text-gray-900"
                           title="Edit"
-                          onClick={() => window.location.href = `/tenants/${tenant.id}/edit`}
+                          onClick={() => push(routes.tenants.edit(tenant.id))}
                         >
                           <PencilIcon className="h-4 w-4" />
                         </button>
@@ -467,7 +472,7 @@ export function TenantManagement({
         {compact && tenantsData && tenantsData.total > (tenantsData.tenants?.length || 0) && (
           <div className="card-content border-t text-center">
             <button
-              onClick={() => window.location.href = '/tenants'}
+              onClick={() => push(routes.tenants.list)}
               className="text-sm text-primary-600 hover:text-primary-900 font-medium"
             >
               View all {tenantsData.total} tenants →

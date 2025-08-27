@@ -3,17 +3,17 @@
 import { useCachedData } from '@dotmac/headless';
 import { Card } from '@dotmac/styled-components/customer';
 import {
-  Check,
-  Star,
-  Zap,
-  Shield,
-  Headphones,
-  Wifi,
-  Phone,
-  Tv,
-  Clock,
   ArrowRight,
+  Check,
+  Clock,
+  Headphones,
   Info,
+  Phone,
+  Shield,
+  Star,
+  Tv,
+  Wifi,
+  Zap,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -240,20 +240,20 @@ export function ServicePlans() {
   const getPlanIcon = (category: string) => {
     switch (category) {
       case 'internet':
-        return <Wifi className='h-6 w-6 text-blue-600' />;
+        return <Wifi className="h-6 w-6 text-blue-600" />;
       case 'phone':
-        return <Phone className='h-6 w-6 text-green-600' />;
+        return <Phone className="h-6 w-6 text-green-600" />;
       case 'tv':
-        return <Tv className='h-6 w-6 text-purple-600' />;
+        return <Tv className="h-6 w-6 text-purple-600" />;
       default:
-        return <Zap className='h-6 w-6 text-orange-600' />;
+        return <Zap className="h-6 w-6 text-orange-600" />;
     }
   };
 
   if (isLoading || !plansData) {
     return (
-      <div className='flex h-64 items-center justify-center'>
-        <div className='h-8 w-8 animate-spin rounded-full border-blue-600 border-b-2' />
+      <div className="flex h-64 items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-blue-600 border-b-2" />
       </div>
     );
   }
@@ -274,31 +274,31 @@ export function ServicePlans() {
   };
 
   return (
-    <div className='space-y-6'>
-      <div className='flex items-center justify-between'>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h2 className='text-2xl font-bold text-gray-900'>Available Plans</h2>
-          <p className='mt-1 text-sm text-gray-500'>
+          <h2 className="text-2xl font-bold text-gray-900">Available Plans</h2>
+          <p className="mt-1 text-sm text-gray-500">
             Explore our service plans and find the perfect fit for your needs
           </p>
         </div>
         <button
           onClick={() => setShowComparison(!showComparison)}
-          className='rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50'
+          className="rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50"
         >
           {showComparison ? 'Hide Comparison' : 'Compare Plans'}
         </button>
       </div>
 
       {/* Category Navigation */}
-      <div className='border-b border-gray-200'>
-        <nav className='-mb-px flex space-x-8'>
+      <div className="border-b border-gray-200">
+        <nav className="-mb-px flex space-x-8">
           {[
             { id: 'internet', label: 'Internet Plans', icon: Wifi },
             { id: 'phone', label: 'Phone Plans', icon: Phone },
             { id: 'tv', label: 'TV Plans', icon: Tv },
             { id: 'bundles', label: 'Bundle Deals', icon: Zap },
-          ].map((category) => (
+          ].map(category => (
             <button
               key={category.id}
               onClick={() => setActiveCategory(category.id as any)}
@@ -308,7 +308,7 @@ export function ServicePlans() {
                   : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
               }`}
             >
-              <category.icon className='mr-2 h-4 w-4' />
+              <category.icon className="mr-2 h-4 w-4" />
               {category.label}
             </button>
           ))}
@@ -325,91 +325,91 @@ export function ServicePlans() {
             className={`relative p-6 ${plan.isPopular ? 'ring-2 ring-blue-500' : ''}`}
           >
             {plan.isPopular && (
-              <div className='absolute -top-3 left-1/2 transform -translate-x-1/2'>
-                <span className='inline-flex items-center rounded-full bg-blue-500 px-3 py-1 text-xs font-medium text-white'>
-                  <Star className='mr-1 h-3 w-3' />
+              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                <span className="inline-flex items-center rounded-full bg-blue-500 px-3 py-1 text-xs font-medium text-white">
+                  <Star className="mr-1 h-3 w-3" />
                   Most Popular
                 </span>
               </div>
             )}
 
             {plan.isCurrentPlan && (
-              <div className='absolute -top-3 right-4'>
-                <span className='inline-flex items-center rounded-full bg-green-500 px-3 py-1 text-xs font-medium text-white'>
+              <div className="absolute -top-3 right-4">
+                <span className="inline-flex items-center rounded-full bg-green-500 px-3 py-1 text-xs font-medium text-white">
                   Current Plan
                 </span>
               </div>
             )}
 
-            <div className='mb-6'>
-              <div className='flex items-center mb-2'>
+            <div className="mb-6">
+              <div className="flex items-center mb-2">
                 {getPlanIcon(plan.category || 'bundle')}
-                <h3 className='ml-2 text-xl font-bold text-gray-900'>{plan.name}</h3>
+                <h3 className="ml-2 text-xl font-bold text-gray-900">{plan.name}</h3>
               </div>
 
-              <div className='mb-2'>
+              <div className="mb-2">
                 {plan.bundlePrice ? (
                   <div>
-                    <div className='flex items-baseline'>
-                      <span className='text-3xl font-bold text-gray-900'>
+                    <div className="flex items-baseline">
+                      <span className="text-3xl font-bold text-gray-900">
                         {formatCurrency(plan.bundlePrice)}
                       </span>
-                      <span className='ml-2 text-sm text-gray-500'>/month</span>
+                      <span className="ml-2 text-sm text-gray-500">/month</span>
                     </div>
-                    <div className='flex items-center text-sm'>
-                      <span className='text-gray-500 line-through'>
+                    <div className="flex items-center text-sm">
+                      <span className="text-gray-500 line-through">
                         {formatCurrency(plan.originalPrice)}
                       </span>
-                      <span className='ml-2 text-green-600 font-medium'>
+                      <span className="ml-2 text-green-600 font-medium">
                         Save {formatCurrency(plan.savings)}
                       </span>
                     </div>
                   </div>
                 ) : (
-                  <div className='flex items-baseline'>
-                    <span className='text-3xl font-bold text-gray-900'>
+                  <div className="flex items-baseline">
+                    <span className="text-3xl font-bold text-gray-900">
                       {formatCurrency(plan.price)}
                     </span>
-                    <span className='ml-2 text-sm text-gray-500'>/month</span>
+                    <span className="ml-2 text-sm text-gray-500">/month</span>
                   </div>
                 )}
               </div>
 
-              <p className='text-sm text-gray-600'>{plan.idealFor}</p>
+              <p className="text-sm text-gray-600">{plan.idealFor}</p>
 
               {plan.speed && (
-                <div className='mt-2 flex items-center text-sm text-blue-600'>
-                  <Zap className='mr-1 h-4 w-4' />
-                  <span className='font-medium'>
+                <div className="mt-2 flex items-center text-sm text-blue-600">
+                  <Zap className="mr-1 h-4 w-4" />
+                  <span className="font-medium">
                     {plan.speed.download}/{plan.speed.upload} Mbps
                   </span>
                 </div>
               )}
 
               {plan.channels && (
-                <div className='mt-2 flex items-center text-sm text-purple-600'>
-                  <Tv className='mr-1 h-4 w-4' />
-                  <span className='font-medium'>{plan.channels}+ Channels</span>
+                <div className="mt-2 flex items-center text-sm text-purple-600">
+                  <Tv className="mr-1 h-4 w-4" />
+                  <span className="font-medium">{plan.channels}+ Channels</span>
                 </div>
               )}
             </div>
 
-            <div className='mb-6'>
-              <h4 className='mb-3 font-medium text-gray-900'>Features Include:</h4>
-              <ul className='space-y-2'>
+            <div className="mb-6">
+              <h4 className="mb-3 font-medium text-gray-900">Features Include:</h4>
+              <ul className="space-y-2">
                 {plan.features.map((feature: string, index: number) => (
-                  <li key={index} className='flex items-start text-sm text-gray-600'>
-                    <Check className='mr-2 h-4 w-4 text-green-500 flex-shrink-0 mt-0.5' />
+                  <li key={index} className="flex items-start text-sm text-gray-600">
+                    <Check className="mr-2 h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
                     <span>{feature}</span>
                   </li>
                 ))}
               </ul>
             </div>
 
-            <div className='mb-6 space-y-2 text-sm'>
+            <div className="mb-6 space-y-2 text-sm">
               {plan.setupFee !== undefined && (
-                <div className='flex justify-between'>
-                  <span className='text-gray-600'>Setup Fee:</span>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Setup Fee:</span>
                   <span
                     className={plan.setupFee === 0 ? 'text-green-600 font-medium' : 'text-gray-900'}
                   >
@@ -417,39 +417,39 @@ export function ServicePlans() {
                   </span>
                 </div>
               )}
-              <div className='flex justify-between'>
-                <span className='text-gray-600'>Contract:</span>
-                <span className='text-gray-900'>{plan.contractLength}</span>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Contract:</span>
+                <span className="text-gray-900">{plan.contractLength}</span>
               </div>
               {plan.dataAllowance && (
-                <div className='flex justify-between'>
-                  <span className='text-gray-600'>Data Allowance:</span>
-                  <span className='text-gray-900'>{plan.dataAllowance}</span>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Data Allowance:</span>
+                  <span className="text-gray-900">{plan.dataAllowance}</span>
                 </div>
               )}
             </div>
 
-            <div className='space-y-2'>
+            <div className="space-y-2">
               {plan.isCurrentPlan ? (
                 <button
                   disabled
-                  className='w-full rounded-lg bg-gray-100 px-4 py-2 text-gray-500 cursor-not-allowed'
+                  className="w-full rounded-lg bg-gray-100 px-4 py-2 text-gray-500 cursor-not-allowed"
                 >
                   Current Plan
                 </button>
               ) : plan.upgradeFrom ? (
-                <button className='w-full rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700'>
-                  <span className='flex items-center justify-center'>
+                <button className="w-full rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700">
+                  <span className="flex items-center justify-center">
                     Upgrade to This Plan
-                    <ArrowRight className='ml-2 h-4 w-4' />
+                    <ArrowRight className="ml-2 h-4 w-4" />
                   </span>
                 </button>
               ) : (
-                <button className='w-full rounded-lg bg-green-600 px-4 py-2 text-white transition-colors hover:bg-green-700'>
+                <button className="w-full rounded-lg bg-green-600 px-4 py-2 text-white transition-colors hover:bg-green-700">
                   Add This Service
                 </button>
               )}
-              <button className='w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50'>
+              <button className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50">
                 Learn More
               </button>
             </div>
@@ -459,48 +459,48 @@ export function ServicePlans() {
 
       {/* Plan Comparison Table */}
       {showComparison && activeCategory !== 'bundles' && (
-        <Card className='p-6 overflow-x-auto'>
-          <h3 className='mb-4 text-lg font-semibold text-gray-900'>Plan Comparison</h3>
-          <table className='min-w-full'>
+        <Card className="p-6 overflow-x-auto">
+          <h3 className="mb-4 text-lg font-semibold text-gray-900">Plan Comparison</h3>
+          <table className="min-w-full">
             <thead>
-              <tr className='border-b border-gray-200'>
-                <th className='text-left py-3 px-4 font-medium text-gray-900'>Feature</th>
+              <tr className="border-b border-gray-200">
+                <th className="text-left py-3 px-4 font-medium text-gray-900">Feature</th>
                 {getCurrentPlans().map((plan: any) => (
-                  <th key={plan.id} className='text-center py-3 px-4'>
-                    <div className='font-medium text-gray-900'>{plan.name}</div>
-                    <div className='text-2xl font-bold text-blue-600 mt-1'>
+                  <th key={plan.id} className="text-center py-3 px-4">
+                    <div className="font-medium text-gray-900">{plan.name}</div>
+                    <div className="text-2xl font-bold text-blue-600 mt-1">
                       {formatCurrency(plan.price)}
                     </div>
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className='divide-y divide-gray-200'>
+            <tbody className="divide-y divide-gray-200">
               {activeCategory === 'internet' && (
                 <>
                   <tr>
-                    <td className='py-3 px-4 font-medium text-gray-900'>Download Speed</td>
+                    <td className="py-3 px-4 font-medium text-gray-900">Download Speed</td>
                     {getCurrentPlans().map((plan: any) => (
-                      <td key={plan.id} className='text-center py-3 px-4'>
-                        <span className='font-medium text-blue-600'>
+                      <td key={plan.id} className="text-center py-3 px-4">
+                        <span className="font-medium text-blue-600">
                           {plan.speed.download} Mbps
                         </span>
                       </td>
                     ))}
                   </tr>
                   <tr>
-                    <td className='py-3 px-4 font-medium text-gray-900'>Upload Speed</td>
+                    <td className="py-3 px-4 font-medium text-gray-900">Upload Speed</td>
                     {getCurrentPlans().map((plan: any) => (
-                      <td key={plan.id} className='text-center py-3 px-4'>
-                        <span className='font-medium text-blue-600'>{plan.speed.upload} Mbps</span>
+                      <td key={plan.id} className="text-center py-3 px-4">
+                        <span className="font-medium text-blue-600">{plan.speed.upload} Mbps</span>
                       </td>
                     ))}
                   </tr>
                   <tr>
-                    <td className='py-3 px-4 font-medium text-gray-900'>Data Allowance</td>
+                    <td className="py-3 px-4 font-medium text-gray-900">Data Allowance</td>
                     {getCurrentPlans().map((plan: any) => (
-                      <td key={plan.id} className='text-center py-3 px-4'>
-                        <Check className='h-5 w-5 text-green-500 mx-auto' />
+                      <td key={plan.id} className="text-center py-3 px-4">
+                        <Check className="h-5 w-5 text-green-500 mx-auto" />
                       </td>
                     ))}
                   </tr>
@@ -508,9 +508,9 @@ export function ServicePlans() {
               )}
 
               <tr>
-                <td className='py-3 px-4 font-medium text-gray-900'>Setup Fee</td>
+                <td className="py-3 px-4 font-medium text-gray-900">Setup Fee</td>
                 {getCurrentPlans().map((plan: any) => (
-                  <td key={plan.id} className='text-center py-3 px-4'>
+                  <td key={plan.id} className="text-center py-3 px-4">
                     <span
                       className={
                         plan.setupFee === 0 ? 'text-green-600 font-medium' : 'text-gray-900'
@@ -523,19 +523,19 @@ export function ServicePlans() {
               </tr>
 
               <tr>
-                <td className='py-3 px-4 font-medium text-gray-900'>Contract Length</td>
+                <td className="py-3 px-4 font-medium text-gray-900">Contract Length</td>
                 {getCurrentPlans().map((plan: any) => (
-                  <td key={plan.id} className='text-center py-3 px-4'>
-                    <span className='text-gray-900'>{plan.contractLength}</span>
+                  <td key={plan.id} className="text-center py-3 px-4">
+                    <span className="text-gray-900">{plan.contractLength}</span>
                   </td>
                 ))}
               </tr>
 
               <tr>
-                <td className='py-3 px-4 font-medium text-gray-900'>24/7 Support</td>
+                <td className="py-3 px-4 font-medium text-gray-900">24/7 Support</td>
                 {getCurrentPlans().map((plan: any) => (
-                  <td key={plan.id} className='text-center py-3 px-4'>
-                    <Check className='h-5 w-5 text-green-500 mx-auto' />
+                  <td key={plan.id} className="text-center py-3 px-4">
+                    <Check className="h-5 w-5 text-green-500 mx-auto" />
                   </td>
                 ))}
               </tr>
@@ -545,34 +545,34 @@ export function ServicePlans() {
       )}
 
       {/* Additional Information */}
-      <Card className='p-6 bg-blue-50 border-blue-200'>
-        <div className='flex items-start'>
-          <Info className='h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0' />
-          <div className='ml-3'>
-            <h3 className='font-medium text-blue-900'>Need Help Choosing?</h3>
-            <p className='mt-1 text-sm text-blue-700'>
+      <Card className="p-6 bg-blue-50 border-blue-200">
+        <div className="flex items-start">
+          <Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+          <div className="ml-3">
+            <h3 className="font-medium text-blue-900">Need Help Choosing?</h3>
+            <p className="mt-1 text-sm text-blue-700">
               Our customer service team is available 24/7 to help you find the perfect plan for your
               needs. Call us at{' '}
-              <a href='tel:+1-800-123-4567' className='font-medium underline'>
+              <a href="tel:+1-800-123-4567" className="font-medium underline">
                 1-800-123-4567
               </a>{' '}
               or{' '}
-              <button className='font-medium underline hover:no-underline'>
+              <button className="font-medium underline hover:no-underline">
                 chat with us online
               </button>
               .
             </p>
-            <div className='mt-3 flex space-x-4'>
-              <div className='flex items-center text-sm text-blue-700'>
-                <Shield className='mr-1 h-4 w-4' />
+            <div className="mt-3 flex space-x-4">
+              <div className="flex items-center text-sm text-blue-700">
+                <Shield className="mr-1 h-4 w-4" />
                 30-Day Money Back Guarantee
               </div>
-              <div className='flex items-center text-sm text-blue-700'>
-                <Clock className='mr-1 h-4 w-4' />
+              <div className="flex items-center text-sm text-blue-700">
+                <Clock className="mr-1 h-4 w-4" />
                 No Long-Term Contracts
               </div>
-              <div className='flex items-center text-sm text-blue-700'>
-                <Headphones className='mr-1 h-4 w-4' />
+              <div className="flex items-center text-sm text-blue-700">
+                <Headphones className="mr-1 h-4 w-4" />
                 24/7 Customer Support
               </div>
             </div>

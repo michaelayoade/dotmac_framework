@@ -92,9 +92,8 @@ class PluginSecurityScanner:
         # Dependency vulnerability database (simplified)
         self.vuln_db = self._load_vulnerability_database()
     
-    async def perform_comprehensive_scan():
-        self,
-        plugin_id: UUID,
+    async def perform_comprehensive_scan(self,
+        plugin_id): UUID,
         scan_options: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """Perform comprehensive security scan on a plugin."""
@@ -156,7 +155,6 @@ class PluginSecurityScanner:
             is_verified = overall_score >= 80 and not any()
                 issue.severity in [SeverityLevel.CRITICAL, SeverityLevel.HIGH] 
                 for issue in overall_issues
-            )
             
             # Generate security report
             security_report = {
@@ -172,7 +170,7 @@ class PluginSecurityScanner:
                 "scan_results": {k: asdict(v) for k, v in scan_results.items()},
                 "recommendations": self._generate_security_recommendations(overall_issues),
                 "compliance_status": self._assess_compliance_status(overall_issues),
-                "risk_assessment": self._assess_security_risk(overall_score, overall_issues)
+                "risk_assessment": self._assess_security_risk(overall_score, overall_issues}
             }
             
             # Store scan results
@@ -331,13 +329,11 @@ class PluginSecurityScanner:
                     recommendation=recommendation,
                     affected_files=["plugin_source"],
                     first_found=datetime.now(timezone.utc)
-                )
         
         scan_duration = (datetime.now(timezone.utc) - scan_start).total_seconds()
         
-        return SecurityScanResult()
-            plugin_id=str(plugin.id),
-            scan_id=f"code_analysis_{int(scan_start.timestamp()}")
+        return SecurityScanResult(plugin_id=str(plugin.id),
+            scan_id=f"code_analysis_{int(scan_start.timestamp())")
             scan_type=ScanType.CODE_ANALYSIS,
             scan_date=scan_start,
             scanner_version="1.0.0",
@@ -347,7 +343,6 @@ class PluginSecurityScanner:
             files_scanned=files_scanned,
             lines_of_code=lines_of_code,
             metadata={"patterns_checked": len(dangerous_patterns)}
-        )
     
     async def _perform_dependency_scan(self, plugin: Any) -> SecurityScanResult:
         """Scan plugin dependencies for known vulnerabilities."""
@@ -372,13 +367,11 @@ class PluginSecurityScanner:
                     cwe_id=vuln.get('cwe_id'),
                     cvss_score=vuln.get('cvss_score'),
                     first_found=datetime.now(timezone.utc)
-                )
         
         scan_duration = (datetime.now(timezone.utc) - scan_start).total_seconds()
         
-        return SecurityScanResult()
-            plugin_id=str(plugin.id),
-            scan_id=f"dependency_scan_{int(scan_start.timestamp()}")
+        return SecurityScanResult(plugin_id=str(plugin.id),
+            scan_id=f"dependency_scan_{int(scan_start.timestamp())")
             scan_type=ScanType.DEPENDENCY_SCAN,
             scan_date=scan_start,
             scanner_version="1.0.0",
@@ -388,7 +381,6 @@ class PluginSecurityScanner:
             files_scanned=0,
             lines_of_code=0,
             metadata={"dependencies_checked": len(dependencies)}
-        )
     
     async def _perform_permission_audit(self, plugin: Any) -> SecurityScanResult:
         """Audit plugin permissions for security risks."""
@@ -418,13 +410,11 @@ class PluginSecurityScanner:
                     recommendation="Review if this permission is necessary and properly justified",
                     affected_files=[],
                     first_found=datetime.now(timezone.utc)
-                )
         
         scan_duration = (datetime.now(timezone.utc) - scan_start).total_seconds()
         
-        return SecurityScanResult()
-            plugin_id=str(plugin.id),
-            scan_id=f"permission_audit_{int(scan_start.timestamp()}")
+        return SecurityScanResult(plugin_id=str(plugin.id),
+            scan_id=f"permission_audit_{int(scan_start.timestamp())")
             scan_type=ScanType.PERMISSION_AUDIT,
             scan_date=scan_start,
             scanner_version="1.0.0",
@@ -434,7 +424,6 @@ class PluginSecurityScanner:
             files_scanned=0,
             lines_of_code=0,
             metadata={"permissions_checked": len(permissions)}
-        )
     
     async def _perform_signature_verification(self, plugin: Any) -> SecurityScanResult:
         """Verify plugin digital signature."""
@@ -454,7 +443,6 @@ class PluginSecurityScanner:
                 recommendation="Add a digital signature to ensure plugin authenticity",
                 affected_files=[],
                 first_found=datetime.now(timezone.utc)
-            )
         else:
             # Verify signature (simplified)
             if not self._verify_signature(plugin, signature):
@@ -467,13 +455,11 @@ class PluginSecurityScanner:
                     recommendation="Re-sign the plugin with a valid certificate",
                     affected_files=[],
                     first_found=datetime.now(timezone.utc)
-                )
         
         scan_duration = (datetime.now(timezone.utc) - scan_start).total_seconds()
         
-        return SecurityScanResult()
-            plugin_id=str(plugin.id),
-            scan_id=f"signature_verification_{int(scan_start.timestamp()}")
+        return SecurityScanResult(plugin_id=str(plugin.id),
+            scan_id=f"signature_verification_{int(scan_start.timestamp())")
             scan_type=ScanType.SIGNATURE_VERIFICATION,
             scan_date=scan_start,
             scanner_version="1.0.0",
@@ -483,7 +469,6 @@ class PluginSecurityScanner:
             files_scanned=0,
             lines_of_code=0,
             metadata={"has_signature": signature is not None}
-        )
     
     async def _perform_compliance_check(self, plugin: Any) -> SecurityScanResult:
         """Check plugin compliance with security standards."""
@@ -508,7 +493,6 @@ class PluginSecurityScanner:
                 recommendation="Complete all required metadata fields",
                 affected_files=[],
                 first_found=datetime.now(timezone.utc)
-            )
         
         # Check for privacy policy
         if not getattr(plugin, 'privacy_policy_url', None):
@@ -521,13 +505,11 @@ class PluginSecurityScanner:
                 recommendation="Provide a privacy policy URL",
                 affected_files=[],
                 first_found=datetime.now(timezone.utc)
-            )
         
         scan_duration = (datetime.now(timezone.utc) - scan_start).total_seconds()
         
-        return SecurityScanResult()
-            plugin_id=str(plugin.id),
-            scan_id=f"compliance_check_{int(scan_start.timestamp()}")
+        return SecurityScanResult(plugin_id=str(plugin.id),
+            scan_id=f"compliance_check_{int(scan_start.timestamp())")
             scan_type=ScanType.COMPLIANCE_CHECK,
             scan_date=scan_start,
             scanner_version="1.0.0",
@@ -537,7 +519,6 @@ class PluginSecurityScanner:
             files_scanned=0,
             lines_of_code=0,
             metadata={"checks_performed": len(required_metadata) + 1}
-        )
     
     async def _perform_malware_scan(self, plugin: Any) -> SecurityScanResult:
         """Scan plugin for malware signatures."""
@@ -558,13 +539,11 @@ class PluginSecurityScanner:
                     recommendation="Remove malicious code immediately",
                     affected_files=["plugin_source"],
                     first_found=datetime.now(timezone.utc)
-                )
         
         scan_duration = (datetime.now(timezone.utc) - scan_start).total_seconds()
         
-        return SecurityScanResult()
-            plugin_id=str(plugin.id),
-            scan_id=f"malware_scan_{int(scan_start.timestamp()}")
+        return SecurityScanResult(plugin_id=str(plugin.id),
+            scan_id=f"malware_scan_{int(scan_start.timestamp())")
             scan_type=ScanType.MALWARE_SCAN,
             scan_date=scan_start,
             scanner_version="1.0.0",
@@ -574,7 +553,6 @@ class PluginSecurityScanner:
             files_scanned=1,
             lines_of_code=len(code_content.split('\n'))
             metadata={"patterns_checked": len(self.malware_patterns)}
-        )
     
     def _load_vulnerability_patterns(self) -> Dict[str, Any]:
         """Load vulnerability detection patterns."""
@@ -732,9 +710,8 @@ class PluginSecurityScanner:
         except Exception as e:
             logger.error(f"Failed to store scan results: {e}")
     
-    async def _update_plugin_security_status():
-        self,
-        plugin_id: UUID,
+    async def _update_plugin_security_status(self,
+        plugin_id): UUID,
         is_verified: bool,
         security_score: int,
         scan_report: Dict[str, Any]

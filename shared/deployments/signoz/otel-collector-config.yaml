@@ -29,20 +29,11 @@ processors:
 
 exporters:
   clickhousetraces:
-    endpoint: tcp://${CLICKHOUSE_HOST}:9000
-    database: signoz_traces
-    username: signoz
-    password: ${CLICKHOUSE_PASSWORD}
+    datasource: tcp://${CLICKHOUSE_HOST}:9000/?database=signoz_traces&username=signoz&password=${CLICKHOUSE_PASSWORD}
   clickhousemetricswrite:
-    endpoint: tcp://${CLICKHOUSE_HOST}:9000
-    database: signoz_metrics
-    username: signoz
-    password: ${CLICKHOUSE_PASSWORD}
+    dsn: tcp://${CLICKHOUSE_HOST}:9000/?database=signoz_metrics&username=signoz&password=${CLICKHOUSE_PASSWORD}
   clickhouselogsexporter:
-    endpoint: tcp://${CLICKHOUSE_HOST}:9000
-    database: signoz_logs
-    username: signoz
-    password: ${CLICKHOUSE_PASSWORD}
+    dsn: tcp://${CLICKHOUSE_HOST}:9000/?database=signoz_logs&username=signoz&password=${CLICKHOUSE_PASSWORD}
   logging:
     loglevel: debug
 

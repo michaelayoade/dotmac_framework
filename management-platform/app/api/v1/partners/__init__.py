@@ -1,0 +1,3 @@
+"""
+Partner management API endpoints
+"""

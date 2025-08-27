@@ -10,9 +10,9 @@ from fastapi import APIRouter, Request, HTTPException, status, Depends, Header
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ...database import get_db
-from ...services.stripe_service import StripeService
-from ...core.logging import get_logger
+from database import get_db
+from services.stripe_service import StripeService
+from core.logging import get_logger
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/webhooks", tags=["webhooks"])

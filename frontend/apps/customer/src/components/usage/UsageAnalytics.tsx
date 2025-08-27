@@ -149,38 +149,38 @@ export function UsageAnalytics() {
   const runSpeedTest = async () => {
     setRunningSpeedTest(true);
     // Simulate speed test
-    await new Promise((resolve) => setTimeout(resolve, 3000));
+    await new Promise(resolve => setTimeout(resolve, 3000));
     setRunningSpeedTest(false);
     // In real app, this would refresh the speed test data
   };
 
   if (isLoading || !usageData) {
     return (
-      <div className='flex h-64 items-center justify-center'>
-        <div className='h-8 w-8 animate-spin rounded-full border-blue-600 border-b-2' />
+      <div className="flex h-64 items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-blue-600 border-b-2" />
       </div>
     );
   }
 
   return (
-    <div className='space-y-6'>
+    <div className="space-y-6">
       {/* Header */}
-      <div className='flex items-center justify-between'>
-        <h1 className='font-bold text-2xl text-gray-900'>Usage & Performance</h1>
-        <div className='flex items-center space-x-3'>
+      <div className="flex items-center justify-between">
+        <h1 className="font-bold text-2xl text-gray-900">Usage & Performance</h1>
+        <div className="flex items-center space-x-3">
           <select
             value={selectedPeriod}
-            onChange={(e) => setSelectedPeriod(e.target.value as '7d' | '30d' | '90d')}
-            className='rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
+            onChange={e => setSelectedPeriod(e.target.value as '7d' | '30d' | '90d')}
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value='7d'>Last 7 days</option>
-            <option value='30d'>Last 30 days</option>
-            <option value='90d'>Last 90 days</option>
+            <option value="7d">Last 7 days</option>
+            <option value="30d">Last 30 days</option>
+            <option value="90d">Last 90 days</option>
           </select>
           <button
-            type='button'
+            type="button"
             onClick={runSpeedTest}
-            onKeyDown={(e) => e.key === 'Enter' && runSpeedTest}
+            onKeyDown={e => e.key === 'Enter' && runSpeedTest}
             disabled={runningSpeedTest}
             className={`flex items-center rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700 ${
               runningSpeedTest ? 'cursor-not-allowed opacity-50' : ''
@@ -193,15 +193,15 @@ export function UsageAnalytics() {
       </div>
 
       {/* Overview Cards */}
-      <div className='grid grid-cols-1 gap-6 md:grid-cols-4'>
-        <Card className='p-6'>
-          <div className='flex items-center justify-between'>
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
+        <Card className="p-6">
+          <div className="flex items-center justify-between">
             <div>
-              <p className='font-medium text-gray-600 text-sm'>Data Usage</p>
-              <p className='font-bold text-2xl text-gray-900'>
+              <p className="font-medium text-gray-600 text-sm">Data Usage</p>
+              <p className="font-bold text-2xl text-gray-900">
                 {usageData.dataUsage.current} {usageData.dataUsage.unit}
               </p>
-              <p className='text-gray-500 text-sm'>
+              <p className="text-gray-500 text-sm">
                 of {usageData.dataUsage.limit} {usageData.dataUsage.unit}
               </p>
             </div>
@@ -211,14 +211,14 @@ export function UsageAnalytics() {
               }`}
             >
               {usageData.dataUsage.trend === 'up' ? (
-                <TrendingUp className='h-5 w-5' />
+                <TrendingUp className="h-5 w-5" />
               ) : (
-                <TrendingDown className='h-5 w-5' />
+                <TrendingDown className="h-5 w-5" />
               )}
             </div>
           </div>
-          <div className='mt-4'>
-            <div className='h-2 w-full rounded-full bg-gray-200'>
+          <div className="mt-4">
+            <div className="h-2 w-full rounded-full bg-gray-200">
               <div
                 className={`h-2 rounded-full transition-all duration-300 ${
                   usageData.dataUsage.percentUsed > 80
@@ -230,18 +230,18 @@ export function UsageAnalytics() {
                 style={{ width: `${Math.min(usageData.dataUsage.percentUsed, 100)}%` }}
               />
             </div>
-            <p className='mt-1 text-gray-500 text-xs'>
+            <p className="mt-1 text-gray-500 text-xs">
               {usageData.dataUsage.percentUsed}% used • {usageData.currentPeriod.daysRemaining} days
               remaining
             </p>
           </div>
         </Card>
 
-        <Card className='p-6'>
-          <div className='flex items-center justify-between'>
+        <Card className="p-6">
+          <div className="flex items-center justify-between">
             <div>
-              <p className='font-medium text-gray-600 text-sm'>Daily Average</p>
-              <p className='font-bold text-2xl text-gray-900'>
+              <p className="font-medium text-gray-600 text-sm">Daily Average</p>
+              <p className="font-bold text-2xl text-gray-900">
                 {usageData.dataUsage.dailyAverage} GB
               </p>
               <p
@@ -253,53 +253,53 @@ export function UsageAnalytics() {
                 {usageData.dataUsage.trendPercent}% vs last period
               </p>
             </div>
-            <Activity className='h-8 w-8 text-blue-600' />
+            <Activity className="h-8 w-8 text-blue-600" />
           </div>
         </Card>
 
-        <Card className='p-6'>
-          <div className='flex items-center justify-between'>
+        <Card className="p-6">
+          <div className="flex items-center justify-between">
             <div>
-              <p className='font-medium text-gray-600 text-sm'>Network Uptime</p>
-              <p className='font-bold text-2xl text-gray-900'>{usageData.networkStatus.uptime}%</p>
-              <p className='text-green-600 text-sm'>Excellent</p>
+              <p className="font-medium text-gray-600 text-sm">Network Uptime</p>
+              <p className="font-bold text-2xl text-gray-900">{usageData.networkStatus.uptime}%</p>
+              <p className="text-green-600 text-sm">Excellent</p>
             </div>
-            <CheckCircle className='h-8 w-8 text-green-600' />
+            <CheckCircle className="h-8 w-8 text-green-600" />
           </div>
         </Card>
 
-        <Card className='p-6'>
-          <div className='flex items-center justify-between'>
+        <Card className="p-6">
+          <div className="flex items-center justify-between">
             <div>
-              <p className='font-medium text-gray-600 text-sm'>Connected Devices</p>
-              <p className='font-bold text-2xl text-gray-900'>
+              <p className="font-medium text-gray-600 text-sm">Connected Devices</p>
+              <p className="font-bold text-2xl text-gray-900">
                 {usageData.deviceConnections.active}
               </p>
-              <p className='text-gray-500 text-sm'>of {usageData.deviceConnections.total} total</p>
+              <p className="text-gray-500 text-sm">of {usageData.deviceConnections.total} total</p>
             </div>
-            <Wifi className='h-8 w-8 text-purple-600' />
+            <Wifi className="h-8 w-8 text-purple-600" />
           </div>
         </Card>
       </div>
 
-      <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Speed Test Results */}
-        <Card className='p-6'>
-          <div className='mb-4 flex items-center justify-between'>
-            <h3 className='font-semibold text-gray-900 text-lg'>Recent Speed Tests</h3>
+        <Card className="p-6">
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="font-semibold text-gray-900 text-lg">Recent Speed Tests</h3>
             <button
-              type='button'
+              type="button"
               onClick={runSpeedTest}
-              onKeyDown={(e) => e.key === 'Enter' && runSpeedTest}
+              onKeyDown={e => e.key === 'Enter' && runSpeedTest}
               disabled={runningSpeedTest}
-              className='flex items-center font-medium text-blue-600 text-sm hover:text-blue-800'
+              className="flex items-center font-medium text-blue-600 text-sm hover:text-blue-800"
             >
               <RefreshCw className={`mr-1 h-4 w-4 ${runningSpeedTest ? 'animate-spin' : ''}`} />
               {runningSpeedTest ? 'Testing...' : 'Run Test'}
             </button>
           </div>
 
-          <div className='space-y-4'>
+          <div className="space-y-4">
             {usageData.speedTests.map((test, index) => {
               const downloadStatus = getSpeedStatus(test.downloadSpeed, 100);
               const uploadStatus = getSpeedStatus(test.uploadSpeed, 100);
@@ -311,8 +311,8 @@ export function UsageAnalytics() {
                     index === 0 ? 'border-blue-200 bg-blue-50' : 'border-gray-200 bg-gray-50'
                   }`}
                 >
-                  <div className='mb-2 flex items-start justify-between'>
-                    <span className='text-gray-600 text-sm'>{formatTimestamp(test.timestamp)}</span>
+                  <div className="mb-2 flex items-start justify-between">
+                    <span className="text-gray-600 text-sm">{formatTimestamp(test.timestamp)}</span>
                     <span
                       className={`rounded-full px-2 py-1 font-medium text-xs ${
                         test.status === 'excellent'
@@ -326,26 +326,26 @@ export function UsageAnalytics() {
                     </span>
                   </div>
 
-                  <div className='grid grid-cols-2 gap-4 text-sm'>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <span className='text-gray-600'>Download:</span>
+                      <span className="text-gray-600">Download:</span>
                       <span className={`ml-2 font-medium ${downloadStatus.color}`}>
                         {test.downloadSpeed} Mbps
                       </span>
                     </div>
                     <div>
-                      <span className='text-gray-600'>Upload:</span>
+                      <span className="text-gray-600">Upload:</span>
                       <span className={`ml-2 font-medium ${uploadStatus.color}`}>
                         {test.uploadSpeed} Mbps
                       </span>
                     </div>
                     <div>
-                      <span className='text-gray-600'>Ping:</span>
-                      <span className='ml-2 font-medium'>{test.ping} ms</span>
+                      <span className="text-gray-600">Ping:</span>
+                      <span className="ml-2 font-medium">{test.ping} ms</span>
                     </div>
                     <div>
-                      <span className='text-gray-600'>Jitter:</span>
-                      <span className='ml-2 font-medium'>{test.jitter} ms</span>
+                      <span className="text-gray-600">Jitter:</span>
+                      <span className="ml-2 font-medium">{test.jitter} ms</span>
                     </div>
                   </div>
                 </div>
@@ -355,43 +355,43 @@ export function UsageAnalytics() {
         </Card>
 
         {/* Daily Usage Chart */}
-        <Card className='p-6'>
-          <h3 className='mb-4 font-semibold text-gray-900 text-lg'>Daily Usage Trend</h3>
+        <Card className="p-6">
+          <h3 className="mb-4 font-semibold text-gray-900 text-lg">Daily Usage Trend</h3>
 
-          <div className='space-y-2'>
+          <div className="space-y-2">
             {usageData.dailyUsage.map((day, _index) => {
-              const maxUsage = Math.max(...usageData.dailyUsage.map((d) => d.peak));
+              const maxUsage = Math.max(...usageData.dailyUsage.map(d => d.peak));
               const usagePercent = (day.usage / maxUsage) * 100;
               const peakPercent = (day.peak / maxUsage) * 100;
 
               return (
-                <div key={day.date} className='flex items-center'>
-                  <div className='mr-3 w-16 text-right text-gray-600 text-xs'>
+                <div key={day.date} className="flex items-center">
+                  <div className="mr-3 w-16 text-right text-gray-600 text-xs">
                     {formatDate(day.date)}
                   </div>
-                  <div className='relative h-6 flex-1 rounded bg-gray-100'>
+                  <div className="relative h-6 flex-1 rounded bg-gray-100">
                     <div
-                      className='absolute top-0 left-0 h-full rounded bg-blue-200'
+                      className="absolute top-0 left-0 h-full rounded bg-blue-200"
                       style={{ width: `${peakPercent}%` }}
                     />
                     <div
-                      className='absolute top-0 left-0 h-full rounded bg-blue-600'
+                      className="absolute top-0 left-0 h-full rounded bg-blue-600"
                       style={{ width: `${usagePercent}%` }}
                     />
                   </div>
-                  <div className='ml-3 w-16 text-right text-gray-900 text-xs'>{day.usage} GB</div>
+                  <div className="ml-3 w-16 text-right text-gray-900 text-xs">{day.usage} GB</div>
                 </div>
               );
             })}
           </div>
 
-          <div className='mt-4 flex items-center justify-between text-gray-600 text-xs'>
-            <div className='flex items-center'>
-              <div className='mr-2 h-3 w-3 rounded bg-blue-600' />
+          <div className="mt-4 flex items-center justify-between text-gray-600 text-xs">
+            <div className="flex items-center">
+              <div className="mr-2 h-3 w-3 rounded bg-blue-600" />
               <span>Usage</span>
             </div>
-            <div className='flex items-center'>
-              <div className='mr-2 h-3 w-3 rounded bg-blue-200' />
+            <div className="flex items-center">
+              <div className="mr-2 h-3 w-3 rounded bg-blue-200" />
               <span>Peak</span>
             </div>
           </div>
@@ -399,10 +399,10 @@ export function UsageAnalytics() {
       </div>
 
       {/* Connected Devices */}
-      <Card className='p-6'>
-        <h3 className='mb-4 font-semibold text-gray-900 text-lg'>Connected Devices</h3>
+      <Card className="p-6">
+        <h3 className="mb-4 font-semibold text-gray-900 text-lg">Connected Devices</h3>
 
-        <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {usageData.deviceConnections.devices.map((device, index) => (
             <div
               key={`device-${device.mac || index}`}
@@ -412,10 +412,10 @@ export function UsageAnalytics() {
                   : 'border-gray-200 bg-gray-50'
               }`}
             >
-              <div className='mb-2 flex items-center justify-between'>
-                <div className='flex items-center'>
-                  <span className='mr-2 text-lg'>{getDeviceIcon(device.type)}</span>
-                  <span className='font-medium text-gray-900'>{device.name}</span>
+              <div className="mb-2 flex items-center justify-between">
+                <div className="flex items-center">
+                  <span className="mr-2 text-lg">{getDeviceIcon(device.type)}</span>
+                  <span className="font-medium text-gray-900">{device.name}</span>
                 </div>
                 <div
                   className={`h-3 w-3 rounded-full ${
@@ -424,8 +424,8 @@ export function UsageAnalytics() {
                 />
               </div>
 
-              <div className='text-gray-600 text-sm'>
-                <div className='flex justify-between'>
+              <div className="text-gray-600 text-sm">
+                <div className="flex justify-between">
                   <span>Status:</span>
                   <span
                     className={`capitalize ${
@@ -435,9 +435,9 @@ export function UsageAnalytics() {
                     {device.status}
                   </span>
                 </div>
-                <div className='flex justify-between'>
+                <div className="flex justify-between">
                   <span>Usage:</span>
-                  <span className='font-medium'>{device.usage} GB</span>
+                  <span className="font-medium">{device.usage} GB</span>
                 </div>
               </div>
             </div>
@@ -446,21 +446,21 @@ export function UsageAnalytics() {
       </Card>
 
       {/* Network Status */}
-      <Card className='p-6'>
-        <h3 className='mb-4 font-semibold text-gray-900 text-lg'>Network Status</h3>
+      <Card className="p-6">
+        <h3 className="mb-4 font-semibold text-gray-900 text-lg">Network Status</h3>
 
-        <div className='flex items-center justify-between'>
-          <div className='flex items-center'>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
             <div
               className={`mr-3 h-4 w-4 rounded-full ${
                 usageData.networkStatus.status === 'operational' ? 'bg-green-500' : 'bg-yellow-500'
               }`}
             />
             <div>
-              <p className='font-medium text-gray-900 capitalize'>
+              <p className="font-medium text-gray-900 capitalize">
                 {usageData.networkStatus.status}
               </p>
-              <p className='text-gray-600 text-sm'>
+              <p className="text-gray-600 text-sm">
                 {usageData.networkStatus.uptime}% uptime • Last outage:{' '}
                 {formatTimestamp(usageData.networkStatus.lastOutage)}
               </p>
@@ -468,8 +468,8 @@ export function UsageAnalytics() {
           </div>
 
           {usageData.networkStatus.maintenanceScheduled ? (
-            <div className='flex items-center text-sm text-yellow-600'>
-              <AlertTriangle className='mr-1 h-4 w-4' />
+            <div className="flex items-center text-sm text-yellow-600">
+              <AlertTriangle className="mr-1 h-4 w-4" />
               <span>Maintenance scheduled</span>
             </div>
           ) : null}

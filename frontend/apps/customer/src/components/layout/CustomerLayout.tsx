@@ -11,10 +11,10 @@ interface CustomerLayoutProps {
 
 export function CustomerLayout({ children }: CustomerLayoutProps) {
   return (
-    <div className='customer-layout'>
+    <div className="customer-layout">
       <CustomerHeader />
       <CustomerNavigation />
-      <main className='customer-content'>{children}</main>
+      <main className="customer-content">{children}</main>
     </div>
   );
 }

@@ -27,14 +27,13 @@ class SSHDeploymentPlugin(DeploymentProviderPlugin):
     
     @property
     def meta(self) -> PluginMeta:
-        return PluginMeta()
-            name="ssh_deployment",
+        return PluginMeta(name="ssh_deployment",
             version="1.0.0",
             plugin_type=PluginType.DEPLOYMENT_PROVIDER,
             description="SSH-based deployment to remote servers (VPS, bare metal)",
             author="DotMac Platform",
             configuration_schema={
-                "default_ssh_port": {"type": "integer", "default": 22},
+                "default_ssh_port": {"type": "integer", "default": 22),
                 "connection_timeout": {"type": "integer", "default": 30},
                 "command_timeout": {"type": "integer", "default": 300},
                 "docker_compose_version": {"type": "string", "default": "2.24.1"},
@@ -42,7 +41,6 @@ class SSHDeploymentPlugin(DeploymentProviderPlugin):
                 "sudo_required": {"type": "boolean", "default": True},
                 "cleanup_on_failure": {"type": "boolean", "default": True}
             }
-        )
     
     def __init__(self):
         super().__init__()
@@ -123,7 +121,6 @@ class SSHDeploymentPlugin(DeploymentProviderPlugin):
                     password=ssh_password,
                     port=ssh_port,
                     config=infrastructure_config
-                )
             
             # Record successful provisioning
             self.observability.record_deployment("infrastructure_provision_success", tenant_id, success=True)
@@ -166,7 +163,6 @@ class SSHDeploymentPlugin(DeploymentProviderPlugin):
                     port=ssh_port,
                     app_config=app_config,
                     infrastructure_id=infrastructure_id
-                )
             
             # Record successful deployment
             self.observability.record_deployment("application_deploy_success", tenant_id, success=True)
@@ -501,7 +497,7 @@ WantedBy=multi-user.target
             compose_content = f"""version: '3.8'
 
 services:
-  # PostgreSQL Database
+    # PostgreSQL Database
   postgres:
     image: postgres:15-alpine
     container_name: {deployment_name}-postgres
@@ -605,13 +601,13 @@ services:
     restart: unless-stopped
 
 volumes:
-  postgres_data:
+    postgres_data:
     name: {deployment_name}-postgres-data
   redis_data:
     name: {deployment_name}-redis-data
 
 networks:
-  dotmac-network:
+    dotmac-network:
     driver: bridge
     name: {deployment_name}-network
 """

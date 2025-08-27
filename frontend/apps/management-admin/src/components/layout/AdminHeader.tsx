@@ -15,9 +15,10 @@ import { User } from '@/types/auth';
 interface AdminHeaderProps {
   user: User | null;
   onMenuClick: () => void;
+  showMenuButton?: boolean;
 }
 
-export function AdminHeader({ user, onMenuClick }: AdminHeaderProps) {
+export function AdminHeader({ user, onMenuClick, showMenuButton = true }: AdminHeaderProps) {
   const { logout } = useAuth();
 
   const handleLogout = async () => {

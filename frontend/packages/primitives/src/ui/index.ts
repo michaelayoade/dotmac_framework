@@ -5,3 +5,4 @@
  */
 
 export * from './OptimizedImage';
+export * from './Skeleton';

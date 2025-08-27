@@ -24,7 +24,7 @@ export function usePortalAuth() {
   // Portal detection composition helpers
   const PortalDetectionHelpers = {
     getPortalTypeFromURL: (): string => {
-      const { hostname, _port } = window.location;
+      const { hostname, port } = window.location;
 
       // Development port detection
       const devPortMap: Record<string, string> = {
@@ -101,7 +101,7 @@ export function usePortalAuth() {
   ]);
 
   // Get required fields based on portal configuration
-  const getRequiredFields = (portal: PortalConfig): string[] => {
+  const getRequiredFields = useCallback((portal: PortalConfig): string[] => {
     const fields = ['password'];
 
     if (portal.loginMethods.includes('email')) {
@@ -121,7 +121,7 @@ export function usePortalAuth() {
     }
 
     return fields;
-  };
+  }, []);
 
   // Helper to build login payload
   const buildLoginPayload = useCallback(
@@ -253,13 +253,7 @@ export function usePortalAuth() {
 
       return CredentialValidation.createValidationResult(true);
     },
-    [
-      loginFlow.step,
-      CredentialValidation.checkLoginMethods,
-      CredentialValidation.createValidationResult,
-      CredentialValidation.validateMFA,
-      CredentialValidation.validatePassword,
-    ]
+    [loginFlow.step]
   );
 
   // Get default roles based on portal type
@@ -302,6 +296,39 @@ export function usePortalAuth() {
     }
   }, [currentPortal]);
 
+  // Secure logout implementation
+  const logout = useCallback(async (): Promise<void> => {
+    try {
+      // Call server logout endpoint
+      const apiClient = getApiClient();
+      await apiClient.request('/api/v1/auth/logout', {
+        method: 'POST',
+      });
+    } catch (error) {
+      console.warn('Logout API call failed:', error);
+    } finally {
+      // Clear all client-side data regardless of API response
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      // Clear auth store
+      const { logout: authLogout } = useAuthStore.getState();
+      authLogout();
+      
+      // Reset portal state
+      setCurrentPortal(null);
+      setLoginFlow({
+        step: 'portal_detection',
+        availableLoginMethods: [],
+        requiredFields: [],
+        mfaRequired: false,
+      });
+      
+      // Redirect to login
+      window.location.href = '/login';
+    }
+  }, []);
+
   return {
     // Portal state
     currentPortal,
@@ -316,6 +343,7 @@ export function usePortalAuth() {
     // Actions
     detectPortal,
     loginWithPortal,
+    logout,
 
     // Utilities
     getRequiredFields: () => (currentPortal ? getRequiredFields(currentPortal) : []),

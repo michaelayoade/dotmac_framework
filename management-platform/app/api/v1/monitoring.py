@@ -6,15 +6,15 @@ from typing import Dict, Any, Optional
 from fastapi import APIRouter, Query, HTTPException
 from pydantic import BaseModel
 
-from ...core.monitoring import (
+from core.monitoring import (
     health_checker, 
     metrics_collector, 
     request_metrics, 
     get_comprehensive_status,
     HealthStatus
 )
-from ...core.cache import get_cache_manager
-from ...core.logging import get_logger
+from core.cache import get_cache_manager
+from core.logging import get_logger
 
 logger = get_logger(__name__)
 

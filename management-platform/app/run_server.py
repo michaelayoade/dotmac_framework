@@ -57,19 +57,27 @@ def create_app():
     async def health():
         return {"status": "healthy", "service": "management-platform"}
     
-    @app.get("/api/v1/tenants")
-    async def list_tenants():
-        return {
-            "tenants": [],
-            "message": "Tenant management endpoint (placeholder)"
-        }
-    
-    @app.post("/api/v1/deploy")
-    async def deploy_tenant():
-        return {
-            "status": "deployment_initiated", 
-            "message": "Tenant deployment endpoint (placeholder)"
-        }
+    # Include API routers
+    try:
+        from api.v1 import api_router
+        app.include_router(api_router, prefix="/api/v1")
+    except Exception as e:
+        print(f"Warning: Could not load API routes: {e}")
+        
+        # Fallback placeholder endpoints
+        @app.get("/api/v1/tenants")
+        async def list_tenants_fallback():
+            return {
+                "tenants": [],
+                "message": "Tenant management endpoint (fallback - API routes failed to load)"
+            }
+        
+        @app.post("/api/v1/deploy")
+        async def deploy_tenant_fallback():
+            return {
+                "status": "deployment_initiated", 
+                "message": "Tenant deployment endpoint (fallback - API routes failed to load)"
+            }
     
     return app
 

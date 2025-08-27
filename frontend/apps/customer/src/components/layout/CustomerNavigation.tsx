@@ -76,10 +76,10 @@ export function CustomerNavigation() {
   };
 
   return (
-    <nav className='customer-nav'>
-      <div className='container mx-auto px-4'>
+    <nav className="customer-nav">
+      <div className="container mx-auto px-4">
         {/* Desktop and tablet: Enhanced tab navigation */}
-        <div className='hidden sm:block'>
+        <div className="hidden sm:block">
           <EnhancedTabNavigation
             items={navItems}
             currentPath={pathname}
@@ -88,17 +88,17 @@ export function CustomerNavigation() {
         </div>
 
         {/* Mobile: Drawer navigation */}
-        <div className='flex items-center justify-between sm:hidden'>
-          <div className='flex-1'>
-            <h1 className='font-semibold text-gray-900 text-lg'>
-              {navItems.find((item) => item.href === pathname)?.label || 'Dashboard'}
+        <div className="flex items-center justify-between sm:hidden">
+          <div className="flex-1">
+            <h1 className="font-semibold text-gray-900 text-lg">
+              {navItems.find(item => item.href === pathname)?.label || 'Dashboard'}
             </h1>
           </div>
           <MobileNavigation
             items={navItems}
             currentPath={pathname}
             onNavigate={handleNavigate}
-            variant='drawer'
+            variant="drawer"
           />
         </div>
       </div>

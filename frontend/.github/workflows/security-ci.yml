@@ -1,0 +1,311 @@
+name: Security Vulnerability Scanning
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+jobs:
+  npm-audit:
+    name: NPM Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run npm audit
+        run: |
+          echo "Running npm audit..."
+          pnpm audit --audit-level high --json > audit-results.json || true
+          
+          # Check if there are high/critical vulnerabilities
+          HIGH_VULNS=$(cat audit-results.json | jq -r '.metadata.vulnerabilities.high // 0')
+          CRITICAL_VULNS=$(cat audit-results.json | jq -r '.metadata.vulnerabilities.critical // 0')
+          
+          echo "High vulnerabilities: $HIGH_VULNS"
+          echo "Critical vulnerabilities: $CRITICAL_VULNS"
+          
+          if [ "$HIGH_VULNS" -gt 0 ] || [ "$CRITICAL_VULNS" -gt 0 ]; then
+            echo "❌ High or critical vulnerabilities found!"
+            pnpm audit --audit-level high
+            exit 1
+          else
+            echo "✅ No high or critical vulnerabilities found"
+          fi
+
+      - name: Upload audit results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-audit-results
+          path: audit-results.json
+
+  snyk-scan:
+    name: Snyk Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high --json > snyk-results.json
+        continue-on-error: true
+
+      - name: Upload Snyk results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: snyk-results
+          path: snyk-results.json
+
+  semgrep-scan:
+    name: Semgrep SAST Scan
+    runs-on: ubuntu-latest
+    container:
+      image: returntocorp/semgrep
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Semgrep
+        run: |
+          semgrep --config=auto --json --output=semgrep-results.json . || true
+          
+          # Check for high severity findings
+          HIGH_FINDINGS=$(cat semgrep-results.json | jq '[.results[] | select(.extra.severity == "ERROR")] | length')
+          echo "High severity findings: $HIGH_FINDINGS"
+          
+          if [ "$HIGH_FINDINGS" -gt 0 ]; then
+            echo "❌ High severity security issues found!"
+            semgrep --config=auto --severity=ERROR .
+            exit 1
+          else
+            echo "✅ No high severity security issues found"
+          fi
+
+      - name: Upload Semgrep results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-results
+          path: semgrep-results.json
+
+  dependency-check:
+    name: OWASP Dependency Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run OWASP Dependency Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: 'dotmac-frontend'
+          path: '.'
+          format: 'JSON'
+          args: >
+            --enableRetired
+            --enableExperimental
+            --failOnCVSS 7
+            --exclude "**/node_modules/**"
+            --exclude "**/test/**"
+            --exclude "**/*.test.*"
+
+      - name: Upload Dependency Check results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-check-results
+          path: reports/
+
+  codeql-analysis:
+    name: CodeQL Security Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      packages: read
+      actions: read
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript, typescript
+          queries: security-and-quality
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build applications
+        run: pnpm build || true
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: '/language:javascript'
+
+  security-summary:
+    name: Security Scan Summary
+    runs-on: ubuntu-latest
+    needs: [npm-audit, snyk-scan, semgrep-scan, dependency-check, codeql-analysis]
+    if: always()
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Generate Security Summary
+        run: |
+          echo "# Security Scan Summary" > security-summary.md
+          echo "" >> security-summary.md
+          echo "## Scan Results" >> security-summary.md
+          echo "" >> security-summary.md
+          
+          # NPM Audit Results
+          if [ -f npm-audit-results/audit-results.json ]; then
+            echo "### NPM Audit" >> security-summary.md
+            TOTAL_VULNS=$(cat npm-audit-results/audit-results.json | jq -r '.metadata.vulnerabilities.total // 0')
+            HIGH_VULNS=$(cat npm-audit-results/audit-results.json | jq -r '.metadata.vulnerabilities.high // 0')
+            CRITICAL_VULNS=$(cat npm-audit-results/audit-results.json | jq -r '.metadata.vulnerabilities.critical // 0')
+            echo "- Total vulnerabilities: $TOTAL_VULNS" >> security-summary.md
+            echo "- High severity: $HIGH_VULNS" >> security-summary.md
+            echo "- Critical severity: $CRITICAL_VULNS" >> security-summary.md
+            echo "" >> security-summary.md
+          fi
+          
+          # Semgrep Results
+          if [ -f semgrep-results/semgrep-results.json ]; then
+            echo "### Semgrep SAST" >> security-summary.md
+            TOTAL_FINDINGS=$(cat semgrep-results/semgrep-results.json | jq '[.results[]] | length')
+            HIGH_FINDINGS=$(cat semgrep-results/semgrep-results.json | jq '[.results[] | select(.extra.severity == "ERROR")] | length')
+            echo "- Total findings: $TOTAL_FINDINGS" >> security-summary.md
+            echo "- High severity: $HIGH_FINDINGS" >> security-summary.md
+            echo "" >> security-summary.md
+          fi
+          
+          echo "## Recommendations" >> security-summary.md
+          echo "1. Review and address all high and critical vulnerabilities" >> security-summary.md
+          echo "2. Update dependencies to latest secure versions" >> security-summary.md
+          echo "3. Implement security fixes for identified issues" >> security-summary.md
+          echo "4. Run scans regularly as part of CI/CD pipeline" >> security-summary.md
+
+      - name: Upload Security Summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-summary
+          path: security-summary.md
+
+      - name: Create Issue on Security Findings
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `Security Vulnerabilities Detected - ${new Date().toISOString().split('T')[0]}`;
+            const body = `
+            ## 🚨 Security Alert
+            
+            Automated security scans have detected vulnerabilities in the codebase.
+            
+            **Scan Date:** ${new Date().toISOString()}
+            **Workflow:** ${context.workflow}
+            **Run:** ${context.runNumber}
+            
+            ### Action Required
+            1. Review the scan results in the workflow artifacts
+            2. Address high and critical vulnerabilities immediately
+            3. Update dependencies and apply security patches
+            4. Re-run security scans to verify fixes
+            
+            ### Artifacts
+            Check the workflow run for detailed results from:
+            - NPM Audit
+            - Snyk Security Scan  
+            - Semgrep SAST Analysis
+            - OWASP Dependency Check
+            - CodeQL Analysis
+            
+            **Priority:** High
+            **Labels:** security, vulnerability, automated
+            `;
+            
+            // Check if a similar issue already exists
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'security,vulnerability,automated',
+              state: 'open'
+            });
+            
+            if (issues.length === 0) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['security', 'vulnerability', 'automated', 'high-priority']
+              });
+            }

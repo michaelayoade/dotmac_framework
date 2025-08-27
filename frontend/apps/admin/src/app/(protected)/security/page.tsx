@@ -1,9 +1,9 @@
 'use client';
 
-import { RouteGuard } from '@dotmac/headless';
+import { RouteGuard } from '../../../components/security/RouteGuard';
 
 import { RouteProtectionDemo } from '../../../components/demo/RouteProtectionDemo';
-import { AdminLayout } from '../../../components/layout/AdminLayout';
+import AdminLayout from '../../../components/layout/AdminLayout';
 
 export default function SecurityPage() {
   return (

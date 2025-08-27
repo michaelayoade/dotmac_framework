@@ -11,6 +11,7 @@ import {
   TechnicianLocation,
   OfflineAction,
 } from '../lib/enhanced-offline-db';
+import { SecureTokenManager } from '../lib/auth/secure-token-manager';
 
 interface PWACapabilities {
   isInstallable: boolean;
@@ -573,11 +574,12 @@ export function useEnhancedPWA(): UseEnhancedPWAReturn {
 
 // Utility functions for sync operations
 async function syncWorkOrder(workOrder: WorkOrder): Promise<void> {
+  // SECURITY: Use cookie-only authentication - no tokens
   const response = await fetch(`/api/v1/field-ops/work-orders/${workOrder.id}`, {
     method: 'PUT',
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${localStorage.getItem('access_token')}`,
     },
     body: JSON.stringify(workOrder),
   });
@@ -594,10 +596,12 @@ async function syncPhoto(photo: Photo): Promise<void> {
   formData.append('category', photo.category);
   formData.append('description', photo.description || '');
 
+  // SECURITY: Use cookie-only authentication - no tokens
   const response = await fetch('/api/v1/field-ops/photos/upload', {
     method: 'POST',
+    credentials: 'include',
     headers: {
-      Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+      // No Authorization header needed - cookies handle auth
     },
     body: formData,
   });
@@ -608,11 +612,12 @@ async function syncPhoto(photo: Photo): Promise<void> {
 }
 
 async function syncLocation(location: TechnicianLocation): Promise<void> {
+  // SECURITY: Use cookie-only authentication - no tokens
   const response = await fetch('/api/v1/field-ops/technicians/location', {
     method: 'POST',
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${localStorage.getItem('access_token')}`,
     },
     body: JSON.stringify(location),
   });
@@ -623,11 +628,12 @@ async function syncLocation(location: TechnicianLocation): Promise<void> {
 }
 
 async function syncWorkOrderCompletion(data: any): Promise<void> {
+  const token = await SecureTokenManager.getToken();
   const response = await fetch(`/api/v1/field-ops/work-orders/${data.work_order_id}/complete`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify(data),
   });

@@ -51,69 +51,11 @@ import {
   PulseIndicator,
   BounceIn,
 } from '@dotmac/primitives/animations/Animations';
+import type { Invoice, Payment, Report, Metrics } from '../../types/billing';
 
-interface Invoice {
-  id: string;
-  customerId: string;
-  customerName: string;
-  customerEmail: string;
-  amount: number;
-  tax: number;
-  total: number;
-  currency: string;
-  status: 'paid' | 'pending' | 'overdue' | 'cancelled';
-  dueDate: string;
-  paidDate: string | null;
-  paymentMethod: string;
-  services: { name: string; amount: number }[];
-  billingPeriod: { start: string; end: string };
-  createdAt: string;
-  updatedAt: string;
-  tags: string[];
-}
 
-interface Payment {
-  id: string;
-  invoiceId: string | null;
-  customerId: string;
-  customerName: string;
-  amount: number;
-  currency: string;
-  method: string;
-  status: 'completed' | 'pending' | 'failed' | 'refunded';
-  transactionId: string;
-  gateway: string;
-  processedAt: string | null;
-  fees: { processing: number; gateway: number };
-  metadata: Record<string, any>;
-}
 
-interface Metrics {
-  totalRevenue: number;
-  monthlyRecurring: number;
-  outstandingAmount: number;
-  collectionsRate: number;
-  averageInvoiceValue: number;
-  paymentFailureRate: number;
-  trends: { revenue: number; collections: number; failures: number };
-  chartData: {
-    revenue: { month: string; amount: number }[];
-    collections: { month: string; rate: number }[];
-    paymentMethods: { method: string; percentage: number; amount: number }[];
-  };
-}
 
-interface Report {
-  id: string;
-  name: string;
-  type: string;
-  description: string;
-  lastGenerated: string;
-  frequency: string;
-  status: 'ready' | 'generating' | 'failed';
-  format: string;
-  size: string | null;
-}
 
 interface BillingManagementProps {
   invoices: Invoice[];

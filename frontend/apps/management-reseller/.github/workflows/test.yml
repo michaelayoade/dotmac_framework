@@ -1,0 +1,152 @@
+name: Test Suite
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  unit-tests:
+    name: Unit & Integration Tests
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run type checking
+      run: npm run type-check
+
+    - name: Run linting
+      run: npm run lint
+
+    - name: Run unit tests with coverage
+      run: npm run test:ci
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage/lcov.info
+        flags: unittests
+        name: codecov-umbrella
+
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: test-results-${{ matrix.node-version }}
+        path: |
+          coverage/
+          test-results/
+
+  e2e-tests:
+    name: End-to-End Tests
+    runs-on: ubuntu-latest
+    needs: unit-tests
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Install Playwright browsers
+      run: npx playwright install --with-deps
+
+    - name: Build application
+      run: npm run build
+
+    - name: Run Playwright tests
+      run: npm run test:e2e
+      env:
+        CI: true
+
+    - name: Upload E2E test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: playwright-report
+        path: |
+          playwright-report/
+          test-results/
+
+  test-summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [unit-tests, e2e-tests]
+    if: always()
+
+    steps:
+    - name: Download test artifacts
+      uses: actions/download-artifact@v3
+      with:
+        path: test-artifacts
+
+    - name: Create test summary
+      run: |
+        echo "# Test Results Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## Unit Tests" >> $GITHUB_STEP_SUMMARY
+        
+        if [ -f "test-artifacts/test-results-20.x/coverage/coverage-summary.json" ]; then
+          node -p "
+            const coverage = JSON.parse(require('fs').readFileSync('test-artifacts/test-results-20.x/coverage/coverage-summary.json', 'utf8'));
+            const total = coverage.total;
+            '| Metric | Coverage |\\n|--------|----------|\\n' +
+            '| Lines | ' + total.lines.pct + '% |\\n' +
+            '| Functions | ' + total.functions.pct + '% |\\n' +
+            '| Branches | ' + total.branches.pct + '% |\\n' +
+            '| Statements | ' + total.statements.pct + '% |'
+          " >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## E2E Tests" >> $GITHUB_STEP_SUMMARY
+        echo "E2E tests completed. Check the Playwright report for detailed results." >> $GITHUB_STEP_SUMMARY
+
+    - name: Check coverage thresholds
+      run: |
+        if [ -f "test-artifacts/test-results-20.x/coverage/coverage-summary.json" ]; then
+          node -e "
+            const coverage = JSON.parse(require('fs').readFileSync('test-artifacts/test-results-20.x/coverage/coverage-summary.json', 'utf8'));
+            const total = coverage.total;
+            const threshold = 70;
+            
+            let failed = false;
+            ['lines', 'functions', 'branches', 'statements'].forEach(metric => {
+              if (total[metric].pct < threshold) {
+                console.error(\`❌ \${metric} coverage (\${total[metric].pct}%) is below threshold (\${threshold}%)\`);
+                failed = true;
+              } else {
+                console.log(\`✅ \${metric} coverage (\${total[metric].pct}%) meets threshold (\${threshold}%)\`);
+              }
+            });
+            
+            if (failed) {
+              process.exit(1);
+            } else {
+              console.log('🎉 All coverage thresholds met!');
+            }
+          "
+        fi

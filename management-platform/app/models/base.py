@@ -12,7 +12,7 @@ from sqlalchemy.types import TypeDecorator, CHAR
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import as_declarative
 
-from ..database import Base
+from database import Base
 
 # Export GUID as UUID for compatibility
 __all__ = ['BaseModel', 'GUID', 'UUID']

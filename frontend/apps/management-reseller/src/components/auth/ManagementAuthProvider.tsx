@@ -2,8 +2,12 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { tokenManager } from '@/lib/auth/token-manager';
+import { authService } from '@/lib/auth/real-auth-service';
+import { useAuthActions } from '@/store';
+import { useNotifications } from '@/hooks/useNotifications';
 
-interface ManagementUser {
+export interface ManagementUser {
   id: string;
   email: string;
   name: string;
@@ -11,19 +15,25 @@ interface ManagementUser {
   permissions: string[];
   departments: string[];
   last_login?: Date;
+  created_at: string;
+  updated_at: string;
 }
 
 interface ManagementAuthContextValue {
   user: ManagementUser | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (credentials: { email: string; password: string }) => Promise<void>;
+  authError: string | null;
+  login: (credentials: { email: string; password: string; rememberMe?: boolean }) => Promise<void>;
   logout: () => Promise<void>;
   refreshAuth: () => Promise<void>;
+  validateAuth: () => Promise<boolean>;
   hasPermission: (permission: string) => boolean;
   canManageResellers: () => boolean;
   canApproveCommissions: () => boolean;
   canViewAnalytics: () => boolean;
+  updateProfile: (updates: Partial<ManagementUser>) => Promise<void>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
 }
 
 const ManagementAuthContext = createContext<ManagementAuthContextValue | null>(null);
@@ -114,8 +124,11 @@ export function useManagementAuth() {
 export function ManagementAuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<ManagementUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
   const router = useRouter();
   const pathname = usePathname();
+  const { setUser: setStoreUser, clearAuth, updateLastActivity } = useAuthActions();
+  const { addNotification } = useNotifications();
 
   const isAuthenticated = !!user;
 
@@ -135,127 +148,225 @@ export function ManagementAuthProvider({ children }: { children: React.ReactNode
     return hasPermission('VIEW_ANALYTICS');
   };
 
-  // Real authentication implementation with Management Platform API
-  const login = async (credentials: { email: string; password: string }) => {
+  // Authentication implementation with real auth service
+  const login = async (credentials: { email: string; password: string; rememberMe?: boolean }) => {
     setIsLoading(true);
+    setAuthError(null);
+    
     try {
-      // API call to management platform
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: credentials.email,
-          password: credentials.password,
-          remember_me: true
-        }),
+      // Use real auth service for login
+      const loginResult = await authService.login({
+        email: credentials.email,
+        password: credentials.password,
+        rememberMe: credentials.rememberMe
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Login failed');
-      }
-
-      const loginResponse = await response.json();
       
       // Extract user data and map to ManagementUser interface
-      const user = loginResponse.user;
+      const apiUser = loginResult.user;
       const managementUser: ManagementUser = {
-        id: user.user_id || user.id,
-        email: user.email,
-        name: user.full_name || user.username || 'Management User',
-        role: mapRoleToManagementRole(user.role),
-        permissions: mapRoleToPermissions(user.role),
-        departments: mapRoleToDepartments(user.role),
-        last_login: user.last_login ? new Date(user.last_login) : new Date(),
+        id: apiUser.id,
+        email: apiUser.email,
+        name: apiUser.name,
+        role: mapRoleToManagementRole(apiUser.role),
+        permissions: mapRoleToPermissions(apiUser.role),
+        departments: mapRoleToDepartments(apiUser.role),
+        last_login: apiUser.last_login ? new Date(apiUser.last_login) : new Date(),
+        created_at: apiUser.created_at,
+        updated_at: apiUser.updated_at,
       };
 
-      // Store tokens securely (in production, use HTTP-only cookies)
-      sessionStorage.setItem('access_token', loginResponse.access_token);
-      sessionStorage.setItem('refresh_token', loginResponse.refresh_token);
+      // Store user data in sessionStorage for quick access
       sessionStorage.setItem('management_user', JSON.stringify(managementUser));
       
       setUser(managementUser);
+      setStoreUser(managementUser);
+      updateLastActivity();
       
-      // Redirect to dashboard
-      router.push('/dashboard');
+      // Show success notification
+      addNotification({
+        type: 'success',
+        title: 'Welcome back!',
+        message: `Successfully logged in as ${managementUser.name}`,
+        duration: 3000,
+      });
+      
+      // Redirect to intended page or dashboard
+      const redirectUrl = sessionStorage.getItem('auth_redirect_url') || '/dashboard';
+      sessionStorage.removeItem('auth_redirect_url');
+      router.push(redirectUrl);
+      
     } catch (error) {
-      console.error('Login failed:', error);
-      throw new Error(error instanceof Error ? error.message : 'Invalid credentials');
+      const errorMessage = error instanceof Error ? error.message : 'Login failed';
+      setAuthError(errorMessage);
+      
+      addNotification({
+        type: 'error',
+        title: 'Login Failed',
+        message: errorMessage,
+        duration: 5000,
+      });
+      
+      throw error;
     } finally {
       setIsLoading(false);
     }
   };
 
   const logout = async () => {
+    setIsLoading(true);
+    
     try {
-      const accessToken = sessionStorage.getItem('access_token');
+      // Use real auth service for logout
+      await authService.logout();
       
-      // Call logout API to revoke server-side session
-      if (accessToken) {
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/logout`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
-        });
-      }
-    } catch (error) {
-      console.error('Logout API failed:', error);
-      // Continue with client-side cleanup even if API fails
-    } finally {
-      // Clean up client-side storage
-      sessionStorage.removeItem('access_token');
-      sessionStorage.removeItem('refresh_token');
-      sessionStorage.removeItem('management_user');
+      // Clear local state
       setUser(null);
+      setStoreUser(null);
+      setAuthError(null);
+      clearAuth();
+      
+      // Show logout notification
+      addNotification({
+        type: 'info',
+        title: 'Logged out',
+        message: 'You have been successfully logged out',
+        duration: 3000,
+      });
+      
+      // Redirect to login
       router.push('/login');
+      
+    } catch (error) {
+      console.error('Logout failed:', error);
+      
+      // Force logout even if server call fails
+      setUser(null);
+      setStoreUser(null);
+      setAuthError(null);
+      clearAuth();
+      
+      await tokenManager.clearTokens();
+      sessionStorage.removeItem('management_user');
+      
+      router.push('/login');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const refreshAuth = async () => {
     try {
-      const refreshToken = sessionStorage.getItem('refresh_token');
-      const storedUser = sessionStorage.getItem('management_user');
+      // Get current user from server
+      const currentUser = await authService.getCurrentUser();
       
-      if (!refreshToken || !storedUser) {
-        // No stored auth, check if we're on a protected route
-        if (pathname !== '/login' && !pathname.startsWith('/auth')) {
+      if (!currentUser) {
+        // No user found, check if we're on a protected route
+        if (pathname && pathname !== '/login' && !pathname.startsWith('/auth') && !pathname.startsWith('/reset-password')) {
+          // Store current URL for redirect after login
+          sessionStorage.setItem('auth_redirect_url', pathname);
           await logout();
         }
         return;
       }
-
-      // Attempt to refresh token
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/refresh`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          refresh_token: refreshToken,
-        }),
-      });
-
-      if (!response.ok) {
-        // Refresh failed, redirect to login
-        await logout();
-        return;
-      }
-
-      const refreshResponse = await response.json();
       
-      // Update access token
-      sessionStorage.setItem('access_token', refreshResponse.access_token);
+      // Map API user to management user
+      const managementUser: ManagementUser = {
+        id: currentUser.id,
+        email: currentUser.email,
+        name: currentUser.name,
+        role: mapRoleToManagementRole(currentUser.role),
+        permissions: mapRoleToPermissions(currentUser.role),
+        departments: mapRoleToDepartments(currentUser.role),
+        last_login: currentUser.last_login ? new Date(currentUser.last_login) : new Date(),
+        created_at: currentUser.created_at,
+        updated_at: currentUser.updated_at,
+      };
       
-      // Update user data from storage
-      setUser(JSON.parse(storedUser));
+      // Update user data
+      sessionStorage.setItem('management_user', JSON.stringify(managementUser));
+      setUser(managementUser);
+      setStoreUser(managementUser);
+      updateLastActivity();
       
     } catch (error) {
       console.error('Auth refresh failed:', error);
-      await logout();
+      setAuthError('Session expired');
+      
+      // Don't auto-logout on every error - only on auth errors
+      if (error instanceof Error && error.message.includes('Session expired')) {
+        if (pathname && pathname !== '/login') {
+          sessionStorage.setItem('auth_redirect_url', pathname);
+        }
+        await logout();
+      }
+    }
+  };
+  
+  // Validate current authentication state
+  const validateAuth = async (): Promise<boolean> => {
+    try {
+      return await authService.validateAuth();
+    } catch (error) {
+      console.error('Auth validation failed:', error);
+      return false;
+    }
+  };
+  
+  // Update user profile
+  const updateProfile = async (updates: Partial<ManagementUser>): Promise<void> => {
+    try {
+      const updatedUser = await authService.updateProfile(updates);
+      
+      const managementUser: ManagementUser = {
+        ...user!,
+        ...updates,
+        updated_at: updatedUser.updated_at,
+      };
+      
+      setUser(managementUser);
+      setStoreUser(managementUser);
+      sessionStorage.setItem('management_user', JSON.stringify(managementUser));
+      
+      addNotification({
+        type: 'success',
+        title: 'Profile Updated',
+        message: 'Your profile has been successfully updated',
+        duration: 3000,
+      });
+      
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update profile';
+      addNotification({
+        type: 'error',
+        title: 'Update Failed',
+        message: errorMessage,
+        duration: 5000,
+      });
+      throw error;
+    }
+  };
+  
+  // Change password
+  const changePassword = async (currentPassword: string, newPassword: string): Promise<void> => {
+    try {
+      await authService.changePassword(currentPassword, newPassword);
+      
+      addNotification({
+        type: 'success',
+        title: 'Password Changed',
+        message: 'Your password has been successfully updated',
+        duration: 3000,
+      });
+      
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to change password';
+      addNotification({
+        type: 'error',
+        title: 'Password Change Failed',
+        message: errorMessage,
+        duration: 5000,
+      });
+      throw error;
     }
   };
 
@@ -270,6 +381,7 @@ export function ManagementAuthProvider({ children }: { children: React.ReactNode
         try {
           const parsedUser = JSON.parse(storedUser);
           setUser(parsedUser);
+          setStoreUser(parsedUser);
           
           // Refresh auth in background
           await refreshAuth();
@@ -277,7 +389,7 @@ export function ManagementAuthProvider({ children }: { children: React.ReactNode
           console.error('Failed to parse stored auth:', error);
           await logout();
         }
-      } else if (pathname !== '/login' && !pathname.startsWith('/auth')) {
+      } else if (pathname && pathname !== '/login' && !pathname.startsWith('/auth')) {
         // Redirect to login if not authenticated and not on auth pages
         router.push('/login');
       }
@@ -292,13 +404,17 @@ export function ManagementAuthProvider({ children }: { children: React.ReactNode
     user,
     isLoading,
     isAuthenticated,
+    authError,
     login,
     logout,
     refreshAuth,
+    validateAuth,
     hasPermission,
     canManageResellers,
     canApproveCommissions,
     canViewAnalytics,
+    updateProfile,
+    changePassword,
   };
 
   return (

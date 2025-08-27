@@ -1,7 +1,11 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { SecureAuthService } from '@/lib/secure-auth-service';
+import { loginCredentialsSchema } from '@/lib/validation-schemas';
+import { sanitizeEmail } from '@/lib/sanitization';
+import { withAuthPerformanceTracking, logAuthStateChange } from '@/lib/auth-performance';
 
 interface TenantUser {
   id: string;
@@ -30,9 +34,9 @@ interface TenantAuthContextValue {
   tenant: TenantInfo | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (credentials: { email: string; password: string }) => Promise<void>;
+  login: (credentials: { email: string; password: string; rememberMe?: boolean }) => Promise<void>;
   logout: () => Promise<void>;
-  refreshAuth: () => Promise<void>;
+  refreshAuth: () => Promise<boolean>;
 }
 
 const TenantAuthContext = createContext<TenantAuthContextValue | null>(null);
@@ -51,166 +55,185 @@ export function TenantAuthProvider({ children }: { children: React.ReactNode }) 
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
+  
+  // Performance monitoring refs
+  const renderCount = useRef(0);
+  const lastAuthCheck = useRef<number>(0);
+  
+  // Track renders for debugging
+  renderCount.current += 1;
 
-  const isAuthenticated = !!user && !!tenant && tenant.status === 'active';
-
-  // Mock authentication - in real implementation, this would call the API
-  const login = async (credentials: { email: string; password: string }) => {
-    setIsLoading(true);
-    try {
-      // Call management platform authentication API
-      const response = await fetch('/api/v1/tenant-admin/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          email: credentials.email,
-          password: credentials.password,
-        }),
-      });
-      
-      if (!response.ok) {
-        throw new Error('Authentication failed');
-      }
-      
-      const authData = await response.json();
-      
-      // Set user from API response
-      const apiUser: TenantUser = {
-        id: authData.user.id,
-        email: authData.user.email,
-        name: authData.user.name || 'Tenant Admin',
-        role: authData.user.role,
-        tenant_id: authData.user.tenant_id,
-        permissions: authData.user.permissions || [],
-        last_login: new Date(authData.user.last_login || Date.now()),
-      };
-
-      const mockTenant: TenantInfo = {
-        id: 'tenant_123',
-        name: 'acme-isp',
-        display_name: 'ACME ISP Solutions',
-        slug: 'acme-isp',
-        status: 'active',
-        tier: 'standard',
-        custom_domain: 'portal.acme-isp.com',
-        primary_color: '#0ea5e9',
-        logo_url: '/api/tenant/logo',
-      };
-
-      // Store in session storage (in production, use secure HTTP-only cookies)
-      sessionStorage.setItem('tenant_user', JSON.stringify(apiUser));
-      sessionStorage.setItem('tenant_info', JSON.stringify(mockTenant));
-
-      setUser(apiUser);
-      setTenant(mockTenant);
-      
-      // Redirect to dashboard
-      router.push('/dashboard');
-    } catch (error) {
-      console.error('Login failed:', error);
-      throw new Error('Invalid credentials');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const logout = async () => {
-    try {
-      // Call logout API to invalidate server-side session
-      try {
-        await fetch('/api/v1/tenant-admin/auth/logout', { 
-          method: 'POST',
-          credentials: 'include'
-        });
-      } catch (error) {
-        console.warn('Server logout failed, clearing local session:', error);
-      }
-      
-      sessionStorage.removeItem('tenant_user');
-      sessionStorage.removeItem('tenant_info');
-      
-      setUser(null);
-      setTenant(null);
-      
-      router.push('/login');
-    } catch (error) {
-      console.error('Logout failed:', error);
-    }
-  };
-
-  const refreshAuth = async () => {
-    try {
-      // Attempt to refresh authentication token
-      try {
-        const response = await fetch('/api/v1/tenant-admin/auth/refresh', { 
-          method: 'POST',
-          credentials: 'include'
-        });
-        
-        if (response.ok) {
-          const refreshData = await response.json();
-          // Token refreshed successfully, update user data if provided
-          if (refreshData.user) {
-            setUser(refreshData.user);
-            sessionStorage.setItem('tenant_user', JSON.stringify(refreshData.user));
-          }
-          return true;
-        }
-      } catch (error) {
-        console.warn('Token refresh failed, checking local session:', error);
-      }
-      
-      // Fall back to session storage check
-      const storedUser = sessionStorage.getItem('tenant_user');
-      const storedTenant = sessionStorage.getItem('tenant_info');
-      
-      if (storedUser && storedTenant) {
-        setUser(JSON.parse(storedUser));
-        setTenant(JSON.parse(storedTenant));
-      }
-    } catch (error) {
-      console.error('Auth refresh failed:', error);
-      await logout();
-    }
-  };
-
-  // Check authentication on mount and route changes
+  // Memoized authentication state
+  const isAuthenticated = useMemo(
+    () => !!user && !!tenant && tenant.status === 'active',
+    [user, tenant]
+  );
+  
+  // Track auth state changes for performance monitoring
+  const previousState = useRef({ user, tenant, isAuthenticated });
+  
+  // Log auth state changes in development
   useEffect(() => {
-    const checkAuth = async () => {
+    const prevState = previousState.current;
+    const newState = { user, tenant, isAuthenticated };
+    
+    logAuthStateChange(prevState, newState);
+    previousState.current = newState;
+  }, [user, tenant, isAuthenticated]);
+
+  // Memoized login function with performance tracking
+  const login = useCallback(withAuthPerformanceTracking(
+    'login',
+    async (credentials: { email: string; password: string; rememberMe?: boolean }) => {
       setIsLoading(true);
-      
-      const storedUser = sessionStorage.getItem('tenant_user');
-      const storedTenant = sessionStorage.getItem('tenant_info');
-      
-      if (storedUser && storedTenant) {
-        try {
-          const parsedUser = JSON.parse(storedUser);
-          const parsedTenant = JSON.parse(storedTenant);
-          
-          setUser(parsedUser);
-          setTenant(parsedTenant);
-          
-          // Refresh auth in background
-          await refreshAuth();
-        } catch (error) {
-          console.error('Failed to parse stored auth:', error);
-          await logout();
+      try {
+        // Validate and sanitize input
+        const validatedCredentials = loginCredentialsSchema.parse({
+          email: sanitizeEmail(credentials.email),
+          password: credentials.password, // Password not sanitized to preserve special characters
+          rememberMe: credentials.rememberMe || false,
+        });
+
+        // Use secure authentication service
+        const authResult = await SecureAuthService.login(validatedCredentials);
+        
+        if (!authResult.success) {
+          throw new Error(authResult.error || 'Authentication failed');
         }
-      } else if (pathname !== '/login' && !pathname.startsWith('/auth')) {
-        // Redirect to login if not authenticated and not on auth pages
+
+        if (authResult.requiresMFA) {
+          // TODO: Handle MFA flow
+          throw new Error('Multi-factor authentication required');
+        }
+
+        if (authResult.user && authResult.tenant) {
+          setUser(authResult.user);
+          setTenant(authResult.tenant);
+          
+          // Redirect to dashboard
+          router.push('/dashboard');
+        } else {
+          throw new Error('Invalid authentication response');
+        }
+      } catch (error) {
+        console.error('Login failed:', error);
+        throw new Error(error instanceof Error ? error.message : 'Invalid credentials');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  ), [router]);
+
+  // Memoized logout function with performance tracking
+  const logout = useCallback(withAuthPerformanceTracking(
+    'logout',
+    async () => {
+      try {
+        // Use secure authentication service
+        await SecureAuthService.logout();
+        
+        setUser(null);
+        setTenant(null);
+        
+        router.push('/login');
+      } catch (error) {
+        console.error('Logout failed:', error);
+        // Even if logout fails, clear local state and redirect
+        setUser(null);
+        setTenant(null);
         router.push('/login');
       }
+    }
+  ), [router]);
+
+  // Memoized refresh auth function with performance tracking
+  const refreshAuth = useCallback(withAuthPerformanceTracking(
+    'refreshAuth',
+    async () => {
+      try {
+        // Use secure authentication service
+        const refreshResult = await SecureAuthService.refreshAuth();
+        
+        if (refreshResult.success && refreshResult.user && refreshResult.tenant) {
+          setUser(refreshResult.user);
+          setTenant(refreshResult.tenant);
+          return true;
+        } else {
+          // Refresh failed, logout user
+          await logout();
+          return false;
+        }
+      } catch (error) {
+        console.error('Auth refresh failed:', error);
+        await logout();
+        return false;
+      }
+    }
+  ), [logout]);
+
+  // Optimized authentication check with debouncing and caching
+  useEffect(() => {
+    const checkAuth = async () => {
+      const now = Date.now();
+      const AUTH_CHECK_DEBOUNCE = 1000; // 1 second debounce
       
-      setIsLoading(false);
+      // Debounce auth checks to prevent excessive API calls
+      if (now - lastAuthCheck.current < AUTH_CHECK_DEBOUNCE) {
+        return;
+      }
+      
+      lastAuthCheck.current = now;
+      setIsLoading(true);
+      
+      try {
+        // Performance monitoring
+        const startTime = performance.now();
+        
+        // Check if user is authenticated using secure service
+        const isAuth = await SecureAuthService.isAuthenticated();
+        
+        if (isAuth) {
+          // Only fetch user data if we don't have it or it's stale
+          if (!user || !tenant) {
+            const { user: currentUser, tenant: currentTenant } = await SecureAuthService.getCurrentUser();
+            
+            if (currentUser && currentTenant) {
+              setUser(currentUser);
+              setTenant(currentTenant);
+            } else {
+              throw new Error('Failed to get user data');
+            }
+          }
+        } else if (pathname !== '/login' && !pathname.startsWith('/auth')) {
+          // Clear stale data and redirect
+          setUser(null);
+          setTenant(null);
+          router.push('/login');
+        }
+        
+        // Performance monitoring
+        const endTime = performance.now();
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`Auth check completed in ${endTime - startTime}ms (render #${renderCount.current})`);
+        }
+        
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        if (pathname !== '/login' && !pathname.startsWith('/auth')) {
+          setUser(null);
+          setTenant(null);
+          router.push('/login');
+        }
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     checkAuth();
-  }, [pathname, router]);
+  }, [pathname, router, user, tenant]);
 
-  const value: TenantAuthContextValue = {
+  // Memoized context value to prevent unnecessary re-renders of consumers
+  const value = useMemo<TenantAuthContextValue>(() => ({
     user,
     tenant,
     isLoading,
@@ -218,7 +241,7 @@ export function TenantAuthProvider({ children }: { children: React.ReactNode }) 
     login,
     logout,
     refreshAuth,
-  };
+  }), [user, tenant, isLoading, isAuthenticated, login, logout, refreshAuth]);
 
   return (
     <TenantAuthContext.Provider value={value}>

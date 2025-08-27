@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { CommissionTracker } from '../../../components/commission/CommissionTracker';
+import { CommissionTracker } from "../../../components/commission/CommissionTracker";
 
 export default function CommissionTrackerPage() {
-  return <CommissionTracker />;
+	return <CommissionTracker />;
 }

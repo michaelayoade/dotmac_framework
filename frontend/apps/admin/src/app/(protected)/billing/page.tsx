@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
-import { AdminLayout } from '../../../components/layout/AdminLayout';
+import AdminLayout from '../../../components/layout/AdminLayout';
 import { BillingManagement } from '../../../components/billing/BillingManagement';
+import type { InvoiceStatus, PaymentStatus, ReportStatus } from '../../../types/billing';
 
 interface SearchParams {
   page?: string;
@@ -131,7 +132,7 @@ async function getBillingData(searchParams: SearchParams) {
       tax: 7.2,
       total: 87.19,
       currency: 'USD',
-      status: 'paid',
+      status: 'paid' as InvoiceStatus,
       dueDate: '2024-02-15T00:00:00Z',
       paidDate: '2024-02-10T14:30:00Z',
       paymentMethod: 'credit_card',
@@ -165,7 +166,7 @@ async function getBillingData(searchParams: SearchParams) {
       tax: 27.0,
       total: 326.99,
       currency: 'USD',
-      status: 'overdue',
+      status: 'overdue' as InvoiceStatus,
       dueDate: '2024-02-15T00:00:00Z',
       paidDate: null,
       paymentMethod: 'bank_transfer',
@@ -208,7 +209,7 @@ async function getBillingData(searchParams: SearchParams) {
       tax: 135.0,
       total: 1634.99,
       currency: 'USD',
-      status: 'pending',
+      status: 'pending' as InvoiceStatus,
       dueDate: '2024-03-15T00:00:00Z',
       paidDate: null,
       paymentMethod: 'wire_transfer',
@@ -257,7 +258,7 @@ async function getBillingData(searchParams: SearchParams) {
       tax: 4.5,
       total: 54.49,
       currency: 'USD',
-      status: 'paid',
+      status: 'paid' as InvoiceStatus,
       dueDate: '2024-02-20T00:00:00Z',
       paidDate: '2024-02-18T16:20:00Z',
       paymentMethod: 'auto_pay',
@@ -291,7 +292,7 @@ async function getBillingData(searchParams: SearchParams) {
       tax: 225.0,
       total: 2724.99,
       currency: 'USD',
-      status: 'paid',
+      status: 'paid' as InvoiceStatus,
       dueDate: '2024-02-05T00:00:00Z',
       paidDate: '2024-02-03T10:15:00Z',
       paymentMethod: 'ach',
@@ -335,7 +336,7 @@ async function getBillingData(searchParams: SearchParams) {
       amount: 87.19,
       currency: 'USD',
       method: 'credit_card',
-      status: 'completed',
+      status: 'completed' as PaymentStatus,
       transactionId: 'txn_1OkjHn2eZvKYlo2C1XkQOVWT',
       gateway: 'stripe',
       processedAt: '2024-02-10T14:30:00Z',
@@ -356,7 +357,7 @@ async function getBillingData(searchParams: SearchParams) {
       amount: 99.99,
       currency: 'USD',
       method: 'bank_transfer',
-      status: 'pending',
+      status: 'pending' as PaymentStatus,
       transactionId: 'ach_1OkjHn2eZvKYlo2C1XkQOVWT',
       gateway: 'stripe',
       processedAt: null,
@@ -418,7 +419,7 @@ async function getBillingData(searchParams: SearchParams) {
         'Comprehensive revenue analysis with breakdowns by service, customer segment, and region',
       lastGenerated: '2024-02-01T09:00:00Z',
       frequency: 'monthly',
-      status: 'ready',
+      status: 'ready' as ReportStatus,
       format: 'PDF',
       size: '2.4 MB',
     },
@@ -429,7 +430,7 @@ async function getBillingData(searchParams: SearchParams) {
       description: 'Outstanding invoices categorized by age for collections management',
       lastGenerated: '2024-02-15T15:30:00Z',
       frequency: 'weekly',
-      status: 'ready',
+      status: 'ready' as ReportStatus,
       format: 'Excel',
       size: '1.8 MB',
     },
@@ -440,7 +441,7 @@ async function getBillingData(searchParams: SearchParams) {
       description: 'Payment gateway performance, fees, and failure rate analysis',
       lastGenerated: '2024-02-10T12:00:00Z',
       frequency: 'daily',
-      status: 'generating',
+      status: 'generating' as ReportStatus,
       format: 'PDF',
       size: null,
     },

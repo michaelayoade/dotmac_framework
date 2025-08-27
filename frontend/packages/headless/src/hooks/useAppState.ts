@@ -35,7 +35,7 @@ export const useUI = () => {
 };
 
 // Notification hooks
-export const useNotifications = () => {
+export const useAppNotifications = () => {
   const notifications = useAppStore((state) => state.ui.notifications);
   const addNotification = useAppStore((state) => state.addNotification);
   const dismissNotification = useAppStore((state) => state.dismissNotification);

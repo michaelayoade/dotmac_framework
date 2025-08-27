@@ -124,6 +124,14 @@ export {
 
 // Also export the Card from primitives as PrimitiveCard for compatibility
 export { Card as PrimitiveCard } from '@dotmac/primitives';
+
+// Export component aliases for easier importing
+export { CustomerButton as Button } from './Button';
+export { CustomerCard as Card } from './Card';
+export { CustomerInput as Input } from './Input';
+
+// Export Avatar from primitives for compatibility
+export { Avatar } from '@dotmac/primitives';
 // Theme utilities
 export { cn, createPortalTheme } from '../lib/utils';
 export type { CustomerButtonProps } from './Button';

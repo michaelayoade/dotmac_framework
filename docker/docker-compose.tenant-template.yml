@@ -1,0 +1,186 @@
+# Docker Compose Template for Tenant Container Deployment
+# This template is used by the Management Platform to deploy individual tenant containers
+
+version: '3.8'
+
+services:
+  # Tenant ISP Framework Instance
+  dotmac-tenant-${TENANT_ID}:
+    image: dotmac-isp:${VERSION:-latest}
+    container_name: dotmac-tenant-${TENANT_ID}
+    
+    environment:
+      # Tenant Identification
+      TENANT_ID: "${TENANT_ID}"
+      TENANT_SUBDOMAIN: "${TENANT_SUBDOMAIN:-${TENANT_ID}}"
+      TENANT_DOMAIN: "${TENANT_DOMAIN:-${TENANT_ID}.dotmac.app}"
+      
+      # Database Configuration (Isolated Schema)
+      DATABASE_URL: "postgresql+asyncpg://${DB_USER:-dotmac_admin}:${DB_PASSWORD}@${DB_HOST:-postgres-shared}:${DB_PORT:-5432}/${DB_NAME:-dotmac_isp}?options=-csearch_path=${DB_SCHEMA:-tenant_${TENANT_ID}}"
+      DATABASE_SCHEMA: "${DB_SCHEMA:-tenant_${TENANT_ID}}"
+      
+      # Redis Configuration (Isolated Namespace)
+      REDIS_URL: "redis://:${REDIS_PASSWORD}@${REDIS_HOST:-redis-shared}:${REDIS_PORT:-6379}/${REDIS_DB:-0}"
+      REDIS_NAMESPACE: "${REDIS_NAMESPACE:-tenant:${TENANT_ID}:}"
+      
+      # Celery Configuration (Tenant-isolated)
+      CELERY_BROKER_URL: "redis://:${REDIS_PASSWORD}@${REDIS_HOST:-redis-shared}:${REDIS_PORT:-6379}/${CELERY_BROKER_DB:-1}"
+      CELERY_RESULT_BACKEND: "redis://:${REDIS_PASSWORD}@${REDIS_HOST:-redis-shared}:${REDIS_PORT:-6379}/${CELERY_RESULT_DB:-2}"
+      
+      # Vault/OpenBao Configuration
+      VAULT_URL: "${VAULT_URL:-http://openbao-shared:8200}"
+      VAULT_TOKEN: "${VAULT_TOKEN}"
+      VAULT_PATH: "${VAULT_PATH:-secret/tenants/${TENANT_ID}}"
+      
+      # Observability Configuration
+      SIGNOZ_ENDPOINT: "${SIGNOZ_ENDPOINT:-signoz-collector:4317}"
+      OTEL_RESOURCE_ATTRIBUTES: "service.name=dotmac-tenant-${TENANT_ID},tenant.id=${TENANT_ID},tenant.tier=${TENANT_TIER:-basic}"
+      
+      # Application Configuration
+      ENVIRONMENT: "${APP_ENVIRONMENT:-production}"
+      LOG_LEVEL: "${LOG_LEVEL:-INFO}"
+      DEBUG: "${DEBUG:-false}"
+      
+      # Import Paths (Critical for shared modules)
+      PYTHONPATH: "/app/src:/app/shared"
+      
+      # Tenant-specific Features
+      RATE_LIMIT_MULTIPLIER: "${RATE_LIMIT_MULTIPLIER:-1.0}"
+      MAX_CONCURRENT_CONNECTIONS: "${MAX_CONCURRENT_CONNECTIONS:-100}"
+      FEATURE_FLAGS: "${FEATURE_FLAGS:-basic_features}"
+      
+      # Security Configuration
+      JWT_SECRET_KEY: "${JWT_SECRET_KEY}"
+      CORS_ORIGINS: "${CORS_ORIGINS:-[\"https://${TENANT_SUBDOMAIN}.dotmac.app\"]}"
+      
+      # Billing Integration
+      STRIPE_CUSTOMER_ID: "${STRIPE_CUSTOMER_ID:-}"
+      BILLING_PLAN: "${BILLING_PLAN:-basic}"
+    
+    volumes:
+      # Read-only shared modules
+      - ${SHARED_PATH:-./shared}:/app/shared:ro
+      # Tenant-specific data directories
+      - dotmac_tenant_${TENANT_ID}_uploads:/app/uploads
+      - dotmac_tenant_${TENANT_ID}_logs:/app/logs
+      # Tenant startup scripts
+      - ${SCRIPTS_PATH:-./docker/scripts}:/app/scripts:ro
+    
+    ports:
+      # Dynamic port allocation
+      - "${TENANT_PORT:-0}:8000"
+    
+    networks:
+      - dotmac-network
+      - tenant-${TENANT_ID}-network
+    
+    # Resource Limits (Configurable per tenant tier)
+    deploy:
+      resources:
+        limits:
+          cpus: "${CPU_LIMIT:-0.5}"
+          memory: "${MEMORY_LIMIT:-512M}"
+        reservations:
+          cpus: "${CPU_RESERVATION:-0.25}"
+          memory: "${MEMORY_RESERVATION:-256M}"
+    
+    # Health Check with Extended Startup Time
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    
+    # Restart Policy
+    restart: unless-stopped
+    
+    # Dependencies (Shared Infrastructure)
+    depends_on:
+      postgres-shared:
+        condition: service_healthy
+      redis-shared:
+        condition: service_healthy
+      openbao-shared:
+        condition: service_healthy
+    
+    # Labels for Management
+    labels:
+      com.dotmac.tenant.id: "${TENANT_ID}"
+      com.dotmac.tenant.subdomain: "${TENANT_SUBDOMAIN:-${TENANT_ID}}"
+      com.dotmac.tenant.tier: "${TENANT_TIER:-basic}"
+      com.dotmac.service: "isp-framework"
+      com.dotmac.version: "${VERSION:-latest}"
+      com.dotmac.provisioned: "${PROVISIONED_AT}"
+      com.dotmac.billing.plan: "${BILLING_PLAN:-basic}"
+      traefik.enable: "${TRAEFIK_ENABLE:-true}"
+      traefik.http.routers.tenant-${TENANT_ID}.rule: "Host(`${TENANT_SUBDOMAIN:-${TENANT_ID}}.dotmac.app`)"
+      traefik.http.services.tenant-${TENANT_ID}.loadbalancer.server.port: "8000"
+    
+    # Logging Configuration
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "tenant_id,tenant_tier"
+    
+    # Use Custom Startup Script
+    command: ["/app/scripts/tenant-startup.sh"]
+
+  # Optional: Tenant-specific Worker (for high-tier tenants)
+  dotmac-tenant-${TENANT_ID}-worker:
+    image: dotmac-isp:${VERSION:-latest}
+    container_name: dotmac-tenant-${TENANT_ID}-worker
+    profiles: ["worker"]
+    
+    environment:
+      # Inherit all tenant environment variables
+      TENANT_ID: "${TENANT_ID}"
+      DATABASE_URL: "postgresql+asyncpg://${DB_USER:-dotmac_admin}:${DB_PASSWORD}@${DB_HOST:-postgres-shared}:${DB_PORT:-5432}/${DB_NAME:-dotmac_isp}?options=-csearch_path=${DB_SCHEMA:-tenant_${TENANT_ID}}"
+      REDIS_URL: "redis://:${REDIS_PASSWORD}@${REDIS_HOST:-redis-shared}:${REDIS_PORT:-6379}/${REDIS_DB:-0}"
+      REDIS_NAMESPACE: "tenant:${TENANT_ID}:"
+      CELERY_BROKER_URL: "redis://:${REDIS_PASSWORD}@${REDIS_HOST:-redis-shared}:${REDIS_PORT:-6379}/${CELERY_BROKER_DB:-1}"
+      CELERY_RESULT_BACKEND: "redis://:${REDIS_PASSWORD}@${REDIS_HOST:-redis-shared}:${REDIS_PORT:-6379}/${CELERY_RESULT_DB:-2}"
+      PYTHONPATH: "/app/src:/app/shared"
+    
+    volumes:
+      - ${SHARED_PATH:-./shared}:/app/shared:ro
+      - dotmac_tenant_${TENANT_ID}_logs:/app/logs
+    
+    networks:
+      - dotmac-network
+      - tenant-${TENANT_ID}-network
+    
+    depends_on:
+      - dotmac-tenant-${TENANT_ID}
+    
+    deploy:
+      resources:
+        limits:
+          cpus: "${WORKER_CPU_LIMIT:-0.25}"
+          memory: "${WORKER_MEMORY_LIMIT:-256M}"
+    
+    command: ["celery", "-A", "dotmac_isp.core.celery_app", "worker", "--loglevel=info", "--concurrency=2"]
+    
+    labels:
+      com.dotmac.tenant.id: "${TENANT_ID}"
+      com.dotmac.service: "isp-worker"
+
+# Networks
+networks:
+  dotmac-network:
+    external: true
+    name: dotmac-network
+  
+  tenant-${TENANT_ID}-network:
+    driver: bridge
+    name: tenant-${TENANT_ID}-network
+
+# Volumes (Tenant-specific)
+volumes:
+  dotmac_tenant_${TENANT_ID}_uploads:
+    name: dotmac-tenant-${TENANT_ID}-uploads
+    
+  dotmac_tenant_${TENANT_ID}_logs:
+    name: dotmac-tenant-${TENANT_ID}-logs

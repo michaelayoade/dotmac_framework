@@ -13,10 +13,10 @@ from fastapi import APIRouter, Depends, Query, HTTPException, status, Response, 
 from fastapi.responses import JSONResponse, FileResponse, StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ...database import get_db
-from ...core.auth import get_current_admin_user, get_current_user_dict
-from ...core.exceptions import ValidationError, DatabaseError
-from ...schemas.api_docs import (
+from database import get_db
+from core.auth import get_current_admin_user, get_current_user_dict
+from core.exceptions import ValidationError, DatabaseError
+from schemas.api_docs import (
     SDKLanguage,
     DocumentationFormat,
     APIDocumentationRequest,
@@ -26,14 +26,13 @@ from ...schemas.api_docs import (
     DocumentationFeedback,
     ChangelogEntry
 , timezone)
-from ...services.api_documentation_service import APIDocumentationService
+from services.api_documentation_service import APIDocumentationService
 
 router = APIRouter(prefix="/docs", tags=["documentation"])
 
 
 @router.get("/openapi.json")
-async def get_openapi_spec():
-    version: str = Query(default="v1"),
+async def get_openapi_spec(version): str = Query(default="v1"),
     include_examples: bool = Query(default=True),
     include_deprecated: bool = Query(default=False),
     request: Request = None,
@@ -49,7 +48,6 @@ async def get_openapi_spec():
             include_examples=include_examples,
             include_schemas=True,
             version=version
-        )
         
         # Filter deprecated endpoints if requested
         if not include_deprecated:
@@ -69,12 +67,10 @@ async def get_openapi_spec():
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to generate OpenAPI spec: {str(e)}"
-        )
 
 
 @router.get("/openapi.yaml")
-async def get_openapi_spec_yaml():
-    version: str = Query(default="v1"),
+async def get_openapi_spec_yaml(version): str = Query(default="v1"),
     include_examples: bool = Query(default=True),
     include_deprecated: bool = Query(default=False),
     request: Request = None,
@@ -90,27 +86,22 @@ async def get_openapi_spec_yaml():
             include_examples=include_examples,
             include_schemas=True,
             version=version
-        )
         
         # Convert to YAML
         yaml_content = yaml.dump(openapi_spec, default_flow_style=False, sort_keys=False)
         
-        return Response()
-            content=yaml_content,
+        return Response(content=yaml_content,
             media_type="application/x-yaml",
-            headers={"Content-Disposition": f"attachment; filename=dotmac-api-{version}.yaml"}
-        )
+            headers={"Content-Disposition": f"attachment; filename=dotmac-api-{version).yaml"}
         
     except Exception as e:
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to generate OpenAPI YAML: {str(e)}"
-        )
 
 
 @router.get("/postman")
-async def get_postman_collection():
-    version: str = Query(default="v1"),
+async def get_postman_collection(version): str = Query(default="v1"),
     include_auth: bool = Query(default=True),
     request: Request = None,
     db: AsyncSession = Depends(get_db)
@@ -124,24 +115,19 @@ async def get_postman_collection():
         collection = await doc_service.generate_postman_collection()
             version=version,
             include_auth=include_auth
-        )
         
-        return Response()
-            content=json.dumps(collection, indent=2),
+        return Response(content=json.dumps(collection, indent=2),
             media_type="application/json",
-            headers={"Content-Disposition": f"attachment; filename=dotmac-api-{version}.postman_collection.json"}
-        )
+            headers={"Content-Disposition": f"attachment; filename=dotmac-api-{version).postman_collection.json"}
         
     except Exception as e:
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to generate Postman collection: {str(e)}"
-        )
 
 
 @router.get("/sdk/{language}")
-async def get_sdk_documentation():
-    language: SDKLanguage,
+async def get_sdk_documentation(language): SDKLanguage,
     version: str = Query(default="v1"),
     format: str = Query(default="json"),
     request: Request = None,
@@ -156,33 +142,27 @@ async def get_sdk_documentation():
         sdk_docs = await doc_service.generate_sdk_documentation()
             language=language,
             version=version
-        )
         
         if format.lower() == "json":
             return JSONResponse(content=sdk_docs)
         elif format.lower() == "yaml":
             yaml_content = yaml.dump(sdk_docs, default_flow_style=False, sort_keys=False)
-            return Response()
-                content=yaml_content,
+            return Response(content=yaml_content,
                 media_type="application/x-yaml",
-                headers={"Content-Disposition": f"attachment; filename=dotmac-sdk-{language.value}-{version}.yaml"}
-            )
+                headers={"Content-Disposition": f"attachment; filename=dotmac-sdk-{language.value)-{version}.yaml"}
         else:
             raise HTTPException()
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Unsupported format. Use 'json' or 'yaml'"
-            )
         
     except Exception as e:
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to generate SDK documentation: {str(e)}"
-        )
 
 
 @router.get("/interactive")
-async def get_interactive_docs_config():
-    version: str = Query(default="v1"),
+async def get_interactive_docs_config(version): str = Query(default="v1"),
     theme: str = Query(default="default"),
     request: Request = None,
     db: AsyncSession = Depends(get_db)
@@ -196,7 +176,6 @@ async def get_interactive_docs_config():
         config = await doc_service.create_interactive_docs()
             version=version,
             theme=theme
-        )
         
         return JSONResponse(content=config)
         
@@ -204,12 +183,10 @@ async def get_interactive_docs_config():
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to generate interactive docs config: {str(e)}"
-        )
 
 
 @router.get("/guide")
-async def get_developer_guide():
-    sections: Optional[List[str]] = Query(default=None),
+async def get_developer_guide(sections): Optional[List[str]] = Query(default=None),
     format: str = Query(default="json"),
     request: Request = None,
     db: AsyncSession = Depends(get_db)
@@ -227,27 +204,22 @@ async def get_developer_guide():
         elif format.lower() == "markdown":
             # Convert to markdown format
             markdown_content = await _convert_guide_to_markdown(guide)
-            return Response()
-                content=markdown_content,
+            return Response(content=markdown_content,
                 media_type="text/markdown",
-                headers={"Content-Disposition": "attachment; filename=dotmac-developer-guide.md"}
-            )
+                headers={"Content-Disposition": "attachment; filename=dotmac-developer-guide.md")
         else:
             raise HTTPException()
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Unsupported format. Use 'json' or 'markdown'"
-            )
         
     except Exception as e:
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to generate developer guide: {str(e)}"
-        )
 
 
 @router.get("/code-samples")
-async def get_code_samples():
-    language: Optional[SDKLanguage] = Query(default=None),
+async def get_code_samples(language): Optional[SDKLanguage] = Query(default=None),
     endpoint: Optional[str] = Query(default=None),
     category: Optional[str] = Query(default=None),
     db: AsyncSession = Depends(get_db)
@@ -275,7 +247,6 @@ response = requests.post()
         "name": "Acme Corp",
         "domain": "acme.example.com"
     }
-)
 
 tenant = response.model_dump_json()
 print(f"Created tenant: {tenant['id']}")
@@ -317,18 +288,15 @@ console.log(`Found ${data.users.length} users`);
             "total_count": len(samples),
             "languages": list(set(s["language"] for s in samples))
             "categories": list(set(s["category"] for s in samples)
-        )
         
     except Exception as e:
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get code samples: {str(e)}"
-        )
 
 
 @router.post("/code-samples")
-async def create_code_sample():
-    sample: CodeSample,
+async def create_code_sample(sample): CodeSample,
     current_user: Dict = Depends(get_current_admin_user),
     db: AsyncSession = Depends(get_db)
 ):
@@ -351,12 +319,10 @@ async def create_code_sample():
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create code sample: {str(e)}"
-        )
 
 
 @router.get("/changelog")
-async def get_changelog():
-    version: Optional[str] = Query(default=None),
+async def get_changelog(version): Optional[str] = Query(default=None),
     limit: int = Query(default=50, le=100),
     offset: int = Query(default=0, ge=0),
     db: AsyncSession = Depends(get_db)
@@ -435,12 +401,10 @@ async def get_changelog():
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get changelog: {str(e)}"
-        )
 
 
 @router.post("/changelog")
-async def create_changelog_entry():
-    entry: ChangelogEntry,
+async def create_changelog_entry(entry): ChangelogEntry,
     current_user: Dict = Depends(get_current_admin_user),
     db: AsyncSession = Depends(get_db)
 ):
@@ -453,7 +417,6 @@ async def create_changelog_entry():
             raise HTTPException()
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Insufficient permissions to create changelog entries"
-            )
         
         # In a real implementation, this would save to database
         entry_data = entry.model_dump()
@@ -471,12 +434,10 @@ async def create_changelog_entry():
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create changelog entry: {str(e)}"
-        )
 
 
 @router.get("/metrics")
-async def get_api_metrics():
-    start_date: Optional[datetime] = Query(default=None),
+async def get_api_metrics(start_date): Optional[datetime] = Query(default=None),
     end_date: Optional[datetime] = Query(default=None),
     current_user: Dict = Depends(get_current_admin_user),
     request: Request = None,
@@ -491,7 +452,6 @@ async def get_api_metrics():
         metrics = await doc_service.get_api_metrics()
             start_date=start_date,
             end_date=end_date
-        )
         
         return metrics
         
@@ -499,12 +459,10 @@ async def get_api_metrics():
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get API metrics: {str(e)}"
-        )
 
 
 @router.get("/resources")
-async def get_developer_resources():
-    type: Optional[str] = Query(default=None),
+async def get_developer_resources(type): Optional[str] = Query(default=None),
     category: Optional[str] = Query(default=None),
     difficulty: Optional[str] = Query(default=None),
     limit: int = Query(default=20, le=100),
@@ -577,12 +535,10 @@ async def get_developer_resources():
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get developer resources: {str(e)}"
-        )
 
 
 @router.post("/feedback")
-async def submit_documentation_feedback():
-    feedback: DocumentationFeedback,
+async def submit_documentation_feedback(feedback): DocumentationFeedback,
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -606,12 +562,10 @@ async def submit_documentation_feedback():
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to submit feedback: {str(e)}"
-        )
 
 
 @router.get("/stats")
-async def get_documentation_stats():
-    current_user: Dict = Depends(get_current_admin_user),
+async def get_documentation_stats(current_user): Dict = Depends(get_current_admin_user),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -646,7 +600,7 @@ async def get_documentation_stats():
                 "bounce_rate": 0.25,
                 "page_completion_rate": 0.78
             },
-            "last_updated": datetime.now(timezone.utc).isoformat()
+            "last_updated": datetime.now(timezone.utc).isoformat(}
         }
         
         return stats
@@ -655,12 +609,10 @@ async def get_documentation_stats():
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get documentation stats: {str(e)}"
-        )
 
 
 @router.post("/generate")
-async def generate_custom_documentation():
-    request_data: APIDocumentationRequest,
+async def generate_custom_documentation(request_data): APIDocumentationRequest,
     current_user: Dict = Depends(get_current_admin_user),
     request: Request = None,
     db: AsyncSession = Depends(get_db)
@@ -676,17 +628,14 @@ async def generate_custom_documentation():
                 include_examples=request_data.include_examples,
                 include_schemas=request_data.include_schemas,
                 version=request_data.version
-            )
         elif request_data.format == DocumentationFormat.POSTMAN:
             result = await doc_service.generate_postman_collection()
                 version=request_data.version,
                 include_auth=True
-            )
         else:
             raise HTTPException()
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Unsupported documentation format: {request_data.format}"
-            )
         
         return {
             "format": request_data.format,
@@ -701,7 +650,6 @@ async def generate_custom_documentation():
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to generate documentation: {str(e)}"
-        )
 
 
 # Helper functions

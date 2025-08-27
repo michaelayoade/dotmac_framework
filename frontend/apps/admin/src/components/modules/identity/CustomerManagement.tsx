@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useAuthToken } from '../../../hooks/useSSRSafeStorage';
 import { Card, CardContent, CardHeader, CardTitle } from '../../ui/Card';
 import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
@@ -24,21 +25,24 @@ interface CustomerHealth {
 }
 
 export function CustomerManagement() {
+  const [authToken, , tokenLoading] = useAuthToken();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [customerHealth, setCustomerHealth] = useState<Record<string, CustomerHealth>>({});
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    fetchCustomers();
-    fetchCustomerHealth();
-  }, []);
+    if (authToken && !tokenLoading) {
+      fetchCustomers();
+      fetchCustomerHealth();
+    }
+  }, [authToken, tokenLoading]);
 
   const fetchCustomers = async () => {
     try {
       const response = await fetch('/api/isp/identity/customers', {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('isp-admin-token')}`,
+          Authorization: `Bearer ${authToken}`,
         },
       });
 
@@ -104,7 +108,7 @@ export function CustomerManagement() {
     try {
       const response = await fetch('/api/isp/identity/intelligence/customer-health', {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('isp-admin-token')}`,
+          Authorization: `Bearer ${authToken}`,
         },
       });
 

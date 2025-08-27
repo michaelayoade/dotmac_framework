@@ -19,6 +19,9 @@ export {
 // Export all from NotificationSystem including its version of useToast
 export * from './NotificationSystem';
 
+// Explicitly export NotificationProvider for clarity
+export { NotificationProvider } from './NotificationSystem';
+
 // Check if Modal exists in layout and create alias
 export { Modal as ConfirmationModal } from '../layout';
 

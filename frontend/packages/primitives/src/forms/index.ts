@@ -4,6 +4,7 @@ export * from './BottomSheet';
 export * from './FileUpload';
 // Export Input components first (takes priority)
 export * from './Input';
+export * from './Textarea';
 
 // Explicit type re-exports to ensure they're available
 export type {

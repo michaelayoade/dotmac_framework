@@ -1,7 +1,7 @@
 """Analytics and reporting service."""
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional, Any
 from uuid import UUID
 
@@ -10,7 +10,7 @@ from dotmac_isp.shared.exceptions import EntityNotFoundError, ValidationError
 from ..schemas import OmnichannelDashboardStats
 from .base_service import BaseOmnichannelService
 
-logger = logging.getLogger(__name__, timezone)
+logger = logging.getLogger(__name__)
 
 
 class AnalyticsService(BaseOmnichannelService):
@@ -386,4 +386,4 @@ class AnalyticsService(BaseOmnichannelService):
             channel_usage[channel] = channel_usage.get(channel, 0) + 1
 
         # Sort by usage frequency
-        return dict(sorted(channel_usage.items(), key=lambda x: x[1], reverse=True)
+        return dict(sorted(channel_usage.items(), key=lambda x: x[1], reverse=True))

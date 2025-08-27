@@ -82,7 +82,6 @@ def evaluate_alert_rules(self, tenant_id: str = None):
                         
                         metrics = await service.metric_repo.get_rule_metrics()
                             rule, start_time, end_time
-                        )
                         
                         # Evaluate rule against metrics
                         for metric in metrics:
@@ -97,7 +96,6 @@ def evaluate_alert_rules(self, tenant_id: str = None):
                                 timestamp=metric.timestamp,
                                 labels=metric.labels,
                                 unit=metric.unit
-                            )
                             
                             violation = await service._check_rule_violation(rule, metric_create)
                             if violation:
@@ -186,7 +184,6 @@ def aggregate_metrics(self, aggregation_window: int = 3600):
                 # Get metrics to aggregate
                 metrics = await service.metric_repo.get_metrics_for_aggregation()
                     start_time, end_time
-                )
                 
                 # Group metrics by tenant, service, metric name
                 aggregated_data = {}
@@ -203,7 +200,7 @@ def aggregate_metrics(self, aggregation_window: int = 3600):
                             "count": 0,
                             "sum": 0,
                             "min": float('inf'),
-                            "max": float('-inf')
+                            "max": float('-inf'}
                         }
                     
                     data = aggregated_data[key]
@@ -362,7 +359,6 @@ def calculate_service_health_scores(self):
                             # Calculate health score
                             health_status = await service.get_service_health_status()
                                 tenant_id, service_name
-                            )
                             
                             # Store health score as metric
                             health_metric = {
@@ -466,7 +462,7 @@ def export_monitoring_report(self, tenant_id: str, report_type: str, start_date:
                     "report_type": report_type,
                     "period": f"{start} to {end}",
                     "record_count": len(data),
-                    "generated_at": datetime.now(None).isoformat()
+                    "generated_at": datetime.now(None).isoformat(}
                 }
                 
                 logger.info(f"Monitoring report exported: {report_type} for tenant {tenant_id}")

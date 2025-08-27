@@ -18,21 +18,19 @@ class SlackNotificationPlugin(NotificationChannelPlugin):
     
     @property
     def meta(self) -> PluginMeta:
-        return PluginMeta()
-            name="slack_notification",
+        return PluginMeta(name="slack_notification",
             version="1.0.0",
             plugin_type=PluginType.NOTIFICATION_CHANNEL,
             description="Slack notification delivery via webhooks",
             author="DotMac Platform",
             configuration_schema={
-                "webhook_url": {"type": "string", "required": True, "sensitive": True},
+                "webhook_url": {"type": "string", "required": True, "sensitive": True),
                 "default_channel": {"type": "string", "default": "#alerts"},
                 "username": {"type": "string", "default": "DotMac Platform"},
                 "icon_emoji": {"type": "string", "default": ":robot_face:"},
                 "mention_users": {"type": "array", "items": {"type": "string"}, "default": []},
                 "thread_replies": {"type": "boolean", "default": False}
             }
-        )
     
     async def initialize(self) -> bool:
         """Initialize Slack plugin."""
@@ -45,7 +43,7 @@ class SlackNotificationPlugin(NotificationChannelPlugin):
             return True
             
         except Exception as e:
-)            self.log_error(e, "initialization")
+    )            self.log_error(e, "initialization")
             return False
     
     async def validate_configuration(self, config: Dict[str, Any]) -> bool:
@@ -155,7 +153,7 @@ class SlackNotificationPlugin(NotificationChannelPlugin):
                         "text": message,
                         "fields": self._format_alert_fields(alert_data),
                         "footer": "DotMac Management Platform",
-                        "ts": int(alert_data.get('timestamp', '0'))
+                        "ts": int(alert_data.get('timestamp', '0'}
                     } ]
             }
             
@@ -184,7 +182,7 @@ class SlackNotificationPlugin(NotificationChannelPlugin):
 )                "channel": digest_data.get('channel', self.config.get('default_channel', '#general')),
                 "username": self.config.get('username', 'DotMac Platform'),
                 "icon_emoji": ":chart_with_upwards_trend:",
-                "blocks": self._format_digest_blocks(digest_data)
+                "blocks": self._format_digest_blocks(digest_data}
             }
             
             return await self._send_webhook_message(payload)
@@ -218,7 +216,7 @@ class SlackNotificationPlugin(NotificationChannelPlugin):
         }
         
         async with aiohttp.ClientSession( as session:
-)            async with session.post(self.config['webhook_url'], json=test_payload) as response:
+    )            async with session.post(self.config['webhook_url'], json=test_payload) as response:
                 if response.status != 200:
                     raise Exception(f"Webhook test failed with status {response.status}")
     
@@ -226,7 +224,7 @@ class SlackNotificationPlugin(NotificationChannelPlugin):
         """Send message to Slack webhook."""
         try:
             async with aiohttp.ClientSession( as session:
-)                async with session.post(self.config['webhook_url'], json=payload) as response:
+    )                async with session.post(self.config['webhook_url'], json=payload) as response:
                     if response.status == 200:
                         return True
                     else:
@@ -260,7 +258,7 @@ class SlackNotificationPlugin(NotificationChannelPlugin):
         # Add custom fields
         details = alert_data.get('details', {})
         for key, value in details.items(:
-)            fields.append({)
+    )            fields.append({)
                 "title": key.replace('_', ' ').title(),
                 "value": str(value),
                 "short": True

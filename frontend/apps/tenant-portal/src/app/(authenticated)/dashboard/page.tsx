@@ -14,6 +14,7 @@ import {
   DollarSign,
 } from 'lucide-react';
 import { useTenantAuth } from '@/components/auth/TenantAuthProvider';
+import { TenantApiService } from '@/lib/tenant-api-service';
 
 interface HealthMetrics {
   uptime_percentage: number;
@@ -42,35 +43,53 @@ export default function DashboardPage() {
   const { tenant, user } = useTenantAuth();
   const [overview, setOverview] = useState<TenantOverview | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Mock data - in production, fetch from management platform API
-    const mockOverview: TenantOverview = {
-      current_customers: 1247,
-      current_services: 3891,
-      storage_used_gb: 67.5,
-      storage_limit_gb: 100,
-      health_metrics: {
-        uptime_percentage: 99.95,
-        avg_response_time_ms: 185,
-        error_rate_percentage: 0.02,
-        cpu_usage_percentage: 45.2,
-        memory_usage_percentage: 68.7,
-        storage_usage_percentage: 67.5,
-      },
-      recent_logins: 156,
-      recent_api_calls: 12450,
-      recent_tickets: 2,
-      active_alerts: 0,
-      next_billing_date: '2024-02-15',
-      monthly_cost: 2650,
+    const fetchOverviewData = async () => {
+      setIsLoading(true);
+      setError(null);
+      
+      try {
+        const result = await TenantApiService.getTenantOverview();
+        
+        if (result.success && result.data) {
+          setOverview(result.data);
+        } else {
+          // Fallback to mock data if API is unavailable
+          const mockOverview: TenantOverview = {
+            current_customers: 1247,
+            current_services: 3891,
+            storage_used_gb: 67.5,
+            storage_limit_gb: 100,
+            health_metrics: {
+              uptime_percentage: 99.95,
+              avg_response_time_ms: 185,
+              error_rate_percentage: 0.02,
+              cpu_usage_percentage: 45.2,
+              memory_usage_percentage: 68.7,
+              storage_usage_percentage: 67.5,
+            },
+            recent_logins: 156,
+            recent_api_calls: 12450,
+            recent_tickets: 2,
+            active_alerts: 0,
+            next_billing_date: '2024-02-15',
+            monthly_cost: 2650,
+          };
+          
+          setOverview(mockOverview);
+          setError('Using demo data - API unavailable');
+        }
+      } catch (err) {
+        setError('Failed to load dashboard data');
+        console.error('Dashboard data fetch failed:', err);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
-    // Simulate API call delay
-    setTimeout(() => {
-      setOverview(mockOverview);
-      setIsLoading(false);
-    }, 1000);
+    fetchOverviewData();
   }, []);
 
   if (isLoading || !overview) {
@@ -152,6 +171,14 @@ export default function DashboardPage() {
         <p className="text-gray-600">
           Here's what's happening with your {tenant?.display_name} instance today.
         </p>
+        {error && (
+          <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+            <div className="flex">
+              <AlertTriangle className="h-5 w-5 text-yellow-600 mr-2" />
+              <p className="text-sm text-yellow-700">{error}</p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Key Metrics */}

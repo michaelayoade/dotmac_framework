@@ -13,6 +13,7 @@ import {
   Shield,
   Users,
   Workflow,
+  Activity,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import type React from 'react';
@@ -55,9 +56,9 @@ const menuItems: MenuItem[] = [
     requiredPermissions: ['billing:read'],
   },
   {
-    id: 'support',
-    label: 'Support',
-    href: '/support',
+    id: 'helpdesk',
+    label: 'Helpdesk',
+    href: '/helpdesk',
     icon: HeadphonesIcon,
     requiredPermissions: ['support:read'],
     badge: '3',
@@ -89,6 +90,13 @@ const menuItems: MenuItem[] = [
     href: '/security',
     icon: Shield,
     requiredPermissions: ['security:read'],
+  },
+  {
+    id: 'gateway-status',
+    label: 'Gateway Status',
+    href: '/gateway-status',
+    icon: Activity,
+    requiredPermissions: ['admin', 'system.monitoring'],
   },
   {
     id: 'settings',

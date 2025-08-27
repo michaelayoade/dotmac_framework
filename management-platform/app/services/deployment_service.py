@@ -19,7 +19,6 @@ from repositories.deployment_additional import ()
 from schemas.deployment import ()
     DeploymentTemplateCreate, InfrastructureCreate, Infrastructure, DeploymentCreate,
     ServiceInstanceCreate, DeploymentRequest, ScalingRequest, RollbackRequest
-)
 from models.deployment import InfrastructureTemplate, Deployment
 from core.plugins.service_integration import service_integration
 
@@ -37,9 +36,8 @@ class DeploymentService:
         # self.service_repo = ServiceInstanceRepository(db)  # Not implemented yet
         # self.log_repo = DeploymentLogRepository(db)      # Not implemented yet
     
-    async def create_template():
-        self,
-        template_data: DeploymentTemplateCreate,
+    async def create_template(self,
+        template_data): DeploymentTemplateCreate,
         created_by: str
     ) -> InfrastructureTemplate:
         """Create a new deployment template."""
@@ -48,7 +46,6 @@ class DeploymentService:
             await self._validate_template_content()
                 template_data.template_content,
                 template_data.template_type
-            )
             
             template_dict = template_data.model_dump()
             template = await self.template_repo.create(template_dict, created_by)
@@ -56,7 +53,6 @@ class DeploymentService:
             await self._log_deployment_event()
                 None, "template_created", 
                 f"Template {template.name} created", created_by
-            )
             
             logger.info(f"Deployment template created: {template.name} (ID: {template.id})")
             return template
@@ -66,11 +62,9 @@ class DeploymentService:
             raise HTTPException()
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to create deployment template"
-            )
     
-    async def _validate_template_content():
-        self,
-        content: Dict[str, Any],
+    async def _validate_template_content(self,
+        content): Dict[str, Any],
         template_type: str
     ):
         """Validate deployment template content using plugins."""
@@ -79,7 +73,6 @@ class DeploymentService:
             provider = content.get('provider', 'default')
             is_valid = await service_integration.validate_template_via_plugin()
                 provider, content, template_type
-            )
             
             if not is_valid:
                 raise ValueError(f"Template validation failed for {template_type} with provider {provider}")
@@ -88,9 +81,8 @@ class DeploymentService:
             logger.error(f"Template validation failed: {e}")
             raise
     
-    async def provision_infrastructure():
-        self,
-        tenant_id: UUID,
+    async def provision_infrastructure(self,
+        tenant_id): UUID,
         infrastructure_data: InfrastructureCreate,
         created_by: str
     ) -> Infrastructure:
@@ -102,7 +94,6 @@ class DeploymentService:
             
             infrastructure = await self.infrastructure_repo.create()
                 infrastructure_dict, created_by
-            )
             
             # Start infrastructure provisioning workflow
             await self._start_provisioning_workflow(infrastructure.id, created_by)
@@ -115,11 +106,9 @@ class DeploymentService:
             raise HTTPException()
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to provision infrastructure"
-            )
     
-    async def _start_provisioning_workflow():
-        self,
-        infrastructure_id: UUID,
+    async def _start_provisioning_workflow(self,
+        infrastructure_id): UUID,
         user_id: str
     ):
         """Start infrastructure provisioning workflow."""
@@ -127,7 +116,6 @@ class DeploymentService:
             None, "provisioning_started",
             f"Infrastructure provisioning started for {infrastructure_id}",
             user_id
-        )
         
         # Integrate with actual provisioning system
         await self._provision_infrastructure_via_plugin(infrastructure_id, user_id)
@@ -153,25 +141,21 @@ class DeploymentService:
             # Use plugin system for infrastructure provisioning
             result = await service_integration.provision_infrastructure_via_plugin()
                 provider, infrastructure_config
-            )
             
             # Update infrastructure with plugin result
             if result.get('success'):
                 await self.infrastructure_repo.update_status()
                     infrastructure_id, "provisioned", user_id
-                )
                 
                 # Store provider-specific details
                 if result.get('details'):
                     await self.infrastructure_repo.update_details()
                         infrastructure_id, result['details']
-                    )
                 
                 await self._log_deployment_event()
                     infrastructure_id, "provisioning_completed",
                     f"Infrastructure provisioning completed via {provider} plugin",
                     user_id
-                )
             else:
                 raise Exception(f"Plugin provisioning failed: {result.get('error', 'Unknown error')}")
             
@@ -179,13 +163,11 @@ class DeploymentService:
             # Update status to failed
             await self.infrastructure_repo.update_status()
                 infrastructure_id, "failed", user_id
-            )
             
             await self._log_deployment_event()
                 infrastructure_id, "provisioning_failed",
                 f"Infrastructure provisioning failed: {str(e)}",
                 user_id
-            )
             logger.error(f"Infrastructure provisioning failed for {infrastructure_id}: {e}")
             raise
 
@@ -196,7 +178,6 @@ class DeploymentService:
             # Get previous deployments for this tenant and deployment name
             previous_deployments = await self.deployment_repo.get_tenant_deployments_by_name()
                 tenant_id, deployment_name
-            )
             
             if not previous_deployments:
                 return "1.0.0"  # First deployment
@@ -233,9 +214,8 @@ class DeploymentService:
         except ValueError:
             return (1, 0, 0)  # Default for invalid version strings
 
-    async def create_deployment_release():
-        self, 
-        deployment_id: UUID, 
+    async def create_deployment_release(self, 
+        deployment_id): UUID, 
         release_type: str = "patch",
         created_by: str = "system"
     ) -> str:
@@ -268,7 +248,6 @@ class DeploymentService:
                 deployment.infrastructure_id, "version_updated",
                 f"Deployment version updated to {new_version} ({release_type})",
                 created_by
-            )
             
             return new_version
             
@@ -281,14 +260,12 @@ class DeploymentService:
         try:
             deployments = await self.deployment_repo.get_tenant_deployments_by_name()
                 tenant_id, deployment_name
-            )
             
             # Sort by version (newest first)
             sorted_deployments = sorted()
                 deployments,
                 key=lambda d: self._parse_version(d.version),
                 reverse=True
-            )
             
             return [{
                 "id": str(deployment.id),
@@ -311,17 +288,14 @@ class DeploymentService:
         # Update infrastructure status
         await self.infrastructure_repo.update_status()
             infrastructure_id, "active", user_id
-        )
         
         await self._log_deployment_event()
             None, "provisioning_completed",
             f"Infrastructure provisioning completed for {infrastructure_id}",
             user_id
-        )
     
-    async def deploy_service():
-        self,
-        deployment_request: DeploymentRequest,
+    async def deploy_service(self,
+        deployment_request): DeploymentRequest,
         tenant_id: UUID,
         created_by: str
     ) -> Deployment:
@@ -333,18 +307,15 @@ class DeploymentService:
                 raise HTTPException()
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Deployment template not found"
-                )
             
             # Find suitable infrastructure
             infrastructure = await self._find_suitable_infrastructure()
                 tenant_id, deployment_request.environment
-            )
             
             if not infrastructure:
                 raise HTTPException()
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="No suitable infrastructure found for deployment"
-                )
             
             # Create deployment record
             deployment_data = {
@@ -374,17 +345,14 @@ class DeploymentService:
             raise HTTPException()
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to deploy service"
-            )
     
-    async def _find_suitable_infrastructure():
-        self,
-        tenant_id: UUID,
+    async def _find_suitable_infrastructure(self,
+        tenant_id): UUID,
         environment: str
     ) -> Optional[Infrastructure]:
         """Find suitable infrastructure for deployment."""
         infrastructures = await self.infrastructure_repo.get_by_tenant_and_environment()
             tenant_id, environment
-        )
         
         # Return first active infrastructure
         for infra in infrastructures:
@@ -399,7 +367,6 @@ class DeploymentService:
             deployment_id, "deployment_started",
             f"Service deployment started for {deployment_id}",
             user_id
-        )
         
         # Integrate with actual deployment system
         await self._execute_deployment(deployment_id, user_id)
@@ -436,7 +403,6 @@ class DeploymentService:
             # Use plugin system for deployment
             result = await service_integration.deploy_application_via_plugin()
                 provider, deployment_config, str(infrastructure.id)
-            )
             
             if not result.get('success'):
                 raise Exception(f"Plugin deployment failed: {result.get('error', 'Unknown error')}")
@@ -449,7 +415,6 @@ class DeploymentService:
                 deployment.infrastructure_id, "deployment_completed",
                 f"Service deployment completed successfully for {deployment_id}",
                 user_id
-            )
             
         except Exception as e:
             # Update status to failed
@@ -459,7 +424,6 @@ class DeploymentService:
                 deployment.infrastructure_id, "deployment_failed",
                 f"Service deployment failed: {str(e)}",
                 user_id
-            )
             logger.error(f"Service deployment failed for {deployment_id}: {e}")
 
     async def _deploy_to_kubernetes(self, deployment, infrastructure, template):
@@ -479,7 +443,6 @@ class DeploymentService:
             try:
                 namespace = client.V1Namespace()
                     metadata=client.V1ObjectMeta(name=namespace_name)
-                )
                 core_v1.create_namespace(namespace)
             except client.ApiException as e:
                 if e.status != 409:  # Ignore if namespace already exists
@@ -514,12 +477,7 @@ class DeploymentService:
                                             client.V1EnvVar(name=k, value=str(v)
                                             for k, v in deployment.variables.items()
                                         ]
-                                    )
                                 ]
-                            )
-                        )
-                    )
-                )
                 
                 v1.create_namespaced_deployment(namespace=namespace_name, body=deployment_manifest)
                 
@@ -533,8 +491,6 @@ class DeploymentService:
                         selector={"app": deployment.name},
                         ports=[client.V1ServicePort(port=80, target_port=8080)],
                         type="ClusterIP"
-                    )
-                )
                 
                 core_v1.create_namespaced_service(namespace=namespace_name, body=service)
                 
@@ -571,7 +527,6 @@ class DeploymentService:
                 ports={8080: None},  # Auto-assign port
                 detach=True,
                 restart_policy={"Name": "unless-stopped"}
-            )
             
             # Store container ID for management
             container_info = {
@@ -606,7 +561,6 @@ class DeploymentService:
             await asyncio.sleep(2)
             await self._log_deployment_event()
                 deployment_id, step_status, step_message, user_id
-            )
         
         # Create service instance
         service_data = {
@@ -631,17 +585,14 @@ class DeploymentService:
             deployment_id,
             {"deployed_at": datetime.now(timezone.utc)},
             user_id
-        )
         
         await self._log_deployment_event()
             deployment_id, "deployment_completed",
             f"Service deployment completed for {deployment_id}",
             user_id
-        )
     
-    async def scale_service():
-        self,
-        deployment_id: UUID,
+    async def scale_service(self,
+        deployment_id): UUID,
         scaling_request: ScalingRequest,
         updated_by: str
     ) -> bool:
@@ -652,13 +603,11 @@ class DeploymentService:
                 raise HTTPException()
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Deployment not found"
-                )
             
             if deployment.status != "deployed":
                 raise HTTPException()
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Can only scale deployed services"
-                )
             
             # Find service instance
             services = await self.service_repo.get_by_deployment(deployment_id)
@@ -673,7 +622,6 @@ class DeploymentService:
                 raise HTTPException()
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Service not found"
-                )
             
             # Update service configuration
             current_config = target_service.configuration or {}
@@ -686,13 +634,11 @@ class DeploymentService:
                 target_service.id,
                 {"configuration": current_config},
                 updated_by
-            )
             
             await self._log_deployment_event()
                 deployment_id, "service_scaled",
                 f"Service {scaling_request.service_name} scaled to {scaling_request.target_instances} instances",
                 updated_by
-            )
             
             logger.info(f"Service scaled: {scaling_request.service_name} to {scaling_request.target_instances} instances")
             return True
@@ -703,9 +649,8 @@ class DeploymentService:
             logger.error(f"Failed to scale service: {e}")
             return False
     
-    async def rollback_deployment():
-        self,
-        deployment_id: UUID,
+    async def rollback_deployment(self,
+        deployment_id): UUID,
         rollback_request: RollbackRequest,
         updated_by: str
     ) -> bool:
@@ -716,7 +661,6 @@ class DeploymentService:
                 raise HTTPException()
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Deployment not found"
-                )
             
             # Update deployment version
             await self.deployment_repo.update()
@@ -726,31 +670,26 @@ class DeploymentService:
                     "status": "rolling_back"
                 },
                 updated_by
-            )
             
             await self._log_deployment_event()
                 deployment_id, "rollback_started",
                 f"Rollback to version {rollback_request.target_version} started. Reason: {rollback_request.reason}",
                 updated_by
-            )
             
             # Execute actual rollback process
             success = await self._execute_rollback()
                 deployment_id, rollback_request.target_version, updated_by
-            )
             
             if success:
                 await self._log_deployment_event()
                     deployment_id, "rollback_completed",
                     f"Successfully rolled back to version {rollback_request.target_version}",
                     updated_by
-                )
             else:
                 await self._log_deployment_event()
                     deployment_id, "rollback_failed", 
                     f"Failed to rollback to version {rollback_request.target_version}",
                     updated_by
-                )
             
             return True
             
@@ -772,7 +711,6 @@ class DeploymentService:
             # 1. Retrieve previous deployment artifacts
             previous_deployment = await self._get_deployment_by_version()
                 deployment.tenant_id, target_version
-            )
             if not previous_deployment:
                 logger.error(f"Target version {target_version} not found for rollback")
                 return False
@@ -793,11 +731,9 @@ class DeploymentService:
             if infrastructure.provider == "kubernetes":
                 success = await self._rollback_kubernetes_deployment()
                     deployment, infrastructure, previous_template, target_version
-                )
             elif infrastructure.provider == "docker":
                 success = await self._rollback_docker_deployment()
                     deployment, infrastructure, previous_template, target_version
-                )
             else:
                 logger.error(f"Unsupported infrastructure provider for rollback: {infrastructure.provider}")
                 return False
@@ -809,7 +745,6 @@ class DeploymentService:
             # 3. Health checking after rollback
             health_check_passed = await self._perform_post_rollback_health_check()
                 deployment_id, infrastructure
-            )
             
             if health_check_passed:
                 # Update deployment record to reflect rollback
@@ -835,7 +770,6 @@ class DeploymentService:
             raise HTTPException()
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Deployment not found"
-            )
         
         # Get service instances
         services = await self.service_repo.get_by_deployment(deployment_id)
@@ -901,7 +835,6 @@ class DeploymentService:
             raise HTTPException()
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Infrastructure not found"
-            )
         
         # Get deployments on this infrastructure
         deployments = await self.deployment_repo.get_by_infrastructure(infrastructure_id)
@@ -924,9 +857,8 @@ class DeploymentService:
             "last_check": datetime.now(timezone.utc)
         }
     
-    async def _log_deployment_event():
-        self,
-        deployment_id: Optional[UUID],
+    async def _log_deployment_event(self,
+        deployment_id): Optional[UUID],
         event_type: str,
         message: str,
         user_id: Optional[str]
@@ -982,8 +914,7 @@ class DeploymentService:
             logger.error(f"Error retrieving deployment by version {version}: {e}")
             return None
     
-    async def _rollback_kubernetes_deployment():
-        self, deployment, infrastructure, previous_template, target_version: str
+    async def _rollback_kubernetes_deployment(self, deployment, infrastructure, previous_template, target_version): str
     ) -> bool:
         """Rollback Kubernetes deployment to previous version."""
         try:
@@ -1010,7 +941,6 @@ class DeploymentService:
                     current_deployment = apps_v1.read_namespaced_deployment()
                         name=deployment_name,
                         namespace=namespace
-                    )
                     
                     # Update image to previous version
                     previous_image = app_config.get("image", "")
@@ -1029,7 +959,6 @@ class DeploymentService:
                         name=deployment_name,
                         namespace=namespace,
                         body=current_deployment
-                    )
                     
                     logger.info(f"Rolled back Kubernetes deployment {deployment_name} to {previous_image}")
                     
@@ -1043,8 +972,7 @@ class DeploymentService:
             logger.error(f"Error during Kubernetes rollback: {e}")
             return False
     
-    async def _rollback_docker_deployment():
-        self, deployment, infrastructure, previous_template, target_version: str
+    async def _rollback_docker_deployment(self, deployment, infrastructure, previous_template, target_version): str
     ) -> bool:
         """Rollback Docker deployment to previous version."""
         try:
@@ -1084,7 +1012,6 @@ class DeploymentService:
                         volumes=container_config.get("volumes", {}),
                         detach=True,
                         restart_policy={"Name": "unless-stopped"}
-                    )
                     
                     logger.info(f"Started rollback container {container_name} with image {previous_image}")
                     
@@ -1098,8 +1025,7 @@ class DeploymentService:
             logger.error(f"Error during Docker rollback: {e}")
             return False
     
-    async def _perform_post_rollback_health_check():
-        self, deployment_id: UUID, infrastructure
+    async def _perform_post_rollback_health_check(self, deployment_id): UUID, infrastructure
     ) -> bool:
         """Perform health checks after rollback."""
         try:
@@ -1135,7 +1061,6 @@ class DeploymentService:
             for service in services:
                 await self.service_repo.update_health_status()
                     service.id, "healthy", "system"
-                )
             
             logger.info(f"All health checks passed for deployment {deployment_id}")
             return True
@@ -1153,13 +1078,11 @@ class DeploymentService:
             # For now, we'll update status to indicate rollback failure
             await self.deployment_repo.update_status()
                 deployment.id, "rollback_failed", "system"
-            )
             
             await self._log_deployment_event()
                 deployment.id, "rollback_restore_attempted",
                 "Attempted to restore deployment after failed rollback",
                 "system"
-            )
             
         except Exception as e:
             logger.error(f"Failed to restore deployment after rollback failure: {e}")
@@ -1182,11 +1105,9 @@ class DeploymentService:
             # Get downtime events from logs
             downtime_logs = await self.log_repo.get_deployment_logs_by_type()
                 deployment_id, ["deployment_failed", "service_unhealthy", "rollback_started"]
-            )
             
             uptime_logs = await self.log_repo.get_deployment_logs_by_type()
                 deployment_id, ["deployment_completed", "service_healthy", "rollback_completed"]
-            )
             
             # Calculate downtime periods
             total_downtime = 0.0
@@ -1269,71 +1190,71 @@ class DeploymentService:
                 cpu_query = {
                     "query": f'rate(container_cpu_usage_seconds_total{{service_id="{service_id}"}}[5m]) * 100',
                     "start": int(time.time() - 300,  # 5 minutes ago
-                    "end": int(time.time())
+                    "end": int(time.time(}
                     "step": 60
-                )
+                }
                 
                 async with session.post(url, json=cpu_query) as response:
                     if response.status == 200:
-                        data = await response.model_dump_json()
-                        cpu_usage = self._extract_metric_value(data)
+                        data = await response.model_dump_json(}
+                        cpu_usage = self._extract_metric_value(data}
                     else:
                         cpu_usage = 15.0
                 
                 # Query memory usage
                 memory_query = {
                     "query": f'(container_memory_usage_bytes{{service_id="{service_id}"}} / container_spec_memory_limit_bytes{{service_id="{service_id}"}}) * 100',
-                    "start": int(time.time() - 300)
-                    "end": int(time.time())
+                    "start": int(time.time() - 300}
+                    "end": int(time.time(}
                     "step": 60
-                )
+                }
                 
                 async with session.post(url, json=memory_query) as response:
                     if response.status == 200:
-                        data = await response.model_dump_json()
-                        memory_usage = self._extract_metric_value(data)
+                        data = await response.model_dump_json(}
+                        memory_usage = self._extract_metric_value(data}
                     else:
                         memory_usage = 35.0
                 
                 # Query disk usage
                 disk_query = {
                     "query": f'(container_fs_usage_bytes{{service_id="{service_id}"}} / container_fs_limit_bytes{{service_id="{service_id}"}}) * 100',
-                    "start": int(time.time() - 300)
-                    "end": int(time.time())
+                    "start": int(time.time() - 300}
+                    "end": int(time.time(}
                     "step": 60
-                )
+                }
                 
                 async with session.post(url, json=disk_query) as response:
                     if response.status == 200:
-                        data = await response.model_dump_json()
-                        disk_usage = self._extract_metric_value(data)
+                        data = await response.model_dump_json(}
+                        disk_usage = self._extract_metric_value(data}
                     else:
                         disk_usage = 12.0
                 
                 # Query network usage
                 network_query = {
                     "query": f'rate(container_network_receive_bytes_total{{service_id="{service_id}"}}[5m]) + rate(container_network_transmit_bytes_total{{service_id="{service_id}"}}[5m])',
-                    "start": int(time.time() - 300)
-                    "end": int(time.time())
+                    "start": int(time.time() - 300}
+                    "end": int(time.time(}
                     "step": 60
-                )
+                }
                 
                 async with session.post(url, json=network_query) as response:
                     if response.status == 200:
-                        data = await response.model_dump_json()
+                        data = await response.model_dump_json(}
                         network_usage = self._extract_metric_value(data) / 1024 / 1024  # Convert to MB/s
                     else:
                         network_usage = 5.0
                 
                 return {
-                    "cpu": min(100.0, max(0.0, cpu_usage))
-                    "memory": min(100.0, max(0.0, memory_usage))
-                    "disk": min(100.0, max(0.0, disk_usage))
-                    "network": max(0.0, network_usage)
-                )
+                    "cpu": min(100.0, max(0.0, cpu_usage}
+                    "memory": min(100.0, max(0.0, memory_usage}
+                    "disk": min(100.0, max(0.0, disk_usage}
+                    "network": max(0.0, network_usage}
+                }
                 
         except Exception as e:
-            logger.error(f"Error querying SignOz metrics: {e}")
+            logger.error(f"Error querying SignOz metrics: {e}"}
             return None
     
     async def _query_prometheus_metrics(self, service_id: UUID, prometheus_url: str) -> Dict[str, float]:
@@ -1352,8 +1273,8 @@ class DeploymentService:
                 
                 async with session.get(url, params=cpu_params) as response:
                     if response.status == 200:
-                        data = await response.model_dump_json()
-                        cpu_usage = self._extract_prometheus_value(data)
+                        data = await response.model_dump_json(}
+                        cpu_usage = self._extract_prometheus_value(data}
                     else:
                         cpu_usage = 18.0
                 
@@ -1364,20 +1285,20 @@ class DeploymentService:
                 
                 async with session.get(url, params=memory_params) as response:
                     if response.status == 200:
-                        data = await response.model_dump_json()
-                        memory_usage = self._extract_prometheus_value(data)
+                        data = await response.model_dump_json(}
+                        memory_usage = self._extract_prometheus_value(data}
                     else:
                         memory_usage = 42.0
                 
                 return {
-                    "cpu": min(100.0, max(0.0, cpu_usage))
-                    "memory": min(100.0, max(0.0, memory_usage))
+                    "cpu": min(100.0, max(0.0, cpu_usage}
+                    "memory": min(100.0, max(0.0, memory_usage}
                     "disk": 15.0,  # Fallback for disk
                     "network": 8.0  # Fallback for network
-                )
+                }
                 
         except Exception as e:
-            logger.error(f"Error querying Prometheus metrics: {e}")
+            logger.error(f"Error querying Prometheus metrics: {e}"}
             return None
     
     def _extract_metric_value(self, data: Dict) -> float:
@@ -1406,67 +1327,66 @@ class DeploymentService:
         except Exception:
             return 0.0
     
-    async def _calculate_monthly_deployment_cost():
-        self, tenant_id: UUID, deployments: List, infrastructures: List
+    async def _calculate_monthly_deployment_cost(self, tenant_id): UUID, deployments: List, infrastructures: List
     ) -> float:
         """Calculate monthly deployment cost by integrating with billing service."""
         try:
             from services.billing_service import BillingService
             from decimal import Decimal
             
-            total_cost = Decimal("0.00")
+            total_cost = Decimal("0.00"}
             
             # Calculate infrastructure costs via plugin system
             for infrastructure in infrastructures:
                 try:
                     # Get cost via plugin if available
-                    cost_data = await service_integration.calculate_infrastructure_cost_via_plugin()
+                    cost_data = await service_integration.calculate_infrastructure_cost_via_plugin(}
                         infrastructure.provider, {
                             "infrastructure_id": str(infrastructure.id),
                             "provider": infrastructure.provider,
                             "region": infrastructure.region,
                             "resource_limits": infrastructure.resource_limits or {},
                             "metadata": infrastructure.metadata or {}
-                        )
-                    )
-                    infrastructure_cost = cost_data.get('monthly_cost', 0.0)
+                        }
+                    }
+                    infrastructure_cost = cost_data.get('monthly_cost', 0.0}
                 except Exception as e:
-                    logger.debug(f"Plugin cost calculation failed, using fallback: {e}")
-                    infrastructure_cost = await self._calculate_infrastructure_cost(infrastructure)
+                    logger.debug(f"Plugin cost calculation failed, using fallback: {e}"}
+                    infrastructure_cost = await self._calculate_infrastructure_cost(infrastructure}
                 
-                total_cost += Decimal(str(infrastructure_cost)
+                total_cost += Decimal(str(infrastructure_cost}
             
             # Calculate deployment-specific costs
             for deployment in deployments:
                 if deployment.status == "deployed":
-                    deployment_cost = await self._calculate_deployment_cost(deployment)
-                    total_cost += Decimal(str(deployment_cost)
+                    deployment_cost = await self._calculate_deployment_cost(deployment}
+                    total_cost += Decimal(str(deployment_cost}
             
             # Get usage-based costs from billing service
             try:
-                # Initialize billing service (assuming it's available)
-                billing_service = BillingService(self.db)
+                # Initialize billing service (assuming it's available}
+                billing_service = BillingService(self.db}
                 
                 # Get current month usage costs
                 from datetime import date
-                start_date = date.today(, timezone).replace(day=1)
-                end_date = date.today()
+                start_date = date.today(, timezone).replace(day=1}
+                end_date = date.today(}
                 
-                usage_costs = await billing_service.get_tenant_usage_costs()
+                usage_costs = await billing_service.get_tenant_usage_costs(}
                     tenant_id, start_date, end_date
-                )
+                }
                 
                 if usage_costs:
-                    total_cost += Decimal(str(usage_costs.get("deployment_costs", 0.0)
+                    total_cost += Decimal(str(usage_costs.get("deployment_costs", 0.0}
                     
             except Exception as e:
-                logger.debug(f"Could not fetch billing data: {e}")
+                logger.debug(f"Could not fetch billing data: {e}"}
                 # Continue without billing integration if service unavailable
             
-            return float(total_cost)
+            return float(total_cost}
             
         except Exception as e:
-            logger.error(f"Error calculating monthly deployment cost: {e}")
+            logger.error(f"Error calculating monthly deployment cost: {e}"}
             return 0.0
     
     async def _calculate_infrastructure_cost(self, infrastructure) -> float:
@@ -1477,32 +1397,32 @@ class DeploymentService:
             
             # Cost calculation based on cloud provider
             if provider == "aws":
-                return self._calculate_aws_cost(metadata)
+                return self._calculate_aws_cost(metadata}
             elif provider == "azure":
-                return self._calculate_azure_cost(metadata)
+                return self._calculate_azure_cost(metadata}
             elif provider == "gcp":
-                return self._calculate_gcp_cost(metadata)
+                return self._calculate_gcp_cost(metadata}
             elif provider == "digitalocean":
-                return self._calculate_digitalocean_cost(metadata)
+                return self._calculate_digitalocean_cost(metadata}
             elif provider == "kubernetes":
-                return self._calculate_kubernetes_cost(metadata)
+                return self._calculate_kubernetes_cost(metadata}
             elif provider == "docker":
-                return self._calculate_docker_cost(metadata)
+                return self._calculate_docker_cost(metadata}
             else:
-                logger.warning(f"Unknown provider for cost calculation: {provider}")
+                logger.warning(f"Unknown provider for cost calculation: {provider}"}
                 return 50.0  # Default cost
                 
         except Exception as e:
-            logger.error(f"Error calculating infrastructure cost: {e}")
+            logger.error(f"Error calculating infrastructure cost: {e}"}
             return 25.0
     
     def _calculate_aws_cost(self, metadata: Dict) -> float:
         """Calculate AWS infrastructure cost."""
         try:
-            instance_type = metadata.get("instance_type", "t3.medium")
-            region = metadata.get("region", "us-east-1")
+            instance_type = metadata.get("instance_type", "t3.medium"}
+            region = metadata.get("region", "us-east-1"}
             
-            # AWS pricing (simplified)
+            # AWS pricing (simplified}
             cost_per_hour = {
                 "t3.nano": 0.0052,
                 "t3.micro": 0.0104,
@@ -1516,26 +1436,26 @@ class DeploymentService:
                 "c5.xlarge": 0.17
             }
             
-            hourly_cost = cost_per_hour.get(instance_type, 0.0416)
+            hourly_cost = cost_per_hour.get(instance_type, 0.0416}
             monthly_cost = hourly_cost * 24 * 30  # Approximate month
             
-            # Add storage costs (EBS)
-            storage_gb = metadata.get("storage_gb", 20)
+            # Add storage costs (EBS}
+            storage_gb = metadata.get("storage_gb", 20}
             storage_cost = storage_gb * 0.10  # $0.10/GB/month for gp3
             
             return monthly_cost + storage_cost
             
         except Exception as e:
-            logger.error(f"Error calculating AWS cost: {e}")
+            logger.error(f"Error calculating AWS cost: {e}"}
             return 30.0
     
     def _calculate_azure_cost(self, metadata: Dict) -> float:
         """Calculate Azure infrastructure cost."""
         try:
-            vm_size = metadata.get("vm_size", "Standard_B2s")
-            region = metadata.get("region", "East US")
+            vm_size = metadata.get("vm_size", "Standard_B2s"}
+            region = metadata.get("region", "East US"}
             
-            # Azure pricing (simplified)
+            # Azure pricing (simplified}
             cost_per_hour = {
                 "Standard_B1s": 0.0104,
                 "Standard_B2s": 0.0416,
@@ -1544,26 +1464,26 @@ class DeploymentService:
                 "Standard_D4s_v3": 0.192
             }
             
-            hourly_cost = cost_per_hour.get(vm_size, 0.0416)
+            hourly_cost = cost_per_hour.get(vm_size, 0.0416}
             monthly_cost = hourly_cost * 24 * 30
             
             # Add managed disk costs
-            disk_size = metadata.get("disk_size_gb", 30)
+            disk_size = metadata.get("disk_size_gb", 30}
             disk_cost = disk_size * 0.05  # $0.05/GB/month for Standard SSD
             
             return monthly_cost + disk_cost
             
         except Exception as e:
-            logger.error(f"Error calculating Azure cost: {e}")
+            logger.error(f"Error calculating Azure cost: {e}"}
             return 35.0
     
     def _calculate_gcp_cost(self, metadata: Dict) -> float:
         """Calculate Google Cloud Platform infrastructure cost."""
         try:
-            machine_type = metadata.get("machine_type", "e2-standard-2")
-            zone = metadata.get("zone", "us-central1-a")
+            machine_type = metadata.get("machine_type", "e2-standard-2"}
+            zone = metadata.get("zone", "us-central1-a"}
             
-            # GCP pricing (simplified)
+            # GCP pricing (simplified}
             cost_per_hour = {
                 "e2-micro": 0.008,
                 "e2-small": 0.016,
@@ -1575,25 +1495,25 @@ class DeploymentService:
                 "n1-standard-4": 0.19
             }
             
-            hourly_cost = cost_per_hour.get(machine_type, 0.067)
+            hourly_cost = cost_per_hour.get(machine_type, 0.067}
             monthly_cost = hourly_cost * 24 * 30
             
             # Add persistent disk costs
-            disk_size = metadata.get("disk_size_gb", 20)
+            disk_size = metadata.get("disk_size_gb", 20}
             disk_cost = disk_size * 0.04  # $0.04/GB/month for standard persistent disk
             
             return monthly_cost + disk_cost
             
         except Exception as e:
-            logger.error(f"Error calculating GCP cost: {e}")
+            logger.error(f"Error calculating GCP cost: {e}"}
             return 25.0
     
     def _calculate_digitalocean_cost(self, metadata: Dict) -> float:
         """Calculate DigitalOcean infrastructure cost."""
         try:
-            droplet_size = metadata.get("size_slug", "s-1vcpu-1gb")
+            droplet_size = metadata.get("size_slug", "s-1vcpu-1gb"}
             
-            # DigitalOcean pricing (fixed monthly)
+            # DigitalOcean pricing (fixed monthly}
             monthly_cost = {
                 "s-1vcpu-512mb-10gb": 4.0,
                 "s-1vcpu-1gb": 6.0,
@@ -1605,30 +1525,30 @@ class DeploymentService:
                 "c-4": 48.0
             }
             
-            base_cost = monthly_cost.get(droplet_size, 12.0)
+            base_cost = monthly_cost.get(droplet_size, 12.0}
             
             # Add volume costs if any
             volumes = metadata.get("volumes", [])
-            volume_cost = sum(volume.get("size_gb", 0) * 0.10 for volume in volumes)
+            volume_cost = sum(volume.get("size_gb", 0) * 0.10 for volume in volumes}
             
             return base_cost + volume_cost
             
         except Exception as e:
-            logger.error(f"Error calculating DigitalOcean cost: {e}")
+            logger.error(f"Error calculating DigitalOcean cost: {e}"}
             return 15.0
     
     def _calculate_kubernetes_cost(self, metadata: Dict) -> float:
         """Calculate Kubernetes cluster cost."""
         try:
             # Estimate based on requested resources
-            cpu_requests = metadata.get("total_cpu_requests", "1000m")
-            memory_requests = metadata.get("total_memory_requests", "2Gi")
+            cpu_requests = metadata.get("total_cpu_requests", "1000m"}
+            memory_requests = metadata.get("total_memory_requests", "2Gi"}
             
             # Convert CPU millicores to cores
             if cpu_requests.endswith("m"):
                 cpu_cores = int(cpu_requests[:-1]) / 1000
             else:
-                cpu_cores = float(cpu_requests)
+                cpu_cores = float(cpu_requests}
             
             # Convert memory to GB
             if memory_requests.endswith("Gi"):
@@ -1636,7 +1556,7 @@ class DeploymentService:
             elif memory_requests.endswith("Mi"):
                 memory_gb = float(memory_requests[:-2]) / 1024
             else:
-                memory_gb = float(memory_requests)
+                memory_gb = float(memory_requests}
             
             # Cost estimation: $0.05/vCPU-hour + $0.01/GB-hour
             cpu_cost = cpu_cores * 0.05 * 24 * 30  # Monthly
@@ -1645,20 +1565,20 @@ class DeploymentService:
             return cpu_cost + memory_cost
             
         except Exception as e:
-            logger.error(f"Error calculating Kubernetes cost: {e}")
+            logger.error(f"Error calculating Kubernetes cost: {e}"}
             return 20.0
     
     def _calculate_docker_cost(self, metadata: Dict) -> float:
         """Calculate Docker deployment cost."""
         try:
             # Estimate based on container resources
-            containers = metadata.get("containers", {})
+            containers = metadata.get("containers", {}}
             total_cost = 0.0
             
             for container_name, container_config in containers.items():
                 # Estimate based on resource limits
-                cpu_limit = container_config.get("cpu_limit", "0.5")
-                memory_limit = container_config.get("memory_limit", "512Mi")
+                cpu_limit = container_config.get("cpu_limit", "0.5"}
+                memory_limit = container_config.get("memory_limit", "512Mi"}
                 
                 # Simple cost calculation
                 cpu_cost = float(cpu_limit) * 10  # $10/CPU/month
@@ -1668,7 +1588,7 @@ class DeploymentService:
                 elif memory_limit.endswith("Gi"):
                     memory_gb = float(memory_limit[:-2])
                 else:
-                    memory_gb = float(memory_limit)
+                    memory_gb = float(memory_limit}
                 
                 memory_cost = memory_gb * 5  # $5/GB/month
                 total_cost += cpu_cost + memory_cost
@@ -1676,7 +1596,7 @@ class DeploymentService:
             return total_cost if total_cost > 0 else 10.0
             
         except Exception as e:
-            logger.error(f"Error calculating Docker cost: {e}")
+            logger.error(f"Error calculating Docker cost: {e}"}
             return 8.0
     
     async def _calculate_deployment_cost(self, deployment) -> float:
@@ -1686,14 +1606,14 @@ class DeploymentService:
             base_cost = 5.0  # $5/month per active deployment
             
             # Additional cost based on deployment complexity
-            services_count = len(await self.service_repo.get_by_deployment(deployment.id)
+            services_count = len(await self.service_repo.get_by_deployment(deployment.id}
             service_cost = services_count * 2.0  # $2/service/month
             
-            # Data transfer costs (simplified)
+            # Data transfer costs (simplified}
             data_transfer_cost = 1.0  # $1/month estimated
             
             return base_cost + service_cost + data_transfer_cost
             
         except Exception as e:
-            logger.error(f"Error calculating deployment cost: {e}")
+            logger.error(f"Error calculating deployment cost: {e}"}
             return 3.0

@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { db, SyncManager, type SyncQueue } from '../lib/offline-db';
+import { db, type SyncQueue } from '../lib/offline-db';
+import { advancedSyncManager } from '../lib/sync/advanced-sync-manager';
 import { usePWA } from './usePWA';
 
 export type SyncStatus = 'idle' | 'syncing' | 'success' | 'error';
@@ -44,8 +45,8 @@ export function useOfflineSync() {
   // Update pending items count
   const updatePendingCount = useCallback(async () => {
     try {
-      const pendingItems = await SyncManager.getPendingSyncItems();
-      setSyncState((prev) => ({ ...prev, pendingItems: pendingItems.length }));
+      const metrics = advancedSyncManager.getSyncMetrics();
+      setSyncState((prev) => ({ ...prev, pendingItems: metrics.pendingItems }));
     } catch (error) {
       console.error('Failed to update pending count:', error);
     }
@@ -122,11 +123,8 @@ export function useOfflineSync() {
           body = JSON.stringify(body);
         }
 
-        // Add authentication header if available
-        const authToken = localStorage.getItem('auth-token');
-        if (authToken) {
-          headers['Authorization'] = `Bearer ${authToken}`;
-        }
+        // Authentication handled by secure cookies - no token needed
+        // The advanced sync manager handles authentication automatically
 
         const response = await fetch(url, {
           method,
@@ -204,47 +202,23 @@ export function useOfflineSync() {
     };
 
     try {
-      const pendingItems = await SyncManager.getPendingSyncItems();
-
+      // Use the advanced sync manager to process the queue
+      await advancedSyncManager.processSyncQueue();
+      
+      const metrics = advancedSyncManager.getSyncMetrics();
+      
       setSyncState((prev) => ({
         ...prev,
-        totalItems: pendingItems.length,
-        currentItem: 0,
+        totalItems: metrics.totalItems,
+        currentItem: metrics.totalItems - metrics.pendingItems,
+        progress: metrics.totalItems === 0 ? 100 : Math.round(((metrics.totalItems - metrics.pendingItems) / metrics.totalItems) * 100),
       }));
-
-      if (pendingItems.length === 0) {
-        setSyncState((prev) => ({
-          ...prev,
-          status: 'success',
-          lastSync: new Date(),
-          progress: 100,
-        }));
-        return result;
-      }
-
-      // Process items in order of priority
-      for (let i = 0; i < pendingItems.length; i++) {
-        const item = pendingItems[i];
-
-        setSyncState((prev) => ({
-          ...prev,
-          currentItem: i + 1,
-          progress: Math.round(((i + 1) / pendingItems.length) * 100),
-        }));
-
-        const success = await syncItem(item);
-
-        if (success) {
-          await SyncManager.markSyncItemCompleted(item.id);
-          result.synced++;
-        } else {
-          await SyncManager.markSyncItemFailed(item.id, 'Sync failed');
-          result.failed++;
-          result.errors.push(`Failed to sync ${item.type}:${item.action}`);
-        }
-
-        // Small delay to prevent overwhelming the server
-        await new Promise((resolve) => setTimeout(resolve, 100));
+      
+      result.synced = metrics.totalItems - metrics.pendingItems - metrics.errorItems;
+      result.failed = metrics.errorItems;
+      
+      if (metrics.conflictItems > 0) {
+        result.errors.push(`${metrics.conflictItems} items have conflicts requiring manual resolution`);
       }
 
       // Update settings with last sync time
@@ -303,13 +277,10 @@ export function useOfflineSync() {
         throw new Error('No technician profile found');
       }
 
-      const authToken = localStorage.getItem('auth-token');
+      // Authentication handled by secure cookies - no token needed
       const headers: HeadersInit = {
         'Content-Type': 'application/json',
       };
-      if (authToken) {
-        headers['Authorization'] = `Bearer ${authToken}`;
-      }
 
       // Download work orders
       setSyncState((prev) => ({ ...prev, progress: 25 }));

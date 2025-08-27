@@ -6,6 +6,7 @@ import * as React from 'react';
 
 export * from './accessibility';
 export * from './ssr';
+export * from './validation';
 
 // Add missing exports that styled-components expects
 export const isBrowser = typeof window !== 'undefined';

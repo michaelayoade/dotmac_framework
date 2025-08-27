@@ -2,7 +2,8 @@
 
 import { usePortalAuth } from '@dotmac/headless';
 import { OptimizedImage } from '@dotmac/primitives';
-import { Button, Card, Input } from '@dotmac/styled-components/customer';
+import { Button, Input } from '@dotmac/styled-components/customer';
+import { Card } from '@dotmac/primitives';
 import { clsx } from 'clsx';
 import { AlertCircle, CreditCard, Eye, EyeOff, Mail, User } from 'lucide-react';
 import { useId, useState } from 'react';
@@ -266,7 +267,9 @@ export function CustomerLoginForm() {
 
           <button
             type='button'
-            onClick={() => console.log('Forgot password')}
+            onClick={() => {
+              // Navigate to forgot password
+            }}
             className='font-medium text-sm hover:text-blue-500'
             style={{ color: branding?.primaryColor }}
           >
@@ -292,7 +295,9 @@ export function CustomerLoginForm() {
           Don't have an account?{' '}
           <button
             type='button'
-            onClick={() => console.log('Contact us')}
+            onClick={() => {
+              // Open contact support
+            }}
             className='font-medium hover:opacity-80'
             style={{ color: branding?.primaryColor }}
           >

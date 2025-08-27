@@ -7,7 +7,7 @@ from typing import Dict, List, Optional, Any, Union
 from uuid import UUID
 from enum import Enum
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field
 
 from schemas.common import BaseSchema
 

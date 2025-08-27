@@ -14,7 +14,7 @@ from urllib.parse import quote, unquote
 import bleach
 from pydantic import field_validator
 
-from exceptions import SecurityValidationError
+from core.exceptions import SecurityValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +82,7 @@ class InputSanitizer:
         tags = allowed_tags or ALLOWED_HTML_TAGS
         
         # Clean HTML using bleach
-        cleaned = bleach.clean()
+        cleaned = bleach.clean(
             text,
             tags=tags,
             attributes=ALLOWED_HTML_ATTRIBUTES,
@@ -140,7 +140,7 @@ class InputSanitizer:
         for pattern in COMPILED_DANGEROUS_PATTERNS[1:5]:  # SQL-related patterns
             if pattern.search(text):
                 logger.warning(f"Dangerous SQL pattern detected in input: {text[:100]}...")
-                raise SecurityValidationError()
+                raise SecurityValidationError(
                     field="sql_input",
                     reason="Potentially malicious SQL pattern detected"
                 )
@@ -172,10 +172,10 @@ class InputSanitizer:
         for i, pattern in enumerate(COMPILED_DANGEROUS_PATTERNS):
             match = pattern.search(text)
             if match:
-                logger.warning()
+                logger.warning(
                     f"Dangerous pattern {i} detected in {field_name}: {match.group()[:50]}..."
                 )
-                raise SecurityValidationError()
+                raise SecurityValidationError(
                     field=field_name,
                     reason=f"Potentially malicious content detected: {match.group()[:50]}..."
                 )
@@ -189,7 +189,7 @@ class InputSanitizer:
             # Check decoded content for patterns too
             for pattern in COMPILED_DANGEROUS_PATTERNS:
                 if pattern.search(decoded):
-                    raise SecurityValidationError()
+                    raise SecurityValidationError(
                         field=field_name,
                         reason="Potentially malicious encoded content detected"
                     )
@@ -249,7 +249,7 @@ class InputSanitizer:
         email_pattern = re.compile(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
         
         if not email_pattern.match(email):
-            raise SecurityValidationError()
+            raise SecurityValidationError(
                 field="email",
                 reason="Invalid email format"
             )
@@ -257,7 +257,7 @@ class InputSanitizer:
         # Check for dangerous patterns in email
         for pattern in COMPILED_DANGEROUS_PATTERNS:
             if pattern.search(email):
-                raise SecurityValidationError()
+                raise SecurityValidationError(
                     field="email",
                     reason="Potentially malicious email content"
                 )
@@ -388,9 +388,9 @@ def sanitize_inputs(func):
         sanitized_args = []
         for arg in args:
             if isinstance(arg, str):
-                sanitized_args.append(InputSanitizer.validate_safe_input(arg)
+                sanitized_args.append(InputSanitizer.validate_safe_input(arg))
             elif isinstance(arg, dict):
-                sanitized_args.append(InputSanitizer.sanitize_json_input(arg)
+                sanitized_args.append(InputSanitizer.sanitize_json_input(arg))
             else:
                 sanitized_args.append(arg)
         

@@ -835,7 +835,7 @@ class EnhancedOmnichannelService:
                     "pending": pending_interactions or 0,
                     "overdue": overdue_interactions or 0,
                     "sla_breach_rate": (
-                        (overdue_interactions / max(total_interactions, 1) * 100
+                        (overdue_interactions / max(total_interactions, 1)) * 100
                         if overdue_interactions
                         else 0
                     ),
@@ -844,7 +844,7 @@ class EnhancedOmnichannelService:
                     "total": total_agents or 0,
                     "available": available_agents or 0,
                     "utilization_rate": (
-                        ((total_agents - available_agents) / max(total_agents, 1) * 100
+                        ((total_agents - available_agents) / max(total_agents, 1)) * 100
                         if total_agents
                         else 0
                     ),

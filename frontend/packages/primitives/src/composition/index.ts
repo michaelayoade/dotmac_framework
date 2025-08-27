@@ -1,2 +1,2 @@
-export { DataTable } from './DataTable';
-export type { Column, DataTableProps } from './DataTable';
+export { DataTable as CompositionDataTable } from './DataTable';
+export type { Column, DataTableProps as CompositionDataTableProps } from './DataTable';

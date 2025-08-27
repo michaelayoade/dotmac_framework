@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import { AdminLayout } from '../../../components/layout/AdminLayout';
+import AdminLayout from '../../../components/layout/AdminLayout';
 import { RealTimeMonitoringDashboard } from '../../../components/network/RealTimeMonitoringDashboard';
 
 export default function MonitoringPage() {

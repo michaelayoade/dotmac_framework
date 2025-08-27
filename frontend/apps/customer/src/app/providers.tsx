@@ -28,7 +28,7 @@ interface ProvidersProps {
 export function Providers({ children }: ProvidersProps) {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider portal='customer'>
+      <ThemeProvider portal="customer">
         <AuthProvider>
           <NotificationProvider maxNotifications={3} defaultDuration={4000}>
             {children}

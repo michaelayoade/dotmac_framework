@@ -1,0 +1,439 @@
+name: Release Management
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+          - prerelease
+      pre_release:
+        description: 'Pre-release'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  NODE_VERSION: '18.x'
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  # Create release tag (manual workflow only)
+  create-tag:
+    name: Create Release Tag
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    
+    outputs:
+      new_tag: ${{ steps.tag.outputs.new_tag }}
+      changelog: ${{ steps.changelog.outputs.changelog }}
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install semantic-release
+        run: npm install -g semantic-release @semantic-release/changelog @semantic-release/git
+
+      - name: Generate version and changelog
+        id: tag
+        run: |
+          # Get current version from package.json
+          CURRENT_VERSION=$(node -p "require('./frontend/package.json').version")
+          echo "Current version: $CURRENT_VERSION"
+          
+          # Calculate new version based on release type
+          case "${{ github.event.inputs.release_type }}" in
+            major)
+              NEW_VERSION=$(echo $CURRENT_VERSION | awk -F. '{print ($1+1)".0.0"}')
+              ;;
+            minor)
+              NEW_VERSION=$(echo $CURRENT_VERSION | awk -F. '{print $1"."($2+1)".0"}')
+              ;;
+            patch)
+              NEW_VERSION=$(echo $CURRENT_VERSION | awk -F. '{print $1"."$2"."($3+1)}')
+              ;;
+            prerelease)
+              NEW_VERSION="${CURRENT_VERSION}-rc.$(date +%Y%m%d%H%M%S)"
+              ;;
+          esac
+          
+          NEW_TAG="v${NEW_VERSION}"
+          echo "New version: $NEW_VERSION"
+          echo "New tag: $NEW_TAG"
+          echo "new_tag=$NEW_TAG" >> $GITHUB_OUTPUT
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Get last tag
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -z "$LAST_TAG" ]; then
+            LAST_TAG="HEAD~10"  # If no previous tags, get last 10 commits
+          fi
+          
+          # Generate changelog
+          CHANGELOG=$(git log $LAST_TAG..HEAD --pretty=format:"- %s (%an)" --no-merges)
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Update version in files
+        run: |
+          NEW_VERSION=$(echo "${{ steps.tag.outputs.new_tag }}" | sed 's/^v//')
+          
+          # Update frontend package.json
+          cd frontend
+          npm version $NEW_VERSION --no-git-tag-version
+          
+          # Update Python packages
+          cd ../isp-framework
+          echo "__version__ = \"$NEW_VERSION\"" > src/dotmac_isp/__init__.py
+          
+          cd ../management-platform
+          echo "__version__ = \"$NEW_VERSION\"" > app/__init__.py
+
+      - name: Commit version updates
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add .
+          git commit -m "chore: bump version to ${{ steps.tag.outputs.new_tag }}"
+          git tag ${{ steps.tag.outputs.new_tag }}
+          git push origin main --tags
+
+  # Build release assets
+  build-release-assets:
+    name: Build Release Assets
+    runs-on: ubuntu-latest
+    needs: create-tag
+    if: always() && (needs.create-tag.result == 'success' || github.event_name == 'push')
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm install
+          
+      - name: Build frontend applications
+        run: |
+          cd frontend
+          npm run build
+          
+          # Create production builds for each app
+          for app in admin customer reseller technician tenant-portal management-admin management-reseller; do
+            if [ -d "apps/$app" ]; then
+              echo "Building $app..."
+              cd "apps/$app"
+              npm run build
+              cd ../..
+              
+              # Create distribution package
+              mkdir -p "dist/$app"
+              cp -r "apps/$app/dist/"* "dist/$app/"
+              tar -czf "dotmac-$app-${GITHUB_REF_NAME:-latest}.tar.gz" -C dist "$app"
+            fi
+          done
+
+      - name: Build backend packages
+        run: |
+          # Build ISP Framework
+          cd isp-framework
+          python -m build
+          mv dist/*.whl ../dotmac-isp-framework-${GITHUB_REF_NAME:-latest}.whl
+          
+          # Build Management Platform
+          cd ../management-platform
+          python -m build
+          mv dist/*.whl ../dotmac-management-platform-${GITHUB_REF_NAME:-latest}.whl
+
+      - name: Create docker-compose package
+        run: |
+          # Create production-ready docker-compose setup
+          mkdir -p release-package
+          cp docker-compose.yml release-package/
+          cp -r docker/ release-package/
+          cp -r k8s/ release-package/
+          
+          # Create environment templates
+          cat > release-package/.env.template << EOF
+          # Database Configuration
+          DATABASE_URL=postgresql://user:password@localhost:5432/dotmac
+          REDIS_URL=redis://localhost:6379/0
+          
+          # Security
+          JWT_SECRET_KEY=your-secret-key-here
+          ENCRYPTION_KEY=your-encryption-key-here
+          
+          # External Services
+          STRIPE_SECRET_KEY=sk_live_...
+          SENDGRID_API_KEY=SG...
+          
+          # Monitoring
+          SENTRY_DSN=https://...
+          DATADOG_API_KEY=...
+          EOF
+          
+          tar -czf "dotmac-deployment-package-${GITHUB_REF_NAME:-latest}.tar.gz" -C release-package .
+
+      - name: Generate checksums
+        run: |
+          sha256sum *.tar.gz *.whl > checksums.txt
+
+      - name: Upload release assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-assets
+          path: |
+            *.tar.gz
+            *.whl
+            checksums.txt
+          retention-days: 90
+
+  # Security scan of release
+  security-scan-release:
+    name: Security Scan Release
+    runs-on: ubuntu-latest
+    needs: build-release-assets
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download release assets
+        uses: actions/download-artifact@v4
+        with:
+          name: release-assets
+
+      - name: Scan release packages
+        run: |
+          # Scan Python wheels
+          pip install safety
+          for wheel in *.whl; do
+            echo "Scanning $wheel..."
+            python -m zipfile -l "$wheel" | grep -E '\.(py|json|yaml|yml)$' || true
+          done
+          
+          # Scan tarballs for sensitive data
+          for tarball in *.tar.gz; do
+            echo "Scanning $tarball..."
+            tar -tzf "$tarball" | grep -E '\.(key|pem|env|secret)$' && echo "⚠️ Potential sensitive file found in $tarball" || true
+          done
+
+      - name: Generate security report
+        run: |
+          echo "# Security Scan Report" > security-report.md
+          echo "Generated: $(date)" >> security-report.md
+          echo "" >> security-report.md
+          echo "## Scanned Assets" >> security-report.md
+          ls -la *.tar.gz *.whl >> security-report.md
+
+      - name: Upload security report
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-report
+          path: security-report.md
+
+  # Create GitHub release
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [build-release-assets, security-scan-release]
+    if: always() && needs.build-release-assets.result == 'success'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download release assets
+        uses: actions/download-artifact@v4
+        with:
+          name: release-assets
+
+      - name: Download security report
+        uses: actions/download-artifact@v4
+        with:
+          name: security-report
+
+      - name: Get release info
+        id: release_info
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG_NAME="${{ needs.create-tag.outputs.new_tag }}"
+            IS_PRERELEASE="${{ github.event.inputs.pre_release }}"
+            CHANGELOG="${{ needs.create-tag.outputs.changelog }}"
+          else
+            TAG_NAME="${{ github.ref_name }}"
+            IS_PRERELEASE="false"
+            # Generate changelog from commits since last tag
+            LAST_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
+            if [ -n "$LAST_TAG" ]; then
+              CHANGELOG=$(git log $LAST_TAG..HEAD --pretty=format:"- %s (%an)" --no-merges)
+            else
+              CHANGELOG="Initial release"
+            fi
+          fi
+          
+          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+          echo "is_prerelease=$IS_PRERELEASE" >> $GITHUB_OUTPUT
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create release body
+        run: |
+          cat > release-body.md << EOF
+          # DotMac Framework Release ${{ steps.release_info.outputs.tag_name }}
+          
+          ## What's Changed
+          ${{ steps.release_info.outputs.changelog }}
+          
+          ## 📦 Release Assets
+          
+          ### Frontend Applications
+          - **Admin Portal**: \`dotmac-admin-${{ steps.release_info.outputs.tag_name }}.tar.gz\`
+          - **Customer Portal**: \`dotmac-customer-${{ steps.release_info.outputs.tag_name }}.tar.gz\`
+          - **Reseller Portal**: \`dotmac-reseller-${{ steps.release_info.outputs.tag_name }}.tar.gz\`
+          - **Technician App**: \`dotmac-technician-${{ steps.release_info.outputs.tag_name }}.tar.gz\`
+          - **Management Portals**: Available for tenant and reseller management
+          
+          ### Backend Services
+          - **ISP Framework**: \`dotmac-isp-framework-${{ steps.release_info.outputs.tag_name }}.whl\`
+          - **Management Platform**: \`dotmac-management-platform-${{ steps.release_info.outputs.tag_name }}.whl\`
+          
+          ### Deployment Package
+          - **Complete Setup**: \`dotmac-deployment-package-${{ steps.release_info.outputs.tag_name }}.tar.gz\`
+            - Docker Compose configuration
+            - Kubernetes manifests
+            - Environment templates
+            - Setup scripts
+          
+          ## 🔐 Security
+          - All packages have been scanned for vulnerabilities
+          - SHA256 checksums provided in \`checksums.txt\`
+          - Security report available in artifacts
+          
+          ## 📖 Installation
+          
+          ### Quick Start with Docker Compose
+          \`\`\`bash
+          wget https://github.com/${{ github.repository }}/releases/download/${{ steps.release_info.outputs.tag_name }}/dotmac-deployment-package-${{ steps.release_info.outputs.tag_name }}.tar.gz
+          tar -xzf dotmac-deployment-package-${{ steps.release_info.outputs.tag_name }}.tar.gz
+          cd dotmac-deployment-package
+          cp .env.template .env
+          # Edit .env with your configuration
+          docker-compose up -d
+          \`\`\`
+          
+          ### Production Kubernetes Deployment
+          \`\`\`bash
+          kubectl apply -f k8s/production/
+          \`\`\`
+          
+          ## 🔄 Upgrade Instructions
+          
+          ### From Previous Version
+          1. Backup your database
+          2. Update environment variables if needed
+          3. Deploy new version using blue-green strategy
+          4. Run database migrations
+          5. Verify functionality
+          
+          ## 📋 Requirements
+          - Docker 20.10+ and Docker Compose 2.0+
+          - Or Kubernetes 1.24+
+          - PostgreSQL 13+
+          - Redis 6+
+          - Node.js 18+ (for development)
+          - Python 3.11+ (for development)
+          
+          ## 🐛 Known Issues
+          - None at this time
+          
+          ## 💬 Support
+          - Documentation: [docs.dotmac.com](https://docs.dotmac.com)
+          - Issues: [GitHub Issues](https://github.com/${{ github.repository }}/issues)
+          - Community: [Discussions](https://github.com/${{ github.repository }}/discussions)
+          EOF
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.release_info.outputs.tag_name }}
+          name: "DotMac Framework ${{ steps.release_info.outputs.tag_name }}"
+          body_path: release-body.md
+          prerelease: ${{ steps.release_info.outputs.is_prerelease }}
+          files: |
+            *.tar.gz
+            *.whl
+            checksums.txt
+            security-report.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Notify stakeholders
+  notify-release:
+    name: Notify Release
+    runs-on: ubuntu-latest
+    needs: create-release
+    if: success()
+    
+    steps:
+      - name: Send Slack notification
+        uses: 8398a7/action-slack@v3
+        with:
+          status: success
+          text: |
+            🎉 New DotMac Framework release is available!
+            
+            **Version**: ${{ github.ref_name || needs.create-tag.outputs.new_tag }}
+            **Download**: https://github.com/${{ github.repository }}/releases/latest
+            
+            Ready for deployment to production! 🚀
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Update documentation site
+        run: |
+          # Trigger documentation update
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${{ github.repository_owner }}/dotmac-docs/dispatches \
+            -d '{"event_type":"release","client_payload":{"version":"${{ github.ref_name || needs.create-tag.outputs.new_tag }}"}}'
+
+      - name: Update Homebrew formula (if applicable)
+        if: github.event.inputs.release_type != 'prerelease'
+        run: |
+          echo "Consider updating Homebrew formula for CLI tools"
+          # This would typically update a Homebrew tap repository

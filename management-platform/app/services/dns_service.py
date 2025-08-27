@@ -47,9 +47,8 @@ class DNSService:
         self._route53_client = None
         self._cloudflare_client = None
     
-    async def create_tenant_domain():
-        self, 
-        tenant_id: UUID, 
+    async def create_tenant_domain(self, 
+        tenant_id): UUID, 
         domain_name: str,
         user_id: str,
         subdomain_prefix: Optional[str] = None
@@ -109,9 +108,8 @@ class DNSService:
             logger.error(f"Domain creation failed for tenant {tenant_id}: {e}")
             raise DNSError(f"Domain creation failed: {e}")
     
-    async def create_dns_record():
-        self,
-        tenant_id: UUID,
+    async def create_dns_record(self,
+        tenant_id): UUID,
         zone_id: UUID,
         record_data: DNSRecordCreate,
         user_id: str
@@ -142,22 +140,18 @@ class DNSService:
             # 3. Create record in database
             dns_record = await self._create_dns_record_db()
                 zone_id, record_data, user_id
-            )
             
             # 4. Create record with DNS provider
             provider_record_id = await self._create_provider_record()
                 zone, dns_record
-            )
             
             # 5. Update record with provider ID
             await self._update_record_provider_id()
                 dns_record.id, provider_record_id
-            )
             
             # 6. Verify propagation
             propagation_status = await self._check_dns_propagation()
                 dns_record.name, dns_record.record_type, dns_record.value
-            )
             
             return {
                 "record_id": str(dns_record.id),
@@ -175,9 +169,8 @@ class DNSService:
             logger.error(f"DNS record creation failed: {e}")
             raise DNSError(f"DNS record creation failed: {e}")
     
-    async def update_dns_record():
-        self,
-        tenant_id: UUID,
+    async def update_dns_record(self,
+        tenant_id): UUID,
         record_id: UUID,
         record_update: DNSRecordUpdate,
         user_id: str
@@ -206,7 +199,6 @@ class DNSService:
             if record_update.value:
                 await self._validate_record_value()
                     dns_record.record_type, record_update.value
-                )
             
             # 3. Update record with provider
             await self._update_provider_record(dns_record, record_update)
@@ -214,14 +206,12 @@ class DNSService:
             # 4. Update record in database
             updated_record = await self._update_dns_record_db()
                 record_id, record_update, user_id
-            )
             
             # 5. Verify propagation
             propagation_status = await self._check_dns_propagation()
                 updated_record.name, 
                 updated_record.record_type, 
                 updated_record.value
-            )
             
             return {
                 "record_id": str(record_id),
@@ -237,9 +227,8 @@ class DNSService:
             logger.error(f"DNS record update failed: {e}")
             raise DNSError(f"DNS record update failed: {e}")
     
-    async def delete_dns_record():
-        self,
-        tenant_id: UUID,
+    async def delete_dns_record(self,
+        tenant_id): UUID,
         record_id: UUID,
         user_id: str
     ) -> Dict[str, Any]:
@@ -278,9 +267,8 @@ class DNSService:
             logger.error(f"DNS record deletion failed: {e}")
             raise DNSError(f"DNS record deletion failed: {e}")
     
-    async def get_dns_records():
-        self,
-        tenant_id: UUID,
+    async def get_dns_records(self,
+        tenant_id): UUID,
         zone_id: Optional[UUID] = None,
         record_type: Optional[DNSRecordType] = None
     ) -> Dict[str, Any]:
@@ -308,7 +296,6 @@ class DNSService:
             # Execute query
             result = await self.db.execute()
                 select(DNSRecord).where(*filters).order_by(DNSRecord.name)
-            )
             records = result.scalars().all()
             
             # Format response
@@ -317,7 +304,6 @@ class DNSService:
                 # Get real-time status
                 propagation_status = await self._check_dns_propagation()
                     record.name, record.record_type, record.value
-                )
                 
                 record_list.append({)
                     "record_id": str(record.id),
@@ -342,9 +328,8 @@ class DNSService:
             logger.error(f"Failed to get DNS records: {e}")
             raise DNSError(f"Failed to get DNS records: {e}")
     
-    async def verify_domain_ownership():
-        self,
-        tenant_id: UUID,
+    async def verify_domain_ownership(self,
+        tenant_id): UUID,
         domain: str,
         verification_method: str = "txt_record"
     ) -> Dict[str, Any]:
@@ -372,7 +357,6 @@ class DNSService:
                 # Check if verification record exists
                 verification_status = await self._check_txt_record()
                     verification_record, verification_token
-                )
                 
                 return {
                     "domain": domain,
@@ -390,7 +374,6 @@ class DNSService:
                 
                 verification_status = await self._check_cname_record()
                     cname_record, cname_target
-                )
                 
                 return {
                     "domain": domain,
@@ -408,9 +391,8 @@ class DNSService:
             logger.error(f"Domain verification failed: {e}")
             raise DNSError(f"Domain verification failed: {e}")
     
-    async def setup_load_balancer_dns():
-        self,
-        tenant_id: UUID,
+    async def setup_load_balancer_dns(self,
+        tenant_id): UUID,
         zone_id: UUID,
         load_balancer_config: Dict[str, Any],
         user_id: str
@@ -444,11 +426,9 @@ class DNSService:
                         record_type=DNSRecordType.A,
                         value=ip,
                         ttl=300
-                    )
                     
                     record = await self.create_dns_record()
                         tenant_id, zone_id, record_data, user_id
-                    )
                     lb_records.append(record)
             
             # Create AAAA records for IPv6
@@ -459,11 +439,9 @@ class DNSService:
                         record_type=DNSRecordType.AAAA,
                         value=ip,
                         ttl=300
-                    )
                     
                     record = await self.create_dns_record()
                         tenant_id, zone_id, record_data, user_id
-                    )
                     lb_records.append(record)
             
             # Create main application CNAME
@@ -473,11 +451,9 @@ class DNSService:
                     record_type=DNSRecordType.CNAME,
                     value=load_balancer_config["primary_endpoint"],
                     ttl=300
-                )
                 
                 app_record = await self.create_dns_record()
                     tenant_id, zone_id, app_record_data, user_id
-                )
                 lb_records.append(app_record)
             
             # Create health check record
@@ -486,11 +462,9 @@ class DNSService:
                 record_type=DNSRecordType.CNAME,
                 value=f"lb1.{zone.domain}",
                 ttl=60
-            )
             
             health_record = await self.create_dns_record()
                 tenant_id, zone_id, health_record_data, user_id
-            )
             lb_records.append(health_record)
             
             return {
@@ -503,7 +477,6 @@ class DNSService:
                     "load_balancers": [f"lb{i+1}.{zone.domain}" for i in range(len(load_balancer_config.get("ipv4_addresses", [])]
                 },
                 "configured_at": datetime.now(timezone.utc).isoformat()
-            )
             
         except Exception as e:
             logger.error(f"Load balancer DNS setup failed: {e}")
@@ -516,7 +489,6 @@ class DNSService:
         # Check if domain already exists in our system
         result = await self.db.execute()
             select(DNSZone).where(DNSZone.domain == domain)
-        )
         existing_zone = result.scalar_one_or_none()
         
         if existing_zone:
@@ -532,9 +504,8 @@ class DNSService:
         except Exception as e:
             logger.warning(f"DNS lookup error for {domain}: {e}")
     
-    async def _create_dns_zone():
-        self, 
-        tenant_id: UUID, 
+    async def _create_dns_zone(self, 
+        tenant_id): UUID, 
         domain: str, 
         user_id: str
     ) -> DNSZone:
@@ -547,8 +518,6 @@ class DNSService:
             metadata={
                 "created_by": user_id,
                 "provider_config": self.provider_config.model_dump()
-            )
-        )
         
         self.db.add(zone)
         await self.db.commit()
@@ -568,7 +537,6 @@ class DNSService:
             record_type=DNSRecordType.SOA,
             value=soa_value,
             ttl=86400
-        )
         self.db.add(soa_record)
         default_records.append({)
             "name": zone.domain,
@@ -586,7 +554,6 @@ class DNSService:
                 record_type=DNSRecordType.NS,
                 value=ns,
                 ttl=86400
-            )
             self.db.add(ns_record)
             default_records.append({)
                 "name": zone.domain,
@@ -602,7 +569,6 @@ class DNSService:
             record_type=DNSRecordType.A,
             value="203.0.113.1",  # Placeholder IP
             ttl=300
-        )
         self.db.add(a_record)
         default_records.append({)
             "name": zone.domain,
@@ -622,7 +588,6 @@ class DNSService:
             "status": "issued",
             "expires_at": (datetime.now(timezone.utc) + timedelta(days=90).isoformat())
             "auto_renewal": True
-        )
     
     async def _setup_cdn_configuration(self, domain: str) -> Dict[str, Any]:
         """Set up CDN configuration for domain."""
@@ -674,9 +639,8 @@ class DNSService:
             if not re.match(r'^\d+\s+[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*\.$?', value):
                 raise ValidationError(f"Invalid MX record format: {value}")
     
-    async def _create_dns_record_db():
-        self, 
-        zone_id: UUID, 
+    async def _create_dns_record_db(self, 
+        zone_id): UUID, 
         record_data: DNSRecordCreate, 
         user_id: str
     ) -> DNSRecord:
@@ -690,8 +654,6 @@ class DNSService:
             priority=record_data.priority,
             metadata={
                 "created_by": user_id
-            )
-        )
         
         self.db.add(dns_record)
         await self.db.commit()
@@ -721,9 +683,8 @@ class DNSService:
         logger.info(f"Creating Cloudflare record: {record.name} -> {record.value}")
         return f"cf-{record.id.hex[:16]}"
     
-    async def _check_dns_propagation():
-        self, 
-        name: str, 
+    async def _check_dns_propagation(self, 
+        name): str, 
         record_type: DNSRecordType, 
         expected_value: str
     ) -> Dict[str, Any]:
@@ -765,7 +726,6 @@ class DNSService:
                 "servers_propagated": total_propagated,
                 "details": propagation_results,
                 "checked_at": datetime.now(timezone.utc).isoformat()
-            )
             
         except Exception as e:
             logger.error(f"DNS propagation check failed: {e}")
@@ -803,8 +763,6 @@ class DNSService:
             select(DNSZone).where()
                 DNSZone.id == zone_id,
                 DNSZone.tenant_id == tenant_id
-            )
-        )
         return result.scalar_one_or_none()
     
     async def _get_tenant_dns_record(self, record_id: UUID, tenant_id: UUID) -> Optional[DNSRecord]:
@@ -813,8 +771,6 @@ class DNSService:
             select(DNSRecord).join(DNSZone).where()
                 DNSRecord.id == record_id,
                 DNSZone.tenant_id == tenant_id
-            )
-        )
         return result.scalar_one_or_none()
     
     async def _update_record_provider_id(self, record_id: UUID, provider_record_id: str):
@@ -825,8 +781,6 @@ class DNSService:
             .values()
                 provider_record_id=provider_record_id,
                 updated_at=datetime.now(timezone.utc)
-            )
-        )
         await self.db.commit()
     
     async def _update_provider_record(self, record: DNSRecord, update_data: DNSRecordUpdate):
@@ -839,9 +793,8 @@ class DNSService:
         # Implementation for provider record deletion
         logger.info(f"Deleting provider record {record.provider_record_id}")
     
-    async def _update_dns_record_db():
-        self, 
-        record_id: UUID, 
+    async def _update_dns_record_db(self, 
+        record_id): UUID, 
         update_data: DNSRecordUpdate, 
         user_id: str
     ) -> DNSRecord:
@@ -859,17 +812,14 @@ class DNSService:
             update(DNSRecord)
             .where(DNSRecord.id == record_id)
             .values(**update_values)
-        )
         await self.db.commit()
         
         result = await self.db.execute()
             select(DNSRecord).where(DNSRecord.id == record_id)
-        )
         return result.scalar_one()
     
     async def _delete_dns_record_db(self, record_id: UUID):
         """Delete DNS record from database."""
         await self.db.execute()
             delete(DNSRecord).where(DNSRecord.id == record_id)
-        )
         await self.db.commit()

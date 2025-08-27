@@ -60,10 +60,11 @@ services:
     networks:
       - dotmac-network
     healthcheck:
-      test: ["CMD", "bao", "status"]
+      test: ["CMD", "bao", "status", "-format=json"]
       interval: 30s
       timeout: 10s
-      retries: 3
+      retries: 5
+      start_period: 60s
 
   # ===== OBSERVABILITY STACK =====
   
@@ -143,29 +144,39 @@ services:
   
   isp-framework:
     build:
-      context: ./isp-framework
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./isp-framework/Dockerfile
       target: development
     container_name: dotmac-isp-framework
     environment:
+      # Tenant Configuration
+      TENANT_ID: "development"
+      DATABASE_SCHEMA: "public"
       # Database
       DATABASE_URL: postgresql+asyncpg://dotmac_admin:${POSTGRES_PASSWORD}@postgres-shared:5432/dotmac_isp
       # Redis
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis-shared:6379/0
+      REDIS_NAMESPACE: "dev:"
       # Celery
       CELERY_BROKER_URL: redis://:${REDIS_PASSWORD}@redis-shared:6379/1
       CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD}@redis-shared:6379/2
       # OpenBao
       VAULT_URL: http://openbao-shared:8200
       VAULT_TOKEN: ${VAULT_TOKEN}
+      VAULT_PATH: "secret/development"
       # SignOz
       SIGNOZ_ENDPOINT: signoz-collector:4317
+      OTEL_RESOURCE_ATTRIBUTES: "service.name=dotmac-isp-dev,tenant.id=development"
       # Application
       ENVIRONMENT: development
       LOG_LEVEL: INFO
       DEBUG: "false"
+      # Import paths
+      PYTHONPATH: "/app/src:/app/shared"
     volumes:
       - ./isp-framework:/app
+      - ./shared:/app/shared
+      - ./docker/scripts:/app/scripts
       - isp_uploads:/app/uploads
       - isp_logs:/app/logs
     ports:
@@ -173,17 +184,35 @@ services:
     networks:
       - dotmac-network
     depends_on:
-      - postgres-shared
-      - redis-shared
-      - openbao-shared
-      - signoz-collector
+      postgres-shared:
+        condition: service_healthy
+      redis-shared:
+        condition: service_healthy
+      openbao-shared:
+        condition: service_healthy
+      signoz-collector:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
 
   # ===== MANAGEMENT PLATFORM =====
   
   management-platform:
     build:
-      context: ./management-platform
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./management-platform/Dockerfile
       target: development
     container_name: dotmac-management-platform
     environment:
@@ -214,6 +243,7 @@ services:
       ISP_FRAMEWORK_URL: http://isp-framework:8000
     volumes:
       - ./management-platform:/app
+      - ./shared:/app/shared
       - mgmt_uploads:/app/uploads
       - mgmt_logs:/app/logs
       - /var/run/docker.sock:/var/run/docker.sock  # For deployment tasks
@@ -233,8 +263,8 @@ services:
   # Management Platform Celery Worker
   mgmt-celery-worker:
     build:
-      context: ./management-platform
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./management-platform/Dockerfile
       target: development
     container_name: dotmac-mgmt-celery-worker
     environment:
@@ -248,6 +278,7 @@ services:
       LOG_LEVEL: INFO
     volumes:
       - ./management-platform:/app
+      - ./shared:/app/shared
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - dotmac-network
@@ -260,8 +291,8 @@ services:
   # Management Platform Celery Beat
   mgmt-celery-beat:
     build:
-      context: ./management-platform
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./management-platform/Dockerfile
       target: development
     container_name: dotmac-mgmt-celery-beat
     environment:
@@ -273,6 +304,7 @@ services:
       LOG_LEVEL: INFO
     volumes:
       - ./management-platform:/app
+      - ./shared:/app/shared
     networks:
       - dotmac-network
     depends_on:

@@ -1,12 +1,31 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { generateNonce, generateCSP } from '@dotmac/headless/utils/csp';
+import { csrfMiddleware } from './middleware/csrf';
+import { sanitizationMiddleware } from './middleware/sanitization';
 
 // Public routes that don't require authentication
 const publicRoutes = ['/', '/login', '/forgot-password', '/reset-password'];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  
+  // Apply security middleware first
+  // 1. CSRF Protection
+  const csrfResponse = csrfMiddleware(request);
+  if (csrfResponse.status !== 200) {
+    return csrfResponse; // Return CSRF error response
+  }
+  
+  // 2. Input Sanitization (for API routes)
+  if (pathname.startsWith('/api/')) {
+    const sanitizationResponse = sanitizationMiddleware(request);
+    if (sanitizationResponse instanceof Response && sanitizationResponse.status !== 200) {
+      return sanitizationResponse; // Return sanitization error response
+    }
+  }
+  
+  // Continue with authentication checks
   const authToken = request.cookies.get('auth-token');
   const portalType = request.cookies.get('portal-type');
 

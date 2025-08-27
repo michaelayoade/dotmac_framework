@@ -1,24 +1,24 @@
 'use client';
 
-import { useState } from 'react';
 import { Card } from '@dotmac/styled-components/customer';
 import {
-  MessageSquare,
-  Phone,
-  Mail,
-  Clock,
-  Users,
-  HelpCircle,
-  BookOpen,
-  Video,
-  Calendar,
-  MapPin,
-  Zap,
-  CheckCircle,
   AlertCircle,
   ArrowRight,
+  BookOpen,
+  Calendar,
+  CheckCircle,
+  Clock,
   ExternalLink,
+  HelpCircle,
+  Mail,
+  MapPin,
+  MessageSquare,
+  Phone,
+  Users,
+  Video,
+  Zap,
 } from 'lucide-react';
+import { useState } from 'react';
 
 interface SupportOption {
   id: string;
@@ -139,7 +139,7 @@ export function SupportCenter() {
     switch (optionId) {
       case 'live-chat':
         // Trigger live chat widget
-        console.log('Opening live chat...');
+        // Debug: 'Opening live chat...'
         break;
       case 'phone-support':
         window.location.href = 'tel:+18001234567';
@@ -148,7 +148,7 @@ export function SupportCenter() {
         window.location.href = 'mailto:support@dotmac.com';
         break;
       default:
-        console.log(`Opening ${optionId}...`);
+      // Debug: `Opening ${optionId}...`
     }
   };
 
@@ -156,22 +156,22 @@ export function SupportCenter() {
     switch (actionId) {
       case 'check-outage':
         // Navigate to service status page
-        console.log('Checking service status...');
+        // Debug: 'Checking service status...'
         break;
       case 'restart-service':
         // Trigger service restart
-        console.log('Restarting service...');
+        // Debug: 'Restarting service...'
         break;
       case 'speed-test':
         // Open speed test tool
-        console.log('Running speed test...');
+        // Debug: 'Running speed test...'
         break;
       case 'billing-help':
         // Open billing help
-        console.log('Opening billing help...');
+        // Debug: 'Opening billing help...'
         break;
       default:
-        console.log(`Executing ${actionId}...`);
+      // Debug: `Executing ${actionId}...`
     }
   };
 
@@ -189,26 +189,26 @@ export function SupportCenter() {
   };
 
   return (
-    <div className='space-y-8'>
+    <div className="space-y-8">
       {/* Quick Actions */}
       <div>
-        <h2 className='text-xl font-semibold text-gray-900 mb-4'>Quick Actions</h2>
-        <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4'>
-          {quickActions.map((action) => (
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {quickActions.map(action => (
             <Card
               key={action.id}
-              className='p-4 hover:shadow-lg transition-shadow cursor-pointer group'
+              className="p-4 hover:shadow-lg transition-shadow cursor-pointer group"
               onClick={() => handleQuickAction(action.id)}
             >
-              <div className='text-center'>
-                <div className='mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 group-hover:bg-blue-200 transition-colors'>
-                  <action.icon className='h-6 w-6 text-blue-600' />
+              <div className="text-center">
+                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 group-hover:bg-blue-200 transition-colors">
+                  <action.icon className="h-6 w-6 text-blue-600" />
                 </div>
-                <h3 className='font-medium text-gray-900 mb-1'>{action.title}</h3>
-                <p className='text-sm text-gray-600 mb-3'>{action.description}</p>
-                <div className='flex items-center justify-center text-blue-600 text-sm font-medium group-hover:text-blue-700'>
+                <h3 className="font-medium text-gray-900 mb-1">{action.title}</h3>
+                <p className="text-sm text-gray-600 mb-3">{action.description}</p>
+                <div className="flex items-center justify-center text-blue-600 text-sm font-medium group-hover:text-blue-700">
                   {action.action}
-                  <ArrowRight className='ml-1 h-4 w-4' />
+                  <ArrowRight className="ml-1 h-4 w-4" />
                 </div>
               </div>
             </Card>
@@ -218,46 +218,46 @@ export function SupportCenter() {
 
       {/* Support Options */}
       <div>
-        <div className='flex items-center justify-between mb-4'>
-          <h2 className='text-xl font-semibold text-gray-900'>Get Support</h2>
-          <div className='flex items-center text-sm text-gray-600'>
-            <Clock className='mr-1 h-4 w-4' />
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold text-gray-900">Get Support</h2>
+          <div className="flex items-center text-sm text-gray-600">
+            <Clock className="mr-1 h-4 w-4" />
             Available 24/7
           </div>
         </div>
 
-        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
-          {supportOptions.map((option) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {supportOptions.map(option => (
             <Card
               key={option.id}
               className={`p-6 hover:shadow-lg transition-all duration-200 cursor-pointer group ${getPriorityColor(option.priority)}`}
               onClick={() => handleSupportAction(option.id)}
             >
-              <div className='flex items-start justify-between mb-4'>
-                <div className='flex items-center'>
-                  <div className='mr-3 flex h-10 w-10 items-center justify-center rounded-lg bg-white shadow-sm'>
-                    <option.icon className='h-5 w-5 text-blue-600' />
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center">
+                  <div className="mr-3 flex h-10 w-10 items-center justify-center rounded-lg bg-white shadow-sm">
+                    <option.icon className="h-5 w-5 text-blue-600" />
                   </div>
                   <div>
-                    <h3 className='font-semibold text-gray-900'>{option.title}</h3>
-                    <p className='text-sm text-gray-600'>{option.description}</p>
+                    <h3 className="font-semibold text-gray-900">{option.title}</h3>
+                    <p className="text-sm text-gray-600">{option.description}</p>
                   </div>
                 </div>
                 {option.isAvailable ? (
-                  <CheckCircle className='h-5 w-5 text-green-600 flex-shrink-0' />
+                  <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
                 ) : (
-                  <Clock className='h-5 w-5 text-gray-400 flex-shrink-0' />
+                  <Clock className="h-5 w-5 text-gray-400 flex-shrink-0" />
                 )}
               </div>
 
-              <div className='space-y-2 text-sm text-gray-600 mb-4'>
-                <div className='flex items-center justify-between'>
+              <div className="space-y-2 text-sm text-gray-600 mb-4">
+                <div className="flex items-center justify-between">
                   <span>Availability:</span>
-                  <span className='font-medium'>{option.availability}</span>
+                  <span className="font-medium">{option.availability}</span>
                 </div>
-                <div className='flex items-center justify-between'>
+                <div className="flex items-center justify-between">
                   <span>Response Time:</span>
-                  <span className='font-medium'>{option.responseTime}</span>
+                  <span className="font-medium">{option.responseTime}</span>
                 </div>
               </div>
 
@@ -277,28 +277,28 @@ export function SupportCenter() {
       </div>
 
       {/* Emergency Contact */}
-      <Card className='p-6 border-red-200 bg-red-50'>
-        <div className='flex items-start'>
-          <AlertCircle className='h-6 w-6 text-red-600 mt-1 flex-shrink-0' />
-          <div className='ml-4 flex-grow'>
-            <h3 className='text-lg font-semibold text-red-900 mb-2'>Emergency Service Issues?</h3>
-            <p className='text-red-700 mb-4'>
+      <Card className="p-6 border-red-200 bg-red-50">
+        <div className="flex items-start">
+          <AlertCircle className="h-6 w-6 text-red-600 mt-1 flex-shrink-0" />
+          <div className="ml-4 flex-grow">
+            <h3 className="text-lg font-semibold text-red-900 mb-2">Emergency Service Issues?</h3>
+            <p className="text-red-700 mb-4">
               If you're experiencing a complete service outage or emergency, call our emergency
               hotline for immediate assistance.
             </p>
-            <div className='flex flex-col sm:flex-row gap-3'>
+            <div className="flex flex-col sm:flex-row gap-3">
               <a
-                href='tel:+18001234911'
-                className='inline-flex items-center rounded-lg bg-red-600 px-4 py-2 text-white font-medium transition-colors hover:bg-red-700'
+                href="tel:+18001234911"
+                className="inline-flex items-center rounded-lg bg-red-600 px-4 py-2 text-white font-medium transition-colors hover:bg-red-700"
               >
-                <Phone className='mr-2 h-4 w-4' />
+                <Phone className="mr-2 h-4 w-4" />
                 Emergency: 1-800-123-4911
               </a>
               <button
                 onClick={() => handleSupportAction('live-chat')}
-                className='inline-flex items-center rounded-lg border border-red-300 px-4 py-2 text-red-700 font-medium transition-colors hover:bg-red-100'
+                className="inline-flex items-center rounded-lg border border-red-300 px-4 py-2 text-red-700 font-medium transition-colors hover:bg-red-100"
               >
-                <MessageSquare className='mr-2 h-4 w-4' />
+                <MessageSquare className="mr-2 h-4 w-4" />
                 Emergency Chat
               </button>
             </div>
@@ -307,70 +307,70 @@ export function SupportCenter() {
       </Card>
 
       {/* Support Hours & Contact Info */}
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-        <Card className='p-6'>
-          <h3 className='text-lg font-semibold text-gray-900 mb-4'>Support Hours</h3>
-          <div className='space-y-3'>
-            <div className='flex items-center justify-between'>
-              <div className='flex items-center'>
-                <MessageSquare className='mr-2 h-4 w-4 text-blue-600' />
-                <span className='text-sm'>Live Chat</span>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Support Hours</h3>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <MessageSquare className="mr-2 h-4 w-4 text-blue-600" />
+                <span className="text-sm">Live Chat</span>
               </div>
-              <span className='text-sm font-medium text-green-600'>24/7</span>
+              <span className="text-sm font-medium text-green-600">24/7</span>
             </div>
-            <div className='flex items-center justify-between'>
-              <div className='flex items-center'>
-                <Phone className='mr-2 h-4 w-4 text-green-600' />
-                <span className='text-sm'>Phone Support</span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <Phone className="mr-2 h-4 w-4 text-green-600" />
+                <span className="text-sm">Phone Support</span>
               </div>
-              <span className='text-sm font-medium'>6 AM - 10 PM PST</span>
+              <span className="text-sm font-medium">6 AM - 10 PM PST</span>
             </div>
-            <div className='flex items-center justify-between'>
-              <div className='flex items-center'>
-                <Video className='mr-2 h-4 w-4 text-purple-600' />
-                <span className='text-sm'>Video Support</span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <Video className="mr-2 h-4 w-4 text-purple-600" />
+                <span className="text-sm">Video Support</span>
               </div>
-              <span className='text-sm font-medium'>8 AM - 8 PM PST</span>
+              <span className="text-sm font-medium">8 AM - 8 PM PST</span>
             </div>
-            <div className='flex items-center justify-between'>
-              <div className='flex items-center'>
-                <Users className='mr-2 h-4 w-4 text-orange-600' />
-                <span className='text-sm'>Technician Visits</span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <Users className="mr-2 h-4 w-4 text-orange-600" />
+                <span className="text-sm">Technician Visits</span>
               </div>
-              <span className='text-sm font-medium'>Mon-Fri 8 AM - 6 PM</span>
+              <span className="text-sm font-medium">Mon-Fri 8 AM - 6 PM</span>
             </div>
           </div>
         </Card>
 
-        <Card className='p-6'>
-          <h3 className='text-lg font-semibold text-gray-900 mb-4'>Contact Information</h3>
-          <div className='space-y-3'>
-            <div className='flex items-center'>
-              <Phone className='mr-3 h-4 w-4 text-gray-600' />
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h3>
+          <div className="space-y-3">
+            <div className="flex items-center">
+              <Phone className="mr-3 h-4 w-4 text-gray-600" />
               <div>
-                <p className='text-sm font-medium'>Customer Support</p>
-                <p className='text-sm text-gray-600'>1-800-123-4567</p>
+                <p className="text-sm font-medium">Customer Support</p>
+                <p className="text-sm text-gray-600">1-800-123-4567</p>
               </div>
             </div>
-            <div className='flex items-center'>
-              <Mail className='mr-3 h-4 w-4 text-gray-600' />
+            <div className="flex items-center">
+              <Mail className="mr-3 h-4 w-4 text-gray-600" />
               <div>
-                <p className='text-sm font-medium'>Email Support</p>
-                <p className='text-sm text-gray-600'>support@dotmac.com</p>
+                <p className="text-sm font-medium">Email Support</p>
+                <p className="text-sm text-gray-600">support@dotmac.com</p>
               </div>
             </div>
-            <div className='flex items-center'>
-              <MapPin className='mr-3 h-4 w-4 text-gray-600' />
+            <div className="flex items-center">
+              <MapPin className="mr-3 h-4 w-4 text-gray-600" />
               <div>
-                <p className='text-sm font-medium'>Service Area</p>
-                <p className='text-sm text-gray-600'>Available nationwide</p>
+                <p className="text-sm font-medium">Service Area</p>
+                <p className="text-sm text-gray-600">Available nationwide</p>
               </div>
             </div>
-            <div className='flex items-center'>
-              <ExternalLink className='mr-3 h-4 w-4 text-gray-600' />
+            <div className="flex items-center">
+              <ExternalLink className="mr-3 h-4 w-4 text-gray-600" />
               <div>
-                <p className='text-sm font-medium'>System Status</p>
-                <a href='#' className='text-sm text-blue-600 hover:text-blue-800'>
+                <p className="text-sm font-medium">System Status</p>
+                <a href="#" className="text-sm text-blue-600 hover:text-blue-800">
                   status.dotmac.com
                 </a>
               </div>

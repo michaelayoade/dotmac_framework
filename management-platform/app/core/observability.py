@@ -2,7 +2,7 @@
 Strategic Observability Integration for Management Platform.
 
 Integrates with SignOz for comprehensive monitoring of the SaaS platform including:
-- API performance monitoring
+    - API performance monitoring
 - Business metrics tracking
 - Tenant isolation monitoring
 - Revenue and subscription tracking
@@ -54,7 +54,7 @@ from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapProp
 from opentelemetry.baggage.propagation import W3CBaggagePropagator
 from opentelemetry.propagators.composite import CompositePropagator
 
-from ..config import get_settings
+from config import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -205,14 +205,12 @@ class ManagementPlatformObservability:
                 resource=self.resource,
                 metric_readers=[metric_reader],
                 views=views
-            )
             
             # Set global meter
             metrics.set_meter_provider(self.meter_provider)
             self.meter = metrics.get_meter()
                 name=self.service_name,
                 version=self.service_version
-            )
             
             logger.info("Management Platform metrics configured")
             
@@ -229,7 +227,6 @@ class ManagementPlatformObservability:
                 endpoint=self.signoz_endpoint,
                 headers=self.headers,
                 insecure=True
-            )
 
             # Create logger provider
             self.logger_provider = LoggerProvider(resource=self.resource)
@@ -247,7 +244,6 @@ class ManagementPlatformObservability:
             handler = LoggingHandler()
                 level=logging.INFO,
                 logger_provider=self.logger_provider
-            )
             
             # Add to root logger
             logging.getLogger().addHandler(handler)
@@ -264,7 +260,6 @@ class ManagementPlatformObservability:
                 TraceContextTextMapPropagator(),
                 W3CBaggagePropagator()
             ])
-        )
 
     def _init_business_metrics(self):
         """Initialize business and SaaS-specific metrics."""
@@ -435,7 +430,6 @@ class ManagementPlatformObservability:
                         status_code=status_code,
                         tenant_id=span.attributes.get("tenant.id", "system"),
                         duration_ms=time.time() * 1000
-                    )
 
             # Temporarily commented out for initial deployment - add back later
             # # Instrument FastAPI

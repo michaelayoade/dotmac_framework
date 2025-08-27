@@ -8,11 +8,11 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ...database import get_db
-from ...services.auth_service import AuthService
-from ...core.auth import get_current_user, get_current_active_user
-from ...core.security import CurrentUser
-from ...schemas.user import (
+from database import get_db
+from services.auth_service import AuthService
+from core.auth import get_current_user, get_current_active_user
+from core.security import CurrentUser
+from schemas.user import (
     UserLogin,
     UserLoginResponse,
     UserCreate,
@@ -24,7 +24,7 @@ from ...schemas.user import (
     UserInvitationResponse,
     UserProfileUpdate
 )
-from ...schemas.common import SuccessResponse
+from schemas.common import SuccessResponse
 
 logger = logging.getLogger(__name__)
 

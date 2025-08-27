@@ -10,7 +10,7 @@ interface AdminLayoutProps {
   children: ReactNode;
 }
 
-export function AdminLayout({ children }: AdminLayoutProps) {
+function AdminLayout({ children }: AdminLayoutProps) {
   return (
     <div className='admin-layout'>
       <ErrorBoundary level='section'>
@@ -27,3 +27,5 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     </div>
   );
 }
+
+export default AdminLayout;

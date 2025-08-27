@@ -1,10 +1,10 @@
 'use client';
 
+import React, { useState } from 'react';
 import { usePortalAuth } from '@dotmac/headless';
 import { OptimizedImage } from '@dotmac/primitives';
 import { Avatar, Button } from '@dotmac/styled-components/customer';
 import { Bell, ChevronDown, HelpCircle, LogOut, Settings, User } from 'lucide-react';
-import { useState } from 'react';
 
 export function CustomerHeader() {
   const { user, _currentPortal, _getPortalBranding } = usePortalAuth();
@@ -14,7 +14,7 @@ export function CustomerHeader() {
 
   const handleLogout = () => {
     // Implement logout logic
-    console.log('Logging out...');
+    // Debug: 'Logging out...'
   };
 
   const handleUserMenuToggle = () => {
@@ -86,7 +86,9 @@ export function CustomerHeader() {
             <div className='absolute right-0 z-50 mt-2 w-48 rounded-md border border-gray-200 bg-white py-1 shadow-lg'>
               <button
                 type='button'
-                onClick={() => console.log('Profile')}
+                onClick={() => {
+                  // Navigate to profile
+                }}
                 className='flex w-full items-center px-4 py-2 text-left text-gray-700 text-sm hover:bg-gray-100'
               >
                 <User className='mr-2 h-4 w-4' />
@@ -94,7 +96,9 @@ export function CustomerHeader() {
               </button>
               <button
                 type='button'
-                onClick={() => console.log('Settings')}
+                onClick={() => {
+                  // Navigate to settings
+                }}
                 className='flex w-full items-center px-4 py-2 text-left text-gray-700 text-sm hover:bg-gray-100'
               >
                 <Settings className='mr-2 h-4 w-4' />

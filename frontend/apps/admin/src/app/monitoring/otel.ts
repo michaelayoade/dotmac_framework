@@ -1,12 +1,13 @@
 import { NodeSDK } from '@opentelemetry/sdk-node';
 import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
 import { PeriodicExportingMetricReader, ConsoleMetricExporter } from '@opentelemetry/sdk-metrics';
-import { Resource } from '@opentelemetry/resources';
+import { type Resource } from '@opentelemetry/resources';
+import { Resource as ResourceClass } from '@opentelemetry/resources';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 
 export function registerOTel(serviceName: string) {
   const sdk = new NodeSDK({
-    resource: new Resource({
+    resource: new ResourceClass({
       [SemanticResourceAttributes.SERVICE_NAME]: serviceName,
       [SemanticResourceAttributes.SERVICE_VERSION]: process.env.npm_package_version || '1.0.0',
     }),
@@ -30,7 +31,7 @@ export function registerOTel(serviceName: string) {
     sdk
       .shutdown()
       .then(() => console.log('OpenTelemetry terminated successfully'))
-      .catch((error) => console.error('Error terminating OpenTelemetry', error))
+      .catch((error: any) => console.error('Error terminating OpenTelemetry', error))
       .finally(() => process.exit(0));
   });
 

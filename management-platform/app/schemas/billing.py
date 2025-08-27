@@ -7,7 +7,7 @@ from decimal import Decimal
 from typing import Optional, List, Dict, Any
 from uuid import UUID
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field
 
 from schemas.common import BaseSchema, PaginatedResponse
 

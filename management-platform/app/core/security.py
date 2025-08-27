@@ -3,7 +3,7 @@ Security utilities for authentication and authorization.
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any, List
 
 from jose import jwt
@@ -12,7 +12,7 @@ from fastapi import HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from passlib.context import CryptContext
 
-from ..config import settings
+from config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -178,7 +178,7 @@ def create_access_token(
     expires_delta: Optional[timedelta] = None
 ) -> str:
     """Create JWT access token."""
-    to_encode = data.model_copy()
+    to_encode = data.copy() if isinstance(data, dict) else dict(data)
     
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
@@ -200,7 +200,7 @@ def create_refresh_token(
     expires_delta: Optional[timedelta] = None
 ) -> str:
     """Create JWT refresh token."""
-    to_encode = data.model_copy()
+    to_encode = data.copy() if isinstance(data, dict) else dict(data)
     
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta

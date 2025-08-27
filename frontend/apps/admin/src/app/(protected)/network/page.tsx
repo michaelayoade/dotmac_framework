@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import { AdminLayout } from '../../../components/layout/AdminLayout';
+import AdminLayout from '../../../components/layout/AdminLayout';
 import { NetworkTopologyViewer } from '../../../components/network/NetworkTopologyViewer';
 import { ServiceProvisioningDashboard } from '../../../components/network/ServiceProvisioningDashboard';
 

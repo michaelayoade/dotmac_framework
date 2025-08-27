@@ -24,7 +24,7 @@ RUN pip install poetry
 WORKDIR /app
 
 # Copy poetry files
-COPY pyproject.toml poetry.lock* ./
+COPY isp-framework/pyproject.toml isp-framework/poetry.lock* ./
 
 # Development stage
 FROM base AS development
@@ -33,11 +33,14 @@ FROM base AS development
 RUN poetry config virtualenvs.create false
 RUN poetry install --no-root && rm -rf $POETRY_CACHE_DIR
 
+# Copy shared modules first (critical for imports)
+COPY shared/ ./shared/
+
 # Copy application code
-COPY src/ ./src/
-COPY alembic.ini ./
-COPY alembic/ ./alembic/
-COPY README.md ./
+COPY isp-framework/src/ ./src/
+COPY isp-framework/alembic.ini ./
+COPY isp-framework/alembic/ ./alembic/
+COPY isp-framework/README.md ./
 
 # Install the application
 RUN poetry install --only-root
@@ -64,11 +67,14 @@ FROM base AS production
 RUN poetry config virtualenvs.create false
 RUN poetry install --only=main --no-root && rm -rf $POETRY_CACHE_DIR
 
+# Copy shared modules first (critical for imports)
+COPY shared/ ./shared/
+
 # Copy application code
-COPY src/ ./src/
-COPY alembic.ini ./
-COPY alembic/ ./alembic/
-COPY README.md ./
+COPY isp-framework/src/ ./src/
+COPY isp-framework/alembic.ini ./
+COPY isp-framework/alembic/ ./alembic/
+COPY isp-framework/README.md ./
 
 # Install the application
 RUN poetry install --only-root

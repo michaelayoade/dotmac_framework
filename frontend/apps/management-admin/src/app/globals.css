@@ -162,4 +162,120 @@
   .content-area {
     @apply max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 space-y-6;
   }
+
+  /* Mobile-first responsive improvements */
+  @media (max-width: 768px) {
+    .sidebar {
+      @apply transform -translate-x-full;
+    }
+    
+    .sidebar.open {
+      @apply translate-x-0;
+    }
+    
+    .main-content {
+      @apply ml-0;
+    }
+    
+    .table {
+      @apply text-sm;
+    }
+    
+    .table-cell {
+      @apply px-3 py-2;
+    }
+    
+    .table-header-cell {
+      @apply px-3 py-2;
+    }
+    
+    .card-content {
+      @apply px-4 py-3;
+    }
+    
+    .card-header {
+      @apply px-4 py-3;
+    }
+    
+    .btn {
+      @apply text-xs px-3 py-1.5;
+    }
+    
+    .content-area {
+      @apply px-3 py-4;
+    }
+    
+    .page-header-content {
+      @apply px-3 py-4;
+    }
+  }
+
+  /* Tablet improvements */
+  @media (min-width: 769px) and (max-width: 1024px) {
+    .sidebar {
+      @apply w-56;
+    }
+    
+    .main-content {
+      @apply ml-56;
+    }
+  }
+
+  /* Animation utilities */
+  @keyframes slide-up {
+    from {
+      transform: translateY(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  .animate-slide-up {
+    animation: slide-up 0.3s ease-out;
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.2s ease-out;
+  }
+
+  /* Focus improvements for accessibility */
+  .focus-visible {
+    @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+  }
+
+  /* Loading state improvements */
+  .skeleton {
+    @apply animate-pulse bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 bg-[length:200%_100%];
+    animation: skeleton-loading 1.5s ease-in-out infinite;
+  }
+
+  @keyframes skeleton-loading {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+
+  /* Utility classes for better mobile UX */
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
+
+  .tap-highlight-transparent {
+    -webkit-tap-highlight-color: transparent;
+  }
 }

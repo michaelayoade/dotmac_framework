@@ -1,30 +1,43 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { useTenantAuth } from '@/components/auth/TenantAuthProvider';
+import { demoCredentials } from '@/lib/env-config';
+import { AccessibleInput, AccessibleButton, AccessibleCheckbox, AccessibleAlert } from '@/components/ui/AccessibleForm';
+import { announceToScreenReader } from '@/lib/accessibility';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   
   const { login } = useTenantAuth();
   const router = useRouter();
+  
+  // Announce page load to screen readers
+  useEffect(() => {
+    announceToScreenReader('Login page loaded. Please enter your credentials to access the tenant portal.', 'polite');
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
 
+    // Announce login attempt
+    announceToScreenReader('Attempting to sign in...', 'polite');
+
     try {
-      await login({ email, password });
+      await login({ email, password, rememberMe });
+      announceToScreenReader('Login successful. Redirecting to dashboard...', 'polite');
       // Redirect is handled by the auth provider
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
+      const errorMessage = err instanceof Error ? err.message : 'Login failed';
+      setError(errorMessage);
+      announceToScreenReader(`Login failed: ${errorMessage}`, 'assertive');
     } finally {
       setIsLoading(false);
     }
@@ -33,141 +46,196 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
+        {/* Skip to main content link for keyboard users */}
+        <a
+          href="#login-form"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-blue-600 text-white px-4 py-2 rounded-md z-50 focus:z-50"
+        >
+          Skip to main content
+        </a>
+        
         {/* Header */}
-        <div className="text-center">
-          <div className="mx-auto h-12 w-12 bg-tenant-600 rounded-lg flex items-center justify-center">
-            <div className="text-white font-bold text-xl">D</div>
+        <header className="text-center">
+          <div className="mx-auto h-12 w-12 bg-blue-600 rounded-lg flex items-center justify-center">
+            <div className="text-white font-bold text-xl" aria-hidden="true">D</div>
           </div>
-          <h2 className="mt-6 text-3xl font-bold text-gray-900">
+          <h1 className="mt-6 text-3xl font-bold text-gray-900">
             Sign in to your tenant portal
-          </h2>
+          </h1>
           <p className="mt-2 text-sm text-gray-600">
             Access your DotMac ISP Platform instance
           </p>
-        </div>
+        </header>
 
-        {/* Form */}
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-md p-4">
-              <div className="flex">
-                <AlertCircle className="h-5 w-5 text-red-400 mr-2 mt-0.5" />
-                <div className="text-sm text-red-800">{error}</div>
-              </div>
-            </div>
-          )}
+        {/* Main Login Form */}
+        <main>
+          <form 
+            id="login-form"
+            className="mt-8 space-y-6" 
+            onSubmit={handleSubmit}
+            noValidate
+            aria-label="Login form"
+          >
+            {/* Error Alert */}
+            {error && (
+              <AccessibleAlert type="error" dismissible onDismiss={() => setError('')}>
+                {error}
+              </AccessibleAlert>
+            )}
 
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email address
-              </label>
-              <input
-                id="email"
+            <div className="space-y-4">
+              {/* Email Field */}
+              <AccessibleInput
+                id="login-email"
                 name="email"
                 type="email"
+                label="Email address"
+                description="Enter the email address associated with your account"
                 autoComplete="email"
                 required
-                className="tenant-input mt-1"
-                placeholder="Enter your email"
+                placeholder="name@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={isLoading}
+                error={error && email === '' ? 'Email is required' : undefined}
+              />
+
+              {/* Password Field */}
+              <AccessibleInput
+                id="login-password"
+                name="password"
+                type="password"
+                label="Password"
+                description="Enter your account password"
+                autoComplete="current-password"
+                required
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isLoading}
+                showPasswordToggle
+                error={error && password === '' ? 'Password is required' : undefined}
               />
             </div>
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
-              <div className="mt-1 relative">
-                <input
-                  id="password"
-                  name="password"
-                  type={showPassword ? 'text' : 'password'}
-                  autoComplete="current-password"
-                  required
-                  className="tenant-input pr-10"
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={isLoading}
-                />
-                <button
-                  type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  onClick={() => setShowPassword(!showPassword)}
-                  disabled={isLoading}
+            <div className="flex items-center justify-between">
+              {/* Remember Me Checkbox */}
+              <AccessibleCheckbox
+                id="remember-me"
+                name="rememberMe"
+                label="Remember me"
+                description="Stay signed in on this device"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                disabled={isLoading}
+              />
+
+              {/* Forgot Password Link */}
+              <div className="text-sm">
+                <a 
+                  href="/forgot-password" 
+                  className="font-medium text-blue-600 hover:text-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-0 rounded-sm transition-colors"
+                  aria-describedby="forgot-password-description"
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4 text-gray-400" />
-                  ) : (
-                    <Eye className="h-4 w-4 text-gray-400" />
-                  )}
-                </button>
+                  Forgot your password?
+                </a>
+                <div id="forgot-password-description" className="sr-only">
+                  Opens forgot password page in same window
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <input
-                id="remember-me"
-                name="remember-me"
-                type="checkbox"
-                className="h-4 w-4 text-tenant-600 focus:ring-tenant-500 border-gray-300 rounded"
-              />
-              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-                Remember me
-              </label>
-            </div>
-
-            <div className="text-sm">
-              <a href="#" className="font-medium text-tenant-600 hover:text-tenant-500">
-                Forgot your password?
-              </a>
-            </div>
-          </div>
-
-          <div>
-            <button
+            {/* Submit Button */}
+            <AccessibleButton
               type="submit"
-              disabled={isLoading}
-              className="tenant-button-primary w-full flex justify-center py-3 text-sm font-medium"
+              variant="primary"
+              size="lg"
+              className="w-full"
+              isLoading={isLoading}
+              loadingText="Signing in..."
+              disabled={isLoading || !email || !password}
+              aria-describedby="submit-button-description"
             >
-              {isLoading ? (
-                <div className="flex items-center">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                  Signing in...
-                </div>
-              ) : (
-                'Sign in'
-              )}
-            </button>
-          </div>
-
-          {/* Demo credentials */}
-          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <h4 className="text-sm font-medium text-blue-800 mb-2">Demo Access</h4>
-            <p className="text-xs text-blue-700 mb-2">
-              Use these credentials to access the demo tenant:
-            </p>
-            <div className="text-xs space-y-1 font-mono">
-              <div>Email: admin@demo-tenant.com</div>
-              <div>Password: demo123</div>
+              Sign in
+            </AccessibleButton>
+            <div id="submit-button-description" className="sr-only">
+              {isLoading 
+                ? 'Currently signing you in, please wait' 
+                : !email || !password 
+                  ? 'Please enter both email and password to sign in'
+                  : 'Click to sign in with your credentials'
+              }
             </div>
-          </div>
-        </form>
+
+            {/* Demo credentials - only show in development */}
+            {demoCredentials.enabled && (
+              <AccessibleAlert type="info">
+                <div>
+                  <h4 className="text-sm font-medium text-blue-800 mb-2">
+                    Demo Access (Development Only)
+                  </h4>
+                  <p className="text-xs text-blue-700 mb-3">
+                    Use these pre-configured credentials to access the demo tenant:
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    <div className="space-y-1">
+                      <div className="font-medium text-blue-800">Admin Account:</div>
+                      <div className="font-mono text-blue-700">{demoCredentials.admin.email}</div>
+                      <AccessibleButton
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setEmail(demoCredentials.admin.email);
+                          setPassword(demoCredentials.admin.password);
+                          announceToScreenReader('Admin credentials filled', 'polite');
+                        }}
+                        disabled={isLoading}
+                        className="text-blue-600 hover:text-blue-800 p-0 h-auto font-normal"
+                        aria-label="Fill form with admin demo credentials"
+                      >
+                        Use admin credentials
+                      </AccessibleButton>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="font-medium text-blue-800">User Account:</div>
+                      <div className="font-mono text-blue-700">{demoCredentials.user.email}</div>
+                      <AccessibleButton
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setEmail(demoCredentials.user.email);
+                          setPassword(demoCredentials.user.password);
+                          announceToScreenReader('User credentials filled', 'polite');
+                        }}
+                        disabled={isLoading}
+                        className="text-blue-600 hover:text-blue-800 p-0 h-auto font-normal"
+                        aria-label="Fill form with user demo credentials"
+                      >
+                        Use user credentials
+                      </AccessibleButton>
+                    </div>
+                  </div>
+                </div>
+              </AccessibleAlert>
+            )}
+          </form>
+        </main>
 
         {/* Footer */}
-        <div className="text-center text-sm text-gray-600">
+        <footer className="text-center text-sm text-gray-600">
           <p>
             Need help?{' '}
-            <a href="#" className="font-medium text-tenant-600 hover:text-tenant-500">
+            <a 
+              href="/support" 
+              className="font-medium text-blue-600 hover:text-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-0 rounded-sm transition-colors"
+              aria-label="Contact support for login assistance"
+            >
               Contact support
             </a>
           </p>
-        </div>
+        </footer>
       </div>
     </div>
   );

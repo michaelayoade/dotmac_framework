@@ -11,15 +11,15 @@ from fastapi import APIRouter, Depends, Query, HTTPException, status, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_, or_
 
-from ...database import get_db, database_transaction
-from ...core.auth import get_current_user, require_tenant_admin, get_current_user_dict
-from ...core.exceptions import ValidationError, DatabaseError
-from ...models.tenant import Tenant
-from ...models.user import User
-from ...models.billing import Subscription, Invoice, Payment, BillingPlan
-from ...models.infrastructure import InfrastructureDeployment
-from ...models.notifications import NotificationLog, NotificationTemplate
-from ...schemas.portal import (
+from database import get_db, database_transaction
+from core.auth import get_current_user, require_tenant_admin, get_current_user_dict
+from core.exceptions import ValidationError, DatabaseError
+from models.tenant import Tenant
+from models.user import User
+from models.billing import Subscription, Invoice, Payment, BillingPlan
+from models.infrastructure import InfrastructureDeployment
+from models.notifications import NotificationLog, NotificationTemplate
+from schemas.portal import (
     TenantProfile,
     TenantProfileUpdate,
     UserInvitation,
@@ -29,17 +29,16 @@ from ...schemas.portal import (
     SupportTicket,
     PortalDashboard
 , timezone)
-from ...services.tenant_service import TenantService
-from ...services.billing_service import BillingService
-from ...services.infrastructure_service import InfrastructureService
-from ...services.notification_service import NotificationService
+from services.tenant_service import TenantService
+from services.billing_service import BillingService
+from services.infrastructure_service import InfrastructureService
+from services.notification_service import NotificationService
 
 router = APIRouter(prefix="/portal", tags=["portal"])
 
 
 @router.get("/dashboard", response_model=PortalDashboard)
-async def get_portal_dashboard():
-    current_user: Dict = Depends(get_current_user_dict),
+async def get_portal_dashboard(current_user): Dict = Depends(get_current_user_dict),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -51,22 +50,18 @@ async def get_portal_dashboard():
         # Get tenant information
         tenant_result = await db.execute()
             select(Tenant).where(Tenant.id == tenant_id)
-        )
         tenant = tenant_result.scalar_one_or_none()
         
         if not tenant:
             raise HTTPException()
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Tenant not found"
-            )
         
         # Get user count
         user_count_result = await db.execute()
             select(func.count(User.id).where()
                 User.tenant_id == tenant_id,
                 User.is_active == True
-            )
-        )
         user_count = user_count_result.scalar()
         
         # Get active subscription
@@ -75,7 +70,6 @@ async def get_portal_dashboard():
                 Subscription.tenant_id == tenant_id,
                 Subscription.status == "active"
             ).limit(1)
-        )
         subscription = subscription_result.scalar_one_or_none()
         
         # Get billing plan if subscription exists
@@ -83,7 +77,6 @@ async def get_portal_dashboard():
         if subscription:
             plan_result = await db.execute()
                 select(BillingPlan).where(BillingPlan.id == subscription.plan_id)
-            )
             billing_plan = plan_result.scalar_one_or_none()
         
         # Get current month's usage
@@ -97,7 +90,6 @@ async def get_portal_dashboard():
                     InfrastructureDeployment.status == "active"
                 ).label("active")
             ).where(InfrastructureDeployment.tenant_id == tenant_id)
-        )
         deployment_stats = deployment_result.one()
         
         # Get recent notifications
@@ -105,7 +97,6 @@ async def get_portal_dashboard():
             select(NotificationLog).where()
                 NotificationLog.tenant_id == tenant_id
             ).order_by(NotificationLog.created_at.desc().limit(5)
-        )
         recent_notifications = notification_result.scalars().all()
         
         # Get outstanding balance
@@ -113,18 +104,15 @@ async def get_portal_dashboard():
             select(func.coalesce(func.sum(Invoice.total_amount), 0).where()
                 Invoice.tenant_id == tenant_id,
                 Invoice.status.in_(["pending", "overdue"])
-            )
-        )
         outstanding_balance = outstanding_result.scalar()
         
-        return PortalDashboard()
-            tenant={
+        return PortalDashboard(tenant={
                 "id": str(tenant.id),
                 "name": tenant.name,
                 "domain": tenant.domain,
                 "created_at": tenant.created_at,
                 "is_active": tenant.is_active
-            },
+            ),
             subscription={
                 "status": subscription.status if subscription else "none",
                 "plan_name": billing_plan.name if billing_plan else None,
@@ -157,18 +145,15 @@ async def get_portal_dashboard():
                 for notif in recent_notifications
             ],
             last_updated=datetime.now(timezone.utc)
-        )
         
     except Exception as e:
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get dashboard: {str(e)}"
-        )
 
 
 @router.get("/profile", response_model=TenantProfile)
-async def get_tenant_profile():
-    current_user: Dict = Depends(get_current_user_dict),
+async def get_tenant_profile(current_user): Dict = Depends(get_current_user_dict),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -179,35 +164,29 @@ async def get_tenant_profile():
         
         result = await db.execute()
             select(Tenant).where(Tenant.id == tenant_id)
-        )
         tenant = result.scalar_one_or_none()
         
         if not tenant:
             raise HTTPException()
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Tenant not found"
-            )
         
-        return TenantProfile()
-            id=tenant.id,
+        return TenantProfile(id=tenant.id,
             name=tenant.name,
             domain=tenant.domain,
             is_active=tenant.is_active,
             created_at=tenant.created_at,
             updated_at=tenant.updated_at,
-            metadata=tenant.tenant_metadata or {}
-        )
+            metadata=tenant.tenant_metadata or {)
         
     except Exception as e:
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get tenant profile: {str(e)}"
-        )
 
 
 @router.put("/profile", response_model=TenantProfile)
-async def update_tenant_profile():
-    profile_update: TenantProfileUpdate,
+async def update_tenant_profile(profile_update): TenantProfileUpdate,
     current_user: Dict = Depends(require_tenant_admin),
     db: AsyncSession = Depends(get_db)
 ):
@@ -220,14 +199,12 @@ async def update_tenant_profile():
         async with database_transaction(db) as session:
             result = await session.execute()
                 select(Tenant).where(Tenant.id == tenant_id)
-            )
             tenant = result.scalar_one_or_none()
             
             if not tenant:
                 raise HTTPException()
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Tenant not found"
-                )
             
             # Update fields
             if profile_update.name:
@@ -242,26 +219,22 @@ async def update_tenant_profile():
             await session.commit()
             await session.refresh(tenant)
             
-            return TenantProfile()
-                id=tenant.id,
+            return TenantProfile(id=tenant.id,
                 name=tenant.name,
                 domain=tenant.domain,
                 is_active=tenant.is_active,
                 created_at=tenant.created_at,
                 updated_at=tenant.updated_at,
-                metadata=tenant.tenant_metadata or {}
-            )
+                metadata=tenant.tenant_metadata or {)
         
     except Exception as e:
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to update tenant profile: {str(e)}"
-        )
 
 
 @router.get("/users")
-async def get_tenant_users():
-    current_user: Dict = Depends(get_current_user_dict),
+async def get_tenant_users(current_user): Dict = Depends(get_current_user_dict),
     limit: int = Query(default=50, le=100),
     offset: int = Query(default=0, ge=0),
     search: Optional[str] = Query(default=None),
@@ -282,8 +255,6 @@ async def get_tenant_users():
                 or_()
                     User.email.ilike(search_term),
                     User.full_name.ilike(search_term)
-                )
-            )
         
         # Get total count
         count_query = select(func.count(User.id).where(User.tenant_id == tenant_id)
@@ -293,8 +264,6 @@ async def get_tenant_users():
                 or_()
                     User.email.ilike(search_term),
                     User.full_name.ilike(search_term)
-                )
-            )
         
         total_result = await db.execute(count_query)
         total_count = total_result.scalar()
@@ -330,12 +299,10 @@ async def get_tenant_users():
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get users: {str(e)}"
-        )
 
 
 @router.post("/users/invite")
-async def invite_user():
-    invitation: UserInvitation,
+async def invite_user(invitation): UserInvitation,
     current_user: Dict = Depends(require_tenant_admin),
     db: AsyncSession = Depends(get_db)
 ):
@@ -348,14 +315,12 @@ async def invite_user():
         # Check if user already exists
         existing_user_result = await db.execute()
             select(User).where(User.email == invitation.email)
-        )
         existing_user = existing_user_result.scalar_one_or_none()
         
         if existing_user:
             raise HTTPException()
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="User with this email already exists"
-            )
         
         # Create invitation (in a real implementation, this would send an email)
         invitation_token = f"invite-{tenant_id}-{invitation.email}".replace("@", "-at-")
@@ -373,7 +338,6 @@ async def invite_user():
                 "invited_at": datetime.now(timezone.utc).isoformat(),
                 "status": "pending"
             }
-        )
         
         db.add(new_user)
         await db.commit()
@@ -392,7 +356,6 @@ async def invite_user():
                 "invitation_link": f"https://portal.example.com/accept-invite/{invitation_token}",
                 "role": invitation.role
             }
-        )
         
         return {
             "user_id": str(new_user.id),
@@ -406,12 +369,10 @@ async def invite_user():
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to invite user: {str(e)}"
-        )
 
 
 @router.get("/billing/overview", response_model=BillingOverview)
-async def get_billing_overview():
-    current_user: Dict = Depends(get_current_user_dict),
+async def get_billing_overview(current_user): Dict = Depends(get_current_user_dict),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -426,7 +387,6 @@ async def get_billing_overview():
                 Subscription.tenant_id == tenant_id,
                 Subscription.status == "active"
             ).limit(1)
-        )
         subscription = subscription_result.scalar_one_or_none()
         
         # Get billing plan
@@ -434,7 +394,6 @@ async def get_billing_overview():
         if subscription:
             plan_result = await db.execute()
                 select(BillingPlan).where(BillingPlan.id == subscription.plan_id)
-            )
             billing_plan = plan_result.scalar_one_or_none()
         
         # Get recent invoices
@@ -442,7 +401,6 @@ async def get_billing_overview():
             select(Invoice).where()
                 Invoice.tenant_id == tenant_id
             ).order_by(Invoice.created_at.desc().limit(10)
-        )
         invoices = invoices_result.scalars().all()
         
         # Get recent payments
@@ -450,7 +408,6 @@ async def get_billing_overview():
             select(Payment).join(Invoice).where()
                 Invoice.tenant_id == tenant_id
             ).order_by(Payment.created_at.desc().limit(10)
-        )
         payments = payments_result.scalars().all()
         
         # Calculate outstanding balance
@@ -458,12 +415,9 @@ async def get_billing_overview():
             select(func.coalesce(func.sum(Invoice.total_amount), 0).where()
                 Invoice.tenant_id == tenant_id,
                 Invoice.status.in_(["pending", "overdue"])
-            )
-        )
         outstanding_balance = outstanding_result.scalar()
         
-        return BillingOverview()
-            subscription={
+        return BillingOverview(subscription={
                 "id": str(subscription.id) if subscription else None,
                 "status": subscription.status if subscription else "none",
                 "plan_name": billing_plan.name if billing_plan else None,
@@ -471,7 +425,7 @@ async def get_billing_overview():
                 "billing_cycle": billing_plan.billing_cycle if billing_plan else None,
                 "next_billing_date": subscription.end_date if subscription else None,
                 "auto_renew": subscription.auto_renew if subscription else False
-            },
+            ),
             outstanding_balance=float(outstanding_balance),
             recent_invoices=[
                 {
@@ -496,18 +450,15 @@ async def get_billing_overview():
                 for payment in payments
             ],
             currency="USD"
-        )
         
     except Exception as e:
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get billing overview: {str(e)}"
-        )
 
 
 @router.get("/billing/invoices/{invoice_id}")
-async def get_invoice_details():
-    invoice_id: UUID,
+async def get_invoice_details(invoice_id): UUID,
     current_user: Dict = Depends(get_current_user_dict),
     db: AsyncSession = Depends(get_db)
 ):
@@ -521,20 +472,16 @@ async def get_invoice_details():
             select(Invoice).where()
                 Invoice.id == invoice_id,
                 Invoice.tenant_id == tenant_id
-            )
-        )
         invoice = result.scalar_one_or_none()
         
         if not invoice:
             raise HTTPException()
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Invoice not found"
-            )
         
         # Get payments for this invoice
         payments_result = await db.execute()
             select(Payment).where(Payment.invoice_id == invoice_id)
-        )
         payments = payments_result.scalars().all()
         
         return {
@@ -570,12 +517,10 @@ async def get_invoice_details():
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get invoice details: {str(e)}"
-        )
 
 
 @router.get("/infrastructure/deployments")
-async def get_infrastructure_deployments():
-    current_user: Dict = Depends(get_current_user_dict),
+async def get_infrastructure_deployments(current_user): Dict = Depends(get_current_user_dict),
     limit: int = Query(default=20, le=100),
     offset: int = Query(default=0, ge=0),
     status_filter: Optional[str] = Query(default=None),
@@ -598,7 +543,6 @@ async def get_infrastructure_deployments():
         # Get total count
         count_query = select(func.count(InfrastructureDeployment.id).where()
             InfrastructureDeployment.tenant_id == tenant_id
-        )
         if status_filter:
             count_query = count_query.where(InfrastructureDeployment.status == status_filter)
         
@@ -637,12 +581,10 @@ async def get_infrastructure_deployments():
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get infrastructure deployments: {str(e)}"
-        )
 
 
 @router.get("/usage/metrics")
-async def get_usage_metrics():
-    current_user: Dict = Depends(get_current_user_dict),
+async def get_usage_metrics(current_user): Dict = Depends(get_current_user_dict),
     start_date: Optional[datetime] = Query(default=None),
     end_date: Optional[datetime] = Query(default=None),
     metric_type: Optional[str] = Query(default=None),
@@ -666,8 +608,6 @@ async def get_usage_metrics():
                 InfrastructureDeployment.tenant_id == tenant_id,
                 InfrastructureDeployment.created_at >= start_date,
                 InfrastructureDeployment.created_at <= end_date
-            )
-        )
         deployments = infrastructure_result.scalars().all()
         
         # Get notification usage
@@ -683,7 +623,6 @@ async def get_usage_metrics():
                 NotificationLog.created_at >= start_date,
                 NotificationLog.created_at <= end_date
             ).group_by(NotificationLog.channel)
-        )
         notification_stats = notification_result.all()
         
         # Calculate resource usage from deployments
@@ -691,17 +630,15 @@ async def get_usage_metrics():
             deployment.resource_limits.get("cpu", 0) 
             for deployment in deployments 
             if deployment.resource_limits
-        )
         total_memory = sum()
             deployment.resource_limits.get("memory", 0) 
             for deployment in deployments 
             if deployment.resource_limits
-        )
         
         usage_metrics = {
             "period": {
                 "start": start_date.isoformat(),
-                "end": end_date.isoformat()
+                "end": end_date.isoformat(}
             },
             "infrastructure": {
                 "active_deployments": len([d for d in deployments if d.status == "active"]),
@@ -730,12 +667,10 @@ async def get_usage_metrics():
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get usage metrics: {str(e)}"
-        )
 
 
 @router.get("/notifications/templates")
-async def get_notification_templates():
-    current_user: Dict = Depends(get_current_user_dict),
+async def get_notification_templates(current_user): Dict = Depends(get_current_user_dict),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -749,7 +684,6 @@ async def get_notification_templates():
                 NotificationTemplate.tenant_id == tenant_id,
                 NotificationTemplate.is_active == True
             ).order_by(NotificationTemplate.created_at.desc()
-        )
         templates = result.scalars().all()
         
         template_list = []
@@ -775,12 +709,10 @@ async def get_notification_templates():
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get notification templates: {str(e)}"
-        )
 
 
 @router.post("/support/tickets")
-async def create_support_ticket():
-    ticket: SupportTicket,
+async def create_support_ticket(ticket): SupportTicket,
     current_user: Dict = Depends(get_current_user_dict),
     db: AsyncSession = Depends(get_db)
 ):
@@ -812,7 +744,6 @@ async def create_support_ticket():
                 "user_email": current_user["email"],
                 "tenant_name": "Tenant Name"  # Would get from database
             }
-        )
         
         # Send confirmation to user
         await notification_service.send_notification()
@@ -825,7 +756,6 @@ async def create_support_ticket():
                 "subject": ticket.subject,
                 "user_name": current_user["email"]
             }
-        )
         
         return {
             "ticket_id": ticket_id,
@@ -841,12 +771,10 @@ async def create_support_ticket():
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create support ticket: {str(e)}"
-        )
 
 
 @router.get("/settings/configuration")
-async def get_service_configuration():
-    current_user: Dict = Depends(get_current_user_dict),
+async def get_service_configuration(current_user): Dict = Depends(get_current_user_dict),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -858,14 +786,12 @@ async def get_service_configuration():
         # Get tenant
         tenant_result = await db.execute()
             select(Tenant).where(Tenant.id == tenant_id)
-        )
         tenant = tenant_result.scalar_one_or_none()
         
         if not tenant:
             raise HTTPException()
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Tenant not found"
-            )
         
         # Extract configuration from metadata
         metadata = tenant.tenant_metadata or {}
@@ -874,22 +800,22 @@ async def get_service_configuration():
             "notifications": {
                 "email_enabled": metadata.get("notifications", {}).get("email_enabled", True),
                 "sms_enabled": metadata.get("notifications", {}).get("sms_enabled", False),
-                "default_channel": metadata.get("notifications", {}).get("default_channel", "email")
+                "default_channel": metadata.get("notifications", {}).get("default_channel", "email"}
             },
             "security": {
                 "two_factor_required": metadata.get("security", {}).get("two_factor_required", False),
                 "session_timeout_minutes": metadata.get("security", {}).get("session_timeout_minutes", 30),
-                "password_policy": metadata.get("security", {}).get("password_policy", "standard")
+                "password_policy": metadata.get("security", {}).get("password_policy", "standard"}
             },
             "billing": {
                 "auto_pay_enabled": metadata.get("billing", {}).get("auto_pay_enabled", False),
                 "invoice_email": metadata.get("billing", {}).get("invoice_email", ""),
-                "currency": metadata.get("billing", {}).get("currency", "USD")
+                "currency": metadata.get("billing", {}).get("currency", "USD"}
             },
             "infrastructure": {
                 "auto_scaling_enabled": metadata.get("infrastructure", {}).get("auto_scaling_enabled", True),
                 "backup_enabled": metadata.get("infrastructure", {}).get("backup_enabled", True),
-                "monitoring_level": metadata.get("infrastructure", {}).get("monitoring_level", "standard")
+                "monitoring_level": metadata.get("infrastructure", {}).get("monitoring_level", "standard"}
             }
         }
         
@@ -903,12 +829,10 @@ async def get_service_configuration():
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get service configuration: {str(e)}"
-        )
 
 
 @router.put("/settings/configuration")
-async def update_service_configuration():
-    configuration: ServiceConfiguration,
+async def update_service_configuration(configuration): ServiceConfiguration,
     current_user: Dict = Depends(require_tenant_admin),
     db: AsyncSession = Depends(get_db)
 ):
@@ -921,14 +845,12 @@ async def update_service_configuration():
         async with database_transaction(db) as session:
             result = await session.execute()
                 select(Tenant).where(Tenant.id == tenant_id)
-            )
             tenant = result.scalar_one_or_none()
             
             if not tenant:
                 raise HTTPException()
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Tenant not found"
-                )
             
             # Update configuration in metadata
             metadata = tenant.tenant_metadata or {}
@@ -958,4 +880,3 @@ async def update_service_configuration():
         raise HTTPException()
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to update service configuration: {str(e)}"
-        )

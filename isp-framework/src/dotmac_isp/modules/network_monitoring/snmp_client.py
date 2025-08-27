@@ -478,13 +478,13 @@ class SnmpClient:
         # Create transport target
         if ":" in target_str and not target_str.startswith("["):
             # IPv6 address
-            transport_target = Udp6TransportTarget((target_str, port)
+            transport_target = Udp6TransportTarget((target_str, port))
         else:
             # IPv4 address
-            transport_target = UdpTransportTarget((target_str, port)
+            transport_target = UdpTransportTarget((target_str, port))
 
         # Create object types for all OIDs
-        object_types = [ObjectType(ObjectIdentity(oid) for oid in oids]
+        object_types = [ObjectType(ObjectIdentity(oid)) for oid in oids]
 
         try:
             # Perform SNMP GET

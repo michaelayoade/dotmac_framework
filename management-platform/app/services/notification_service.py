@@ -68,7 +68,6 @@ class NotificationService:
         self.template_cache = {}
         self.jinja_env = Environment()
             loader=DictLoader({})
-        )
         self._plugin_system_initialized = False
     
     async def _ensure_plugin_system_ready(self):
@@ -82,9 +81,8 @@ class NotificationService:
                 logger.error(f"❌ Plugin system initialization failed: {e}")
                 raise NotificationError(f"Communication system unavailable: {e}")
     
-    async def send_notification():
-        self,
-        tenant_id: UUID,
+    async def send_notification(self,
+        tenant_id): UUID,
         notification_type: NotificationType,
         recipients: List[str],
         channel: DeliveryChannel,
@@ -118,13 +116,11 @@ class NotificationService:
             # 1. Load and render template
             rendered_content = await self._render_notification_template()
                 template_id, notification_type, template_data or {}
-            )
             
             # 2. Create notification log entries
             notification_logs = await self._create_notification_logs()
                 tenant_id, notification_type, recipients, channel, 
                 rendered_content, priority, user_id
-            )
             
             # 3. Send notifications via plugin system - NO HARDCODED CHANNELS
             delivery_results = []
@@ -142,8 +138,6 @@ class NotificationService:
                             "tenant_id": str(tenant_id),
                             "notification_type": notification_type.value,
                             "priority": priority.value
-                        )
-                    )
                     delivery_results.append(result)
                     
                 except Exception as e:
@@ -176,9 +170,8 @@ class NotificationService:
             logger.error(f"Notification sending failed: {e}")
             raise NotificationError(f"Notification sending failed: {e}")
     
-    async def send_bulk_notifications():
-        self,
-        tenant_id: UUID,
+    async def send_bulk_notifications(self,
+        tenant_id): UUID,
         notifications: List[Dict[str, Any]],
         user_id: Optional[str] = None
     ) -> Dict[str, Any]:
@@ -224,7 +217,6 @@ class NotificationService:
                         bulk_result = await global_plugin_registry.send_bulk_message()
                             channel_type=channel.value,
                             notifications=channel_notifications
-                        )
                         channel_results.append(bulk_result)
                     except Exception as e:
                         logger.warning(f"Bulk sending failed for {channel.value}, falling back to individual: {e}")
@@ -242,7 +234,6 @@ class NotificationService:
                             template_data=notification.get("template_data"),
                             priority=notification.get("priority", NotificationPriority.NORMAL),
                             user_id=user_id
-                        )
                         channel_results.append(result)
                 
                 all_results.extend(channel_results)
@@ -269,9 +260,8 @@ class NotificationService:
             logger.error(f"Bulk notification sending failed: {e}")
             raise NotificationError(f"Bulk notification sending failed: {e}")
     
-    async def create_notification_template():
-        self,
-        tenant_id: UUID,
+    async def create_notification_template(self,
+        tenant_id): UUID,
         name: str,
         notification_type: NotificationType,
         channel: DeliveryChannel,
@@ -319,7 +309,6 @@ class NotificationService:
                     "created_by": user_id,
                     "variable_count": len(variables)
                 }
-            )
             
             self.db.add(template)
             await self.db.commit()
@@ -342,9 +331,8 @@ class NotificationService:
             logger.error(f"Template creation failed: {e}")
             raise NotificationError(f"Template creation failed: {e}")
     
-    async def get_notification_history():
-        self,
-        tenant_id: UUID,
+    async def get_notification_history(self,
+        tenant_id): UUID,
         notification_type: Optional[NotificationType] = None,
         channel: Optional[DeliveryChannel] = None,
         status: Optional[NotificationStatus] = None,
@@ -385,7 +373,6 @@ class NotificationService:
                 .order_by(NotificationLog.created_at.desc()
                 .limit(limit)
                 .offset(offset)
-            )
             notifications = result.scalars().all()
             
             # Format response
@@ -416,9 +403,8 @@ class NotificationService:
             logger.error(f"Failed to get notification history: {e}")
             raise NotificationError(f"Failed to get notification history: {e}")
     
-    async def get_notification_statistics():
-        self,
-        tenant_id: UUID,
+    async def get_notification_statistics(self,
+        tenant_id): UUID,
         start_date: datetime,
         end_date: datetime
     ) -> Dict[str, Any]:
@@ -442,8 +428,6 @@ class NotificationService:
                     NotificationLog.tenant_id == tenant_id,
                     NotificationLog.created_at >= start_date,
                     NotificationLog.created_at <= end_date
-                )
-            )
             notifications = result.scalars().all()
             
             # Calculate statistics
@@ -509,9 +493,8 @@ class NotificationService:
     
     # Private methods
     
-    async def _render_notification_template():
-        self,
-        template_id: Optional[UUID],
+    async def _render_notification_template(self,
+        template_id): Optional[UUID],
         notification_type: NotificationType,
         template_data: Dict[str, Any]
     ) -> Dict[str, str]:
@@ -549,8 +532,6 @@ class NotificationService:
             select(NotificationTemplate).where()
                 NotificationTemplate.id == template_id,
                 NotificationTemplate.is_active == True
-            )
-        )
         template = result.scalar_one_or_none()
         
         if template:
@@ -580,14 +561,13 @@ class NotificationService:
             NotificationType.MAINTENANCE_NOTICE: (
                 "Scheduled Maintenance Notice",
                 "Hello {{ user_name }},\n\nWe will be performing scheduled maintenance on {{ maintenance_date }} from {{ start_time }} to {{ end_time }}.\n\nDuring this time, {{ affected_services }} may be unavailable.\n\nWe apologize for any inconvenience.\n\nBest regards,\nThe {{ company_name }} Team"
-            )
-        )
+            }
+        }
         
-        return templates.get(notification_type, (None, "{{ message }}")
+        return templates.get(notification_type, (None, "{{ message }}"}
     
-    async def _create_notification_logs():
-        self,
-        tenant_id: UUID,
+    async def _create_notification_logs(self,
+        tenant_id): UUID,
         notification_type: NotificationType,
         recipients: List[str],
         channel: DeliveryChannel,
@@ -599,7 +579,7 @@ class NotificationService:
         logs = []
         
         for recipient in recipients:
-            log = NotificationLog()
+            log = NotificationLog(}
                 tenant_id=tenant_id,
                 notification_type=notification_type,
                 channel=channel,
@@ -610,23 +590,22 @@ class NotificationService:
                 priority=priority,
                 metadata={
                     "triggered_by": user_id,
-                    "template_variables": list(content.keys()
-                )
-            )
+                    "template_variables": list(content.keys(}
+                }
+            }
             
-            self.db.add(log)
-            logs.append(log)
+            self.db.add(log}
+            logs.append(log}
         
-        await self.db.commit()
+        await self.db.commit(}
         
         for log in logs:
-            await self.db.refresh(log)
+            await self.db.refresh(log}
         
         return logs
     
-    async def _send_email_notifications():
-        self,
-        recipients: List[str],
+    async def _send_email_notifications(self,
+        recipients): List[str],
         content: Dict[str, str],
         notification_logs: List[NotificationLog]
     ) -> List[Dict[str, Any]]:
@@ -642,39 +621,38 @@ class NotificationService:
                 # Update log
                 log = notification_logs[i]
                 log.status = NotificationStatus.SENT
-                log.sent_at = datetime.now(timezone.utc)
+                log.sent_at = datetime.now(timezone.utc}
                 
                 # Simulate delivery confirmation
-                await asyncio.sleep(0.5)
+                await asyncio.sleep(0.5}
                 log.status = NotificationStatus.DELIVERED
-                log.delivered_at = datetime.now(timezone.utc)
+                log.delivered_at = datetime.now(timezone.utc}
                 
-                results.append({)
+                results.append({}
                     "recipient": recipient,
                     "success": True,
                     "message_id": f"email-{log.id.hex[:16]}",
                     "sent_at": log.sent_at.isoformat(),
-                    "delivered_at": log.delivered_at.isoformat()
-                })
+                    "delivered_at": log.delivered_at.isoformat(}
+                }}
                 
             except Exception as e:
                 # Update log with error
                 log = notification_logs[i]
                 log.status = NotificationStatus.FAILED
-                log.error_message = str(e)
+                log.error_message = str(e}
                 
-                results.append({)
+                results.append({}
                     "recipient": recipient,
                     "success": False,
-                    "error": str(e)
-                })
+                    "error": str(e}
+                }}
         
-        await self.db.commit()
+        await self.db.commit(}
         return results
     
-    async def _send_sms_notifications():
-        self,
-        recipients: List[str],
+    async def _send_sms_notifications(self,
+        recipients): List[str],
         content: Dict[str, str],
         notification_logs: List[NotificationLog]
     ) -> List[Dict[str, Any]]:
@@ -684,42 +662,41 @@ class NotificationService:
         for i, recipient in enumerate(recipients):
             try:
                 # Simulate SMS sending via Twilio
-                await asyncio.sleep(0.1)
+                await asyncio.sleep(0.1}
                 
                 log = notification_logs[i]
                 log.status = NotificationStatus.SENT
-                log.sent_at = datetime.now(timezone.utc)
+                log.sent_at = datetime.now(timezone.utc}
                 
                 # Simulate delivery
-                await asyncio.sleep(0.3)
+                await asyncio.sleep(0.3}
                 log.status = NotificationStatus.DELIVERED
-                log.delivered_at = datetime.now(timezone.utc)
+                log.delivered_at = datetime.now(timezone.utc}
                 
-                results.append({)
+                results.append({}
                     "recipient": recipient,
                     "success": True,
                     "message_id": f"sms-{log.id.hex[:16]}",
                     "sent_at": log.sent_at.isoformat(),
-                    "delivered_at": log.delivered_at.isoformat()
-                })
+                    "delivered_at": log.delivered_at.isoformat(}
+                }}
                 
             except Exception as e:
                 log = notification_logs[i]
                 log.status = NotificationStatus.FAILED
-                log.error_message = str(e)
+                log.error_message = str(e}
                 
-                results.append({)
+                results.append({}
                     "recipient": recipient,
                     "success": False,
-                    "error": str(e)
-                })
+                    "error": str(e}
+                }}
         
-        await self.db.commit()
+        await self.db.commit(}
         return results
     
-    async def _send_push_notifications():
-        self,
-        recipients: List[str],
+    async def _send_push_notifications(self,
+        recipients): List[str],
         content: Dict[str, str],
         notification_logs: List[NotificationLog]
     ) -> List[Dict[str, Any]]:
@@ -729,41 +706,40 @@ class NotificationService:
         for i, recipient in enumerate(recipients):
             try:
                 # Simulate push notification sending
-                await asyncio.sleep(0.05)
+                await asyncio.sleep(0.05}
                 
                 log = notification_logs[i]
                 log.status = NotificationStatus.SENT
-                log.sent_at = datetime.now(timezone.utc)
+                log.sent_at = datetime.now(timezone.utc}
                 
                 # Push notifications are typically delivered immediately
                 log.status = NotificationStatus.DELIVERED
-                log.delivered_at = datetime.now(timezone.utc)
+                log.delivered_at = datetime.now(timezone.utc}
                 
-                results.append({)
+                results.append({}
                     "recipient": recipient,
                     "success": True,
                     "message_id": f"push-{log.id.hex[:16]}",
                     "sent_at": log.sent_at.isoformat(),
-                    "delivered_at": log.delivered_at.isoformat()
-                })
+                    "delivered_at": log.delivered_at.isoformat(}
+                }}
                 
             except Exception as e:
                 log = notification_logs[i]
                 log.status = NotificationStatus.FAILED
-                log.error_message = str(e)
+                log.error_message = str(e}
                 
-                results.append({)
+                results.append({}
                     "recipient": recipient,
                     "success": False,
-                    "error": str(e)
-                })
+                    "error": str(e}
+                }}
         
-        await self.db.commit()
+        await self.db.commit(}
         return results
     
-    async def _send_slack_notifications():
-        self,
-        recipients: List[str],
+    async def _send_slack_notifications(self,
+        recipients): List[str],
         content: Dict[str, str],
         notification_logs: List[NotificationLog]
     ) -> List[Dict[str, Any]]:
@@ -773,39 +749,38 @@ class NotificationService:
         for i, recipient in enumerate(recipients):
             try:
                 # Simulate Slack webhook
-                await asyncio.sleep(0.2)
+                await asyncio.sleep(0.2}
                 
                 log = notification_logs[i]
                 log.status = NotificationStatus.SENT
-                log.sent_at = datetime.now(timezone.utc)
+                log.sent_at = datetime.now(timezone.utc}
                 log.status = NotificationStatus.DELIVERED
-                log.delivered_at = datetime.now(timezone.utc)
+                log.delivered_at = datetime.now(timezone.utc}
                 
-                results.append({)
+                results.append({}
                     "recipient": recipient,
                     "success": True,
                     "message_id": f"slack-{log.id.hex[:16]}",
                     "sent_at": log.sent_at.isoformat(),
-                    "delivered_at": log.delivered_at.isoformat()
-                })
+                    "delivered_at": log.delivered_at.isoformat(}
+                }}
                 
             except Exception as e:
                 log = notification_logs[i]
                 log.status = NotificationStatus.FAILED
-                log.error_message = str(e)
+                log.error_message = str(e}
                 
-                results.append({)
+                results.append({}
                     "recipient": recipient,
                     "success": False,
-                    "error": str(e)
-                })
+                    "error": str(e}
+                }}
         
-        await self.db.commit()
+        await self.db.commit(}
         return results
     
-    async def _send_webhook_notifications():
-        self,
-        recipients: List[str],
+    async def _send_webhook_notifications(self,
+        recipients): List[str],
         content: Dict[str, str],
         notification_logs: List[NotificationLog]
     ) -> List[Dict[str, Any]]:
@@ -815,39 +790,38 @@ class NotificationService:
         for i, recipient in enumerate(recipients):
             try:
                 # Simulate webhook POST
-                await asyncio.sleep(0.3)
+                await asyncio.sleep(0.3}
                 
                 log = notification_logs[i]
                 log.status = NotificationStatus.SENT
-                log.sent_at = datetime.now(timezone.utc)
+                log.sent_at = datetime.now(timezone.utc}
                 log.status = NotificationStatus.DELIVERED
-                log.delivered_at = datetime.now(timezone.utc)
+                log.delivered_at = datetime.now(timezone.utc}
                 
-                results.append({)
+                results.append({}
                     "recipient": recipient,
                     "success": True,
                     "message_id": f"webhook-{log.id.hex[:16]}",
                     "sent_at": log.sent_at.isoformat(),
-                    "delivered_at": log.delivered_at.isoformat()
-                })
+                    "delivered_at": log.delivered_at.isoformat(}
+                }}
                 
             except Exception as e:
                 log = notification_logs[i]
                 log.status = NotificationStatus.FAILED
-                log.error_message = str(e)
+                log.error_message = str(e}
                 
-                results.append({)
+                results.append({}
                     "recipient": recipient,
                     "success": False,
-                    "error": str(e)
-                })
+                    "error": str(e}
+                }}
         
-        await self.db.commit()
+        await self.db.commit(}
         return results
     
-    async def _send_bulk_emails():
-        self,
-        tenant_id: UUID,
+    async def _send_bulk_emails(self,
+        tenant_id): UUID,
         notifications: List[Dict[str, Any]],
         user_id: Optional[str]
     ) -> List[Dict[str, Any]]:
@@ -858,14 +832,14 @@ class NotificationService:
             template_key = (notification.get("template_id"), notification["type"])
             if template_key not in template_groups:
                 template_groups[template_key] = []
-            template_groups[template_key].append(notification)
+            template_groups[template_key].append(notification}
         
         all_results = []
         
         for template_key, group_notifications in template_groups.items():
             # Process each template group
             for notification in group_notifications:
-                result = await self.send_notification()
+                result = await self.send_notification(}
                     tenant_id=tenant_id,
                     notification_type=notification["type"],
                     recipients=notification["recipients"],
@@ -874,14 +848,13 @@ class NotificationService:
                     template_data=notification.get("template_data"),
                     priority=notification.get("priority", NotificationPriority.NORMAL),
                     user_id=user_id
-                )
-                all_results.append(result)
+                }
+                all_results.append(result}
         
         return all_results
     
-    async def _send_bulk_sms():
-        self,
-        tenant_id: UUID,
+    async def _send_bulk_sms(self,
+        tenant_id): UUID,
         notifications: List[Dict[str, Any]],
         user_id: Optional[str]
     ) -> List[Dict[str, Any]]:
@@ -890,7 +863,7 @@ class NotificationService:
         
         # SMS can be sent in batches more efficiently
         for notification in notifications:
-            result = await self.send_notification()
+            result = await self.send_notification(}
                 tenant_id=tenant_id,
                 notification_type=notification["type"],
                 recipients=notification["recipients"],
@@ -899,14 +872,13 @@ class NotificationService:
                 template_data=notification.get("template_data"),
                 priority=notification.get("priority", NotificationPriority.NORMAL),
                 user_id=user_id
-            )
-            all_results.append(result)
+            }
+            all_results.append(result}
         
         return all_results
     
-    async def _update_notification_logs():
-        self,
-        notification_logs: List[NotificationLog],
+    async def _update_notification_logs(self,
+        notification_logs): List[NotificationLog],
         delivery_results: List[Dict[str, Any]]
     ):
         """Update notification logs with delivery results."""
@@ -915,20 +887,20 @@ class NotificationService:
                 log = notification_logs[i]
                 if result.get("success"):
                     log.status = NotificationStatus.DELIVERED
-                    log.delivered_at = datetime.now(timezone.utc)
-                    log.provider_message_id = result.get("message_id")
+                    log.delivered_at = datetime.now(timezone.utc}
+                    log.provider_message_id = result.get("message_id"}
                 else:
                     log.status = NotificationStatus.FAILED
-                    log.error_message = result.get("error")
+                    log.error_message = result.get("error"}
         
-        await self.db.commit()
+        await self.db.commit(}
     
     async def _validate_template_syntax(self, template: str, variables: List[str]):
         """Validate Jinja2 template syntax."""
         try:
-            jinja_template = Template(template)
+            jinja_template = Template(template}
             # Test render with dummy data
             test_data = {var: f"test_{var}" for var in variables}
-            jinja_template.render(**test_data)
+            jinja_template.render(**test_data}
         except Exception as e:
-            raise ValidationError(f"Invalid template syntax: {e}")
+            raise ValidationError(f"Invalid template syntax: {e}"}

@@ -1,7 +1,7 @@
 """Intelligent routing service."""
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional, Any
 from uuid import UUID
 
@@ -220,7 +220,7 @@ class RoutingService(BaseOmnichannelService):
 
         # Select agent with best skill match
         best_agent = max(
-            agents, key=lambda a: len(set(a.skills) & set(required_skills)
+            agents, key=lambda a: len(set(a.skills) & set(required_skills))
         )
 
         return {
@@ -242,7 +242,7 @@ class RoutingService(BaseOmnichannelService):
         agent_workloads = []
         for agent in agents:
             workload = await self.repository.get_agent_workload(agent.id)
-            agent_workloads.append((agent, workload)
+            agent_workloads.append((agent, workload))
 
         # Select agent with lowest workload
         best_agent, _ = min(agent_workloads, key=lambda x: x[1])

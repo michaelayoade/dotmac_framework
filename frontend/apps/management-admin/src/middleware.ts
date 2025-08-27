@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateNonce, generateCSP } from '@dotmac/headless/utils/csp';
+import { generateNonce } from '@/lib/csp-utils';
 
 // Public routes that don't require authentication
 const publicRoutes = ['/', '/login'];

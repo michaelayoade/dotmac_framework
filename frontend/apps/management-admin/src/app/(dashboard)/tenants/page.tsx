@@ -160,7 +160,7 @@ export default function TenantsPage() {
                 </tr>
               </thead>
               <tbody className="table-body">
-                {tenantsData?.tenants?.map((tenant) => (
+                {tenantsData?.tenants?.map((tenant: Tenant) => (
                   <tr key={tenant.id} className="hover:bg-gray-50">
                     <td className="table-cell">
                       <div>

@@ -1,4 +1,6 @@
 /** @type {import('next').NextConfig} */
+const isProd = process.env.NODE_ENV === 'production';
+
 const nextConfig = {
   transpilePackages: ['@dotmac/headless', '@dotmac/primitives', '@dotmac/patterns', '@dotmac/mapping'],
   env: {
@@ -40,6 +42,77 @@ const nextConfig = {
         ],
       },
     ];
+  },
+  
+  // Webpack configuration
+  webpack: (config, { dev, isServer }) => {
+    // Bundle analysis
+    if (process.env.ANALYZE === 'true') {
+      const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
+      config.plugins.push(
+        new BundleAnalyzerPlugin({
+          analyzerMode: 'static',
+          openAnalyzer: false,
+          reportFilename: isServer
+            ? '../analyze/server.html'
+            : './analyze/client.html',
+        })
+      );
+    }
+    
+    // Production optimizations
+    if (!dev && !isServer) {
+      config.optimization.splitChunks = {
+        chunks: 'all',
+        cacheGroups: {
+          vendor: {
+            test: /[\\/]node_modules[\\/]/,
+            name: 'vendors',
+            priority: 10,
+            reuseExistingChunk: true,
+          },
+          common: {
+            name: 'common',
+            minChunks: 2,
+            priority: 5,
+            reuseExistingChunk: true,
+          },
+          charts: {
+            test: /[\\/]node_modules[\\/](recharts|d3)[\\/]/,
+            name: 'charts',
+            priority: 20,
+            reuseExistingChunk: true,
+          },
+        },
+      };
+    }
+    
+    // Security: Remove source maps in production
+    if (isProd) {
+      config.devtool = false;
+    }
+    
+    return config;
+  },
+  
+  // Output configuration
+  output: isProd ? 'standalone' : undefined,
+  
+  // Image optimization
+  images: {
+    domains: ['localhost'],
+    ...(isProd && {
+      loader: 'custom',
+      loaderFile: './src/lib/image-loader.js',
+    }),
+  },
+  
+  // PoweredBy header removal
+  poweredByHeader: false,
+  
+  // Generate build ID
+  generateBuildId: async () => {
+    return `build-${Date.now()}`;
   },
 };
 

@@ -9,6 +9,7 @@ export { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // API Client and Configuration
 export * from './api';
+export { partnerApiClient } from './api/partner-client';
 // Components
 export * from './components';
 export * from './config/ConfigProvider';
@@ -21,7 +22,9 @@ export {
   useApiData,
   useCachedData,
   useAuth,
+  useBilling,
   useBusinessWorkflow,
+  useCommunication,
   useFormatting,
   useMFA,
   useOfflineSync,
@@ -29,14 +32,69 @@ export {
   usePermissions,
   usePortalAuth,
   usePortalIdAuth,
+  useProvisioning,
   useISPModules,
   useISPTenant,
   useISPTenantProvider,
   useWebSocket,
   useRealTimeSync,
   useRouteProtection,
+  useCustomRouteProtection,
   useAppState,
+  useUI,
+  useAppNotifications,
+  useFilters,
+  usePagination,
+  useSelection,
+  useLoading,
+  usePreferences,
+  useDataTable,
+  useFormState,
 } from './hooks';
+
+// Partner Portal hooks
+export {
+  usePartnerDashboard,
+  usePartnerCustomers,
+  usePartnerCustomer,
+  useCreateCustomer,
+  useUpdateCustomer,
+  usePartnerCommissions,
+  usePartnerAnalytics,
+  useValidateTerritory,
+  usePartnerDataWithErrorBoundary,
+  partnerQueryKeys,
+} from './hooks/usePartnerData';
+
+// Security hooks
+export { useSecureForm } from './hooks/useSecureForm';
+export { useMFAGuard } from './hooks/useMFA';
+
+// Additional WebSocket hooks
+export { useNetworkMonitoring, useCustomerActivity, useFieldOperations } from './hooks/useWebSocket';
+
+// Real-time event hooks
+export { useRealTimeEvent, useRealTimeData } from './hooks/useRealTimeSync';
+
+// Business validation hooks
+export { useBusinessValidation } from './hooks/useBusinessValidation';
+
+// Form handling hooks
+export { useFormValidation, useFormSubmission, useAsyncValidation } from './hooks/useFormValidation';
+
+// Customer data hooks
+export { 
+  useCustomerDashboard, 
+  useCustomerServices, 
+  useCustomerBilling, 
+  useCustomerUsage, 
+  useCustomerDocuments, 
+  useCustomerSupportTickets 
+} from './hooks/useApiData';
+
+// Business logic engines
+export { commissionEngine, DEFAULT_COMMISSION_TIERS } from './business/commission-engine';
+export { territoryValidator } from './business/territory-validator';
 
 // Notification hooks
 export {
@@ -75,6 +133,11 @@ export {
 } from './hooks/useErrorHandler';
 // Stores
 export * from './stores';
+
+// Explicitly export store hooks for clarity
+export { useAuthStore } from './stores/authStore';
+export { useTenantStore } from './stores/tenantStore';
+export { useAppStore } from './stores/appStore';
 // Types (exclude conflicting types that are exported from hooks)
 export type {
   Address,
@@ -116,6 +179,10 @@ export type {
   TenantSession,
   TenantPermissions,
   TenantBranding,
+  // Route Protection Types
+  RouteProtectionResult,
+  RouteConfig,
+  RouteGuardProps,
 } from './types';
 // Security utilities
 export * from './utils';
@@ -138,6 +205,26 @@ export {
   type ErrorMetadata,
 } from './utils/errorUtils';
 
-// Error handling components
-export * from './components/StandardErrorBoundary';
+// Error handling components - export specific components to avoid conflicts
+export { 
+  StandardErrorBoundary,
+  useErrorBoundary,
+  withErrorBoundary as withStandardErrorBoundary 
+} from './components/StandardErrorBoundary';
 export * from './providers/ErrorHandlingProvider';
+
+// Route Guard components and utilities
+export {
+  RouteGuard,
+  AdminOnlyGuard,
+  CustomerOnlyGuard,
+  ResellerOnlyGuard,
+  NetworkEngineerGuard,
+  BillingManagerGuard,
+  SupportAgentGuard,
+  PermissionGuard,
+  FeatureGuard,
+} from './components/RouteGuard';
+
+// Production Data Guard utilities
+export * from './utils/production-data-guard';

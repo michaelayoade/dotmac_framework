@@ -366,7 +366,7 @@ class OmnichannelIntegrationService:
                     CustomerContact.customer_id == customer_id,
                     CustomerContact.tenant_id == self.tenant_id,
                 )
-                .order_by(desc(CommunicationInteraction.created_at)
+                .order_by(desc(CommunicationInteraction.created_at))
                 .limit(limit)
                 .all()
             )

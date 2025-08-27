@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 
 const MANAGEMENT_API_URL = process.env.NEXT_PUBLIC_MANAGEMENT_API_URL || 'http://localhost:8000';
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     const cookieStore = cookies();
     const refreshToken = cookieStore.get('mgmt_refresh_token');

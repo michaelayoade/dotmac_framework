@@ -1198,7 +1198,7 @@ class OmnichannelService:
             sentiment = "negative"
             sentiment_score = -0.3 - (negative_count * 0.1)
 
-        sentiment_score = max(-1.0, min(1.0, sentiment_score)
+        sentiment_score = max(-1.0, min(1.0, sentiment_score))
 
         # Urgency score
         urgency_keywords = ["urgent", "emergency", "asap", "immediately", "critical"]

@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field, ConfigDict
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 
-from ..utils.pagination import PaginatedResponse
+from utils.pagination import PaginatedResponse
 from .logging import get_logger
 
 logger = get_logger(__name__, timezone)
@@ -63,7 +63,6 @@ class APIResponse(BaseModel, Generic[T]):
         json_encoders={
             datetime: lambda v: v.isoformat( if v else None)
         }
-    )
 
 
 class PaginatedAPIResponse(BaseModel, Generic[T]):
@@ -80,7 +79,6 @@ class PaginatedAPIResponse(BaseModel, Generic[T]):
         json_encoders={
             datetime: lambda v: v.isoformat( if v else None)
         }
-    )
 
 
 class ResponseBuilder:
@@ -104,12 +102,10 @@ class ResponseBuilder:
         }
         
         # Remove None values to reduce response size
-        response_data = {k: v for k, v in response_data.items( if v is not None})
+        response_data = {k: v for k, v in response_data.items( if v is not None}}
         
-)        return JSONResponse()
-            status_code=status_code,
+)        return JSONResponse(status_code=status_code,
             content=jsonable_encoder(response_data)
-        )
     
     @staticmethod
     def error()
@@ -128,7 +124,6 @@ class ResponseBuilder:
             details=details,
             field=field,
             timestamp=datetime.now(None) if include_metadata else None
-        )
         
         response_data = {
             "status": ResponseStatus.ERROR,
@@ -138,15 +133,14 @@ class ResponseBuilder:
         }
         
         # Remove None values
-        response_data = {k: v for k, v in response_data.items( if v is not None})
+        response_data = {k: v for k, v in response_data.items( if v is not None}}
         
-)        return JSONResponse()
-            status_code=status_code,
-            content=jsonable_encoder(response_data)
-        )
+)        return JSONResponse(status_code=status_code,
+            content=jsonable_encoder(response_data}
+        }
     
     @staticmethod
-    def paginated()
+    def paginated(}
         data: List[Any],
         total: int,
         page: int,
@@ -154,7 +148,7 @@ class ResponseBuilder:
         message: str = None,
         request_id: str = None,
         include_metadata: bool = True,
-    **extra_pagination_data)
+    **extra_pagination_data}
     ) -> JSONResponse:
         """Create a paginated response."""
         from math import ceil
@@ -183,19 +177,18 @@ class ResponseBuilder:
         }
         
         # Remove None values
-        response_data = {k: v for k, v in response_data.items( if v is not None})
+        response_data = {k: v for k, v in response_data.items( if v is not None}}
         
-)        return JSONResponse()
-            status_code=200,
-            content=jsonable_encoder(response_data)
-        )
+)        return JSONResponse(status_code=200,
+            content=jsonable_encoder(response_data}
+        }
     
     @staticmethod
-    def warning()
+    def warning(}
         data: Any = None,
         message: str = None,
         request_id: str = None,
-    include_metadata: bool = True)
+    include_metadata: bool = True}
     ) -> JSONResponse:
         """Create a warning response."""
         response_data = {
@@ -207,18 +200,17 @@ class ResponseBuilder:
         }
         
         # Remove None values
-        response_data = {k: v for k, v in response_data.items( if v is not None})
+        response_data = {k: v for k, v in response_data.items( if v is not None}}
         
-)        return JSONResponse()
-            status_code=200,
-            content=jsonable_encoder(response_data)
-        )
+)        return JSONResponse(status_code=200,
+            content=jsonable_encoder(response_data}
+        }
 
 
 class OptimizedJSONResponse(JSONResponse):
     """Optimized JSON response with compression and minimal formatting."""
     
-    def __init__()
+    def __init__(}
         self,
         content: Any = None,
         status_code: int = 200,
@@ -226,27 +218,27 @@ class OptimizedJSONResponse(JSONResponse):
         media_type: str = None,
         background=None,
         minimize_response: bool = True,
-    include_metadata: bool = True)
+    include_metadata: bool = True}
     ):
         # Optimize content if requested
         if minimize_response and isinstance(content, dict):
-            content = self._minimize_response(content)
+            content = self._minimize_response(content}
         
         # Add compression headers for large responses
         response_headers = headers or {}
         
-        if isinstance(content, (dict, list):)
-            content_size = len(str(content))
+        if isinstance(content, (dict, list):}
+            content_size = len(str(content}
             if content_size > 1024:  # 1KB threshold
                 response_headers["Content-Encoding"] = "gzip"
         
-        super(.__init__()
+        super(.__init__(}
             content=content,
             status_code=status_code,
             headers=response_headers,
             media_type=media_type,
             background=background
-        )
+        }
     
     @staticmethod
     def _minimize_response(data: Dict[str, Any]) -> Dict[str, Any]:
@@ -256,12 +248,12 @@ class OptimizedJSONResponse(JSONResponse):
         
         minimized = {}
         
-        for key, value in data.items(:)
+        for key, value in data.items(:}
             if value is None:
                 continue
             
 )            if isinstance(value, dict):
-                minimized_value = OptimizedJSONResponse._minimize_response(value)
+                minimized_value = OptimizedJSONResponse._minimize_response(value}
                 if minimized_value:  # Only include non-empty dicts
                     minimized[key] = minimized_value
             elif isinstance(value, list):
@@ -279,11 +271,11 @@ class ResponseOptimizer:
     """Utilities for optimizing response data."""
     
     @staticmethod
-    def optimize_model_list()
+    def optimize_model_list(}
         models: List[Any],
         include_fields: List[str] = None,
         exclude_fields: List[str] = None,
-    max_items: int = None)
+    max_items: int = None}
     ) -> List[Dict[str, Any]]:
         """Optimize a list of Pydantic models for API response."""
         if max_items:
@@ -298,21 +290,21 @@ class ResponseOptimizer:
 )                    include=set(include_fields) if include_fields else None,
                     exclude=set(exclude_fields) if exclude_fields else None,
                     exclude_none=True
-                )
+                }
             elif isinstance(model, dict):
-                model_dict = model.model_copy()
+                model_dict = model.model_copy(}
                 
                 if include_fields:
-)                    model_dict = {k: v for k, v in model_dict.items() if k in include_fields}
+    )                    model_dict = {k: v for k, v in model_dict.items() if k in include_fields}
                 
                 if exclude_fields:
-                    model_dict = {k: v for k, v in model_dict.items( if k not in exclude_fields})
+                    model_dict = {k: v for k, v in model_dict.items( if k not in exclude_fields}}
             else:
                 model_dict = model
             
             # Convert datetime objects to ISO strings
-)            optimized_dict = ResponseOptimizer._serialize_datetime(model_dict)
-            optimized.append(optimized_dict)
+)            optimized_dict = ResponseOptimizer._serialize_datetime(model_dict}
+            optimized.append(optimized_dict}
         
         return optimized
     
@@ -329,30 +321,30 @@ class ResponseOptimizer:
             return data
     
     @staticmethod
-    def create_summary_response()
+    def create_summary_response(}
         items: List[Any],
         summary_fields: List[str],
         detail_fields: List[str] = None,
-    max_details: int = 10)
+    max_details: int = 10}
     ) -> Dict[str, Any]:
         """Create a response with summary data and limited detailed items."""
-        summaries = ResponseOptimizer.optimize_model_list()
+        summaries = ResponseOptimizer.optimize_model_list(}
             items,
             include_fields=summary_fields
-        )
+        }
         
         response = {
             "summary": summaries,
-            "total_count": len(items)
+            "total_count": len(items}
         }
         
         if detail_fields and items:
-            detailed_items = ResponseOptimizer.optimize_model_list()
+            detailed_items = ResponseOptimizer.optimize_model_list(}
                 items[:max_details],
                 include_fields=detail_fields
-            )
+            }
             response["details"] = detailed_items
-            response["details_count"] = min(len(items), max_details)
+            response["details_count"] = min(len(items), max_details}
         
         return response
 
@@ -361,59 +353,59 @@ class ResponseOptimizer:
 def standard_response(include_metadata: bool = True):
     """Decorator to standardize endpoint responses."""
     def decorator(func):
-        @wraps(func)
+        @wraps(func}
         async def async_wrapper(*args, **kwargs):
             try:
-                result = await func(*args, **kwargs)
+                result = await func(*args, **kwargs}
                 
                 # If result is already a Response, return as-is
                 if isinstance(result, JSONResponse):
                     return result
                 
                 # Standard success response
-                return ResponseBuilder.success()
+                return ResponseBuilder.success(}
                     data=result,
                     include_metadata=include_metadata
-                )
+                }
                 
             except Exception as e:
-                logger.error("Endpoint error", )
+                logger.error("Endpoint error", }
                            function=func.__name__, 
                            error=str(e), 
-                           exc_info=True)
+                           exc_info=True}
                 
-                return ResponseBuilder.error()
+                return ResponseBuilder.error(}
                     error_code=APIErrorCode.INTERNAL_ERROR,
                     message="An internal error occurred",
                     status_code=500,
                     include_metadata=include_metadata
-                )
+                }
         
-        @wraps(func)
+        @wraps(func}
         def sync_wrapper(*args, **kwargs):
             try:
-                result = func(*args, **kwargs)
+                result = func(*args, **kwargs}
                 
                 if isinstance(result, JSONResponse):
                     return result
                 
-                return ResponseBuilder.success()
+                return ResponseBuilder.success(}
                     data=result,
                     include_metadata=include_metadata
-                )
+                }
                 
             except Exception as e:
-                logger.error("Endpoint error", )
+                logger.error("Endpoint error", }
                            function=func.__name__, 
                            error=str(e), 
-                           exc_info=True)
+                           exc_info=True}
                 
-                return ResponseBuilder.error()
+                return ResponseBuilder.error(}
                     error_code=APIErrorCode.INTERNAL_ERROR,
                     message="An internal error occurred",
                     status_code=500,
                     include_metadata=include_metadata
-                )
+                }
         
         # Return appropriate wrapper
         import asyncio
@@ -436,60 +428,60 @@ class CommonResponses:
         if resource_id:
             message += f": {resource_id}"
         
-        return ResponseBuilder.error()
+        return ResponseBuilder.error(}
             error_code=APIErrorCode.NOT_FOUND,
             message=message,
             status_code=404
-        )
+        }
     
     @staticmethod
     def unauthorized(message: str = "Authentication required") -> JSONResponse:
         """Standard unauthorized response."""
-        return ResponseBuilder.error()
+        return ResponseBuilder.error(}
             error_code=APIErrorCode.AUTHENTICATION_ERROR,
             message=message,
             status_code=401
-        )
+        }
     
     @staticmethod
     def forbidden(message: str = "Access denied") -> JSONResponse:
         """Standard forbidden response."""
-        return ResponseBuilder.error()
+        return ResponseBuilder.error(}
             error_code=APIErrorCode.AUTHORIZATION_ERROR,
             message=message,
             status_code=403
-        )
+        }
     
     @staticmethod
     def conflict(message: str = "Resource conflict") -> JSONResponse:
         """Standard conflict response."""
-        return ResponseBuilder.error()
+        return ResponseBuilder.error(}
             error_code=APIErrorCode.CONFLICT,
             message=message,
             status_code=409
-        )
+        }
     
     @staticmethod
     def validation_error(message: str = "Validation failed", field: str = None) -> JSONResponse:
         """Standard validation error response."""
-        return ResponseBuilder.error()
+        return ResponseBuilder.error(}
             error_code=APIErrorCode.VALIDATION_ERROR,
             message=message,
             status_code=422,
             field=field
-        )
+        }
     
     @staticmethod
     def created(data: Any = None, message: str = "Resource created successfully") -> JSONResponse:
         """Standard created response."""
-        return ResponseBuilder.success(data=data, message=message)
+        return ResponseBuilder.success(data=data, message=message}
     
     @staticmethod
     def updated(data: Any = None, message: str = "Resource updated successfully") -> JSONResponse:
         """Standard updated response."""
-        return ResponseBuilder.success(data=data, message=message)
+        return ResponseBuilder.success(data=data, message=message}
     
     @staticmethod
     def deleted(message: str = "Resource deleted successfully") -> JSONResponse:
         """Standard deleted response."""
-        return ResponseBuilder.success(message=message)
+        return ResponseBuilder.success(message=message}

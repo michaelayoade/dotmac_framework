@@ -65,9 +65,8 @@ class TenantProvisioningService:
         self.dns_service = DNSService(db)
         self.notification_service = NotificationService(db)
     
-    async def provision_tenant():
-        self,
-        provisioning_request: TenantProvisioningRequest,
+    async def provision_tenant(self,
+        provisioning_request): TenantProvisioningRequest,
         user_id: str
     ) -> Dict[str, Any]:
         """
@@ -85,7 +84,6 @@ class TenantProvisioningService:
             current_stage = ProvisioningStage.VALIDATING
             await self._update_provisioning_status()
                 provisioning_id, current_stage, "Validating tenant request"
-            )
             
             validation_result = await self._validate_provisioning_request(provisioning_request)
             if not validation_result["valid"]:
@@ -93,7 +91,6 @@ class TenantProvisioningService:
                     f"Validation failed: {validation_result['errors']}",
                     current_stage,
                     validation_result
-                )
             
             # Stage 2: Create tenant record
             tenant = await self._create_tenant_record(provisioning_request, user_id)
@@ -102,7 +99,6 @@ class TenantProvisioningService:
             current_stage = ProvisioningStage.CREATING_BILLING
             await self._update_provisioning_status()
                 provisioning_id, current_stage, "Setting up billing and payment processing"
-            )
             
             billing_result = await self._setup_tenant_billing(tenant, provisioning_request)
             
@@ -110,7 +106,6 @@ class TenantProvisioningService:
             current_stage = ProvisioningStage.PROVISIONING_INFRASTRUCTURE
             await self._update_provisioning_status()
                 provisioning_id, current_stage, "Provisioning cloud infrastructure"
-            )
             
             infrastructure_result = await self._provision_infrastructure(tenant, provisioning_request)
             
@@ -118,7 +113,6 @@ class TenantProvisioningService:
             current_stage = ProvisioningStage.CONFIGURING_DNS
             await self._update_provisioning_status()
                 provisioning_id, current_stage, "Configuring DNS and SSL certificates"
-            )
             
             dns_result = await self._configure_dns(tenant, provisioning_request)
             
@@ -126,7 +120,6 @@ class TenantProvisioningService:
             current_stage = ProvisioningStage.DEPLOYING_SERVICES
             await self._update_provisioning_status()
                 provisioning_id, current_stage, "Deploying DotMac ISP Framework services"
-            )
             
             deployment_result = await self._deploy_tenant_services(tenant, provisioning_request)
             
@@ -134,7 +127,6 @@ class TenantProvisioningService:
             current_stage = ProvisioningStage.CONFIGURING_MONITORING
             await self._update_provisioning_status()
                 provisioning_id, current_stage, "Setting up monitoring and alerting"
-            )
             
             monitoring_result = await self._configure_monitoring(tenant)
             
@@ -142,7 +134,6 @@ class TenantProvisioningService:
             current_stage = ProvisioningStage.FINALIZING
             await self._update_provisioning_status()
                 provisioning_id, current_stage, "Finalizing tenant setup"
-            )
             
             await self._finalize_tenant_provisioning(tenant)
             
@@ -150,7 +141,6 @@ class TenantProvisioningService:
             current_stage = ProvisioningStage.COMPLETED
             await self._update_provisioning_status()
                 provisioning_id, current_stage, "Tenant provisioning completed successfully"
-            )
             
             # Send welcome notification
             await self._send_provisioning_complete_notification(tenant, provisioning_request)
@@ -182,11 +172,9 @@ class TenantProvisioningService:
                 f"Provisioning failed at stage {current_stage}: {str(e)}",
                 current_stage,
                 {"error": str(e), "provisioning_id": provisioning_id}
-            )
     
-    async def _validate_provisioning_request():
-        self, 
-        request: TenantProvisioningRequest
+    async def _validate_provisioning_request(self, 
+        request): TenantProvisioningRequest
     ) -> Dict[str, Any]:
         """Validate tenant provisioning request."""
         errors = []
@@ -226,9 +214,8 @@ class TenantProvisioningService:
             "validation_timestamp": datetime.now(timezone.utc).isoformat()
         }
     
-    async def _create_tenant_record():
-        self, 
-        request: TenantProvisioningRequest, 
+    async def _create_tenant_record(self, 
+        request): TenantProvisioningRequest, 
         user_id: str
     ) -> Tenant:
         """Create initial tenant database record."""
@@ -249,13 +236,11 @@ class TenantProvisioningService:
                 "provisioning_started_at": datetime.now(timezone.utc).isoformat(),
                 "provisioned_by": user_id
             }
-        )
         
         return await self.tenant_repo.create(tenant_data, user_id)
     
-    async def _setup_tenant_billing():
-        self, 
-        tenant: Tenant, 
+    async def _setup_tenant_billing(self, 
+        tenant): Tenant, 
         request: TenantProvisioningRequest
     ) -> Dict[str, Any]:
         """Set up Stripe billing for tenant."""
@@ -268,15 +253,12 @@ class TenantProvisioningService:
                 metadata={
                     "tenant_slug": tenant.slug,
                     "tier": tenant.tier
-                )
-            )
             
             # Update tenant with Stripe customer ID
             await self.tenant_repo.update()
                 tenant.id,
                 {"stripe_customer_id": stripe_customer["stripe_customer_id"]},
                 "provisioning_service"
-            )
             
             # Set up subscription if billing config provided
             subscription_result = None
@@ -299,11 +281,9 @@ class TenantProvisioningService:
                 f"Failed to set up billing: {str(e)}",
                 ProvisioningStage.CREATING_BILLING,
                 {"tenant_id": str(tenant.id), "error": str(e)}
-            )
     
-    async def _provision_infrastructure():
-        self, 
-        tenant: Tenant, 
+    async def _provision_infrastructure(self, 
+        tenant): Tenant, 
         request: TenantProvisioningRequest
     ) -> Dict[str, Any]:
         """Provision cloud infrastructure for tenant."""
@@ -315,25 +295,25 @@ class TenantProvisioningService:
                 "tenant_id": str(tenant.id),
                 "tenant_slug": tenant.slug,
                 "region": infrastructure_config.get("preferred_region", "us-east-1"),
-                "instance_type": self._determine_instance_type()
+                "instance_type": self._determine_instance_type(}
                     infrastructure_config.get("expected_users", 100),
-                    infrastructure_config.get("estimated_bandwidth_gb", 10)
+                    infrastructure_config.get("estimated_bandwidth_gb", 10}
                 ),
-                "storage_size": max()
+                "storage_size": max(}
                     infrastructure_config.get("estimated_storage_gb", 50), 
                     20  # Minimum 20GB
                 ),
                 "backup_retention": infrastructure_config.get("backup_retention_days", 30),
-                "high_availability": infrastructure_config.get("high_availability", False)
-            )
+                "high_availability": infrastructure_config.get("high_availability", False}
+            }
             
             # Provision infrastructure
-            infrastructure_result = await self.infrastructure_service.provision_tenant_infrastructure()
+            infrastructure_result = await self.infrastructure_service.provision_tenant_infrastructure(}
                 infrastructure_spec
-            )
+            }
             
             # Store infrastructure details
-            await self.tenant_repo.update()
+            await self.tenant_repo.update(}
                 tenant.id,
                 {
                     "infrastructure_config": infrastructure_spec,
@@ -341,21 +321,20 @@ class TenantProvisioningService:
                     "infrastructure_details": infrastructure_result
                 },
                 "provisioning_service"
-            )
+            }
             
             return infrastructure_result
             
         except Exception as e:
-            logger.error(f"Infrastructure provisioning failed for tenant {tenant.id}: {e}")
-            raise ProvisioningError()
+            logger.error(f"Infrastructure provisioning failed for tenant {tenant.id}: {e}"}
+            raise ProvisioningError(}
                 f"Failed to provision infrastructure: {str(e)}",
                 ProvisioningStage.PROVISIONING_INFRASTRUCTURE,
                 {"tenant_id": str(tenant.id), "error": str(e)}
-            )
+            }
     
-    async def _configure_dns():
-        self, 
-        tenant: Tenant, 
+    async def _configure_dns(self, 
+        tenant): Tenant, 
         request: TenantProvisioningRequest
     ) -> Dict[str, Any]:
         """Configure DNS records and SSL certificates."""
@@ -369,17 +348,17 @@ class TenantProvisioningService:
             }
             
             # Configure DNS records
-            dns_result = await self.dns_service.configure_tenant_dns(dns_config)
+            dns_result = await self.dns_service.configure_tenant_dns(dns_config}
             
             # Request SSL certificates
-            ssl_result = await self.dns_service.provision_ssl_certificates([)
+            ssl_result = await self.dns_service.provision_ssl_certificates([}
                 dns_config["primary_domain"],
                 dns_config["admin_domain"], 
                 dns_config["api_domain"]
             ])
             
             # Update tenant with DNS configuration
-            await self.tenant_repo.update()
+            await self.tenant_repo.update(}
                 tenant.id,
                 {
                     "custom_domain": dns_config["primary_domain"],
@@ -387,7 +366,7 @@ class TenantProvisioningService:
                     "ssl_certificates": ssl_result
                 },
                 "provisioning_service"
-            )
+            }
             
             return {
                 "dns_records": dns_result,
@@ -397,22 +376,21 @@ class TenantProvisioningService:
             }
             
         except Exception as e:
-            logger.error(f"DNS configuration failed for tenant {tenant.id}: {e}")
-            raise ProvisioningError()
+            logger.error(f"DNS configuration failed for tenant {tenant.id}: {e}"}
+            raise ProvisioningError(}
                 f"Failed to configure DNS: {str(e)}",
                 ProvisioningStage.CONFIGURING_DNS,
                 {"tenant_id": str(tenant.id), "error": str(e)}
-            )
+            }
     
-    async def _deploy_tenant_services():
-        self, 
-        tenant: Tenant, 
+    async def _deploy_tenant_services(self, 
+        tenant): Tenant, 
         request: TenantProvisioningRequest
     ) -> Dict[str, Any]:
         """Deploy DotMac ISP Framework services for tenant."""
         try:
             # Create deployment record
-            deployment_data = DeploymentCreate()
+            deployment_data = DeploymentCreate(}
                 tenant_id=tenant.id,
                 template_id=None,  # Would use appropriate template
                 configuration={
@@ -423,9 +401,9 @@ class TenantProvisioningService:
                 },
                 deployment_type="full_stack",
                 status=DeploymentStatus.PENDING
-            )
+            }
             
-            deployment = await self.deployment_repo.create(deployment_data, "provisioning_service")
+            deployment = await self.deployment_repo.create(deployment_data, "provisioning_service"}
             
             # Deploy core services
             core_services = [
@@ -440,16 +418,16 @@ class TenantProvisioningService:
             
             service_results = {}
             for service in core_services:
-                service_result = await self._deploy_individual_service()
+                service_result = await self._deploy_individual_service(}
                     tenant, service, deployment.configuration
-                )
+                }
                 service_results[service] = service_result
                 
                 # Wait briefly between deployments
-                await asyncio.sleep(2)
+                await asyncio.sleep(2}
             
             # Update deployment status
-            await self.deployment_repo.update()
+            await self.deployment_repo.update(}
                 deployment.id,
                 {
                     "status": DeploymentStatus.COMPLETED,
@@ -457,31 +435,30 @@ class TenantProvisioningService:
                     "deployment_results": service_results
                 },
                 "provisioning_service"
-            )
+            }
             
             return {
                 "deployment_id": str(deployment.id),
                 "services_deployed": core_services,
                 "service_results": service_results,
-                "deployment_completed_at": datetime.now(timezone.utc).isoformat()
+                "deployment_completed_at": datetime.now(timezone.utc).isoformat(}
             }
             
         except Exception as e:
-            logger.error(f"Service deployment failed for tenant {tenant.id}: {e}")
-            raise ProvisioningError()
+            logger.error(f"Service deployment failed for tenant {tenant.id}: {e}"}
+            raise ProvisioningError(}
                 f"Failed to deploy services: {str(e)}",
                 ProvisioningStage.DEPLOYING_SERVICES,
                 {"tenant_id": str(tenant.id), "error": str(e)}
-            )
+            }
     
-    async def _deploy_individual_service():
-        self, 
-        tenant: Tenant, 
+    async def _deploy_individual_service(self, 
+        tenant): Tenant, 
         service_name: str, 
         configuration: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Deploy individual DotMac service."""
-        logger.info(f"Deploying {service_name} for tenant {tenant.slug}")
+        logger.info(f"Deploying {service_name} for tenant {tenant.slug}"}
         
         # Service-specific configuration
         service_config = {
@@ -494,7 +471,7 @@ class TenantProvisioningService:
             **configuration
         }
         
-        # Simulate service deployment (in real implementation, this would use K8s API)
+        # Simulate service deployment (in real implementation, this would use K8s API}
         await asyncio.sleep(1)  # Simulate deployment time
         
         return {
@@ -502,7 +479,7 @@ class TenantProvisioningService:
             "status": "deployed",
             "endpoint": f"https://{tenant.slug}-api.{settings.base_domain}/{service_name}",
             "health_check": f"https://{tenant.slug}-api.{settings.base_domain}/{service_name}/health",
-            "deployed_at": datetime.now(timezone.utc).isoformat()
+            "deployed_at": datetime.now(timezone.utc).isoformat(}
         }
     
     async def _configure_monitoring(self, tenant: Tenant) -> Dict[str, Any]:
@@ -523,13 +500,13 @@ class TenantProvisioningService:
             }
             
             # Set up Prometheus targets
-            prometheus_config = await self._configure_prometheus_monitoring(tenant, monitoring_config)
+            prometheus_config = await self._configure_prometheus_monitoring(tenant, monitoring_config}
             
             # Configure Grafana dashboards
-            grafana_config = await self._configure_grafana_dashboards(tenant, monitoring_config)
+            grafana_config = await self._configure_grafana_dashboards(tenant, monitoring_config}
             
             # Set up alerting rules
-            alerting_config = await self._configure_alerting_rules(tenant, monitoring_config)
+            alerting_config = await self._configure_alerting_rules(tenant, monitoring_config}
             
             return {
                 "monitoring_configured": True,
@@ -539,31 +516,31 @@ class TenantProvisioningService:
             }
             
         except Exception as e:
-            logger.error(f"Monitoring configuration failed for tenant {tenant.id}: {e}")
-            raise ProvisioningError()
+            logger.error(f"Monitoring configuration failed for tenant {tenant.id}: {e}"}
+            raise ProvisioningError(}
                 f"Failed to configure monitoring: {str(e)}",
                 ProvisioningStage.CONFIGURING_MONITORING,
                 {"tenant_id": str(tenant.id), "error": str(e)}
-            )
+            }
     
     async def _finalize_tenant_provisioning(self, tenant: Tenant) -> None:
         """Finalize tenant provisioning."""
         # Update tenant status
-        await self.tenant_repo.update()
+        await self.tenant_repo.update(}
             tenant.id,
             {
                 "status": TenantStatus.ACTIVE,
                 "activated_at": datetime.now(timezone.utc),
-                "provisioning_completed_at": datetime.now(timezone.utc)
+                "provisioning_completed_at": datetime.now(timezone.utc}
             },
             "provisioning_service"
-        )
+        }
         
-        # Create initial admin user (would be implemented)
-        # await self._create_initial_admin_user(tenant)
+        # Create initial admin user (would be implemented}
+        # await self._create_initial_admin_user(tenant}
         
         # Set up default configurations
-        await self._apply_default_tenant_settings(tenant)
+        await self._apply_default_tenant_settings(tenant}
     
     async def _determine_instance_type(self, expected_users: int, bandwidth_gb: int) -> str:
         """Determine appropriate infrastructure instance type."""
@@ -576,40 +553,37 @@ class TenantProvisioningService:
         else:
             return "xlarge"
     
-    async def _update_provisioning_status():
-        self, 
-        provisioning_id: str, 
+    async def _update_provisioning_status(self, 
+        provisioning_id): str, 
         stage: ProvisioningStage, 
         message: str
     ) -> None:
         """Update provisioning status for tracking."""
-        logger.info(f"Provisioning {provisioning_id}: {stage.value} - {message}")
+        logger.info(f"Provisioning {provisioning_id}: {stage.value} - {message}"}
         # In real implementation, this would update a provisioning status table
     
-    async def _handle_provisioning_failure():
-        self, 
-        provisioning_id: str, 
+    async def _handle_provisioning_failure(self, 
+        provisioning_id): str, 
         stage: ProvisioningStage, 
         error: str
     ) -> None:
         """Handle provisioning failure and cleanup."""
-        logger.error(f"Provisioning {provisioning_id} failed at {stage.value}: {error}")
+        logger.error(f"Provisioning {provisioning_id} failed at {stage.value}: {error}"}
         
         # Mark provisioning as failed
-        await self._update_provisioning_status()
+        await self._update_provisioning_status(}
             provisioning_id, ProvisioningStage.FAILED, f"Failed: {error}"
-        )
+        }
         
         # Trigger cleanup process
-        # await self._cleanup_failed_provisioning(provisioning_id)
+        # await self._cleanup_failed_provisioning(provisioning_id}
     
-    async def _send_provisioning_complete_notification():
-        self, 
-        tenant: Tenant, 
+    async def _send_provisioning_complete_notification(self, 
+        tenant): Tenant, 
         request: TenantProvisioningRequest
     ) -> None:
         """Send provisioning completion notification."""
-        await self.notification_service.send_email()
+        await self.notification_service.send_email(}
             to_email=tenant.primary_contact_email,
             subject=f"Welcome to DotMac ISP Framework - {tenant.name} is Ready!",
             template="tenant_provisioning_complete",
@@ -617,33 +591,30 @@ class TenantProvisioningService:
                 "tenant_name": tenant.name,
                 "tenant_url": f"https://{tenant.slug}.{settings.base_domain}",
                 "admin_url": f"https://{tenant.slug}-admin.{settings.base_domain}",
-                "provisioning_date": datetime.now(timezone.utc).isoformat()
-            )
-        )
+                "provisioning_date": datetime.now(timezone.utc).isoformat(}
+            }
+        }
     
     # Helper methods for monitoring configuration
     
-    async def _configure_prometheus_monitoring():
-        self, 
-        tenant: Tenant, 
+    async def _configure_prometheus_monitoring(self, 
+        tenant): Tenant, 
         config: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Configure Prometheus monitoring for tenant."""
         # Implementation would configure Prometheus targets
         return {"targets_configured": True, "scrape_interval": "30s"}
     
-    async def _configure_grafana_dashboards():
-        self, 
-        tenant: Tenant, 
+    async def _configure_grafana_dashboards(self, 
+        tenant): Tenant, 
         config: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Configure Grafana dashboards for tenant."""
         # Implementation would create tenant-specific dashboards
         return {"dashboards_created": ["Overview", "Performance", "Billing"]}
     
-    async def _configure_alerting_rules():
-        self, 
-        tenant: Tenant, 
+    async def _configure_alerting_rules(self, 
+        tenant): Tenant, 
         config: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Configure alerting rules for tenant."""
@@ -661,8 +632,8 @@ class TenantProvisioningService:
             "cdn_enabled": False
         }
         
-        await self.tenant_repo.update()
+        await self.tenant_repo.update(}
             tenant.id,
             {"default_settings": default_settings},
             "provisioning_service"
-        )
+        }

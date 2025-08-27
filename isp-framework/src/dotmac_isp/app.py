@@ -23,6 +23,7 @@ from startup.error_handling import (
 )
 from health.comprehensive_checks import setup_health_checker
 from health.endpoints import add_health_endpoints, add_startup_status_endpoint
+from security.api_security_integration import setup_complete_api_security
 
 from dotmac_isp.api.routers import register_routers
 from dotmac_isp.core.audit_middleware import (
@@ -45,6 +46,8 @@ from dotmac_isp.core.security import initialize_rls
 from dotmac_isp.core.security_middleware import setup_enhanced_security_middleware
 from dotmac_isp.core.settings import get_settings
 from dotmac_isp.core.ssl_manager import get_ssl_manager, initialize_ssl
+from dotmac_isp.core.csrf_middleware import add_csrf_protection
+from dotmac_isp.core.tenant_security import init_tenant_security, add_tenant_security_middleware
 from dotmac_isp.shared.cache import get_cache_manager
 
 # SignOz observability integration
@@ -154,6 +157,53 @@ async def lifespan(app: FastAPI):
                 logging.info(f"🔒 {component_name} initialized")
             else:
                 startup_manager.add_warning(f"{component_name} initialization failed")
+
+        # Initialize tenant security (RLS + middleware)
+        async def init_tenant_sec():
+            from dotmac_isp.core.database import engine, get_session
+            async with get_session() as session:
+                return await init_tenant_security(engine, session)
+        
+        tenant_security_result = await startup_manager.execute_with_retry(
+            operation=init_tenant_sec,
+            phase=StartupPhase.SECURITY,
+            component="Tenant Security (RLS)",
+            severity=StartupErrorSeverity.HIGH,
+            max_retries=2
+        )
+        
+        if tenant_security_result.success:
+            logging.info("🔒 Tenant Security (RLS) initialized")
+        else:
+            startup_manager.add_warning("Tenant Security initialization failed")
+
+        # Initialize comprehensive API security
+        async def init_api_security():
+            return await setup_complete_api_security(
+                app=app,
+                environment=settings.environment,
+                jwt_secret_key=settings.secret_key,
+                redis_url=settings.redis_url,
+                api_type="api",  # ISP Framework is standard API
+                tenant_domains=settings.cors_origins_list,
+                validate_implementation=True
+            )
+        
+        api_security_result = await startup_manager.execute_with_retry(
+            operation=init_api_security,
+            phase=StartupPhase.SECURITY,
+            component="API Security Suite",
+            severity=StartupErrorSeverity.HIGH,
+            max_retries=1
+        )
+        
+        if api_security_result.success:
+            security_data = api_security_result.metadata.get("result", {})
+            app.state.api_security_suite = security_data.get("security_suite")
+            validation_result = security_data.get("validation_result", {})
+            logging.info(f"🛡️ API Security Suite initialized - Status: {validation_result.get('overall_status', 'UNKNOWN')} - Score: {validation_result.get('security_score', 0):.1f}%")
+        else:
+            logging.warning("⚠️ API Security Suite initialization failed - using fallback security")
 
         # Initialize SSL certificates if enabled
         if hasattr(settings, "ssl_enabled") and settings.ssl_enabled:
@@ -265,23 +315,17 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
-    # Security middleware
+    # Essential middleware (API Security Suite handles most security middleware)
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.allowed_hosts_list)
 
-    # CORS middleware
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.cors_origins_list,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
-
-    # Infrastructure middleware (caching, tracing, monitoring, rate limiting)
+    # Infrastructure middleware (caching, tracing, monitoring)  
     add_infrastructure_middleware(app, settings)
 
-    # Enhanced security middleware (highest priority)
-    setup_enhanced_security_middleware(app)
+    # Add CSRF protection
+    add_csrf_protection(app)
+
+    # Add tenant security middleware
+    add_tenant_security_middleware(app)
 
     # Security and audit middleware
     # setup_audit_middleware(app)  # Temporarily disabled to fix SQLAlchemy mapper conflicts

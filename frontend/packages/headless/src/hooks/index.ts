@@ -1,12 +1,14 @@
 // Authentication and user management
-
+export * from './useAppState';
 // API integration and data fetching
 export * from './useApiData';
 // Legacy compatibility - provides useCachedData for backward compatibility
 export { useApiData as useCachedData } from './useApiData';
 export * from './useAuth';
 // Business logic and workflows
+export * from './useBilling';
 export * from './useBusinessWorkflow';
+export * from './useCommunication';
 export * from './useErrorHandler';
 // Formatting and utilities
 export * from './useFormatting';
@@ -20,6 +22,7 @@ export * from './usePerformanceMonitoring';
 export * from './usePermissions';
 export * from './usePortalAuth';
 export * from './usePortalIdAuth';
+export * from './useProvisioning';
 export * from './useISPModules';
 export * from './useISPTenant';
 export * from './useWebSocket';

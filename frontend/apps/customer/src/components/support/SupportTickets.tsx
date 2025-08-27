@@ -132,15 +132,15 @@ export function SupportTickets() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'open':
-        return <AlertCircle className='h-4 w-4 text-yellow-600' />;
+        return <AlertCircle className="h-4 w-4 text-yellow-600" />;
       case 'pending':
-        return <Clock className='h-4 w-4 text-blue-600' />;
+        return <Clock className="h-4 w-4 text-blue-600" />;
       case 'resolved':
-        return <CheckCircle className='h-4 w-4 text-green-600' />;
+        return <CheckCircle className="h-4 w-4 text-green-600" />;
       case 'closed':
-        return <XCircle className='h-4 w-4 text-gray-600' />;
+        return <XCircle className="h-4 w-4 text-gray-600" />;
       default:
-        return <AlertCircle className='h-4 w-4 text-gray-600' />;
+        return <AlertCircle className="h-4 w-4 text-gray-600" />;
     }
   };
 
@@ -203,7 +203,7 @@ export function SupportTickets() {
   };
 
   const filteredTickets =
-    ticketData?.tickets.filter((ticket) => {
+    ticketData?.tickets.filter(ticket => {
       const matchesCategory = selectedCategory === 'all' || ticket.category === selectedCategory;
       const matchesSearch =
         ticket.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -212,30 +212,30 @@ export function SupportTickets() {
     }) || [];
 
   const selectedTicketData = selectedTicket
-    ? ticketData?.tickets.find((t) => t.id === selectedTicket)
+    ? ticketData?.tickets.find(t => t.id === selectedTicket)
     : null;
 
   if (isLoading || !ticketData) {
     return (
-      <div className='flex h-64 items-center justify-center'>
-        <div className='h-8 w-8 animate-spin rounded-full border-blue-600 border-b-2' />
+      <div className="flex h-64 items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-blue-600 border-b-2" />
       </div>
     );
   }
 
   if (selectedTicketData) {
     return (
-      <div className='space-y-6'>
+      <div className="space-y-6">
         {/* Ticket Header */}
-        <div className='flex items-center justify-between'>
+        <div className="flex items-center justify-between">
           <button
-            type='button'
+            type="button"
             onClick={() => setSelectedTicket(null)}
-            className='font-medium text-blue-600 text-sm hover:text-blue-800'
+            className="font-medium text-blue-600 text-sm hover:text-blue-800"
           >
             ← Back to Tickets
           </button>
-          <div className='flex items-center space-x-2'>
+          <div className="flex items-center space-x-2">
             {getStatusIcon(selectedTicketData.status)}
             <span
               className={`rounded-full border px-2 py-1 font-medium text-xs ${getStatusColor(selectedTicketData.status)}`}
@@ -245,14 +245,14 @@ export function SupportTickets() {
           </div>
         </div>
 
-        <Card className='p-6'>
-          <div className='mb-4 border-b pb-4'>
-            <div className='flex items-start justify-between'>
+        <Card className="p-6">
+          <div className="mb-4 border-b pb-4">
+            <div className="flex items-start justify-between">
               <div>
-                <h1 className='font-semibold text-gray-900 text-xl'>
+                <h1 className="font-semibold text-gray-900 text-xl">
                   {selectedTicketData.subject}
                 </h1>
-                <p className='mt-1 text-gray-600 text-sm'>Ticket #{selectedTicketData.id}</p>
+                <p className="mt-1 text-gray-600 text-sm">Ticket #{selectedTicketData.id}</p>
               </div>
               <span
                 className={`rounded px-2 py-1 font-medium text-xs ${getPriorityColor(selectedTicketData.priority)}`}
@@ -261,28 +261,28 @@ export function SupportTickets() {
               </span>
             </div>
 
-            <div className='mt-4 grid grid-cols-2 gap-4 text-sm md:grid-cols-4'>
+            <div className="mt-4 grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
               <div>
-                <span className='text-gray-600'>Created:</span>
-                <p className='font-medium'>{formatDate(selectedTicketData.createdDate)}</p>
+                <span className="text-gray-600">Created:</span>
+                <p className="font-medium">{formatDate(selectedTicketData.createdDate)}</p>
               </div>
               <div>
-                <span className='text-gray-600'>Last Updated:</span>
-                <p className='font-medium'>{formatDate(selectedTicketData.lastUpdated)}</p>
+                <span className="text-gray-600">Last Updated:</span>
+                <p className="font-medium">{formatDate(selectedTicketData.lastUpdated)}</p>
               </div>
               <div>
-                <span className='text-gray-600'>Assigned To:</span>
-                <p className='font-medium'>{selectedTicketData.assignedTo}</p>
+                <span className="text-gray-600">Assigned To:</span>
+                <p className="font-medium">{selectedTicketData.assignedTo}</p>
               </div>
               <div>
-                <span className='text-gray-600'>Category:</span>
-                <p className='font-medium capitalize'>{selectedTicketData.category}</p>
+                <span className="text-gray-600">Category:</span>
+                <p className="font-medium capitalize">{selectedTicketData.category}</p>
               </div>
             </div>
           </div>
 
           {/* Messages */}
-          <div className='mb-6 space-y-4'>
+          <div className="mb-6 space-y-4">
             {selectedTicketData.messages.map((message, index) => (
               <div
                 key={`${selectedTicketData.id}-message-${index}`}
@@ -295,8 +295,8 @@ export function SupportTickets() {
                       : 'bg-gray-100 text-gray-900'
                   } rounded-lg p-4`}
                 >
-                  <div className='mb-2 flex items-center justify-between'>
-                    <span className='font-medium text-sm'>{message.senderName}</span>
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="font-medium text-sm">{message.senderName}</span>
                     <span
                       className={`text-xs ${
                         message.sender === 'customer' ? 'text-blue-100' : 'text-gray-500'
@@ -305,15 +305,15 @@ export function SupportTickets() {
                       {formatTimestamp(message.timestamp)}
                     </span>
                   </div>
-                  <p className='whitespace-pre-wrap text-sm'>{message.message}</p>
+                  <p className="whitespace-pre-wrap text-sm">{message.message}</p>
                   {message.attachments.length > 0 && (
-                    <div className='mt-2'>
+                    <div className="mt-2">
                       {message.attachments.map((attachment, index) => (
                         <div
                           key={`${message.id}-attachment-${index}`}
-                          className='flex items-center text-xs'
+                          className="flex items-center text-xs"
                         >
-                          <Paperclip className='mr-1 h-3 w-3' />
+                          <Paperclip className="mr-1 h-3 w-3" />
                           <span>{attachment}</span>
                         </div>
                       ))}
@@ -326,13 +326,13 @@ export function SupportTickets() {
 
           {/* Resolution (if resolved) */}
           {selectedTicketData.status === 'resolved' && selectedTicketData.resolution ? (
-            <div className='mb-6 rounded-lg border border-green-200 bg-green-50 p-4'>
-              <h4 className='mb-2 font-medium text-green-900'>Resolution</h4>
-              <p className='text-green-800 text-sm'>{selectedTicketData.resolution}</p>
+            <div className="mb-6 rounded-lg border border-green-200 bg-green-50 p-4">
+              <h4 className="mb-2 font-medium text-green-900">Resolution</h4>
+              <p className="text-green-800 text-sm">{selectedTicketData.resolution}</p>
               {selectedTicketData.rating ? (
-                <div className='mt-2 flex items-center'>
-                  <span className='mr-2 text-green-800 text-sm'>Your Rating:</span>
-                  <div className='flex'>
+                <div className="mt-2 flex items-center">
+                  <span className="mr-2 text-green-800 text-sm">Your Rating:</span>
+                  <div className="flex">
                     {[...Array(5)].map((_, i) => (
                       <Star
                         key={`${selectedTicketData.id}-rating-star-${i}`}
@@ -351,29 +351,29 @@ export function SupportTickets() {
 
           {/* Reply Form (if not resolved) */}
           {selectedTicketData.status !== 'resolved' && selectedTicketData.status !== 'closed' && (
-            <div className='border-t pt-4'>
-              <h4 className='mb-3 font-medium text-gray-900'>Reply to Ticket</h4>
-              <div className='space-y-3'>
+            <div className="border-t pt-4">
+              <h4 className="mb-3 font-medium text-gray-900">Reply to Ticket</h4>
+              <div className="space-y-3">
                 <textarea
                   value={newTicketMessage}
-                  onChange={(e) => setNewTicketMessage(e.target.value)}
-                  placeholder='Type your message...'
+                  onChange={e => setNewTicketMessage(e.target.value)}
+                  placeholder="Type your message..."
                   rows={4}
-                  className='w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
-                <div className='flex items-center justify-between'>
+                <div className="flex items-center justify-between">
                   <button
-                    type='button'
-                    className='flex items-center text-gray-600 text-sm hover:text-gray-800'
+                    type="button"
+                    className="flex items-center text-gray-600 text-sm hover:text-gray-800"
                   >
-                    <Paperclip className='mr-1 h-4 w-4' />
+                    <Paperclip className="mr-1 h-4 w-4" />
                     Attach File
                   </button>
                   <button
-                    type='button'
-                    className='flex items-center rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700'
+                    type="button"
+                    className="flex items-center rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
                   >
-                    <Send className='mr-2 h-4 w-4' />
+                    <Send className="mr-2 h-4 w-4" />
                     Send Reply
                   </button>
                 </div>
@@ -386,44 +386,44 @@ export function SupportTickets() {
   }
 
   return (
-    <div className='space-y-6'>
+    <div className="space-y-6">
       {/* Header */}
-      <div className='flex items-center justify-between'>
-        <h1 className='font-bold text-2xl text-gray-900'>Support Tickets</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="font-bold text-2xl text-gray-900">Support Tickets</h1>
         <button
-          type='button'
+          type="button"
           onClick={() => setShowCreateTicket(true)}
-          className='flex items-center rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700'
+          className="flex items-center rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
         >
-          <Plus className='mr-2 h-4 w-4' />
+          <Plus className="mr-2 h-4 w-4" />
           New Ticket
         </button>
       </div>
 
-      <div className='grid grid-cols-1 gap-6 lg:grid-cols-4'>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
         {/* Sidebar */}
-        <div className='space-y-4'>
+        <div className="space-y-4">
           {/* Search */}
-          <Card className='p-4'>
-            <div className='relative'>
-              <Search className='-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 transform text-gray-400' />
+          <Card className="p-4">
+            <div className="relative">
+              <Search className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 transform text-gray-400" />
               <input
-                type='text'
-                placeholder='Search tickets...'
+                type="text"
+                placeholder="Search tickets..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className='w-full rounded-lg border border-gray-300 py-2 pr-4 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500'
+                onChange={e => setSearchQuery(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 py-2 pr-4 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </Card>
 
           {/* Categories */}
-          <Card className='p-4'>
-            <h3 className='mb-3 font-medium text-gray-900 text-sm'>Categories</h3>
-            <div className='space-y-1'>
-              {ticketData.categories.map((category) => (
+          <Card className="p-4">
+            <h3 className="mb-3 font-medium text-gray-900 text-sm">Categories</h3>
+            <div className="space-y-1">
+              {ticketData.categories.map(category => (
                 <button
-                  type='button'
+                  type="button"
                   key={category.id}
                   onClick={() => setSelectedCategory(category.id)}
                   className={`w-full rounded-lg px-3 py-2 text-left text-sm transition-colors ${
@@ -432,9 +432,9 @@ export function SupportTickets() {
                       : 'text-gray-700 hover:bg-gray-100'
                   }`}
                 >
-                  <div className='flex items-center justify-between'>
+                  <div className="flex items-center justify-between">
                     <span>{category.name}</span>
-                    <span className='text-gray-500 text-xs'>{category.count}</span>
+                    <span className="text-gray-500 text-xs">{category.count}</span>
                   </div>
                 </button>
               ))}
@@ -443,29 +443,29 @@ export function SupportTickets() {
         </div>
 
         {/* Ticket List */}
-        <div className='lg:col-span-3'>
-          <Card className='divide-y divide-gray-200'>
+        <div className="lg:col-span-3">
+          <Card className="divide-y divide-gray-200">
             {filteredTickets.length === 0 ? (
-              <div className='p-8 text-center'>
-                <MessageCircle className='mx-auto mb-4 h-12 w-12 text-gray-400' />
-                <h3 className='mb-2 font-medium text-gray-900 text-lg'>No tickets found</h3>
-                <p className='text-gray-600'>
+              <div className="p-8 text-center">
+                <MessageCircle className="mx-auto mb-4 h-12 w-12 text-gray-400" />
+                <h3 className="mb-2 font-medium text-gray-900 text-lg">No tickets found</h3>
+                <p className="text-gray-600">
                   {searchQuery
                     ? 'No tickets match your search criteria.'
                     : "You haven't created any support tickets yet."}
                 </p>
               </div>
             ) : (
-              filteredTickets.map((ticket) => (
+              filteredTickets.map(ticket => (
                 <button
                   key={ticket.id}
                   onClick={() => setSelectedTicket(ticket.id)}
-                  type='button'
-                  className='w-full cursor-pointer p-6 text-left transition-colors hover:bg-gray-50'
+                  type="button"
+                  className="w-full cursor-pointer p-6 text-left transition-colors hover:bg-gray-50"
                 >
-                  <div className='flex items-start justify-between'>
-                    <div className='min-w-0 flex-1'>
-                      <div className='mb-1 flex items-center space-x-2'>
+                  <div className="flex items-start justify-between">
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-1 flex items-center space-x-2">
                         {getStatusIcon(ticket.status)}
                         <span
                           className={`rounded-full border px-2 py-1 font-medium text-xs ${getStatusColor(ticket.status)}`}
@@ -479,20 +479,20 @@ export function SupportTickets() {
                         </span>
                       </div>
 
-                      <h3 className='mb-1 font-medium text-gray-900 text-lg'>{ticket.subject}</h3>
+                      <h3 className="mb-1 font-medium text-gray-900 text-lg">{ticket.subject}</h3>
 
-                      <p className='mb-2 line-clamp-2 text-gray-600 text-sm'>
+                      <p className="mb-2 line-clamp-2 text-gray-600 text-sm">
                         {ticket.description}
                       </p>
 
-                      <div className='flex items-center space-x-4 text-gray-500 text-xs'>
+                      <div className="flex items-center space-x-4 text-gray-500 text-xs">
                         <span>#{ticket.id}</span>
                         <span>Created {formatDate(ticket.createdDate)}</span>
                         <span>Updated {formatDate(ticket.lastUpdated)}</span>
                       </div>
                     </div>
 
-                    <ChevronRight className='ml-4 h-5 w-5 text-gray-400' />
+                    <ChevronRight className="ml-4 h-5 w-5 text-gray-400" />
                   </div>
                 </button>
               ))
@@ -503,91 +503,91 @@ export function SupportTickets() {
 
       {/* Create Ticket Modal */}
       {showCreateTicket ? (
-        <div className='fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4'>
-          <div className='max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white'>
-            <div className='border-b p-6'>
-              <div className='flex items-center justify-between'>
-                <h2 className='font-semibold text-gray-900 text-xl'>Create Support Ticket</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white">
+            <div className="border-b p-6">
+              <div className="flex items-center justify-between">
+                <h2 className="font-semibold text-gray-900 text-xl">Create Support Ticket</h2>
                 <button
-                  type='button'
+                  type="button"
                   onClick={() => setShowCreateTicket(false)}
-                  className='text-gray-400 hover:text-gray-600'
+                  className="text-gray-400 hover:text-gray-600"
                 >
-                  <XCircle className='h-6 w-6' />
+                  <XCircle className="h-6 w-6" />
                 </button>
               </div>
             </div>
 
-            <div className='space-y-4 p-6'>
+            <div className="space-y-4 p-6">
               <div>
                 <label
-                  htmlFor='input-1755609778622-yfypjzaia'
-                  className='mb-1 block font-medium text-gray-700 text-sm'
+                  htmlFor="input-1755609778622-yfypjzaia"
+                  className="mb-1 block font-medium text-gray-700 text-sm"
                 >
                   Category
                 </label>
-                <select className='w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500'>
-                  <option value='technical'>Technical Support</option>
-                  <option value='billing'>Billing</option>
-                  <option value='sales'>Sales</option>
-                  <option value='general'>General</option>
+                <select className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="technical">Technical Support</option>
+                  <option value="billing">Billing</option>
+                  <option value="sales">Sales</option>
+                  <option value="general">General</option>
                 </select>
               </div>
 
               <div>
                 <label
-                  htmlFor='input-1755609778622-3mrqzgmdl'
-                  className='mb-1 block font-medium text-gray-700 text-sm'
+                  htmlFor="input-1755609778622-3mrqzgmdl"
+                  className="mb-1 block font-medium text-gray-700 text-sm"
                 >
                   Priority
                 </label>
-                <select className='w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500'>
-                  <option value='low'>Low</option>
-                  <option value='medium'>Medium</option>
-                  <option value='high'>High</option>
+                <select className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
                 </select>
               </div>
 
               <div>
                 <label
-                  htmlFor='input-1755609778622-ba4nzyjns'
-                  className='mb-1 block font-medium text-gray-700 text-sm'
+                  htmlFor="input-1755609778622-ba4nzyjns"
+                  className="mb-1 block font-medium text-gray-700 text-sm"
                 >
                   Subject
                 </label>
                 <input
-                  type='text'
-                  placeholder='Brief description of your issue'
-                  className='w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
+                  type="text"
+                  placeholder="Brief description of your issue"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               <div>
                 <label
-                  htmlFor='input-1755609778622-fcpuyat6a'
-                  className='mb-1 block font-medium text-gray-700 text-sm'
+                  htmlFor="input-1755609778622-fcpuyat6a"
+                  className="mb-1 block font-medium text-gray-700 text-sm"
                 >
                   Description
                 </label>
                 <textarea
-                  placeholder='Please provide detailed information about your issue...'
+                  placeholder="Please provide detailed information about your issue..."
                   rows={6}
-                  className='w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
 
-            <div className='flex justify-end space-x-3 border-t bg-gray-50 p-6'>
+            <div className="flex justify-end space-x-3 border-t bg-gray-50 p-6">
               <button
-                type='button'
+                type="button"
                 onClick={() => setShowCreateTicket(false)}
-                className='rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-100'
+                className="rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-100"
               >
                 Cancel
               </button>
               <button
-                type='button'
-                className='rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700'
+                type="button"
+                className="rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
               >
                 Create Ticket
               </button>

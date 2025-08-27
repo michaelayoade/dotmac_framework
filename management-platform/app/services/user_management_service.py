@@ -148,9 +148,8 @@ class UserManagementService:
     def __init__(self, db: AsyncSession):
         self.db = db
     
-    async def create_user():
-        self,
-        user_data: UserCreate,
+    async def create_user(self,
+        user_data): UserCreate,
         created_by: str,
         tenant_id: Optional[UUID] = None
     ) -> Dict[str, Any]:
@@ -171,7 +170,6 @@ class UserManagementService:
             # Check if user already exists
             existing_user_result = await self.db.execute()
                 select(User).where(User.email == user_data.email)
-            )
             existing_user = existing_user_result.scalar_one_or_none()
             
             if existing_user:
@@ -204,7 +202,6 @@ class UserManagementService:
                     "password_generated": not bool(user_data.password),
                     "must_change_password": not bool(user_data.password)
                 }
-            )
             
             self.db.add(user)
             await self.db.commit()
@@ -228,9 +225,8 @@ class UserManagementService:
             logger.error(f"User creation failed: {e}")
             raise ValidationError(f"User creation failed: {e}")
     
-    async def update_user():
-        self,
-        user_id: UUID,
+    async def update_user(self,
+        user_id): UUID,
         user_update: UserUpdate,
         updated_by: str
     ) -> Dict[str, Any]:
@@ -251,7 +247,6 @@ class UserManagementService:
             # Get existing user
             result = await self.db.execute()
                 select(User).where(User.id == user_id)
-            )
             user = result.scalar_one_or_none()
             
             if not user:
@@ -311,9 +306,8 @@ class UserManagementService:
             logger.error(f"User update failed: {e}")
             raise ValidationError(f"User update failed: {e}")
     
-    async def delete_user():
-        self,
-        user_id: UUID,
+    async def delete_user(self,
+        user_id): UUID,
         deleted_by: str,
         soft_delete: bool = True
     ) -> Dict[str, Any]:
@@ -333,7 +327,6 @@ class UserManagementService:
             
             result = await self.db.execute()
                 select(User).where(User.id == user_id)
-            )
             user = result.scalar_one_or_none()
             
             if not user:
@@ -364,15 +357,13 @@ class UserManagementService:
                     "user_id": str(user_id),
                     "status": "deleted",
                     "deleted_at": datetime.now(timezone.utc).isoformat()
-                )
             
         except Exception as e:
             logger.error(f"User deletion failed: {e}")
             raise ValidationError(f"User deletion failed: {e}")
     
-    async def invite_user():
-        self,
-        invitation: UserInvite,
+    async def invite_user(self,
+        invitation): UserInvite,
         invited_by: str,
         tenant_id: Optional[UUID] = None
     ) -> Dict[str, Any]:
@@ -393,7 +384,6 @@ class UserManagementService:
             # Check if user already exists
             existing_user_result = await self.db.execute()
                 select(User).where(User.email == invitation.email)
-            )
             existing_user = existing_user_result.scalar_one_or_none()
             
             if existing_user:
@@ -417,8 +407,6 @@ class UserManagementService:
                     "invited_at": datetime.now(timezone.utc).isoformat(),
                     "invitation_expires_at": (datetime.now(timezone.utc) + timedelta(days=7).isoformat())
                     "custom_message": invitation.custom_message
-                )
-            )
             
             self.db.add(user)
             await self.db.commit()
@@ -435,15 +423,13 @@ class UserManagementService:
                 "expires_at": (datetime.now(timezone.utc) + timedelta(days=7).isoformat())
                 "invited_at": datetime.now(timezone.utc).isoformat(),
                 "status": "invitation_sent"
-            )
             
         except Exception as e:
             logger.error(f"User invitation failed: {e}")
             raise ValidationError(f"User invitation failed: {e}")
     
-    async def accept_invitation():
-        self,
-        invitation_token: str,
+    async def accept_invitation(self,
+        invitation_token): str,
         password: str
     ) -> Dict[str, Any]:
         """
@@ -463,8 +449,6 @@ class UserManagementService:
             result = await self.db.execute()
                 select(User).where()
                     User.metadata.contains({"invitation_token": invitation_token})
-                )
-            )
             user = result.scalar_one_or_none()
             
             if not user:
@@ -509,9 +493,8 @@ class UserManagementService:
             logger.error(f"Invitation acceptance failed: {e}")
             raise ValidationError(f"Invitation acceptance failed: {e}")
     
-    async def reset_password():
-        self,
-        email: str,
+    async def reset_password(self,
+        email): str,
         new_password: Optional[str] = None
     ) -> Dict[str, Any]:
         """
@@ -529,7 +512,6 @@ class UserManagementService:
             
             result = await self.db.execute()
                 select(User).where(User.email == email)
-            )
             user = result.scalar_one_or_none()
             
             if not user:
@@ -568,9 +550,8 @@ class UserManagementService:
             logger.error(f"Password reset failed: {e}")
             raise ValidationError(f"Password reset failed: {e}")
     
-    async def change_password():
-        self,
-        user_id: UUID,
+    async def change_password(self,
+        user_id): UUID,
         current_password: str,
         new_password: str
     ) -> Dict[str, Any]:
@@ -590,7 +571,6 @@ class UserManagementService:
             
             result = await self.db.execute()
                 select(User).where(User.id == user_id)
-            )
             user = result.scalar_one_or_none()
             
             if not user:
@@ -623,9 +603,8 @@ class UserManagementService:
             logger.error(f"Password change failed: {e}")
             raise ValidationError(f"Password change failed: {e}")
     
-    async def get_user_permissions():
-        self,
-        user_id: UUID,
+    async def get_user_permissions(self,
+        user_id): UUID,
         include_role_permissions: bool = True
     ) -> Dict[str, Any]:
         """
@@ -641,7 +620,6 @@ class UserManagementService:
         try:
             result = await self.db.execute()
                 select(User).where(User.id == user_id)
-            )
             user = result.scalar_one_or_none()
             
             if not user:
@@ -665,9 +643,8 @@ class UserManagementService:
             logger.error(f"Failed to get user permissions: {e}")
             raise ValidationError(f"Failed to get user permissions: {e}")
     
-    async def assign_permissions():
-        self,
-        user_id: UUID,
+    async def assign_permissions(self,
+        user_id): UUID,
         permissions: List[str],
         assigned_by: str
     ) -> Dict[str, Any]:
@@ -687,7 +664,6 @@ class UserManagementService:
             
             result = await self.db.execute()
                 select(User).where(User.id == user_id)
-            )
             user = result.scalar_one_or_none()
             
             if not user:
@@ -727,9 +703,8 @@ class UserManagementService:
             logger.error(f"Permission assignment failed: {e}")
             raise ValidationError(f"Permission assignment failed: {e}")
     
-    async def revoke_permissions():
-        self,
-        user_id: UUID,
+    async def revoke_permissions(self,
+        user_id): UUID,
         permissions: List[str],
         revoked_by: str
     ) -> Dict[str, Any]:
@@ -749,7 +724,6 @@ class UserManagementService:
             
             result = await self.db.execute()
                 select(User).where(User.id == user_id)
-            )
             user = result.scalar_one_or_none()
             
             if not user:
@@ -783,9 +757,8 @@ class UserManagementService:
             logger.error(f"Permission revocation failed: {e}")
             raise ValidationError(f"Permission revocation failed: {e}")
     
-    async def get_users_by_tenant():
-        self,
-        tenant_id: UUID,
+    async def get_users_by_tenant(self,
+        tenant_id): UUID,
         include_inactive: bool = False,
         limit: int = 100,
         offset: int = 0

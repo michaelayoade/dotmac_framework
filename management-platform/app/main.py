@@ -24,21 +24,25 @@ from startup.error_handling import (
 )
 from health.comprehensive_checks import setup_health_checker
 from health.endpoints import add_health_endpoints, add_startup_status_endpoint
+from security.api_security_integration import setup_complete_api_security
 
-from .api.portals import portals_router
-from .api.v1 import api_router
-from .config import settings
-from .core.exceptions import add_exception_handlers
-from .core.logging import configure_logging, get_logger
-from .core.middleware import (
+from api.portals import portals_router
+from api.v1 import api_router
+from config import settings
+from core.exceptions import add_exception_handlers
+from core.logging import configure_logging, get_logger
+from core.middleware import (
     LoggingMiddleware,
     RateLimitMiddleware,
     RequestValidationMiddleware,
     SecurityHeadersMiddleware,
     TenantIsolationMiddleware,
 )
-from .core.observability import init_observability, get_observability
-from .database import close_database, init_database
+from core.observability import init_observability, get_observability
+from core.security_validator import startup_security_check
+from core.csrf_middleware import add_csrf_protection
+from core.tenant_security import init_management_tenant_security, add_management_tenant_security_middleware
+from database import close_database, init_database
 
 # Configure comprehensive logging
 configure_logging(
@@ -63,6 +67,14 @@ async def lifespan(app: FastAPI):
     ) as startup_manager:
         
         logger.info("Starting DotMac Management Platform...")
+        
+        # Security validation first
+        try:
+            security_result = startup_security_check()
+            logger.info("✅ Security validation completed")
+        except Exception as e:
+            logger.error(f"❌ Security validation failed: {e}")
+            raise
         
         # Initialize database with retry
         db_result = await initialize_database_with_retry(
@@ -142,6 +154,51 @@ async def lifespan(app: FastAPI):
             metadata = plugin_result.metadata.get("result", {})
             logger.info(f"✅ Plugin system initialized: {metadata.get('registered_count', 0)} plugins registered")
         
+        # Initialize Management Platform tenant security
+        async def init_mgmt_tenant_sec():
+            from database import engine, get_session
+            async with get_session() as session:
+                return await init_management_tenant_security(engine, session)
+        
+        mgmt_tenant_security_result = await startup_manager.execute_with_retry(
+            operation=init_mgmt_tenant_sec,
+            phase=StartupPhase.SECURITY,
+            component="Management Tenant Security",
+            severity=StartupErrorSeverity.MEDIUM,
+            max_retries=1
+        )
+        
+        if mgmt_tenant_security_result.success:
+            logger.info("🔒 Management Platform tenant security initialized")
+        
+        # Initialize comprehensive API security
+        async def init_api_security():
+            return await setup_complete_api_security(
+                app=app,
+                environment=settings.environment,
+                jwt_secret_key=settings.secret_key,
+                redis_url=settings.redis_url,
+                api_type="admin",  # Management platform is admin API
+                tenant_domains=settings.cors_origins,
+                validate_implementation=True
+            )
+        
+        api_security_result = await startup_manager.execute_with_retry(
+            operation=init_api_security,
+            phase=StartupPhase.SECURITY,
+            component="API Security Suite",
+            severity=StartupErrorSeverity.HIGH,
+            max_retries=1
+        )
+        
+        if api_security_result.success:
+            security_data = api_security_result.metadata.get("result", {})
+            app.state.api_security_suite = security_data.get("security_suite")
+            validation_result = security_data.get("validation_result", {})
+            logger.info(f"🛡️ API Security Suite initialized - Status: {validation_result.get('overall_status', 'UNKNOWN')} - Score: {validation_result.get('security_score', 0):.1f}%")
+        else:
+            logger.warning("⚠️ API Security Suite initialization failed - using fallback security")
+        
         # Set up comprehensive health checks
         health_checker = setup_health_checker(
             service_name="DotMac Management Platform",
@@ -196,15 +253,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Add middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.cors_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
+# Essential middleware (API Security Suite handles most security middleware)
 trusted_hosts = (
     ["localhost", "127.0.0.1", "149.102.135.97", "testserver", "*.dotmac.app"]
     if not settings.is_production
@@ -216,10 +265,13 @@ app.add_middleware(
 )
 
 app.add_middleware(LoggingMiddleware)
-app.add_middleware(RateLimitMiddleware, calls_per_minute=settings.rate_limit_per_minute)
-app.add_middleware(RequestValidationMiddleware)
-app.add_middleware(SecurityHeadersMiddleware)
-app.add_middleware(TenantIsolationMiddleware)
+app.add_middleware(TenantIsolationMiddleware)  # Keep tenant isolation
+
+# Add CSRF protection
+add_csrf_protection(app)
+
+# Add management tenant security middleware
+add_management_tenant_security_middleware(app)
 
 # Add exception handlers
 add_exception_handlers(app)

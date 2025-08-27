@@ -10,4 +10,4 @@ export { default as userEvent } from '@testing-library/user-event';
 export { axe, toHaveNoViolations } from 'jest-axe';
 
 // Test configuration and utilities
-export { testConfig, testUtils, a11yUtils, securityUtils, perfUtils } from './jest/setup.js';
+export { testConfig, testUtils, a11yUtils, securityUtils, perfUtils } from './jest/setup';

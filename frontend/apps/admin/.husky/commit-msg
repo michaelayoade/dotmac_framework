@@ -1,0 +1,48 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "📝 Validating commit message..."
+
+# Read the commit message
+commit_message=$(cat "$1")
+
+# Define the commit message format pattern
+# Format: type(scope): subject
+# Types: feat, fix, docs, style, refactor, perf, test, build, ci, chore
+pattern="^(feat|fix|docs|style|refactor|perf|test|build|ci|chore)(\(.+\))?: .{1,50}"
+
+if echo "$commit_message" | grep -qE "$pattern"; then
+  echo "✅ Commit message format is valid"
+else
+  echo "❌ Commit message format is invalid!"
+  echo ""
+  echo "Expected format: type(scope): subject"
+  echo ""
+  echo "Types: feat, fix, docs, style, refactor, perf, test, build, ci, chore"
+  echo "Scope: optional"
+  echo "Subject: 1-50 characters"
+  echo ""
+  echo "Examples:"
+  echo "  feat(auth): add login rate limiting"
+  echo "  fix: resolve memory leak in data table"
+  echo "  docs: update API integration guide"
+  echo ""
+  echo "Your message:"
+  echo "  $commit_message"
+  exit 1
+fi
+
+# Check for imperative mood (simple heuristic)
+subject=$(echo "$commit_message" | sed 's/^[^:]*: //')
+first_word=$(echo "$subject" | awk '{print tolower($1)}')
+
+# Common non-imperative words that should be avoided
+non_imperative_words="added|fixed|updated|changed|removed|deleted|created"
+
+if echo "$first_word" | grep -qE "$non_imperative_words"; then
+  echo "⚠️  Warning: Consider using imperative mood in commit subject"
+  echo "   Instead of '$first_word', consider: add, fix, update, change, remove, delete, create"
+  echo ""
+fi
+
+echo "✅ Commit message validation passed!"

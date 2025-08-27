@@ -424,7 +424,7 @@ class NetworkMonitoringService:
         else:
             # Get all metrics
             metrics = self.metric_repo.get_latest_metrics(device_id, None, 24)
-            unique_metrics = list(set(m.metric_name for m in metrics)
+            unique_metrics = list(set(m.metric_name for m in metrics))
 
             for metric_name in unique_metrics:
                 timeseries = self.metric_repo.get_metric_timeseries(

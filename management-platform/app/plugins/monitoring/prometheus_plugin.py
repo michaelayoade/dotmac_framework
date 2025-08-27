@@ -18,21 +18,19 @@ class PrometheusMonitoringPlugin(MonitoringProviderPlugin):
     
     @property
     def meta(self) -> PluginMeta:
-        return PluginMeta()
-            name="prometheus_monitoring",
+        return PluginMeta(name="prometheus_monitoring",
             version="1.0.0",
             plugin_type=PluginType.MONITORING_PROVIDER,
             description="Prometheus metrics collection and alerting",
             author="DotMac Platform",
             configuration_schema={
-                "prometheus_url": {"type": "string", "required": True},
+                "prometheus_url": {"type": "string", "required": True),
                 "alertmanager_url": {"type": "string", "required": False},
                 "default_scrape_interval": {"type": "string", "default": "15s"},
                 "query_timeout": {"type": "integer", "default": 30},
                 "basic_auth_username": {"type": "string", "required": False},
                 "basic_auth_password": {"type": "string", "required": False, "sensitive": True}
             }
-        )
     
     async def initialize(self) -> bool:
         """Initialize Prometheus plugin."""
@@ -45,7 +43,7 @@ class PrometheusMonitoringPlugin(MonitoringProviderPlugin):
             return True
             
         except Exception as e:
-)            self.log_error(e, "initialization")
+    )            self.log_error(e, "initialization")
             return False
     
     async def validate_configuration(self, config: Dict[str, Any]) -> bool:
@@ -245,7 +243,7 @@ class PrometheusMonitoringPlugin(MonitoringProviderPlugin):
                     if response.status == 200:
                         return await response.model_dump_json()
                     else:
-)                        error_text = await response.text()
+    )                        error_text = await response.text()
                         raise Exception(f"Prometheus query failed: {response.status} - {error_text}")
                         
         except Exception as e:

@@ -176,7 +176,6 @@ class AnalyticsService:
             # Revenue time series
             revenue_series = await self._get_revenue_time_series()
                 filters, start_date, end_date, granularity
-            )
             
             # Revenue by plan
             revenue_by_plan = await self._get_revenue_by_plan(filters, start_date, end_date)
@@ -184,12 +183,10 @@ class AnalyticsService:
             # Revenue cohort analysis
             cohort_analysis = await self._get_revenue_cohort_analysis()
                 tenant_id, start_date, end_date
-            )
             
             # MRR/ARR calculations
             recurring_revenue = await self._calculate_recurring_revenue()
                 tenant_id, end_date
-            )
             
             # Revenue forecasting
             forecast = await self._forecast_revenue(revenue_series, granularity)
@@ -260,12 +257,10 @@ class AnalyticsService:
             # Infrastructure usage
             infrastructure_usage = await self._get_infrastructure_usage()
                 tenant_id, start_date, end_date
-            )
             
             # Notification usage
             notification_usage = await self._get_notification_usage()
                 tenant_id, start_date, end_date
-            )
             
             # API usage (would need API logging table)
             api_usage = await self._get_api_usage(tenant_id, start_date, end_date)
@@ -276,12 +271,10 @@ class AnalyticsService:
             # User activity patterns
             user_activity = await self._get_user_activity_patterns()
                 tenant_id, start_date, end_date
-            )
             
             # Peak usage analysis
             peak_usage = await self._get_peak_usage_analysis()
                 tenant_id, start_date, end_date
-            )
             
             return {
                 "period": {
@@ -463,7 +456,7 @@ class AnalyticsService:
             # Calculate changes
             kpis = {}
             for metric, current_value in current_metrics.items(:
-)                previous_value = previous_metrics.get(metric, 0)
+    )                previous_value = previous_metrics.get(metric, 0)
                 change = self._calculate_percentage_change(previous_value, current_value)
                 
                 kpis[metric] = {
@@ -499,15 +492,12 @@ class AnalyticsService:
         # Total tenants
         total_result = await self.db.execute(
 )            select(func.count(Tenant.id).where(and_(*tenant_filter)
-        )
         total_tenants = total_result.scalar()
         
         # Active tenants
 )        active_result = await self.db.execute()
             select(func.count(Tenant.id).where())
                 and_(Tenant.is_active == True, *tenant_filter)
-            )
-        )
         active_tenants = active_result.scalar()
         
         # New tenants in period
@@ -517,9 +507,6 @@ class AnalyticsService:
                     Tenant.created_at >= start_date,
                     Tenant.created_at <= end_date,
                     *tenant_filter
-                )
-            )
-        )
         new_tenants = new_result.scalar()
         
         return {
@@ -558,9 +545,6 @@ class AnalyticsService:
                         User.tenant_id.in_(
 )                            select(Tenant.id).where(and_(*tenant_filter)
                         ) if tenant_filter else True
-                    )
-                )
-            )
             user_count = user_result.scalar()
             
 )            growth_data.append({)
@@ -585,15 +569,11 @@ class AnalyticsService:
             filters.append(
 )                Subscription.tenant_id.in_()
                     select(Tenant.id).where(and_(*tenant_filter)
-                )
-            )
         
         # Active subscriptions
         active_result = await self.db.execute(
 )            select(func.count(Subscription.id).where()
                 and_(Subscription.status == "active", *filters)
-            )
-        )
         active_subscriptions = active_result.scalar()
         
         # New subscriptions in period
@@ -603,9 +583,6 @@ class AnalyticsService:
                     Subscription.created_at >= start_date,
                     Subscription.created_at <= end_date,
                     *filters
-                )
-            )
-        )
         new_subscriptions = new_result.scalar()
         
         # Cancelled subscriptions
@@ -616,9 +593,6 @@ class AnalyticsService:
                     Subscription.updated_at >= start_date,
                     Subscription.updated_at <= end_date,
                     *filters
-                )
-            )
-        )
         cancelled_subscriptions = cancelled_result.scalar()
         
         return {
@@ -626,7 +600,6 @@ class AnalyticsService:
             "new_subscriptions": new_subscriptions,
             "cancelled_subscriptions": cancelled_subscriptions,
 )            "churn_rate": (cancelled_subscriptions / max(active_subscriptions, 1) * 100
-        )
     
     async def _get_usage_metrics(:)
         self,
@@ -642,8 +615,6 @@ class AnalyticsService:
             deployment_filters.append(
 )                InfrastructureDeployment.tenant_id.in_()
                     select(Tenant.id).where(and_(*tenant_filter)
-                )
-            )
         
         deployment_result = await self.db.execute(
 )            select(func.count(InfrastructureDeployment.id).where()
@@ -651,19 +622,14 @@ class AnalyticsService:
                     InfrastructureDeployment.created_at >= start_date,
                     InfrastructureDeployment.created_at <= end_date,
                     *deployment_filters
-                )
-            )
-        )
         deployments = deployment_result.scalar()
         
         # Notifications
         notification_filters = []
         if tenant_filter:
-)            notification_filters.append()
+    )            notification_filters.append()
                 NotificationLog.tenant_id.in_(
 )                    select(Tenant.id).where(and_(*tenant_filter)
-                )
-            )
         
         notification_result = await self.db.execute(
 )            select()
@@ -674,9 +640,6 @@ class AnalyticsService:
                     NotificationLog.created_at >= start_date,
                     NotificationLog.created_at <= end_date,
                     *notification_filters
-                )
-            )
-        )
         total_notifications, delivered_notifications = notification_result.one()
         
         return {
@@ -684,7 +647,6 @@ class AnalyticsService:
             "total_notifications": total_notifications,
             "delivered_notifications": delivered_notifications,
 )            "notification_delivery_rate": (delivered_notifications / max(total_notifications, 1) * 100
-        )
     
     async def _get_top_tenants(:)
         self,
@@ -698,30 +660,25 @@ class AnalyticsService:
 )            select()
                 Invoice.tenant_id,
                 func.sum(Payment.amount).label("total_revenue")
-            )
             .join(Payment, Invoice.id == Payment.invoice_id)
             .where()
                 and_()
                     Payment.status == "completed",
                     Payment.processed_at >= start_date,
                     Payment.processed_at <= end_date
-                )
-            )
             .group_by(Invoice.tenant_id)
             .order_by(func.sum(Payment.amount).desc())
             .limit(limit)
-        )
         
         top_tenants = []
         for tenant_id, revenue in revenue_result.all(:)
             # Get tenant details
 )            tenant_result = await self.db.execute()
                 select(Tenant).where(Tenant.id == tenant_id)
-            )
             tenant = tenant_result.scalar_one_or_none()
             
             if tenant:
-)                top_tenants.append({)
+    )                top_tenants.append({)
                     "tenant_id": str(tenant_id),
                     "tenant_name": tenant.name,
                     "total_revenue": float(revenue),
@@ -752,25 +709,20 @@ class AnalyticsService:
                 func.date_trunc(date_trunc_format, Payment.processed_at).label("period"),
                 func.sum(Payment.amount).label("revenue"),
                 func.count(Payment.id).label("payment_count")
-            )
             .join(Invoice, Payment.invoice_id == Invoice.id)
             .where()
                 and_()
                     Payment.processed_at >= start_date,
                     Payment.processed_at <= end_date,
                     *filters
-                )
-            )
             .group_by(func.date_trunc(date_trunc_format, Payment.processed_at))
             .order_by(func.date_trunc(date_trunc_format, Payment.processed_at)
-        )
         
         return [
             {
                 "period": period.isoformat(,
 )                "revenue": float(revenue),
                 "payment_count": payment_count
-            )
             for period, revenue, payment_count in result.all( ])
     
 )    def _calculate_growth_rate(self, time_series: List[Dict[str, Any]]) -> float:
@@ -795,8 +747,81 @@ class AnalyticsService:
     
     # Placeholder methods for additional analytics features
     async def _get_revenue_by_plan(self, filters, start_date, end_date):
-        """Get revenue breakdown by billing plan."""
-        return {"premium": 50000, "standard": 30000, "basic": 15000}
+        """Get revenue broken down by billing plan."""
+        # Placeholder implementation
+        return {}
+    
+    async def get_tenant_usage_summary(
+        self, 
+        tenant_id: str, 
+        period_days: int = 30
+    ) -> Dict[str, Any]:
+        """Get tenant usage summary for specified period."""
+        try:
+            # Mock data - in production this would query actual usage metrics
+            return {
+                "current_usage": {
+                    "active_customers": 1247,
+                    "active_services": 3891,
+                    "storage_used_gb": 67.5,
+                    "bandwidth_used_gb": 1250.0,
+                    "api_requests": 450000
+                },
+                "utilization": {
+                    "storage_percent": 67.5,
+                    "cpu_percent": 45.2,
+                    "memory_percent": 68.7
+                },
+                "performance": {
+                    "avg_response_time_ms": 185,
+                    "avg_uptime_percent": 99.95,
+                    "total_api_requests": 450000
+                },
+                "new_customers": 25,
+                "churned_customers": 3,
+                "services_provisioned": 127,
+                "services_deprovisioned": 8,
+                "estimated_monthly_cost": 2650.0
+            }
+        except Exception as e:
+            logger.error(f"Error getting usage summary for tenant {tenant_id}: {e}")
+            return {}
+    
+    async def get_recent_activity(self, tenant_id: str, hours: int = 24) -> Dict[str, Any]:
+        """Get recent activity metrics for tenant."""
+        try:
+            # Mock data - in production this would query actual activity logs
+            return {
+                "logins_24h": 156,
+                "api_calls_24h": 12450,
+                "open_tickets": 2,
+                "failed_logins": 5,
+                "new_users": 3,
+                "service_changes": 1
+            }
+        except Exception as e:
+            logger.error(f"Error getting recent activity for tenant {tenant_id}: {e}")
+            return {}
+    
+    async def get_performance_metrics(
+        self, 
+        tenant_id: str, 
+        period_days: int = 30
+    ) -> Dict[str, Any]:
+        """Get performance metrics for tenant."""
+        try:
+            # Mock data - in production this would query monitoring systems
+            return {
+                "api_requests_total": 450000,
+                "avg_response_time_ms": 185,
+                "uptime_percentage": 99.95,
+                "error_count": 45,
+                "peak_concurrent_users": 250,
+                "cache_hit_rate": 89.5
+            }
+        except Exception as e:
+            logger.error(f"Error getting performance metrics for tenant {tenant_id}: {e}")
+            return {}
     
     async def _get_revenue_cohort_analysis(self, tenant_id, start_date, end_date):
         """Get revenue cohort analysis."""

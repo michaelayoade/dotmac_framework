@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     """Application settings with validation and security."""
     
     model_config = SettingsConfigDict(
-        env_file=[".env", ".env.local"],
+        env_file=[".env.development", ".env", ".env.local"],
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore"
@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     environment: str = Field(default="development", pattern="^(development|staging|production)$")
     
     # Server
-    host: str = "127.0.0.1"
+    host: str = Field(default="127.0.0.1", description="Server host")
     port: int = Field(default=8000, ge=1, le=65535)
     reload: bool = False
     
@@ -38,17 +38,17 @@ class Settings(BaseSettings):
     redoc_url: Optional[str] = "/redoc"
     openapi_url: Optional[str] = "/openapi.json"
     
-    # Security  
-    secret_key: str = Field(default="development-secret-key-change-in-production")
-    jwt_secret_key: str = Field(default="development-jwt-secret-change-in-production")
+    # Security - NO DEFAULTS FOR PRODUCTION SECRETS
+    secret_key: str = Field(..., min_length=32, description="Application secret key (required)")
+    jwt_secret_key: str = Field(..., min_length=32, description="JWT secret key (required)")
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
     refresh_token_expire_days: int = 7
     
     # Database
     database_url: str = Field(
-        default="postgresql+asyncpg://mgmt_user:mgmt_pass@localhost:5432/mgmt_platform",
-        description="Database connection URL"
+        ...,
+        description="Database connection URL (required)"
     )
     database_pool_size: int = Field(default=10, ge=1, le=100)
     database_max_overflow: int = Field(default=20, ge=0, le=50)
@@ -58,15 +58,14 @@ class Settings(BaseSettings):
     database_echo: bool = False
     
     # Redis
-    redis_url: str = "redis://localhost:6379/0"
+    redis_url: str = Field(..., description="Redis connection URL (required)")
     redis_max_connections: int = 50
     
-    # CORS
-    cors_origins: List[str] = [
-        "http://localhost:3000",  # Master Admin Portal
-        "http://localhost:3001",  # Tenant Admin Portal
-        "http://localhost:3002",  # Reseller Portal
-    ]
+    # CORS - Environment-specific origins
+    cors_origins: List[str] = Field(
+        default=["http://localhost:3000", "http://localhost:3001", "http://localhost:3002"],
+        description="CORS allowed origins"
+    )
     
     # Multi-tenant
     enable_tenant_isolation: bool = True
@@ -91,17 +90,17 @@ class Settings(BaseSettings):
     kubernetes_namespace_prefix: str = "dotmac-tenant"
     
     # OpenBao/Vault
-    vault_url: Optional[str] = "http://localhost:8200"
+    vault_url: Optional[str] = Field(None, description="Vault URL for secrets management")
     vault_token: Optional[str] = None
     
     # Monitoring
-    signoz_endpoint: str = "localhost:4317"
+    signoz_endpoint: str = Field(..., description="SignOz endpoint (required)")
     signoz_access_token: Optional[str] = None
     enable_metrics: bool = True
     
     # Background Tasks
-    celery_broker_url: str = "redis://localhost:6379/1"
-    celery_result_backend: str = "redis://localhost:6379/2"
+    celery_broker_url: str = Field(..., description="Celery broker URL (required)")
+    celery_result_backend: str = Field(..., description="Celery result backend URL (required)")
     celery_worker_concurrency: int = 4
     
     # Logging
@@ -115,10 +114,10 @@ class Settings(BaseSettings):
     @field_validator('environment')
     @classmethod
     def validate_environment(cls, v: str) -> str:
-        """Validate environment and adjust settings accordingly."""
-        if v == "production":
-            # Security validations for production
-            pass
+        """Validate environment and enforce security requirements."""
+        valid_environments = ['development', 'staging', 'production']
+        if v not in valid_environments:
+            raise ValueError(f"Environment must be one of: {valid_environments}")
         return v
     
     @field_validator('cors_origins', mode='before')
@@ -137,10 +136,26 @@ class Settings(BaseSettings):
     @field_validator('secret_key', 'jwt_secret_key')
     @classmethod
     def validate_secrets(cls, v: str, info) -> str:
-        """Validate secrets are not using default values in production."""
+        """Validate secrets meet security requirements."""
+        if len(v) < 32:
+            raise ValueError(f"Secret keys must be at least 32 characters long")
+        
+        # Check for common insecure patterns
+        insecure_patterns = [
+            'development', 'change', 'default', 'secret', 'password',
+            '123', 'test', 'demo', 'example', 'placeholder'
+        ]
+        
+        v_lower = v.lower()
+        for pattern in insecure_patterns:
+            if pattern in v_lower:
+                raise ValueError(f"Secret key contains insecure pattern: '{pattern}'")
+        
+        # Production environment additional checks
         if hasattr(info.data, 'environment') and info.data.get('environment') == 'production':
-            if 'development' in v.lower() or 'change' in v.lower():
-                raise ValueError(f"Production environment requires secure {info.field_name}")
+            if v == info.data.get('jwt_secret_key') if info.field_name == 'secret_key' else v == info.data.get('secret_key'):
+                raise ValueError("secret_key and jwt_secret_key must be different in production")
+        
         return v
     
     @property
@@ -156,6 +171,41 @@ class Settings(BaseSettings):
         if async_driver and not self.database_url.startswith("postgresql+asyncpg"):
             return self.database_url.replace("postgresql://", "postgresql+asyncpg://")
         return self.database_url
+    
+    @property
+    def is_secure_deployment(self) -> bool:
+        """Check if this is a secure deployment configuration."""
+        return (
+            self.is_production and 
+            len(self.secret_key) >= 32 and
+            len(self.jwt_secret_key) >= 32 and
+            not any(origin.startswith('http://localhost') for origin in self.cors_origins)
+        )
+    
+    def validate_production_security(self) -> List[str]:
+        """Validate production security requirements."""
+        issues = []
+        
+        if self.is_production:
+            # Check secret keys
+            if len(self.secret_key) < 32:
+                issues.append("secret_key must be at least 32 characters for production")
+            if len(self.jwt_secret_key) < 32:
+                issues.append("jwt_secret_key must be at least 32 characters for production")
+            
+            # Check CORS origins
+            if any(origin.startswith('http://localhost') for origin in self.cors_origins):
+                issues.append("CORS origins should not include localhost in production")
+            
+            # Check database URL
+            if 'localhost' in self.database_url:
+                issues.append("Database URL should not use localhost in production")
+            
+            # Check Redis URL
+            if 'localhost' in self.redis_url:
+                issues.append("Redis URL should not use localhost in production")
+        
+        return issues
 
 
 @lru_cache()

@@ -2,26 +2,26 @@
 
 import { Card } from '@dotmac/styled-components/customer';
 import {
+  Activity,
   AlertCircle,
+  BookOpen,
   CheckCircle,
   Clock,
+  ExternalLink,
   HelpCircle,
+  MessageSquare,
+  Monitor,
+  Phone,
   Play,
   RefreshCw,
   Router,
   Settings,
   Smartphone,
+  Video,
   Wifi,
   WifiOff,
-  Monitor,
-  Phone,
-  Activity,
-  ExternalLink,
-  BookOpen,
-  Video,
-  MessageSquare,
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 interface DiagnosticStep {
   id: string;
@@ -225,12 +225,12 @@ export function ServiceTroubleshooting() {
 
     for (let i = 0; i < diagnostics.length; i++) {
       // Update step status to running
-      setDiagnostics((prev) =>
+      setDiagnostics(prev =>
         prev.map((step, index) => (index === i ? { ...step, status: 'running' } : step))
       );
 
       // Simulate diagnostic duration
-      await new Promise((resolve) => setTimeout(resolve, diagnostics[i].duration! * 100));
+      await new Promise(resolve => setTimeout(resolve, diagnostics[i].duration! * 100));
 
       // Simulate results
       const results = [
@@ -241,7 +241,7 @@ export function ServiceTroubleshooting() {
         { status: 'completed', result: 'All equipment online and functioning' },
       ];
 
-      setDiagnostics((prev) =>
+      setDiagnostics(prev =>
         prev.map((step, index) =>
           index === i
             ? {
@@ -269,13 +269,13 @@ export function ServiceTroubleshooting() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'operational':
-        return <CheckCircle className='h-5 w-5 text-green-600' />;
+        return <CheckCircle className="h-5 w-5 text-green-600" />;
       case 'maintenance':
-        return <Clock className='h-5 w-5 text-yellow-600' />;
+        return <Clock className="h-5 w-5 text-yellow-600" />;
       case 'outage':
-        return <AlertCircle className='h-5 w-5 text-red-600' />;
+        return <AlertCircle className="h-5 w-5 text-red-600" />;
       default:
-        return <HelpCircle className='h-5 w-5 text-gray-600' />;
+        return <HelpCircle className="h-5 w-5 text-gray-600" />;
     }
   };
 
@@ -304,40 +304,40 @@ export function ServiceTroubleshooting() {
   const getCategoryIcon = (category: string) => {
     switch (category) {
       case 'internet':
-        return <Wifi className='h-5 w-5 text-blue-600' />;
+        return <Wifi className="h-5 w-5 text-blue-600" />;
       case 'phone':
-        return <Phone className='h-5 w-5 text-green-600' />;
+        return <Phone className="h-5 w-5 text-green-600" />;
       case 'tv':
-        return <Monitor className='h-5 w-5 text-purple-600' />;
+        return <Monitor className="h-5 w-5 text-purple-600" />;
       default:
-        return <Settings className='h-5 w-5 text-gray-600' />;
+        return <Settings className="h-5 w-5 text-gray-600" />;
     }
   };
 
   if (selectedGuide) {
     return (
-      <div className='space-y-6'>
-        <div className='flex items-center justify-between'>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
           <button
             onClick={() => setSelectedGuide(null)}
-            className='text-blue-600 hover:text-blue-800 font-medium'
+            className="text-blue-600 hover:text-blue-800 font-medium"
           >
             ← Back to Troubleshooting Guides
           </button>
         </div>
 
-        <Card className='p-6'>
-          <div className='mb-6'>
-            <div className='flex items-center mb-2'>
+        <Card className="p-6">
+          <div className="mb-6">
+            <div className="flex items-center mb-2">
               {getCategoryIcon(selectedGuide.category)}
-              <h2 className='ml-2 text-2xl font-bold text-gray-900'>{selectedGuide.title}</h2>
+              <h2 className="ml-2 text-2xl font-bold text-gray-900">{selectedGuide.title}</h2>
             </div>
-            <p className='text-gray-600 mb-4'>{selectedGuide.description}</p>
+            <p className="text-gray-600 mb-4">{selectedGuide.description}</p>
 
-            <div className='flex items-center space-x-4 text-sm'>
-              <div className='flex items-center'>
-                <Clock className='mr-1 h-4 w-4 text-gray-400' />
-                <span className='text-gray-600'>{selectedGuide.estimatedTime}</span>
+            <div className="flex items-center space-x-4 text-sm">
+              <div className="flex items-center">
+                <Clock className="mr-1 h-4 w-4 text-gray-400" />
+                <span className="text-gray-600">{selectedGuide.estimatedTime}</span>
               </div>
               <span
                 className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getDifficultyBadge(selectedGuide.difficulty)}`}
@@ -345,20 +345,20 @@ export function ServiceTroubleshooting() {
                 {selectedGuide.difficulty}
               </span>
               {selectedGuide.videoUrl && (
-                <button className='flex items-center text-blue-600 hover:text-blue-800'>
-                  <Video className='mr-1 h-4 w-4' />
+                <button className="flex items-center text-blue-600 hover:text-blue-800">
+                  <Video className="mr-1 h-4 w-4" />
                   Watch Video Guide
                 </button>
               )}
             </div>
           </div>
 
-          <div className='mb-6'>
-            <h3 className='text-lg font-semibold text-gray-900 mb-3'>Common Causes</h3>
-            <ul className='space-y-2'>
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-3">Common Causes</h3>
+            <ul className="space-y-2">
               {selectedGuide.commonCauses.map((cause, index) => (
-                <li key={index} className='flex items-start text-sm text-gray-600'>
-                  <AlertCircle className='mr-2 h-4 w-4 text-yellow-500 flex-shrink-0 mt-0.5' />
+                <li key={index} className="flex items-start text-sm text-gray-600">
+                  <AlertCircle className="mr-2 h-4 w-4 text-yellow-500 flex-shrink-0 mt-0.5" />
                   <span>{cause}</span>
                 </li>
               ))}
@@ -366,36 +366,36 @@ export function ServiceTroubleshooting() {
           </div>
 
           <div>
-            <h3 className='text-lg font-semibold text-gray-900 mb-3'>Step-by-Step Solution</h3>
-            <ol className='space-y-3'>
+            <h3 className="text-lg font-semibold text-gray-900 mb-3">Step-by-Step Solution</h3>
+            <ol className="space-y-3">
               {selectedGuide.steps.map((step, index) => (
-                <li key={index} className='flex items-start'>
-                  <span className='flex-shrink-0 w-6 h-6 bg-blue-600 text-white text-sm font-medium rounded-full flex items-center justify-center mr-3 mt-0.5'>
+                <li key={index} className="flex items-start">
+                  <span className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white text-sm font-medium rounded-full flex items-center justify-center mr-3 mt-0.5">
                     {index + 1}
                   </span>
-                  <span className='text-gray-700'>{step}</span>
+                  <span className="text-gray-700">{step}</span>
                 </li>
               ))}
             </ol>
           </div>
 
-          <div className='mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg'>
-            <div className='flex items-start'>
-              <HelpCircle className='h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0' />
-              <div className='ml-3'>
-                <h4 className='font-medium text-blue-900'>Still Need Help?</h4>
-                <p className='mt-1 text-sm text-blue-700'>
+          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-start">
+              <HelpCircle className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+              <div className="ml-3">
+                <h4 className="font-medium text-blue-900">Still Need Help?</h4>
+                <p className="mt-1 text-sm text-blue-700">
                   If these steps don't resolve your issue, our technical support team is available
                   24/7.
                 </p>
-                <div className='mt-3 flex space-x-4'>
-                  <button className='text-sm text-blue-600 hover:text-blue-800 font-medium'>
+                <div className="mt-3 flex space-x-4">
+                  <button className="text-sm text-blue-600 hover:text-blue-800 font-medium">
                     Chat with Support
                   </button>
-                  <button className='text-sm text-blue-600 hover:text-blue-800 font-medium'>
+                  <button className="text-sm text-blue-600 hover:text-blue-800 font-medium">
                     Schedule a Call
                   </button>
-                  <button className='text-sm text-blue-600 hover:text-blue-800 font-medium'>
+                  <button className="text-sm text-blue-600 hover:text-blue-800 font-medium">
                     Request Technician Visit
                   </button>
                 </div>
@@ -408,22 +408,22 @@ export function ServiceTroubleshooting() {
   }
 
   return (
-    <div className='space-y-6'>
+    <div className="space-y-6">
       <div>
-        <h2 className='text-2xl font-bold text-gray-900'>Troubleshooting & Diagnostics</h2>
-        <p className='mt-1 text-sm text-gray-500'>
+        <h2 className="text-2xl font-bold text-gray-900">Troubleshooting & Diagnostics</h2>
+        <p className="mt-1 text-sm text-gray-500">
           Run diagnostic tests and access self-service troubleshooting guides
         </p>
       </div>
 
       {/* Tab Navigation */}
-      <div className='border-b border-gray-200'>
-        <nav className='-mb-px flex space-x-8'>
+      <div className="border-b border-gray-200">
+        <nav className="-mb-px flex space-x-8">
           {[
             { id: 'diagnostic', label: 'Run Diagnostics', icon: Activity },
             { id: 'guides', label: 'Troubleshooting Guides', icon: BookOpen },
             { id: 'status', label: 'Service Status', icon: Monitor },
-          ].map((tab) => (
+          ].map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
@@ -433,7 +433,7 @@ export function ServiceTroubleshooting() {
                   : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
               }`}
             >
-              <tab.icon className='mr-2 h-4 w-4' />
+              <tab.icon className="mr-2 h-4 w-4" />
               {tab.label}
             </button>
           ))}
@@ -441,17 +441,17 @@ export function ServiceTroubleshooting() {
       </div>
 
       {activeTab === 'diagnostic' && (
-        <Card className='p-6'>
-          <div className='mb-6'>
-            <h3 className='text-lg font-semibold text-gray-900 mb-2'>Network Diagnostic Test</h3>
-            <p className='text-gray-600'>
+        <Card className="p-6">
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Network Diagnostic Test</h3>
+            <p className="text-gray-600">
               Run a comprehensive diagnostic to identify and resolve connectivity issues
               automatically.
             </p>
           </div>
 
-          <div className='mb-6'>
-            <div className='flex space-x-4'>
+          <div className="mb-6">
+            <div className="flex space-x-4">
               <button
                 onClick={runDiagnostic}
                 disabled={isRunningDiagnostic}
@@ -462,62 +462,62 @@ export function ServiceTroubleshooting() {
                 }`}
               >
                 {isRunningDiagnostic ? (
-                  <RefreshCw className='mr-2 h-4 w-4 animate-spin' />
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
-                  <Play className='mr-2 h-4 w-4' />
+                  <Play className="mr-2 h-4 w-4" />
                 )}
                 {isRunningDiagnostic ? 'Running Diagnostic...' : 'Start Diagnostic'}
               </button>
               <button
                 onClick={resetDiagnostic}
                 disabled={isRunningDiagnostic}
-                className='px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Reset
               </button>
             </div>
           </div>
 
-          <div className='space-y-4'>
+          <div className="space-y-4">
             {diagnostics.map((step, index) => (
-              <div key={step.id} className='flex items-center p-4 border rounded-lg'>
-                <div className='flex-shrink-0 mr-4'>
+              <div key={step.id} className="flex items-center p-4 border rounded-lg">
+                <div className="flex-shrink-0 mr-4">
                   {step.status === 'pending' && (
-                    <div className='w-8 h-8 border-2 border-gray-300 rounded-full flex items-center justify-center'>
-                      <span className='text-sm font-medium text-gray-600'>{index + 1}</span>
+                    <div className="w-8 h-8 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                      <span className="text-sm font-medium text-gray-600">{index + 1}</span>
                     </div>
                   )}
                   {step.status === 'running' && (
-                    <div className='w-8 h-8 border-2 border-blue-600 rounded-full flex items-center justify-center'>
-                      <RefreshCw className='h-4 w-4 text-blue-600 animate-spin' />
+                    <div className="w-8 h-8 border-2 border-blue-600 rounded-full flex items-center justify-center">
+                      <RefreshCw className="h-4 w-4 text-blue-600 animate-spin" />
                     </div>
                   )}
                   {step.status === 'completed' && (
-                    <div className='w-8 h-8 bg-green-600 rounded-full flex items-center justify-center'>
-                      <CheckCircle className='h-5 w-5 text-white' />
+                    <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                      <CheckCircle className="h-5 w-5 text-white" />
                     </div>
                   )}
                   {step.status === 'failed' && (
-                    <div className='w-8 h-8 bg-red-600 rounded-full flex items-center justify-center'>
-                      <AlertCircle className='h-5 w-5 text-white' />
+                    <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
+                      <AlertCircle className="h-5 w-5 text-white" />
                     </div>
                   )}
                 </div>
 
-                <div className='flex-grow'>
-                  <h4 className='font-medium text-gray-900'>{step.title}</h4>
-                  <p className='text-sm text-gray-600'>{step.description}</p>
+                <div className="flex-grow">
+                  <h4 className="font-medium text-gray-900">{step.title}</h4>
+                  <p className="text-sm text-gray-600">{step.description}</p>
                   {step.result && (
-                    <p className='mt-1 text-sm text-green-600 font-medium'>{step.result}</p>
+                    <p className="mt-1 text-sm text-green-600 font-medium">{step.result}</p>
                   )}
                   {step.action && (
-                    <p className='mt-1 text-sm text-blue-600'>Recommendation: {step.action}</p>
+                    <p className="mt-1 text-sm text-blue-600">Recommendation: {step.action}</p>
                   )}
                 </div>
 
                 {step.status === 'running' && (
-                  <div className='flex-shrink-0 ml-4'>
-                    <div className='text-sm text-gray-500'>~{step.duration}s</div>
+                  <div className="flex-shrink-0 ml-4">
+                    <div className="text-sm text-gray-500">~{step.duration}s</div>
                   </div>
                 )}
               </div>
@@ -527,23 +527,23 @@ export function ServiceTroubleshooting() {
       )}
 
       {activeTab === 'guides' && (
-        <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-          {troubleshootingGuides.map((guide) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {troubleshootingGuides.map(guide => (
             <Card
               key={guide.id}
-              className='p-6 hover:shadow-lg transition-shadow cursor-pointer'
+              className="p-6 hover:shadow-lg transition-shadow cursor-pointer"
               onClick={() => setSelectedGuide(guide)}
             >
-              <div className='mb-4'>
-                <div className='flex items-center mb-2'>
+              <div className="mb-4">
+                <div className="flex items-center mb-2">
                   {getCategoryIcon(guide.category)}
-                  <h3 className='ml-2 text-lg font-semibold text-gray-900'>{guide.title}</h3>
+                  <h3 className="ml-2 text-lg font-semibold text-gray-900">{guide.title}</h3>
                 </div>
-                <p className='text-gray-600 text-sm mb-3'>{guide.description}</p>
+                <p className="text-gray-600 text-sm mb-3">{guide.description}</p>
 
-                <div className='flex items-center space-x-3 text-sm'>
-                  <div className='flex items-center text-gray-500'>
-                    <Clock className='mr-1 h-4 w-4' />
+                <div className="flex items-center space-x-3 text-sm">
+                  <div className="flex items-center text-gray-500">
+                    <Clock className="mr-1 h-4 w-4" />
                     {guide.estimatedTime}
                   </div>
                   <span
@@ -552,19 +552,19 @@ export function ServiceTroubleshooting() {
                     {guide.difficulty}
                   </span>
                   {guide.videoUrl && (
-                    <div className='flex items-center text-blue-600'>
-                      <Video className='mr-1 h-4 w-4' />
+                    <div className="flex items-center text-blue-600">
+                      <Video className="mr-1 h-4 w-4" />
                       Video
                     </div>
                   )}
                 </div>
               </div>
 
-              <div className='flex items-center justify-between'>
-                <span className='text-sm text-gray-500'>{guide.steps.length} steps</span>
-                <div className='flex items-center text-blue-600'>
-                  <span className='text-sm font-medium'>View Guide</span>
-                  <ExternalLink className='ml-1 h-4 w-4' />
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-500">{guide.steps.length} steps</span>
+                <div className="flex items-center text-blue-600">
+                  <span className="text-sm font-medium">View Guide</span>
+                  <ExternalLink className="ml-1 h-4 w-4" />
                 </div>
               </div>
             </Card>
@@ -573,23 +573,23 @@ export function ServiceTroubleshooting() {
       )}
 
       {activeTab === 'status' && (
-        <div className='space-y-6'>
-          <Card className='p-6'>
-            <h3 className='text-lg font-semibold text-gray-900 mb-4'>Current Service Status</h3>
+        <div className="space-y-6">
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Current Service Status</h3>
 
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-              <div className='space-y-4'>
-                <div className='flex items-center justify-between p-3 border rounded-lg'>
-                  <div className='flex items-center'>
-                    <Wifi className='mr-3 h-5 w-5 text-blue-600' />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex items-center">
+                    <Wifi className="mr-3 h-5 w-5 text-blue-600" />
                     <div>
-                      <p className='font-medium text-gray-900'>Internet Service</p>
-                      <p className='text-sm text-gray-500'>
+                      <p className="font-medium text-gray-900">Internet Service</p>
+                      <p className="text-sm text-gray-500">
                         Last checked: {serviceStatus.internet.lastChecked}
                       </p>
                     </div>
                   </div>
-                  <div className='flex items-center'>
+                  <div className="flex items-center">
                     {getStatusIcon(serviceStatus.internet.status)}
                     <span
                       className={`ml-2 text-sm font-medium capitalize ${getStatusColor(serviceStatus.internet.status)}`}
@@ -599,17 +599,17 @@ export function ServiceTroubleshooting() {
                   </div>
                 </div>
 
-                <div className='flex items-center justify-between p-3 border rounded-lg'>
-                  <div className='flex items-center'>
-                    <Phone className='mr-3 h-5 w-5 text-green-600' />
+                <div className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex items-center">
+                    <Phone className="mr-3 h-5 w-5 text-green-600" />
                     <div>
-                      <p className='font-medium text-gray-900'>Phone Service</p>
-                      <p className='text-sm text-gray-500'>
+                      <p className="font-medium text-gray-900">Phone Service</p>
+                      <p className="text-sm text-gray-500">
                         Last checked: {serviceStatus.phone.lastChecked}
                       </p>
                     </div>
                   </div>
-                  <div className='flex items-center'>
+                  <div className="flex items-center">
                     {getStatusIcon(serviceStatus.phone.status)}
                     <span
                       className={`ml-2 text-sm font-medium capitalize ${getStatusColor(serviceStatus.phone.status)}`}
@@ -620,18 +620,18 @@ export function ServiceTroubleshooting() {
                 </div>
               </div>
 
-              <div className='space-y-4'>
-                <div className='flex items-center justify-between p-3 border rounded-lg'>
-                  <div className='flex items-center'>
-                    <Monitor className='mr-3 h-5 w-5 text-purple-600' />
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex items-center">
+                    <Monitor className="mr-3 h-5 w-5 text-purple-600" />
                     <div>
-                      <p className='font-medium text-gray-900'>TV Service</p>
-                      <p className='text-sm text-gray-500'>
+                      <p className="font-medium text-gray-900">TV Service</p>
+                      <p className="text-sm text-gray-500">
                         Last checked: {serviceStatus.tv.lastChecked}
                       </p>
                     </div>
                   </div>
-                  <div className='flex items-center'>
+                  <div className="flex items-center">
                     {getStatusIcon(serviceStatus.tv.status)}
                     <span
                       className={`ml-2 text-sm font-medium capitalize ${getStatusColor(serviceStatus.tv.status)}`}
@@ -641,17 +641,17 @@ export function ServiceTroubleshooting() {
                   </div>
                 </div>
 
-                <div className='flex items-center justify-between p-3 border rounded-lg'>
-                  <div className='flex items-center'>
-                    <Router className='mr-3 h-5 w-5 text-orange-600' />
+                <div className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex items-center">
+                    <Router className="mr-3 h-5 w-5 text-orange-600" />
                     <div>
-                      <p className='font-medium text-gray-900'>Network Infrastructure</p>
-                      <p className='text-sm text-gray-500'>
+                      <p className="font-medium text-gray-900">Network Infrastructure</p>
+                      <p className="text-sm text-gray-500">
                         Last checked: {serviceStatus.network.lastChecked}
                       </p>
                     </div>
                   </div>
-                  <div className='flex items-center'>
+                  <div className="flex items-center">
                     {getStatusIcon(serviceStatus.network.status)}
                     <span
                       className={`ml-2 text-sm font-medium capitalize ${getStatusColor(serviceStatus.network.status)}`}
@@ -663,12 +663,12 @@ export function ServiceTroubleshooting() {
               </div>
             </div>
 
-            <div className='mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg'>
-              <div className='flex items-start'>
-                <Clock className='h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0' />
-                <div className='ml-3'>
-                  <h4 className='font-medium text-yellow-900'>Scheduled Maintenance</h4>
-                  <p className='mt-1 text-sm text-yellow-700'>
+            <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <div className="flex items-start">
+                <Clock className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+                <div className="ml-3">
+                  <h4 className="font-medium text-yellow-900">Scheduled Maintenance</h4>
+                  <p className="mt-1 text-sm text-yellow-700">
                     TV service maintenance is currently in progress. Expected completion: Today at
                     2:00 PM PST. Some channels may be temporarily unavailable.
                   </p>
@@ -677,26 +677,26 @@ export function ServiceTroubleshooting() {
             </div>
           </Card>
 
-          <Card className='p-6'>
-            <h3 className='text-lg font-semibold text-gray-900 mb-4'>Quick Actions</h3>
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
 
-            <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-              <button className='p-4 border border-gray-300 rounded-lg text-center hover:bg-gray-50 transition-colors'>
-                <RefreshCw className='h-6 w-6 text-blue-600 mx-auto mb-2' />
-                <p className='font-medium text-gray-900'>Refresh Status</p>
-                <p className='text-sm text-gray-500'>Update service status</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <button className="p-4 border border-gray-300 rounded-lg text-center hover:bg-gray-50 transition-colors">
+                <RefreshCw className="h-6 w-6 text-blue-600 mx-auto mb-2" />
+                <p className="font-medium text-gray-900">Refresh Status</p>
+                <p className="text-sm text-gray-500">Update service status</p>
               </button>
 
-              <button className='p-4 border border-gray-300 rounded-lg text-center hover:bg-gray-50 transition-colors'>
-                <MessageSquare className='h-6 w-6 text-green-600 mx-auto mb-2' />
-                <p className='font-medium text-gray-900'>Report Issue</p>
-                <p className='text-sm text-gray-500'>Create support ticket</p>
+              <button className="p-4 border border-gray-300 rounded-lg text-center hover:bg-gray-50 transition-colors">
+                <MessageSquare className="h-6 w-6 text-green-600 mx-auto mb-2" />
+                <p className="font-medium text-gray-900">Report Issue</p>
+                <p className="text-sm text-gray-500">Create support ticket</p>
               </button>
 
-              <button className='p-4 border border-gray-300 rounded-lg text-center hover:bg-gray-50 transition-colors'>
-                <Smartphone className='h-6 w-6 text-purple-600 mx-auto mb-2' />
-                <p className='font-medium text-gray-900'>Service Alerts</p>
-                <p className='text-sm text-gray-500'>Manage notifications</p>
+              <button className="p-4 border border-gray-300 rounded-lg text-center hover:bg-gray-50 transition-colors">
+                <Smartphone className="h-6 w-6 text-purple-600 mx-auto mb-2" />
+                <p className="font-medium text-gray-900">Service Alerts</p>
+                <p className="text-sm text-gray-500">Manage notifications</p>
               </button>
             </div>
           </Card>

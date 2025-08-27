@@ -60,3 +60,37 @@ export interface LoginFlow {
   mfaRequired: boolean;
   tenantId?: string;
 }
+
+// Route Protection Types
+export interface RouteProtectionResult {
+  isAllowed: boolean;
+  isLoading: boolean;
+  redirectPath?: string;
+  reason?:
+    | 'portal_mismatch'
+    | 'insufficient_role'
+    | 'insufficient_permissions'
+    | 'missing_features'
+    | 'unauthenticated';
+}
+
+export interface RouteConfig {
+  path: string;
+  requiredRoles?: string[];
+  requiredPermissions?: string[];
+  requiredFeatures?: string[];
+  allowedPortals?: Array<'admin' | 'customer' | 'reseller'>;
+  redirectTo?: string;
+  exact?: boolean;
+}
+
+export interface RouteGuardProps {
+  children: React.ReactNode;
+  requiredRoles?: string[];
+  requiredPermissions?: string[];
+  requiredFeatures?: string[];
+  allowedPortals?: Array<'admin' | 'customer' | 'reseller'>;
+  fallback?: React.ReactNode;
+  loadingComponent?: React.ReactNode;
+  unauthorizedComponent?: React.ReactNode;
+}

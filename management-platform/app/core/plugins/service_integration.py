@@ -15,7 +15,6 @@ from interfaces import ()
     NotificationChannelPlugin,
     PaymentProviderPlugin,
     BillingCalculatorPlugin
-)
 from base import PluginType
 
 logger = logging.getLogger(__name__)
@@ -53,7 +52,7 @@ class PluginServiceIntegration:
             for plugin in notification_plugins:
                 if isinstance(plugin, NotificationChannelPlugin):
                     if plugin.get_channel_type( == channel_type:
-)                        success = await plugin.send_notification(message, recipients, options)
+    )                        success = await plugin.send_notification(message, recipients, options)
                         
                         # Trigger after hook
                         context["success"] = success
@@ -96,7 +95,7 @@ class PluginServiceIntegration:
                 for plugin in notification_plugins:
                     if isinstance(plugin, NotificationChannelPlugin):
                         if plugin.get_channel_type( == channel:
-)                            recipients = alert_data.get('recipients', {}).get(channel, [])
+    )                            recipients = alert_data.get('recipients', {}).get(channel, [])
                             if recipients:
                                 success = await plugin.send_alert(alert_data, recipients)
                                 results[channel] = success
@@ -188,7 +187,7 @@ class PluginServiceIntegration:
             for plugin in deployment_plugins:
                 if isinstance(plugin, DeploymentProviderPlugin):
                     if provider in plugin.get_supported_providers(:
-)                        result = await plugin.provision_infrastructure(infrastructure_config)
+    )                        result = await plugin.provision_infrastructure(infrastructure_config)
                         
                         # Trigger after hook
                         await self.hooks.trigger_hook(HookNames.AFTER_PROVISION_INFRASTRUCTURE, {)
@@ -229,7 +228,7 @@ class PluginServiceIntegration:
             for plugin in deployment_plugins:
                 if isinstance(plugin, DeploymentProviderPlugin):
                     if provider in plugin.get_supported_providers(:
-)                        result = await plugin.deploy_application(app_config, infrastructure_id)
+    )                        result = await plugin.deploy_application(app_config, infrastructure_id)
                         
                         # Trigger after hook
                         await self.hooks.trigger_hook(HookNames.AFTER_DEPLOYMENT, {)
@@ -262,7 +261,7 @@ class PluginServiceIntegration:
             for plugin in deployment_plugins:
                 if isinstance(plugin, DeploymentProviderPlugin):
                     if provider in plugin.get_supported_providers(:
-)                        return await plugin.validate_template(template_content, template_type)
+    )                        return await plugin.validate_template(template_content, template_type)
             
             logger.warning(f"No plugin found for template validation: {provider}")
             return False
@@ -298,7 +297,6 @@ class PluginServiceIntegration:
                     if plugin.meta.name == provider:
                         result = await plugin.process_payment(
 )                            Decimal(str(amount)), payment_method, metadata or {}
-                        )
                         
                         # Trigger after hook
                         await self.hooks.trigger_hook(HookNames.AFTER_PAYMENT_PROCESSING, {)
@@ -443,6 +441,79 @@ class PluginServiceIntegration:
         except Exception as e:
             logger.error(f"Failed to calculate cost via plugin: {e}")
             return {"success": False, "error": str(e)}
+    
+    # Additional Payment Service Methods
+    async def create_subscription_via_plugin(
+        self,
+        provider: str,
+        subscription_config: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Create subscription via payment provider plugin."""
+        try:
+            payment_plugins = self.registry.get_plugins_by_type(PluginType.PAYMENT_PROVIDER)
+            
+            for plugin in payment_plugins:
+                if isinstance(plugin, PaymentProviderPlugin):
+                    if plugin.meta.name == provider:
+                        result = await plugin.create_subscription(
+                            subscription_config.get("plan_config", {}),
+                            subscription_config.get("customer_data", {})
+                        )
+                        return {"success": True, "subscription_id": result}
+            
+            raise ValueError(f"No plugin found for payment provider: {provider}")
+            
+        except Exception as e:
+            logger.error(f"Failed to create subscription via plugin: {e}")
+            raise
+    
+    async def cancel_subscription_via_plugin(
+        self,
+        provider: str,
+        subscription_id: str,
+        reason: str = None
+    ) -> bool:
+        """Cancel subscription via payment provider plugin."""
+        try:
+            payment_plugins = self.registry.get_plugins_by_type(PluginType.PAYMENT_PROVIDER)
+            
+            for plugin in payment_plugins:
+                if isinstance(plugin, PaymentProviderPlugin):
+                    if plugin.meta.name == provider:
+                        return await plugin.cancel_subscription(subscription_id, reason)
+            
+            raise ValueError(f"No plugin found for payment provider: {provider}")
+            
+        except Exception as e:
+            logger.error(f"Failed to cancel subscription via plugin: {e}")
+            raise
+    
+    async def refund_payment_via_plugin(
+        self,
+        provider: str,
+        transaction_id: str,
+        amount: Any,
+        reason: str = None
+    ) -> Dict[str, Any]:
+        """Process refund via payment provider plugin."""
+        try:
+            from decimal import Decimal
+            
+            payment_plugins = self.registry.get_plugins_by_type(PluginType.PAYMENT_PROVIDER)
+            
+            for plugin in payment_plugins:
+                if isinstance(plugin, PaymentProviderPlugin):
+                    if plugin.meta.name == provider:
+                        result = await plugin.refund_payment(
+                            transaction_id, Decimal(str(amount)), reason
+                        )
+                        return result
+            
+            raise ValueError(f"No plugin found for payment provider: {provider}")
+            
+        except Exception as e:
+            logger.error(f"Failed to process refund via plugin: {e}")
+            raise
 
 
 # Global service integration instance

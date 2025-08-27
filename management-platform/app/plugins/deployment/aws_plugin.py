@@ -20,14 +20,13 @@ class AWSDeploymentPlugin(DeploymentProviderPlugin):
     
     @property
     def meta(self) -> PluginMeta:
-        return PluginMeta()
-            name="aws_deployment",
+        return PluginMeta(name="aws_deployment",
             version="1.0.0",
             plugin_type=PluginType.DEPLOYMENT_PROVIDER,
             description="AWS infrastructure provisioning and deployment",
             author="DotMac Platform",
             configuration_schema={
-                "aws_access_key_id": {"type": "string", "required": True, "sensitive": True},
+                "aws_access_key_id": {"type": "string", "required": True, "sensitive": True),
                 "aws_secret_access_key": {"type": "string", "required": True, "sensitive": True},
                 "default_region": {"type": "string", "default": "us-east-1"},
                 "vpc_cidr": {"type": "string", "default": "10.0.0.0/16"},
@@ -36,7 +35,6 @@ class AWSDeploymentPlugin(DeploymentProviderPlugin):
                 "key_pair_name": {"type": "string", "required": False},
                 "security_group_rules": {"type": "array", "default": []}
             }
-        )
     
     async def initialize(self) -> bool:
         """Initialize AWS plugin."""
@@ -172,7 +170,6 @@ class AWSDeploymentPlugin(DeploymentProviderPlugin):
                 cluster=cluster_name,
                 service=service_name,
                 desiredCount=scaling_config.get('target_instances', 2)
-            )
             
             logger.info(f"Scaled AWS ECS service {service_name} to {scaling_config.get('target_instances')} instances")
             return True
@@ -249,7 +246,7 @@ class AWSDeploymentPlugin(DeploymentProviderPlugin):
                 'm5.large': Decimal('0.096'),
                 'm5.xlarge': Decimal('0.192'),
                 'c5.large': Decimal('0.085'),
-                'c5.xlarge': Decimal('0.17')
+                'c5.xlarge': Decimal('0.17'}
             }
             
             hourly_cost = hourly_costs.get(instance_type, Decimal('0.0416')
@@ -286,7 +283,6 @@ class AWSDeploymentPlugin(DeploymentProviderPlugin):
             aws_access_key_id=self.config['aws_access_key_id'],
             aws_secret_access_key=self.config['aws_secret_access_key'],
             region_name=self.config.get('default_region', 'us-east-1')
-        )
     
     def _get_ecs_client(self):
         """Get ECS client."""
@@ -295,7 +291,6 @@ class AWSDeploymentPlugin(DeploymentProviderPlugin):
             aws_access_key_id=self.config['aws_access_key_id'],
             aws_secret_access_key=self.config['aws_secret_access_key'],
             region_name=self.config.get('default_region', 'us-east-1')
-        )
     
     def _get_rds_client(self):
         """Get RDS client."""
@@ -304,7 +299,6 @@ class AWSDeploymentPlugin(DeploymentProviderPlugin):
             aws_access_key_id=self.config['aws_access_key_id'],
             aws_secret_access_key=self.config['aws_secret_access_key'],
             region_name=self.config.get('default_region', 'us-east-1')
-        )
     
     async def _test_aws_connection(self):
         """Test AWS connection."""
@@ -334,7 +328,6 @@ class AWSDeploymentPlugin(DeploymentProviderPlugin):
                     {'Key': 'TenantId', 'Value': str(tenant_id)},
                     {'Key': 'ManagedBy', 'Value': 'DotMac'}
                 ]
-            )
             
             logger.info(f"Created VPC: {vpc_id}")
             return vpc_id
@@ -351,7 +344,6 @@ class AWSDeploymentPlugin(DeploymentProviderPlugin):
             response = ec2.create_subnet()
                 VpcId=vpc_id,
                 CidrBlock=cidr_block
-            )
             subnet_id = response['Subnet']['SubnetId']
             
             # Tag subnet
@@ -362,7 +354,6 @@ class AWSDeploymentPlugin(DeploymentProviderPlugin):
                     {'Key': 'Name', 'Value': f'dotmac-subnet-{tenant_id}'},
                     {'Key': 'TenantId', 'Value': str(tenant_id)}
                 ]
-            )
             
             logger.info(f"Created subnet: {subnet_id}")
             return subnet_id
@@ -380,7 +371,6 @@ class AWSDeploymentPlugin(DeploymentProviderPlugin):
                 GroupName=f'dotmac-sg-{tenant_id}',
                 Description=f'Security group for DotMac tenant {tenant_id}',
                 VpcId=vpc_id
-            )
             security_group_id = response['GroupId']
             
             # Add default rules
@@ -407,7 +397,6 @@ class AWSDeploymentPlugin(DeploymentProviderPlugin):
                 ec2.authorize_security_group_ingress()
                     GroupId=security_group_id,
                     IpPermissions=all_rules
-                )
             
             logger.info(f"Created security group: {security_group_id}")
             return security_group_id
@@ -428,7 +417,6 @@ class AWSDeploymentPlugin(DeploymentProviderPlugin):
                     {'key': 'TenantId', 'value': str(tenant_id)},
                     {'key': 'ManagedBy', 'value': 'DotMac'}
                 ]
-            )
             
             cluster_arn = response['cluster']['clusterArn']
             logger.info(f"Created ECS cluster: {cluster_arn}")
@@ -451,7 +439,6 @@ class AWSDeploymentPlugin(DeploymentProviderPlugin):
                     DBSubnetGroupName=subnet_group_name,
                     DBSubnetGroupDescription=f'Subnet group for tenant {tenant_id}',
                     SubnetIds=[subnet_id]
-                )
             except ClientError as e:
                 if e.response['Error']['Code'] != 'DBSubnetGroupAlreadyExists':
                     raise
@@ -473,7 +460,6 @@ class AWSDeploymentPlugin(DeploymentProviderPlugin):
                     {'Key': 'TenantId', 'Value': str(tenant_id)},
                     {'Key': 'ManagedBy', 'Value': 'DotMac'}
                 ]
-            )
             
             logger.info(f"Created RDS instance: {db_instance_id}")
             return db_instance_id
@@ -503,7 +489,7 @@ class AWSDeploymentPlugin(DeploymentProviderPlugin):
                         ],
                         'environment': [
                             {'name': k, 'value': str(v)} 
-                            for k, v in app_config.get('environment', {}).items()
+                            for k, v in app_config.get('environment', {}).items(}
                         ],
                         'logConfiguration': {
                             'logDriver': 'awslogs',
@@ -545,7 +531,6 @@ class AWSDeploymentPlugin(DeploymentProviderPlugin):
                         'assignPublicIp': 'ENABLED'
                     }
                 }
-            )
             
             service_arn = response['service']['serviceArn']
             logger.info(f"Created ECS service: {service_arn}")
@@ -563,7 +548,6 @@ class AWSDeploymentPlugin(DeploymentProviderPlugin):
                 aws_access_key_id=self.config['aws_access_key_id'],
                 aws_secret_access_key=self.config['aws_secret_access_key'],
                 region_name=self.config.get('default_region')
-            )
             
             # Use CloudFormation validate API
             cloudformation.validate_template(TemplateBody=json.dumps(template)

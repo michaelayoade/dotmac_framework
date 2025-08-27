@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Dict, List, Optional, Any
 from uuid import UUID
 
-from pydantic import BaseModel, Field, EmailStr, validator
+from pydantic import BaseModel, Field, EmailStr
 
 from schemas.common import BaseSchema
 

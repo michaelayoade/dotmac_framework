@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useAuthToken } from '../../hooks/useSSRSafeStorage';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -80,20 +81,23 @@ interface PlatformOverview {
 }
 
 export function MasterAdminDashboard() {
+  const [authToken, , tokenLoading] = useAuthToken();
   const [platformData, setPlatformData] = useState<PlatformOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchPlatformOverview();
-  }, []);
+    if (authToken && !tokenLoading) {
+      fetchPlatformOverview();
+    }
+  }, [authToken, tokenLoading]);
 
   const fetchPlatformOverview = async () => {
     try {
       setLoading(true);
       const response = await fetch('/api/v1/master-admin/dashboard/overview', {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+          Authorization: `Bearer ${authToken}`,
         },
       });
 

@@ -1,12 +1,17 @@
 'use client';
 
+import { ServiceCoverageMap } from '@dotmac/mapping';
+// import { SkeletonCard } from '@dotmac/primitives';
+
+// Temporary skeleton component
+const SkeletonCardPlaceholder = ({ className = "h-32" }: { className?: string }) => (
+  <div className={`bg-gray-200 rounded animate-pulse ${className}`} />
+);
 import { Suspense, useState } from 'react';
 import { CustomerLayout } from '../../../components/layout/CustomerLayout';
 import { ServiceManagement } from '../../../components/services/ServiceManagement';
 import { ServicePlans } from '../../../components/services/ServicePlans';
 import { ServiceTroubleshooting } from '../../../components/services/ServiceTroubleshooting';
-import { ServiceCoverageMap } from '@dotmac/mapping';
-import { SkeletonCard } from '@dotmac/primitives';
 
 // Mock service coverage data for demonstration
 const mockServiceAreas = [
@@ -80,75 +85,75 @@ export default function ServicesPage() {
 
   return (
     <CustomerLayout>
-      <div className='space-y-6'>
-        <div className='flex items-center justify-between'>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className='text-2xl font-bold text-gray-900'>My Services</h1>
-            <p className='mt-1 text-sm text-gray-500'>
+            <h1 className="text-2xl font-bold text-gray-900">My Services</h1>
+            <p className="mt-1 text-sm text-gray-500">
               Manage your services, monitor usage, and explore upgrades
             </p>
           </div>
           <button
             onClick={() => setShowCoverageMap(!showCoverageMap)}
-            className='inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           >
             {showCoverageMap ? '📋 Service Details' : '🗺️ Coverage Map'}
           </button>
         </div>
 
         {showCoverageMap ? (
-          <div className='bg-white rounded-lg shadow'>
-            <div className='p-6 border-b border-gray-200'>
-              <h2 className='text-lg font-semibold text-gray-900'>Service Coverage in Your Area</h2>
-              <p className='text-sm text-gray-600 mt-1'>
+          <div className="bg-white rounded-lg shadow">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900">Service Coverage in Your Area</h2>
+              <p className="text-sm text-gray-600 mt-1">
                 Explore available services and coverage areas near your location
               </p>
             </div>
-            <div className='h-[500px] bg-gray-50'>
+            <div className="h-[500px] bg-gray-50">
               <ServiceCoverageMap
                 serviceAreas={mockServiceAreas}
                 customers={mockCustomers}
                 showCustomers={true}
-                filterServiceType='all'
-                className='h-full'
+                filterServiceType="all"
+                className="h-full"
                 config={{
                   defaultCenter: { latitude: 47.6062, longitude: -122.3321 },
                   defaultZoom: 12,
                 }}
               />
             </div>
-            <div className='p-4 bg-gray-50 border-t border-gray-200'>
-              <div className='grid grid-cols-1 md:grid-cols-3 gap-4 text-sm'>
-                <div className='text-center'>
-                  <div className='font-semibold text-green-600'>
-                    {mockServiceAreas.filter((sa) => sa.serviceLevel === 'full').length} Areas
+            <div className="p-4 bg-gray-50 border-t border-gray-200">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div className="text-center">
+                  <div className="font-semibold text-green-600">
+                    {mockServiceAreas.filter(sa => sa.serviceLevel === 'full').length} Areas
                   </div>
-                  <div className='text-gray-600'>Full Service Available</div>
+                  <div className="text-gray-600">Full Service Available</div>
                 </div>
-                <div className='text-center'>
-                  <div className='font-semibold text-yellow-600'>
-                    {mockServiceAreas.filter((sa) => sa.serviceLevel === 'partial').length} Areas
+                <div className="text-center">
+                  <div className="font-semibold text-yellow-600">
+                    {mockServiceAreas.filter(sa => sa.serviceLevel === 'partial').length} Areas
                   </div>
-                  <div className='text-gray-600'>Partial Coverage</div>
+                  <div className="text-gray-600">Partial Coverage</div>
                 </div>
-                <div className='text-center'>
-                  <div className='font-semibold text-blue-600'>
-                    {mockServiceAreas.filter((sa) => sa.serviceLevel === 'planned').length} Areas
+                <div className="text-center">
+                  <div className="font-semibold text-blue-600">
+                    {mockServiceAreas.filter(sa => sa.serviceLevel === 'planned').length} Areas
                   </div>
-                  <div className='text-gray-600'>Coming Soon</div>
+                  <div className="text-gray-600">Coming Soon</div>
                 </div>
               </div>
-              <div className='mt-4 p-3 bg-blue-50 rounded-lg'>
-                <div className='flex items-start'>
-                  <div className='flex-shrink-0'>
-                    <span className='text-blue-600 text-lg'>💡</span>
+              <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                <div className="flex items-start">
+                  <div className="flex-shrink-0">
+                    <span className="text-blue-600 text-lg">💡</span>
                   </div>
-                  <div className='ml-3'>
-                    <p className='text-sm text-blue-800'>
+                  <div className="ml-3">
+                    <p className="text-sm text-blue-800">
                       <strong>Your Location:</strong> You're currently in our full fiber coverage
                       area with speeds up to 1 Gbps available.
                     </p>
-                    <p className='text-sm text-blue-700 mt-1'>
+                    <p className="text-sm text-blue-700 mt-1">
                       Interested in upgrading or adding services? Contact us to explore your
                       options.
                     </p>
@@ -169,7 +174,7 @@ export default function ServicesPage() {
 
 function ServicesContent() {
   return (
-    <div className='space-y-8'>
+    <div className="space-y-8">
       <ServiceManagement />
       <ServicePlans />
       <ServiceTroubleshooting />
@@ -179,16 +184,16 @@ function ServicesContent() {
 
 function ServicesSkeleton() {
   return (
-    <div className='space-y-6'>
-      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
-        <SkeletonCard />
-        <SkeletonCard />
-        <SkeletonCard />
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <SkeletonCardPlaceholder />
+        <SkeletonCardPlaceholder />
+        <SkeletonCardPlaceholder />
       </div>
-      <SkeletonCard className='h-64' />
-      <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
-        <SkeletonCard />
-        <SkeletonCard />
+      <SkeletonCardPlaceholder className="h-64" />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <SkeletonCardPlaceholder />
+        <SkeletonCardPlaceholder />
       </div>
     </div>
   );
