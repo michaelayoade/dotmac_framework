@@ -1,0 +1,161 @@
+{{- if .Values.freeradius.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: freeradius
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: freeradius
+    component: radius-server
+    {{- include "dotmac-isp.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.freeradius.replicaCount }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: freeradius
+      {{- include "dotmac-isp.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: freeradius
+        component: radius-server
+        {{- include "dotmac-isp.selectorLabels" . | nindent 8 }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/freeradius-configmap.yaml") . | sha256sum }}
+    spec:
+      securityContext:
+        runAsNonRoot: false  # FreeRADIUS needs root for port binding
+        fsGroup: 999
+      initContainers:
+      {{- range .Values.freeradius.initContainers }}
+      - name: {{ .name }}
+        image: {{ .image }}
+        command: {{ .command | toYaml | nindent 8 }}
+        {{- if .volumeMounts }}
+        volumeMounts: {{ .volumeMounts | toYaml | nindent 8 }}
+        {{- end }}
+      {{- end }}
+      containers:
+      - name: freeradius
+        image: "{{ .Values.freeradius.image.repository }}:{{ .Values.freeradius.image.tag }}"
+        imagePullPolicy: {{ .Values.freeradius.image.pullPolicy }}
+        ports:
+        - name: radius-auth
+          containerPort: 1812
+          protocol: UDP
+        - name: radius-acct
+          containerPort: 1813
+          protocol: UDP
+        resources: {{ .Values.freeradius.resources | toYaml | nindent 10 }}
+        env:
+        - name: POSTGRES_HOST
+          value: "postgresql"
+        - name: POSTGRES_PORT
+          value: "5432"
+        - name: POSTGRES_USER
+          value: "postgres"
+        - name: POSTGRES_PASSWORD
+          value: {{ .Values.postgresql.auth.postgresPassword | quote }}
+        - name: POSTGRES_DATABASE
+          value: "radius"
+        - name: RADIUS_CLIENT_SECRET
+          value: {{ .Values.freeradius.config.clients[0].secret | quote }}
+        - name: DEBUG_LEVEL
+          value: "2"
+        volumeMounts:
+        - name: freeradius-config
+          mountPath: /etc/freeradius/3.0/radiusd.conf
+          subPath: radiusd.conf
+        - name: freeradius-config
+          mountPath: /etc/freeradius/3.0/clients.conf
+          subPath: clients.conf
+        - name: freeradius-config
+          mountPath: /etc/freeradius/3.0/mods-available/sql
+          subPath: sql
+        {{- if .Values.freeradius.persistence.enabled }}
+        - name: freeradius-data
+          mountPath: /var/log/freeradius
+        {{- end }}
+        livenessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - "radtest test test localhost 0 testing123"
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - "radtest test test localhost 0 testing123"
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+      volumes:
+      - name: freeradius-config
+        configMap:
+          name: freeradius-config
+      {{- if .Values.freeradius.persistence.enabled }}
+      - name: freeradius-data
+        persistentVolumeClaim:
+          claimName: freeradius-data-pvc
+      {{- end }}
+      {{- range .Values.freeradius.volumes }}
+      - name: {{ .name }}
+        configMap:
+          name: {{ .configMap.name }}
+      {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: freeradius
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: freeradius
+    component: radius-server
+    {{- include "dotmac-isp.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.freeradius.service.type }}
+  ports:
+  - name: radius-auth
+    port: {{ .Values.freeradius.service.ports.auth }}
+    targetPort: 1812
+    protocol: UDP
+  - name: radius-acct
+    port: {{ .Values.freeradius.service.ports.acct }}
+    targetPort: 1813
+    protocol: UDP
+  selector:
+    app: freeradius
+    {{- include "dotmac-isp.selectorLabels" . | nindent 4 }}
+{{- if .Values.freeradius.persistence.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: freeradius-data-pvc
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: freeradius
+    component: radius-server
+    {{- include "dotmac-isp.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: {{ .Values.global.storageClass }}
+  resources:
+    requests:
+      storage: {{ .Values.freeradius.persistence.size }}
+{{- end }}
+{{- end }}

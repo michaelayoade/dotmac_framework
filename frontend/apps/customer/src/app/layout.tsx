@@ -5,7 +5,7 @@ import type React from 'react';
 import './globals.css';
 import { RootErrorBoundary } from '../components/common/RootErrorBoundary';
 import { ServiceWorkerProvider } from '../components/providers/ServiceWorkerProvider';
-import { AuthErrorProvider } from '../components/providers/AuthErrorProvider';
+import { CustomerPortalAudit } from '@dotmac/headless';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -19,7 +19,6 @@ export const metadata: Metadata = {
   viewport: {
     width: 'device-width',
     initialScale: 1,
-    maximumScale: 1,
   },
   appleWebApp: {
     capable: true,
@@ -41,9 +40,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className={inter.className}>
         <RootErrorBoundary>
-          <AuthErrorProvider>
+          <CustomerPortalAudit>
             <ServiceWorkerProvider>{children}</ServiceWorkerProvider>
-          </AuthErrorProvider>
+          </CustomerPortalAudit>
         </RootErrorBoundary>
       </body>
     </html>

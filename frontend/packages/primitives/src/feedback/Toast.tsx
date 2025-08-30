@@ -3,10 +3,7 @@
  */
 
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { clsx } from 'clsx';
-
-// Simple class name utility
-const cn = (...classes: (string | undefined)[]) => clsx(classes);
+import { cn } from '../utils/cn';
 
 // Types
 interface ToastProps {
@@ -35,16 +32,16 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const addToast = useCallback((toast: Omit<ToastProps, 'id'>) => {
     const id = Math.random().toString(36).substring(2, 9);
     const newToast = { ...toast, id };
-    
+
     setToasts(prev => [...prev, newToast]);
-    
+
     // Auto remove after duration
     if (toast.duration !== 0) {
       setTimeout(() => {
         removeToast(id);
       }, toast.duration || 5000);
     }
-    
+
     return id;
   }, []);
 

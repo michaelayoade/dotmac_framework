@@ -3,10 +3,7 @@
  */
 
 import React from 'react';
-import { clsx } from 'clsx';
-
-// Simple class name utility
-const cn = (...classes: (string | undefined)[]) => clsx(classes);
+import { cn } from '../utils/cn';
 
 export interface StackProps extends React.HTMLAttributes<HTMLDivElement> {
   direction?: 'horizontal' | 'vertical';
@@ -17,15 +14,15 @@ export interface StackProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 export const Stack = React.forwardRef<HTMLDivElement, StackProps>(
-  ({ 
-    className, 
-    direction = 'vertical', 
+  ({
+    className,
+    direction = 'vertical',
     spacing = 'md',
     align = 'stretch',
     justify = 'start',
     wrap = false,
     children,
-    ...props 
+    ...props
   }, ref) => {
     const spacingClasses = {
       none: '',

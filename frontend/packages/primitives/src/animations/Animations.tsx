@@ -7,13 +7,7 @@
 
 import { motion, AnimatePresence, useInView, useAnimation } from 'framer-motion';
 import { useEffect, useRef } from 'react';
-import { type ClassValue, clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-
-// Local cn utility
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+import { cn } from '../utils/cn';
 
 // Fade in animation variants
 const fadeInVariants = {

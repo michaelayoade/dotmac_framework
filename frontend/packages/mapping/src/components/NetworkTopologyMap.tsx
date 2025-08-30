@@ -388,16 +388,16 @@ export function NetworkTopologyMap({
       <div className='absolute top-4 left-4 bg-white p-3 rounded-lg shadow-lg border border-gray-200'>
         <div className='text-xs space-y-1'>
           <div>
-            <strong>Devices:</strong> {devices.length}
+            <strong>Devices:</strong> {devices?.length || 0}
           </div>
           <div>
-            <strong>Links:</strong> {links.length}
+            <strong>Links:</strong> {links?.length || 0}
           </div>
           <div>
-            <strong>Online:</strong> {devices.filter((d) => d.status === 'online').length}
+            <strong>Online:</strong> {devices?.filter((d) => d.status === 'online').length || 0}
           </div>
           <div>
-            <strong>Issues:</strong> {devices.filter((d) => d.status !== 'online').length}
+            <strong>Issues:</strong> {devices?.filter((d) => d.status !== 'online').length || 0}
           </div>
         </div>
       </div>

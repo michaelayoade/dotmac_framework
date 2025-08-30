@@ -3,10 +3,10 @@ import { usePerformanceMonitor } from './PerformanceHooks';
 
 // Performance Monitor
 export { PerformanceMonitor } from './PerformanceMonitor';
-export type { 
-  PerformanceMetrics, 
-  PerformanceBudget, 
-  PerformanceAlert 
+export type {
+  PerformanceMetrics,
+  PerformanceBudget,
+  PerformanceAlert
 } from './PerformanceMonitor';
 
 // Performance Hooks
@@ -77,7 +77,7 @@ export const formatDuration = (ms: number): string => {
 };
 
 export const getPerformanceGrade = (
-  metric: number, 
+  metric: number,
   thresholds: { good: number; poor: number }
 ): 'A' | 'B' | 'C' | 'D' | 'F' => {
   if (metric <= thresholds.good) return 'A';
@@ -94,10 +94,10 @@ export const withPerformanceMonitoring = <P extends object>(
 ) => {
   return React.forwardRef<any, P>((props, ref) => {
     const { measureRender } = usePerformanceMonitor(componentName);
-    
-    return measureRender(() => (
-      <Component {...props} ref={ref} />
-    ));
+
+    return measureRender(() =>
+      React.createElement(Component, { ...props, ref })
+    );
   });
 };
 
@@ -111,14 +111,14 @@ export const measureComponentPerformance = <P extends object>(
     const { measureRender } = usePerformanceMonitor(componentName);
 
     const [renderCount, setRenderCount] = React.useState(0);
-    
+
     React.useEffect(() => {
       setRenderCount(prev => prev + 1);
     });
 
     return measureRender(() => {
       performance.mark(`${componentName}-render-${renderCount}-start`);
-      const result = <WrappedComponent {...props} />;
+      const result = React.createElement(WrappedComponent, props);
       performance.mark(`${componentName}-render-${renderCount}-end`);
       performance.measure(
         `${componentName}-render-${renderCount}`,
@@ -130,7 +130,7 @@ export const measureComponentPerformance = <P extends object>(
   };
 
   MeasuredComponent.displayName = `withPerformanceMonitoring(${displayName || WrappedComponent.displayName || WrappedComponent.name})`;
-  
+
   return MeasuredComponent;
 };
 
@@ -138,14 +138,14 @@ export const measureComponentPerformance = <P extends object>(
 export const performanceTest = {
   render: async (component: () => JSX.Element, iterations = 100) => {
     const times: number[] = [];
-    
+
     for (let i = 0; i < iterations; i++) {
       const start = performance.now();
       component();
       const end = performance.now();
       times.push(end - start);
     }
-    
+
     return {
       average: times.reduce((a, b) => a + b, 0) / times.length,
       median: times.sort((a, b) => a - b)[Math.floor(times.length / 2)],
@@ -155,7 +155,7 @@ export const performanceTest = {
       p99: times.sort((a, b) => a - b)[Math.floor(times.length * 0.99)]
     };
   },
-  
+
   memory: () => {
     if ('memory' in performance) {
       const memory = (performance as any).memory;
@@ -167,11 +167,11 @@ export const performanceTest = {
     }
     return null;
   },
-  
+
   timing: () => {
     const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
     if (!navigation) return null;
-    
+
     return {
       dns: navigation.domainLookupEnd - navigation.domainLookupStart,
       tcp: navigation.connectEnd - navigation.connectStart,

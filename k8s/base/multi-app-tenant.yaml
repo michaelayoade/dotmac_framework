@@ -1,0 +1,586 @@
+# Multi-Application Tenant Kubernetes Template
+# This template creates a complete multi-app tenant deployment with:
+# - Tenant namespace with isolation
+# - Shared infrastructure services (PostgreSQL, Redis, Vault)
+# - Individual application deployments
+# - Service mesh configuration
+# - Ingress routing and SSL
+
+apiVersion: v1
+kind: Template
+metadata:
+  name: multi-app-tenant
+  annotations:
+    description: "Complete multi-application tenant deployment"
+    tags: "dotmac,multi-app,tenant,production"
+    version: "1.0"
+
+parameters:
+  - name: TENANT_ID
+    description: "Unique tenant identifier"
+    required: true
+  - name: PARTNER_ID
+    description: "Partner identifier"
+    value: "default"
+  - name: PLAN_TYPE
+    description: "Service plan type"
+    value: "standard"
+  - name: BASE_DOMAIN
+    description: "Base domain for ingress"
+    value: "dotmac.cloud"
+  - name: APPLICATIONS
+    description: "Comma-separated list of applications to deploy"
+    value: "isp_framework,status_dashboard"
+
+objects:
+  # Tenant Namespace with Isolation
+  - apiVersion: v1
+    kind: Namespace
+    metadata:
+      name: tenant-${TENANT_ID}
+      labels:
+        dotmac.tenant: ${TENANT_ID}
+        dotmac.partner: ${PARTNER_ID}
+        dotmac.plan: ${PLAN_TYPE}
+        dotmac.type: multi-app-tenant
+      annotations:
+        dotmac.created-at: ${TIMESTAMP}
+        dotmac.applications: ${APPLICATIONS}
+
+  # Network Policy for Tenant Isolation
+  - apiVersion: networking.k8s.io/v1
+    kind: NetworkPolicy
+    metadata:
+      name: tenant-isolation
+      namespace: tenant-${TENANT_ID}
+    spec:
+      podSelector: {}
+      policyTypes:
+        - Ingress
+        - Egress
+      ingress:
+        - from:
+            - namespaceSelector:
+                matchLabels:
+                  name: tenant-${TENANT_ID}
+        - from:
+            - namespaceSelector:
+                matchLabels:
+                  name: istio-system
+      egress:
+        - to:
+            - namespaceSelector:
+                matchLabels:
+                  name: tenant-${TENANT_ID}
+        - to: {}
+          ports:
+            - protocol: TCP
+              port: 53
+            - protocol: UDP
+              port: 53
+        - to: {}
+          ports:
+            - protocol: TCP
+              port: 443
+
+  # Resource Quota
+  - apiVersion: v1
+    kind: ResourceQuota
+    metadata:
+      name: tenant-quota
+      namespace: tenant-${TENANT_ID}
+    spec:
+      hard:
+        requests.cpu: "4"
+        requests.memory: 8Gi
+        requests.storage: 100Gi
+        limits.cpu: "8"
+        limits.memory: 16Gi
+        persistentvolumeclaims: "10"
+        services: "20"
+        secrets: "20"
+        configmaps: "20"
+
+  # PostgreSQL Deployment
+  - apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: postgresql
+      namespace: tenant-${TENANT_ID}
+      labels:
+        app: postgresql
+        component: database
+        dotmac.tenant: ${TENANT_ID}
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: postgresql
+      template:
+        metadata:
+          labels:
+            app: postgresql
+            component: database
+        spec:
+          containers:
+            - name: postgresql
+              image: postgres:15-alpine
+              env:
+                - name: POSTGRES_DB
+                  value: ${TENANT_ID}
+                - name: POSTGRES_USER
+                  value: dotmac
+                - name: POSTGRES_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgresql-secret
+                      key: password
+              ports:
+                - containerPort: 5432
+              volumeMounts:
+                - name: postgresql-data
+                  mountPath: /var/lib/postgresql/data
+              resources:
+                requests:
+                  cpu: 500m
+                  memory: 1Gi
+                limits:
+                  cpu: 1000m
+                  memory: 2Gi
+              livenessProbe:
+                tcpSocket:
+                  port: 5432
+                initialDelaySeconds: 30
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - pg_isready -U dotmac -d ${TENANT_ID}
+                initialDelaySeconds: 5
+          volumes:
+            - name: postgresql-data
+              persistentVolumeClaim:
+                claimName: postgresql-pvc
+
+  # PostgreSQL Service
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: postgresql-service
+      namespace: tenant-${TENANT_ID}
+      labels:
+        app: postgresql
+        component: database
+    spec:
+      selector:
+        app: postgresql
+      ports:
+        - port: 5432
+          targetPort: 5432
+
+  # PostgreSQL PVC
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: postgresql-pvc
+      namespace: tenant-${TENANT_ID}
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 10Gi
+
+  # PostgreSQL Secret
+  - apiVersion: v1
+    kind: Secret
+    metadata:
+      name: postgresql-secret
+      namespace: tenant-${TENANT_ID}
+    type: Opaque
+    stringData:
+      password: ${POSTGRESQL_PASSWORD}
+      connection-string: postgresql://dotmac:${POSTGRESQL_PASSWORD}@postgresql-service:5432/${TENANT_ID}
+
+  # Redis Deployment
+  - apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: redis
+      namespace: tenant-${TENANT_ID}
+      labels:
+        app: redis
+        component: cache
+        dotmac.tenant: ${TENANT_ID}
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: redis
+      template:
+        metadata:
+          labels:
+            app: redis
+            component: cache
+        spec:
+          containers:
+            - name: redis
+              image: redis:7-alpine
+              ports:
+                - containerPort: 6379
+              volumeMounts:
+                - name: redis-data
+                  mountPath: /data
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+                limits:
+                  cpu: 500m
+                  memory: 512Mi
+              livenessProbe:
+                tcpSocket:
+                  port: 6379
+                initialDelaySeconds: 30
+              readinessProbe:
+                exec:
+                  command:
+                    - redis-cli
+                    - ping
+                initialDelaySeconds: 5
+          volumes:
+            - name: redis-data
+              persistentVolumeClaim:
+                claimName: redis-pvc
+
+  # Redis Service
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: redis-service
+      namespace: tenant-${TENANT_ID}
+      labels:
+        app: redis
+        component: cache
+    spec:
+      selector:
+        app: redis
+      ports:
+        - port: 6379
+          targetPort: 6379
+
+  # Redis PVC
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: redis-pvc
+      namespace: tenant-${TENANT_ID}
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 1Gi
+
+  # Redis Secret
+  - apiVersion: v1
+    kind: Secret
+    metadata:
+      name: redis-secret
+      namespace: tenant-${TENANT_ID}
+    type: Opaque
+    stringData:
+      connection-string: redis://redis-service:6379/0
+
+  # ISP Framework Application
+  - apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: isp-framework-main
+      namespace: tenant-${TENANT_ID}
+      labels:
+        app: isp-framework-main
+        component: application
+        dotmac.tenant: ${TENANT_ID}
+        dotmac.app-type: isp_framework
+        dotmac.instance: main
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: isp-framework-main
+      template:
+        metadata:
+          labels:
+            app: isp-framework-main
+            component: application
+            dotmac.tenant: ${TENANT_ID}
+            version: v1
+        spec:
+          containers:
+            - name: isp-framework
+              image: dotmac/isp-framework:latest
+              env:
+                - name: DOTMAC_TENANT_ID
+                  value: ${TENANT_ID}
+                - name: DOTMAC_PARTNER_ID
+                  value: ${PARTNER_ID}
+                - name: DOTMAC_PLAN_TYPE
+                  value: ${PLAN_TYPE}
+                - name: DATABASE_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgresql-secret
+                      key: connection-string
+                - name: REDIS_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: redis-secret
+                      key: connection-string
+              ports:
+                - containerPort: 8000
+                  name: http
+                - containerPort: 9000
+                  name: metrics
+              resources:
+                requests:
+                  cpu: 500m
+                  memory: 1Gi
+                limits:
+                  cpu: 2000m
+                  memory: 2Gi
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8000
+                initialDelaySeconds: 30
+                periodSeconds: 30
+              readinessProbe:
+                httpGet:
+                  path: /health/ready
+                  port: 8000
+                initialDelaySeconds: 5
+                periodSeconds: 10
+              startupProbe:
+                httpGet:
+                  path: /health/startup
+                  port: 8000
+                initialDelaySeconds: 10
+                periodSeconds: 10
+                failureThreshold: 30
+
+  # ISP Framework Service
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: isp-framework-main-service
+      namespace: tenant-${TENANT_ID}
+      labels:
+        app: isp-framework-main
+        component: application
+        dotmac.tenant: ${TENANT_ID}
+    spec:
+      selector:
+        app: isp-framework-main
+      ports:
+        - name: http
+          port: 8000
+          targetPort: 8000
+        - name: metrics
+          port: 9000
+          targetPort: 9000
+
+  # Status Dashboard Application
+  - apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: status-dashboard-monitor
+      namespace: tenant-${TENANT_ID}
+      labels:
+        app: status-dashboard-monitor
+        component: application
+        dotmac.tenant: ${TENANT_ID}
+        dotmac.app-type: status_dashboard
+        dotmac.instance: monitor
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: status-dashboard-monitor
+      template:
+        metadata:
+          labels:
+            app: status-dashboard-monitor
+            component: application
+            dotmac.tenant: ${TENANT_ID}
+            version: v1
+        spec:
+          containers:
+            - name: status-dashboard
+              image: dotmac/status-dashboard:latest
+              env:
+                - name: DOTMAC_TENANT_ID
+                  value: ${TENANT_ID}
+                - name: REDIS_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: redis-secret
+                      key: connection-string
+              ports:
+                - containerPort: 3000
+                  name: http
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+                limits:
+                  cpu: 500m
+                  memory: 512Mi
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 3000
+                initialDelaySeconds: 30
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 3000
+                initialDelaySeconds: 5
+
+  # Status Dashboard Service
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: status-dashboard-monitor-service
+      namespace: tenant-${TENANT_ID}
+      labels:
+        app: status-dashboard-monitor
+        component: application
+        dotmac.tenant: ${TENANT_ID}
+    spec:
+      selector:
+        app: status-dashboard-monitor
+      ports:
+        - name: http
+          port: 3000
+          targetPort: 3000
+
+  # Ingress for External Access
+  - apiVersion: networking.k8s.io/v1
+    kind: Ingress
+    metadata:
+      name: tenant-ingress
+      namespace: tenant-${TENANT_ID}
+      labels:
+        dotmac.tenant: ${TENANT_ID}
+        dotmac.type: multi-app-ingress
+      annotations:
+        kubernetes.io/ingress.class: nginx
+        cert-manager.io/cluster-issuer: letsencrypt-prod
+        nginx.ingress.kubernetes.io/ssl-redirect: "true"
+        nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    spec:
+      tls:
+        - hosts:
+            - main.${TENANT_ID}.${BASE_DOMAIN}
+            - monitor.${TENANT_ID}.${BASE_DOMAIN}
+          secretName: tenant-tls
+      rules:
+        - host: main.${TENANT_ID}.${BASE_DOMAIN}
+          http:
+            paths:
+              - path: /
+                pathType: Prefix
+                backend:
+                  service:
+                    name: isp-framework-main-service
+                    port:
+                      number: 8000
+        - host: monitor.${TENANT_ID}.${BASE_DOMAIN}
+          http:
+            paths:
+              - path: /
+                pathType: Prefix
+                backend:
+                  service:
+                    name: status-dashboard-monitor-service
+                    port:
+                      number: 3000
+
+  # Service Monitor for Prometheus
+  - apiVersion: monitoring.coreos.com/v1
+    kind: ServiceMonitor
+    metadata:
+      name: tenant-monitor
+      namespace: tenant-${TENANT_ID}
+      labels:
+        dotmac.tenant: ${TENANT_ID}
+        dotmac.type: multi-app-monitor
+    spec:
+      selector:
+        matchLabels:
+          dotmac.tenant: ${TENANT_ID}
+      endpoints:
+        - port: metrics
+          path: /metrics
+          interval: 30s
+          scrapeTimeout: 10s
+
+  # Istio VirtualService for Service Mesh
+  - apiVersion: networking.istio.io/v1beta1
+    kind: VirtualService
+    metadata:
+      name: tenant-routing
+      namespace: tenant-${TENANT_ID}
+    spec:
+      hosts:
+        - main.${TENANT_ID}.${BASE_DOMAIN}
+        - monitor.${TENANT_ID}.${BASE_DOMAIN}
+      gateways:
+        - istio-system/tenant-gateway
+      http:
+        - match:
+            - uri:
+                prefix: /
+            - headers:
+                host:
+                  exact: main.${TENANT_ID}.${BASE_DOMAIN}
+          route:
+            - destination:
+                host: isp-framework-main-service
+                port:
+                  number: 8000
+        - match:
+            - uri:
+                prefix: /
+            - headers:
+                host:
+                  exact: monitor.${TENANT_ID}.${BASE_DOMAIN}
+          route:
+            - destination:
+                host: status-dashboard-monitor-service
+                port:
+                  number: 3000
+
+  # Istio DestinationRule for Load Balancing
+  - apiVersion: networking.istio.io/v1beta1
+    kind: DestinationRule
+    metadata:
+      name: tenant-destination-rules
+      namespace: tenant-${TENANT_ID}
+    spec:
+      host: "*.tenant-${TENANT_ID}.svc.cluster.local"
+      trafficPolicy:
+        loadBalancer:
+          simple: ROUND_ROBIN
+        connectionPool:
+          tcp:
+            maxConnections: 100
+          http:
+            http1MaxPendingRequests: 50
+            maxRequestsPerConnection: 10
+        circuitBreaker:
+          consecutiveErrors: 3
+          interval: 30s
+          baseEjectionTime: 30s

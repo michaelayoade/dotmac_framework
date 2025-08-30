@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { AlertCircle } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { AlertCircle, Settings } from 'lucide-react';
 import { useSecureAuth } from '../auth/SecureAuthProvider';
+import { CustomerOnboardingWorkflow } from '../onboarding';
 
 interface CustomerDashboardProps {
   data?: any;
@@ -11,6 +13,16 @@ interface CustomerDashboardProps {
 export function CustomerDashboard({ data: propData }: CustomerDashboardProps) {
   const { user, isAuthenticated } = useSecureAuth();
   const [error, setError] = useState<string | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [isOnboardingComplete, setIsOnboardingComplete] = useState(false);
+  const router = useRouter();
+
+  // Check if user needs onboarding (in a real app, this would come from API/user profile)
+  useEffect(() => {
+    if (user && !user.onboardingComplete) {
+      setShowOnboarding(true);
+    }
+  }, [user]);
 
   // Use error boundary for authentication failures instead of hard redirect
   if (!isAuthenticated) {
@@ -20,8 +32,8 @@ export function CustomerDashboard({ data: propData }: CustomerDashboardProps) {
           <AlertCircle className='mx-auto h-12 w-12 text-amber-500 mb-4' />
           <h3 className='text-lg font-semibold text-gray-900 mb-2'>Authentication Required</h3>
           <p className='text-gray-600 mb-4'>Please log in to access your customer portal.</p>
-          <button 
-            onClick={() => window.location.href = '/login'} 
+          <button
+            onClick={() => router.push('/login')}
             className='px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700'
           >
             Go to Login
@@ -38,13 +50,32 @@ export function CustomerDashboard({ data: propData }: CustomerDashboardProps) {
           <AlertCircle className='mx-auto h-12 w-12 text-red-500 mb-4' />
           <h3 className='text-lg font-semibold text-gray-900 mb-2'>Something went wrong</h3>
           <p className='text-gray-600 mb-4'>{error}</p>
-          <button 
-            onClick={() => setError(null)} 
+          <button
+            onClick={() => setError(null)}
             className='px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700'
           >
             Try Again
           </button>
         </div>
+      </div>
+    );
+  }
+
+  // Show onboarding workflow if needed
+  if (showOnboarding) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <CustomerOnboardingWorkflow
+          onComplete={() => {
+            setShowOnboarding(false);
+            setIsOnboardingComplete(true);
+            // In a real app, update user profile via API
+          }}
+          onSkip={() => {
+            setShowOnboarding(false);
+          }}
+          customerId={user?.id}
+        />
       </div>
     );
   }
@@ -61,6 +92,15 @@ export function CustomerDashboard({ data: propData }: CustomerDashboardProps) {
             <p className='text-blue-100 opacity-90'>
               Here's your service overview and account status
             </p>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowOnboarding(true)}
+              className="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
+            >
+              <Settings className="w-4 h-4 mr-1" />
+              Setup Guide
+            </button>
           </div>
         </div>
       </div>

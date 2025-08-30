@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { 
-  Settings as SettingsIcon, 
-  Save, 
-  RefreshCw, 
+import {
+  Settings as SettingsIcon,
+  Save,
+  RefreshCw,
   AlertCircle,
   CheckCircle,
   Palette,
@@ -13,7 +13,7 @@ import {
   Bell,
   Database,
 } from 'lucide-react';
-import { useTenantAuth } from '@/components/auth/TenantAuthProvider';
+import { useTenantAuth } from '@/components/auth/TenantAuthProviderNew';
 
 interface ConfigCategory {
   category: string;
@@ -226,7 +226,7 @@ export default function SettingsPage() {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
               const hasUnsavedChanges = hasChanges(tab.id);
-              
+
               return (
                 <button
                   key={tab.id}
@@ -266,7 +266,7 @@ export default function SettingsPage() {
                       {activeConfig.description}
                     </p>
                   </div>
-                  
+
                   {!activeConfig.editable_by_tenant && (
                     <div className="flex items-center px-2 py-1 bg-gray-100 rounded-md">
                       <Shield className="h-4 w-4 text-gray-500 mr-1" />
@@ -292,13 +292,13 @@ export default function SettingsPage() {
                 {Object.entries(activeConfig.settings).map(([key, value]) => {
                   const displayValue = getDisplayValue(activeConfig.category, key, value);
                   const fieldName = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                  
+
                   return (
                     <div key={key}>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         {fieldName}
                       </label>
-                      
+
                       {typeof value === 'boolean' ? (
                         <div className="flex items-center">
                           <input
@@ -417,7 +417,7 @@ export default function SettingsPage() {
                       <RefreshCw className="h-4 w-4 mr-2" />
                       Reset
                     </button>
-                    
+
                     <button
                       onClick={() => handleSave(activeConfig.category)}
                       disabled={!hasChanges(activeConfig.category) || isSaving}

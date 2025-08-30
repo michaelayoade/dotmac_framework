@@ -10,8 +10,8 @@ import { useId } from 'react';
  */
 
 import { useFormatting } from '@dotmac/headless';
-import { ErrorBoundary } from '@dotmac/primitives';
-import { Button, Card } from '@dotmac/styled-components';
+import { ErrorBoundary } from '@dotmac/providers';
+import { Button, Card } from '@dotmac/primitives';
 
 interface ImportTestProps {
   testValue?: number;
@@ -29,8 +29,8 @@ export function ImportTest({ testValue = 299.99 }: ImportTestProps): JSX.Element
           <p className="mb-4">Testing imports from all packages:</p>
           <ul className="mb-4 space-y-2">
             <li>✅ @dotmac/headless - useFormatting hook</li>
-            <li>✅ @dotmac/primitives - ErrorBoundary component</li>
-            <li>✅ @dotmac/styled-components - Card and Button components</li>
+            <li>✅ @dotmac/providers - ErrorBoundary component</li>
+            <li>✅ @dotmac/ui - Card and Button components</li>
           </ul>
           <p className="mb-4">
             Formatted currency: <strong>{formatCurrency?.(testValue)}</strong>

@@ -1,1 +1,0 @@
-"""Resellers module placeholder."""

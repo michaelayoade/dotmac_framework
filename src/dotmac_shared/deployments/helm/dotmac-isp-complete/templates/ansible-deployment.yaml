@@ -1,0 +1,209 @@
+{{- if .Values.ansible.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ansible-engine
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: ansible-engine
+    component: automation
+    {{- include "dotmac-isp.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.ansible.replicaCount }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: ansible-engine
+      {{- include "dotmac-isp.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: ansible-engine
+        component: automation
+        {{- include "dotmac-isp.selectorLabels" . | nindent 8 }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/ansible-configmap.yaml") . | sha256sum }}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      initContainers:
+      - name: ansible-collections-init
+        image: "{{ .Values.ansible.image.repository }}:{{ .Values.ansible.image.tag }}"
+        imagePullPolicy: {{ .Values.ansible.image.pullPolicy }}
+        command:
+        - /bin/bash
+        - -c
+        - |
+          echo "Installing Ansible collections..."
+          {{- range .Values.ansible.config.collections }}
+          ansible-galaxy collection install {{ . }} || echo "Failed to install {{ . }}"
+          {{- end }}
+          echo "Collections installation complete"
+        volumeMounts:
+        - name: ansible-collections
+          mountPath: /home/ansible/.ansible/collections
+      containers:
+      - name: ansible-engine
+        image: "{{ .Values.ansible.image.repository }}:{{ .Values.ansible.image.tag }}"
+        imagePullPolicy: {{ .Values.ansible.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        env:
+        - name: ANSIBLE_HOST_KEY_CHECKING
+          value: "False"
+        - name: ANSIBLE_SSH_CONTROL_MASTER
+          value: "auto"
+        - name: ANSIBLE_SSH_CONTROL_PERSIST
+          value: "60s"
+        - name: ANSIBLE_TIMEOUT
+          value: "30"
+        - name: ANSIBLE_VAULT_PASSWORD_FILE
+          value: "/etc/ansible/vault_pass"
+        - name: ANSIBLE_INVENTORY
+          value: "/etc/ansible/inventory"
+        - name: ANSIBLE_PLAYBOOK_DIR
+          value: "/etc/ansible/playbooks"
+        - name: ANSIBLE_LOG_PATH
+          value: "/var/log/ansible/ansible.log"
+        resources: {{ .Values.ansible.resources | toYaml | nindent 10 }}
+        volumeMounts:
+        - name: ansible-config
+          mountPath: /etc/ansible/ansible.cfg
+          subPath: ansible.cfg
+        - name: ansible-vault-pass
+          mountPath: /etc/ansible/vault_pass
+          subPath: vault_pass
+        - name: ansible-inventory
+          mountPath: /etc/ansible/inventory
+          subPath: inventory
+        - name: ansible-collections
+          mountPath: /home/ansible/.ansible/collections
+        {{- if .Values.ansible.persistence.playbooks.enabled }}
+        - name: ansible-playbooks
+          mountPath: {{ .Values.ansible.persistence.playbooks.mountPath }}
+        {{- end }}
+        {{- if .Values.ansible.persistence.vault.enabled }}
+        - name: ansible-vault-data
+          mountPath: {{ .Values.ansible.persistence.vault.mountPath }}
+        {{- end }}
+        - name: ansible-logs
+          mountPath: /var/log/ansible
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        startupProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 5
+          failureThreshold: 12
+      volumes:
+      - name: ansible-config
+        configMap:
+          name: ansible-config
+      - name: ansible-vault-pass
+        secret:
+          secretName: ansible-secrets
+          items:
+          - key: vault-password
+            path: vault_pass
+          defaultMode: 0600
+      - name: ansible-inventory
+        configMap:
+          name: ansible-inventory
+      - name: ansible-collections
+        emptyDir: {}
+      - name: ansible-logs
+        emptyDir: {}
+      {{- if .Values.ansible.persistence.playbooks.enabled }}
+      - name: ansible-playbooks
+        persistentVolumeClaim:
+          claimName: ansible-playbooks-pvc
+      {{- end }}
+      {{- if .Values.ansible.persistence.vault.enabled }}
+      - name: ansible-vault-data
+        persistentVolumeClaim:
+          claimName: ansible-vault-pvc
+      {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ansible-engine
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: ansible-engine
+    component: automation
+    {{- include "dotmac-isp.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.ansible.service.type }}
+  ports:
+  - name: http
+    port: {{ .Values.ansible.service.port }}
+    targetPort: 8080
+    protocol: TCP
+  selector:
+    app: ansible-engine
+    {{- include "dotmac-isp.selectorLabels" . | nindent 4 }}
+---
+{{- if .Values.ansible.persistence.playbooks.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ansible-playbooks-pvc
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: ansible-engine
+    component: automation
+    {{- include "dotmac-isp.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteMany  # Multiple pods need access to playbooks
+  storageClassName: {{ .Values.global.storageClass }}
+  resources:
+    requests:
+      storage: {{ .Values.ansible.persistence.playbooks.size }}
+{{- end }}
+---
+{{- if .Values.ansible.persistence.vault.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ansible-vault-pvc
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: ansible-engine
+    component: automation
+    {{- include "dotmac-isp.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: {{ .Values.global.storageClass }}
+  resources:
+    requests:
+      storage: {{ .Values.ansible.persistence.vault.size }}
+{{- end }}
+{{- end }}

@@ -6,6 +6,8 @@ from urllib.parse import parse_qs
 
 import aiohttp
 
+from dotmac_shared.api.exception_handlers import standard_exception_handler
+
 
 class SMSProvider:
     def __init__(self):

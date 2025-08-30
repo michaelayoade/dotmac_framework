@@ -1,0 +1,475 @@
+# Default values for dotmac-framework
+global:
+  imageRegistry: "registry.dotmac.com"
+  imageTag: "latest"
+  imagePullPolicy: IfNotPresent
+  storageClass: "ssd"
+
+  # Configuration Management
+  configManagement:
+    resourceLimits:
+      standard:
+        memory: "512Mi"
+        cpu: "500m"
+        storage: "2Gi"
+        maxConnections: 50
+        maxConcurrentRequests: 25
+      premium:
+        memory: "1Gi"
+        cpu: "1000m"
+        storage: "5Gi"
+        maxConnections: 100
+        maxConcurrentRequests: 50
+      enterprise:
+        memory: "2Gi"
+        cpu: "2000m"
+        storage: "10Gi"
+        maxConnections: 200
+        maxConcurrentRequests: 100
+
+# Core Infrastructure
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: "changeme"
+    database: "dotmac_isp"
+  primary:
+    persistence:
+      enabled: true
+      size: 100Gi
+    resources:
+      requests:
+        memory: "1Gi"
+        cpu: "500m"
+      limits:
+        memory: "4Gi"
+        cpu: "2"
+    initdb:
+      scripts:
+        init-multiple-databases.sh: |
+          #!/bin/bash
+          set -e
+
+          psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
+            CREATE DATABASE dotmac_isp;
+            CREATE DATABASE mgmt_platform;
+            CREATE DATABASE dotmac_tenants;
+            CREATE DATABASE dotmac_analytics;
+          EOSQL
+
+redis:
+  enabled: true
+  auth:
+    password: "changeme"
+  master:
+    persistence:
+      enabled: true
+      size: 20Gi
+    resources:
+      requests:
+        memory: "512Mi"
+        cpu: "250m"
+      limits:
+        memory: "1Gi"
+        cpu: "500m"
+
+rabbitmq:
+  enabled: true
+  auth:
+    username: "dotmac"
+    password: "changeme"
+  persistence:
+    enabled: true
+    size: 20Gi
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "500m"
+
+elasticsearch:
+  enabled: true
+  master:
+    heapSize: "2g"
+    persistence:
+      enabled: true
+      size: 50Gi
+  data:
+    heapSize: "2g"
+    persistence:
+      enabled: true
+      size: 100Gi
+
+grafana:
+  enabled: true
+  admin:
+    password: "changeme"
+  persistence:
+    enabled: true
+    size: 10Gi
+
+prometheus:
+  enabled: true
+  server:
+    persistentVolume:
+      enabled: true
+      size: 50Gi
+
+# ISP Framework
+ispFramework:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: dotmac/isp-framework
+    tag: latest
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "500m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 8
+    targetCPUUtilizationPercentage: 70
+  env:
+    ENVIRONMENT: production
+    LOG_LEVEL: INFO
+    SIGNOZ_ENDPOINT: "signoz-collector:4317"
+  service:
+    type: ClusterIP
+    port: 8000
+  healthcheck:
+    enabled: true
+    path: "/health"
+    initialDelaySeconds: 30
+    periodSeconds: 10
+
+# Management Platform
+managementPlatform:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: dotmac/management-platform
+    tag: latest
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "500m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 6
+    targetCPUUtilizationPercentage: 70
+  env:
+    ENVIRONMENT: production
+    LOG_LEVEL: INFO
+    SIGNOZ_ENDPOINT: "signoz-collector:4317"
+  service:
+    type: ClusterIP
+    port: 8000
+  healthcheck:
+    enabled: true
+    path: "/health"
+    initialDelaySeconds: 30
+    periodSeconds: 10
+
+# SignOz Observability Stack
+clickhouse:
+  enabled: true
+  auth:
+    password: "changeme"
+  persistence:
+    enabled: true
+    size: 50Gi
+  resources:
+    requests:
+      memory: "1Gi"
+      cpu: "500m"
+    limits:
+      memory: "2Gi"
+      cpu: "1000m"
+
+signoz:
+  enabled: true
+  collector:
+    replicaCount: 2
+    image:
+      repository: signoz/signoz-otel-collector
+      tag: 0.88.11
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "250m"
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
+  query:
+    replicaCount: 2
+    image:
+      repository: signoz/query-service
+      tag: 0.40.0
+    resources:
+      requests:
+        memory: "512Mi"
+        cpu: "500m"
+      limits:
+        memory: "1Gi"
+        cpu: "1000m"
+  frontend:
+    replicaCount: 2
+    image:
+      repository: signoz/frontend
+      tag: 0.40.0
+    service:
+      type: ClusterIP
+      port: 3301
+    ingress:
+      enabled: true
+      className: "nginx"
+      hosts:
+        - host: signoz.dotmac.local
+          paths:
+            - path: /
+              pathType: Prefix
+
+# OpenBao (Vault)
+openbao:
+  enabled: true
+  server:
+    dev:
+      enabled: false
+    ha:
+      enabled: true
+      replicas: 3
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "250m"
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
+    dataStorage:
+      enabled: true
+      size: 10Gi
+    service:
+      type: ClusterIP
+      port: 8200
+
+# Background Workers
+celeryWorker:
+  enabled: true
+  replicaCount: 4
+  image:
+    repository: dotmac/management-platform
+    tag: latest
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+  env:
+    CELERY_CONCURRENCY: 4
+    LOG_LEVEL: INFO
+
+celeryBeat:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: dotmac/management-platform
+    tag: latest
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "250m"
+
+# Ingress Configuration
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  tls:
+    enabled: true
+    secretName: dotmac-tls
+  hosts:
+    managementPlatform:
+      host: api.dotmac.local
+      paths:
+        - path: /
+          pathType: Prefix
+          service: management-platform
+          port: 8000
+    ispFramework:
+      host: isp.dotmac.local
+      paths:
+        - path: /
+          pathType: Prefix
+          service: isp-framework
+          port: 8000
+    signoz:
+      host: observability.dotmac.local
+      paths:
+        - path: /
+          pathType: Prefix
+          service: signoz-frontend
+          port: 3301
+
+# Frontend Portals
+frontendPortals:
+  enabled: true
+
+  adminPortal:
+    enabled: true
+    replicaCount: 2
+    image:
+      repository: dotmac/admin-portal
+      tag: latest
+    service:
+      type: ClusterIP
+      port: 3000
+    resources:
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+      limits:
+        memory: "256Mi"
+        cpu: "250m"
+    env:
+      NEXT_PUBLIC_API_URL: "https://api.dotmac.local"
+      NEXT_PUBLIC_ISP_API_URL: "https://isp.dotmac.local"
+
+  customerPortal:
+    enabled: true
+    replicaCount: 3
+    image:
+      repository: dotmac/customer-portal
+      tag: latest
+    service:
+      type: ClusterIP
+      port: 3000
+    autoscaling:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 8
+      targetCPUUtilizationPercentage: 70
+    resources:
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+      limits:
+        memory: "256Mi"
+        cpu: "250m"
+    env:
+      NEXT_PUBLIC_API_URL: "https://isp.dotmac.local"
+
+  resellerPortal:
+    enabled: true
+    replicaCount: 2
+    image:
+      repository: dotmac/reseller-portal
+      tag: latest
+    service:
+      type: ClusterIP
+      port: 3000
+    resources:
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+      limits:
+        memory: "256Mi"
+        cpu: "250m"
+    env:
+      NEXT_PUBLIC_API_URL: "https://api.dotmac.local"
+
+# Tenant Management
+tenantManagement:
+  enabled: true
+
+  # Multi-tenant configuration
+  multiTenant:
+    enabled: true
+    isolationLevel: "container" # container, process, database
+    maxTenantsPerNode: 10
+
+  # Tenant resource templates
+  tenantTemplates:
+    standard:
+      resources:
+        requests:
+          memory: "512Mi"
+          cpu: "500m"
+        limits:
+          memory: "1Gi"
+          cpu: "1000m"
+      storage: "2Gi"
+
+    premium:
+      resources:
+        requests:
+          memory: "1Gi"
+          cpu: "1000m"
+        limits:
+          memory: "2Gi"
+          cpu: "2000m"
+      storage: "5Gi"
+
+    enterprise:
+      resources:
+        requests:
+          memory: "2Gi"
+          cpu: "2000m"
+        limits:
+          memory: "4Gi"
+          cpu: "4000m"
+      storage: "10Gi"
+
+# Security
+security:
+  networkPolicies:
+    enabled: true
+
+  podSecurityPolicy:
+    enabled: true
+
+  rbac:
+    enabled: true
+
+  serviceMonitor:
+    enabled: true
+
+  # CSRF and security middleware
+  middleware:
+    csrf:
+      enabled: true
+    cors:
+      enabled: true
+      allowedOrigins:
+        - "https://portal.dotmac.local"
+        - "https://admin.dotmac.local"
+        - "https://partners.dotmac.local"
+    rateLimit:
+      enabled: true
+      rpm: 1000 # requests per minute
+
+# Backup Configuration
+backup:
+  enabled: true
+  schedule: "0 2 * * *" # Daily at 2 AM
+  retention: "30d"
+  s3:
+    bucket: "dotmac-backups"
+    region: "us-east-1"

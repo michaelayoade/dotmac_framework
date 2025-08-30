@@ -4,7 +4,7 @@
  */
 
 import { renderHook, act } from '@testing-library/react';
-import { useDataTable, useFilters, useNotifications } from '../hooks/useAppState';
+import { useDataTable, useFilters, useNotifications } from "@dotmac/headless/hooks";
 
 describe('State Management System Demo', () => {
   describe('Real-world Customer Management Scenario', () => {

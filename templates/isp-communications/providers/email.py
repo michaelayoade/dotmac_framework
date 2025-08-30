@@ -6,6 +6,8 @@ from typing import Any, Dict
 
 import aiohttp
 
+from dotmac_shared.api.exception_handlers import standard_exception_handler
+
 
 class EmailProvider:
     def __init__(self):

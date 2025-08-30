@@ -14,13 +14,18 @@ interface AuthErrorProviderProps {
  */
 export function AuthErrorProvider({ children }: AuthErrorProviderProps) {
   const router = useRouter();
-  const errorHandler = useStandardErrorHandler();
+  const errorHandler = useStandardErrorHandler({
+    context: 'auth',
+    enableRetry: true,
+    enableNotifications: true,
+    enableLogging: true
+  });
 
   useEffect(() => {
     // Listen for authentication errors globally
     const handleAuthError = (event: CustomEvent) => {
       const { error, context } = event.detail;
-      
+
       // Handle different auth error types gracefully
       if (error.status === 401) {
         // Authentication required - show login prompt instead of redirect
@@ -28,7 +33,7 @@ export function AuthErrorProvider({ children }: AuthErrorProviderProps) {
         if (!currentPath.includes('/login')) {
           sessionStorage.setItem('redirect_after_login', currentPath);
         }
-        
+
         errorHandler.handleError(error, 'Authentication required');
       } else if (error.status === 403) {
         // Access denied - handle gracefully
@@ -41,7 +46,7 @@ export function AuthErrorProvider({ children }: AuthErrorProviderProps) {
 
     // Listen for custom auth error events
     window.addEventListener('auth-error' as any, handleAuthError);
-    
+
     return () => {
       window.removeEventListener('auth-error' as any, handleAuthError);
     };
@@ -51,10 +56,10 @@ export function AuthErrorProvider({ children }: AuthErrorProviderProps) {
     // Check if it's an authentication-related error
     if (error.message?.includes('401') || error.message?.includes('unauthorized')) {
       const redirectPath = sessionStorage.getItem('redirect_after_login') || '/dashboard';
-      
+
       // Show user-friendly error instead of crashing
       console.error('Authentication error caught by boundary:', error);
-      
+
       // Optionally navigate to login with context
       setTimeout(() => {
         router.push(`/login?redirect=${encodeURIComponent(redirectPath)}`);

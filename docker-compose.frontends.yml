@@ -1,0 +1,185 @@
+version: '3.8'
+
+services:
+  # ===== FRONTEND PORTALS =====
+
+  # Master Admin Portal
+  master-admin-portal:
+    build:
+      context: ./frontend/apps/admin
+      dockerfile: Dockerfile
+      target: ${BUILD_TARGET:-development}
+    container_name: dotmac-master-admin
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+      NEXT_PUBLIC_ISP_API_URL: ${NEXT_PUBLIC_ISP_API_URL:-http://localhost:8001}
+      NEXT_PUBLIC_SIGNOZ_URL: ${NEXT_PUBLIC_SIGNOZ_URL:-http://localhost:3301}
+      NODE_ENV: ${NODE_ENV:-development}
+      # Security headers
+      NEXT_PUBLIC_CSP_NONCE: ${CSP_NONCE:-}
+      NEXT_PUBLIC_APP_VERSION: ${APP_VERSION:-dev}
+    ports:
+      - "${ADMIN_PORT:-3000}:3000"
+    networks:
+      - dotmac-network
+    volumes:
+      - ./frontend/apps/admin:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - management-platform
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Customer Portal
+  customer-portal:
+    build:
+      context: ./frontend/apps/customer
+      dockerfile: Dockerfile
+      target: ${BUILD_TARGET:-development}
+    container_name: dotmac-customer-portal
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_ISP_API_URL:-http://localhost:8001}
+      NODE_ENV: ${NODE_ENV:-development}
+      # Customer-specific configuration
+      NEXT_PUBLIC_TENANT_ID: ${CUSTOMER_TENANT_ID:-default}
+      NEXT_PUBLIC_APP_VERSION: ${APP_VERSION:-dev}
+    ports:
+      - "${CUSTOMER_PORT:-3001}:3000"
+    networks:
+      - dotmac-network
+    volumes:
+      - ./frontend/apps/customer:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - isp-framework
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Reseller Portal
+  reseller-portal:
+    build:
+      context: ./frontend/apps/reseller
+      dockerfile: Dockerfile
+      target: ${BUILD_TARGET:-development}
+    container_name: dotmac-reseller-portal
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+      NODE_ENV: ${NODE_ENV:-development}
+      # Reseller-specific configuration
+      NEXT_PUBLIC_RESELLER_ID: ${RESELLER_ID:-default}
+      NEXT_PUBLIC_APP_VERSION: ${APP_VERSION:-dev}
+    ports:
+      - "${RESELLER_PORT:-3002}:3000"
+    networks:
+      - dotmac-network
+    volumes:
+      - ./frontend/apps/reseller:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - management-platform
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Management Admin Portal
+  management-admin-portal:
+    build:
+      context: ./frontend/apps/management-admin
+      dockerfile: Dockerfile
+      target: ${BUILD_TARGET:-development}
+    container_name: dotmac-management-admin
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+      NEXT_PUBLIC_SIGNOZ_URL: ${NEXT_PUBLIC_SIGNOZ_URL:-http://localhost:3301}
+      NODE_ENV: ${NODE_ENV:-development}
+      NEXT_PUBLIC_APP_VERSION: ${APP_VERSION:-dev}
+    ports:
+      - "${MGMT_ADMIN_PORT:-3003}:3000"
+    networks:
+      - dotmac-network
+    volumes:
+      - ./frontend/apps/management-admin:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - management-platform
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Technician Portal (PWA)
+  technician-portal:
+    build:
+      context: ./frontend/apps/technician
+      dockerfile: Dockerfile
+      target: ${BUILD_TARGET:-development}
+    container_name: dotmac-technician-portal
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_ISP_API_URL:-http://localhost:8001}
+      NODE_ENV: ${NODE_ENV:-development}
+      # PWA specific
+      NEXT_PUBLIC_PWA_ENABLED: ${PWA_ENABLED:-true}
+      NEXT_PUBLIC_OFFLINE_ENABLED: ${OFFLINE_ENABLED:-true}
+      NEXT_PUBLIC_APP_VERSION: ${APP_VERSION:-dev}
+    ports:
+      - "${TECHNICIAN_PORT:-3004}:3000"
+    networks:
+      - dotmac-network
+    volumes:
+      - ./frontend/apps/technician:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - isp-framework
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Tenant Portal
+  tenant-portal:
+    build:
+      context: ./frontend/apps/tenant-portal
+      dockerfile: Dockerfile
+      target: ${BUILD_TARGET:-development}
+    container_name: dotmac-tenant-portal
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+      NODE_ENV: ${NODE_ENV:-development}
+      # Multi-tenant configuration
+      NEXT_PUBLIC_TENANT_MODE: ${TENANT_MODE:-single}
+      NEXT_PUBLIC_APP_VERSION: ${APP_VERSION:-dev}
+    ports:
+      - "${TENANT_PORT:-3005}:3000"
+    networks:
+      - dotmac-network
+    volumes:
+      - ./frontend/apps/tenant-portal:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - management-platform
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  dotmac-network:
+    external: true
+    name: dotmac-network

@@ -7,7 +7,7 @@
 
 import { useCallback, useEffect } from 'react';
 import type { ReactNode } from 'react';
-import { ErrorBoundary } from '@dotmac/primitives/error';
+import { ErrorBoundary } from '@dotmac/providers/error';
 
 interface GlobalErrorHandlerProps {
   children: ReactNode;
@@ -17,7 +17,7 @@ export function GlobalErrorHandler({ children }: GlobalErrorHandlerProps) {
   // Handle unhandled promise rejections
   const handleUnhandledRejection = useCallback((event: PromiseRejectionEvent) => {
     console.error('🚨 Unhandled Promise Rejection:', event.reason);
-    
+
     // Report to error tracking
     reportError(new Error(`Unhandled Promise Rejection: ${event.reason}`), {
       type: 'unhandledRejection',
@@ -31,7 +31,7 @@ export function GlobalErrorHandler({ children }: GlobalErrorHandlerProps) {
   // Handle general JavaScript errors
   const handleError = useCallback((event: ErrorEvent) => {
     console.error('🚨 JavaScript Error:', event.error);
-    
+
     reportError(event.error || new Error(event.message), {
       type: 'javascriptError',
       filename: event.filename,
@@ -127,7 +127,7 @@ export function withErrorHandler<P extends object>(
   );
 
   WrappedComponent.displayName = `withErrorHandler(${Component.displayName || Component.name})`;
-  
+
   return WrappedComponent;
 }
 

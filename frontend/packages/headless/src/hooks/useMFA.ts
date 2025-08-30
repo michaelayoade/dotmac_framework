@@ -4,8 +4,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
-import { getApiClient } from '../api/client';
-import { useAuthStore } from '../stores/authStore';
+import { getApiClient } from "@dotmac/headless/api";
+import { useAuthStore } from "@dotmac/headless/auth";
 
 export type MFAMethod = 'totp' | 'sms' | 'email' | 'backup_code';
 

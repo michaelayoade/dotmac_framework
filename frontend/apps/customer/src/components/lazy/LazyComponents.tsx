@@ -5,12 +5,12 @@
 
 import dynamic from 'next/dynamic';
 import { ComponentProps } from 'react';
-import { LoadingSpinner } from '../ui/LoadingSpinner';
+import { Loading } from '@dotmac/primitives';
 
 // Loading component for lazy imports
 const LazyLoadingFallback = () => (
   <div className="flex items-center justify-center p-8">
-    <LoadingSpinner />
+    <Loading variant="spinner" />
     <span className="ml-2 text-sm text-gray-600">Loading...</span>
   </div>
 );
@@ -41,7 +41,7 @@ export const LazyCustomerLoginForm = dynamic(
 // Dashboard components - Heavy components loaded after login
 export const LazyCustomerDashboard = dynamic(
   () =>
-    import('../dashboard/CustomerDashboard').then(mod => ({
+    import('../dashboard/CustomerDashboardRefactored').then(mod => ({
       default: mod.CustomerDashboard,
     })),
   {
@@ -61,7 +61,7 @@ export const LazyCustomerDashboard = dynamic(
 );
 
 // Billing components - Only load when user accesses billing
-export const LazyBillingOverview = dynamic(() => import('../billing/BillingOverview'), {
+export const LazyBillingOverviewUniversal = dynamic(() => import('../billing/BillingOverviewUniversal'), {
   loading: LazyLoadingFallback,
   ssr: false,
 });
@@ -146,8 +146,8 @@ export const LazyDocumentManager = dynamic(() => import('../documents/DocumentMa
 // Chart components - Heavy recharts library
 export const LazyNetworkUsageChart = dynamic(
   () =>
-    Promise.resolve().then(() => ({
-      default: mod.NetworkUsageChart,
+    import('@dotmac/primitives/src/charts/InteractiveChart').then(m => ({
+      default: m.NetworkUsageChart,
     })),
   {
     loading: () => (
@@ -161,8 +161,8 @@ export const LazyNetworkUsageChart = dynamic(
 
 export const LazyBandwidthChart = dynamic(
   () =>
-    Promise.resolve().then(() => ({
-      default: mod.BandwidthChart,
+    import('@dotmac/primitives/src/charts/InteractiveChart').then(m => ({
+      default: m.BandwidthChart,
     })),
   {
     loading: () => (
@@ -207,7 +207,7 @@ export const preloadCriticalComponents = () => {
   import('../dashboard/CustomerDashboard');
 
   // Preload common billing components
-  import('../billing/BillingOverview');
+  import('../billing/BillingOverviewUniversal');
 
   // Preload charts for dashboard
   Promise.resolve({ default: () => null });
@@ -216,7 +216,7 @@ export const preloadCriticalComponents = () => {
 // Component preloading based on user interaction
 export const preloadOnHover = {
   billing: () => {
-    import('../billing/BillingOverview');
+    import('../billing/BillingOverviewUniversal');
     import('../billing/PaymentMethods');
   },
   services: () => {

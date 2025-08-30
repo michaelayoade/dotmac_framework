@@ -6,8 +6,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { io, type Socket } from 'socket.io-client';
 
-import { getApiClient } from '../api/client';
-import { useAuthStore } from '../stores/authStore';
+import { getApiClient } from "@dotmac/headless/api";
+import { useAuthStore } from "@dotmac/headless/auth";
 
 export interface UseLiveChatOptions {
   portalType: PortalType;

@@ -6,9 +6,8 @@
 'use client';
 
 import { cva, type VariantProps } from 'class-variance-authority';
-import { type ClassValue, clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
 import { useMemo, useCallback, memo, useState, useRef, useEffect } from 'react';
+import { cn } from '../utils/cn';
 import { sanitizeText, validateClassName, validateData } from '../utils/security';
 import {
   uptimeSchema,
@@ -46,9 +45,6 @@ import type {
   AlertSeverityConfig
 } from '../types/status';
 import { ErrorBoundary } from '../components/ErrorBoundary';
-
-// Local cn utility (memoized)
-const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs));
 
 // Memoized status badge variants
 const statusBadgeVariants = cva(
@@ -145,7 +141,7 @@ export const OptimizedStatusBadge: React.FC<StatusBadgeProps> = memo(({
   const computedValues = useMemo(() => {
     const safeClassName = validateClassName(className);
     const safeChildren = typeof children === 'string' ? sanitizeText(children) : children;
-    
+
     const validVariants = [
       'online', 'offline', 'maintenance', 'degraded',
       'active', 'suspended', 'pending',
@@ -176,7 +172,7 @@ export const OptimizedStatusBadge: React.FC<StatusBadgeProps> = memo(({
 
   // Debounced click handler to prevent rapid firing
   const [, , debouncedClickHandler] = useDebouncedState(null, 150);
-  
+
   const handleClick = useCallback(() => {
     try {
       if (onClick) {
@@ -205,7 +201,7 @@ export const OptimizedStatusBadge: React.FC<StatusBadgeProps> = memo(({
   return (
     <ErrorBoundary
       fallback={
-        <span 
+        <span
           className="inline-flex items-center px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs"
           role="status"
           aria-label="Status indicator error"
@@ -214,14 +210,14 @@ export const OptimizedStatusBadge: React.FC<StatusBadgeProps> = memo(({
         </span>
       }
     >
-      <span 
+      <span
         id={badgeId}
         className={cn(
-          statusBadgeVariants({ 
-            variant: computedValues.safeVariant, 
-            size, 
-            animated: animationConfig.shouldAnimate 
-          }), 
+          statusBadgeVariants({
+            variant: computedValues.safeVariant,
+            size,
+            animated: animationConfig.shouldAnimate
+          }),
           computedValues.safeClassName,
           // Focus styles with throttled state
           onClick && throttledIsFocused && 'ring-2 ring-offset-2 ring-blue-500',
@@ -244,7 +240,7 @@ export const OptimizedStatusBadge: React.FC<StatusBadgeProps> = memo(({
         <span className="sr-only">
           {computedValues.accessibleStatusText}
         </span>
-        
+
         {/* Visual status dot with optimized rendering */}
         {showDot && (
           <span
@@ -258,7 +254,7 @@ export const OptimizedStatusBadge: React.FC<StatusBadgeProps> = memo(({
             aria-hidden="true"
           />
         )}
-        
+
         {/* Main content with text indicator for color independence */}
         <span className="flex items-center gap-1">
           {/* Text indicator for accessibility */}
@@ -267,7 +263,7 @@ export const OptimizedStatusBadge: React.FC<StatusBadgeProps> = memo(({
           </span>
           {computedValues.safeChildren}
         </span>
-        
+
         {/* Description for interactive elements */}
         {onClick && (
           <span id={`${badgeId}-description`} className="sr-only">
@@ -288,15 +284,15 @@ export const OptimizedStatusBadge: React.FC<StatusBadgeProps> = memo(({
     prevProps.className === nextProps.className &&
     prevProps.onClick === nextProps.onClick &&
     prevProps['aria-label'] === nextProps['aria-label'] &&
-    (typeof prevProps.children === 'string' && typeof nextProps.children === 'string' 
+    (typeof prevProps.children === 'string' && typeof nextProps.children === 'string'
       ? prevProps.children === nextProps.children
       : prevProps.children === nextProps.children)
   );
 });
 
 // High-performance uptime indicator with virtualized progress
-export const OptimizedUptimeIndicator: React.FC<UptimeIndicatorProps> = memo(({ 
-  uptime, 
+export const OptimizedUptimeIndicator: React.FC<UptimeIndicatorProps> = memo(({
+  uptime,
   className,
   showLabel = true,
   'aria-label': ariaLabel
@@ -313,28 +309,28 @@ export const OptimizedUptimeIndicator: React.FC<UptimeIndicatorProps> = memo(({
     if (animationRef.current) {
       cancelAnimationFrame(animationRef.current);
     }
-    
+
     const startTime = performance.now();
     const startValue = animatedUptime;
     const duration = 1000; // 1 second animation
-    
+
     const animate = (currentTime: number) => {
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      
+
       // Easing function for smooth animation
       const easeOutCubic = 1 - Math.pow(1 - progress, 3);
       const currentValue = startValue + (uptime - startValue) * easeOutCubic;
-      
+
       setAnimatedUptime(currentValue);
-      
+
       if (progress < 1) {
         animationRef.current = requestAnimationFrame(animate);
       }
     };
-    
+
     animationRef.current = requestAnimationFrame(animate);
-    
+
     return () => {
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
@@ -394,7 +390,7 @@ export const OptimizedUptimeIndicator: React.FC<UptimeIndicatorProps> = memo(({
         </div>
       }
     >
-      <div 
+      <div
         className={cn('flex items-center space-x-3', computedValues.safeClassName)}
         role="progressbar"
         aria-valuenow={computedValues.validatedUptime}

@@ -1,20 +1,45 @@
-"use client";
+'use client';
 
-import type { ReactNode } from "react";
-
-import { ResellerHeader } from "./ResellerHeader";
-import { ResellerNavigation } from "./ResellerNavigation";
+import {
+  UniversalNavigation,
+  NavigationPresets,
+  UserHelper,
+  BrandingHelper,
+  NavigationHookHelpers
+} from '@dotmac/navigation-system';
+import { useUniversalAuth } from '@dotmac/headless';
+import { useRouter } from 'next/navigation';
+import type { ReactNode } from 'react';
 
 interface ResellerLayoutProps {
-	children: ReactNode;
+  children: ReactNode;
 }
 
 export function ResellerLayout({ children }: ResellerLayoutProps) {
-	return (
-		<div className="reseller-layout">
-			<ResellerHeader />
-			<ResellerNavigation />
-			<main className="reseller-content">{children}</main>
-		</div>
-	);
+  const router = useRouter();
+  const { user, logout, currentPortal, getPortalBranding } = useUniversalAuth();
+
+  const branding = getPortalBranding();
+
+  return (
+    <UniversalNavigation
+      items={NavigationPresets.reseller()}
+      variant="reseller"
+      layoutType="sidebar"
+      user={UserHelper.format(user)}
+      branding={branding ? {
+        logo: branding.logo,
+        companyName: branding.companyName || 'Reseller Portal',
+        primaryColor: branding.primaryColor || '#9333EA'
+      } : {
+        companyName: 'Reseller Portal',
+        primaryColor: '#9333EA'
+      }}
+      tenant={BrandingHelper.fromTenant(currentPortal)}
+      onNavigate={NavigationHookHelpers.createNavigationHandler(router)}
+      onLogout={NavigationHookHelpers.createLogoutHandler({ logout })}
+    >
+      {children}
+    </UniversalNavigation>
+  );
 }

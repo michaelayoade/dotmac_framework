@@ -2,11 +2,11 @@
 
 import React, { useState, useCallback, useMemo } from 'react';
 import { useCommunication } from '@dotmac/headless';
-import { 
-  useNotifications, 
-  NotificationList, 
-  NotificationBadge 
-} from '@dotmac/primitives';
+import {
+  useNotifications,
+  NotificationList,
+  NotificationBadge
+} from '@dotmac/providers';
 
 interface CommunicationCenterProps {
   className?: string;
@@ -64,7 +64,7 @@ export function CommunicationCenter({ className = '' }: CommunicationCenterProps
       }));
 
       await communication.sendBulkMessages(messages);
-      
+
       addNotification({
         type: 'success',
         priority: 'medium',
@@ -120,7 +120,7 @@ export function CommunicationCenter({ className = '' }: CommunicationCenterProps
             )}
           </div>
         </div>
-        
+
         <div className="flex items-center space-x-3">
           <NotificationBadge className="mr-2" />
           <button
@@ -289,13 +289,13 @@ interface MessagesTabProps {
   isLoading: boolean;
 }
 
-function MessagesTab({ 
-  messages, 
-  filters, 
-  onFiltersChange, 
-  onRetry, 
-  onCancel, 
-  isLoading 
+function MessagesTab({
+  messages,
+  filters,
+  onFiltersChange,
+  onRetry,
+  onCancel,
+  isLoading
 }: MessagesTabProps) {
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -495,13 +495,13 @@ interface TemplatesTabProps {
   onBulkSend: (templateId: string, recipients: string[]) => Promise<void>;
 }
 
-function TemplatesTab({ 
-  templates, 
-  channels, 
-  onCreateTemplate, 
-  onUpdateTemplate, 
+function TemplatesTab({
+  templates,
+  channels,
+  onCreateTemplate,
+  onUpdateTemplate,
   onDeleteTemplate,
-  onBulkSend 
+  onBulkSend
 }: TemplatesTabProps) {
   const [isCreating, setIsCreating] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<any>(null);
@@ -631,8 +631,8 @@ function ChannelsTab({ channels, onTestChannel }: ChannelsTabProps) {
                     <div key={key} className="flex justify-between text-sm">
                       <span className="text-gray-500">{key}:</span>
                       <span className="text-gray-900 truncate ml-2">
-                        {typeof value === 'string' && value.length > 20 
-                          ? `${value.substring(0, 20)}...` 
+                        {typeof value === 'string' && value.length > 20
+                          ? `${value.substring(0, 20)}...`
                           : String(value)
                         }
                       </span>
@@ -674,7 +674,7 @@ function SettingsTab({ settings, onUpdateSettings }: SettingsTabProps) {
     <div className="settings-tab">
       <div className="bg-white p-6 rounded-lg shadow">
         <h2 className="text-lg font-medium text-gray-900 mb-6">Notification Settings</h2>
-        
+
         <div className="space-y-6">
           <div>
             <h3 className="text-base font-medium text-gray-900 mb-4">Channel Preferences</h3>

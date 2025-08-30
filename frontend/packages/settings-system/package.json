@@ -1,0 +1,69 @@
+{
+  "name": "@dotmac/settings-system",
+  "version": "1.0.0",
+  "description": "Universal settings and preferences management system for DotMac ISP Framework",
+  "main": "dist/index.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "eslint src --ext .ts,.tsx",
+    "type-check": "tsc --noEmit"
+  },
+  "keywords": [
+    "dotmac",
+    "settings",
+    "preferences",
+    "react",
+    "typescript"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "lucide-react": "^0.263.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@dotmac/typescript-config": "*",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "eslint": "^8.45.0",
+    "tsup": "^7.1.0",
+    "typescript": "^5.1.6"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  },
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "import": "./dist/index.esm.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./profile": {
+      "import": "./dist/profile/index.esm.js",
+      "require": "./dist/profile/index.js",
+      "types": "./dist/profile/index.d.ts"
+    },
+    "./notifications": {
+      "import": "./dist/notifications/index.esm.js",
+      "require": "./dist/notifications/index.js",
+      "types": "./dist/notifications/index.d.ts"
+    },
+    "./security": {
+      "import": "./dist/security/index.esm.js",
+      "require": "./dist/security/index.js",
+      "types": "./dist/security/index.d.ts"
+    },
+    "./appearance": {
+      "import": "./dist/appearance/index.esm.js",
+      "require": "./dist/appearance/index.js",
+      "types": "./dist/appearance/index.d.ts"
+    }
+  }
+}

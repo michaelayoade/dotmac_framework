@@ -1,0 +1,307 @@
+{{- if .Values.voltha.enabled }}
+# VOLTHA Core
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: voltha-core
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: voltha-core
+    component: voltha
+    {{- include "dotmac-isp.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.voltha.core.replicaCount }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: voltha-core
+      {{- include "dotmac-isp.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: voltha-core
+        component: voltha
+        {{- include "dotmac-isp.selectorLabels" . | nindent 8 }}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+      - name: voltha-core
+        image: "{{ .Values.voltha.core.image.repository }}:{{ .Values.voltha.core.image.tag }}"
+        imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+        ports:
+        - name: grpc
+          containerPort: 50057
+          protocol: TCP
+        - name: rest
+          containerPort: 8882
+          protocol: TCP
+        env:
+        - name: KAFKA_ENDPOINT
+          value: "voltha-kafka:9092"
+        - name: ETCD_ENDPOINT
+          value: "voltha-etcd:2379"
+        - name: BACKEND
+          value: "etcd"
+        - name: LOG_LEVEL
+          value: "INFO"
+        - name: CORE_TOPIC
+          value: "rwcore"
+        resources: {{ .Values.voltha.core.resources | toYaml | nindent 10 }}
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8882
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /readiness
+            port: 8882
+          initialDelaySeconds: 10
+          periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: voltha-core
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: voltha-core
+    component: voltha
+    {{- include "dotmac-isp.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+  - name: grpc
+    port: {{ .Values.voltha.core.service.grpcPort }}
+    targetPort: 50057
+    protocol: TCP
+  - name: rest
+    port: {{ .Values.voltha.core.service.restPort }}
+    targetPort: 8882
+    protocol: TCP
+  selector:
+    app: voltha-core
+    {{- include "dotmac-isp.selectorLabels" . | nindent 4 }}
+---
+# VOLTHA API Server
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: voltha-api
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: voltha-api
+    component: voltha
+    {{- include "dotmac-isp.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.voltha.api.replicaCount }}
+  selector:
+    matchLabels:
+      app: voltha-api
+      {{- include "dotmac-isp.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: voltha-api
+        component: voltha
+        {{- include "dotmac-isp.selectorLabels" . | nindent 8 }}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+      - name: voltha-api
+        image: "{{ .Values.voltha.api.image.repository }}:{{ .Values.voltha.api.image.tag }}"
+        imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+        ports:
+        - name: grpc
+          containerPort: 55555
+          protocol: TCP
+        env:
+        - name: VOLTHA_CORE_ENDPOINT
+          value: "voltha-core:50057"
+        - name: LOG_LEVEL
+          value: "INFO"
+        resources: {{ .Values.voltha.api.resources | toYaml | nindent 10 }}
+        livenessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - "grpc_health_probe -addr=localhost:55555"
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - "grpc_health_probe -addr=localhost:55555"
+          initialDelaySeconds: 10
+          periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: voltha-api
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: voltha-api
+    component: voltha
+    {{- include "dotmac-isp.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+  - name: grpc
+    port: {{ .Values.voltha.api.service.grpcPort }}
+    targetPort: 55555
+    protocol: TCP
+  selector:
+    app: voltha-api
+    {{- include "dotmac-isp.selectorLabels" . | nindent 4 }}
+---
+# OpenOLT Adapter
+{{- if .Values.voltha.openolt.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: voltha-openolt-adapter
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: voltha-openolt-adapter
+    component: voltha
+    {{- include "dotmac-isp.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.voltha.openolt.replicaCount }}
+  selector:
+    matchLabels:
+      app: voltha-openolt-adapter
+      {{- include "dotmac-isp.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: voltha-openolt-adapter
+        component: voltha
+        {{- include "dotmac-isp.selectorLabels" . | nindent 8 }}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+      - name: openolt-adapter
+        image: "{{ .Values.voltha.openolt.image.repository }}:{{ .Values.voltha.openolt.image.tag }}"
+        imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+        ports:
+        - name: grpc
+          containerPort: 50062
+          protocol: TCP
+        env:
+        - name: KAFKA_ENDPOINT
+          value: "voltha-kafka:9092"
+        - name: CORE_TOPIC
+          value: "rwcore"
+        - name: LOG_LEVEL
+          value: "INFO"
+        - name: ADAPTER_TOPIC
+          value: "openolt"
+        resources: {{ .Values.voltha.openolt.resources | toYaml | nindent 10 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: voltha-openolt-adapter
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: voltha-openolt-adapter
+    component: voltha
+    {{- include "dotmac-isp.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+  - name: grpc
+    port: {{ .Values.voltha.openolt.service.port }}
+    targetPort: 50062
+    protocol: TCP
+  selector:
+    app: voltha-openolt-adapter
+    {{- include "dotmac-isp.selectorLabels" . | nindent 4 }}
+{{- end }}
+---
+# OpenONU Adapter
+{{- if .Values.voltha.openonu.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: voltha-openonu-adapter
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: voltha-openonu-adapter
+    component: voltha
+    {{- include "dotmac-isp.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.voltha.openonu.replicaCount }}
+  selector:
+    matchLabels:
+      app: voltha-openonu-adapter
+      {{- include "dotmac-isp.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: voltha-openonu-adapter
+        component: voltha
+        {{- include "dotmac-isp.selectorLabels" . | nindent 8 }}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+      - name: openonu-adapter
+        image: "{{ .Values.voltha.openonu.image.repository }}:{{ .Values.voltha.openonu.image.tag }}"
+        imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+        ports:
+        - name: grpc
+          containerPort: 50063
+          protocol: TCP
+        env:
+        - name: KAFKA_ENDPOINT
+          value: "voltha-kafka:9092"
+        - name: CORE_TOPIC
+          value: "rwcore"
+        - name: LOG_LEVEL
+          value: "INFO"
+        - name: ADAPTER_TOPIC
+          value: "brcm_openomci_onu"
+        resources: {{ .Values.voltha.openonu.resources | toYaml | nindent 10 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: voltha-openonu-adapter
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: voltha-openonu-adapter
+    component: voltha
+    {{- include "dotmac-isp.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+  - name: grpc
+    port: {{ .Values.voltha.openonu.service.port }}
+    targetPort: 50063
+    protocol: TCP
+  selector:
+    app: voltha-openonu-adapter
+    {{- include "dotmac-isp.selectorLabels" . | nindent 4 }}
+{{- end }}
+{{- end }}

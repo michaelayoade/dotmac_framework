@@ -1,0 +1,497 @@
+---
+# OpenBao deployment for Kubernetes
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dotmac
+  labels:
+    name: dotmac
+
+---
+# ConfigMap for OpenBao configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openbao-config
+  namespace: dotmac
+data:
+  config.hcl: |
+    # OpenBao configuration
+    listener "tcp" {
+      address = "0.0.0.0:8200"
+      tls_disable = true
+
+      # Enable metrics
+      telemetry {
+        unauthenticated_metrics_access = true
+      }
+    }
+
+    # Storage backend (Raft for HA)
+    storage "raft" {
+      path = "/openbao/data"
+      node_id = "node1"
+
+      retry_join {
+        leader_api_addr = "http://openbao-0.openbao-internal:8200"
+      }
+      retry_join {
+        leader_api_addr = "http://openbao-1.openbao-internal:8200"
+      }
+      retry_join {
+        leader_api_addr = "http://openbao-2.openbao-internal:8200"
+      }
+    }
+
+    # High Availability
+    cluster_addr = "http://POD_IP:8201"
+    api_addr = "http://POD_IP:8200"
+
+    # UI
+    ui = true
+
+    # Logging
+    log_level = "info"
+    log_format = "json"
+
+    # Telemetry for SignOz
+    telemetry {
+      prometheus_retention_time = "30s"
+      disable_hostname = true
+
+      # OTLP export for SignOz
+      opentelemetry {
+        address = "signoz-otel-collector.observability:4317"
+        namespace = "openbao"
+
+        resource_attributes {
+          "service.name" = "openbao"
+          "service.namespace" = "dotmac"
+          "deployment.environment" = "production"
+        }
+      }
+    }
+
+    # Performance tuning
+    max_lease_ttl = "768h"
+    default_lease_ttl = "768h"
+
+    # Security
+    disable_mlock = false
+    disable_cache = false
+    disable_sentinel = false
+
+---
+# Service account for OpenBao
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: openbao
+  namespace: dotmac
+
+---
+# ClusterRoleBinding for OpenBao Kubernetes auth
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: openbao-auth-delegator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:auth-delegator
+subjects:
+  - kind: ServiceAccount
+    name: openbao
+    namespace: dotmac
+
+---
+# StatefulSet for OpenBao HA deployment
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: openbao
+  namespace: dotmac
+  labels:
+    app: openbao
+spec:
+  serviceName: openbao-internal
+  replicas: 3
+  selector:
+    matchLabels:
+      app: openbao
+  template:
+    metadata:
+      labels:
+        app: openbao
+    spec:
+      serviceAccountName: openbao
+
+      # Security context
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 100
+        runAsGroup: 1000
+        fsGroup: 1000
+
+      # Anti-affinity for HA
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - openbao
+              topologyKey: kubernetes.io/hostname
+
+      containers:
+        - name: openbao
+          image: quay.io/openbao/openbao:latest
+          imagePullPolicy: Always
+
+          # Command
+          command:
+            - bao
+            - server
+            - -config=/openbao/config/config.hcl
+
+          # Security capabilities
+          securityContext:
+            capabilities:
+              add:
+                - IPC_LOCK
+
+          # Environment variables
+          env:
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: VAULT_CLUSTER_ADDR
+              value: "http://$(POD_IP):8201"
+            - name: VAULT_API_ADDR
+              value: "http://$(POD_IP):8200"
+            - name: SKIP_CHOWN
+              value: "true"
+            - name: SKIP_SETCAP
+              value: "true"
+            - name: BAO_ADDR
+              value: "http://127.0.0.1:8200"
+            - name: BAO_LOG_LEVEL
+              value: "info"
+            - name: BAO_LOG_FORMAT
+              value: "json"
+
+          # Ports
+          ports:
+            - containerPort: 8200
+              name: http
+              protocol: TCP
+            - containerPort: 8201
+              name: cluster
+              protocol: TCP
+            - containerPort: 8202
+              name: replication
+              protocol: TCP
+
+          # Volume mounts
+          volumeMounts:
+            - name: config
+              mountPath: /openbao/config
+            - name: data
+              mountPath: /openbao/data
+            - name: tls
+              mountPath: /openbao/tls
+              readOnly: true
+
+          # Lifecycle hooks
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - /bin/sh
+                  - -c
+                  - sleep 5 && kill -SIGTERM $(pidof bao)
+
+          # Health checks
+          livenessProbe:
+            httpGet:
+              path: /v1/sys/health?standbyok=true
+              port: 8200
+              scheme: HTTP
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+
+          readinessProbe:
+            httpGet:
+              path: /v1/sys/health?standbyok=true&uninitcode=204&sealedcode=204
+              port: 8200
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+
+          # Resources
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+
+      # Volumes
+      volumes:
+        - name: config
+          configMap:
+            name: openbao-config
+        - name: tls
+          secret:
+            secretName: openbao-tls
+            optional: true
+
+  # Volume claim templates for persistent storage
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10Gi
+        storageClassName: fast-ssd # Use appropriate storage class
+
+---
+# Headless service for StatefulSet
+apiVersion: v1
+kind: Service
+metadata:
+  name: openbao-internal
+  namespace: dotmac
+  labels:
+    app: openbao
+spec:
+  type: ClusterIP
+  clusterIP: None
+  publishNotReadyAddresses: true
+  ports:
+    - port: 8200
+      targetPort: 8200
+      protocol: TCP
+      name: http
+    - port: 8201
+      targetPort: 8201
+      protocol: TCP
+      name: cluster
+  selector:
+    app: openbao
+
+---
+# External service for client access
+apiVersion: v1
+kind: Service
+metadata:
+  name: openbao
+  namespace: dotmac
+  labels:
+    app: openbao
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8200
+      targetPort: 8200
+      protocol: TCP
+      name: http
+  selector:
+    app: openbao
+
+---
+# Service for UI access (optional)
+apiVersion: v1
+kind: Service
+metadata:
+  name: openbao-ui
+  namespace: dotmac
+  labels:
+    app: openbao
+spec:
+  type: LoadBalancer # Or NodePort for on-premise
+  ports:
+    - port: 8200
+      targetPort: 8200
+      protocol: TCP
+      name: http
+  selector:
+    app: openbao
+
+---
+# PodDisruptionBudget for HA
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: openbao
+  namespace: dotmac
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: openbao
+
+---
+# NetworkPolicy for security
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: openbao
+  namespace: dotmac
+spec:
+  podSelector:
+    matchLabels:
+      app: openbao
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow from all pods in dotmac namespace
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: dotmac
+      ports:
+        - protocol: TCP
+          port: 8200
+    # Allow cluster communication
+    - from:
+        - podSelector:
+            matchLabels:
+              app: openbao
+      ports:
+        - protocol: TCP
+          port: 8201
+        - protocol: TCP
+          port: 8202
+  egress:
+    # Allow to other OpenBao pods
+    - to:
+        - podSelector:
+            matchLabels:
+              app: openbao
+      ports:
+        - protocol: TCP
+          port: 8200
+        - protocol: TCP
+          port: 8201
+        - protocol: TCP
+          port: 8202
+    # Allow to SignOz
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: observability
+      ports:
+        - protocol: TCP
+          port: 4317
+    # Allow DNS
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+
+---
+# Job to initialize OpenBao
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: openbao-init
+  namespace: dotmac
+spec:
+  template:
+    metadata:
+      name: openbao-init
+    spec:
+      serviceAccountName: openbao
+      restartPolicy: OnFailure
+
+      containers:
+        - name: init
+          image: quay.io/openbao/openbao:latest
+          imagePullPolicy: Always
+
+          env:
+            - name: BAO_ADDR
+              value: "http://openbao.dotmac.svc.cluster.local:8200"
+
+          command:
+            - /bin/sh
+            - -c
+            - |
+              # Wait for OpenBao to be ready
+              until bao status 2>/dev/null; do
+                echo "Waiting for OpenBao..."
+                sleep 5
+              done
+
+              # Check if already initialized
+              if bao status | grep -q "Initialized.*true"; then
+                echo "OpenBao already initialized"
+                exit 0
+              fi
+
+              # Initialize OpenBao
+              echo "Initializing OpenBao..."
+              bao operator init \
+                -key-shares=5 \
+                -key-threshold=3 \
+                -format=json > /tmp/init.json
+
+              # Save keys to Kubernetes secret
+              kubectl create secret generic openbao-init \
+                --from-file=/tmp/init.json \
+                --namespace=dotmac || true
+
+              # Unseal OpenBao
+              echo "Unsealing OpenBao..."
+              for i in 0 1 2; do
+                key=$(cat /tmp/init.json | jq -r ".unseal_keys_b64[$i]")
+                bao operator unseal "$key"
+              done
+
+              # Set root token
+              export BAO_TOKEN=$(cat /tmp/init.json | jq -r ".root_token")
+
+              # Run initialization script
+              /scripts/init-openbao.sh
+
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+
+      volumes:
+        - name: scripts
+          configMap:
+            name: openbao-init-scripts
+            defaultMode: 0755
+
+---
+# ConfigMap with initialization scripts
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openbao-init-scripts
+  namespace: dotmac
+data:
+  init-openbao.sh: |
+    #!/bin/bash
+    # Copy the initialization script content here
+    # (Content from /home/dotmac_framework/deployments/openbao/scripts/init-openbao.sh)

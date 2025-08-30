@@ -1,0 +1,334 @@
+# Feature Configuration Template
+# Generated: {{ now() }}
+# Tenant: {{ tenant.name }} ({{ tenant.tenant_id }})
+# Plan: {{ tenant.plan }}
+
+# Feature Flag Configuration
+feature_flags:
+  {% for feature in enabled_features %}
+  {{ feature }}:
+    enabled: true
+    rollout_percentage: 100.0
+    config: {{ feature_configs.get(feature, {}) | to_yaml(indent=6) | indent(4) }}
+
+    # Feature metadata
+    category: "{{ plan_features.get(feature, {}).get('category', 'custom') }}"
+    plan_required: "{{ tenant.plan }}"
+    environment: "{{ tenant.environment }}"
+  {% endfor %}
+
+# Plan-based Feature Configuration
+plan_features:
+  current_plan: "{{ tenant.plan }}"
+
+  # Available features for current plan
+  available_features:
+    {% for feature in tenant.features %}
+    - name: "{{ feature }}"
+      enabled: {{ 'true' if feature in enabled_features else 'false' }}
+      {% if feature in feature_configs %}
+      config: {{ feature_configs[feature] | to_yaml(indent=8) | indent(6) }}
+      {% endif %}
+    {% endfor %}
+
+  # Feature categories
+  categories:
+    core:
+      {% if 'email_support' in enabled_features %}
+      - name: "email_support"
+        config:
+          response_time_hours: {{ 24 if tenant.plan == 'basic' else (4 if tenant.plan == 'premium' else 1) }}
+          support_channels: ["email"]
+      {% endif %}
+
+      {% if 'phone_support' in enabled_features %}
+      - name: "phone_support"
+        config:
+          response_time_hours: {{ 4 if tenant.plan == 'premium' else 1 }}
+          business_hours: "{{ '9-17' if tenant.plan == 'premium' else '24/7' }}"
+          support_channels: ["phone", "email"]
+      {% endif %}
+
+      {% if 'priority_support' in enabled_features %}
+      - name: "priority_support"
+        config:
+          response_time_hours: 1
+          dedicated_team: true
+          support_channels: ["phone", "email", "chat", "slack"]
+      {% endif %}
+
+    analytics:
+      {% if 'basic_analytics' in enabled_features %}
+      - name: "basic_analytics"
+        config:
+          retention_days: 30
+          max_reports: {{ 5 if tenant.plan == 'basic' else 25 }}
+          dashboard_widgets: {{ 10 if tenant.plan == 'basic' else 50 }}
+          data_export: {{ 'csv' if tenant.plan == 'basic' else 'csv,json,xlsx' }}
+      {% endif %}
+
+      {% if 'advanced_analytics' in enabled_features %}
+      - name: "advanced_analytics"
+        config:
+          retention_days: {{ 90 if tenant.plan == 'premium' else 365 }}
+          max_reports: {{ 25 if tenant.plan == 'premium' else -1 }}
+          custom_dashboards: true
+          real_time_analytics: {{ 'true' if tenant.plan == 'enterprise' else 'false' }}
+          advanced_filters: true
+          custom_metrics: true
+          data_export: "csv,json,xlsx,pdf"
+          api_access: true
+      {% endif %}
+
+    api:
+      {% if 'standard_api' in enabled_features %}
+      - name: "standard_api"
+        config:
+          rate_limit: {{ tenant.plan | resource_limit('api') }}
+          burst_limit: {{ (tenant.plan | resource_limit('api')) // 10 }}
+          endpoints: "basic"
+          webhook_support: false
+          batch_operations: false
+      {% endif %}
+
+      {% if 'premium_api' in enabled_features %}
+      - name: "premium_api"
+        config:
+          rate_limit: {{ tenant.plan | resource_limit('api') }}
+          burst_limit: {{ (tenant.plan | resource_limit('api')) // 10 }}
+          endpoints: "basic,premium"
+          webhook_support: true
+          batch_operations: true
+          graphql_support: false
+      {% endif %}
+
+      {% if 'enterprise_api' in enabled_features %}
+      - name: "enterprise_api"
+        config:
+          rate_limit: {{ tenant.plan | resource_limit('api') }}
+          burst_limit: {{ (tenant.plan | resource_limit('api')) // 10 }}
+          endpoints: "basic,premium,enterprise"
+          webhook_support: true
+          batch_operations: true
+          graphql_support: true
+          custom_endpoints: true
+          api_versioning: true
+      {% endif %}
+
+    integration:
+      {% if 'basic_integration' in enabled_features %}
+      - name: "basic_integration"
+        config:
+          max_integrations: {{ tenant.limits.max_integrations }}
+          webhook_endpoints: 0
+          oauth_providers: ["google", "microsoft"]
+          custom_connectors: false
+      {% endif %}
+
+      {% if 'premium_integration' in enabled_features %}
+      - name: "premium_integration"
+        config:
+          max_integrations: {{ tenant.limits.max_integrations }}
+          webhook_endpoints: 5
+          oauth_providers: ["google", "microsoft", "github", "slack"]
+          custom_connectors: false
+          zapier_integration: true
+      {% endif %}
+
+      {% if 'enterprise_integration' in enabled_features %}
+      - name: "enterprise_integration"
+        config:
+          max_integrations: -1  # unlimited
+          webhook_endpoints: -1  # unlimited
+          oauth_providers: ["google", "microsoft", "github", "slack", "custom"]
+          custom_connectors: true
+          zapier_integration: true
+          custom_api_connectors: true
+          etl_pipelines: true
+      {% endif %}
+
+    security:
+      {% if 'sso' in enabled_features %}
+      - name: "sso"
+        config:
+          protocols: ["saml", "oidc"]
+          max_providers: {{ 3 if tenant.plan == 'enterprise' else 1 }}
+          auto_provisioning: true
+          group_mapping: true
+          custom_attributes: true
+      {% endif %}
+
+      {% if 'advanced_security' in enabled_features %}
+      - name: "advanced_security"
+        config:
+          audit_logging: true
+          compliance_reports: ["soc2", "gdpr", "hipaa"]
+          security_scanning: true
+          vulnerability_reports: true
+          penetration_testing: true
+          custom_security_policies: true
+          ip_whitelisting: true
+          session_recording: true
+      {% endif %}
+
+    ui_ux:
+      {% if 'custom_branding' in enabled_features %}
+      - name: "custom_branding"
+        config:
+          custom_logo: true
+          custom_colors: true
+          custom_fonts: false
+          favicon_customization: true
+          email_templates: "basic"
+      {% endif %}
+
+      {% if 'white_label' in enabled_features %}
+      - name: "white_label"
+        config:
+          custom_logo: true
+          custom_colors: true
+          custom_fonts: true
+          custom_domain: true
+          hide_branding: true
+          custom_login_page: true
+          email_templates: "full"
+          mobile_app_branding: true
+      {% endif %}
+
+# Feature Dependencies
+feature_dependencies:
+  {% for feature in enabled_features %}
+  {% set deps = plan_features.get(feature, {}).get('requires', []) %}
+  {% if deps %}
+  {{ feature }}:
+    requires: {{ deps | to_yaml | indent(4) }}
+  {% endif %}
+  {% endfor %}
+
+# Feature Limits by Plan
+feature_limits:
+  basic:
+    analytics_retention_days: 30
+    api_requests_per_hour: 1000
+    integrations: 3
+    users: 10
+    projects: 5
+    storage_gb: 10
+
+  premium:
+    analytics_retention_days: 90
+    api_requests_per_hour: 10000
+    integrations: 10
+    users: 50
+    projects: 25
+    storage_gb: 100
+    webhooks: 5
+
+  enterprise:
+    analytics_retention_days: 365
+    api_requests_per_hour: 100000
+    integrations: -1  # unlimited
+    users: -1  # unlimited
+    projects: -1  # unlimited
+    storage_gb: 1000
+    webhooks: -1  # unlimited
+    custom_domains: 10
+    sso_providers: 5
+
+# Feature Usage Tracking
+usage_tracking:
+  enabled: true
+  metrics:
+    {% for feature in enabled_features %}
+    - feature: "{{ feature }}"
+      track_usage: true
+      metrics:
+        - "usage_count"
+        - "active_users"
+        - "session_duration"
+      {% if feature_configs.get(feature, {}).get('billable', false) %}
+      billing_metric: "usage_count"
+      {% endif %}
+    {% endfor %}
+
+# A/B Testing Configuration
+{% if tenant.plan in ['premium', 'enterprise'] %}
+ab_testing:
+  enabled: true
+  features:
+    {% for feature in enabled_features %}
+    {% if feature in ['advanced_analytics', 'premium_integration'] %}
+    {{ feature }}_experiment:
+      enabled: true
+      traffic_split: 50  # 50% of users get new version
+      metrics_to_track:
+        - "conversion_rate"
+        - "user_engagement"
+        - "feature_usage"
+      duration_days: 14
+    {% endif %}
+    {% endfor %}
+{% endif %}
+
+# Feature Rollout Configuration
+rollout_strategy:
+  {% for feature in enabled_features %}
+  {{ feature }}:
+    strategy: "instant"  # instant, gradual, targeted
+    percentage: 100.0
+    target_users: []
+    target_groups: []
+    start_date: "{{ now() }}"
+    conditions: {}
+  {% endfor %}
+
+# Feature Documentation
+documentation:
+  {% for feature in enabled_features %}
+  {{ feature }}:
+    description: "{{ plan_features.get(feature, {}).get('description', 'Feature description') }}"
+    documentation_url: "https://docs.dotmac.io/features/{{ feature }}"
+    support_contact: "{{ tenant.contacts.technical | default('support@dotmac.io') }}"
+    category: "{{ plan_features.get(feature, {}).get('category', 'custom') }}"
+  {% endfor %}
+
+# Custom Feature Configuration
+custom_features:
+  {% if feature_configs %}
+  {% for feature_name, config in feature_configs.items() %}
+  {% if feature_name not in enabled_features %}
+  {{ feature_name }}:
+    enabled: false
+    config: {{ config | to_yaml(indent=6) | indent(4) }}
+    reason: "Not included in {{ tenant.plan }} plan"
+  {% endif %}
+  {% endfor %}
+  {% endif %}
+
+# Environment-specific Feature Overrides
+{% if tenant.environment == 'development' %}
+development_features:
+  debug_mode:
+    enabled: true
+    config:
+      detailed_errors: true
+      profiling: true
+      query_logging: true
+
+{% elif tenant.environment == 'staging' %}
+staging_features:
+  performance_testing:
+    enabled: true
+    config:
+      load_testing: true
+      stress_testing: false
+
+{% elif tenant.environment == 'production' %}
+production_features:
+  monitoring:
+    enabled: true
+    config:
+      alerting: true
+      health_checks: true
+      performance_monitoring: true
+{% endif %}

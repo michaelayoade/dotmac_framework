@@ -71,12 +71,12 @@ export class PerformanceMeasurer {
   startMeasurement(testName: string): void {
     this.startTime = performance.now();
     this.renderCount = 0;
-    
+
     // Measure initial memory if available
     if (typeof window !== 'undefined' && 'memory' in performance) {
       this.initialMemory = (performance as any).memory.usedJSHeapSize;
     }
-    
+
     console.log(`🔬 Starting performance measurement: ${testName}`);
   }
 
@@ -91,20 +91,26 @@ export class PerformanceMeasurer {
   finishMeasurement(): PerformanceMetrics {
     const endTime = performance.now();
     const renderTime = endTime - this.startTime;
-    
+
     let memoryUsage = 0;
     if (typeof window !== 'undefined' && 'memory' in performance) {
       const currentMemory = (performance as any).memory.usedJSHeapSize;
       memoryUsage = (currentMemory - this.initialMemory) / (1024 * 1024); // Convert to MB
     }
 
-    return {
+    const result: PerformanceMetrics = {
       renderTime,
       memoryUsage,
       componentCount: 1, // Will be overridden by specific tests
       reRenderCount: this.renderCount,
-      interactionTime: this.metrics.interactionTime,
     };
+
+    // Only add interactionTime if it's defined
+    if (this.metrics.interactionTime !== undefined) {
+      result.interactionTime = this.metrics.interactionTime;
+    }
+
+    return result;
   }
 
   reset(): void {
@@ -125,27 +131,27 @@ export const ComponentBenchmarks = {
   ): Promise<BenchmarkResult> {
     const measurer = new PerformanceMeasurer();
     const testName = `Chart Performance - ${testData.length} data points`;
-    
+
     measurer.startMeasurement(testName);
-    
+
     // Simulate component lifecycle
     const startRender = performance.now();
-    
+
     // Mock rendering process
     await new Promise(resolve => {
       measurer.recordRender();
       setTimeout(resolve, 10); // Simulate render time
     });
-    
+
     // Simulate data updates
     for (let i = 0; i < 5; i++) {
       measurer.recordRender();
       await new Promise(resolve => setTimeout(resolve, 5));
     }
-    
+
     const metrics = measurer.finishMeasurement();
     metrics.componentCount = testData.length;
-    
+
     const passed = (
       metrics.renderTime <= budget.renderTime &&
       metrics.memoryUsage <= budget.memoryUsage &&
@@ -168,20 +174,20 @@ export const ComponentBenchmarks = {
   ): Promise<BenchmarkResult> {
     const measurer = new PerformanceMeasurer();
     const testName = `Status Indicator Performance - ${testCount} indicators`;
-    
+
     measurer.startMeasurement(testName);
-    
+
     // Simulate rendering multiple indicators
     const renderPromises = Array(testCount).fill(0).map(async (_, index) => {
       measurer.recordRender();
       return new Promise(resolve => setTimeout(resolve, 1));
     });
-    
+
     await Promise.all(renderPromises);
-    
+
     const metrics = measurer.finishMeasurement();
     metrics.componentCount = testCount;
-    
+
     const passed = (
       metrics.renderTime <= budget.renderTime &&
       metrics.memoryUsage <= budget.memoryUsage &&
@@ -204,13 +210,13 @@ export const ComponentBenchmarks = {
   ): Promise<BenchmarkResult> {
     const measurer = new PerformanceMeasurer();
     const testName = `Virtualized List Performance - ${itemCount} items`;
-    
+
     measurer.startMeasurement(testName);
-    
+
     // Simulate initial render
     measurer.recordRender();
     await new Promise(resolve => setTimeout(resolve, 20));
-    
+
     // Simulate scrolling interactions
     for (let i = 0; i < 10; i++) {
       const interactionStart = performance.now();
@@ -219,10 +225,10 @@ export const ComponentBenchmarks = {
       const interactionTime = performance.now() - interactionStart;
       measurer.recordInteraction(interactionTime);
     }
-    
+
     const metrics = measurer.finishMeasurement();
     metrics.componentCount = itemCount;
-    
+
     const passed = (
       metrics.renderTime <= budget.renderTime &&
       metrics.memoryUsage <= budget.memoryUsage &&
@@ -256,34 +262,34 @@ export const PerformanceComparison = {
   generateReport(results: BenchmarkResult[]): string {
     const passedTests = results.filter(r => r.passed).length;
     const totalTests = results.length;
-    
+
     let report = `\n📊 Performance Test Report\n`;
     report += `==============================\n`;
     report += `Tests Passed: ${passedTests}/${totalTests}\n`;
     report += `Success Rate: ${(passedTests / totalTests * 100).toFixed(1)}%\n\n`;
-    
+
     results.forEach(result => {
       report += `🧪 ${result.testName}\n`;
       report += `   Status: ${result.passed ? '✅ PASSED' : '❌ FAILED'}\n`;
       report += `   Render Time: ${result.metrics.renderTime.toFixed(2)}ms\n`;
       report += `   Memory Usage: ${result.metrics.memoryUsage.toFixed(2)}MB\n`;
       report += `   Re-renders: ${result.metrics.reRenderCount}\n`;
-      
+
       if (result.metrics.interactionTime) {
         report += `   Interaction Time: ${result.metrics.interactionTime.toFixed(2)}ms\n`;
       }
-      
+
       if (result.improvement) {
         report += `   Improvements:\n`;
         report += `     Render Time: ${result.improvement.renderTime}\n`;
         report += `     Memory: ${result.improvement.memoryUsage}\n`;
         report += `     Re-renders: ${result.improvement.reRenderCount}\n`;
       }
-      
+
       report += `   Component Count: ${result.metrics.componentCount}\n`;
       report += `   Timestamp: ${result.timestamp}\n\n`;
     });
-    
+
     return report;
   }
 };
@@ -300,12 +306,12 @@ export const BundleSizeAnalyzer = {
       'types': 5.2,            // KB
       'total': 223.7           // KB
     };
-    
+
     console.log('📦 Bundle Size Analysis:');
     Object.entries(bundleSizes).forEach(([module, size]) => {
       console.log(`  ${module}: ${size}KB`);
     });
-    
+
     return bundleSizes;
   },
 
@@ -348,31 +354,31 @@ export const MemoryLeakDetector = {
     }
 
     const initialMemory = (performance as any).memory.usedJSHeapSize;
-    
+
     for (let i = 0; i < iterations; i++) {
       await testFunction();
-      
+
       // Force garbage collection if available
       if ('gc' in window) {
         (window as any).gc();
       }
-      
+
       // Small delay between iterations
       await new Promise(resolve => setTimeout(resolve, 100));
     }
-    
+
     const finalMemory = (performance as any).memory.usedJSHeapSize;
     const memoryGrowth = (finalMemory - initialMemory) / (1024 * 1024); // MB
-    
+
     // Consider > 10MB growth over 10 iterations as potential leak
     const hasLeaks = memoryGrowth > 10;
-    
+
     console.log(`🔍 Memory Leak Detection:`);
     console.log(`  Initial Memory: ${(initialMemory / 1024 / 1024).toFixed(2)}MB`);
     console.log(`  Final Memory: ${(finalMemory / 1024 / 1024).toFixed(2)}MB`);
     console.log(`  Growth: ${memoryGrowth.toFixed(2)}MB`);
     console.log(`  Has Leaks: ${hasLeaks ? '⚠️  Potential leak detected' : '✅ No leaks detected'}`);
-    
+
     return {
       hasLeaks,
       memoryGrowth,
@@ -391,71 +397,69 @@ export const PerformanceTestSuite = {
   }> {
     console.log('🚀 Starting Comprehensive Performance Test Suite');
     console.log('================================================');
-    
+
     const results = {
       benchmarks: [] as BenchmarkResult[],
       bundleAnalysis: {} as { [key: string]: number },
       memoryLeaks: [] as any[],
       overallPassed: false
     };
-    
+
     try {
       // Run bundle size analysis
       results.bundleAnalysis = await BundleSizeAnalyzer.analyzeBundleSize();
-      
+
       // Mock benchmark tests (in real scenario would render actual components)
-      const chartTest = await ComponentBenchmarks.testChartPerformance(
-        {} as any, // Mock component
-        Array(100).fill(0).map((_, i) => ({ month: `Month ${i}`, revenue: i * 1000 })),
-        PERFORMANCE_BUDGETS.charts
-      );
-      results.benchmarks.push(chartTest);
-      
-      const indicatorTest = await ComponentBenchmarks.testStatusIndicatorPerformance(
-        {} as any, // Mock component
-        50,
-        PERFORMANCE_BUDGETS.statusIndicators
-      );
-      results.benchmarks.push(indicatorTest);
-      
-      const virtualizedTest = await ComponentBenchmarks.testVirtualizedListPerformance(
-        {} as any, // Mock component
-        10000,
-        PERFORMANCE_BUDGETS.virtualizedLists
-      );
-      results.benchmarks.push(virtualizedTest);
-      
+      const chartsBudget = PERFORMANCE_BUDGETS.charts;
+      const statusBudget = PERFORMANCE_BUDGETS.statusIndicators;
+      const virtualizedBudget = PERFORMANCE_BUDGETS.virtualizedLists;
+
+      if (chartsBudget && statusBudget && virtualizedBudget) {
+        const chartTest = await ComponentBenchmarks.testChartPerformance(
+          {} as any, // Mock component
+          Array(100).fill(0).map((_, i) => ({ month: `Month ${i}`, revenue: i * 1000 })),
+          chartsBudget
+        );
+        results.benchmarks.push(chartTest);
+
+        const indicatorTest = await ComponentBenchmarks.testStatusIndicatorPerformance(
+          {} as any, // Mock component
+          50,
+          statusBudget
+        );
+        results.benchmarks.push(indicatorTest);
+
+        const virtualizedTest = await ComponentBenchmarks.testVirtualizedListPerformance(
+          {} as any, // Mock component
+          10000,
+          virtualizedBudget
+        );
+        results.benchmarks.push(virtualizedTest);
+      }
+
       // Check overall success
       const bundleCheck = BundleSizeAnalyzer.checkBundleBudgets(results.bundleAnalysis);
       const allBenchmarksPassed = results.benchmarks.every(b => b.passed);
       results.overallPassed = bundleCheck.passed && allBenchmarksPassed;
-      
+
       // Generate and log report
       const report = PerformanceComparison.generateReport(results.benchmarks);
       console.log(report);
-      
+
       if (!bundleCheck.passed) {
         console.log('📦 Bundle Budget Violations:');
         bundleCheck.violations.forEach(violation => console.log(`  ❌ ${violation}`));
       }
-      
+
       console.log(`🎯 Overall Result: ${results.overallPassed ? '✅ ALL TESTS PASSED' : '❌ SOME TESTS FAILED'}`);
-      
+
     } catch (error) {
       console.error('❌ Performance test suite failed:', error);
       results.overallPassed = false;
     }
-    
+
     return results;
   }
 };
 
-// Export all utilities
-export {
-  PerformanceMeasurer,
-  ComponentBenchmarks,
-  PerformanceComparison,
-  BundleSizeAnalyzer,
-  MemoryLeakDetector,
-  PerformanceTestSuite
-};
+// Classes are already exported above with 'export class' declarations

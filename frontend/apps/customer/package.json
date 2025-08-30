@@ -31,11 +31,21 @@
     "build:profile": "NEXT_PROFILE=true npm run build"
   },
   "dependencies": {
+    "@dotmac/providers": "workspace:*",
+    "@dotmac/auth": "workspace:*",
     "@dotmac/headless": "workspace:*",
-    "@dotmac/primitives": "workspace:*",
-    "@dotmac/styled-components": "workspace:*",
     "@dotmac/mapping": "workspace:*",
-    "next": "^14.2.18",
+    "@dotmac/navigation-system": "workspace:*",
+    "@dotmac/settings-system": "workspace:*",
+    "@dotmac/communication-system": "workspace:*",
+    "@dotmac/workflows-system": "workspace:*",
+    "@dotmac/portal-components": "workspace:*",
+    "@dotmac/journey-orchestration": "workspace:*",
+    "@dotmac/support-system": "workspace:*",
+    "@dotmac/collaboration": "workspace:*",
+    "@dotmac/ml-analytics": "workspace:*",
+    "@dotmac/billing-system": "workspace:*",
+    "next": "^14.2.31",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "class-variance-authority": "^0.7.0",
@@ -48,7 +58,8 @@
     "d3": "^7.8.5",
     "framer-motion": "^10.16.16",
     "web-vitals": "^3.5.0",
-    "@sentry/nextjs": "^7.92.0"
+    "@sentry/nextjs": "^7.92.0",
+    "@tanstack/react-query": "^5.85.5"
   },
   "devDependencies": {
     "@dotmac/typescript-config": "workspace:*",

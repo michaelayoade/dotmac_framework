@@ -1,0 +1,37 @@
+# Deployment Guide
+
+## Health Checks
+
+The application provides the following health check endpoints:
+
+{% if health_probes_available %}
+- `GET /health/live` - Liveness probe
+- `GET /health/ready` - Readiness probe
+- `GET /health/startup` - Startup probe
+{% else %}
+⚠️ **Warning**: Health probes not implemented
+{% endif %}
+
+## Container Deployment
+
+{% if dockerfile_exists %}
+Build the container:
+```bash
+docker build -t dotmac-platform .
+```
+{% else %}
+⚠️ **Error**: No Dockerfile found
+{% endif %}
+
+## Database Setup
+
+{% if postgresql_configured %}
+The application uses PostgreSQL. Ensure database is configured with:
+```bash
+export DATABASE_URL="postgresql://user:pass@host:5432/db"
+```
+{% else %}
+⚠️ **Warning**: PostgreSQL configuration not detected
+{% endif %}
+
+*Auto-generated on {{ generation_date }}*

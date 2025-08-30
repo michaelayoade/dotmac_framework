@@ -1,8 +1,8 @@
 "use client";
 
 import { usePortalAuth, useSecureForm } from "@dotmac/headless";
-import { CSRFToken, OptimizedImage } from "@dotmac/primitives";
-import { Button, Card, Input } from "@dotmac/styled-components/reseller";
+import { CSRFToken, OptimizedImage } from "@dotmac/providers";
+import { Button, Card, Input } from "@dotmac/ui/reseller";
 import {
 	AlertCircle,
 	DollarSign,

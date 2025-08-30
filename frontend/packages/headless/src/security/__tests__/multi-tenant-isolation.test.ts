@@ -11,8 +11,8 @@ import { ISPTenantProvider } from '../../components/ISPTenantProvider';
 import { AuthProvider } from '../../components/AuthProvider';
 import { ApiManager } from '../../api/manager/ApiManager';
 import { EnhancedISPError, ErrorCode } from '../../utils/enhancedErrorHandling';
-import { IdentityApiClient } from '../../api/clients/IdentityApiClient';
-import { BillingApiClient } from '../../api/clients/BillingApiClient';
+import { IdentityApiClient } from "@dotmac/headless/api";
+import { BillingApiClient } from "@dotmac/headless/api";
 
 // Mock API clients
 jest.mock('../../api/clients/IdentityApiClient');
@@ -146,9 +146,9 @@ describe('Multi-Tenant Isolation Security Tests', () => {
 
     // Mock API client responses based on tenant context
     mockIdentityClient.getCustomer.mockImplementation(async (customerId: string) => {
-      const currentTenantId = localStorage.getItem('currentTenant') || 
+      const currentTenantId = localStorage.getItem('currentTenant') ||
                             document.documentElement.getAttribute('data-tenant-id');
-      
+
       if (!currentTenantId) {
         throw new EnhancedISPError({
           code: ErrorCode.AUTHZ_TENANT_CONTEXT_MISSING,
@@ -178,7 +178,7 @@ describe('Multi-Tenant Isolation Security Tests', () => {
       if (!customer) {
         // Check if customer exists in other tenants (cross-tenant access attempt)
         const allTenants = Object.values(TENANT_DATA);
-        const customerInOtherTenant = allTenants.some(tenant => 
+        const customerInOtherTenant = allTenants.some(tenant =>
           tenant.customers.some(c => c.id === customerId)
         );
 
@@ -214,9 +214,9 @@ describe('Multi-Tenant Isolation Security Tests', () => {
     });
 
     mockBillingClient.getCustomerBilling.mockImplementation(async (customerId: string) => {
-      const currentTenantId = localStorage.getItem('currentTenant') || 
+      const currentTenantId = localStorage.getItem('currentTenant') ||
                             document.documentElement.getAttribute('data-tenant-id');
-      
+
       if (!currentTenantId) {
         throw new EnhancedISPError({
           code: ErrorCode.AUTHZ_TENANT_CONTEXT_MISSING,
@@ -288,7 +288,7 @@ describe('Multi-Tenant Isolation Security Tests', () => {
 
       render(
         <TenantTestWrapper tenantId="tenant_001" userId="user_001">
-          <TenantCustomerDisplay 
+          <TenantCustomerDisplay
             customerId="cust_001_001"
             onDataReceived={(data) => receivedData.push(data)}
           />
@@ -333,10 +333,10 @@ describe('Multi-Tenant Isolation Security Tests', () => {
 
       // Test Tenant 1
       localStorage.setItem('currentTenant', 'tenant_001');
-      
+
       const { unmount: unmountTenant1 } = render(
         <TenantTestWrapper tenantId="tenant_001" userId="user_001">
-          <TenantCustomerDisplay 
+          <TenantCustomerDisplay
             customerId="cust_001_001"
             onDataReceived={(data) => tenant1Data.push(data)}
           />
@@ -354,7 +354,7 @@ describe('Multi-Tenant Isolation Security Tests', () => {
 
       render(
         <TenantTestWrapper tenantId="tenant_002" userId="user_002">
-          <TenantCustomerDisplay 
+          <TenantCustomerDisplay
             customerId="cust_002_001"
             onDataReceived={(data) => tenant2Data.push(data)}
           />
@@ -368,7 +368,7 @@ describe('Multi-Tenant Isolation Security Tests', () => {
       // Verify complete isolation
       expect(tenant1Data[0].customer.name).toBe('Tenant 1 Customer 1');
       expect(tenant1Data[0].customer.email).toBe('cust1@tenant1.com');
-      
+
       expect(tenant2Data[0].customer.name).toBe('Tenant 2 Customer 1');
       expect(tenant2Data[0].customer.email).toBe('cust1@tenant2.com');
 
@@ -388,7 +388,7 @@ describe('Multi-Tenant Isolation Security Tests', () => {
       mockIdentityClient.getCustomer.mockImplementationOnce(async (customerId: string) => {
         // Simulate attacker trying to override tenant context in request
         const manipulatedTenantId = 'tenant_002';
-        
+
         // Security check should prevent this
         const actualTenantId = localStorage.getItem('currentTenant');
         if (actualTenantId !== manipulatedTenantId) {
@@ -564,7 +564,7 @@ describe('Multi-Tenant Isolation Security Tests', () => {
       localStorage.setItem('currentTenant', 'tenant_001');
 
       const loggedErrors: any[] = [];
-      
+
       // Mock console.error to capture logs
       const originalConsoleError = console.error;
       console.error = jest.fn((...args) => {
@@ -602,8 +602,8 @@ describe('Multi-Tenant Isolation Security Tests', () => {
       console.error = originalConsoleError;
 
       // Verify tenant identifiers are sanitized in logs
-      const errorLog = loggedErrors.find(log => 
-        log.some((arg: any) => 
+      const errorLog = loggedErrors.find(log =>
+        log.some((arg: any) =>
           typeof arg === 'string' && arg.includes('Customer not found')
         )
       );
@@ -622,7 +622,7 @@ describe('Multi-Tenant Isolation Security Tests', () => {
       localStorage.setItem('currentTenant', 'tenant_001');
 
       const startTime = performance.now();
-      
+
       render(
         <TenantTestWrapper tenantId="tenant_001" userId="user_001">
           <TenantCustomerDisplay customerId="cust_001_001" />
@@ -676,7 +676,7 @@ describe('Multi-Tenant Isolation Security Tests', () => {
         apiCallCount++;
         const currentTenant = localStorage.getItem('currentTenant');
         tenantContextLog.push(`identity-call-${apiCallCount}:${currentTenant}`);
-        
+
         const tenantData = TENANT_DATA[currentTenant as keyof typeof TENANT_DATA];
         return tenantData.customers.find(c => c.id === customerId)!;
       });
@@ -685,7 +685,7 @@ describe('Multi-Tenant Isolation Security Tests', () => {
         apiCallCount++;
         const currentTenant = localStorage.getItem('currentTenant');
         tenantContextLog.push(`billing-call-${apiCallCount}:${currentTenant}`);
-        
+
         const tenantData = TENANT_DATA[currentTenant as keyof typeof TENANT_DATA];
         return tenantData.billing.find(b => b.customerId === customerId)!;
       });
@@ -712,12 +712,12 @@ describe('Multi-Tenant Isolation Security Tests', () => {
       // Mock a slow API call that might be interrupted by tenant switch
       mockIdentityClient.getCustomer.mockImplementation(async (customerId: string) => {
         const initialTenant = localStorage.getItem('currentTenant');
-        
+
         // Simulate slow operation
         await new Promise(resolve => setTimeout(resolve, 100));
-        
+
         const finalTenant = localStorage.getItem('currentTenant');
-        
+
         if (initialTenant !== finalTenant) {
           throw new EnhancedISPError({
             code: ErrorCode.AUTHZ_TENANT_CONTEXT_CHANGED,
@@ -763,7 +763,7 @@ describe('Multi-Tenant Isolation Security Tests', () => {
       mockIdentityClient.getCustomer.mockImplementation(async (customerId: string) => {
         const tenantId = localStorage.getItem('currentTenant');
         const sessionTenant = document.documentElement.getAttribute('data-tenant-id');
-        
+
         contextValidations.push(`validation:tenant=${tenantId},session=${sessionTenant}`);
 
         if (!tenantId || !sessionTenant || tenantId !== sessionTenant) {

@@ -3,10 +3,7 @@
  */
 
 import React from 'react';
-import { clsx } from 'clsx';
-
-// Simple class name utility
-const cn = (...classes: (string | undefined)[]) => clsx(classes);
+import { cn } from '../utils/cn';
 
 export interface TextareaProps
   extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {}

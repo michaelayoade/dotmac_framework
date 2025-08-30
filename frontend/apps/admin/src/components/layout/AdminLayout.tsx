@@ -1,30 +1,42 @@
 'use client';
 
-import { ErrorBoundary } from '@dotmac/primitives/error';
+import { ErrorBoundary } from '@dotmac/providers/error';
+import {
+  UniversalNavigation,
+  NavigationPresets,
+  UserHelper,
+  BrandingHelper,
+  NavigationHookHelpers
+} from '@dotmac/navigation-system';
+import { useUniversalAuth } from '@dotmac/headless';
+import { useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
-
-import { AdminHeader } from './AdminHeader';
-import { AdminSidebar } from './AdminSidebar';
 
 interface AdminLayoutProps {
   children: ReactNode;
 }
 
 function AdminLayout({ children }: AdminLayoutProps) {
+  const router = useRouter();
+  const { user, logout, currentPortal } = useUniversalAuth();
+
   return (
-    <div className='admin-layout'>
-      <ErrorBoundary level='section'>
-        <AdminHeader />
-      </ErrorBoundary>
-      <div className='flex h-[calc(100vh-64px)]'>
-        <ErrorBoundary level='section'>
-          <AdminSidebar />
-        </ErrorBoundary>
-        <main className='admin-content'>
-          <ErrorBoundary level='section'>{children}</ErrorBoundary>
-        </main>
-      </div>
-    </div>
+    <ErrorBoundary level='section'>
+      <UniversalNavigation
+        items={NavigationPresets.admin()}
+        variant="admin"
+        layoutType="sidebar"
+        user={UserHelper.format(user)}
+        branding={BrandingHelper.fromTenant(currentPortal) || {
+          companyName: 'DotMac Admin',
+          primaryColor: '#3B82F6'
+        }}
+        onNavigate={NavigationHookHelpers.createNavigationHandler(router)}
+        onLogout={NavigationHookHelpers.createLogoutHandler({ logout })}
+      >
+        <ErrorBoundary level='section'>{children}</ErrorBoundary>
+      </UniversalNavigation>
+    </ErrorBoundary>
   );
 }
 

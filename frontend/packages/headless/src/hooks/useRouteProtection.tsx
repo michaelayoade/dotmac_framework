@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
 import { usePermissions } from './usePermissions';
-import { usePortalAuth } from './usePortalAuth';
+import { useUniversalAuth } from './useUniversalAuth';
 
 interface RouteConfig {
   path: string;

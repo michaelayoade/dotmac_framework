@@ -2,11 +2,11 @@
 
 import React, { useState, useCallback, useMemo } from 'react';
 import { useProvisioning } from '@dotmac/headless';
-import { 
+import {
   useNotifications,
   VirtualizedTable,
-  Modal 
-} from '@dotmac/primitives';
+  Modal
+} from '@dotmac/providers';
 
 interface ProvisioningDashboardProps {
   className?: string;
@@ -35,11 +35,11 @@ export function ProvisioningDashboard({ className = '' }: ProvisioningDashboardP
   // Quick Actions
   const handleBulkApproval = useCallback(async () => {
     if (selectedRequests.length === 0) return;
-    
+
     try {
       await provisioning.bulkUpdateStatus(selectedRequests, 'approved', 'Bulk approved');
       setSelectedRequests([]);
-      
+
       addNotification({
         type: 'success',
         priority: 'medium',
@@ -109,7 +109,7 @@ export function ProvisioningDashboard({ className = '' }: ProvisioningDashboardP
             )}
           </div>
         </div>
-        
+
         <div className="flex items-center space-x-3">
           {selectedRequests.length > 0 && (
             <button
@@ -287,11 +287,11 @@ interface OverviewTabProps {
   onSelectRequest: (request: any) => void;
 }
 
-function OverviewTab({ 
-  stats, 
-  urgentRequests, 
-  todayInstallations, 
-  onSelectRequest 
+function OverviewTab({
+  stats,
+  urgentRequests,
+  todayInstallations,
+  onSelectRequest
 }: OverviewTabProps) {
   return (
     <div className="overview-tab">
@@ -305,8 +305,8 @@ function OverviewTab({
                 <span className="text-sm text-gray-600 capitalize">{status.replace('_', ' ')}</span>
                 <div className="flex items-center space-x-2">
                   <div className="w-16 bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="h-2 rounded-full bg-blue-600" 
+                    <div
+                      className="h-2 rounded-full bg-blue-600"
                       style={{ width: `${(count as number / stats.totalRequests) * 100}%` }}
                     ></div>
                   </div>
@@ -326,8 +326,8 @@ function OverviewTab({
                 <span className="text-sm text-gray-600">{technician}</span>
                 <div className="flex items-center space-x-2">
                   <div className="w-16 bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="h-2 rounded-full bg-orange-600" 
+                    <div
+                      className="h-2 rounded-full bg-orange-600"
                       style={{ width: `${Math.min((workload as number / 10) * 100, 100)}%` }}
                     ></div>
                   </div>
@@ -345,7 +345,7 @@ function OverviewTab({
           </h2>
           <div className="space-y-3">
             {urgentRequests.slice(0, 5).map((request) => (
-              <div 
+              <div
                 key={request.id}
                 className="flex items-center justify-between p-3 border border-red-200 rounded-lg bg-red-50 cursor-pointer hover:bg-red-100"
                 onClick={() => onSelectRequest(request)}
@@ -372,7 +372,7 @@ function OverviewTab({
           </h2>
           <div className="space-y-3">
             {todayInstallations.slice(0, 5).map((installation) => (
-              <div 
+              <div
                 key={installation.id}
                 className="flex items-center justify-between p-3 border border-blue-200 rounded-lg bg-blue-50 cursor-pointer hover:bg-blue-100"
                 onClick={() => onSelectRequest(installation)}
@@ -412,17 +412,17 @@ interface RequestsTabProps {
   isLoading: boolean;
 }
 
-function RequestsTab({ 
-  requests, 
-  filters, 
-  onFiltersChange, 
-  selectedRequests, 
+function RequestsTab({
+  requests,
+  filters,
+  onFiltersChange,
+  selectedRequests,
   onSelectionChange,
   onUpdateStatus,
   onScheduleInstallation,
   onQuickSchedule,
   onCancel,
-  isLoading 
+  isLoading
 }: RequestsTabProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -528,7 +528,7 @@ function RequestsTab({
       header: 'Scheduled',
       render: (request: any) => (
         <span className="text-sm text-gray-500">
-          {request.scheduledAt 
+          {request.scheduledAt
             ? new Date(request.scheduledAt).toLocaleDateString()
             : 'Not scheduled'
           }
@@ -736,7 +736,7 @@ function CalendarTab({ installations, onReschedule }: CalendarTabProps) {
   // Group installations by date
   const installationsByDate = installations.reduce((acc, installation) => {
     if (!installation.scheduledAt) return acc;
-    
+
     const date = new Date(installation.scheduledAt).toDateString();
     if (!acc[date]) acc[date] = [];
     acc[date].push(installation);
@@ -749,17 +749,17 @@ function CalendarTab({ installations, onReschedule }: CalendarTabProps) {
         {/* Calendar View */}
         <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow">
           <h2 className="text-lg font-medium text-gray-900 mb-4">Installation Calendar</h2>
-          
+
           {/* Simple calendar implementation */}
           <div className="calendar-grid">
             {Object.entries(installationsByDate).map(([date, dayInstallations]) => (
               <div key={date} className="mb-4">
                 <h3 className="font-medium text-gray-900 mb-2">
-                  {new Date(date).toLocaleDateString(undefined, { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
+                  {new Date(date).toLocaleDateString(undefined, {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
                   })}
                 </h3>
                 <div className="space-y-2">
@@ -795,10 +795,10 @@ function CalendarTab({ installations, onReschedule }: CalendarTabProps) {
         {/* Today's Summary */}
         <div className="bg-white p-6 rounded-lg shadow">
           <h2 className="text-lg font-medium text-gray-900 mb-4">Today's Schedule</h2>
-          
+
           <div className="space-y-3">
             {installations
-              .filter(inst => inst.scheduledAt && 
+              .filter(inst => inst.scheduledAt &&
                 new Date(inst.scheduledAt).toDateString() === new Date().toDateString()
               )
               .map((installation) => (
@@ -841,7 +841,7 @@ function NewRequestModal({ templates, onSubmit, onClose }: NewRequestModalProps)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const requestData = {
       customerId: formData.customerId || `customer_${Date.now()}`,
       serviceTemplateId: formData.serviceTemplateId,
@@ -867,7 +867,7 @@ function NewRequestModal({ templates, onSubmit, onClose }: NewRequestModalProps)
     <Modal onClose={onClose} className="max-w-2xl">
       <div className="p-6">
         <h2 className="text-lg font-medium text-gray-900 mb-4">New Service Request</h2>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>

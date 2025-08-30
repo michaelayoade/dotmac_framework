@@ -6,9 +6,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '../ui/Button';
-import { Card } from '../ui/Card';
-import { Input } from '../ui/Input';
+import { Button, Card, Input } from '@dotmac/primitives';
 
 interface FamilyMember {
   id: string;

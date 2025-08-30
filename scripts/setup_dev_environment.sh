@@ -42,93 +42,106 @@ show_usage() {
 # Check system requirements
 check_requirements() {
     print_step "Checking system requirements..."
-    
+
     local missing_tools=()
-    
+
     # Check required tools
-    local required_tools=("git" "python3" "pip3" "docker" "docker-compose")
-    
+    local required_tools=("git" "python3" "docker" "docker-compose")
+    local optional_tools=("poetry")
+
     for tool in "${required_tools[@]}"; do
         if ! command -v "$tool" &> /dev/null; then
             missing_tools+=("$tool")
         fi
     done
-    
+
     if [ ${#missing_tools[@]} -gt 0 ]; then
         print_error "Missing required tools: ${missing_tools[*]}"
         print_error "Please install the missing tools and run this script again"
         exit 1
     fi
-    
+
     # Check Docker daemon
     if ! docker info &> /dev/null; then
         print_error "Docker daemon is not running"
         print_error "Please start Docker and run this script again"
         exit 1
     fi
-    
+
     # Check Python version
     local python_version=$(python3 --version | cut -d' ' -f2 | cut -d'.' -f1-2)
-    if [ "$(echo "$python_version" | tr -d '.')" -lt 38 ]; then
-        print_warning "Python 3.8+ recommended, found Python $python_version"
+    if [ "$(echo "$python_version" | tr -d '.')" -lt 312 ]; then
+        print_warning "Python 3.12+ required, found Python $python_version"
     fi
-    
+
+    # Check optional tools
+    for tool in "${optional_tools[@]}"; do
+        if ! command -v "$tool" &> /dev/null; then
+            print_warning "$tool not found (will be installed automatically)"
+        else
+            print_status "✓ $tool found"
+        fi
+    done
+
     print_status "All requirements satisfied"
 }
 
-# Setup Python development environment
+# Setup Poetry and Python development environment
 setup_python_environment() {
-    print_step "Setting up Python development environment..."
-    
+    print_step "Setting up Poetry and Python development environment..."
+
     cd "$PROJECT_ROOT"
-    
-    # Create virtual environment if it doesn't exist
-    if [ ! -d "venv" ]; then
-        print_status "Creating Python virtual environment..."
-        python3 -m venv venv
+
+    # Check if Poetry is installed
+    if ! command -v poetry &> /dev/null; then
+        print_status "Installing Poetry..."
+        curl -sSL https://install.python-poetry.org | python3 -
+        export PATH="$HOME/.local/bin:$PATH"
+    else
+        print_status "Poetry already installed"
     fi
-    
-    # Activate virtual environment
-    source venv/bin/activate
-    
-    # Upgrade pip
-    pip install --upgrade pip
-    
-    # Install development dependencies for ISP Framework
-    if [ -f "isp-framework/requirements-dev.txt" ]; then
-        print_status "Installing ISP Framework development dependencies..."
-        pip install -r isp-framework/requirements-dev.txt
-    elif [ -f "isp-framework/requirements.txt" ]; then
+
+    # Install root dependencies
+    print_status "Installing root dependencies..."
+    poetry install
+
+    # Install ISP Framework dependencies
+    if [ -d "isp-framework" ]; then
         print_status "Installing ISP Framework dependencies..."
-        pip install -r isp-framework/requirements.txt
+        cd isp-framework && poetry install && cd ..
     fi
-    
-    # Install development dependencies for Management Platform
-    if [ -f "management-platform/requirements-dev.txt" ]; then
-        print_status "Installing Management Platform development dependencies..."
-        pip install -r management-platform/requirements-dev.txt
-    elif [ -f "management-platform/requirements.txt" ]; then
+
+    # Install Management Platform dependencies
+    if [ -d "management-platform" ]; then
         print_status "Installing Management Platform dependencies..."
-        pip install -r management-platform/requirements.txt
+        cd management-platform && poetry install && cd ..
     fi
-    
-    # Install common development tools
-    print_status "Installing common development tools..."
-    pip install pytest black mypy flake8 pre-commit requests python-dotenv
-    
+
+    # Install SDK dependencies
+    if [ -d "sdk/python" ]; then
+        print_status "Installing Python SDK dependencies..."
+        cd sdk/python && poetry install && cd ../..
+    fi
+
+    # Install Documentation dependencies
+    if [ -d "docs" ]; then
+        print_status "Installing Documentation dependencies..."
+        cd docs && poetry install && cd ..
+    fi
+
     print_status "Python environment setup completed"
 }
 
 # Setup Docker development environment
 setup_docker_environment() {
     print_step "Setting up Docker development environment..."
-    
+
     cd "$PROJECT_ROOT"
-    
+
     # Create development Docker Compose file if it doesn't exist
     if [ ! -f "docker-compose.dev.yml" ]; then
         print_status "Creating development Docker Compose configuration..."
-        
+
         cat > docker-compose.dev.yml << 'EOF'
 version: '3.8'
 
@@ -179,14 +192,14 @@ volumes:
   postgres_dev_data:
   redis_dev_data:
 EOF
-        
+
         print_status "Development Docker Compose file created"
     fi
-    
+
     # Create development environment file
     if [ ! -f ".env.dev" ]; then
         print_status "Creating development environment configuration..."
-        
+
         cat > .env.dev << 'EOF'
 # DotMac Framework Development Environment Configuration
 
@@ -231,18 +244,18 @@ ISP_FRAMEWORK_URL=http://localhost:8001
 MANAGEMENT_PLATFORM_URL=http://localhost:8000
 FRONTEND_URL=http://localhost:3000
 EOF
-        
+
         print_status "Development environment file created"
     fi
-    
+
     # Start development services
     print_status "Starting development services..."
     docker-compose -f docker-compose.dev.yml up -d
-    
+
     # Wait for services to be ready
     print_status "Waiting for services to be ready..."
     sleep 10
-    
+
     # Check service health
     local services=("postgres-dev" "redis-dev" "mailhog")
     for service in "${services[@]}"; do
@@ -252,55 +265,55 @@ EOF
             print_warning "⚠ $service may not be running properly"
         fi
     done
-    
+
     print_status "Docker development environment setup completed"
 }
 
 # Setup development databases
 setup_development_databases() {
     print_step "Setting up development databases..."
-    
+
     cd "$PROJECT_ROOT"
-    
+
     # Wait for PostgreSQL to be ready
     print_status "Waiting for PostgreSQL to be ready..."
     local max_attempts=30
     local attempt=1
-    
+
     while [ $attempt -le $max_attempts ]; do
         if docker exec dotmac-postgres-dev pg_isready -U dotmac_dev &> /dev/null; then
             break
         fi
-        
+
         if [ $attempt -eq $max_attempts ]; then
             print_error "PostgreSQL not ready after $max_attempts attempts"
             return 1
         fi
-        
+
         sleep 2
         attempt=$((attempt + 1))
     done
-    
+
     # Create additional databases
     local databases=("dotmac_isp" "mgmt_platform" "test_db")
-    
+
     for db in "${databases[@]}"; do
         print_status "Creating database: $db"
         docker exec dotmac-postgres-dev createdb -U dotmac_dev "$db" 2>/dev/null || print_warning "Database $db may already exist"
     done
-    
+
     print_status "Development databases setup completed"
 }
 
 # Setup development tools and scripts
 setup_development_tools() {
     print_step "Setting up development tools..."
-    
+
     cd "$PROJECT_ROOT"
-    
+
     # Create development scripts directory
     mkdir -p dev-scripts
-    
+
     # Create database reset script
     cat > dev-scripts/reset-db.sh << 'EOF'
 #!/bin/bash
@@ -314,7 +327,7 @@ docker exec dotmac-postgres-dev dropdb -U dotmac_dev --if-exists mgmt_platform
 docker exec dotmac-postgres-dev createdb -U dotmac_dev mgmt_platform
 echo "Database reset completed"
 EOF
-    
+
     # Create start development services script
     cat > dev-scripts/start-services.sh << 'EOF'
 #!/bin/bash
@@ -328,7 +341,7 @@ echo "  PostgreSQL: localhost:5432"
 echo "  Redis: localhost:6379"
 echo "  MailHog: http://localhost:8025"
 EOF
-    
+
     # Create stop development services script
     cat > dev-scripts/stop-services.sh << 'EOF'
 #!/bin/bash
@@ -338,58 +351,74 @@ cd "$(dirname "$0")/.."
 docker-compose -f docker-compose.dev.yml down
 echo "Development services stopped"
 EOF
-    
+
     # Create test runner script
     cat > dev-scripts/run-tests.sh << 'EOF'
 #!/bin/bash
 # Run tests for DotMac Framework
 echo "Running tests..."
 
-# Activate virtual environment if it exists
-if [ -f "venv/bin/activate" ]; then
-    source venv/bin/activate
-fi
-
 # Run validation scripts
 echo "Running validation tests..."
-python3 scripts/validate_imports.py
-python3 scripts/validate_environment.py
+if [ -f "scripts/validate_imports.py" ]; then
+    poetry run python scripts/validate_imports.py
+fi
+if [ -f "scripts/validate_environment.py" ]; then
+    poetry run python scripts/validate_environment.py
+fi
 
-# Run unit tests if pytest is available
-if command -v pytest &> /dev/null; then
-    echo "Running pytest..."
-    pytest -v
-else
-    echo "pytest not available, skipping unit tests"
+# Run unit tests in each module
+echo "Running ISP Framework tests..."
+if [ -d "isp-framework" ]; then
+    cd isp-framework && poetry run pytest -v && cd ..
+fi
+
+echo "Running Management Platform tests..."
+if [ -d "management-platform" ]; then
+    cd management-platform && poetry run pytest -v && cd ..
+fi
+
+echo "Running SDK tests..."
+if [ -d "sdk/python" ]; then
+    cd sdk/python && poetry run pytest -v && cd ../..
 fi
 
 echo "Tests completed"
 EOF
-    
+
     # Make scripts executable
     chmod +x dev-scripts/*.sh
-    
+
     # Create VS Code configuration if it doesn't exist
     if [ ! -d ".vscode" ]; then
         mkdir -p .vscode
-        
+
         cat > .vscode/settings.json << 'EOF'
 {
-    "python.defaultInterpreterPath": "./venv/bin/python",
-    "python.formatting.provider": "black",
+    "python.defaultInterpreterPath": "poetry",
+    "python.terminal.activateEnvironment": true,
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": true
+        }
+    },
     "python.linting.enabled": true,
     "python.linting.pylintEnabled": false,
-    "python.linting.flake8Enabled": true,
+    "python.linting.ruffEnabled": true,
     "python.linting.mypyEnabled": true,
     "files.exclude": {
         "**/__pycache__": true,
         "**/*.pyc": true,
-        ".pytest_cache": true
+        ".pytest_cache": true,
+        ".mypy_cache": true,
+        ".ruff_cache": true
     },
     "python.envFile": "${workspaceFolder}/.env.dev"
 }
 EOF
-        
+
         cat > .vscode/launch.json << 'EOF'
 {
     "version": "0.2.0",
@@ -413,10 +442,10 @@ EOF
     ]
 }
 EOF
-        
+
         print_status "VS Code configuration created"
     fi
-    
+
     print_status "Development tools setup completed"
 }
 
@@ -424,38 +453,38 @@ EOF
 generate_development_summary() {
     print_header "\n🎉 DEVELOPMENT ENVIRONMENT SETUP COMPLETED!"
     print_header "=" * 60
-    
+
     print_status "Environment overview:"
     echo "  🐳 Docker services: PostgreSQL, Redis, MailHog"
     echo "  🐍 Python virtual environment with dev dependencies"
     echo "  🔧 Development tools and scripts"
     echo "  📝 VS Code configuration"
-    
+
     print_status "\nServices available:"
     echo "  📊 PostgreSQL: localhost:5432"
-    echo "  🔄 Redis: localhost:6379"  
+    echo "  🔄 Redis: localhost:6379"
     echo "  📧 MailHog: http://localhost:8025"
-    
+
     print_status "\nDevelopment commands:"
     echo "  🚀 Start services: ./dev-scripts/start-services.sh"
     echo "  🛑 Stop services: ./dev-scripts/stop-services.sh"
     echo "  🔄 Reset database: ./dev-scripts/reset-db.sh"
     echo "  🧪 Run tests: ./dev-scripts/run-tests.sh"
-    
+
     print_status "\nPython environment:"
-    echo "  🐍 Virtual env: source venv/bin/activate"
-    echo "  📦 Dependencies: pip install -r requirements-dev.txt"
-    echo "  🧪 Tests: pytest"
-    echo "  🎨 Format: black ."
-    echo "  🔍 Lint: flake8 ."
-    
+    echo "  🐍 Poetry: poetry shell"
+    echo "  📦 Dependencies: poetry install"
+    echo "  🧪 Tests: poetry run pytest"
+    echo "  🎨 Format: poetry run black ."
+    echo "  🔍 Lint: poetry run ruff check ."
+
     print_status "\nConfiguration files:"
     echo "  🐳 Docker: docker-compose.dev.yml"
     echo "  ⚙️  Environment: .env.dev"
     echo "  📝 VS Code: .vscode/settings.json"
-    
+
     print_status "\nNext steps:"
-    echo "  1. Activate Python environment: source venv/bin/activate"
+    echo "  1. Activate Poetry shell: poetry shell"
     echo "  2. Start development services: ./dev-scripts/start-services.sh"
     echo "  3. Run tests to verify setup: ./dev-scripts/run-tests.sh"
     echo "  4. Start developing! 🚀"
@@ -464,13 +493,13 @@ generate_development_summary() {
 # Main setup function
 setup_development_environment() {
     local setup_type="$1"
-    
+
     print_header "🚀 DotMac Framework Development Environment Setup"
     print_header "Setup type: $setup_type"
     print_header "=" * 60
-    
+
     check_requirements
-    
+
     case "$setup_type" in
         "minimal")
             setup_docker_environment
@@ -492,21 +521,21 @@ setup_development_environment() {
             echo "  2) Full (Python + Docker + Tools)"
             echo "  3) Docker only"
             read -p "Enter choice (1-3): " choice
-            
+
             case $choice in
                 1) setup_type="minimal" ;;
                 2) setup_type="full" ;;
                 3) setup_type="docker-only" ;;
                 *) setup_type="full" ;;
             esac
-            
+
             setup_development_environment "$setup_type"
             return
             ;;
     esac
-    
+
     generate_development_summary
-    
+
     print_header "\n✅ Development environment setup completed successfully!"
 }
 

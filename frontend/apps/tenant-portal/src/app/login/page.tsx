@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useTenantAuth } from '@/components/auth/TenantAuthProvider';
+import { useTenantAuth } from '@/components/auth/TenantAuthProviderNew';
 import { demoCredentials } from '@/lib/env-config';
 import { AccessibleInput, AccessibleButton, AccessibleCheckbox, AccessibleAlert } from '@/components/ui/AccessibleForm';
 import { announceToScreenReader } from '@/lib/accessibility';
@@ -13,10 +13,10 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const { login } = useTenantAuth();
   const router = useRouter();
-  
+
   // Announce page load to screen readers
   useEffect(() => {
     announceToScreenReader('Login page loaded. Please enter your credentials to access the tenant portal.', 'polite');
@@ -53,7 +53,7 @@ export default function LoginPage() {
         >
           Skip to main content
         </a>
-        
+
         {/* Header */}
         <header className="text-center">
           <div className="mx-auto h-12 w-12 bg-blue-600 rounded-lg flex items-center justify-center">
@@ -69,9 +69,9 @@ export default function LoginPage() {
 
         {/* Main Login Form */}
         <main>
-          <form 
+          <form
             id="login-form"
-            className="mt-8 space-y-6" 
+            className="mt-8 space-y-6"
             onSubmit={handleSubmit}
             noValidate
             aria-label="Login form"
@@ -132,8 +132,8 @@ export default function LoginPage() {
 
               {/* Forgot Password Link */}
               <div className="text-sm">
-                <a 
-                  href="/forgot-password" 
+                <a
+                  href="/forgot-password"
                   className="font-medium text-blue-600 hover:text-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-0 rounded-sm transition-colors"
                   aria-describedby="forgot-password-description"
                 >
@@ -159,9 +159,9 @@ export default function LoginPage() {
               Sign in
             </AccessibleButton>
             <div id="submit-button-description" className="sr-only">
-              {isLoading 
-                ? 'Currently signing you in, please wait' 
-                : !email || !password 
+              {isLoading
+                ? 'Currently signing you in, please wait'
+                : !email || !password
                   ? 'Please enter both email and password to sign in'
                   : 'Click to sign in with your credentials'
               }
@@ -227,8 +227,8 @@ export default function LoginPage() {
         <footer className="text-center text-sm text-gray-600">
           <p>
             Need help?{' '}
-            <a 
-              href="/support" 
+            <a
+              href="/support"
               className="font-medium text-blue-600 hover:text-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-0 rounded-sm transition-colors"
               aria-label="Contact support for login assistance"
             >

@@ -1,0 +1,319 @@
+# ISP Framework Configuration Template
+# Generated: {{ now() }}
+# Tenant: {{ tenant.name }} ({{ tenant.tenant_id }})
+# Plan: {{ tenant.plan }}
+# Environment: {{ environment }}
+
+# Application Configuration
+app:
+  name: "DotMac ISP Framework"
+  version: "1.0.0"
+  environment: "{{ environment }}"
+  tenant_id: "{{ tenant.tenant_id }}"
+  debug: {{ 'true' if environment == 'development' else 'false' }}
+
+# Database Configuration
+database:
+  type: "postgresql"
+  host: "{{ tenant.slug }}-db.{{ environment }}.dotmac.io"
+  port: 5432
+  name: "isp_{{ tenant.slug }}_{{ environment }}"
+  username: "isp_{{ tenant.slug }}"
+  password: {{ generate_secret_placeholder('database_password') }}
+
+  # Connection Pool Settings (scaled by plan)
+  pool_size: {{ 5 | scale_by_plan(tenant.plan) }}
+  max_overflow: {{ 10 | scale_by_plan(tenant.plan) }}
+  pool_timeout: {{ 30 if environment == 'development' else 60 }}
+  pool_recycle: {{ 3600 if environment == 'development' else 1800 }}
+
+  # SSL Configuration
+  ssl_mode: "{{ 'prefer' if environment == 'development' else 'require' }}"
+  connect_timeout: 10
+  query_timeout: 60
+
+# Redis Configuration
+redis:
+  host: "{{ tenant.slug }}-redis.{{ environment }}.dotmac.io"
+  port: 6379
+  database: 0
+  password: {{ generate_secret_placeholder('redis_password') }}
+
+  # Connection Settings (scaled by plan)
+  connection_pool_size: {{ 10 | scale_by_plan(tenant.plan) }}
+  max_connections: {{ 50 | scale_by_plan(tenant.plan) }}
+  connection_timeout: 5
+  socket_timeout: 5
+
+  # SSL Settings
+  ssl_enabled: {{ 'true' if environment == 'production' else 'false' }}
+
+# Security Configuration
+security:
+  # JWT Settings
+  jwt_secret_key: {{ generate_secret_placeholder('jwt_secret_key') }}
+  jwt_algorithm: "{{ 'RS256' if tenant.plan == 'enterprise' else 'HS256' }}"
+  jwt_access_token_expire_minutes: {{ 15 if environment == 'production' else 60 }}
+  jwt_refresh_token_expire_days: 30
+
+  # Encryption
+  encryption_key: {{ generate_secret_placeholder('encryption_key') }}
+  password_hash_algorithm: "bcrypt"
+  password_hash_rounds: {{ 12 if tenant.plan == 'enterprise' else 10 }}
+
+  # Rate Limiting
+  rate_limit_enabled: true
+  rate_limit_requests_per_minute: {{ tenant.plan | resource_limit('api') }}
+  rate_limit_burst: {{ (tenant.plan | resource_limit('api')) // 10 }}
+
+  # CORS Settings
+  cors_enabled: true
+  cors_origins:
+    - "https://{{ tenant.slug }}.dotmac.io"
+    {% if tenant.domains.custom %}
+    {% for domain in tenant.domains.custom %}
+    - "https://{{ domain }}"
+    {% endfor %}
+    {% endif %}
+  cors_methods:
+    - "GET"
+    - "POST"
+    - "PUT"
+    - "DELETE"
+    - "PATCH"
+    - "OPTIONS"
+
+  # Security Headers
+  enable_security_headers: true
+  content_security_policy: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';"
+
+# Monitoring Configuration
+monitoring:
+  metrics_enabled: true
+  metrics_endpoint: "/metrics"
+  metrics_port: 9090
+
+  health_check_enabled: true
+  health_check_endpoint: "/health"
+  health_check_interval: 30
+
+  # Enhanced monitoring for premium plans
+  tracing_enabled: {{ 'true' if tenant.plan in ['premium', 'enterprise'] else 'false' }}
+  tracing_sample_rate: {{ 0.1 if tenant.plan == 'enterprise' else 0.01 }}
+
+  # External monitoring
+  prometheus_enabled: {{ 'true' if tenant.plan in ['premium', 'enterprise'] else 'false' }}
+  grafana_dashboard_enabled: {{ 'true' if tenant.plan == 'enterprise' else 'false' }}
+  alertmanager_enabled: {{ 'true' if environment == 'production' else 'false' }}
+
+# Logging Configuration
+logging:
+  level: "{{ 'DEBUG' if environment == 'development' else 'INFO' }}"
+  format: "{{ 'text' if environment == 'development' else 'json' }}"
+
+  # File Logging
+  log_to_file: {{ 'false' if environment == 'development' else 'true' }}
+  log_file_path: "/var/log/isp/{{ tenant.slug }}/app.log"
+  log_file_max_size: "10MB"
+  log_file_backup_count: 5
+
+  # Console Logging
+  log_to_console: true
+  console_log_level: "{{ 'DEBUG' if environment == 'development' else 'INFO' }}"
+
+  # Structured Logging
+  structured_logging: true
+  log_request_id: true
+  log_user_id: true
+  log_tenant_id: true
+
+  # External Logging
+  external_logging_enabled: {{ 'true' if tenant.plan == 'enterprise' else 'false' }}
+  {% if tenant.plan == 'enterprise' %}
+  external_logging_endpoint: "{{ env_or_default('EXTERNAL_LOG_ENDPOINT') }}"
+  {% endif %}
+
+  # Sensitive field filtering
+  sensitive_fields:
+    - "password"
+    - "token"
+    - "secret"
+    - "key"
+    - "authorization"
+
+# Network Configuration
+network:
+  host: "0.0.0.0"
+  port: {{ env_or_default('PORT', 8000) }}
+  workers: {{ tenant.plan | resource_limit('cpu') }}
+
+  # Timeouts
+  request_timeout: {{ 60 if tenant.plan == 'enterprise' else 30 }}
+  keepalive_timeout: 5
+
+  # Limits (scaled by plan)
+  max_request_size: {{ 16777216 | scale_by_plan(tenant.plan) }}  # 16MB base
+  max_concurrent_requests: {{ 1000 | scale_by_plan(tenant.plan) }}
+
+  # Proxy Settings
+  proxy_headers: true
+  proxy_prefix: "{{ env_or_default('PROXY_PREFIX') }}"
+
+  # WebSocket Settings
+  websocket_enabled: true
+  websocket_max_connections: {{ 100 | scale_by_plan(tenant.plan) }}
+
+# Services Configuration
+services:
+  # Core API Service
+  - name: "api"
+    version: "latest"
+    status: "enabled"
+    cpu_limit: {{ tenant.plan | resource_limit('cpu') }}
+    memory_limit: "{{ tenant.plan | resource_limit('memory') }}"
+
+    environment_variables:
+      TENANT_ID: "{{ tenant.tenant_id }}"
+      ENVIRONMENT: "{{ environment }}"
+      SUBSCRIPTION_PLAN: "{{ tenant.plan }}"
+      DATABASE_URL: "{{ database | format_database_url }}"
+      REDIS_URL: "{{ redis | format_redis_url }}"
+
+    health_check_path: "/health"
+    health_check_interval: 30
+
+  # Worker Service
+  - name: "worker"
+    version: "latest"
+    status: "enabled"
+    cpu_limit: {{ (tenant.plan | resource_limit('cpu')) / 2 }}
+    memory_limit: "{{ tenant.plan | resource_limit('memory') }}"
+
+    depends_on:
+      - "api"
+
+    environment_variables:
+      TENANT_ID: "{{ tenant.tenant_id }}"
+      WORKER_TYPE: "celery"
+      CONCURRENCY: "{{ tenant.plan | resource_limit('cpu') }}"
+
+  # Scheduler Service
+  - name: "scheduler"
+    version: "latest"
+    status: "enabled"
+
+    depends_on:
+      - "api"
+      - "worker"
+
+    environment_variables:
+      TENANT_ID: "{{ tenant.tenant_id }}"
+      SCHEDULER_TYPE: "celery-beat"
+
+  {% if tenant.plan in ['premium', 'enterprise'] %}
+  # Analytics Service (Premium+)
+  - name: "analytics"
+    version: "latest"
+    status: "enabled"
+    cpu_limit: {{ tenant.plan | resource_limit('cpu') }}
+    memory_limit: "{{ tenant.plan | resource_limit('memory') }}"
+
+    depends_on:
+      - "api"
+
+    environment_variables:
+      TENANT_ID: "{{ tenant.tenant_id }}"
+      ANALYTICS_ENABLED: "true"
+      ANALYTICS_MODE: "{{ 'advanced' if tenant.plan == 'enterprise' else 'standard' }}"
+  {% endif %}
+
+# External Services Configuration
+external_services:
+  # Email Service (All Plans)
+  - service_name: "email"
+    endpoint: "https://api.sendgrid.com/v3"
+    api_key: {{ generate_secret_placeholder('sendgrid_api_key') }}
+    auth_type: "bearer"
+    timeout: 30
+    max_retries: 3
+    circuit_breaker_enabled: true
+
+  {% if tenant.plan in ['premium', 'enterprise'] %}
+  # SMS Service (Premium+)
+  - service_name: "sms"
+    endpoint: "https://api.twilio.com"
+    api_key: {{ generate_secret_placeholder('twilio_api_key') }}
+    auth_type: "basic"
+    auth_config:
+      username: {{ generate_secret_placeholder('twilio_username') }}
+      password: {{ generate_secret_placeholder('twilio_password') }}
+    timeout: 30
+    max_retries: 3
+  {% endif %}
+
+  {% if tenant.plan == 'enterprise' %}
+  # Payment Processing (Enterprise)
+  - service_name: "payment"
+    endpoint: "https://api.stripe.com/v1"
+    api_key: {{ generate_secret_placeholder('stripe_secret_key') }}
+    auth_type: "bearer"
+    timeout: 60
+    max_retries: 5
+    rate_limit: 100  # requests per second
+  {% endif %}
+
+# Feature Flags Configuration
+feature_flags:
+  {% for feature in features %}
+  - feature_name: "{{ feature }}"
+    enabled: true
+    rollout_percentage: 100.0
+    target_plans: [{{ plan_features[tenant.plan] | map('tojson') | join(', ') }}]
+    target_environments: ["{{ environment }}"]
+  {% endfor %}
+
+# Custom Configuration
+custom_config:
+  tenant_metadata:
+    name: "{{ tenant.name }}"
+    slug: "{{ tenant.slug }}"
+    plan: "{{ tenant.plan }}"
+    created_at: "{{ tenant.created_at if tenant.created_at else now() }}"
+
+  deployment_info:
+    environment: "{{ environment }}"
+    config_version: "v1"
+    generated_at: "{{ now() }}"
+    template_version: "1.0.0"
+
+# Environment-specific overrides
+{% if environment == 'development' %}
+development_overrides:
+  database:
+    pool_size: 3
+    max_overflow: 5
+  redis:
+    connection_pool_size: 5
+  logging:
+    level: "DEBUG"
+    log_to_file: false
+  monitoring:
+    tracing_enabled: false
+{% elif environment == 'staging' %}
+staging_overrides:
+  # Staging mirrors production but with reduced resources
+  database:
+    pool_size: {{ (5 | scale_by_plan(tenant.plan)) // 2 }}
+  redis:
+    connection_pool_size: {{ (10 | scale_by_plan(tenant.plan)) // 2 }}
+{% elif environment == 'production' %}
+production_overrides:
+  # Production hardening
+  security:
+    enable_security_headers: true
+    rate_limit_enabled: true
+  monitoring:
+    alertmanager_enabled: true
+  logging:
+    external_logging_enabled: {{ 'true' if tenant.plan == 'enterprise' else 'false' }}
+{% endif %}

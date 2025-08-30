@@ -6,8 +6,8 @@ import {
 	usePartnerDataWithErrorBoundary,
 	usePortalAuth,
 } from "@dotmac/headless";
-import { ErrorBoundary } from "@dotmac/primitives";
-import { Card } from "@dotmac/styled-components/reseller";
+import { ErrorBoundary } from "@dotmac/providers";
+import { Card } from "@dotmac/ui/reseller";
 import {
 	AlertCircle,
 	Award,

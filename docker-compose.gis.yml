@@ -1,0 +1,180 @@
+# ============================================================================
+# GIS Module Docker Compose Configuration
+# Integrates with existing DotMac infrastructure
+# ============================================================================
+
+version: '3.8'
+
+services:
+  # ============================================================================
+  # GIS CDN SERVICE - Serves static map assets
+  # ============================================================================
+  gis-cdn:
+    image: nginx:alpine
+    container_name: dotmac-gis-cdn
+    restart: unless-stopped
+    ports:
+      - "3001:80"
+    volumes:
+      - ./gis-assets:/usr/share/nginx/html:ro
+      - ./nginx/gis-cdn.conf:/etc/nginx/conf.d/default.conf:ro
+    environment:
+      - NGINX_HOST=localhost
+      - NGINX_PORT=80
+    networks:
+      - dotmac-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.gis-cdn.rule=Host(`cdn.local.dotmac.com`)"
+      - "traefik.http.services.gis-cdn.loadbalancer.server.port=80"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============================================================================
+  # TILE SERVER - For serving map tiles if not using external CDN
+  # ============================================================================
+  tile-server:
+    image: overv/openstreetmap-tile-server
+    container_name: dotmac-tile-server
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    environment:
+      - THREADS=4
+      - OSM2PGSQL_EXTRA_ARGS=-C 512
+    volumes:
+      - tile-data:/var/lib/postgresql/12/main
+      - tile-cache:/var/cache/renderd
+    networks:
+      - dotmac-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.tiles.rule=Host(`tiles.local.dotmac.com`)"
+      - "traefik.http.services.tiles.loadbalancer.server.port=80"
+    profiles:
+      - tiles
+
+  # ============================================================================
+  # POSTGIS DATABASE EXTENSION - Extends existing PostgreSQL
+  # ============================================================================
+  postgres-gis:
+    image: postgis/postgis:15-3.3-alpine
+    container_name: dotmac-postgres-gis
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-dotmac}
+      POSTGRES_USER: ${POSTGRES_USER:-dotmac_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secure_password_2024}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+    volumes:
+      - postgres-gis-data:/var/lib/postgresql/data
+      - ./sql/init-gis.sql:/docker-entrypoint-initdb.d/init-gis.sql:ro
+    ports:
+      - "5433:5432"
+    networks:
+      - dotmac-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-dotmac_admin} -d ${POSTGRES_DB:-dotmac}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    profiles:
+      - gis-db
+
+  # ============================================================================
+  # REDIS FOR GIS CACHING - Extends existing Redis setup
+  # ============================================================================
+  redis-gis:
+    image: redis:7-alpine
+    container_name: dotmac-redis-gis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-gis-data:/data
+    ports:
+      - "6380:6379"
+    networks:
+      - dotmac-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    profiles:
+      - gis-cache
+
+  # ============================================================================
+  # GEOCODING SERVICE - Optional self-hosted geocoding
+  # ============================================================================
+  nominatim:
+    image: mediagis/nominatim:4.2
+    container_name: dotmac-nominatim
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    environment:
+      PBF_URL: https://download.geofabrik.de/north-america/us-west-latest.osm.pbf
+      REPLICATION_URL: https://download.geofabrik.de/north-america/us-west-updates/
+      IMPORT_WIKIPEDIA: false
+      IMPORT_US_POSTCODES: true
+      IMPORT_GB_POSTCODES: false
+    volumes:
+      - nominatim-data:/var/lib/postgresql/12/main
+    networks:
+      - dotmac-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.nominatim.rule=Host(`geocode.local.dotmac.com`)"
+      - "traefik.http.services.nominatim.loadbalancer.server.port=8080"
+    profiles:
+      - geocoding
+
+  # ============================================================================
+  # NGINX FOR GIS ASSETS CDN
+  # ============================================================================
+  gis-assets-nginx:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.gis-nginx
+    container_name: dotmac-gis-nginx
+    restart: unless-stopped
+    ports:
+      - "3002:80"
+    volumes:
+      - ./frontend/packages/maps/public:/usr/share/nginx/html/maps:ro
+      - ./gis-static-assets:/usr/share/nginx/html/assets:ro
+    environment:
+      - CDN_DOMAIN=cdn.local.dotmac.com
+    networks:
+      - dotmac-network
+    depends_on:
+      - postgres-gis
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.gis-assets.rule=Host(`gis-assets.local.dotmac.com`)"
+      - "traefik.http.services.gis-assets.loadbalancer.server.port=80"
+
+# ============================================================================
+# VOLUMES
+# ============================================================================
+volumes:
+  postgres-gis-data:
+    driver: local
+  redis-gis-data:
+    driver: local
+  tile-data:
+    driver: local
+  tile-cache:
+    driver: local
+  nominatim-data:
+    driver: local
+
+# ============================================================================
+# NETWORKS - Use existing DotMac network
+# ============================================================================
+networks:
+  dotmac-network:
+    external: true

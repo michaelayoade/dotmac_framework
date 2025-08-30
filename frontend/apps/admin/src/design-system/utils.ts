@@ -3,14 +3,8 @@
  * Helper functions and utilities for consistent styling
  */
 
-import { type ClassValue, clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { cn } from '@dotmac/primitives/utils';
 import { colors, spacing, borderRadius, shadows } from './tokens';
-
-// Utility function to merge Tailwind classes
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
 
 // Color utilities
 export const colorUtils = {
@@ -18,7 +12,7 @@ export const colorUtils = {
   getColor: (path: string): string => {
     const keys = path.split('.');
     let value: any = colors;
-    
+
     for (const key of keys) {
       value = value[key];
       if (value === undefined) {
@@ -26,10 +20,10 @@ export const colorUtils = {
         return colors.gray[500];
       }
     }
-    
+
     return value;
   },
-  
+
   // Get semantic colors for status
   getStatusColor: (status: string): string => {
     switch (status.toLowerCase()) {
@@ -54,7 +48,7 @@ export const colorUtils = {
         return colors.gray[500];
     }
   },
-  
+
   // Check color contrast ratio
   getContrastRatio: (color1: string, color2: string): number => {
     // Simplified contrast ratio calculation
@@ -65,34 +59,34 @@ export const colorUtils = {
       const r = parseInt(hex.substr(0, 2), 16) / 255;
       const g = parseInt(hex.substr(2, 2), 16) / 255;
       const b = parseInt(hex.substr(4, 2), 16) / 255;
-      
+
       const [rs, gs, bs] = [r, g, b].map(c => {
         return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
       });
-      
+
       return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
     };
-    
+
     const l1 = getLuminance(color1);
     const l2 = getLuminance(color2);
     const lighter = Math.max(l1, l2);
     const darker = Math.min(l1, l2);
-    
+
     return (lighter + 0.05) / (darker + 0.05);
   },
-  
+
   // Generate color variations
   generateColorScale: (baseColor: string, steps: number = 9) => {
     // This is a simplified implementation
     // In production, you'd use a proper color library like chroma-js
     const scale: Record<number, string> = {};
     const baseStep = Math.floor(steps / 2);
-    
+
     for (let i = 0; i < steps; i++) {
       const weight = (i + 1) * 100;
       scale[weight] = baseColor; // Simplified - would generate actual variations
     }
-    
+
     return scale;
   },
 };
@@ -103,7 +97,7 @@ export const spacingUtils = {
   getSpacing: (key: keyof typeof spacing): string => {
     return spacing[key];
   },
-  
+
   // Generate responsive spacing
   getResponsiveSpacing: (base: keyof typeof spacing, scale: number = 1.5) => {
     const baseValue = parseFloat(spacing[base]);
@@ -113,7 +107,7 @@ export const spacingUtils = {
       lg: `${baseValue * scale * scale}rem`,
     };
   },
-  
+
   // Convert spacing to CSS custom properties
   toCSSCustomProperties: () => {
     return Object.entries(spacing).reduce((acc, [key, value]) => {
@@ -137,10 +131,10 @@ export const typographyUtils = {
       '3xl': { fontSize: '1.875rem', lineHeight: '2.25rem' },
       '4xl': { fontSize: '2.25rem', lineHeight: '2.5rem' },
     };
-    
+
     return sizeMap[size] || sizeMap.base;
   },
-  
+
   // Generate responsive typography
   getResponsiveTypography: (baseSizes: Record<string, string>) => {
     return Object.entries(baseSizes).reduce((acc, [breakpoint, size]) => {
@@ -148,7 +142,7 @@ export const typographyUtils = {
       return acc;
     }, {} as Record<string, { fontSize: string; lineHeight: string }>);
   },
-  
+
   // Truncate text utilities
   getTruncateClass: (lines: number = 1): string => {
     if (lines === 1) {
@@ -184,14 +178,14 @@ export const variantUtils = {
         'border-transparent'
       ),
     },
-    
+
     size: {
       sm: cn('h-8 px-3 text-sm'),
       base: cn('h-10 px-4 text-base'),
       lg: cn('h-12 px-6 text-lg'),
     },
   },
-  
+
   // Input variants
   input: {
     variant: {
@@ -206,14 +200,14 @@ export const variantUtils = {
         'placeholder:text-gray-400'
       ),
     },
-    
+
     size: {
       sm: cn('h-8 px-3 text-sm'),
       base: cn('h-10 px-3 text-base'),
       lg: cn('h-12 px-4 text-lg'),
     },
   },
-  
+
   // Badge/Status variants
   badge: {
     variant: {
@@ -224,7 +218,7 @@ export const variantUtils = {
       danger: cn('bg-red-100 text-red-800'),
       info: cn('bg-blue-100 text-blue-800'),
     },
-    
+
     size: {
       sm: cn('px-2 py-1 text-xs'),
       base: cn('px-3 py-1 text-sm'),
@@ -238,21 +232,21 @@ export const animationUtils = {
   // Fade animations
   fadeIn: cn('animate-in fade-in duration-200'),
   fadeOut: cn('animate-out fade-out duration-200'),
-  
+
   // Slide animations
   slideInFromTop: cn('animate-in slide-in-from-top-2 duration-300'),
   slideInFromBottom: cn('animate-in slide-in-from-bottom-2 duration-300'),
   slideInFromLeft: cn('animate-in slide-in-from-left-2 duration-300'),
   slideInFromRight: cn('animate-in slide-in-from-right-2 duration-300'),
-  
+
   // Scale animations
   scaleIn: cn('animate-in zoom-in-95 duration-200'),
   scaleOut: cn('animate-out zoom-out-95 duration-200'),
-  
+
   // Combined animations
   modalEnter: cn('animate-in fade-in zoom-in-95 duration-200'),
   modalExit: cn('animate-out fade-out zoom-out-95 duration-200'),
-  
+
   dropdownEnter: cn('animate-in fade-in slide-in-from-top-2 duration-200'),
   dropdownExit: cn('animate-out fade-out slide-out-to-top-2 duration-200'),
 };
@@ -273,14 +267,14 @@ export const layoutUtils = {
     '7xl': cn('max-w-7xl mx-auto px-4'),
     full: cn('w-full px-4'),
   },
-  
+
   // Grid utilities
   grid: {
     responsive: cn('grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'),
     cards: cn('grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'),
     table: cn('grid gap-1 divide-y divide-gray-200'),
   },
-  
+
   // Flex utilities
   flex: {
     center: cn('flex items-center justify-center'),
@@ -296,7 +290,7 @@ export const layoutUtils = {
 export const a11yUtils = {
   // Screen reader only content
   srOnly: cn('sr-only'),
-  
+
   // Skip links
   skipLink: cn(
     'absolute left-1/2 top-4 z-50 -translate-x-1/2 -translate-y-full',
@@ -304,16 +298,16 @@ export const a11yUtils = {
     'shadow-lg ring-1 ring-gray-300',
     'focus:translate-y-0 focus:ring-2 focus:ring-primary-500'
   ),
-  
+
   // Focus rings
   focusRing: cn(
     'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2'
   ),
-  
+
   focusRingInset: cn(
     'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-inset'
   ),
-  
+
   // High contrast mode utilities
   highContrast: {
     border: cn('border-2 border-gray-900'),
@@ -331,14 +325,14 @@ export const responsiveUtils = {
     lg: cn('hidden lg:block'),
     xl: cn('hidden xl:block'),
   },
-  
+
   hide: {
     sm: cn('block sm:hidden'),
     md: cn('block md:hidden'),
     lg: cn('block lg:hidden'),
     xl: cn('block xl:hidden'),
   },
-  
+
   // Responsive text alignment
   textAlign: {
     responsive: cn('text-center sm:text-left'),

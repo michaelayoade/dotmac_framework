@@ -1,30 +1,30 @@
 'use client';
 
 import { lazy, Suspense } from 'react';
-import { PageLoading } from '@/components/ui/LoadingOverlay';
+import { Loading } from '@dotmac/primitives';
 
 // Lazy load heavy components for better performance
-const PartnersPage = lazy(() => 
-  import('@/app/(authenticated)/partners/page').then(module => ({ 
-    default: module.default 
+const PartnersPage = lazy(() =>
+  import('@/app/(authenticated)/partners/page').then(module => ({
+    default: module.default
   }))
 );
 
-const CommissionsPage = lazy(() => 
-  import('@/app/(authenticated)/commissions/page').then(module => ({ 
-    default: module.default 
+const CommissionsPage = lazy(() =>
+  import('@/app/(authenticated)/commissions/page').then(module => ({
+    default: module.default
   }))
 );
 
-const OnboardingPage = lazy(() => 
-  import('@/app/(authenticated)/partners/onboarding/page').then(module => ({ 
-    default: module.default 
+const OnboardingPage = lazy(() =>
+  import('@/app/(authenticated)/partners/onboarding/page').then(module => ({
+    default: module.default
   }))
 );
 
-const DashboardPage = lazy(() => 
-  import('@/app/(authenticated)/dashboard/page').then(module => ({ 
-    default: module.default 
+const DashboardPage = lazy(() =>
+  import('@/app/(authenticated)/dashboard/page').then(module => ({
+    default: module.default
   }))
 );
 
@@ -35,7 +35,7 @@ export function withLazyLoading<P extends object>(
 ) {
   return function LazyLoadedComponent(props: P) {
     return (
-      <Suspense fallback={<PageLoading page="component" message={loadingMessage} />}>
+      <Suspense fallback={<Loading message={loadingMessage} />}>
         <Component {...props} />
       </Suspense>
     );
@@ -51,10 +51,10 @@ export const LazyDashboard = withLazyLoading(DashboardPage, 'Loading dashboard..
 // Route-based code splitting utility
 export function createLazyRoute(importFn: () => Promise<{ default: React.ComponentType }>, loadingMessage?: string) {
   const LazyComponent = lazy(importFn);
-  
+
   return function LazyRoute(props: any) {
     return (
-      <Suspense fallback={<PageLoading page="page" message={loadingMessage} />}>
+      <Suspense fallback={<Loading message={loadingMessage} />}>
         <LazyComponent {...props} />
       </Suspense>
     );

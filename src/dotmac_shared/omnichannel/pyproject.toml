@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=45", "wheel", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dotmac-omnichannel"
+description = "Omnichannel communication service for DotMac Framework"
+authors = [{name = "DotMac Framework Team", email = "dev@dotmac.com"}]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.9"
+keywords = ["omnichannel", "communication", "notifications", "multi-channel"]
+dynamic = ["version"]
+
+dependencies = [
+    "pydantic>=2.0.0,<3.0.0",
+    "structlog>=23.0.0,<24.0.0",
+]
+
+[project.optional-dependencies]
+sms = ["twilio>=8.0.0,<9.0.0"]
+email = ["sendgrid>=6.10.0,<7.0.0", "boto3>=1.26.0,<2.0.0"]
+all = ["dotmac-omnichannel[sms,email]"]
+
+[tool.setuptools]
+packages = ["dotmac_shared.omnichannel"]
+include-package-data = true

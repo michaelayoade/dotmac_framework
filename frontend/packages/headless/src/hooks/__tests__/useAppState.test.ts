@@ -15,7 +15,7 @@ import {
   useDataTable,
   useFormState,
 } from '../useAppState';
-import { useAppStore } from '../../stores/appStore';
+import { useAppStore } from "@dotmac/headless/stores";
 
 describe('useAppState Hooks', () => {
   beforeEach(() => {

@@ -1,69 +1,142 @@
 /**
- * Type-safe API client for DotMac platform with enhanced security
+ * Unified API Client
+ * Consolidates all API functionality from individual portals
  */
 
 import type {
-  ApiError,
   ApiResponse,
+  ApiError,
+  RequestConfig,
+  RetryConfig,
+  ApiClientConfig,
+  PortalEndpoints,
+  PaginatedResponse,
+  PaginationParams,
+} from './types';
+import { PORTAL_ENDPOINTS } from './types';
+import { ApiCache } from './cache';
+import { RateLimiter } from '../auth/rateLimiter';
+
+// Legacy types for compatibility
+import type {
   ChatSession,
   Customer,
   DashboardMetrics,
   Invoice,
   NetworkAlert,
   NetworkDevice,
-  PaginatedResponse,
   QueryParams,
   ServicePlan,
   User,
 } from '../types';
+import type {
+  PluginCatalogItem,
+  PluginInstallationRequest,
+  PluginInstallationResponse,
+  InstalledPlugin,
+  PluginUpdateInfo,
+  PluginMarketplaceFilters,
+  PluginPermissionRequest,
+  PluginBackup,
+} from '../types/plugins';
 import { csrfProtection } from '../utils/csrfProtection';
-
-// Constants to avoid duplication
-const AUTH_REQUIRED_ERROR = 'Unauthorized - authentication required';
-
 import { inputSanitizer } from '../utils/sanitization';
 import { type TokenPair, tokenManager } from '../utils/tokenManager';
+import { validationPatterns, validate } from '@dotmac/primitives';
+import { ISPError, classifyError } from '../utils/errorUtils';
 
-export interface ApiClientConfig {
-  baseUrl: string;
-  apiKey?: string;
-  tenantId?: string;
-  timeout?: number;
-  retryAttempts?: number;
-  onUnauthorized?: () => void;
-  onError?: (error: ApiError) => void;
-}
+const DEFAULT_CONFIG: Required<Omit<ApiClientConfig, 'interceptors' | 'portal' | 'tenantId'>> = {
+  baseUrl: '/api',
+  apiKey: '',
+  defaultHeaders: {
+    'Content-Type': 'application/json',
+  },
+  timeout: 30000,
+  retries: 3,
+  rateLimiting: true,
+  caching: true,
+  defaultCacheTTL: 5 * 60 * 1000, // 5 minutes
+  csrf: true,
+  auth: {
+    tokenHeader: 'Authorization',
+    refreshEndpoint: '/auth/refresh',
+    autoRefresh: true,
+  },
+  onUnauthorized: () => {
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login';
+    }
+  },
+  onError: (error) => {
+    // Use existing ISPError system for standardized error handling
+    const ispError = new ISPError({
+      code: 'API_CLIENT_ERROR',
+      message: error.message || 'Unknown API client error',
+      category: 'system',
+      severity: 'medium',
+      technicalDetails: { originalError: error }
+    });
+    // The ISPError constructor automatically logs and reports errors
+  },
+};
+
+const DEFAULT_RETRY_CONFIG: RetryConfig = {
+  attempts: 3,
+  baseDelay: 1000,
+  maxDelay: 10000,
+  backoffFactor: 2,
+  jitter: true,
+};
+
+const AUTH_REQUIRED_ERROR = 'Unauthorized - authentication required';
 
 export class ApiClient {
-  private config: ApiClientConfig &
-    Required<
-      Pick<ApiClientConfig, 'baseUrl' | 'timeout' | 'retryAttempts' | 'onUnauthorized' | 'onError'>
-    >;
+  private config: Required<Omit<ApiClientConfig, 'interceptors' | 'portal' | 'tenantId'>> & {
+    portal?: string;
+    tenantId?: string;
+    interceptors?: ApiClientConfig['interceptors'];
+  };
+  private cache?: ApiCache;
+  private rateLimiter?: RateLimiter;
+  private endpoints: PortalEndpoints;
 
-  constructor(config: ApiClientConfig) {
+  constructor(config: ApiClientConfig = {}) {
     this.config = {
-      baseUrl: config.baseUrl,
-      apiKey: config.apiKey ?? undefined,
-      tenantId: config.tenantId ?? undefined,
-      timeout: config.timeout ?? 10000,
-      retryAttempts: config.retryAttempts ?? 3,
-      onUnauthorized:
-        config.onUnauthorized ??
-        (() => {
-          // Implementation pending
-        }),
-      onError:
-        config.onError ??
-        (() => {
-          // Implementation pending
-        }),
-    } as ApiClientConfig &
-      Required<
-        Pick<
-          ApiClientConfig,
-          'baseUrl' | 'timeout' | 'retryAttempts' | 'onUnauthorized' | 'onError'
-        >
-      >;
+      ...DEFAULT_CONFIG,
+      ...config,
+    };
+
+    // Setup cache if enabled
+    if (this.config.caching) {
+      this.cache = new ApiCache(this.config.defaultCacheTTL);
+    }
+
+    // Setup rate limiting if enabled
+    if (this.config.rateLimiting) {
+      this.rateLimiter = new RateLimiter();
+    }
+
+    // Get portal-specific endpoints
+    this.endpoints = this.getPortalEndpoints();
+  }
+
+  // Get endpoints for current portal
+  private getPortalEndpoints(): PortalEndpoints {
+    if (this.config.portal && this.config.portal in PORTAL_ENDPOINTS) {
+      return PORTAL_ENDPOINTS[this.config.portal]!;
+    }
+
+    // Default endpoints if no portal specified
+    return {
+      login: '/api/auth/login',
+      logout: '/api/auth/logout',
+      refresh: '/api/auth/refresh',
+      validate: '/api/auth/validate',
+      csrf: '/api/auth/csrf',
+      users: '/api/users',
+      profile: '/api/profile',
+      settings: '/api/settings',
+    };
   }
 
   setAuthToken() {
@@ -178,10 +251,25 @@ export class ApiClient {
       code: errorData.code || `HTTP_${response.status}`,
       message: errorData.message || response.statusText,
       details: errorData.details,
-      traceId: errorData.traceId,
+      statusCode: response.status,
+      timestamp: new Date().toISOString(),
+      path: response.url,
     };
-    this.config.onError(apiError);
-    throw new Error(apiError.message);
+
+    // Use existing ISPError system for standardized error classification
+    const ispError = classifyError(apiError);
+
+    // Call configured error handler
+    // Convert ISPError to ApiError for compatibility
+    const apiErrorForCallback: ApiError = {
+      code: ispError.code || 'UNKNOWN_ERROR',
+      message: ispError.message,
+      details: ispError.technicalDetails,
+      statusCode: ispError.status,
+    };
+    this.config.onError?.(apiErrorForCallback);
+
+    throw apiError;
   }
 
   private shouldRetry(error: Error): boolean {
@@ -214,7 +302,7 @@ export class ApiClient {
 
     let lastError: Error = new Error('Request failed');
 
-    for (let attempt = 0; attempt <= this.config.retryAttempts; attempt++) {
+    for (let attempt = 0; attempt <= this.config.retries; attempt++) {
       try {
         const response = await fetch(url, requestOptions);
 
@@ -233,7 +321,7 @@ export class ApiClient {
           throw lastError;
         }
 
-        if (attempt < this.config.retryAttempts) {
+        if (attempt < this.config.retries) {
           await this.wait(attempt);
         }
       }
@@ -264,6 +352,14 @@ export class ApiClient {
       method: 'POST',
       body: JSON.stringify({ refreshToken }),
     });
+
+    if (!response.data) {
+      throw new ISPError({
+        message: 'Invalid refresh token response',
+        category: 'authentication',
+        severity: 'high'
+      });
+    }
 
     return {
       accessToken: response.data.accessToken,
@@ -576,6 +672,278 @@ export class ApiClient {
 
   async getResellerCustomers(): Promise<ApiResponse<any[]>> {
     return this.request('/api/v1/reseller/customers');
+  }
+
+  // Plugin Management APIs
+  async getPluginCatalog(
+    filters?: PluginMarketplaceFilters,
+    params?: PaginationParams
+  ): Promise<PaginatedResponse<PluginCatalogItem>> {
+    const searchParams = new URLSearchParams();
+
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined) {
+          if (Array.isArray(value)) {
+            value.forEach(v => searchParams.append(key, String(v)));
+          } else {
+            searchParams.append(key, String(value));
+          }
+        }
+      });
+    }
+
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) {
+          searchParams.append(key, String(value));
+        }
+      });
+    }
+
+    const query = searchParams.toString();
+    return this.request(`/api/v1/plugins/catalog${query ? `?${query}` : ''}`);
+  }
+
+  async getPluginDetails(pluginId: string): Promise<ApiResponse<PluginCatalogItem>> {
+    return this.request(`/api/v1/plugins/catalog/${pluginId}`);
+  }
+
+  async installPlugin(
+    request: PluginInstallationRequest
+  ): Promise<ApiResponse<PluginInstallationResponse>> {
+    // Validate plugin_id using existing validation system
+    if (!validate.required(request.plugin_id)) {
+      throw new ISPError({
+        code: 'VALIDATION_ERROR',
+        message: 'Plugin ID is required',
+        category: 'validation',
+        severity: 'medium',
+        technicalDetails: { pluginId: request.plugin_id }
+      });
+    }
+
+    // Validate license_tier
+    const validTiers = ['trial', 'basic', 'professional', 'enterprise'];
+    if (!validate.oneOf(request.license_tier, validTiers)) {
+      throw new ISPError({
+        code: 'VALIDATION_ERROR',
+        message: 'Invalid license tier',
+        category: 'validation',
+        severity: 'medium',
+        technicalDetails: { licenseTier: request.license_tier, validTiers }
+      });
+    }
+
+    // Basic configuration validation using existing patterns
+    if (request.configuration && typeof request.configuration === 'object') {
+      // Use existing validation patterns for security
+      const configKeys = Object.keys(request.configuration);
+      if (configKeys.length > 50) {
+        throw new ISPError({
+          code: 'VALIDATION_ERROR',
+          message: 'Too many configuration parameters',
+          category: 'validation',
+          severity: 'medium',
+          technicalDetails: { configCount: configKeys.length, maxAllowed: 50 }
+        });
+      }
+    }
+
+    return this.request('/api/v1/plugins/install', {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  }
+
+  async getPluginInstallationStatus(
+    installationId: string
+  ): Promise<ApiResponse<PluginInstallationResponse>> {
+    return this.request(`/api/v1/plugins/installations/${installationId}/status`);
+  }
+
+  async getInstalledPlugins(params?: PaginationParams): Promise<PaginatedResponse<InstalledPlugin>> {
+    const searchParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) {
+          searchParams.append(key, String(value));
+        }
+      });
+    }
+
+    const query = searchParams.toString();
+    return this.request(`/api/v1/plugins/installed${query ? `?${query}` : ''}`);
+  }
+
+  async getInstalledPlugin(installationId: string): Promise<ApiResponse<InstalledPlugin>> {
+    return this.request(`/api/v1/plugins/installed/${installationId}`);
+  }
+
+  async enablePlugin(installationId: string): Promise<ApiResponse<InstalledPlugin>> {
+    return this.request(`/api/v1/plugins/installed/${installationId}/enable`, {
+      method: 'POST',
+    });
+  }
+
+  async disablePlugin(installationId: string): Promise<ApiResponse<InstalledPlugin>> {
+    return this.request(`/api/v1/plugins/installed/${installationId}/disable`, {
+      method: 'POST',
+    });
+  }
+
+  async configurePlugin(
+    installationId: string,
+    configuration: Record<string, any>
+  ): Promise<ApiResponse<InstalledPlugin>> {
+    return this.request(`/api/v1/plugins/installed/${installationId}/configure`, {
+      method: 'PUT',
+      body: JSON.stringify({ configuration }),
+    });
+  }
+
+  async uninstallPlugin(
+    installationId: string,
+    options?: { backup?: boolean; force?: boolean }
+  ): Promise<ApiResponse<{ success: boolean; message: string }>> {
+    return this.request(`/api/v1/plugins/installed/${installationId}/uninstall`, {
+      method: 'DELETE',
+      body: JSON.stringify(options || {}),
+    });
+  }
+
+  async getPluginUpdates(
+    installationId?: string
+  ): Promise<ApiResponse<Record<string, PluginUpdateInfo>>> {
+    const endpoint = installationId
+      ? `/api/v1/plugins/installed/${installationId}/updates`
+      : '/api/v1/plugins/updates';
+    return this.request(endpoint);
+  }
+
+  async updatePlugin(
+    installationId: string,
+    options?: { backup?: boolean; auto_restart?: boolean; configuration?: any }
+  ): Promise<ApiResponse<PluginInstallationResponse>> {
+    // Basic rate limiting - can be enhanced with actual rate limiter if needed
+    if (this.rateLimiter) {
+      const limitResult = this.rateLimiter.checkLimit('plugin-update', installationId);
+      if (!limitResult.allowed) {
+        throw new ISPError({
+          message: 'Rate limit exceeded. Please wait before making another plugin update request.',
+          category: 'system',
+          severity: 'medium',
+          retryable: true
+        });
+      }
+    }
+
+    // Sanitize installationId
+    const sanitizedId = inputSanitizer.sanitizeText(installationId);
+    if (!sanitizedId || sanitizedId.length > 50) {
+      throw new Error('Invalid installation ID');
+    }
+
+    const sanitizedOptions = options || {};
+
+    // Validate plugin configuration if provided
+    if (sanitizedOptions.configuration) {
+      let parsedConfig;
+      try {
+        parsedConfig = typeof sanitizedOptions.configuration === 'string'
+          ? JSON.parse(sanitizedOptions.configuration)
+          : sanitizedOptions.configuration;
+      } catch (error) {
+        throw new Error(`Invalid plugin configuration: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+
+      // Basic plugin config validation - ensure it's an object
+      if (!parsedConfig || typeof parsedConfig !== 'object') {
+        throw new ISPError({
+          message: 'Plugin configuration must be a valid object',
+          category: 'validation',
+          severity: 'low'
+        });
+      }
+
+      // Use parsed configuration
+      sanitizedOptions.configuration = parsedConfig;
+    }
+
+    return this.request(`/api/v1/plugins/installed/${sanitizedId}/update`, {
+      method: 'POST',
+      body: JSON.stringify(sanitizedOptions),
+    });
+  }
+
+  async getPluginUsage(
+    installationId: string,
+    period?: string
+  ): Promise<ApiResponse<{
+    cpu_usage: Array<{ timestamp: string; value: number }>;
+    memory_usage: Array<{ timestamp: string; value: number }>;
+    storage_usage: number;
+    api_calls: number;
+    errors: number;
+  }>> {
+    const query = period ? `?period=${period}` : '';
+    return this.request(`/api/v1/plugins/installed/${installationId}/usage${query}`);
+  }
+
+  async getPluginHealth(
+    installationId?: string
+  ): Promise<ApiResponse<InstalledPlugin['health'] | Record<string, InstalledPlugin['health']>>> {
+    const endpoint = installationId
+      ? `/api/v1/plugins/installed/${installationId}/health`
+      : '/api/v1/plugins/health';
+    return this.request(endpoint);
+  }
+
+  async requestPluginPermissions(
+    request: PluginPermissionRequest
+  ): Promise<ApiResponse<{ request_id: string; status: string }>> {
+    return this.request('/api/v1/plugins/permissions/request', {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  }
+
+  async getPluginBackups(
+    installationId?: string,
+    params?: PaginationParams
+  ): Promise<PaginatedResponse<PluginBackup>> {
+    const searchParams = new URLSearchParams();
+    if (installationId) {
+      searchParams.append('installation_id', installationId);
+    }
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) {
+          searchParams.append(key, String(value));
+        }
+      });
+    }
+
+    const query = searchParams.toString();
+    return this.request(`/api/v1/plugins/backups${query ? `?${query}` : ''}`);
+  }
+
+  async createPluginBackup(
+    installationId: string,
+    type: 'manual' | 'pre_update' = 'manual'
+  ): Promise<ApiResponse<PluginBackup>> {
+    return this.request('/api/v1/plugins/backups', {
+      method: 'POST',
+      body: JSON.stringify({ installation_id: installationId, type }),
+    });
+  }
+
+  async restorePluginBackup(
+    backupId: string
+  ): Promise<ApiResponse<PluginInstallationResponse>> {
+    return this.request(`/api/v1/plugins/backups/${backupId}/restore`, {
+      method: 'POST',
+    });
   }
 }
 

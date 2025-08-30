@@ -1,1 +1,0 @@
-/home/dotmac_framework/dotmac_isp_framework/src/dotmac_isp/core/config_encryption.py

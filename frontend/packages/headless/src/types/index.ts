@@ -6,9 +6,10 @@
 // Re-export primary tenant and API types
 export * from './tenant';
 export * from '../api/types/api';
-export * from './auth';
+export * from "@dotmac/headless/auth";
 export * from './portal-auth';
 export * from './migration';
+export * from './plugins';
 
 // Core portal type
 export type PortalType = 'admin' | 'customer' | 'reseller' | 'technician';

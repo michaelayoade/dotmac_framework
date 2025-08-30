@@ -1,7 +1,7 @@
 'use client';
 
 import { TenantLayout } from '@/components/layout/TenantLayout';
-import { useTenantAuth } from '@/components/auth/TenantAuthProvider';
+import { useTenantAuth } from '@/components/auth/TenantAuthProviderNew';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 

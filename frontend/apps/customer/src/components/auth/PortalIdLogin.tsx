@@ -3,10 +3,8 @@
 import { usePortalIdAuth } from '@dotmac/headless';
 import { AlertTriangle, Eye, EyeOff, Shield } from 'lucide-react';
 import { useState } from 'react';
-import { Alert } from '../ui/Alert';
-import { Button } from '../ui/Button';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
-import { Input } from '../ui/Input';
+import { Alert } from '@dotmac/primitives';
+import { Button, Input, Card, CardContent, CardHeader, CardTitle } from '@dotmac/primitives';
 
 interface PortalIdLoginProps {
   onLogin: (customer: any) => void;

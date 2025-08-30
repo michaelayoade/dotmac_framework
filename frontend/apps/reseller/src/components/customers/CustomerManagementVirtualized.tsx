@@ -1,6 +1,6 @@
 /**
  * Virtualized Customer Management Component
- * 
+ *
  * High-performance customer management with virtual scrolling for handling
  * large datasets efficiently. Includes comprehensive search, filtering,
  * sorting, and CRUD operations.
@@ -9,12 +9,12 @@
 'use client';
 
 import React, { useState, useCallback, useMemo, useRef } from 'react';
-import { 
-  VirtualizedTable, 
-  VirtualizedTableColumn, 
-  VirtualizedTableRef, 
-  useVirtualizedTable 
-} from '@dotmac/primitives/performance/VirtualizedTable';
+import {
+  VirtualizedTable,
+  VirtualizedTableColumn,
+  VirtualizedTableRef,
+  useVirtualizedTable
+} from '@dotmac/providers/performance/VirtualizedTable';
 // Removed unused security import - can be added back later if needed
 import { usePartnerCustomers, useCreateCustomer, useUpdateCustomer, useDeleteCustomer } from '@dotmac/headless';
 import {
@@ -83,25 +83,25 @@ export function CustomerManagementVirtualized({
   className = '',
 }: CustomerManagementVirtualizedProps) {
   const tableRef = useRef<VirtualizedTableRef>(null);
-  
+
   // Search and filter state
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sourceFilter, setSourceFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<keyof Customer>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-  
+
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [viewingCustomer, setViewingCustomer] = useState<Customer | null>(null);
 
   // API hooks
-  const { 
-    data: customersData, 
-    isLoading, 
-    error, 
-    refetch 
+  const {
+    data: customersData,
+    isLoading,
+    error,
+    refetch
   } = usePartnerCustomers(partnerId, {
     search: searchTerm,
     status: statusFilter === 'all' ? undefined : statusFilter,
@@ -378,7 +378,7 @@ export function CustomerManagementVirtualized({
   const handleExportData = useCallback(() => {
     const selectedCustomers = customers.filter((_, index) => selectedRows.has(index));
     const dataToExport = selectedCustomers.length > 0 ? selectedCustomers : customers;
-    
+
     const csvContent = [
       // Header
       'Name,Email,Phone,Company,Status,Plan,MRR,LTV,Join Date',

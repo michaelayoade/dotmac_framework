@@ -1,7 +1,7 @@
 'use client';
 
 import { useTenantStore } from '@dotmac/headless';
-import { Button } from '@dotmac/styled-components/admin';
+import { Button } from '@dotmac/ui/admin';
 import { clsx } from 'clsx';
 import { Building2, Check, ChevronDown } from 'lucide-react';
 import { useState } from 'react';

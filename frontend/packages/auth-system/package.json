@@ -1,0 +1,62 @@
+{
+  "name": "@dotmac/auth-system",
+  "version": "1.0.0",
+  "description": "Universal Authentication System for DotMac Framework - Production-ready authentication components providing consistent cross-portal authentication with portal-aware login flows, MFA, and security features.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs",
+    "dev": "tsup src/index.ts --watch --format esm,cjs",
+    "build:types": "tsc --emitDeclarationOnly --outDir dist",
+    "lint": "eslint src --ext .ts,.tsx --fix",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "keywords": [
+    "authentication",
+    "auth",
+    "login",
+    "mfa",
+    "portal",
+    "dotmac",
+    "react"
+  ],
+  "author": "DotMac Framework Team",
+  "license": "MIT",
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  },
+  "dependencies": {
+    "framer-motion": "^11.0.0",
+    "lucide-react": "^0.400.0",
+    "zod": "^3.22.0",
+    "@tanstack/react-query": "^5.0.0",
+    "react-hook-form": "^7.45.0",
+    "@hookform/resolvers": "^3.3.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@dotmac/eslint-config": "*",
+    "@dotmac/typescript-config": "*",
+    "eslint": "^8.57.0",
+    "jest": "^29.7.0",
+    "@testing-library/react": "^14.0.0",
+    "@testing-library/jest-dom": "^6.1.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dotmac-framework/dotmac-framework",
+    "directory": "frontend/packages/auth-system"
+  }
+}

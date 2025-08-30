@@ -26,14 +26,14 @@ jobs:
         with:
           filters: |
             isp-framework:
-              - 'isp-framework/**'
+              - 'src/dotmac_isp/**'
             management-platform:
-              - 'management-platform/**'
+              - 'src/dotmac_management/**'
             frontend:
               - 'frontend/**'
             shared:
-              - 'shared/**'
-              - 'docker-compose.unified.yml'
+              - 'src/dotmac_shared/**'
+              - 'docker-compose.master.yml'
               - 'Makefile.unified'
 
   # ===== SECURITY SCANS =====
@@ -43,21 +43,21 @@ jobs:
     if: needs.detect-changes.outputs.isp-framework == 'true' || needs.detect-changes.outputs.management-platform == 'true'
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Run Security Scan - ISP Framework
         if: needs.detect-changes.outputs.isp-framework == 'true'
         run: |
-          cd isp-framework
+          cd src
           pip install bandit safety
-          bandit -r src/ -f json -o security-report.json || true
+          bandit -r dotmac_isp/ -f json -o security-report.json || true
           safety check --json || true
-      
-      - name: Run Security Scan - Management Platform  
+
+      - name: Run Security Scan - Management Platform
         if: needs.detect-changes.outputs.management-platform == 'true'
         run: |
-          cd management-platform
+          cd src
           pip install bandit safety
-          bandit -r app/ -f json -o security-report.json || true
+          bandit -r dotmac_management/ -f json -o security-report.json || true
           safety check --json || true
 
   # ===== ISP FRAMEWORK TESTS =====
@@ -65,7 +65,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: detect-changes
     if: needs.detect-changes.outputs.isp-framework == 'true' || needs.detect-changes.outputs.shared == 'true'
-    
+
     services:
       postgres:
         image: postgres:15
@@ -79,7 +79,7 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
-      
+
       redis:
         image: redis:7-alpine
         options: >-
@@ -92,31 +92,31 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python 3.12
         uses: actions/setup-python@v4
         with:
           python-version: "3.12"
-      
+
       - name: Cache dependencies
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-isp-${{ hashFiles('isp-framework/requirements*.txt') }}
-      
+          key: ${{ runner.os }}-pip-isp-${{ hashFiles('src/requirements*.txt') }}
+
       - name: Install ISP Framework dependencies
         run: |
-          cd isp-framework
+          cd src
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
-      
+
       - name: Run ISP Framework linting
         run: |
-          cd isp-framework
-          flake8 src/
-          mypy src/ || true
-      
+          cd src
+          flake8 dotmac_isp/
+          mypy dotmac_isp/ || true
+
       - name: Run ISP Framework tests
         env:
           DATABASE_URL: postgresql://postgres:test_password@localhost:5432/dotmac_isp_test
@@ -124,13 +124,13 @@ jobs:
           ENVIRONMENT: development
           JWT_SECRET_KEY: test-jwt-secret-key-for-ci-cd-validation-only-at-least-32-chars
         run: |
-          cd isp-framework
-          PYTHONPATH=src pytest tests/ -v --cov=src --cov-report=xml --cov-report=term-missing
-      
+          cd src
+          PYTHONPATH=. pytest tests/ -v --cov=dotmac_isp --cov-report=xml --cov-report=term-missing
+
       - name: Upload ISP Framework coverage
         uses: codecov/codecov-action@v3
         with:
-          file: ./isp-framework/coverage.xml
+          file: ./src/coverage.xml
           flags: isp-framework
           name: isp-framework-coverage
 
@@ -139,7 +139,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: detect-changes
     if: needs.detect-changes.outputs.management-platform == 'true' || needs.detect-changes.outputs.shared == 'true'
-    
+
     services:
       postgres:
         image: postgres:15
@@ -153,7 +153,7 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
-      
+
       redis:
         image: redis:7-alpine
         options: >-
@@ -166,43 +166,44 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python 3.12
         uses: actions/setup-python@v4
         with:
           python-version: "3.12"
-      
+
       - name: Cache dependencies
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-mgmt-${{ hashFiles('management-platform/requirements.txt') }}
-      
+          key: ${{ runner.os }}-pip-mgmt-${{ hashFiles('src/requirements.txt') }}
+
       - name: Install Management Platform dependencies
         run: |
-          cd management-platform
+          cd src
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-      
+          pip install -r requirements-dev.txt
+
       - name: Run Management Platform linting
         run: |
-          cd management-platform
-          flake8 app/
-          mypy app/ || true
-      
+          cd src
+          flake8 dotmac_management/
+          mypy dotmac_management/ || true
+
       - name: Run Management Platform tests
         env:
           DATABASE_URL: postgresql+asyncpg://postgres:test_password@localhost:5432/mgmt_platform_test
           REDIS_URL: redis://localhost:6379/0
           ENVIRONMENT: development
         run: |
-          cd management-platform
-          pytest tests/ -v --cov=app --cov-report=xml --cov-report=term-missing
-      
+          cd src
+          PYTHONPATH=. pytest tests/ -v --cov=dotmac_management --cov-report=xml --cov-report=term-missing
+
       - name: Upload Management Platform coverage
         uses: codecov/codecov-action@v3
         with:
-          file: ./management-platform/coverage.xml
+          file: ./src/coverage.xml
           flags: management-platform
           name: management-platform-coverage
 
@@ -211,35 +212,35 @@ jobs:
     runs-on: ubuntu-latest
     needs: detect-changes
     if: needs.detect-changes.outputs.frontend == 'true'
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "18"
           cache: "pnpm"
           cache-dependency-path: frontend/pnpm-lock.yaml
-      
+
       - name: Install pnpm
         run: npm install -g pnpm
-      
+
       - name: Install frontend dependencies
         run: |
           cd frontend
           pnpm install
-      
+
       - name: Run frontend linting
         run: |
           cd frontend
           pnpm run lint
-      
+
       - name: Run frontend tests
         run: |
           cd frontend
           pnpm run test
-      
+
       - name: Build frontend applications
         run: |
           cd frontend
@@ -250,63 +251,63 @@ jobs:
     runs-on: ubuntu-latest
     needs: [detect-changes, test-isp-framework, test-management-platform]
     if: always() && (needs.detect-changes.outputs.isp-framework == 'true' || needs.detect-changes.outputs.management-platform == 'true' || needs.detect-changes.outputs.shared == 'true')
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python 3.12
         uses: actions/setup-python@v4
         with:
           python-version: "3.12"
-      
+
       - name: Start complete platform for integration testing
         run: |
           # Start infrastructure services
           docker-compose -f docker-compose.unified.yml up -d postgres-shared redis-shared openbao-shared
-          
+
           # Wait for services to be ready
           sleep 30
-          
+
           # Start application services
           docker-compose -f docker-compose.unified.yml up -d isp-framework management-platform
-          
+
           # Wait for applications to be ready
           sleep 60
-      
+
       - name: Run cross-platform integration tests
         run: |
           pip install requests pytest
-          
+
           # Test ISP Framework health
           curl -f http://localhost:8001/health
-          
-          # Test Management Platform health  
+
+          # Test Management Platform health
           curl -f http://localhost:8000/health
-          
+
           # Test cross-platform API integration
           python -c "
           import requests
           import json
-          
+
           # Test Management Platform can reach ISP Framework
           mgmt_response = requests.get('http://localhost:8000/health')
           print(f'Management Platform Health: {mgmt_response.status_code}')
-          
+
           # Test ISP Framework health from Management Platform perspective
-          isp_response = requests.get('http://localhost:8001/health') 
+          isp_response = requests.get('http://localhost:8001/health')
           print(f'ISP Framework Health: {isp_response.status_code}')
-          
+
           assert mgmt_response.status_code == 200
           assert isp_response.status_code == 200
           print('✅ Cross-platform integration test passed')
           "
-      
+
       - name: Check service logs for errors
         if: failure()
         run: |
           echo "=== ISP Framework Logs ==="
           docker-compose -f docker-compose.unified.yml logs isp-framework
-          
+
           echo "=== Management Platform Logs ==="
           docker-compose -f docker-compose.unified.yml logs management-platform
 
@@ -315,33 +316,33 @@ jobs:
     runs-on: ubuntu-latest
     needs: [test-isp-framework, test-management-platform]
     if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
-    
+
     permissions:
       contents: read
       packages: write
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Log in to Container Registry
         uses: docker/login-action@v2
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Extract metadata for ISP Framework
         id: meta-isp
         uses: docker/metadata-action@v4
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/isp-framework
-      
+
       - name: Extract metadata for Management Platform
         id: meta-mgmt
         uses: docker/metadata-action@v4
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/management-platform
-      
+
       - name: Build and push ISP Framework image
         uses: docker/build-push-action@v4
         with:
@@ -349,7 +350,7 @@ jobs:
           push: true
           tags: ${{ steps.meta-isp.outputs.tags }}
           labels: ${{ steps.meta-isp.outputs.labels }}
-      
+
       - name: Build and push Management Platform image
         uses: docker/build-push-action@v4
         with:
@@ -364,10 +365,10 @@ jobs:
     needs: [test-integration, build-images]
     if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
     environment: staging
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Deploy to staging environment
         run: |
           echo "🚀 Deploying to staging environment..."
@@ -381,10 +382,10 @@ jobs:
     needs: [test-integration, build-images]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     environment: production
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Deploy to production environment
         run: |
           echo "🚀 Deploying to production environment..."
@@ -397,7 +398,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [test-integration, build-images]
     if: always()
-    
+
     steps:
       - name: Notify deployment status
         run: |

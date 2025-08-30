@@ -36,7 +36,8 @@
     "allowJs": false,
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
-    "verbatimModuleSyntax": true
+    "verbatimModuleSyntax": true,
+    "jsx": "react-jsx"
   },
   "exclude": ["node_modules", "dist", ".next", "coverage", "*.config.js", "*.config.ts"]
 }

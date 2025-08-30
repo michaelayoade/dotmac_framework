@@ -1,0 +1,52 @@
+version: "3.8"
+
+services:
+  openbao:
+    image: quay.io/openbao/openbao:latest
+    container_name: dotmac-openbao
+    cap_add:
+      - IPC_LOCK
+    environment:
+      BAKED_IN_UPSTREAM_URL: "http://localhost:8200"
+      BAO_DEV_ROOT_TOKEN_ID: "${OPENBAO_ROOT_TOKEN:-root-token-for-dev}"
+      BAO_DEV_LISTEN_ADDRESS: "0.0.0.0:8200"
+      BAO_LOG_LEVEL: "${OPENBAO_LOG_LEVEL:-info}"
+    ports:
+      - "8200:8200"
+    volumes:
+      - openbao-data:/openbao/file
+      - ./config:/openbao/config
+      - ./policies:/openbao/policies
+    command: server -dev -dev-no-store-token
+    networks:
+      - dotmac-network
+    healthcheck:
+      test: ["CMD", "bao", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  openbao-init:
+    image: quay.io/openbao/openbao:latest
+    container_name: dotmac-openbao-init
+    depends_on:
+      openbao:
+        condition: service_healthy
+    environment:
+      BAO_ADDR: "http://openbao:8200"
+      BAO_TOKEN: "${OPENBAO_ROOT_TOKEN:-root-token-for-dev}"
+    volumes:
+      - ./scripts:/scripts
+    command: /scripts/init.sh
+    networks:
+      - dotmac-network
+
+volumes:
+  openbao-data:
+    name: dotmac-openbao-data
+
+networks:
+  dotmac-network:
+    external: true
+    name: dotmac-network

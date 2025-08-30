@@ -1,6 +1,6 @@
 "use client";
 
-import { Badge, Button, Card } from "@dotmac/styled-components";
+import { Badge, Button, Card } from "@dotmac/ui";
 import {
 	Award,
 	BarChart3,

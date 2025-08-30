@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { getApiClient } from '../api/client';
+import { getApiClient } from "@dotmac/headless/api";
 
 import { useApiErrorNotifications } from './useNotifications';
 

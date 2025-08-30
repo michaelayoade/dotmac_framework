@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   # ===== SHARED INFRASTRUCTURE =====
-  
+
   # Shared PostgreSQL for both platforms
   postgres-shared:
     image: postgres:15-alpine
@@ -67,7 +67,7 @@ services:
       start_period: 60s
 
   # ===== OBSERVABILITY STACK =====
-  
+
   # ClickHouse for SignOz
   clickhouse:
     image: clickhouse/clickhouse-server:23.8-alpine
@@ -141,7 +141,7 @@ services:
       - signoz-query
 
   # ===== ISP FRAMEWORK =====
-  
+
   isp-framework:
     build:
       context: .
@@ -166,7 +166,7 @@ services:
       VAULT_PATH: "secret/development"
       # SignOz
       SIGNOZ_ENDPOINT: signoz-collector:4317
-      OTEL_RESOURCE_ATTRIBUTES: "service.name=dotmac-isp-dev,tenant.id=development"
+      OTEL_RESOURCE_ATTRIBUTES: "service.name=dotmac-isp-${TENANT_ID:-dev},tenant.id=${TENANT_ID:-development},service.version=${APP_VERSION:-1.0.0}"
       # Application
       ENVIRONMENT: development
       LOG_LEVEL: INFO
@@ -201,14 +201,14 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1.0'
-          memory: 1G
+          cpus: '${ISP_CPU_LIMIT:-1.0}'
+          memory: ${ISP_MEMORY_LIMIT:-1G}
         reservations:
-          cpus: '0.5'
-          memory: 512M
+          cpus: '${ISP_CPU_RESERVATION:-0.5}'
+          memory: ${ISP_MEMORY_RESERVATION:-512M}
 
   # ===== MANAGEMENT PLATFORM =====
-  
+
   management-platform:
     build:
       context: .
@@ -229,6 +229,7 @@ services:
       # SignOz
       SIGNOZ_ENDPOINT: signoz-collector:4317
       SIGNOZ_ACCESS_TOKEN: ${SIGNOZ_ACCESS_TOKEN:-}
+      OTEL_RESOURCE_ATTRIBUTES: "service.name=dotmac-management-platform,service.version=${APP_VERSION:-1.0.0},environment=${ENVIRONMENT:-development}"
       # Application
       ENVIRONMENT: development
       LOG_LEVEL: INFO
@@ -238,7 +239,7 @@ services:
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-sk_test_placeholder}
       SENDGRID_API_KEY: ${SENDGRID_API_KEY:-sg_placeholder}
       # CORS origins
-      CORS_ORIGINS: '["http://localhost:3000", "http://localhost:3001", "http://localhost:3002", "http://149.102.135.97:8000", "http://149.102.135.97:3000", "http://149.102.135.97:3001"]'
+      CORS_ORIGINS: '${CORS_ORIGINS:-["http://localhost:3000", "http://localhost:3001", "http://localhost:3002"]}'
       # ISP Framework Integration
       ISP_FRAMEWORK_URL: http://isp-framework:8000
     volumes:
@@ -259,7 +260,7 @@ services:
       - isp-framework
 
   # ===== BACKGROUND WORKERS =====
-  
+
   # Management Platform Celery Worker
   mgmt-celery-worker:
     build:
@@ -313,7 +314,7 @@ services:
     command: celery -A app.workers.celery_app beat --loglevel=info
 
   # ===== FRONTEND PORTALS =====
-  
+
   # Master Admin Portal
   master-admin-portal:
     build:

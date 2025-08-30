@@ -4,7 +4,7 @@
  */
 
 import { useMemo } from 'react';
-import { useTenantAuth } from '@/components/auth/TenantAuthProvider';
+import { useTenantAuth } from '@/components/auth/TenantAuthProviderNew';
 
 /**
  * Hook that only re-renders when authentication status changes
@@ -12,7 +12,7 @@ import { useTenantAuth } from '@/components/auth/TenantAuthProvider';
  */
 export function useIsAuthenticated() {
   const { isAuthenticated, isLoading } = useTenantAuth();
-  
+
   return useMemo(() => ({
     isAuthenticated,
     isLoading,
@@ -25,7 +25,7 @@ export function useIsAuthenticated() {
  */
 export function useCurrentUser() {
   const { user, isLoading } = useTenantAuth();
-  
+
   return useMemo(() => ({
     user,
     isLoading,
@@ -38,7 +38,7 @@ export function useCurrentUser() {
  */
 export function useCurrentTenant() {
   const { tenant, isLoading } = useTenantAuth();
-  
+
   return useMemo(() => ({
     tenant,
     isLoading,
@@ -51,7 +51,7 @@ export function useCurrentTenant() {
  */
 export function useAuthActions() {
   const { login, logout, refreshAuth } = useTenantAuth();
-  
+
   return useMemo(() => ({
     login,
     logout,
@@ -65,16 +65,16 @@ export function useAuthActions() {
  */
 export function useUserPermissions() {
   const { user } = useTenantAuth();
-  
+
   return useMemo(() => {
     const permissions = user?.permissions || [];
-    
+
     const hasPermission = (permission: string) => permissions.includes(permission);
-    const hasAnyPermission = (permissionList: string[]) => 
+    const hasAnyPermission = (permissionList: string[]) =>
       permissionList.some(permission => permissions.includes(permission));
-    const hasAllPermissions = (permissionList: string[]) => 
+    const hasAllPermissions = (permissionList: string[]) =>
       permissionList.every(permission => permissions.includes(permission));
-    
+
     return {
       permissions,
       hasPermission,
@@ -90,13 +90,13 @@ export function useUserPermissions() {
  */
 export function useTenantStatus() {
   const { tenant } = useTenantAuth();
-  
+
   return useMemo(() => {
     const isActive = tenant?.status === 'active';
     const isPending = tenant?.status === 'pending';
     const isSuspended = tenant?.status === 'suspended';
     const isCancelled = tenant?.status === 'cancelled';
-    
+
     return {
       status: tenant?.status,
       isActive,
@@ -113,24 +113,24 @@ export function useTenantStatus() {
  */
 export function useUserRole() {
   const { user } = useTenantAuth();
-  
+
   return useMemo(() => {
     const role = user?.role;
-    
+
     const isAdmin = role === 'admin';
     const isManager = role === 'manager';
     const isUser = role === 'user';
     const isOwner = role === 'owner';
-    
+
     const hasRole = (targetRole: string) => role === targetRole;
     const hasMinimumRole = (minimumRole: string) => {
       const roleHierarchy = ['user', 'manager', 'admin', 'owner'];
       const currentRoleIndex = roleHierarchy.indexOf(role || '');
       const minimumRoleIndex = roleHierarchy.indexOf(minimumRole);
-      
+
       return currentRoleIndex >= minimumRoleIndex;
     };
-    
+
     return {
       role,
       isAdmin,

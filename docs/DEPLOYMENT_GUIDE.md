@@ -1,19 +1,22 @@
 # DotMac Platform Deployment & Operations Guide
 
 ## Table of Contents
+
 1. [Prerequisites](#prerequisites)
-2. [Infrastructure Setup](#infrastructure-setup)
-3. [Database Configuration](#database-configuration)
-4. [Application Deployment](#application-deployment)
-5. [Security Configuration](#security-configuration)
-6. [Monitoring Setup](#monitoring-setup)
-7. [Backup & Recovery](#backup--recovery)
-8. [Troubleshooting](#troubleshooting)
-9. [Maintenance Procedures](#maintenance-procedures)
+2. [Container Lifecycle & Health Probes](#container-lifecycle--health-probes)
+3. [Infrastructure Setup](#infrastructure-setup)
+4. [Database Configuration](#database-configuration)
+5. [Application Deployment](#application-deployment)
+6. [Security Configuration](#security-configuration)
+7. [Monitoring Setup](#monitoring-setup)
+8. [Backup & Recovery](#backup--recovery)
+9. [Troubleshooting](#troubleshooting)
+10. [Maintenance Procedures](#maintenance-procedures)
 
 ## Prerequisites
 
 ### System Requirements
+
 - **Operating System**: Ubuntu 22.04 LTS or RHEL 8+
 - **CPU**: Minimum 8 cores (16+ recommended for production)
 - **RAM**: Minimum 16GB (32GB+ recommended)
@@ -21,6 +24,7 @@
 - **Network**: 1Gbps connection minimum
 
 ### Software Dependencies
+
 ```bash
 # Core dependencies
 - Docker 24.0+
@@ -33,6 +37,7 @@
 ```
 
 ### Required Tools
+
 ```bash
 # Install essential tools
 sudo apt-get update
@@ -44,6 +49,41 @@ sudo apt-get install -y \
   htop \
   net-tools
 ```
+
+## Container Lifecycle & Health Probes
+
+### Kubernetes Health Endpoints
+
+Both ISP Framework and Management Platform now include production-ready Kubernetes health probes:
+
+```bash
+# Test health endpoints
+curl http://localhost:8000/health/live      # ISP Framework liveness
+curl http://localhost:8000/health/ready     # ISP Framework readiness
+curl http://localhost:8000/health/startup   # ISP Framework startup
+
+curl http://localhost:8001/health/live      # Management Platform liveness
+curl http://localhost:8001/health/ready     # Management Platform readiness
+curl http://localhost:8001/health/startup   # Management Platform startup
+```
+
+### Graceful Shutdown
+
+Services support proper container termination:
+
+- **SIGTERM/SIGINT**: Graceful shutdown initiation
+- **30-second timeout**: Connection draining period
+- **Resource cleanup**: Database and cache connections closed
+- **Health probe failure**: Services marked unhealthy during shutdown
+
+### Container State Management
+
+Services track startup/shutdown states:
+
+- **Startup tracking**: Monitors initialization progress
+- **Health dependencies**: Database, cache, observability checks
+- **Readiness dependencies**: Service-specific validation
+- **Container info**: Kubernetes environment detection
 
 ## Infrastructure Setup
 
@@ -65,6 +105,7 @@ export DOMAIN=your-domain.com
 ### 2. Kubernetes Deployment
 
 #### Install Kubernetes
+
 ```bash
 # Install kubectl
 curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
@@ -75,6 +116,7 @@ curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 ```
 
 #### Deploy Application
+
 ```bash
 # Create namespace
 kubectl create namespace dotmac
@@ -93,6 +135,88 @@ kubectl apply -f kubernetes/nginx-ingress.yaml
 # Apply HPA and monitoring
 kubectl apply -f kubernetes/hpa.yaml
 kubectl apply -f kubernetes/monitoring/
+
+# Verify health probes are working
+kubectl get pods -n dotmac
+kubectl port-forward -n dotmac svc/isp-framework 8000:8000 &
+kubectl port-forward -n dotmac svc/management-platform 8001:8001 &
+
+# Test health endpoints
+curl http://localhost:8000/health/live      # Should return 200 when healthy
+curl http://localhost:8000/health/ready     # Should return 200 when ready
+curl http://localhost:8000/health/startup   # Should return 200 when started
+
+curl http://localhost:8001/health/live      # Management platform health
+curl http://localhost:8001/health/ready     # Management platform readiness
+curl http://localhost:8001/health/startup   # Management platform startup
+```
+
+#### Health Probe Configuration
+
+Example Kubernetes deployment with health probes:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: isp-framework
+  namespace: dotmac
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: isp-framework
+  template:
+    metadata:
+      labels:
+        app: isp-framework
+    spec:
+      containers:
+      - name: isp-framework
+        image: dotmac/isp-framework:latest
+        ports:
+        - containerPort: 8000
+
+        # Kubernetes Health Probes
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 2
+
+        startupProbe:
+          httpGet:
+            path: /health/startup
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 30  # Allow up to 5 minutes for startup
+
+        # Graceful shutdown
+        terminationGracePeriodSeconds: 30
+
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
 ```
 
 ### 3. Docker Compose Deployment
@@ -111,6 +235,7 @@ docker-compose logs -f
 ### PostgreSQL Setup
 
 #### 1. Initialize Database
+
 ```bash
 # Connect to PostgreSQL
 sudo -u postgres psql
@@ -128,6 +253,7 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 ```
 
 #### 2. SSL Configuration
+
 ```bash
 # Generate SSL certificates
 cd /var/lib/postgresql/14/main
@@ -146,6 +272,7 @@ sudo systemctl restart postgresql
 ```
 
 #### 3. High Availability Setup
+
 ```bash
 # Run replication setup script
 ./scripts/setup_pg_replication.sh primary
@@ -181,6 +308,7 @@ sudo systemctl restart redis
 ### 1. Environment Configuration
 
 Create `.env.production`:
+
 ```bash
 # Database
 DATABASE_URL=postgresql://dotmac_user:password@localhost:5432/dotmac_production
@@ -433,13 +561,13 @@ groups:
         for: 5m
         annotations:
           summary: "High CPU usage detected"
-          
+
       - alert: DatabaseSlowQueries
         expr: db_slow_queries_total > 100
         for: 10m
         annotations:
           summary: "Too many slow queries"
-          
+
       - alert: LowCacheHitRatio
         expr: db_cache_hit_ratio < 0.9
         for: 15m
@@ -536,6 +664,7 @@ tar -xzf app_20240824.tar.gz -C /
 ### Common Issues
 
 #### 1. Database Connection Issues
+
 ```bash
 # Check PostgreSQL status
 sudo systemctl status postgresql
@@ -548,6 +677,7 @@ tail -f /var/log/postgresql/postgresql-14-main.log
 ```
 
 #### 2. High Memory Usage
+
 ```bash
 # Check memory usage
 free -h
@@ -561,12 +691,13 @@ sudo systemctl restart dotmac-app
 ```
 
 #### 3. Slow Performance
+
 ```bash
 # Check slow queries
 psql -U postgres -d dotmac_production -c "
-SELECT query, mean_exec_time, calls 
-FROM pg_stat_statements 
-ORDER BY mean_exec_time DESC 
+SELECT query, mean_exec_time, calls
+FROM pg_stat_statements
+ORDER BY mean_exec_time DESC
 LIMIT 10;"
 
 # Check Nginx connections
@@ -575,6 +706,7 @@ nginx -s reload
 ```
 
 #### 4. SSL Certificate Issues
+
 ```bash
 # Renew certificate
 sudo certbot renew --dry-run
@@ -601,18 +733,21 @@ tail -f /var/log/dotmac/*.log | grep ERROR
 ## Maintenance Procedures
 
 ### Daily Tasks
+
 - Monitor system health dashboard
 - Check backup completion
 - Review error logs
 - Verify SSL certificates
 
 ### Weekly Tasks
+
 - Database vacuum and analyze
 - Clear old logs
 - Update security patches
 - Performance review
 
 ### Monthly Tasks
+
 - Full system backup
 - Security audit
 - Capacity planning review
@@ -638,6 +773,7 @@ sudo systemctl restart postgresql redis nginx dotmac-app
 ## Performance Tuning
 
 ### PostgreSQL Optimization
+
 ```sql
 -- Update postgresql.conf
 shared_buffers = 256MB
@@ -651,6 +787,7 @@ random_page_cost = 1.1
 ```
 
 ### Redis Optimization
+
 ```bash
 # redis.conf
 tcp-backlog 511
@@ -661,6 +798,7 @@ maxclients 10000
 ```
 
 ### Application Optimization
+
 ```python
 # Gunicorn configuration
 workers = multiprocessing.cpu_count() * 2 + 1
@@ -672,6 +810,7 @@ keepalive = 5
 ## Health Checks
 
 ### Automated Health Check Script
+
 ```bash
 #!/bin/bash
 # health_check.sh
@@ -694,11 +833,31 @@ else
     echo "✗ Database is not accessible"
 fi
 
-# Check API
+# Check ISP Framework health endpoints
+echo "Checking ISP Framework health endpoints..."
+for endpoint in live ready startup; do
+    if curl -f http://localhost:8000/health/$endpoint > /dev/null 2>&1; then
+        echo "✓ ISP Framework /health/$endpoint is responding"
+    else
+        echo "✗ ISP Framework /health/$endpoint is not responding"
+    fi
+done
+
+# Check Management Platform health endpoints
+echo "Checking Management Platform health endpoints..."
+for endpoint in live ready startup; do
+    if curl -f http://localhost:8001/health/$endpoint > /dev/null 2>&1; then
+        echo "✓ Management Platform /health/$endpoint is responding"
+    else
+        echo "✗ Management Platform /health/$endpoint is not responding"
+    fi
+done
+
+# Check legacy health endpoint for backwards compatibility
 if curl -f http://localhost:8000/health > /dev/null 2>&1; then
-    echo "✓ API is responding"
+    echo "✓ Legacy health endpoint is responding"
 else
-    echo "✗ API is not responding"
+    echo "✗ Legacy health endpoint is not responding"
 fi
 
 # Check disk space
@@ -714,16 +873,19 @@ done
 ## Support & Resources
 
 ### Documentation
+
 - [Architecture Guide](/docs/ARCHITECTURE.md)
 - [API Documentation](/docs/API_DOCUMENTATION.md)
 - [Security Guide](/docs/SECURITY.md)
 
 ### Contact
-- **Technical Support**: support@dotmac.cloud
+
+- **Technical Support**: <support@dotmac.cloud>
 - **Emergency Hotline**: +1-xxx-xxx-xxxx
 - **Slack Channel**: #dotmac-ops
 
 ### Useful Commands Reference
+
 ```bash
 # Service management
 systemctl status/start/stop/restart dotmac-app

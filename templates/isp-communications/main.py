@@ -1,13 +1,11 @@
 import logging
 from typing import Any, Dict
 
+from dotmac_analytics import track_event
+from dotmac_core_events import EventBus
 from fastapi import FastAPI, Request
 from providers import email, sms, whatsapp
 from pydantic import BaseModel
-
-from dotmac_analytics import track_event
-from dotmac_core_events import EventBus
-
 
 app = FastAPI(title="DotMac Communications Service")
 event_bus = EventBus()
@@ -110,4 +108,7 @@ async def health_check():
 
 if __name__ == "__main__":
     import uvicorn
+
+from dotmac_shared.api.exception_handlers import standard_exception_handler
+
     uvicorn.run(app, host="127.0.0.1", port=8000)

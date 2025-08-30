@@ -1,0 +1,26 @@
+# API Reference
+
+{% for endpoint in api_endpoints %}
+## {{ endpoint.method }} {{ endpoint.path }}
+
+**Function**: `{{ endpoint.function_name }}()`
+
+{% if endpoint.docstring %}
+{{ endpoint.docstring }}
+{% else %}
+*No documentation available*
+{% endif %}
+
+**Parameters:**
+{% for param in endpoint.parameters %}
+- `{{ param }}`
+{% endfor %}
+
+{% if endpoint.response_schema %}
+**Response Schema**: `{{ endpoint.response_schema }}`
+{% endif %}
+
+---
+{% endfor %}
+
+*Auto-generated from source code on {{ generation_date }}*

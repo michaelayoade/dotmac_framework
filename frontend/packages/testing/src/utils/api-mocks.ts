@@ -1,4 +1,4 @@
-import { rest } from 'msw';
+import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 
 // Mock data generators
@@ -29,7 +29,6 @@ export const mockInvoice = (overrides = {}) => ({
   dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
   totalAmount: 99.99,
   amountDue: 99.99,
-  amountPaid: 0,
   lineItems: [
     {
       id: 'line_1',
@@ -115,56 +114,54 @@ export const mockNotification = (overrides = {}) => ({
 // API Mock Handlers
 export const handlers = [
   // Analytics API
-  rest.get('/api/analytics/metrics', (req, res, ctx) => {
-    return res(
-      ctx.json({
-        metrics: {
-          totalCustomers: 1250,
-          activeServices: 2100,
-          monthlyRevenue: 125000,
-          conversionRate: 0.23,
-          customerSatisfaction: 4.6,
-          churnRate: 0.05,
-        },
-        trends: {
-          customers: [1200, 1220, 1235, 1250],
-          revenue: [120000, 122000, 123500, 125000],
-        },
-      })
-    );
+  http.get('/api/analytics/metrics', () => {
+    return HttpResponse.json({
+      metrics: {
+        totalCustomers: 1250,
+        activeServices: 2100,
+        monthlyRevenue: 125000,
+        conversionRate: 0.23,
+        customerSatisfaction: 4.6,
+        churnRate: 0.05,
+      },
+      trends: {
+        customers: [1200, 1220, 1235, 1250],
+        revenue: [120000, 122000, 123500, 125000],
+      },
+    });
   }),
 
   // Billing API
-  rest.get('/api/billing/invoices', (req, res, ctx) => {
+  http.get('/api/billing/invoices', () => {
     const invoices = Array.from({ length: 10 }, () => mockInvoice());
-    return res(ctx.json({ invoices }));
+    return HttpResponse.json({ invoices });
   }),
 
-  rest.post('/api/billing/invoices', (req, res, ctx) => {
-    return res(ctx.json({ invoice: mockInvoice() }));
+  http.post('/api/billing/invoices', () => {
+    return HttpResponse.json({ invoice: mockInvoice() });
   }),
 
-  rest.get('/api/billing/payments', (req, res, ctx) => {
+  http.get('/api/billing/payments', () => {
     const payments = Array.from({ length: 5 }, () => mockPayment());
-    return res(ctx.json({ payments }));
+    return HttpResponse.json({ payments });
   }),
 
-  rest.post('/api/billing/payments', (req, res, ctx) => {
-    return res(ctx.json({ payment: mockPayment({ status: 'completed' }) }));
+  http.post('/api/billing/payments', () => {
+    return HttpResponse.json({ payment: mockPayment({ status: 'completed' }) });
   }),
 
   // Provisioning API
-  rest.get('/api/provisioning/requests', (req, res, ctx) => {
+  http.get('/api/provisioning/requests', () => {
     const requests = Array.from({ length: 8 }, () => mockProvisioningRequest());
-    return res(ctx.json({ requests }));
+    return HttpResponse.json({ requests });
   }),
 
-  rest.post('/api/provisioning/requests', (req, res, ctx) => {
-    return res(ctx.json({ request: mockProvisioningRequest() }));
+  http.post('/api/provisioning/requests', () => {
+    return HttpResponse.json({ request: mockProvisioningRequest() });
   }),
 
   // Commission API
-  rest.get('/api/commissions', (req, res, ctx) => {
+  http.get('/api/commissions', () => {
     const commissions = Array.from({ length: 15 }, () => mockCommissionData());
     const stats = {
       totalEarned: 2350.50,
@@ -173,11 +170,11 @@ export const handlers = [
       avgCommissionPerCustomer: 18.80,
       projectedAnnual: 5400.00,
     };
-    return res(ctx.json({ commissions, stats }));
+    return HttpResponse.json({ commissions, stats });
   }),
 
   // Communication API
-  rest.get('/api/communication/messages', (req, res, ctx) => {
+  http.get('/api/communication/messages', () => {
     const messages = Array.from({ length: 10 }, (_, i) => ({
       id: `msg_${i}`,
       recipient: `customer${i}@example.com`,
@@ -185,64 +182,57 @@ export const handlers = [
       status: ['sent', 'delivered', 'failed'][i % 3],
       sentAt: new Date(Date.now() - i * 60 * 60 * 1000).toISOString(),
     }));
-    return res(ctx.json({ messages }));
+    return HttpResponse.json({ messages });
   }),
 
-  rest.post('/api/communication/messages', (req, res, ctx) => {
-    return res(
-      ctx.json({
-        message: {
-          id: 'msg_new',
-          status: 'sent',
-          sentAt: new Date().toISOString(),
-        },
-      })
-    );
+  http.post('/api/communication/messages', () => {
+    return HttpResponse.json({
+      message: {
+        id: 'msg_new',
+        status: 'sent',
+        sentAt: new Date().toISOString(),
+      },
+    });
   }),
 
   // Territory API
-  rest.get('/api/territory/data', (req, res, ctx) => {
-    return res(
-      ctx.json({
-        territories: [
-          {
-            id: 'territory_1',
-            name: 'Downtown Area',
-            coordinates: [
-              [-74.0059, 40.7128],
-              [-74.0059, 40.7228],
-              [-73.9959, 40.7228],
-              [-73.9959, 40.7128],
-            ],
-            customers: 45,
-            prospects: 12,
-            coverage: 'fiber',
-          },
-        ],
-        customers: Array.from({ length: 20 }, (_, i) => ({
-          id: `customer_${i}`,
-          name: `Customer ${i + 1}`,
-          location: {
-            lat: 40.7128 + (Math.random() - 0.5) * 0.1,
-            lng: -74.0059 + (Math.random() - 0.5) * 0.1,
-          },
-          status: ['active', 'inactive', 'prospect'][i % 3],
-        })),
-      })
-    );
+  http.get('/api/territory/data', () => {
+    return HttpResponse.json({
+      territories: [
+        {
+          id: 'territory_1',
+          name: 'Downtown Area',
+          coordinates: [
+            [-74.0059, 40.7128],
+            [-74.0059, 40.7228],
+            [-73.9959, 40.7228],
+            [-73.9959, 40.7128],
+          ],
+        },
+      ],
+      customers: Array.from({ length: 20 }, (_, i) => ({
+        id: `customer_${i}`,
+        name: `Customer ${i + 1}`,
+        location: {
+          lat: 40.7128 + (Math.random() - 0.5) * 0.1,
+          lng: -74.0059 + (Math.random() - 0.5) * 0.1,
+        },
+        status: ['active', 'inactive', 'prospect'][i % 3],
+      })),
+    });
   }),
 
   // Error simulation handlers
-  rest.get('/api/error/500', (req, res, ctx) => {
-    return res(ctx.status(500), ctx.json({ message: 'Internal Server Error' }));
+  http.get('/api/error/500', () => {
+    return HttpResponse.json({ message: 'Internal Server Error' }, { status: 500 });
   }),
 
-  rest.get('/api/error/404', (req, res, ctx) => {
-    return res(ctx.status(404), ctx.json({ message: 'Not Found' }));
+  http.get('/api/error/404', () => {
+    return HttpResponse.json({ message: 'Not Found' }, { status: 404 });
   }),
 
-  rest.get('/api/error/timeout', (req, res, ctx) => {
-    return res(ctx.delay('infinite'));
+  http.get('/api/error/timeout', () => {
+    return new Promise(() => {}); // Never resolves
   }),
 ];
 
@@ -252,16 +242,15 @@ export const server = setupServer(...handlers);
 // Helper functions for testing
 export const createMockWebSocket = () => {
   const mockWS = {
-    send: jest.fn(),
-    close: jest.fn(),
-    readyState: WebSocket.OPEN,
+    readyState: 0, // WebSocket.CONNECTING
     onopen: null as ((event: Event) => void) | null,
     onmessage: null as ((event: MessageEvent) => void) | null,
     onclose: null as ((event: CloseEvent) => void) | null,
     onerror: null as ((event: Event) => void) | null,
+    send: jest.fn(),
+    close: jest.fn(),
   };
 
-  // Simulate WebSocket events
   const simulateOpen = () => {
     if (mockWS.onopen) {
       mockWS.onopen(new Event('open'));
@@ -275,61 +264,31 @@ export const createMockWebSocket = () => {
   };
 
   const simulateClose = () => {
-    mockWS.readyState = WebSocket.CLOSED;
+    mockWS.readyState = 3; // WebSocket.CLOSED
     if (mockWS.onclose) {
       mockWS.onclose(new CloseEvent('close'));
     }
   };
 
   const simulateError = () => {
+    mockWS.readyState = 3; // WebSocket.CLOSED
     if (mockWS.onerror) {
       mockWS.onerror(new Event('error'));
     }
   };
 
-  return {
-    mockWS,
-    simulateOpen,
-    simulateMessage,
-    simulateClose,
-    simulateError,
-  };
+  return { mockWS, simulateOpen, simulateMessage, simulateClose, simulateError };
 };
 
-// Performance testing utilities
-export const measurePerformance = async (fn: () => Promise<void> | void, label: string) => {
-  const start = performance.now();
-  await fn();
-  const end = performance.now();
-  const duration = end - start;
-  
-  console.log(`${label}: ${duration.toFixed(2)}ms`);
-  
-  return duration;
+// Test server lifecycle helpers
+export const resetMocks = () => {
+  server.resetHandlers();
 };
 
-export const expectPerformance = (duration: number, threshold: number, label: string) => {
-  if (duration > threshold) {
-    console.warn(`Performance warning: ${label} took ${duration.toFixed(2)}ms (threshold: ${threshold}ms)`);
-  }
-  expect(duration).toBeLessThan(threshold);
+export const startTestServer = () => {
+  server.listen();
 };
 
-// Memory leak detection
-export const detectMemoryLeaks = () => {
-  const initialMemory = (performance as any).memory?.usedJSHeapSize || 0;
-  
-  return {
-    check: () => {
-      const currentMemory = (performance as any).memory?.usedJSHeapSize || 0;
-      const diff = currentMemory - initialMemory;
-      const threshold = 10 * 1024 * 1024; // 10MB threshold
-      
-      if (diff > threshold) {
-        console.warn(`Potential memory leak detected: ${(diff / 1024 / 1024).toFixed(2)}MB increase`);
-      }
-      
-      return diff;
-    },
-  };
+export const stopTestServer = () => {
+  server.close();
 };

@@ -23,7 +23,6 @@ export {
   useCachedData,
   useAuth,
   useBilling,
-  useBusinessWorkflow,
   useCommunication,
   useFormatting,
   useMFA,
@@ -83,18 +82,35 @@ export { useBusinessValidation } from './hooks/useBusinessValidation';
 export { useFormValidation, useFormSubmission, useAsyncValidation } from './hooks/useFormValidation';
 
 // Customer data hooks
-export { 
-  useCustomerDashboard, 
-  useCustomerServices, 
-  useCustomerBilling, 
-  useCustomerUsage, 
-  useCustomerDocuments, 
-  useCustomerSupportTickets 
-} from './hooks/useApiData';
+export {
+  useCustomerDashboard,
+  useCustomerServices,
+  useCustomerBilling,
+  useCustomerUsage,
+  useCustomerDocuments,
+  useCustomerSupportTickets
+} from "@dotmac/headless/hooks";
 
 // Business logic engines
 export { commissionEngine, DEFAULT_COMMISSION_TIERS } from './business/commission-engine';
 export { territoryValidator } from './business/territory-validator';
+
+// ISP Business Operations (DRY-compliant centralized business logic)
+export {
+  createISPBusinessService,
+  useISPBusiness,
+  ISPBusinessService,
+  type ISPBusinessOperations
+} from './business/isp-operations';
+
+// Portal-optimized business hooks
+export {
+  useCustomerBusiness,
+  useResellerBusiness,
+  useTechnicianBusiness,
+  useAdminBusiness,
+  useManagementBusiness
+} from './hooks/useISPBusiness';
 
 // Notification hooks
 export {
@@ -105,7 +121,7 @@ export {
   useNotificationStore,
   type NotificationType,
   type Notification,
-} from './hooks/useNotifications';
+} from "@dotmac/headless/hooks";
 
 // Standard error handling (preferred)
 export {
@@ -135,9 +151,9 @@ export {
 export * from './stores';
 
 // Explicitly export store hooks for clarity
-export { useAuthStore } from './stores/authStore';
-export { useTenantStore } from './stores/tenantStore';
-export { useAppStore } from './stores/appStore';
+export { useAuthStore } from "@dotmac/headless/auth";
+export { useTenantStore } from "@dotmac/headless/stores";
+export { useAppStore } from "@dotmac/headless/stores";
 // Types (exclude conflicting types that are exported from hooks)
 export type {
   Address,
@@ -206,10 +222,10 @@ export {
 } from './utils/errorUtils';
 
 // Error handling components - export specific components to avoid conflicts
-export { 
+export {
   StandardErrorBoundary,
   useErrorBoundary,
-  withErrorBoundary as withStandardErrorBoundary 
+  withErrorBoundary as withStandardErrorBoundary
 } from './components/StandardErrorBoundary';
 export * from './providers/ErrorHandlingProvider';
 
@@ -228,3 +244,6 @@ export {
 
 // Production Data Guard utilities
 export * from './utils/production-data-guard';
+
+// Unified Management Operations (High-Impact DRY Solution)
+export * from './management';

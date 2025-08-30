@@ -5,7 +5,7 @@
 
 'use client';
 
-import { Button, Input } from '@dotmac/styled-components/admin';
+import { Button, Input } from '@dotmac/ui/admin';
 import { AlertCircle, Eye, EyeOff, Shield } from 'lucide-react';
 import { useId, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -18,15 +18,15 @@ import { sanitizeInput } from '../../lib/security';
 export function SecureLoginForm() {
   const id = useId();
   const router = useRouter();
-  const { 
-    login, 
-    isLoading, 
-    error, 
-    clearError, 
-    user, 
-    isAuthenticated 
+  const {
+    login,
+    isLoading,
+    error,
+    clearError,
+    user,
+    isAuthenticated
   } = useSecureAuthStore();
-  
+
   const [showPassword, setShowPassword] = useState(false);
   const [csrfToken, setCsrfToken] = useState<string>('');
   const [attemptCount, setAttemptCount] = useState(0);
@@ -51,7 +51,7 @@ export function SecureLoginForm() {
     if (attemptCount >= 3) {
       setIsBlocked(true);
       setBlockTimeRemaining(300); // 5 minutes
-      
+
       const timer = setInterval(() => {
         setBlockTimeRemaining(prev => {
           if (prev <= 1) {
@@ -63,7 +63,7 @@ export function SecureLoginForm() {
           return prev - 1;
         });
       }, 1000);
-      
+
       return () => clearInterval(timer);
     }
   }, [attemptCount]);
@@ -74,7 +74,7 @@ export function SecureLoginForm() {
         method: 'GET',
         credentials: 'include',
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         setCsrfToken(data.csrfToken);
@@ -105,11 +105,11 @@ export function SecureLoginForm() {
       }
 
       clearError();
-      
+
       try {
         // Sanitize email input
         const sanitizedEmail = sanitizeInput(data.email).toLowerCase();
-        
+
         if (!sanitizedEmail || !data.password) {
           setAttemptCount(prev => prev + 1);
           return;
@@ -119,17 +119,17 @@ export function SecureLoginForm() {
           email: sanitizedEmail,
           password: data.password,
         });
-        
+
         if (result.success) {
           // Reset attempt count on success
           setAttemptCount(0);
-          
+
           // Redirect will happen via useEffect
         } else {
           // Increment failed attempt count
           setAttemptCount(prev => prev + 1);
         }
-        
+
       } catch (error) {
         console.error('Login submission error:', error);
         setAttemptCount(prev => prev + 1);

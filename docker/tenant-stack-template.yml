@@ -1,0 +1,263 @@
+version: "3.8"
+
+# Template for true container-per-tenant isolation
+# Each tenant gets their own complete infrastructure stack
+# Variables will be replaced by Management Platform during provisioning
+
+services:
+  # Tenant-specific PostgreSQL Database
+  postgres-${TENANT_ID}:
+    image: postgres:15-alpine
+    container_name: postgres-tenant-${TENANT_ID}
+    environment:
+      POSTGRES_DB: dotmac_isp_${TENANT_ID}
+      POSTGRES_USER: user_${TENANT_ID}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_${TENANT_ID}_data:/var/lib/postgresql/data
+      - ./shared/deployments/scripts/init-tenant-database.sh:/docker-entrypoint-initdb.d/init-tenant-database.sh:ro
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    networks:
+      - tenant-${TENANT_ID}-network
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U user_${TENANT_ID} -d dotmac_isp_${TENANT_ID}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "${TENANT_DB_CPU_LIMIT:-1.0}"
+          memory: ${TENANT_DB_MEMORY_LIMIT:-1G}
+        reservations:
+          cpus: "${TENANT_DB_CPU_RESERVATION:-0.5}"
+          memory: ${TENANT_DB_MEMORY_RESERVATION:-512M}
+
+  # Tenant-specific Redis Cache
+  redis-${TENANT_ID}:
+    image: redis:7-alpine
+    container_name: redis-tenant-${TENANT_ID}
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD} --maxmemory ${REDIS_MAX_MEMORY:-256m} --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_${TENANT_ID}_data:/data
+    ports:
+      - "${REDIS_PORT}:6379"
+    networks:
+      - tenant-${TENANT_ID}-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "${TENANT_REDIS_CPU_LIMIT:-0.5}"
+          memory: ${TENANT_REDIS_MEMORY_LIMIT:-512M}
+        reservations:
+          cpus: "${TENANT_REDIS_CPU_RESERVATION:-0.25}"
+          memory: ${TENANT_REDIS_MEMORY_RESERVATION:-256M}
+
+  # Tenant-specific OpenBao/Vault
+  vault-${TENANT_ID}:
+    image: quay.io/openbao/openbao:latest
+    container_name: vault-tenant-${TENANT_ID}
+    cap_add:
+      - IPC_LOCK
+    environment:
+      BAO_DEV_ROOT_TOKEN_ID: ${VAULT_TOKEN}
+      BAO_DEV_LISTEN_ADDRESS: "0.0.0.0:8200"
+      BAO_LOG_LEVEL: info
+    ports:
+      - "${VAULT_PORT}:8200"
+    volumes:
+      - vault_${TENANT_ID}_data:/openbao/file
+      - ./shared/deployments/openbao/tenant-config.hcl:/openbao/config/config.hcl:ro
+    command: server -dev -dev-no-store-token
+    networks:
+      - tenant-${TENANT_ID}-network
+    healthcheck:
+      test: ["CMD", "bao", "status", "-format=json"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "${TENANT_VAULT_CPU_LIMIT:-0.5}"
+          memory: ${TENANT_VAULT_MEMORY_LIMIT:-512M}
+        reservations:
+          cpus: "${TENANT_VAULT_CPU_RESERVATION:-0.25}"
+          memory: ${TENANT_VAULT_MEMORY_RESERVATION:-256M}
+
+  # Tenant-specific ISP Framework Application
+  app-${TENANT_ID}:
+    build:
+      context: ../isp-framework
+      dockerfile: Dockerfile
+      target: production
+    image: dotmac-isp-framework:${APP_VERSION:-latest}
+    container_name: app-tenant-${TENANT_ID}
+    environment:
+      # Tenant identification
+      TENANT_ID: ${TENANT_ID}
+      TENANT_SUBDOMAIN: ${TENANT_SUBDOMAIN}
+      ENVIRONMENT: ${ENVIRONMENT:-production}
+
+      # Application settings
+      APP_NAME: "DotMac ISP Framework - ${TENANT_NAME}"
+      APP_VERSION: ${APP_VERSION:-1.0.0}
+      DEBUG: ${DEBUG:-false}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+
+      # Server configuration
+      HOST: 0.0.0.0
+      PORT: 8001
+
+      # Database connection (tenant-specific)
+      DATABASE_URL: postgresql+asyncpg://user_${TENANT_ID}:${POSTGRES_PASSWORD}@postgres-${TENANT_ID}:5432/dotmac_isp_${TENANT_ID}
+
+      # Redis connection (tenant-specific)
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis-${TENANT_ID}:6379/0
+
+      # Vault connection (tenant-specific)
+      VAULT_URL: http://vault-${TENANT_ID}:8200
+      VAULT_TOKEN: ${VAULT_TOKEN}
+
+      # Security
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS}
+
+      # External services (optional)
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY:-}
+
+      # Observability
+      SIGNOZ_ENDPOINT: ${SIGNOZ_ENDPOINT:-}
+      OTEL_RESOURCE_ATTRIBUTES: service.name=dotmac-tenant-${TENANT_ID},tenant.id=${TENANT_ID},tenant.name=${TENANT_NAME},tenant.tier=${TENANT_TIER:-standard},service.version=${APP_VERSION:-1.0.0},deployment.environment=${ENVIRONMENT:-production}
+
+      # Python path for shared modules
+      PYTHONPATH: /app/src:/app/shared
+
+    ports:
+      - "${APP_PORT}:8001"
+    volumes:
+      - ../shared:/app/shared:ro
+      - tenant_${TENANT_ID}_uploads:/app/uploads
+      - tenant_${TENANT_ID}_logs:/app/logs
+    networks:
+      - tenant-${TENANT_ID}-network
+      - dotmac-routing-network # For external access via reverse proxy
+    depends_on:
+      postgres-${TENANT_ID}:
+        condition: service_healthy
+      redis-${TENANT_ID}:
+        condition: service_healthy
+      vault-${TENANT_ID}:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "${TENANT_APP_CPU_LIMIT:-1.0}"
+          memory: ${TENANT_APP_MEMORY_LIMIT:-1G}
+        reservations:
+          cpus: "${TENANT_APP_CPU_RESERVATION:-0.5}"
+          memory: ${TENANT_APP_MEMORY_RESERVATION:-512M}
+
+  # Optional: Tenant-specific monitoring (if needed)
+  monitoring-${TENANT_ID}:
+    image: prom/prometheus:latest
+    container_name: monitoring-tenant-${TENANT_ID}
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/etc/prometheus/console_libraries"
+      - "--web.console.templates=/etc/prometheus/consoles"
+      - "--storage.tsdb.retention.time=200h"
+      - "--web.enable-lifecycle"
+    volumes:
+      - ./monitoring/prometheus-tenant.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_${TENANT_ID}_data:/prometheus
+    ports:
+      - "${PROMETHEUS_PORT}:9090"
+    networks:
+      - tenant-${TENANT_ID}-network
+    profiles:
+      - monitoring
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "0.2"
+          memory: 256M
+
+# Tenant-specific isolated network
+networks:
+  tenant-${TENANT_ID}-network:
+    driver: bridge
+    name: tenant-${TENANT_ID}-network
+    ipam:
+      driver: default
+      config:
+        - subnet: ${TENANT_SUBNET:-172.20.0.0/24}
+    internal: false # Set to true for complete network isolation
+
+  # Shared network for routing/load balancer access
+  dotmac-routing-network:
+    external: true
+    name: dotmac-routing-network
+
+# Tenant-specific isolated volumes
+volumes:
+  postgres_${TENANT_ID}_data:
+    driver: local
+    name: postgres_${TENANT_ID}_data
+
+  redis_${TENANT_ID}_data:
+    driver: local
+    name: redis_${TENANT_ID}_data
+
+  vault_${TENANT_ID}_data:
+    driver: local
+    name: vault_${TENANT_ID}_data
+
+  tenant_${TENANT_ID}_uploads:
+    driver: local
+    name: tenant_${TENANT_ID}_uploads
+
+  tenant_${TENANT_ID}_logs:
+    driver: local
+    name: tenant_${TENANT_ID}_logs
+
+  prometheus_${TENANT_ID}_data:
+    driver: local
+    name: prometheus_${TENANT_ID}_data
+
+# Labels for tenant management
+x-tenant-labels: &tenant-labels
+  tenant.id: ${TENANT_ID}
+  tenant.name: ${TENANT_NAME}
+  tenant.subdomain: ${TENANT_SUBDOMAIN}
+  tenant.created: ${CREATED_TIMESTAMP}
+  tenant.tier: ${TENANT_TIER:-standard}
+  management.platform: dotmac

@@ -1,12 +1,9 @@
 'use client';
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import { PortalProviderFactory } from '@dotmac/portal-components';
+import { PackageIntegrations } from '@dotmac/portal-components';
+import { ManagementProvider } from '@dotmac/headless/management';
 import { useState, useEffect } from 'react';
-import { AuthProvider } from '@/components/auth/AuthProvider';
-import { TenantProvider } from '@/lib/tenant-context';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { ToastProvider } from '@/components/ui/Toast';
 import { createProductionQueryClient } from '@/lib/production-init';
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -33,20 +30,62 @@ export function Providers({ children }: { children: React.ReactNode }) {
     return () => clearTimeout(timer);
   }, [queryClient]);
 
+  const managementApiUrl = process.env.NEXT_PUBLIC_MANAGEMENT_API_URL || 'http://localhost:8001/api/v1';
+  const tenantId = process.env.NEXT_PUBLIC_TENANT_ID || 'management';
+
   return (
-    <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <TenantProvider>
-            <ToastProvider>
-              {children}
-            </ToastProvider>
-          </TenantProvider>
-        </AuthProvider>
-        {process.env.NODE_ENV === 'development' && (
-          <ReactQueryDevtools initialIsOpen={false} />
-        )}
-      </QueryClientProvider>
-    </ErrorBoundary>
+    <PortalProviderFactory
+      config={{
+        portal: 'management',
+        authVariant: 'enterprise',
+        apiBaseUrl: managementApiUrl,
+        queryClient,
+        productionInit: true,
+        features: {
+          notifications: true,
+          realtime: true,
+          analytics: true,
+          tenantManagement: true,
+          errorHandling: true,
+          toasts: true,
+          devtools: process.env.NODE_ENV === 'development',
+          enableBatchOperations: true,
+          enableRealTimeSync: true,
+          enableAdvancedAnalytics: true,
+          enableAuditLogging: true
+        }
+      }}
+      customProviders={
+        <PackageIntegrations
+          tenantId={tenantId}
+          enableNetwork={true}
+          enableAssets={true}
+          enableJourneys={true}
+        >
+          <ManagementProvider
+            portalType="management-admin"
+            apiBaseUrl={managementApiUrl}
+            enablePerformanceMonitoring={true}
+            enableErrorBoundary={true}
+            initialConfig={{
+              enableOptimisticUpdates: false, // More conservative for management
+              enableRealTimeSync: true,
+              autoRefreshInterval: 30000, // More frequent updates
+              retryFailedOperations: true
+            }}
+            features={{
+              enableBatchOperations: true, // Enable for management admin
+              enableRealTimeSync: true,
+              enableAdvancedAnalytics: true,
+              enableAuditLogging: true
+            }}
+          >
+            {children}
+          </ManagementProvider>
+        </PackageIntegrations>
+      }
+    >
+      {children}
+    </PortalProviderFactory>
   );
 }

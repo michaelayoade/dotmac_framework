@@ -14,3 +14,7 @@ export * from './RouteGuard';
 export * from './ISPTenantProvider';
 export * from './RealTimeProvider';
 export * from './RealTimeStatus';
+
+// Audit and monitoring components
+export * from './AuditProvider';
+export * from './AuditIntegrationWrapper';

@@ -1,0 +1,116 @@
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "dotmac-inventory-management"
+version = "1.0.0"
+description = "Comprehensive inventory management system for equipment, assets, stock control, and warehouse operations"
+readme = "README.md"
+authors = ["DotMac Framework Team <support@dotmac.com>"]
+license = "MIT"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Office/Business",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Systems Administration",
+]
+keywords = [
+    "inventory-management",
+    "asset-tracking",
+    "warehouse-management",
+    "stock-control",
+    "equipment-management",
+    "purchase-orders",
+    "stock-movements",
+    "inventory-tracking",
+]
+packages = [{include = "dotmac_shared"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+sqlalchemy = {extras = ["asyncio"], version = "^2.0.0"}
+pydantic = {extras = ["email"], version = "^2.0.0"}
+alembic = "^1.10.0"
+asyncpg = "^0.28.0"
+fastapi = "^0.100.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.0.0"
+pytest-asyncio = "^0.21.0"
+pytest-cov = "^4.0.0"
+black = "^23.0.0"
+ruff = "^0.2.0"
+mypy = "^1.0.0"
+
+[tool.poetry.group.testing.dependencies]
+pytest = "^7.0.0"
+pytest-asyncio = "^0.21.0"
+pytest-cov = "^4.0.0"
+coverage = {extras = ["toml"], version = "^7.0.0"}
+factory-boy = "^3.2.0"
+
+[tool.poetry.group.workflows.dependencies]
+celery = {extras = ["redis"], version = "^5.3.0"}
+redis = {extras = ["hiredis"], version = "^4.5.0"}
+apscheduler = "^3.10.0"
+
+[tool.poetry.group.notifications.dependencies]
+aiosmtplib = "^2.0.0"
+jinja2 = "^3.1.0"
+twilio = "^8.2.0"
+
+[tool.poetry.group.reporting.dependencies]
+reportlab = "^4.0.0"
+openpyxl = "^3.1.0"
+pandas = "^2.0.0"
+
+[tool.poetry.group.integrations.dependencies]
+httpx = "^0.24.0"
+pydantic-settings = "^2.0.0"
+barcode = "^1.7.0"
+python-barcode = "^0.15.0"
+
+homepage = "https://github.com/dotmac-framework/inventory-management"
+documentation = "https://dotmac-inventory-management.readthedocs.io"
+repository = "https://github.com/dotmac-framework/inventory-management.git"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_functions = ["test_*"]
+asyncio_mode = "auto"
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--cov=dotmac_shared.inventory_management",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+]
+
+[tool.coverage.run]
+source = ["dotmac_shared/inventory_management"]
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "*/__init__.py",
+]
+
+[tool.black]
+line-length = 100
+target-version = ['py38', 'py39', 'py310', 'py311']
+include = '\.pyi?$'
+
+[tool.mypy]
+python_version = "3.8"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true

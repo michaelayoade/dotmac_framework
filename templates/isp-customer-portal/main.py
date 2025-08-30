@@ -1,7 +1,11 @@
 from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional
 
+from dotmac_billing import InvoiceService, PaymentService, UsageService
 from dotmac_communications import SupportChatService
+from dotmac_identity import AuthService, CustomerService
+from dotmac_networking import DiagnosticsService, OutageService
+from dotmac_services import ServiceManagementService
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -15,12 +19,6 @@ from portal import (
 )
 from pydantic import BaseModel
 from services import BillingServiceLocal, CustomerServiceLocal, SupportServiceLocal
-
-from dotmac_billing import InvoiceService, PaymentService, UsageService
-from dotmac_identity import AuthService, CustomerService
-from dotmac_networking import DiagnosticsService, OutageService
-from dotmac_services import ServiceManagementService
-
 
 app = FastAPI(title="DotMac Customer Portal")
 
@@ -579,4 +577,7 @@ async def health_check():
 
 if __name__ == "__main__":
     import uvicorn
+
+from dotmac_shared.api.exception_handlers import standard_exception_handler
+
     uvicorn.run(app, host="127.0.0.1", port=8000)

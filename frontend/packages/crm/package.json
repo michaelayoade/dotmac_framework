@@ -1,0 +1,77 @@
+{
+  "name": "@dotmac/crm",
+  "version": "0.1.0",
+  "description": "Customer relationship management system with lead tracking, communication history, and analytics",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./customers": {
+      "import": "./dist/customers.mjs",
+      "require": "./dist/customers.js",
+      "types": "./dist/customers.d.ts"
+    },
+    "./contacts": {
+      "import": "./dist/contacts.mjs",
+      "require": "./dist/contacts.js",
+      "types": "./dist/contacts.d.ts"
+    },
+    "./leads": {
+      "import": "./dist/leads.mjs",
+      "require": "./dist/leads.js",
+      "types": "./dist/leads.d.ts"
+    },
+    "./communications": {
+      "import": "./dist/communications.mjs",
+      "require": "./dist/communications.js",
+      "types": "./dist/communications.d.ts"
+    },
+    "./analytics": {
+      "import": "./dist/analytics.mjs",
+      "require": "./dist/analytics.js",
+      "types": "./dist/analytics.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "eslint src/**/*.{ts,tsx}",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@dotmac/headless": "workspace:*",
+    "@dotmac/primitives": "workspace:*",
+    "@dotmac/auth": "workspace:*",
+    "@dotmac/communication-system": "workspace:*",
+    "@dotmac/audit-system": "workspace:*",
+    "lucide-react": "^0.263.1",
+    "framer-motion": "^10.16.4",
+    "dexie": "^3.2.4",
+    "date-fns": "^2.30.0"
+  },
+  "devDependencies": {
+    "@dotmac/typescript-config": "workspace:*",
+    "@dotmac/eslint-config": "workspace:*",
+    "typescript": "^5.2.2",
+    "tsup": "^7.2.0"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "keywords": [
+    "crm",
+    "customer-relationship-management",
+    "lead-management",
+    "contact-management",
+    "communication-tracking",
+    "analytics"
+  ],
+  "author": "DotMac Framework",
+  "license": "MIT"
+}

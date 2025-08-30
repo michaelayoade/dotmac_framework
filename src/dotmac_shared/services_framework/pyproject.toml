@@ -1,0 +1,96 @@
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "dotmac-services-framework"
+version = "1.0.0"
+description = "Universal service lifecycle management framework for business service architecture, health monitoring, configuration management, and deployment-aware service creation"
+readme = "README.md"
+authors = ["DotMac Framework Team <support@dotmac.com>"]
+license = "MIT"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Systems Administration",
+    "Topic :: Software Development :: Quality Assurance",
+]
+keywords = [
+    "service-framework",
+    "service-registry",
+    "health-monitoring",
+    "dependency-injection",
+    "service-discovery",
+    "business-services",
+    "lifecycle-management",
+    "microservices",
+]
+packages = [{include = "dotmac_shared"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+pyjwt = "^2.8.0"
+asyncio = "^3.4.3"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.0.0"
+pytest-asyncio = "^0.21.0"
+pytest-cov = "^4.0.0"
+black = "^23.0.0"
+ruff = "^0.2.0"
+mypy = "^1.0.0"
+
+[tool.poetry.group.testing.dependencies]
+pytest = "^7.0.0"
+pytest-asyncio = "^0.21.0"
+pytest-cov = "^4.0.0"
+coverage = {extras = ["toml"], version = "^7.0.0"}
+factory-boy = "^3.2.0"
+
+[tool.poetry.group.integrations.dependencies]
+httpx = "^0.24.0"
+pydantic-settings = "^2.0.0"
+
+homepage = "https://github.com/dotmac-framework/services-framework"
+documentation = "https://dotmac-services-framework.readthedocs.io"
+repository = "https://github.com/dotmac-framework/services-framework.git"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_functions = ["test_*"]
+asyncio_mode = "auto"
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--cov=dotmac_shared.services_framework",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+]
+
+[tool.coverage.run]
+source = ["dotmac_shared/services_framework"]
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "*/__init__.py",
+]
+
+[tool.black]
+line-length = 100
+target-version = ['py38', 'py39', 'py310', 'py311']
+include = '\.pyi?$'
+
+[tool.mypy]
+python_version = "3.8"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true

@@ -188,7 +188,6 @@ export function LoadingOverlay({
         className={`absolute inset-0 z-50 flex items-center justify-center ${backdropClasses[backdrop]} ${className}`}
         role='alert'
         aria-live='polite'
-        aria-live='polite'
         aria-label={message}
       >
         <div className='flex flex-col items-center space-y-3'>

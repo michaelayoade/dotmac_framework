@@ -7,11 +7,13 @@ This guide provides comprehensive documentation for all operational aspects of t
 ## 🗂️ Documentation Structure
 
 ### Core Documentation
+
 - **[Operations Guide](./OPERATIONS_GUIDE.md)** - This comprehensive guide (you are here)
 - **[Security Implementation](./security/SECURITY_IMPLEMENTATION.md)** - Security hardening and validation
 - **[API Documentation](./api/README.md)** - Complete API documentation for both services
 
 ### Specialized Documentation
+
 - **[Deployment Guide](#deployment)** - Production deployment procedures
 - **[Monitoring Setup](#monitoring)** - Monitoring and alerting configuration
 - **[Backup & Recovery](#backup-recovery)** - Backup and disaster recovery procedures
@@ -36,6 +38,7 @@ sudo bash deployment/scripts/deploy.sh production true true true # Force with al
 ```
 
 **What it does**:
+
 - ✅ Validates system requirements and environment
 - ✅ Creates required directories with proper permissions
 - ✅ Sets up SSL certificates (self-signed for testing)
@@ -48,6 +51,7 @@ sudo bash deployment/scripts/deploy.sh production true true true # Force with al
 - ✅ Verifies deployment health
 
 **Key Files**:
+
 - `deployment/production/docker-compose.prod.yml` - Production container orchestration
 - `deployment/production/nginx/nginx.conf` - Production Nginx configuration
 - `deployment/production/.env.production` - Production environment variables
@@ -87,18 +91,21 @@ SLACK_WEBHOOK="https://hooks.slack.com/..." bash monitoring/setup_monitoring.sh
 ```
 
 **Components**:
+
 - **Prometheus** - Metrics collection and storage
-- **Grafana** - Visualization and dashboards  
+- **Grafana** - Visualization and dashboards
 - **AlertManager** - Alert routing and notifications
 - **Node Exporter** - System metrics
 - **cAdvisor** - Container metrics
 
 **Access Points**:
+
 - Grafana Dashboard: `http://localhost:3000` (admin/admin)
 - Prometheus: `http://localhost:9090`
 - AlertManager: `http://localhost:9093`
 
 **Key Files**:
+
 - `monitoring/prometheus/prometheus.yml` - Prometheus configuration
 - `monitoring/grafana/dashboards/` - Pre-configured dashboards
 - `monitoring/alertmanager/alertmanager-flexible.yml` - Alert routing
@@ -106,13 +113,24 @@ SLACK_WEBHOOK="https://hooks.slack.com/..." bash monitoring/setup_monitoring.sh
 ### Custom Monitoring
 
 **Health Checks**:
+
 ```bash
-# Check all services
-curl http://localhost:8000/health  # Management Platform
-curl http://localhost:8001/health  # ISP Framework
+# Kubernetes health probes (Production-ready)
+curl http://localhost:8000/health/live      # ISP Framework liveness
+curl http://localhost:8000/health/ready     # ISP Framework readiness
+curl http://localhost:8000/health/startup   # ISP Framework startup
+
+curl http://localhost:8001/health/live      # Management Platform liveness
+curl http://localhost:8001/health/ready     # Management Platform readiness
+curl http://localhost:8001/health/startup   # Management Platform startup
+
+# Legacy compatibility
+curl http://localhost:8000/health           # ISP Framework (legacy)
+curl http://localhost:8001/health           # Management Platform (legacy)
 ```
 
 **Metrics Endpoints**:
+
 - Application metrics: `http://localhost:8000/metrics`
 - Container metrics: `http://localhost:8080/metrics` (cAdvisor)
 - System metrics: `http://localhost:9100/metrics` (Node Exporter)
@@ -143,6 +161,7 @@ python3 scripts/apply_security_hardening.py --force
 ```
 
 **Security Features**:
+
 - ✅ UFW firewall configuration
 - ✅ SSH hardening (disable root login, limit attempts)
 - ✅ fail2ban intrusion prevention
@@ -152,15 +171,17 @@ python3 scripts/apply_security_hardening.py --force
 - ✅ Log rotation and security monitoring
 
 **Security Validation Results**:
+
 - Firewall status and rules
 - SSH configuration hardening
-- Intrusion prevention status  
+- Intrusion prevention status
 - Audit logging configuration
 - Docker security settings
 - File integrity monitoring
 - System security limits
 
 **Key Files**:
+
 - `docs/security/SECURITY_IMPLEMENTATION.md` - Detailed security documentation
 - `security/hardening/security-checklist.md` - Security checklist
 - `/etc/ufw/` - Firewall configuration
@@ -200,6 +221,7 @@ bash deployment/scripts/backup.sh --type emergency --compress --encrypt
 ```
 
 **Backup Types**:
+
 - **Full**: Databases, configs, application data, logs
 - **Incremental**: Databases, configs, recent logs
 - **Config**: Configuration files only
@@ -221,6 +243,7 @@ python3 deployment/scripts/disaster_recovery.py --backup /path/to/backup --type 
 ```
 
 **Recovery Types**:
+
 - **full_system**: Complete system restoration
 - **database_only**: Database restoration only
 - **configuration**: Configuration files only
@@ -228,6 +251,7 @@ python3 deployment/scripts/disaster_recovery.py --backup /path/to/backup --type 
 - **emergency**: Critical components only
 
 **Key Files**:
+
 - `/etc/cron.d/dotmac-backups` - Automated backup scheduling
 - `/etc/dotmac/backup.conf` - Backup configuration
 - `/opt/dotmac/backups/` - Backup storage location
@@ -252,6 +276,7 @@ python3 scripts/optimize_performance.py --dry-run
 ```
 
 **Optimizations Applied**:
+
 - ✅ PostgreSQL query optimization and indexing
 - ✅ Redis caching configuration and memory optimization
 - ✅ Nginx performance tuning (HTTP/2, compression)
@@ -259,6 +284,7 @@ python3 scripts/optimize_performance.py --dry-run
 - ✅ Application-level caching strategies
 
 **Performance Configurations**:
+
 - `deployment/production/redis/redis-performance.conf` - Redis optimization
 - `deployment/production/nginx/nginx-performance.conf` - Nginx optimization
 - `deployment/production/docker-compose.performance.yml` - Container optimization
@@ -267,13 +293,15 @@ python3 scripts/optimize_performance.py --dry-run
 ### Performance Monitoring
 
 **Key Metrics**:
+
 - Database query performance
 - Cache hit rates
-- HTTP response times  
+- HTTP response times
 - Container resource usage
 - System load and memory
 
 **Grafana Dashboards**:
+
 - System Overview
 - Application Performance
 - Database Metrics
@@ -296,15 +324,18 @@ python3 scripts/generate_api_docs.py --output-dir /custom/path
 ```
 
 **Generated Documentation**:
+
 - **Markdown Documentation**: Human-readable API docs
 - **Postman Collections**: Ready-to-import API testing collections
 - **OpenAPI Specifications**: Raw API specifications for tooling
 
 **Available APIs**:
+
 - **ISP Framework API**: `http://localhost:8001` (development)
 - **Management Platform API**: `http://localhost:8000` (development)
 
 **Documentation Files**:
+
 - `docs/api/isp-framework-api.md` - ISP Framework documentation
 - `docs/api/management-platform-api.md` - Management Platform documentation
 - `docs/api/*-postman.json` - Postman collections
@@ -327,6 +358,7 @@ python3 scripts/setup_advanced_logging.py --dry-run
 ```
 
 **Logging Features**:
+
 - ✅ Centralized logging configuration
 - ✅ Comprehensive audit trail system
 - ✅ Automatic log monitoring and alerting
@@ -347,6 +379,7 @@ python3 scripts/monitor_logs.py --continuous --interval 300
 ```
 
 **Audit Logging Usage**:
+
 ```python
 from shared.audit_logger import audit_logger
 
@@ -360,6 +393,7 @@ def create_user():
 ```
 
 **Log Files**:
+
 - `/opt/dotmac/logs/application.log` - Application logs
 - `/opt/dotmac/logs/errors.log` - Error logs
 - `/opt/dotmac/logs/audit.log` - Audit trail
@@ -380,11 +414,12 @@ bash scripts/setup_dev_environment.sh
 # Full development setup
 bash scripts/setup_dev_environment.sh --full
 
-# Minimal setup (Docker only)  
+# Minimal setup (Docker only)
 bash scripts/setup_dev_environment.sh --minimal
 ```
 
 **Development Environment Includes**:
+
 - ✅ Python virtual environment with dev dependencies
 - ✅ Docker services (PostgreSQL, Redis, MailHog)
 - ✅ VS Code configuration
@@ -392,24 +427,27 @@ bash scripts/setup_dev_environment.sh --minimal
 - ✅ Pre-commit hooks setup
 
 **Development Services**:
+
 - **PostgreSQL**: `localhost:5432`
 - **Redis**: `localhost:6379`
 - **MailHog**: `http://localhost:8025` (email testing)
 
 **Development Scripts**:
+
 - `dev-scripts/start-services.sh` - Start development services
-- `dev-scripts/stop-services.sh` - Stop development services  
+- `dev-scripts/stop-services.sh` - Stop development services
 - `dev-scripts/reset-db.sh` - Reset development database
 - `dev-scripts/run-tests.sh` - Run all tests
 
 ### Testing & Validation
 
 **Validation Scripts**:
+
 ```bash
 # Import validation
 python3 scripts/validate_imports.py
 
-# Environment validation  
+# Environment validation
 python3 scripts/validate_environment.py
 
 # Container smoke tests
@@ -473,6 +511,7 @@ docker exec dotmac-redis-prod redis-cli FLUSHDB
 ### Common Issues
 
 **Services Won't Start**:
+
 ```bash
 # Check Docker status
 docker info
@@ -488,6 +527,7 @@ free -m
 ```
 
 **Database Connection Issues**:
+
 ```bash
 # Check PostgreSQL status
 docker exec dotmac-postgres-prod pg_isready -U dotmac_admin
@@ -500,6 +540,7 @@ docker-compose -f docker-compose.prod.yml restart postgres-shared
 ```
 
 **Performance Issues**:
+
 ```bash
 # Check resource usage
 docker stats
@@ -517,18 +558,21 @@ python3 scripts/optimize_performance.py --test-only
 ### Emergency Procedures
 
 **System Recovery**:
+
 1. Check service status: `docker-compose ps`
 2. Check logs: `docker-compose logs`
 3. Restart services: `docker-compose restart`
 4. If needed, rollback: `bash deployment/scripts/rollback.sh --list`
 
 **Security Incident**:
+
 1. Check security logs: `/opt/dotmac/logs/audit.log`
 2. Check fail2ban status: `fail2ban-client status`
 3. Review monitoring alerts in Grafana
 4. Run security validation: `python3 scripts/validate_security.py`
 
 **Data Recovery**:
+
 1. List backups: `python3 deployment/scripts/disaster_recovery.py --list-backups`
 2. Choose recovery type and backup
 3. Execute recovery: `python3 deployment/scripts/disaster_recovery.py --backup [path] --type [type]`
@@ -540,16 +584,19 @@ python3 scripts/optimize_performance.py --test-only
 ### Regular Maintenance Tasks
 
 **Daily**:
+
 - Monitor system health via Grafana dashboards
 - Check backup completion
 - Review security alerts
 
 **Weekly**:
+
 - Run security validation: `python3 scripts/validate_security.py`
 - Review audit logs
 - Update dependencies if needed
 
 **Monthly**:
+
 - System updates: `apt update && apt upgrade`
 - Review and clean old backups
 - Performance optimization review
@@ -557,16 +604,19 @@ python3 scripts/optimize_performance.py --test-only
 ### Getting Help
 
 **Log Locations**:
+
 - Application logs: `/opt/dotmac/logs/`
 - System logs: `/var/log/`
 - Docker logs: `docker logs [container]`
 
 **Configuration Files**:
+
 - Production config: `deployment/production/.env.production`
 - Docker compose: `deployment/production/docker-compose.prod.yml`
 - Nginx config: `deployment/production/nginx/nginx.conf`
 
 **Validation Commands**:
+
 - System health: `python3 scripts/validate_imports.py`
 - Security status: `python3 scripts/validate_security.py`
 - Performance test: `python3 scripts/optimize_performance.py --test-only`
@@ -578,18 +628,21 @@ python3 scripts/optimize_performance.py --test-only
 ### Key Performance Indicators
 
 **System Metrics**:
+
 - CPU usage < 80%
 - Memory usage < 85%
 - Disk usage < 90%
 - Network latency < 100ms
 
 **Application Metrics**:
+
 - API response time < 200ms
 - Database query time < 100ms
 - Cache hit rate > 90%
 - Error rate < 1%
 
 **Security Metrics**:
+
 - Failed login attempts < 10/hour
 - Security patches applied within 72 hours
 - Audit log completeness > 99%
@@ -598,12 +651,14 @@ python3 scripts/optimize_performance.py --test-only
 ### Alerting Rules
 
 **Critical Alerts** (Immediate response):
+
 - Service down
 - Database connection failure
 - Disk space > 95%
 - Security incident
 
 **Warning Alerts** (Monitor closely):
+
 - High resource usage
 - Slow response times
 - Failed backups

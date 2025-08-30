@@ -93,8 +93,10 @@ ipython_config.py
 # pipenv
 Pipfile.lock
 
-# poetry
-poetry.lock
+# poetry (keep selective lock files)
+# poetry.lock - commented out to allow selective tracking
+*.lock
+!poetry.lock  # Allow poetry.lock in root and important subdirectories
 
 # pdm
 .pdm.toml
@@ -115,6 +117,7 @@ celerybeat.pid
 .venv
 env/
 venv/
+test_env/
 ENV/
 env.bak/
 venv.bak/
@@ -392,6 +395,9 @@ migrations/versions/*.backup
 # Cache directories
 .cache/
 cache/
+**/__pycache__/
+**/*.pyc
+**/*.pyo
 
 # Lock files (except requirements.lock which we want to track)
 *.lock

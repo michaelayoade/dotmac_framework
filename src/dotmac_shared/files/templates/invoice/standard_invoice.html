@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice {{ invoice_number }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 2px solid #1f4e79;
+            padding-bottom: 20px;
+        }
+        .company-name {
+            font-size: 28px;
+            font-weight: bold;
+            color: #1f4e79;
+            margin-bottom: 10px;
+        }
+        .company-details {
+            color: #666;
+            line-height: 1.4;
+        }
+        .invoice-title {
+            font-size: 32px;
+            font-weight: bold;
+            color: #1f4e79;
+            text-align: center;
+            margin: 30px 0;
+        }
+        .invoice-info {
+            display: table;
+            width: 100%;
+            margin-bottom: 30px;
+        }
+        .info-section {
+            display: table-cell;
+            width: 50%;
+            vertical-align: top;
+            padding: 0 20px;
+        }
+        .info-section h3 {
+            color: #1f4e79;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+        }
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 30px 0;
+        }
+        .items-table th {
+            background-color: #1f4e79;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: bold;
+        }
+        .items-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #ddd;
+        }
+        .items-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .total-section {
+            text-align: right;
+            margin-top: 20px;
+        }
+        .total-row {
+            display: flex;
+            justify-content: flex-end;
+            margin: 5px 0;
+        }
+        .total-label {
+            width: 120px;
+            text-align: right;
+            padding-right: 20px;
+            font-weight: bold;
+        }
+        .total-amount {
+            width: 100px;
+            text-align: right;
+        }
+        .grand-total {
+            font-size: 18px;
+            font-weight: bold;
+            color: #1f4e79;
+            border-top: 2px solid #1f4e79;
+            padding-top: 10px;
+            margin-top: 10px;
+        }
+        .payment-info {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 30px 0;
+        }
+        .payment-info h3 {
+            color: #1f4e79;
+            margin-top: 0;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            color: #666;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <!-- Company Header -->
+    <div class="header">
+        <div class="company-name">{{ company_info.name | default('DotMac ISP') }}</div>
+        <div class="company-details">
+            {{ company_info.address | default('123 Main Street') }}<br>
+            {{ company_info.city | default('City, State 12345') }}<br>
+            Phone: {{ company_info.phone | default('(555) 123-4567') }}<br>
+            Email: {{ company_info.email | default('info@dotmacisp.com') }}
+        </div>
+    </div>
+
+    <!-- Invoice Title -->
+    <div class="invoice-title">INVOICE</div>
+
+    <!-- Invoice Information -->
+    <div class="invoice-info">
+        <div class="info-section">
+            <h3>Invoice Details</h3>
+            <p><strong>Invoice Number:</strong> {{ invoice_number }}</p>
+            <p><strong>Invoice Date:</strong> {{ invoice_date | datetime('%B %d, %Y') }}</p>
+            <p><strong>Due Date:</strong> {{ due_date | datetime('%B %d, %Y') }}</p>
+            {% if po_number %}
+            <p><strong>Purchase Order:</strong> {{ po_number }}</p>
+            {% endif %}
+        </div>
+
+        <div class="info-section">
+            <h3>Bill To</h3>
+            <p>
+                <strong>{{ customer_info.name }}</strong><br>
+                {% if customer_info.company %}{{ customer_info.company }}<br>{% endif %}
+                {% if customer_info.address %}{{ customer_info.address }}<br>{% endif %}
+                {% if customer_info.address2 %}{{ customer_info.address2 }}<br>{% endif %}
+                {% if customer_info.city or customer_info.state or customer_info.zip_code %}
+                {{ customer_info.city }}{% if customer_info.state %}, {{ customer_info.state }}{% endif %}{% if customer_info.zip_code %} {{ customer_info.zip_code }}{% endif %}<br>
+                {% endif %}
+                {% if customer_info.email %}Email: {{ customer_info.email }}<br>{% endif %}
+                {% if customer_info.phone %}Phone: {{ customer_info.phone }}{% endif %}
+            </p>
+        </div>
+    </div>
+
+    <!-- Invoice Items -->
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th>Description</th>
+                <th style="text-align: center; width: 80px;">Qty</th>
+                <th style="text-align: right; width: 100px;">Unit Price</th>
+                <th style="text-align: right; width: 100px;">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td>{{ item.description }}</td>
+                <td style="text-align: center;">{{ item.quantity }}</td>
+                <td style="text-align: right;">${{ "%.2f" | format(item.unit_price) }}</td>
+                <td style="text-align: right;">${{ "%.2f" | format(item.total) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Totals Section -->
+    <div class="total-section">
+        {% if subtotal %}
+        <div class="total-row">
+            <div class="total-label">Subtotal:</div>
+            <div class="total-amount">${{ "%.2f" | format(subtotal) }}</div>
+        </div>
+        {% endif %}
+
+        {% if discount_amount and discount_amount > 0 %}
+        <div class="total-row">
+            <div class="total-label">Discount:</div>
+            <div class="total-amount">-${{ "%.2f" | format(discount_amount) }}</div>
+        </div>
+        {% endif %}
+
+        {% if tax_amount and tax_amount > 0 %}
+        <div class="total-row">
+            <div class="total-label">Tax:</div>
+            <div class="total-amount">${{ "%.2f" | format(tax_amount) }}</div>
+        </div>
+        {% endif %}
+
+        <div class="total-row grand-total">
+            <div class="total-label">Total:</div>
+            <div class="total-amount">${{ "%.2f" | format(total_amount) }}</div>
+        </div>
+    </div>
+
+    <!-- Payment Information -->
+    {% if payment_info %}
+    <div class="payment-info">
+        <h3>Payment Information</h3>
+        {% if payment_info.terms %}
+        <p><strong>Payment Terms:</strong> {{ payment_info.terms }}</p>
+        {% endif %}
+
+        {% if payment_info.methods %}
+        <p><strong>Accepted Payment Methods:</strong>
+        {% if payment_info.methods is iterable and payment_info.methods is not string %}
+            {{ payment_info.methods | join(', ') }}
+        {% else %}
+            {{ payment_info.methods }}
+        {% endif %}
+        </p>
+        {% endif %}
+
+        {% if payment_info.bank_details %}
+        <p><strong>Bank Details:</strong></p>
+        <ul>
+        {% for key, value in payment_info.bank_details.items() %}
+            <li><strong>{{ key | replace('_', ' ') | title }}:</strong> {{ value }}</li>
+        {% endfor %}
+        </ul>
+        {% endif %}
+
+        {% if payment_info.notes %}
+        <p><strong>Notes:</strong> {{ payment_info.notes }}</p>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Footer -->
+    <div class="footer">
+        {{ footer_text | default('Thank you for your business!') }}
+        {% if disclaimer %}
+        <br><br>
+        <small>{{ disclaimer }}</small>
+        {% endif %}
+    </div>
+</body>
+</html>

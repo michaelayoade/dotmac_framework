@@ -1,0 +1,106 @@
+# Coolify-optimized Docker Compose for DotMac Platform
+# Simplified for PaaS deployment with external databases
+
+version: '3.8'
+
+services:
+  # ISP Framework Service
+  dotmac-isp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dotmac-isp
+    environment:
+      # Service Configuration
+      SERVICE_TYPE: isp
+      ENVIRONMENT: ${ENVIRONMENT:-production}
+      PORT: ${ISP_PORT:-8000}
+
+      # Database Configuration
+      DATABASE_URL: ${DATABASE_URL}
+
+      # Cache Configuration
+      REDIS_URL: ${REDIS_URL}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+
+      # Authentication
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      JWT_ACCESS_TOKEN_EXPIRE_MINUTES: ${JWT_ACCESS_TOKEN_EXPIRE_MINUTES:-30}
+
+      # API Configuration
+      API_V1_STR: ${API_V1_STR:-/api/v1}
+      CORS_ORIGINS: ${CORS_ORIGINS:-*}
+
+      # Observability (Optional)
+      OPENTELEMETRY_SERVICE_NAME: dotmac-isp
+      SIGNOZ_ENDPOINT: ${SIGNOZ_ENDPOINT:-}
+
+      # Security
+      SECRET_KEY: ${SECRET_KEY}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+
+    ports:
+      - "${ISP_PORT:-8000}:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    depends_on:
+      - dotmac-management
+
+  # Management Platform Service
+  dotmac-management:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dotmac-management
+    environment:
+      # Service Configuration
+      SERVICE_TYPE: management
+      ENVIRONMENT: ${ENVIRONMENT:-production}
+      PORT: ${MGMT_PORT:-8001}
+
+      # Database Configuration
+      DATABASE_URL: ${MANAGEMENT_DATABASE_URL}
+
+      # Cache Configuration
+      REDIS_URL: ${REDIS_URL}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+
+      # Authentication
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+
+      # API Configuration
+      API_V1_STR: ${API_V1_STR:-/api/v1}
+      CORS_ORIGINS: ${CORS_ORIGINS:-*}
+
+      # Observability (Optional)
+      OPENTELEMETRY_SERVICE_NAME: dotmac-management
+      SIGNOZ_ENDPOINT: ${SIGNOZ_ENDPOINT:-}
+
+      # Security
+      SECRET_KEY: ${SECRET_KEY}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+
+      # SaaS Platform Configuration
+      CONTAINER_ORCHESTRATION_ENABLED: ${CONTAINER_ORCHESTRATION_ENABLED:-true}
+      TENANT_ISOLATION_ENABLED: ${TENANT_ISOLATION_ENABLED:-true}
+
+    ports:
+      - "${MGMT_PORT:-8001}:8001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+networks:
+  default:
+    name: dotmac-network

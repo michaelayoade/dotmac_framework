@@ -6,9 +6,11 @@
 'use client';
 
 import React, { forwardRef, useId, type ReactNode } from 'react';
-import { Eye, EyeOff, AlertCircle, CheckCircle, Info, X } from 'lucide-react';
+import { Eye, EyeOff, AlertCircle, CheckCircle, Info } from 'lucide-react';
 import { cn, variantUtils, a11yUtils } from '../../design-system/utils';
 import { useFieldErrors } from '../../hooks/useValidatedForm';
+// Import the universal file upload component
+import { FileUpload, useFileUpload } from '@dotmac/file-system';
 
 // Base form field wrapper
 interface FormFieldProps {
@@ -21,14 +23,14 @@ interface FormFieldProps {
   disabled?: boolean;
 }
 
-export function FormField({ 
-  children, 
-  label, 
-  description, 
-  error, 
-  required, 
+export function FormField({
+  children,
+  label,
+  description,
+  error,
+  required,
   className,
-  disabled 
+  disabled
 }: FormFieldProps) {
   const id = useId();
   const hasError = Boolean(error && (Array.isArray(error) ? error.length > 0 : error));
@@ -37,7 +39,7 @@ export function FormField({
   return (
     <div className={cn('space-y-2', className)}>
       {label && (
-        <label 
+        <label
           htmlFor={id}
           className={cn(
             'block text-sm font-medium',
@@ -51,13 +53,13 @@ export function FormField({
           )}
         </label>
       )}
-      
+
       {description && (
         <p className="text-sm text-gray-500" id={`${id}-description`}>
           {description}
         </p>
       )}
-      
+
       <div className="relative">
         {React.cloneElement(children as React.ReactElement, {
           id,
@@ -69,7 +71,7 @@ export function FormField({
           disabled,
         })}
       </div>
-      
+
       {hasError && (
         <div className="flex items-start space-x-2 text-sm text-red-600" id={`${id}-error`}>
           <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
@@ -100,7 +102,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             {leftIcon}
           </div>
         )}
-        
+
         <input
           type={type}
           ref={ref}
@@ -121,7 +123,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           )}
           {...props}
         />
-        
+
         {rightIcon && (
           <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
             {rightIcon}
@@ -186,7 +188,7 @@ interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
   ({ className, variant = 'default', resize = 'vertical', error, ...props }, ref) => {
     const textareaVariant = error ? 'error' : variant;
-    
+
     const resizeClass = {
       none: 'resize-none',
       both: 'resize',
@@ -298,7 +300,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
             {...props}
           />
         </div>
-        
+
         {(label || description) && (
           <div className="text-sm">
             {label && (
@@ -343,14 +345,14 @@ interface RadioGroupProps {
   className?: string;
 }
 
-export function RadioGroup({ 
-  name, 
-  value, 
-  onChange, 
-  options, 
-  error, 
+export function RadioGroup({
+  name,
+  value,
+  onChange,
+  options,
+  error,
   disabled,
-  className 
+  className
 }: RadioGroupProps) {
   return (
     <div className={cn('space-y-3', className)} role="radiogroup">
@@ -378,7 +380,7 @@ export function RadioGroup({
                 )}
               />
             </div>
-            
+
             <div className="text-sm">
               <label
                 htmlFor={id}
@@ -401,7 +403,7 @@ export function RadioGroup({
   );
 }
 
-// File input component
+// File input component - now wraps the universal FileUpload
 interface FileInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'> {
   onFileSelect?: (files: FileList | null) => void;
   acceptedTypes?: string[];
@@ -411,131 +413,60 @@ interface FileInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement
 }
 
 export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
-  ({ className, onFileSelect, acceptedTypes, maxSize, error, preview, onChange, ...props }, ref) => {
-    const [selectedFiles, setSelectedFiles] = React.useState<FileList | null>(null);
-    const [dragActive, setDragActive] = React.useState(false);
+  ({ className, onFileSelect, acceptedTypes, maxSize, error, preview, ...props }, ref) => {
+    const handleFilesAdded = (fileItems: any[]) => {
+      // Convert FileItems back to FileList for compatibility
+      const files = fileItems.map(item => {
+        // This is a simplified conversion - in real implementation,
+        // you might want to maintain the original File objects
+        return new File([''], item.name, { type: item.type });
+      });
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const files = e.target.files;
-      setSelectedFiles(files);
-      onFileSelect?.(files);
-      onChange?.(e);
-    };
+      // Create a mock FileList
+      const fileList = {
+        length: files.length,
+        item: (index: number) => files[index],
+        ...files
+      } as unknown as FileList;
 
-    const handleDrag = (e: React.DragEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (e.type === 'dragenter' || e.type === 'dragover') {
-        setDragActive(true);
-      } else if (e.type === 'dragleave') {
-        setDragActive(false);
-      }
-    };
-
-    const handleDrop = (e: React.DragEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setDragActive(false);
-      
-      const files = e.dataTransfer.files;
-      setSelectedFiles(files);
-      onFileSelect?.(files);
-    };
-
-    const formatFileSize = (bytes: number) => {
-      if (bytes === 0) return '0 Bytes';
-      const k = 1024;
-      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-      const i = Math.floor(Math.log(bytes) / Math.log(k));
-      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+      onFileSelect?.(fileList);
     };
 
     return (
-      <div className="space-y-3">
-        <div
-          className={cn(
-            'relative border-2 border-dashed rounded-lg p-6 text-center transition-colors duration-200',
-            dragActive ? 'border-primary-500 bg-primary-50' : 'border-gray-300',
-            error && 'border-red-300 bg-red-50',
-            'hover:border-primary-400 hover:bg-primary-50',
-            className
-          )}
-          onDragEnter={handleDrag}
-          onDragLeave={handleDrag}
-          onDragOver={handleDrag}
-          onDrop={handleDrop}
-        >
-          <input
-            ref={ref}
-            type="file"
-            onChange={handleChange}
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-            accept={acceptedTypes?.join(',')}
-            {...props}
-          />
-          
-          <div className="space-y-2">
-            <div className="text-gray-600">
-              <svg className="w-8 h-8 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-              </svg>
-            </div>
-            <p className="text-sm text-gray-600">
-              <span className="font-medium text-primary-600 hover:text-primary-500">
-                Click to upload
-              </span>
-              {' or drag and drop'}
-            </p>
-            {acceptedTypes && (
-              <p className="text-xs text-gray-500">
-                {acceptedTypes.join(', ')}
-              </p>
-            )}
-            {maxSize && (
-              <p className="text-xs text-gray-500">
-                Max size: {formatFileSize(maxSize)}
-              </p>
-            )}
-          </div>
-        </div>
-
-        {selectedFiles && selectedFiles.length > 0 && (
-          <div className="space-y-2">
-            {Array.from(selectedFiles).map((file, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-              >
-                <div className="flex items-center space-x-3">
-                  <div className="flex-shrink-0">
-                    <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">{file.name}</p>
-                    <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    // Remove file logic would go here
-                  }}
-                  className="text-gray-400 hover:text-red-500 transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      <FileUpload
+        options={{
+          accept: acceptedTypes,
+          maxSize,
+          multiple: props.multiple,
+          generateThumbnails: preview
+        }}
+        onFilesAdded={handleFilesAdded}
+        variant="dropzone"
+        showPreview={preview}
+        disabled={props.disabled}
+        className={className}
+      />
     );
   }
 );
 
 FileInput.displayName = 'FileInput';
+
+// Enhanced file upload hook for forms
+export function useFormFileUpload(options?: {
+  maxSize?: number;
+  accept?: string[];
+  multiple?: boolean;
+  onUpload?: (file: File) => Promise<any>;
+}) {
+  return useFileUpload({
+    maxSize: options?.maxSize || 10 * 1024 * 1024, // 10MB default
+    accept: options?.accept || [],
+    multiple: options?.multiple || false,
+    generateThumbnails: true,
+    uploadFunction: options?.onUpload
+  });
+}
 
 // Form validation message component
 interface ValidationMessageProps {

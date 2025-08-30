@@ -1,0 +1,353 @@
+version: '3.8'
+
+services:
+  # ===== SHARED INFRASTRUCTURE =====
+
+  # Shared PostgreSQL for both platforms
+  postgres-shared:
+    image: postgres:15-alpine
+    container_name: dotmac-postgres-shared
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-dotmac_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_MULTIPLE_DATABASES: "dotmac_isp,mgmt_platform,dotmac_tenants,dotmac_analytics"
+    volumes:
+      - postgres_shared_data:/var/lib/postgresql/data
+      - ./shared/deployments/scripts/init-multiple-databases.sh:/docker-entrypoint-initdb.d/init-multiple-databases.sh:ro
+    ports:
+      - "5434:5432"
+    networks:
+      - dotmac-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-dotmac_admin}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Shared Redis for both platforms
+  redis-shared:
+    image: redis:7-alpine
+    container_name: dotmac-redis-shared
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD} --databases 16
+    volumes:
+      - redis_shared_data:/data
+    ports:
+      - "6378:6379"
+    networks:
+      - dotmac-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # OpenBao for unified secrets management
+  openbao-shared:
+    image: quay.io/openbao/openbao:latest
+    container_name: dotmac-openbao-shared
+    cap_add:
+      - IPC_LOCK
+    environment:
+      BAO_DEV_ROOT_TOKEN_ID: ${OPENBAO_ROOT_TOKEN}
+      BAO_DEV_LISTEN_ADDRESS: "0.0.0.0:8200"
+      BAO_LOG_LEVEL: ${OPENBAO_LOG_LEVEL:-info}
+    ports:
+      - "8200:8200"
+    volumes:
+      - openbao_shared_data:/openbao/file
+      - ./shared/deployments/openbao/config:/openbao/config:ro
+      - ./shared/deployments/openbao/logs:/openbao/logs
+    command: server ${OPENBAO_MODE:-"-dev -dev-no-store-token"}
+    networks:
+      - dotmac-network
+    healthcheck:
+      test: ["CMD", "bao", "status", "-format=json"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # OpenBao Initialization Service
+  openbao-init:
+    image: quay.io/openbao/openbao:latest
+    container_name: dotmac-openbao-init
+    depends_on:
+      openbao-shared:
+        condition: service_healthy
+    environment:
+      BAO_ADDR: "http://openbao-shared:8200"
+      BAO_TOKEN: ${OPENBAO_ROOT_TOKEN}
+    volumes:
+      - ./shared/deployments/openbao/scripts:/scripts
+    command: /scripts/init-openbao.sh
+    networks:
+      - dotmac-network
+
+  # ===== OBSERVABILITY STACK =====
+
+  # ClickHouse for SignOz
+  clickhouse:
+    image: clickhouse/clickhouse-server:23.8-alpine
+    container_name: dotmac-clickhouse
+    environment:
+      CLICKHOUSE_DB: signoz_metrics
+      CLICKHOUSE_USER: signoz
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+    ports:
+      - "9000:9000"
+      - "8123:8123"
+    networks:
+      - dotmac-network
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--query", "SELECT 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  # SignOz OpenTelemetry Collector
+  signoz-collector:
+    image: signoz/signoz-otel-collector:0.88.11
+    container_name: dotmac-signoz-collector
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./shared/deployments/signoz/otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
+    environment:
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+    ports:
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+      - "8889:8889"   # Prometheus metrics
+    networks:
+      - dotmac-network
+    depends_on:
+      - clickhouse
+
+  # SignOz Query Service
+  signoz-query:
+    image: signoz/query-service:0.40.0
+    container_name: dotmac-signoz-query
+    environment:
+      ClickHouseUrl: tcp://clickhouse:9000
+      CLICKHOUSE_USER: signoz
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+      STORAGE: clickhouse
+      TELEMETRY_ENABLED: "false"
+    ports:
+      - "8080:8080"
+    networks:
+      - dotmac-network
+    depends_on:
+      - clickhouse
+      - signoz-collector
+
+  # SignOz Frontend
+  signoz-frontend:
+    image: signoz/frontend:0.40.0
+    container_name: dotmac-signoz-frontend
+    environment:
+      QUERY_SERVICE_URL: http://signoz-query:8080
+    ports:
+      - "3301:3301"
+    networks:
+      - dotmac-network
+    depends_on:
+      - signoz-query
+
+  # ===== ISP FRAMEWORK =====
+
+  isp-framework:
+    build:
+      context: .
+      dockerfile: ./isp-framework/Dockerfile
+      target: ${BUILD_TARGET:-development}
+    container_name: dotmac-isp-framework
+    environment:
+      # Tenant Configuration
+      TENANT_ID: ${ISP_TENANT_ID:-development}
+      DATABASE_SCHEMA: ${ISP_DATABASE_SCHEMA:-public}
+      # Database
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-dotmac_admin}:${POSTGRES_PASSWORD}@postgres-shared:5432/dotmac_isp
+      # Redis
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis-shared:6379/0
+      REDIS_NAMESPACE: "${ISP_REDIS_NAMESPACE:-dev:}"
+      # Celery
+      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD}@redis-shared:6379/1
+      CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD}@redis-shared:6379/2
+      # OpenBao
+      VAULT_URL: http://openbao-shared:8200
+      VAULT_TOKEN: ${OPENBAO_ROOT_TOKEN}
+      VAULT_PATH: "${ISP_VAULT_PATH:-secret/development}"
+      # SignOz
+      SIGNOZ_ENDPOINT: signoz-collector:4317
+      OTEL_RESOURCE_ATTRIBUTES: "service.name=dotmac-isp-${ISP_TENANT_ID:-dev},tenant.id=${ISP_TENANT_ID:-development}"
+      # Application
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      DEBUG: ${DEBUG:-false}
+      # Import paths
+      PYTHONPATH: "/app/src:/app/shared"
+    volumes:
+      - ./isp-framework:/app
+      - ./shared:/app/shared
+      - ./docker/scripts:/app/scripts
+      - isp_uploads:/app/uploads
+      - isp_logs:/app/logs
+    ports:
+      - "${ISP_PORT:-8001}:8000"
+    networks:
+      - dotmac-network
+    depends_on:
+      postgres-shared:
+        condition: service_healthy
+      redis-shared:
+        condition: service_healthy
+      openbao-shared:
+        condition: service_healthy
+      signoz-collector:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+    deploy:
+      resources:
+        limits:
+          cpus: ${ISP_CPU_LIMIT:-1.0}
+          memory: ${ISP_MEMORY_LIMIT:-1G}
+        reservations:
+          cpus: ${ISP_CPU_RESERVATION:-0.5}
+          memory: ${ISP_MEMORY_RESERVATION:-512M}
+
+  # ===== MANAGEMENT PLATFORM =====
+
+  management-platform:
+    build:
+      context: .
+      dockerfile: ./management-platform/Dockerfile
+      target: ${BUILD_TARGET:-development}
+    container_name: dotmac-management-platform
+    environment:
+      # Database
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-dotmac_admin}:${POSTGRES_PASSWORD}@postgres-shared:5432/mgmt_platform
+      # Redis
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis-shared:6379/3
+      # Celery
+      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD}@redis-shared:6379/4
+      CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD}@redis-shared:6379/5
+      # OpenBao
+      VAULT_URL: http://openbao-shared:8200
+      VAULT_TOKEN: ${OPENBAO_ROOT_TOKEN}
+      # SignOz
+      SIGNOZ_ENDPOINT: signoz-collector:4317
+      SIGNOZ_ACCESS_TOKEN: ${SIGNOZ_ACCESS_TOKEN:-}
+      # Application
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      SECRET_KEY: ${MGMT_SECRET_KEY}
+      JWT_SECRET_KEY: ${MGMT_JWT_SECRET_KEY}
+      # External services
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-sk_test_placeholder}
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY:-sg_placeholder}
+      # CORS origins
+      CORS_ORIGINS: ${CORS_ORIGINS:-'["http://localhost:3000", "http://localhost:3001", "http://localhost:3002"]'}
+      # ISP Framework Integration
+      ISP_FRAMEWORK_URL: http://isp-framework:8000
+    volumes:
+      - ./management-platform:/app
+      - ./shared:/app/shared
+      - mgmt_uploads:/app/uploads
+      - mgmt_logs:/app/logs
+      - /var/run/docker.sock:/var/run/docker.sock  # For deployment tasks
+    ports:
+      - "${MGMT_PORT:-8000}:8000"
+    networks:
+      - dotmac-network
+    depends_on:
+      - postgres-shared
+      - redis-shared
+      - openbao-shared
+      - signoz-collector
+      - isp-framework
+
+  # ===== BACKGROUND WORKERS =====
+
+  # Management Platform Celery Worker
+  mgmt-celery-worker:
+    build:
+      context: .
+      dockerfile: ./management-platform/Dockerfile
+      target: ${BUILD_TARGET:-development}
+    container_name: dotmac-mgmt-celery-worker
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-dotmac_admin}:${POSTGRES_PASSWORD}@postgres-shared:5432/mgmt_platform
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis-shared:6379/3
+      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD}@redis-shared:6379/4
+      CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD}@redis-shared:6379/5
+      VAULT_URL: http://openbao-shared:8200
+      VAULT_TOKEN: ${OPENBAO_ROOT_TOKEN}
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    volumes:
+      - ./management-platform:/app
+      - ./shared:/app/shared
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - dotmac-network
+    depends_on:
+      - postgres-shared
+      - redis-shared
+      - management-platform
+    command: celery -A app.workers.celery_app worker --loglevel=${LOG_LEVEL:-info} --concurrency=${CELERY_CONCURRENCY:-4}
+
+  # Management Platform Celery Beat
+  mgmt-celery-beat:
+    build:
+      context: .
+      dockerfile: ./management-platform/Dockerfile
+      target: ${BUILD_TARGET:-development}
+    container_name: dotmac-mgmt-celery-beat
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-dotmac_admin}:${POSTGRES_PASSWORD}@postgres-shared:5432/mgmt_platform
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis-shared:6379/3
+      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD}@redis-shared:6379/4
+      CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD}@redis-shared:6379/5
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    volumes:
+      - ./management-platform:/app
+      - ./shared:/app/shared
+    networks:
+      - dotmac-network
+    depends_on:
+      - postgres-shared
+      - redis-shared
+    command: celery -A app.workers.celery_app beat --loglevel=${LOG_LEVEL:-info}
+
+volumes:
+  postgres_shared_data:
+    name: dotmac-postgres-shared-data
+  redis_shared_data:
+    name: dotmac-redis-shared-data
+  openbao_shared_data:
+    name: dotmac-openbao-shared-data
+  clickhouse_data:
+    name: dotmac-clickhouse-data
+  isp_uploads:
+    name: dotmac-isp-uploads
+  isp_logs:
+    name: dotmac-isp-logs
+  mgmt_uploads:
+    name: dotmac-mgmt-uploads
+  mgmt_logs:
+    name: dotmac-mgmt-logs
+
+networks:
+  dotmac-network:
+    driver: bridge
+    name: dotmac-network

@@ -1,6 +1,7 @@
 /**
  * Base API Client
  * Provides common HTTP operations for all module clients with standardized error handling
+ * Integrated with audit logging for comprehensive API tracking
  */
 
 import { ISPError, ErrorFactory } from '../../utils/errorUtils';

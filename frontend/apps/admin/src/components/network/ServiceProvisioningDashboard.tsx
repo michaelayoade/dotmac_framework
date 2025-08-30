@@ -17,7 +17,9 @@ import {
   FileText,
   Zap,
   Wrench,
+  Play,
 } from 'lucide-react';
+import { ServiceProvisioningWorkflow } from '../provisioning';
 
 interface ProvisioningRequest {
   id: string;
@@ -184,6 +186,8 @@ export function ServiceProvisioningDashboard({
   onStatusUpdate,
 }: ServiceProvisioningDashboardProps) {
   const [selectedRequest, setSelectedRequest] = useState<ProvisioningRequest | null>(null);
+  const [showWorkflow, setShowWorkflow] = useState(false);
+  const [workflowRequest, setWorkflowRequest] = useState<ProvisioningRequest | null>(null);
   const [filter, setFilter] = useState<'all' | 'pending' | 'scheduled' | 'in_progress' | 'blocked'>(
     'all'
   );
@@ -265,6 +269,24 @@ export function ServiceProvisioningDashboard({
     onStatusUpdate?.(requestId, newStatus);
   };
 
+  const handleStartWorkflow = (request: ProvisioningRequest) => {
+    setWorkflowRequest(request);
+    setShowWorkflow(true);
+  };
+
+  const handleWorkflowComplete = (result: any) => {
+    console.log('Workflow completed for request:', workflowRequest?.id, result);
+    setShowWorkflow(false);
+    setWorkflowRequest(null);
+    // Update request status to completed
+    handleStatusUpdate(workflowRequest?.id || '', 'completed');
+  };
+
+  const handleWorkflowCancel = () => {
+    setShowWorkflow(false);
+    setWorkflowRequest(null);
+  };
+
   const stats = {
     total: requests.length,
     pending: requests.filter((r) => r.status === 'pending').length,
@@ -273,6 +295,25 @@ export function ServiceProvisioningDashboard({
     blocked: requests.filter((r) => r.status === 'blocked').length,
     completed_this_week: requests.filter((r) => r.status === 'completed').length, // Mock data
   };
+
+  // Show workflow if started
+  if (showWorkflow && workflowRequest) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <ServiceProvisioningWorkflow
+          onComplete={handleWorkflowComplete}
+          onCancel={handleWorkflowCancel}
+          requestId={workflowRequest.id}
+          customerInfo={{
+            name: workflowRequest.customerName,
+            email: workflowRequest.customerEmail,
+            address: workflowRequest.serviceAddress
+          }}
+          serviceType={workflowRequest.serviceType}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className='bg-white rounded-lg shadow-sm border border-gray-200 p-6'>
@@ -556,6 +597,13 @@ export function ServiceProvisioningDashboard({
                 </div>
 
                 <div className='pt-4 border-t space-y-2'>
+                  <button
+                    onClick={() => handleStartWorkflow(selectedRequest)}
+                    className='w-full px-3 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700'
+                  >
+                    <Play className='h-4 w-4 inline mr-1' />
+                    Start Workflow
+                  </button>
                   <button className='w-full px-3 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700'>
                     <Eye className='h-4 w-4 inline mr-1' />
                     View Full Details

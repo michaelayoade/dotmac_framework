@@ -1,0 +1,319 @@
+# Universal Communication Configuration
+# This single file can configure ANY communication service without code changes
+
+# Global defaults
+defaults:
+  sms: "twilio_sms" # Default SMS provider
+  email: "sendgrid_email" # Default email provider
+  voice: "twilio_voice" # Default voice provider
+  push: "firebase_push" # Default push notification provider
+  webhook: "generic_webhook" # Default webhook provider
+
+# Provider configurations - completely generic
+providers:
+  # Twilio SMS - configured as universal API provider
+  twilio_sms:
+    provider_name: "twilio_sms"
+    channel_type: "sms"
+    type: "api"
+    is_active: true
+    priority: 1
+    rate_limit_per_minute: 100
+    supported_message_types:
+      ["notification", "alert", "verification", "marketing"]
+    capabilities:
+      [
+        "text_messaging",
+        "delivery_receipts",
+        "two_way_messaging",
+        "webhook_support",
+        "template_messaging",
+      ]
+
+    # API endpoint configuration
+    send_endpoint:
+      url: "https://api.twilio.com/2010-04-01/Accounts/{account_sid}/Messages.json"
+      method: "POST"
+      auth_type: "basic"
+      auth_config:
+        username: "${TWILIO_ACCOUNT_SID}"
+        password: "${TWILIO_AUTH_TOKEN}"
+      headers:
+        Content-Type: "application/x-www-form-urlencoded"
+
+    # How to map generic fields to provider-specific fields
+    field_mappings:
+      send:
+        recipient: "To"
+        content: "Body"
+        from: "From"
+
+    # Static fields added to every request
+    static_fields:
+      From: "${TWILIO_FROM_NUMBER}"
+
+    # How to parse responses
+    response_parsing:
+      success_indicators:
+        - field: "sid"
+          condition: "exists"
+      message_id_field: "sid"
+      error_field: "message"
+      status_field: "status"
+
+    # Message templates
+    templates:
+      verification: "Your verification code is: {code}"
+      alert: "ALERT: {message}"
+      welcome: "Welcome {name}! Your account is ready."
+
+  # SendGrid Email - configured as universal API provider
+  sendgrid_email:
+    provider_name: "sendgrid_email"
+    channel_type: "email"
+    type: "api"
+    is_active: true
+    priority: 1
+    rate_limit_per_minute: 600
+    supported_message_types: ["notification", "transactional", "marketing"]
+    capabilities:
+      [
+        "rich_messaging",
+        "file_attachments",
+        "template_messaging",
+        "delivery_receipts",
+      ]
+
+    send_endpoint:
+      url: "https://api.sendgrid.com/v3/mail/send"
+      method: "POST"
+      auth_type: "bearer"
+      auth_config:
+        token: "${SENDGRID_API_KEY}"
+      headers:
+        Content-Type: "application/json"
+
+    field_mappings:
+      send:
+        recipient: "personalizations.0.to.0.email"
+        content: "content.0.value"
+        subject: "personalizations.0.subject"
+
+    static_fields:
+      from:
+        email: "${FROM_EMAIL}"
+        name: "${FROM_NAME}"
+      content:
+        - type: "text/plain"
+          value: "{content}"
+        - type: "text/html"
+          value: "<p>{content}</p>"
+
+    response_parsing:
+      success_indicators:
+        - field: "status"
+          condition: "equals"
+          value: 202
+      message_id_field: "message_id"
+
+  # Generic SMTP Email - works with ANY SMTP server
+  smtp_email:
+    provider_name: "smtp_email"
+    channel_type: "email"
+    type: "smtp"
+    is_active: true
+    priority: 2
+    supported_message_types: ["notification", "transactional"]
+    capabilities: ["rich_messaging", "template_messaging"]
+
+    smtp:
+      host: "${SMTP_HOST}"
+      port: "${SMTP_PORT:587}"
+      username: "${SMTP_USERNAME}"
+      password: "${SMTP_PASSWORD}"
+      use_tls: true
+
+    from_email: "${FROM_EMAIL}"
+
+    templates:
+      welcome: "Welcome {name}! Your DotMac account is now active."
+      reset_password: "Click here to reset your password: {reset_url}"
+
+  # Slack Webhook - configured as universal webhook provider
+  slack_webhook:
+    provider_name: "slack_webhook"
+    channel_type: "chat"
+    type: "api"
+    is_active: true
+    priority: 1
+    supported_message_types: ["alert", "notification"]
+    capabilities: ["rich_messaging", "real_time_delivery"]
+
+    send_endpoint:
+      url: "${SLACK_WEBHOOK_URL}"
+      method: "POST"
+      headers:
+        Content-Type: "application/json"
+
+    field_mappings:
+      send:
+        content: "text"
+        recipient: "channel"
+
+    static_fields:
+      username: "DotMac Bot"
+      icon_emoji: ":robot_face:"
+
+    response_parsing:
+      success_indicators:
+        - field: "ok"
+          condition: "equals"
+          value: true
+
+  # Discord Webhook - same pattern, different service
+  discord_webhook:
+    provider_name: "discord_webhook"
+    channel_type: "chat"
+    type: "api"
+    is_active: false
+    priority: 2
+    supported_message_types: ["alert", "notification"]
+    capabilities: ["rich_messaging", "real_time_delivery"]
+
+    send_endpoint:
+      url: "${DISCORD_WEBHOOK_URL}"
+      method: "POST"
+      headers:
+        Content-Type: "application/json"
+
+    field_mappings:
+      send:
+        content: "content"
+        recipient: "username"
+
+    templates:
+      alert: ":warning: **ALERT**: {message}"
+
+  # Firebase Push Notifications - universal API config
+  firebase_push:
+    provider_name: "firebase_push"
+    channel_type: "push"
+    type: "api"
+    is_active: true
+    priority: 1
+    supported_message_types: ["notification", "alert"]
+    capabilities: ["real_time_delivery", "rich_messaging"]
+
+    send_endpoint:
+      url: "https://fcm.googleapis.com/fcm/send"
+      method: "POST"
+      auth_type: "api_key"
+      auth_config:
+        api_key: "${FIREBASE_SERVER_KEY}"
+        header: "Authorization"
+        format: "key={api_key}"
+      headers:
+        Content-Type: "application/json"
+
+    field_mappings:
+      send:
+        recipient: "to"
+        content: "notification.body"
+        title: "notification.title"
+
+    static_fields:
+      priority: "high"
+      notification:
+        title: "DotMac Notification"
+
+  # Generic Webhook - works with any webhook endpoint
+  generic_webhook:
+    provider_name: "generic_webhook"
+    channel_type: "webhook"
+    type: "api"
+    is_active: true
+    priority: 1
+    supported_message_types: ["notification", "alert", "support"]
+    capabilities: ["real_time_delivery"]
+
+    send_endpoint:
+      url: "${WEBHOOK_URL}"
+      method: "POST"
+      headers:
+        Content-Type: "application/json"
+        User-Agent: "DotMac-Platform/1.0"
+
+    field_mappings:
+      send:
+        recipient: "target"
+        content: "message"
+        message_type: "event_type"
+
+    static_fields:
+      source: "dotmac_platform"
+      timestamp: "{timestamp}"
+
+# Channel groups for advanced routing
+channel_groups:
+  # Critical alerts - try all channels
+  critical_alerts:
+    channels: ["sms", "email", "chat"]
+    strategy: "all_providers"
+    retry_count: 3
+    retry_delay_seconds: 2.0
+    rules:
+      message_types: ["alert"]
+      required_capabilities: ["real_time_delivery"]
+
+  # Standard notifications - priority fallback
+  standard_notifications:
+    channels: ["email", "sms"]
+    strategy: "priority_fallback"
+    retry_count: 2
+    retry_delay_seconds: 1.0
+    rules:
+      message_types: ["notification", "transactional"]
+
+  # Marketing campaigns - email only with templates
+  marketing:
+    channels: ["email"]
+    strategy: "first_available"
+    retry_count: 1
+    rules:
+      message_types: ["marketing"]
+      required_capabilities: ["template_messaging", "rich_messaging"]
+
+# Rate limiting and delivery rules
+global_rules:
+  rate_limits:
+    sms: 100 # per minute
+    email: 500 # per minute
+    push: 1000 # per minute
+
+  time_restrictions:
+    sms:
+      start_hour: 8 # Don't send SMS before 8 AM
+      end_hour: 22 # Don't send SMS after 10 PM
+      timezone: "UTC"
+
+  recipient_patterns:
+    emergency_contacts: "^\\+1555.*" # Emergency numbers pattern
+    internal_users: ".*@company\\.com$" # Internal email pattern
+
+# Environment variable mapping
+# This allows the same config to work across environments
+environment_variables:
+  production:
+    TWILIO_ACCOUNT_SID: "prod_account_sid"
+    TWILIO_AUTH_TOKEN: "prod_auth_token"
+    SENDGRID_API_KEY: "prod_sendgrid_key"
+
+  staging:
+    TWILIO_ACCOUNT_SID: "staging_account_sid"
+    TWILIO_AUTH_TOKEN: "staging_auth_token"
+    SENDGRID_API_KEY: "staging_sendgrid_key"
+
+  development:
+    # Use mock/test services in development
+    WEBHOOK_URL: "http://localhost:3000/webhook"
+    SMTP_HOST: "localhost"

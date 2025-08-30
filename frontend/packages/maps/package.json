@@ -1,0 +1,53 @@
+{
+  "name": "@dotmac/maps",
+  "version": "1.0.0",
+  "description": "Universal GIS and mapping system for ISP portals",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts",
+    "dev": "tsup src/index.ts --format esm,cjs --dts --watch",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "leaflet": "^1.9.4",
+    "react-leaflet": "^4.2.1",
+    "framer-motion": "^10.16.0",
+    "lucide-react": "^0.292.0",
+    "turf": "^3.0.14",
+    "@turf/turf": "^6.5.0",
+    "geolib": "^3.3.4",
+    "proj4": "^2.9.0"
+  },
+  "devDependencies": {
+    "@types/leaflet": "^1.9.8",
+    "@types/proj4": "^2.5.5",
+    "tsup": "^7.2.0",
+    "typescript": "^5.0.0"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  },
+  "keywords": [
+    "maps",
+    "gis",
+    "leaflet",
+    "google-maps",
+    "isp",
+    "telecom",
+    "territory",
+    "coverage",
+    "routing"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dotmac-framework/maps.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dotmac-framework/maps/issues"
+  },
+  "homepage": "https://github.com/dotmac-framework/maps#readme"
+}

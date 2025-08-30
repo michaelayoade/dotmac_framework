@@ -1,7 +1,11 @@
 from datetime import datetime
 from typing import Any, Dict, Optional
 
+from dotmac_analytics import AnalyticsClient
+from dotmac_billing import CommissionService, PricingService
 from dotmac_communications import CommunicationsClient
+from dotmac_identity import CustomerService, ResellerService
+from dotmac_services import ProvisioningService
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -12,12 +16,6 @@ from services import (
     ProvisioningServiceLocal,
     ResellerServiceLocal,
 )
-
-from dotmac_analytics import AnalyticsClient
-from dotmac_billing import CommissionService, PricingService
-from dotmac_identity import CustomerService, ResellerService
-from dotmac_services import ProvisioningService
-
 
 app = FastAPI(title="DotMac Reseller Portal")
 
@@ -449,4 +447,7 @@ async def health_check():
 
 if __name__ == "__main__":
     import uvicorn
+
+from dotmac_shared.api.exception_handlers import standard_exception_handler
+
     uvicorn.run(app, host="127.0.0.1", port=8000)

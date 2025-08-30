@@ -1,0 +1,119 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dotmac-observability"
+version = "1.0.0"
+description = "Complete observability stack with tracing, metrics, and monitoring"
+readme = "README.md"
+authors = [
+    { name = "DotMac Framework Team" }
+]
+license = { text = "MIT" }
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: System :: Monitoring",
+    "Topic :: System :: Distributed Computing",
+]
+keywords = [
+    "observability",
+    "monitoring",
+    "tracing",
+    "metrics",
+    "prometheus",
+    "signoz",
+    "opentelemetry"
+]
+requires-python = ">=3.8"
+dependencies = [
+    "opentelemetry-api>=1.15.0",
+    "opentelemetry-sdk>=1.15.0",
+    "opentelemetry-instrumentation>=0.36b0",
+    "opentelemetry-exporter-otlp>=1.15.0",
+    "prometheus-client>=0.16.0",
+    "structlog>=22.0.0",
+    "pydantic>=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "mypy>=1.0.0",
+]
+
+testing = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0.0",
+    "coverage[toml]>=7.0.0",
+]
+
+signoz = [
+    "opentelemetry-exporter-otlp>=1.15.0",
+    "grpcio>=1.50.0",
+]
+
+prometheus = [
+    "prometheus-client>=0.16.0",
+    "prometheus-async>=19.2.0",
+]
+
+jaeger = [
+    "opentelemetry-exporter-jaeger>=1.15.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/dotmac-framework/observability"
+Documentation = "https://dotmac-observability.readthedocs.io"
+Repository = "https://github.com/dotmac-framework/observability.git"
+Issues = "https://github.com/dotmac-framework/observability/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["dotmac_shared.observability*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_functions = ["test_*"]
+asyncio_mode = "auto"
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--cov=dotmac_shared.observability",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+]
+
+[tool.coverage.run]
+source = ["dotmac_shared/observability"]
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "*/__init__.py",
+]
+
+[tool.black]
+line-length = 100
+target-version = ['py38', 'py39', 'py310', 'py311']
+include = '\.pyi?$'
+
+[tool.mypy]
+python_version = "3.8"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true

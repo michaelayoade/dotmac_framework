@@ -4,12 +4,12 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  transpilePackages: ['@dotmac/headless', '@dotmac/primitives', '@dotmac/styled-components', '@dotmac/providers', '@dotmac/mapping'],
   experimental: {
-    transpilePackages: ['@dotmac/headless', '@dotmac/primitives', '@dotmac/styled-components'],
     optimizeCss: true,
     scrollRestoration: true,
   },
-  
+
   // Advanced bundle optimization
   webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
     // Bundle analysis and optimization
@@ -19,7 +19,7 @@ const nextConfig = {
         ...config.optimization.splitChunks,
         cacheGroups: {
           ...config.optimization.splitChunks.cacheGroups,
-          
+
           // Separate chunk for React/Next.js core
           framework: {
             chunks: 'all',
@@ -28,7 +28,7 @@ const nextConfig = {
             priority: 40,
             enforce: true,
           },
-          
+
           // UI libraries chunk
           ui: {
             name: 'ui-libs',
@@ -36,7 +36,7 @@ const nextConfig = {
             chunks: 'all',
             priority: 30,
           },
-          
+
           // PWA and offline libs
           pwa: {
             name: 'pwa-libs',
@@ -44,7 +44,7 @@ const nextConfig = {
             chunks: 'all',
             priority: 25,
           },
-          
+
           // Maps and visualization
           maps: {
             name: 'maps-libs',
@@ -52,7 +52,7 @@ const nextConfig = {
             chunks: 'all',
             priority: 20,
           },
-          
+
           // Form handling
           forms: {
             name: 'form-libs',
@@ -60,7 +60,7 @@ const nextConfig = {
             chunks: 'all',
             priority: 15,
           },
-          
+
           // Common vendor libraries
           vendor: {
             name: 'vendor',
@@ -70,40 +70,23 @@ const nextConfig = {
           },
         },
       };
-      
+
       // Tree shaking optimization for unused code
       config.optimization.usedExports = true;
       config.optimization.providedExports = true;
       config.optimization.sideEffects = false;
-      
+
       // Module concatenation (scope hoisting)
       config.optimization.concatenateModules = true;
-      
+
       // Minimize CSS
       config.optimization.minimizer.push(
         new (require('css-minimizer-webpack-plugin'))()
       );
     }
-    
-    // Dynamic imports optimization
-    config.module.rules.push({
-      test: /\.(js|jsx|ts|tsx)$/,
-      use: {
-        loader: 'babel-loader',
-        options: {
-          plugins: [
-            ['@babel/plugin-syntax-dynamic-import'],
-            ['babel-plugin-transform-imports', {
-              'lucide-react': {
-                transform: 'lucide-react/dist/esm/icons/{{kebabCase member}}',
-                preventFullImport: true,
-              },
-            }],
-          ],
-        },
-      },
-    });
-    
+
+    // Use Next.js SWC for TS/JSX; avoid overriding with Babel here
+
     return config;
   },
   // PWA Configuration
@@ -185,12 +168,12 @@ const nextConfig = {
   },
   // Enable static export for PWA
   output: 'standalone',
-  
+
   // Performance optimizations
   compress: true,
   productionBrowserSourceMaps: false,
   optimizeFonts: true,
-  
+
   // Image optimization
   images: {
     unoptimized: false,
@@ -200,7 +183,7 @@ const nextConfig = {
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
   },
-  
+
   // Advanced optimizations
   swcMinify: true,
   modularizeImports: {
@@ -208,12 +191,8 @@ const nextConfig = {
       transform: 'lucide-react/dist/esm/icons/{{kebabCase member}}',
       preventFullImport: true,
     },
-    'framer-motion': {
-      transform: 'framer-motion/dist/es/{{member}}',
-      preventFullImport: true,
-    },
   },
-  
+
   // Compiler optimizations
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production' ? {

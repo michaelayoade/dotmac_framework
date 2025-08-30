@@ -1,109 +1,65 @@
-# DotMac SaaS Platform - Unified Dependencies
-# Shared across all components for consistency and maintainability
+# DotMac Framework - Production Dependencies
+# Generated from pyproject.toml for traditional pip deployments
 
-# ===== WEB FRAMEWORK =====
-# Standardized on stable LTS versions for production reliability
-fastapi==0.104.1                 # Web framework - production stable
-uvicorn[standard]==0.24.0         # ASGI server - FastAPI compatible
-starlette==0.27.0                 # FastAPI dependency
+# Core Framework
+fastapi>=0.100.0
+uvicorn>=0.23.0
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
 
-# ===== DATA & VALIDATION =====
-pydantic[email]==2.5.0            # Data validation - stable version
-pydantic-settings==2.1.0          # Configuration management
-email-validator==2.1.0            # Email validation
+# Database
+sqlalchemy>=2.0.0
+alembic>=1.11.0
+asyncpg>=0.28.0
 
-# ===== DATABASE =====
-sqlalchemy[asyncio]==2.0.23       # ORM with async support
-asyncpg==0.29.0                   # PostgreSQL async driver
-alembic==1.13.1                   # Database migrations
+# Caching & Sessions
+redis>=4.6.0
 
-# ===== CACHING & MESSAGING =====
-redis[hiredis]>=4.5.2,<5.0.0     # Caching with async support built-in
+# Authentication & Security
+python-jose>=3.3.0
+passlib>=1.7.0
+cryptography>=41.0.0
 
-# ===== HTTP & NETWORKING =====
-httpx==0.25.2                     # HTTP client - stable version
-aiohttp==3.9.1                    # Alternative HTTP client
-websockets==12.0                  # WebSocket support
+# HTTP & API
+python-multipart>=0.0.6
+httpx>=0.24.0
+aiohttp>=3.8.0
 
-# ===== AUTHENTICATION & SECURITY =====
-passlib[bcrypt]==1.7.4            # Password hashing
-python-jose[cryptography]==3.3.0  # JWT token handling
-cryptography>=41.0.7              # Cryptographic operations
-python-multipart==0.0.6           # Form data handling
+# Configuration & Environment
+python-dotenv>=1.0.0
+click>=8.1.0
 
-# ===== LOGGING & MONITORING =====
-structlog==23.2.0                 # Structured logging
-prometheus-client==0.19.0         # Metrics collection
+# Observability & Monitoring
+opentelemetry-api>=1.20.0
+opentelemetry-sdk>=1.20.0
+opentelemetry-instrumentation-fastapi>=0.41b0
+opentelemetry-exporter-otlp>=1.20.0
 
-# ===== CONFIGURATION & UTILITIES =====
-python-dotenv==1.0.0              # Environment configuration
-click==8.1.7                      # CLI interface
-typer==0.9.0                      # Modern CLI framework
-pendulum>=3.0.0                   # Modern datetime handling
-psutil==5.9.8                     # System utilities
+# File Processing
+aiofiles>=23.0.0
+python-docx>=0.8.11
+openpyxl>=3.1.0
+reportlab>=4.0.0
 
-# ===== ASYNC & CONCURRENCY =====
-celery[redis]==5.3.4              # Background task processing
+# Task Queue
+celery>=5.3.0
+kombu>=5.3.0
 
-# ===== SERIALIZATION =====
-marshmallow==3.20.1               # Data serialization
-cerberus==1.3.5                   # Data validation
+# Network & Infrastructure
+netaddr>=0.8.0
+ipaddress>=1.0.23
 
-# ===== FILE HANDLING =====
-aiofiles>=23.1.0                  # Async file operations
-pillow>=10.2.0                    # Image processing
-reportlab==4.0.7                  # PDF generation
-xlsxwriter>=3.1.9                 # Excel file generation
+# Validation & Serialization
+marshmallow>=3.20.0
+email-validator>=2.0.0
 
-# ===== DEVELOPMENT & TESTING =====
-pytest==7.4.3                     # Testing framework
-pytest-asyncio==0.21.1            # Async testing support
-pytest-cov==4.1.0                 # Coverage reporting
-pytest-mock==3.11.1               # Mocking support
+# Development & Testing (optional in production)
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0
+httpx>=0.24.0
+faker>=19.0.0
+factory-boy>=3.3.0
 
-# ===== CODE QUALITY =====
-black==23.11.0                    # Code formatting
-isort==5.12.0                     # Import sorting
-mypy==1.7.1                       # Type checking
-flake8==6.1.0                     # Linting
-
-# ===== GIS & NETWORKING (ISP Specific) =====
-netaddr==0.10.1                   # Network address manipulation
-geoalchemy2==0.14.2               # GIS database support
-shapely==2.0.2                    # Geometric operations
-
-# ===== WORKFLOW & SCHEDULING =====
-schedule==1.2.2                   # Task scheduling
-
-# ===== MISSING EXTERNAL DEPENDENCIES =====
-# These were found in import analysis but missing from requirements
-watchdog>=3.0.0                   # File system monitoring
-croniter>=1.3.0                   # Cron expression parsing  
-requests>=2.31.0                  # HTTP client for OpenBao API
-openpyxl>=3.1.0                   # Excel file operations
-kombu>=5.3.0                      # Message transport abstraction
-ipaddress                          # IP address handling (built-in Python 3.3+)
-defusedxml>=0.7.0                 # Secure XML parsing
-pyyaml>=6.0                       # YAML processing
-jinja2>=3.1.0                     # Template engine
-
-# Note: Many "missing" imports are actually internal modules, not external dependencies
-# ===== OBSERVABILITY & TRACING =====
-opentelemetry-api>=1.22.0
-opentelemetry-sdk>=1.22.0
-opentelemetry-instrumentation>=0.43b0
-opentelemetry-instrumentation-fastapi>=0.43b0
-opentelemetry-instrumentation-sqlalchemy>=0.43b0
-opentelemetry-instrumentation-redis>=0.43b0
-opentelemetry-instrumentation-httpx>=0.43b0
-opentelemetry-instrumentation-requests>=0.43b0
-opentelemetry-instrumentation-urllib3>=0.43b0
-opentelemetry-instrumentation-asyncio>=0.43b0
-opentelemetry-instrumentation-celery>=0.43b0
-opentelemetry-instrumentation-system-metrics>=0.43b0
-opentelemetry-exporter-otlp>=1.22.0
-opentelemetry-propagator-b3>=1.22.0
-opentelemetry-propagator-jaeger>=1.22.0
-
-# ===== ADDITIONAL DATETIME SUPPORT =====
-pytz>=2023.3
+# Production WSGI/ASGI
+gunicorn>=21.2.0

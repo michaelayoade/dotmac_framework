@@ -28,11 +28,24 @@
     "validate": "npm run type-check && npm run lint && npm run test:all"
   },
   "dependencies": {
+    "@dotmac/auth": "workspace:*",
+    "@dotmac/headless": "workspace:^",
+    "@dotmac/settings-system": "workspace:*",
+    "@dotmac/providers": "workspace:*",
+    "@dotmac/workflows-system": "workspace:*",
+    "@dotmac/portal-components": "workspace:*",
+    "@dotmac/network": "workspace:*",
+    "@dotmac/collaboration": "workspace:*",
+    "@dotmac/collaboration": "workspace:*",
+    "@dotmac/assets": "workspace:*",
+    "@dotmac/journey-orchestration": "workspace:*",
     "@headlessui/react": "^1.7.17",
-    "@heroicons/react": "^2.0.18",
+    "@heroicons/react": "^2.2.0",
+    "@tailwindcss/line-clamp": "^0.4.4",
     "@tanstack/react-query": "^5.0.0",
     "axios": "^1.6.0",
     "clsx": "^2.0.0",
+    "lucide-react": "^0.263.1",
     "next": "^14.2.31",
     "qrcode": "^1.5.4",
     "react": "^18.2.0",
@@ -46,15 +59,15 @@
   "devDependencies": {
     "@playwright/test": "^1.40.0",
     "@tanstack/react-query-devtools": "^5.85.5",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^14.5.0",
     "@types/jest": "^29.5.8",
     "@types/node": "^20.8.0",
     "@types/qrcode": "^1.5.5",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
-    "@testing-library/react": "^13.4.0",
-    "@testing-library/user-event": "^14.5.0",
-    "babel-jest": "^29.7.0",
     "autoprefixer": "^10.4.16",
+    "babel-jest": "^29.7.0",
     "eslint": "^8.51.0",
     "eslint-config-next": "^14.2.31",
     "eslint-plugin-playwright": "^0.18.0",
@@ -72,7 +85,14 @@
       "^@/(.*)$": "<rootDir>/src/$1"
     },
     "transform": {
-      "^.+\\.(js|jsx|ts|tsx)$": ["babel-jest", { "presets": ["next/babel"] }]
+      "^.+\\.(js|jsx|ts|tsx)$": [
+        "babel-jest",
+        {
+          "presets": [
+            "next/babel"
+          ]
+        }
+      ]
     },
     "transformIgnorePatterns": [
       "/node_modules/(?!(@testing-library|@babel)/)"

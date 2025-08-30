@@ -31,10 +31,15 @@
     "test:all:full": "npm run test:unit:coverage && npm run test:integration:coverage && npm run test:component:coverage && npm run test:e2e:full"
   },
   "dependencies": {
+    "@dotmac/auth": "workspace:*",
     "@dotmac/headless": "workspace:*",
     "@dotmac/mapping": "workspace:*",
+    "@dotmac/navigation-system": "workspace:*",
     "@dotmac/patterns": "workspace:*",
     "@dotmac/primitives": "workspace:*",
+    "@dotmac/providers": "workspace:*",
+    "@dotmac/portal-components": "workspace:*",
+    "@dotmac/monitoring": "workspace:*",
     "@hookform/resolvers": "^3.3.0",
     "@tanstack/react-query": "^5.85.5",
     "@tanstack/react-query-devtools": "^5.85.5",

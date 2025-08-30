@@ -1,0 +1,90 @@
+import { Meta } from '@storybook/addon-docs';
+
+<Meta title="Documentation/Introduction" />
+
+# DotMac Design System
+
+Welcome to the comprehensive design system for the DotMac ISP platform. This system provides a unified set of components, patterns, and guidelines to ensure consistency across all portal experiences.
+
+## Design Principles
+
+### 1. Consistency
+Maintain visual and functional consistency across all ISP management portals (Admin, Customer, Reseller, Technician).
+
+### 2. Accessibility
+Every component meets WCAG 2.1 AA standards with full keyboard navigation and screen reader support.
+
+### 3. Performance
+Optimized for real-time ISP operations with minimal bundle sizes and fast rendering.
+
+### 4. Scalability
+Built to support multi-tenant architecture with thousands of customers and complex network hierarchies.
+
+### 5. Mobile-First
+Responsive design with special consideration for field technicians using mobile devices.
+
+## Portal-Specific Guidelines
+
+### Admin Portal
+- **Purpose**: Network management, customer administration, system configuration
+- **Users**: ISP administrators, network engineers, support managers
+- **Key Features**: Dense data tables, network topology views, real-time monitoring
+- **Design Focus**: Information hierarchy, quick access to critical functions
+
+### Customer Portal
+- **Purpose**: Self-service account management, billing, support requests
+- **Users**: ISP customers of all technical levels
+- **Key Features**: Usage dashboards, payment processing, service requests
+- **Design Focus**: Simplicity, clear call-to-actions, guided workflows
+
+### Reseller Portal
+- **Purpose**: Territory management, commission tracking, partner tools
+- **Users**: ISP partners and resellers
+- **Key Features**: Geographic territories, customer onboarding, sales tracking
+- **Design Focus**: Performance metrics, territory visualization, lead management
+
+### Technician Portal
+- **Purpose**: Field service management, installation tracking, diagnostics
+- **Users**: Field technicians, installation crews
+- **Key Features**: Mobile-optimized, GPS integration, offline capability
+- **Design Focus**: Large touch targets, minimal data entry, visual status indicators
+
+## Getting Started
+
+### Installation
+```bash
+npm install @dotmac/primitives @dotmac/ui
+```
+
+### Basic Usage
+```tsx
+import { Button, Card } from '@dotmac/primitives';
+import { CustomerDashboard } from '@dotmac/ui';
+
+function App() {
+  return (
+    <Card>
+      <CustomerDashboard />
+      <Button variant="primary">Take Action</Button>
+    </Card>
+  );
+}
+```
+
+## Architecture
+
+The design system is built with:
+- **React 18** - Component framework
+- **TypeScript** - Type safety
+- **Tailwind CSS** - Utility-first styling
+- **Radix UI** - Accessible primitives
+- **Framer Motion** - Animations
+
+## Browser Support
+- Chrome 90+
+- Firefox 88+
+- Safari 14+
+- Edge 90+
+
+## Contributing
+See our [contribution guidelines](https://github.com/dotmac/frontend/blob/main/CONTRIBUTING.md) for information on how to contribute to the design system.

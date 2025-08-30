@@ -205,8 +205,10 @@ class SecureStorage {
       value: finalValue,
       timestamp: Date.now(),
       encrypted: encrypt,
-      expires: ttl ? Date.now() + ttl : undefined,
     };
+    if (ttl) {
+      (item as any).expires = Date.now() + ttl;
+    }
 
     // Store in sessionStorage (more secure than localStorage)
     try {

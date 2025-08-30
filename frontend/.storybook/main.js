@@ -4,6 +4,7 @@ const config = {
     '../packages/*/src/**/*.stories.@(js|jsx|ts|tsx|mdx)',
     '../apps/*/src/**/*.stories.@(js|jsx|ts|tsx|mdx)',
     '../stories/**/*.stories.@(js|jsx|ts|tsx|mdx)',
+    '../stories/**/*.mdx',
   ],
 
   addons: [
@@ -19,6 +20,7 @@ const config = {
     '@storybook/addon-outline',
     'storybook-addon-performance',
     '@chromatic-com/storybook',
+    '@storybook/addon-design-tokens'
   ],
 
   framework: {
@@ -30,6 +32,7 @@ const config = {
 
   features: {
     experimentalRSC: true,
+    buildStoriesJson: true,
   },
 
   typescript: {
@@ -41,12 +44,10 @@ const config = {
     },
   },
 
-  // Core configuration
   core: {
     disableTelemetry: true,
   },
 
-  // Docs configuration
   docs: {
     autodocs: 'tag',
     defaultName: 'Documentation',
@@ -55,17 +56,27 @@ const config = {
   // Performance optimizations
   managerHead: (head) => `
     ${head}
-    <meta name="theme-color" content="#000000" />
+    <meta name="theme-color" content="#007bff" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   `,
 
-  // Static directories
   staticDirs: ['../public', '../apps/admin/public'],
 
-  // Webpack customization
   webpackFinal: async (config, { configType }) => {
-    // Add support for CSS modules
+    // Add TypeScript path mapping
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@dotmac/primitives': require('path').resolve(__dirname, '../packages/primitives/src'),
+      '@dotmac/ui': require('path').resolve(__dirname, '../packages/ui/src'),
+      '@dotmac/headless': require('path').resolve(__dirname, '../packages/headless/src'),
+      '@dotmac/styled-components': require('path').resolve(__dirname, '../packages/styled-components/src'),
+      '@dotmac/security': require('path').resolve(__dirname, '../packages/security/src'),
+      '@dotmac/testing': require('path').resolve(__dirname, '../packages/testing/src'),
+    };
+
+    // CSS modules support
     config.module.rules.push({
       test: /\.module\.css$/,
       use: [
@@ -78,40 +89,6 @@ const config = {
         },
       ],
     });
-
-    // Add support for TypeScript path mapping
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      '@dotmac/primitives': require('path').resolve(__dirname, '../packages/primitives/src'),
-      '@dotmac/headless': require('path').resolve(__dirname, '../packages/headless/src'),
-      '@dotmac/styled-components': require('path').resolve(
-        __dirname,
-        '../packages/styled-components/src'
-      ),
-      '@dotmac/registry': require('path').resolve(__dirname, '../packages/registry/src'),
-      '@dotmac/security': require('path').resolve(__dirname, '../packages/security/src'),
-      '@dotmac/testing': require('path').resolve(__dirname, '../packages/testing/src'),
-    };
-
-    return config;
-  },
-
-  // Vite configuration (if using Vite)
-  viteFinal: async (config, { configType }) => {
-    if (config.resolve) {
-      config.resolve.alias = {
-        ...config.resolve.alias,
-        '@dotmac/primitives': require('path').resolve(__dirname, '../packages/primitives/src'),
-        '@dotmac/headless': require('path').resolve(__dirname, '../packages/headless/src'),
-        '@dotmac/styled-components': require('path').resolve(
-          __dirname,
-          '../packages/styled-components/src'
-        ),
-        '@dotmac/registry': require('path').resolve(__dirname, '../packages/registry/src'),
-        '@dotmac/security': require('path').resolve(__dirname, '../packages/security/src'),
-        '@dotmac/testing': require('path').resolve(__dirname, '../packages/testing/src'),
-      };
-    }
 
     return config;
   },

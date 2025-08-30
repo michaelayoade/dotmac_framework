@@ -1,32 +1,70 @@
-// Authentication and user management
-export * from './useAppState';
-// API integration and data fetching
-export * from './useApiData';
-// Legacy compatibility - provides useCachedData for backward compatibility
-export { useApiData as useCachedData } from './useApiData';
-export * from './useAuth';
-// Business logic and workflows
-export * from './useBilling';
-export * from './useBusinessWorkflow';
+// ========================================
+// CONSOLIDATED BUSINESS LOGIC HOOKS
+// ========================================
+
+// Core unified systems (NEW - consolidated)
+export * from '../auth/useAuth'; // Unified auth system
+export * from './usePermissions'; // Consolidated permissions
+export * from './useDataManagement'; // Unified data management
+export * from './useNotifications'; // Consolidated notifications
+
+// Audit and monitoring systems
+export * from './useAuditLogger'; // Integrated audit logging
+export * from './useAuditInterceptor'; // Automatic audit interception
+
+// Existing business logic hooks
+export * from './useBilling'; // Comprehensive billing operations
 export * from './useCommunication';
+
+// ISP Business Operations (DRY-compliant centralized business logic)
+export * from './useISPBusiness'; // Portal-optimized business operations
+
+// ========================================
+// LEGACY COMPATIBILITY EXPORTS
+// ========================================
+
+// Authentication compatibility (redirects to unified system)
+export { useAuth as useUniversalAuth } from '../auth/useAuth';
+export { useAuth as usePortalAuth } from '../auth/useAuth';
+
+// Data fetching compatibility
+export * from './useApiData';
+export { useApiData as useCachedData } from './useApiData';
+
+// State management compatibility
+export * from './useAppState';
+
+// ========================================
+// SPECIALIZED HOOKS
+// ========================================
+
+// Error handling
 export * from './useErrorHandler';
-// Formatting and utilities
-export * from './useFormatting';
-// Security hooks
+export * from './useEnhancedErrorHandler';
+export * from './useStandardErrorHandler';
+
+// Security and authentication
 export * from './useMFA';
-export * from './useNotifications';
-// Offline support and caching
-export * from './useOfflineSync';
-export * from './usePerformanceMonitoring';
-// Multi-tenant functionality
-export * from './usePermissions';
-export * from './usePortalAuth';
 export * from './usePortalIdAuth';
+export * from './useSecureForm';
+
+// Performance and monitoring
+export * from './usePerformanceMonitoring';
+export * from './useOfflineSync';
+
+// Multi-tenant functionality
 export * from './useProvisioning';
 export * from './useISPModules';
 export * from './useISPTenant';
+
+// Real-time and connectivity
 export * from './useWebSocket';
-// Real-time data and synchronization
 export * from './useRealTimeSync';
-// Route protection and security
+
+// API Client
+export * from './useApiClient';
+
+// Utilities
+export * from './useFormatting';
+export * from './useFormValidation';
 export * from './useRouteProtection';

@@ -6,7 +6,7 @@
 'use client';
 
 import { CreditCardIcon } from 'lucide-react';
-import { StatusBadge } from '@dotmac/primitives/indicators/StatusIndicators';
+import { StatusBadge } from '@dotmac/providers/indicators/StatusIndicators';
 import type { Payment } from '../../../types/billing';
 
 interface PaymentManagementProps {

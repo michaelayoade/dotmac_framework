@@ -1,0 +1,91 @@
+{
+  "name": "@dotmac/workflows-system",
+  "version": "1.0.0",
+  "description": "Universal workflow engine and UI components for DotMac ISP Framework",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./workflows": {
+      "import": "./dist/workflows.mjs",
+      "require": "./dist/workflows.js",
+      "types": "./dist/workflows.d.ts"
+    },
+    "./stepper": {
+      "import": "./dist/stepper.mjs",
+      "require": "./dist/stepper.js",
+      "types": "./dist/stepper.d.ts"
+    },
+    "./approval": {
+      "import": "./dist/approval.mjs",
+      "require": "./dist/approval.js",
+      "types": "./dist/approval.d.ts"
+    },
+    "./tracking": {
+      "import": "./dist/tracking.mjs",
+      "require": "./dist/tracking.js",
+      "types": "./dist/tracking.d.ts"
+    },
+    "./forms": {
+      "import": "./dist/forms.mjs",
+      "require": "./dist/forms.js",
+      "types": "./dist/forms.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "type-check": "tsc --noEmit",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "lint": "biome check src/",
+    "lint:fix": "biome check src/ --write"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "clsx": "^2.1.0",
+    "framer-motion": "^10.16.16",
+    "zustand": "^4.4.6",
+    "zod": "^3.22.4",
+    "react-hook-form": "^7.48.2",
+    "@hookform/resolvers": "^3.3.2"
+  },
+  "devDependencies": {
+    "@dotmac/typescript-config": "workspace:*",
+    "@types/react": "^18.2.73",
+    "@types/react-dom": "^18.2.22",
+    "typescript": "^5.3.3",
+    "tsup": "^8.0.1",
+    "jest": "^29.7.0",
+    "@testing-library/react": "^14.1.2",
+    "@testing-library/jest-dom": "^6.1.4"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  },
+  "keywords": [
+    "workflow",
+    "stepper",
+    "forms",
+    "approval",
+    "process",
+    "tracking",
+    "isp",
+    "dotmac"
+  ],
+  "author": "DotMac Framework",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dotmac-framework/workflows-system"
+  }
+}

@@ -58,23 +58,23 @@ generate_tenant_env() {
     local tier="${2:-standard}"
     local domain="${3:-}"
     local max_customers="${4:-1000}"
-    
+
     local env_file="$TENANT_DIR/$tenant_id/.env"
-    
+
     # Generate secure passwords
     local postgres_password=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-25)
     local redis_password=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-25)
     local secret_key=$(openssl rand -base64 64 | tr -d "=+/")
-    
+
     # Determine resource limits based on tier
     local postgres_memory redis_memory isp_memory
     local postgres_cpus redis_cpus isp_cpus
     local http_port https_port isp_port
-    
+
     case "$tier" in
         starter)
             postgres_memory="512M"
-            redis_memory="256M" 
+            redis_memory="256M"
             isp_memory="1G"
             postgres_cpus="0.5"
             redis_cpus="0.25"
@@ -113,22 +113,22 @@ generate_tenant_env() {
             exit 1
             ;;
     esac
-    
+
     # Find available ports
     local base_port=8000
     while netstat -ln | grep -q ":$((base_port))"; do
         ((base_port += 10))
     done
-    
+
     isp_port=$base_port
     http_port=$((base_port + 1))
     https_port=$((base_port + 2))
-    
+
     # Generate subnet (172.20.x.0/24 where x is based on tenant hash)
     local subnet_octet=$(echo "$tenant_id" | md5sum | head -c 2)
     local subnet_octet_dec=$((16#$subnet_octet % 240 + 10))  # 10-250 range
     local tenant_subnet="172.20.$subnet_octet_dec.0/24"
-    
+
     cat > "$env_file" << EOF
 # DotMac Tenant Configuration: $tenant_id
 # Generated on $(date)
@@ -176,7 +176,7 @@ TENANT_CORS_ORIGINS=http://localhost:3000,https://${domain:-localhost}
 ISP_FRAMEWORK_VERSION=latest
 ENVIRONMENT=production
 EOF
-    
+
     chmod 600 "$env_file"
     log "Generated tenant environment file: $env_file"
 }
@@ -195,11 +195,11 @@ create_shared_network() {
 create_tenant_dns() {
     local tenant_id="$1"
     local custom_domain="$2"
-    
+
     log "Creating DNS records for tenant: $tenant_id"
-    
+
     # Check if Python environment has required dependencies
-    if ! python3 -c "import sys; sys.path.append('/home/dotmac_framework/isp-framework/src'); from dotmac_isp.core.dns_manager import create_tenant_dns" 2>/dev/null; then
+    if ! python3 -c "import sys; sys.path.append('/home/dotmac_framework/src'); from dotmac_isp.core.dns_manager import create_tenant_dns" 2>/dev/null; then
         warn "DNS automation dependencies not installed. Skipping DNS setup."
         warn "To enable DNS automation:"
         warn "1. Set CLOUDFLARE_TOKEN environment variable"
@@ -207,13 +207,13 @@ create_tenant_dns() {
         warn "3. Install dependencies: pip install cloudflare dnspython"
         return
     fi
-    
+
     # Create DNS records via Python DNS manager
     python3 << EOF
 import sys
 import os
 import asyncio
-sys.path.append('/home/dotmac_framework/isp-framework/src')
+sys.path.append('/home/dotmac_framework/src')
 
 # Set environment variables for DNS manager
 os.environ.setdefault('BASE_DOMAIN', 'dotmac.io')
@@ -221,18 +221,18 @@ os.environ.setdefault('LOAD_BALANCER_IP', '127.0.0.1')
 
 try:
     from dotmac_isp.core.dns_manager import create_tenant_dns
-    
+
     async def main():
         result = await create_tenant_dns('$tenant_id', '$custom_domain' if '$custom_domain' else None)
-        
+
         print(f"DNS setup results for $tenant_id:")
-        
+
         # Print subdomain creation results
         subdomains = result.get('subdomains_created', {})
         for domain, success in subdomains.items():
             status = "✅" if success else "❌"
             print(f"  {status} {domain}")
-        
+
         # Print custom domain setup info
         if '$custom_domain':
             print(f"\\nCustom domain setup: $custom_domain")
@@ -241,9 +241,9 @@ try:
                 print("Required DNS records for custom domain:")
                 for record in verification_records:
                     print(f"  {record['type']} {record['name']} {record['content']}")
-    
+
     asyncio.run(main())
-    
+
 except ImportError as e:
     print(f"❌ DNS automation not available: {e}")
     print("Manual DNS setup required")
@@ -259,41 +259,41 @@ deploy_tenant() {
     local tier="${2:-standard}"
     local domain="${3:-}"
     local max_customers="${4:-}"
-    
+
     log "Deploying tenant: $tenant_id (tier: $tier)"
-    
+
     # Validate tenant ID
     if [[ ! "$tenant_id" =~ ^[a-z0-9][a-z0-9-]*[a-z0-9]$ ]]; then
         error "Invalid tenant ID. Must be lowercase, alphanumeric, and hyphens only."
         exit 1
     fi
-    
+
     # Create tenant directory
     local tenant_path="$TENANT_DIR/$tenant_id"
     mkdir -p "$tenant_path"
-    
+
     # Generate tenant configuration
     generate_tenant_env "$tenant_id" "$tier" "$domain" "$max_customers"
-    
+
     # Copy Docker Compose template
     local compose_file="$tenant_path/docker-compose.yml"
     envsubst < "$TEMPLATE_DIR/tenant-docker-compose.yml" > "$compose_file"
-    
+
     # Create shared network
     create_shared_network
-    
+
     # Create DNS records for tenant
     create_tenant_dns "$tenant_id" "$domain"
-    
+
     # Deploy using Docker Compose
     log "Starting tenant containers..."
     cd "$tenant_path"
-    
+
     # Source the environment file and deploy
     set -a
     source .env
     set +a
-    
+
     if docker-compose up -d; then
         log "✅ Tenant $tenant_id deployed successfully!"
         log "   - ISP Framework: http://localhost:$TENANT_ISP_PORT"
@@ -302,11 +302,11 @@ deploy_tenant() {
         fi
         log "   - Tier: $tier"
         log "   - Max customers: $TENANT_MAX_CUSTOMERS"
-        
+
         # Wait for services to be healthy
         log "Waiting for services to be healthy..."
         sleep 10
-        
+
         if docker-compose ps | grep -q "Up.*healthy"; then
             log "✅ Services are healthy"
         else
@@ -321,27 +321,27 @@ deploy_tenant() {
 remove_tenant() {
     local tenant_id="$1"
     local tenant_path="$TENANT_DIR/$tenant_id"
-    
+
     if [[ ! -d "$tenant_path" ]]; then
         error "Tenant $tenant_id does not exist"
         exit 1
     fi
-    
+
     warn "This will permanently delete tenant $tenant_id and all its data!"
     read -p "Are you sure? Type 'yes' to confirm: " confirm
-    
+
     if [[ "$confirm" == "yes" ]]; then
         log "Removing tenant: $tenant_id"
-        
+
         cd "$tenant_path"
-        
+
         # Stop and remove containers
         docker-compose down -v --remove-orphans
-        
+
         # Remove tenant directory
         cd /
         rm -rf "$tenant_path"
-        
+
         log "✅ Tenant $tenant_id removed successfully"
     else
         log "Removal cancelled"
@@ -351,22 +351,22 @@ remove_tenant() {
 list_tenants() {
     log "Deployed tenants:"
     echo
-    
+
     if [[ ! -d "$TENANT_DIR" ]]; then
         echo "No tenants deployed"
         return
     fi
-    
+
     for tenant_path in "$TENANT_DIR"/*; do
         if [[ -d "$tenant_path" ]]; then
             local tenant_id=$(basename "$tenant_path")
             local env_file="$tenant_path/.env"
-            
+
             if [[ -f "$env_file" ]]; then
                 local tier=$(grep "TENANT_TIER=" "$env_file" | cut -d= -f2)
                 local domain=$(grep "TENANT_DOMAIN=" "$env_file" | cut -d= -f2)
                 local port=$(grep "TENANT_ISP_PORT=" "$env_file" | cut -d= -f2)
-                
+
                 # Check if containers are running
                 cd "$tenant_path"
                 if docker-compose ps -q | xargs docker inspect | grep -q '"Status": "running"'; then
@@ -374,7 +374,7 @@ list_tenants() {
                 else
                     local status="🔴 Stopped"
                 fi
-                
+
                 echo "  $tenant_id ($tier) - $status"
                 echo "    Port: $port"
                 if [[ -n "$domain" ]]; then
@@ -389,14 +389,14 @@ list_tenants() {
 show_tenant_status() {
     local tenant_id="$1"
     local tenant_path="$TENANT_DIR/$tenant_id"
-    
+
     if [[ ! -d "$tenant_path" ]]; then
         error "Tenant $tenant_id does not exist"
         exit 1
     fi
-    
+
     log "Status for tenant: $tenant_id"
-    
+
     cd "$tenant_path"
     docker-compose ps
     echo
@@ -406,12 +406,12 @@ show_tenant_status() {
 show_tenant_logs() {
     local tenant_id="$1"
     local tenant_path="$TENANT_DIR/$tenant_id"
-    
+
     if [[ ! -d "$tenant_path" ]]; then
         error "Tenant $tenant_id does not exist"
         exit 1
     fi
-    
+
     cd "$tenant_path"
     docker-compose logs -f --tail=100
 }
@@ -419,17 +419,17 @@ show_tenant_logs() {
 restart_tenant() {
     local tenant_id="$1"
     local tenant_path="$TENANT_DIR/$tenant_id"
-    
+
     if [[ ! -d "$tenant_path" ]]; then
         error "Tenant $tenant_id does not exist"
         exit 1
     fi
-    
+
     log "Restarting tenant: $tenant_id"
-    
+
     cd "$tenant_path"
     docker-compose restart
-    
+
     log "✅ Tenant $tenant_id restarted"
 }
 

@@ -1,0 +1,149 @@
+# Shared configuration for all CI/CD workflows
+# This file centralizes common environment variables, versions, and settings
+
+env:
+  # Runtime versions
+  NODE_VERSION: "18.x"
+  PYTHON_VERSION: "3.11"
+  PNPM_VERSION: "8.x"
+  KUBECTL_VERSION: "v1.28.0"
+
+  # Registry and images
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  DOCKER_BUILDKIT: 1
+  COMPOSE_DOCKER_CLI_BUILD: 1
+
+  # Service configuration
+  FRONTEND_APPS: "admin,customer,reseller,technician,tenant-portal,management-admin,management-reseller"
+  BACKEND_SERVICES: "isp-framework,management-platform"
+
+  # Database configuration
+  POSTGRES_VERSION: "15"
+  REDIS_VERSION: "7"
+
+  # Testing configuration
+  COVERAGE_THRESHOLD: 80
+  TEST_TIMEOUT: 10000
+  E2E_TIMEOUT: 30000
+
+  # Performance thresholds
+  LIGHTHOUSE_PERFORMANCE_THRESHOLD: 80
+  LIGHTHOUSE_ACCESSIBILITY_THRESHOLD: 95
+  LIGHTHOUSE_BEST_PRACTICES_THRESHOLD: 90
+  LIGHTHOUSE_SEO_THRESHOLD: 80
+
+  # Security configuration
+  SECURITY_SEVERITY_THRESHOLD: "high"
+  VULNERABILITY_SCAN_TIMEOUT: 300
+
+  # Deployment configuration
+  STAGING_NAMESPACE: "staging"
+  PRODUCTION_NAMESPACE: "production"
+  DEPLOYMENT_TIMEOUT: 600
+  HEALTH_CHECK_RETRIES: 5
+  HEALTH_CHECK_INTERVAL: 10
+
+  # Monitoring configuration
+  MONITORING_INTERVAL: 900 # 15 minutes
+  ALERT_THRESHOLD_ERROR_RATE: 0.01 # 1%
+  ALERT_THRESHOLD_RESPONSE_TIME: 2000 # 2 seconds
+
+# Reusable workflow inputs
+workflow_inputs:
+  environment:
+    description: "Target environment (staging/production)"
+    required: true
+    type: string
+
+  services:
+    description: "Services to deploy (comma-separated)"
+    required: false
+    type: string
+    default: "all"
+
+  skip_tests:
+    description: "Skip test execution for hotfixes"
+    required: false
+    type: boolean
+    default: false
+
+  rollback_version:
+    description: "Version to rollback to (for rollback workflow)"
+    required: false
+    type: string
+
+# Common secrets (referenced, not defined)
+required_secrets:
+  # Docker registry
+  - DOCKER_REGISTRY_TOKEN
+
+  # Cloud provider
+  - AWS_ACCESS_KEY_ID
+  - AWS_SECRET_ACCESS_KEY
+  - AWS_REGION
+
+  # Kubernetes clusters
+  - EKS_CLUSTER_NAME_STAGING
+  - EKS_CLUSTER_NAME_PRODUCTION
+
+  # Security scanning
+  - SEMGREP_APP_TOKEN
+  - SNYK_TOKEN
+  - SONAR_TOKEN
+
+  # Monitoring and alerts
+  - SLACK_WEBHOOK_URL
+  - LHCI_GITHUB_APP_TOKEN
+
+  # Database
+  - DATABASE_ENCRYPTION_KEY
+  - REDIS_AUTH_TOKEN
+
+# Common job configurations
+common_services: &common_services
+  postgres:
+    image: postgres:15
+    env:
+      POSTGRES_PASSWORD: test_password
+      POSTGRES_USER: test_user
+      POSTGRES_DB: test_db
+    ports:
+      - 5432:5432
+    options: >-
+      --health-cmd pg_isready
+      --health-interval 10s
+      --health-timeout 5s
+      --health-retries 5
+
+  redis:
+    image: redis:7
+    ports:
+      - 6379:6379
+    options: >-
+      --health-cmd "redis-cli ping"
+      --health-interval 10s
+      --health-timeout 5s
+      --health-retries 5
+
+# Common caching configuration
+cache_config: &cache_config
+  node_modules:
+    paths:
+      - ~/.pnpm-store
+      - frontend/node_modules
+      - "**/node_modules"
+    key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+    restore-keys: |
+      ${{ runner.os }}-pnpm-
+
+  pip:
+    paths:
+      - ~/.cache/pip
+    key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+    restore-keys: |
+      ${{ runner.os }}-pip-
+
+  docker:
+    type: gha
+    mode: max

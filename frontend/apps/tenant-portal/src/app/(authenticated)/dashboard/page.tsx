@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { 
-  Users, 
-  Server, 
-  HardDrive, 
+import {
+  Users,
+  Server,
+  HardDrive,
   Activity,
   TrendingUp,
   TrendingDown,
@@ -13,8 +13,14 @@ import {
   Clock,
   DollarSign,
 } from 'lucide-react';
-import { useTenantAuth } from '@/components/auth/TenantAuthProvider';
+import { useTenantAuth } from '@/components/auth/TenantAuthProviderNew';
 import { TenantApiService } from '@/lib/tenant-api-service';
+import {
+  UniversalDashboard,
+  UniversalMetricCard,
+  UniversalKPISection,
+  UniversalActivityFeed
+} from '@dotmac/primitives';
 
 interface HealthMetrics {
   uptime_percentage: number;
@@ -49,10 +55,10 @@ export default function DashboardPage() {
     const fetchOverviewData = async () => {
       setIsLoading(true);
       setError(null);
-      
+
       try {
         const result = await TenantApiService.getTenantOverview();
-        
+
         if (result.success && result.data) {
           setOverview(result.data);
         } else {
@@ -77,7 +83,7 @@ export default function DashboardPage() {
             next_billing_date: '2024-02-15',
             monthly_cost: 2650,
           };
-          
+
           setOverview(mockOverview);
           setError('Using demo data - API unavailable');
         }
@@ -107,132 +113,158 @@ export default function DashboardPage() {
     );
   }
 
-  const metrics = [
+  // Prepare metrics for universal components
+  const kpiItems = [
     {
-      name: 'Active Customers',
-      value: overview.current_customers.toLocaleString(),
+      id: 'customers',
+      label: 'Active Customers',
+      value: overview.current_customers,
+      formatAs: 'number',
+      trend: { value: 8.5, direction: 'up' as const },
       icon: Users,
-      trend: { value: '+8.5%', positive: true },
-      description: 'from last month',
+      color: 'blue',
     },
     {
-      name: 'Active Services',
-      value: overview.current_services.toLocaleString(),
+      id: 'services',
+      label: 'Active Services',
+      value: overview.current_services,
+      formatAs: 'number',
+      trend: { value: 12.3, direction: 'up' as const },
       icon: Server,
-      trend: { value: '+12.3%', positive: true },
-      description: 'from last month',
+      color: 'green',
     },
     {
-      name: 'Storage Usage',
-      value: `${overview.storage_used_gb}GB`,
+      id: 'storage',
+      label: 'Storage Usage',
+      value: overview.storage_used_gb,
+      formatAs: 'storage',
+      progress: { current: overview.storage_used_gb, max: overview.storage_limit_gb },
       icon: HardDrive,
-      trend: { value: `${Math.round((overview.storage_used_gb / overview.storage_limit_gb) * 100)}%`, positive: false },
-      description: `of ${overview.storage_limit_gb}GB limit`,
+      color: 'orange',
     },
     {
-      name: 'Monthly Cost',
-      value: `$${overview.monthly_cost.toLocaleString()}`,
+      id: 'cost',
+      label: 'Monthly Cost',
+      value: overview.monthly_cost,
+      formatAs: 'currency',
+      trend: { value: 5.2, direction: 'up' as const },
       icon: DollarSign,
-      trend: { value: '+5.2%', positive: false },
-      description: 'next billing cycle',
+      color: 'red',
     },
   ];
 
-  const healthMetrics = [
+  const healthKpis = [
     {
-      name: 'Uptime',
-      value: `${overview.health_metrics.uptime_percentage}%`,
-      status: overview.health_metrics.uptime_percentage >= 99.9 ? 'excellent' : 'good',
+      id: 'uptime',
+      label: 'Uptime',
+      value: overview.health_metrics.uptime_percentage,
+      formatAs: 'percentage',
+      status: overview.health_metrics.uptime_percentage >= 99.9 ? 'success' : 'warning',
     },
     {
-      name: 'Response Time',
-      value: `${overview.health_metrics.avg_response_time_ms}ms`,
-      status: overview.health_metrics.avg_response_time_ms < 200 ? 'excellent' : 'good',
+      id: 'response_time',
+      label: 'Response Time',
+      value: overview.health_metrics.avg_response_time_ms,
+      formatAs: 'number',
+      suffix: 'ms',
+      status: overview.health_metrics.avg_response_time_ms < 200 ? 'success' : 'warning',
     },
     {
-      name: 'Error Rate',
-      value: `${overview.health_metrics.error_rate_percentage}%`,
-      status: overview.health_metrics.error_rate_percentage < 0.1 ? 'excellent' : 'warning',
+      id: 'error_rate',
+      label: 'Error Rate',
+      value: overview.health_metrics.error_rate_percentage,
+      formatAs: 'percentage',
+      status: overview.health_metrics.error_rate_percentage < 0.1 ? 'success' : 'error',
     },
     {
-      name: 'CPU Usage',
-      value: `${overview.health_metrics.cpu_usage_percentage}%`,
-      status: overview.health_metrics.cpu_usage_percentage < 70 ? 'good' : 'warning',
+      id: 'cpu_usage',
+      label: 'CPU Usage',
+      value: overview.health_metrics.cpu_usage_percentage,
+      formatAs: 'percentage',
+      status: overview.health_metrics.cpu_usage_percentage < 70 ? 'success' : 'warning',
+    },
+  ];
+
+  const activityItems = [
+    {
+      id: 'logins',
+      title: 'User Logins',
+      description: 'Last 24 hours',
+      value: overview.recent_logins,
+      timestamp: new Date(),
+      type: 'metric' as const,
+    },
+    {
+      id: 'api_calls',
+      title: 'API Requests',
+      description: 'Last 24 hours',
+      value: overview.recent_api_calls,
+      timestamp: new Date(),
+      type: 'metric' as const,
+    },
+    {
+      id: 'tickets',
+      title: 'Support Tickets',
+      description: 'Open tickets',
+      value: overview.recent_tickets,
+      timestamp: new Date(),
+      type: 'alert' as const,
+      status: overview.recent_tickets > 0 ? 'warning' : 'success',
     },
   ];
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900">
-          Welcome back, {user?.name}
-        </h2>
-        <p className="text-gray-600">
-          Here's what's happening with your {tenant?.display_name} instance today.
-        </p>
-        {error && (
-          <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-            <div className="flex">
-              <AlertTriangle className="h-5 w-5 text-yellow-600 mr-2" />
-              <p className="text-sm text-yellow-700">{error}</p>
-            </div>
-          </div>
-        )}
-      </div>
+    <UniversalDashboard
+      variant="customer"
+      title={`Welcome back, ${user?.name}`}
+      subtitle={`Here's what's happening with your ${tenant?.display_name} instance today.`}
+      user={{
+        id: user?.id || '',
+        name: user?.name || '',
+        email: user?.email || '',
+        avatar: user?.metadata?.avatar,
+        role: user?.role as any,
+        permissions: user?.permissions || [],
+        tenantId: user?.tenantId || tenant?.id || '',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }}
+      tenant={{
+        id: tenant?.id || '',
+        name: tenant?.name || '',
+        displayName: tenant?.display_name || '',
+        slug: tenant?.slug || ''
+      }}
+      alert={error ? {
+        type: 'warning',
+        title: 'Demo Data',
+        message: error
+      } : undefined}
+      className="space-y-8"
+    >
+      {/* Key Performance Metrics */}
+      <UniversalKPISection
+        title="Key Metrics"
+        items={kpiItems}
+        columns={4}
+        className="mb-8"
+      />
 
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {metrics.map((metric) => (
-          <div key={metric.name} className="metric-card">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="metric-value">{metric.value}</div>
-                <div className="metric-label">{metric.name}</div>
-              </div>
-              <metric.icon className="h-8 w-8 text-tenant-500" />
-            </div>
-            <div className={`metric-trend ${metric.trend.positive ? 'positive' : 'negative'}`}>
-              {metric.trend.positive ? (
-                <TrendingUp className="h-4 w-4 mr-1" />
-              ) : (
-                <TrendingDown className="h-4 w-4 mr-1" />
-              )}
-              {metric.trend.value} {metric.description}
-            </div>
-          </div>
-        ))}
-      </div>
+      {/* Health and Activity Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        {/* System Health KPIs */}
+        <div>
+          <UniversalKPISection
+            title="System Health"
+            items={healthKpis}
+            columns={2}
+            showStatus
+            icon={Activity}
+          />
 
-      {/* Health Status */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="tenant-card p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <Activity className="h-5 w-5 mr-2 text-tenant-500" />
-            System Health
-          </h3>
-          <div className="space-y-4">
-            {healthMetrics.map((metric) => (
-              <div key={metric.name} className="flex items-center justify-between">
-                <div>
-                  <div className="text-sm font-medium text-gray-900">{metric.name}</div>
-                  <div className="text-sm text-gray-500">{metric.value}</div>
-                </div>
-                <div className="flex items-center">
-                  {metric.status === 'excellent' ? (
-                    <CheckCircle className="h-5 w-5 text-green-500" />
-                  ) : metric.status === 'good' ? (
-                    <CheckCircle className="h-5 w-5 text-blue-500" />
-                  ) : (
-                    <AlertTriangle className="h-5 w-5 text-yellow-500" />
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-          
+          {/* Active Alerts */}
           {overview.active_alerts > 0 && (
-            <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
               <div className="flex items-center">
                 <AlertTriangle className="h-5 w-5 text-yellow-600 mr-2" />
                 <div>
@@ -249,52 +281,24 @@ export default function DashboardPage() {
         </div>
 
         {/* Recent Activity */}
-        <div className="tenant-card p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <Clock className="h-5 w-5 mr-2 text-tenant-500" />
-            Recent Activity
-          </h3>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between py-2">
-              <div>
-                <div className="text-sm font-medium text-gray-900">User Logins</div>
-                <div className="text-sm text-gray-500">Last 24 hours</div>
-              </div>
-              <div className="text-lg font-semibold text-gray-900">
-                {overview.recent_logins}
-              </div>
-            </div>
-            
-            <div className="flex items-center justify-between py-2">
-              <div>
-                <div className="text-sm font-medium text-gray-900">API Requests</div>
-                <div className="text-sm text-gray-500">Last 24 hours</div>
-              </div>
-              <div className="text-lg font-semibold text-gray-900">
-                {overview.recent_api_calls.toLocaleString()}
-              </div>
-            </div>
-            
-            <div className="flex items-center justify-between py-2">
-              <div>
-                <div className="text-sm font-medium text-gray-900">Support Tickets</div>
-                <div className="text-sm text-gray-500">Open tickets</div>
-              </div>
-              <div className="text-lg font-semibold text-gray-900">
-                {overview.recent_tickets}
-              </div>
-            </div>
-          </div>
+        <div>
+          <UniversalActivityFeed
+            title="Recent Activity"
+            items={activityItems}
+            showTimestamp={false}
+            icon={Clock}
+          />
 
-          <div className="mt-6 p-4 bg-tenant-50 border border-tenant-200 rounded-lg">
+          {/* Billing Info */}
+          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm font-medium text-tenant-800">Next Billing</div>
-                <div className="text-sm text-tenant-700">
+                <div className="text-sm font-medium text-blue-800">Next Billing</div>
+                <div className="text-sm text-blue-700">
                   {new Date(overview.next_billing_date).toLocaleDateString()}
                 </div>
               </div>
-              <div className="text-lg font-semibold text-tenant-900">
+              <div className="text-lg font-semibold text-blue-900">
                 ${overview.monthly_cost.toLocaleString()}
               </div>
             </div>
@@ -302,26 +306,26 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="tenant-card p-6">
+      {/* Quick Actions - can be converted to universal component later */}
+      <div className="bg-white rounded-lg shadow p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <button className="tenant-button-secondary text-left p-4 h-auto">
+          <button className="bg-gray-50 hover:bg-gray-100 transition-colors rounded-lg text-left p-4 border border-gray-200">
             <div className="font-medium">Manage Users</div>
             <div className="text-sm text-gray-500 mt-1">Add or remove user accounts</div>
           </button>
-          
-          <button className="tenant-button-secondary text-left p-4 h-auto">
+
+          <button className="bg-gray-50 hover:bg-gray-100 transition-colors rounded-lg text-left p-4 border border-gray-200">
             <div className="font-medium">View Billing</div>
             <div className="text-sm text-gray-500 mt-1">Check invoices and usage</div>
           </button>
-          
-          <button className="tenant-button-secondary text-left p-4 h-auto">
+
+          <button className="bg-gray-50 hover:bg-gray-100 transition-colors rounded-lg text-left p-4 border border-gray-200">
             <div className="font-medium">Get Support</div>
             <div className="text-sm text-gray-500 mt-1">Contact our support team</div>
           </button>
         </div>
       </div>
-    </div>
+    </UniversalDashboard>
   );
 }

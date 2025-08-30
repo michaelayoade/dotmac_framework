@@ -4,8 +4,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { useAuthStore } from '../stores/authStore';
-import { useTenantStore } from '../stores/tenantStore';
+import { useAuthStore } from "@dotmac/headless/auth";
+import { useTenantStore } from "@dotmac/headless/stores";
 
 export interface OfflineEntry {
   id: string;

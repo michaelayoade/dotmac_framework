@@ -7,6 +7,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ImageProcessor } from '@dotmac/file-system';
 import {
   Camera,
   X,
@@ -51,6 +52,8 @@ export function PhotoCapture({
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [cameraPermissionGranted, setCameraPermissionGranted] = useState(false);
+  const [showImageProcessor, setShowImageProcessor] = useState(false);
+  const [originalFile, setOriginalFile] = useState<File | null>(null);
 
   useEffect(() => {
     initializeCamera();
@@ -65,7 +68,7 @@ export function PhotoCapture({
 
       // Check for camera permission
       const permissionStatus = await navigator.permissions?.query({ name: 'camera' as PermissionName });
-      
+
       if (permissionStatus?.state === 'denied') {
         setError('Camera permission denied. Please enable camera access or use file upload.');
         return;
@@ -124,7 +127,7 @@ export function PhotoCapture({
   const capturePhoto = async () => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
-    
+
     if (!video || !canvas) return;
 
     setIsProcessing(true);
@@ -147,7 +150,7 @@ export function PhotoCapture({
 
       // Convert to blob with compression
       const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-      
+
       setCapturedPhoto(dataUrl);
     } catch (error) {
       console.error('Failed to capture photo:', error);
@@ -170,7 +173,7 @@ export function PhotoCapture({
     // Set up text style
     context.fillStyle = 'rgba(0, 0, 0, 0.7)';
     context.fillRect(0, height - 80, width, 80);
-    
+
     context.fillStyle = 'white';
     context.font = '14px Arial';
     context.textAlign = 'left';
@@ -202,10 +205,10 @@ export function PhotoCapture({
 
     try {
       const dataUrl = await fileToDataUrl(file);
-      
+
       // Process uploaded image (resize if needed)
       const processedDataUrl = await processUploadedImage(dataUrl);
-      
+
       setCapturedPhoto(processedDataUrl);
     } catch (error) {
       console.error('Failed to process uploaded file:', error);
@@ -288,9 +291,35 @@ export function PhotoCapture({
     }
   };
 
+  const handleProcessImage = () => {
+    if (capturedPhoto) {
+      // Convert data URL to File for image processor
+      fetch(capturedPhoto)
+        .then(res => res.blob())
+        .then(blob => {
+          const file = new File([blob], 'captured-photo.png', { type: blob.type });
+          setOriginalFile(file);
+          setShowImageProcessor(true);
+        })
+        .catch(console.error);
+    }
+  };
+
+  const handleImageProcessed = (processedBlob: Blob) => {
+    const processedUrl = URL.createObjectURL(processedBlob);
+    setCapturedPhoto(processedUrl);
+    setShowImageProcessor(false);
+    setOriginalFile(null);
+  };
+
+  const cancelImageProcessing = () => {
+    setShowImageProcessor(false);
+    setOriginalFile(null);
+  };
+
   const cleanup = () => {
     setIsStreaming(false);
-    
+
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
@@ -316,9 +345,9 @@ export function PhotoCapture({
           >
             <X className="w-5 h-5" />
           </button>
-          
+
           <h1 className="text-white font-semibold">{title}</h1>
-          
+
           <div className="flex items-center space-x-2">
             {/* Flash Toggle */}
             {hasFlash && (
@@ -331,7 +360,7 @@ export function PhotoCapture({
                 {flashEnabled ? <Zap className="w-5 h-5" /> : <ZapOff className="w-5 h-5" />}
               </button>
             )}
-            
+
             {/* Camera Switch */}
             {cameras.length > 1 && (
               <button
@@ -438,7 +467,15 @@ export function PhotoCapture({
             >
               <RotateCcw className="w-6 h-6" />
             </button>
-            
+
+            <button
+              onClick={handleProcessImage}
+              className="w-16 h-16 bg-blue-600 hover:bg-blue-700 rounded-full flex items-center justify-center text-white transition-colors mr-4"
+              title="Edit Photo"
+            >
+              <Image className="w-6 h-6" />
+            </button>
+
             <button
               onClick={confirmPhoto}
               className="w-20 h-20 bg-green-600 hover:bg-green-700 rounded-full flex items-center justify-center text-white transition-colors"
@@ -459,7 +496,7 @@ export function PhotoCapture({
                 <Upload className="w-5 h-5" />
               </button>
             )}
-            
+
             {/* Capture Button */}
             <button
               onClick={capturePhoto}
@@ -476,14 +513,14 @@ export function PhotoCapture({
                 </>
               )}
             </button>
-            
+
             {/* Gallery Indicator */}
             <div className="w-12 h-12 bg-gray-600 rounded-lg flex items-center justify-center">
               <Image className="w-5 h-5 text-white" />
             </div>
           </div>
         )}
-        
+
         {/* Category Indicator */}
         <div className="text-center mt-3">
           <span className="text-white text-xs opacity-70">
@@ -500,6 +537,22 @@ export function PhotoCapture({
         onChange={handleFileUpload}
         className="hidden"
       />
+
+      {/* Image Processor Modal */}
+      {showImageProcessor && originalFile && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-6xl max-h-full">
+            <ImageProcessor
+              initialImage={originalFile}
+              onImageProcessed={handleImageProcessed}
+              onCancel={cancelImageProcessing}
+              maxWidth={1920}
+              maxHeight={1080}
+              className="w-full h-full"
+            />
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 }

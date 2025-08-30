@@ -1,266 +1,146 @@
-import React, { useEffect, ReactNode } from 'react';
-import { XMarkIcon } from '@heroicons/react/24/outline';
-import { useFocusTrap, useFocusManagement, useKeyboardNavigation } from '@/lib/accessibility';
+import * as React from 'react';
+import * as DialogPrimitive from '@radix-ui/react-dialog';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { X } from 'lucide-react';
+import { cn } from '../lib/utils';
 
-interface ModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  title?: string;
-  description?: string;
-  size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
-  children: ReactNode;
-  showCloseButton?: boolean;
-  closeOnOverlayClick?: boolean;
-  closeOnEscape?: boolean;
-  className?: string;
-}
+const modalVariants = cva(
+  "fixed left-[50%] top-[50%] z-50 grid w-full translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background shadow-lg duration-200 sm:rounded-lg",
+  {
+    variants: {
+      variant: {
+        default: "border-border bg-background",
 
-const sizeStyles = {
-  sm: 'max-w-md',
-  md: 'max-w-lg', 
-  lg: 'max-w-2xl',
-  xl: 'max-w-4xl',
-  full: 'max-w-7xl',
+        // Portal-specific variants
+        admin: "border-slate-200 bg-white shadow-xl",
+        customer: "border-green-200 bg-white shadow-xl",
+        reseller: "border-purple-200 bg-white shadow-xl",
+        technician: "border-orange-200 bg-white shadow-xl",
+        management: "border-slate-300 bg-white shadow-2xl"
+      },
+      size: {
+        sm: "max-w-sm p-6",
+        default: "max-w-lg p-6",
+        lg: "max-w-2xl p-8",
+        xl: "max-w-4xl p-8",
+        full: "max-w-[95vw] max-h-[95vh] p-8"
+      }
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default"
+    }
+  }
+);
+
+const ModalOverlay = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Overlay>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
+>(({ className, ...props }, ref) => (
+  <DialogPrimitive.Overlay
+    ref={ref}
+    className={cn(
+      "fixed inset-0 z-50 bg-black/50 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      className
+    )}
+    {...props}
+  />
+));
+
+const ModalContent = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & VariantProps<typeof modalVariants>
+>(({ className, variant, size, children, ...props }, ref) => (
+  <DialogPrimitive.Portal>
+    <ModalOverlay />
+    <DialogPrimitive.Content
+      ref={ref}
+      className={cn(
+        modalVariants({ variant, size }),
+        "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
+        className
+      )}
+      {...props}
+    >
+      {children}
+      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
+        <X className="h-4 w-4" />
+        <span className="sr-only">Close</span>
+      </DialogPrimitive.Close>
+    </DialogPrimitive.Content>
+  </DialogPrimitive.Portal>
+));
+
+const ModalHeader = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("flex flex-col space-y-1.5 text-center sm:text-left", className)}
+    {...props}
+  />
+));
+
+const ModalFooter = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2", className)}
+    {...props}
+  />
+));
+
+const ModalTitle = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Title>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Title>
+>(({ className, ...props }, ref) => (
+  <DialogPrimitive.Title
+    ref={ref}
+    className={cn("text-lg font-semibold leading-none tracking-tight", className)}
+    {...props}
+  />
+));
+
+const ModalDescription = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Description>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Description>
+>(({ className, ...props }, ref) => (
+  <DialogPrimitive.Description
+    ref={ref}
+    className={cn("text-sm text-muted-foreground", className)}
+    {...props}
+  />
+));
+
+const Modal = DialogPrimitive.Root;
+const ModalTrigger = DialogPrimitive.Trigger;
+const ModalClose = DialogPrimitive.Close;
+
+ModalOverlay.displayName = DialogPrimitive.Overlay.displayName;
+ModalContent.displayName = DialogPrimitive.Content.displayName;
+ModalHeader.displayName = "ModalHeader";
+ModalFooter.displayName = "ModalFooter";
+ModalTitle.displayName = DialogPrimitive.Title.displayName;
+ModalDescription.displayName = DialogPrimitive.Description.displayName;
+
+export {
+  Modal,
+  ModalTrigger,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalTitle,
+  ModalDescription,
+  ModalClose,
+  modalVariants
 };
 
-export function Modal({
-  isOpen,
-  onClose,
-  title,
-  description,
-  size = 'md',
-  children,
-  showCloseButton = true,
-  closeOnOverlayClick = true,
-  closeOnEscape = true,
-  className = '',
-}: ModalProps) {
-  const { saveFocus, restoreFocus } = useFocusManagement();
-  const containerRef = useFocusTrap(isOpen) as React.RefObject<HTMLDivElement>;
+export type { VariantProps };
 
-  const { handleKeyDown } = useKeyboardNavigation({
-    onEscape: closeOnEscape ? onClose : undefined,
-  });
-
-  // Handle focus management
-  useEffect(() => {
-    if (isOpen) {
-      saveFocus();
-      document.body.style.overflow = 'hidden';
-    } else {
-      restoreFocus();
-      document.body.style.overflow = 'unset';
-    }
-
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [isOpen, saveFocus, restoreFocus]);
-
-  // Handle keyboard events
-  useEffect(() => {
-    if (isOpen) {
-      document.addEventListener('keydown', handleKeyDown);
-      return () => document.removeEventListener('keydown', handleKeyDown);
-    }
-  }, [isOpen, handleKeyDown]);
-
-  if (!isOpen) return null;
-
-  const handleOverlayClick = (e: React.MouseEvent) => {
-    if (closeOnOverlayClick && e.target === e.currentTarget) {
-      onClose();
-    }
-  };
-
-  return (
-    <div 
-      className="fixed inset-0 z-50 overflow-y-auto"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby={title ? 'modal-title' : undefined}
-      aria-describedby={description ? 'modal-description' : undefined}
-    >
-      {/* Backdrop */}
-      <div 
-        className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
-        onClick={handleOverlayClick}
-        aria-hidden="true"
-      />
-
-      {/* Modal Container */}
-      <div className="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
-        <div
-          ref={containerRef}
-          className={`
-            relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl 
-            transition-all w-full ${sizeStyles[size]} ${className}
-          `}
-        >
-          {/* Header */}
-          <div className="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                {title && (
-                  <h3 
-                    id="modal-title"
-                    className="text-lg font-semibold leading-6 text-gray-900"
-                  >
-                    {title}
-                  </h3>
-                )}
-                {description && (
-                  <p 
-                    id="modal-description"
-                    className="mt-1 text-sm text-gray-500"
-                  >
-                    {description}
-                  </p>
-                )}
-              </div>
-              
-              {showCloseButton && (
-                <button
-                  type="button"
-                  className="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-                  onClick={onClose}
-                  aria-label="Close modal"
-                >
-                  <XMarkIcon className="h-6 w-6" />
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Content */}
-          <div className="bg-white px-4 pb-4 sm:p-6">
-            {children}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Modal Header Component
-interface ModalHeaderProps {
-  children: ReactNode;
-  className?: string;
-}
-
-export function ModalHeader({ children, className = '' }: ModalHeaderProps) {
-  return (
-    <div className={`border-b border-gray-200 pb-4 mb-4 ${className}`}>
-      {children}
-    </div>
-  );
-}
-
-// Modal Footer Component
-interface ModalFooterProps {
-  children: ReactNode;
-  className?: string;
-}
-
-export function ModalFooter({ children, className = '' }: ModalFooterProps) {
-  return (
-    <div className={`border-t border-gray-200 pt-4 mt-4 flex justify-end space-x-3 ${className}`}>
-      {children}
-    </div>
-  );
-}
-
-// Confirmation Modal Component
-interface ConfirmModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
-  title: string;
-  message: string;
-  confirmText?: string;
-  cancelText?: string;
-  variant?: 'danger' | 'warning' | 'info';
-  loading?: boolean;
-}
-
-export function ConfirmModal({
-  isOpen,
-  onClose,
-  onConfirm,
-  title,
-  message,
-  confirmText = 'Confirm',
-  cancelText = 'Cancel',
-  variant = 'danger',
-  loading = false,
-}: ConfirmModalProps) {
-  const iconColor = {
-    danger: 'text-danger-600',
-    warning: 'text-warning-600', 
-    info: 'text-primary-600',
-  };
-
-  const buttonVariant = {
-    danger: 'danger',
-    warning: 'danger',
-    info: 'primary',
-  } as const;
-
-  return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      size="sm"
-      closeOnOverlayClick={!loading}
-      closeOnEscape={!loading}
-    >
-      <div className="sm:flex sm:items-start">
-        <div className={`mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-${variant}-100 sm:mx-0 sm:h-10 sm:w-10`}>
-          <svg
-            className={`h-6 w-6 ${iconColor[variant]}`}
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth="1.5"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
-            />
-          </svg>
-        </div>
-        
-        <div className="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
-          <h3 className="text-base font-semibold leading-6 text-gray-900">
-            {title}
-          </h3>
-          <div className="mt-2">
-            <p className="text-sm text-gray-500">
-              {message}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <ModalFooter>
-        <button
-          type="button"
-          className="btn-secondary"
-          onClick={onClose}
-          disabled={loading}
-        >
-          {cancelText}
-        </button>
-        <button
-          type="button"
-          className={`btn-${buttonVariant[variant]}`}
-          onClick={onConfirm}
-          disabled={loading}
-        >
-          {loading ? 'Processing...' : confirmText}
-        </button>
-      </ModalFooter>
-    </Modal>
-  );
+// Export props type
+export interface ModalProps extends VariantProps<typeof modalVariants> {
+  children: React.ReactNode;
 }

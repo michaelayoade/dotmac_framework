@@ -1,7 +1,7 @@
 "use client";
 
 import { useCachedData, usePortalAuth } from "@dotmac/headless";
-import { Card } from "@dotmac/styled-components/reseller";
+import { Card } from "@dotmac/ui/reseller";
 import { motion } from "framer-motion";
 import {
 	Activity,

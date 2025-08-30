@@ -4,7 +4,7 @@
  * Breaks down complex LoginForm into smaller, focused components
  */
 
-import { Button, Input } from '@dotmac/styled-components/admin';
+import { Button, Input } from '@dotmac/ui/admin';
 import { AlertCircle, Eye, EyeOff } from 'lucide-react';
 import type React from 'react';
 import { useId } from 'react';

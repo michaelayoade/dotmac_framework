@@ -6,15 +6,15 @@
 'use client';
 
 import { type FC } from 'react';
-import { 
-  DollarSign, 
-  TrendingUp, 
-  AlertTriangle, 
+import {
+  DollarSign,
+  TrendingUp,
+  AlertTriangle,
   CheckCircle,
   ArrowUpIcon,
   ArrowDownIcon
 } from 'lucide-react';
-import { 
+import {
   AnimatedCounter,
   FadeInWhenVisible,
   StaggeredFadeIn,
@@ -22,8 +22,8 @@ import {
   AnimatedCard,
   PulseIndicator,
   BounceIn
-} from '@dotmac/primitives/animations/Animations';
-import { StatusBadge } from '@dotmac/primitives/indicators/StatusIndicators';
+} from '@dotmac/providers/animations/Animations';
+import { StatusBadge } from '@dotmac/providers/indicators/StatusIndicators';
 import { DataLoader } from '../ui/LoadingStates';
 import { useMetrics } from '../../hooks/useBillingData';
 import type { Metrics } from '../../types/billing';
@@ -128,7 +128,7 @@ export function BillingMetrics({ period = '30d', className = '' }: BillingMetric
                   format="currency"
                 />
               </StaggerChild>
-              
+
               <StaggerChild>
                 <MetricCard
                   title="Monthly Recurring"
@@ -138,7 +138,7 @@ export function BillingMetrics({ period = '30d', className = '' }: BillingMetric
                   format="currency"
                 />
               </StaggerChild>
-              
+
               <StaggerChild>
                 <MetricCard
                   title="Outstanding Amount"
@@ -147,7 +147,7 @@ export function BillingMetrics({ period = '30d', className = '' }: BillingMetric
                   format="currency"
                 />
               </StaggerChild>
-              
+
               <StaggerChild>
                 <MetricCard
                   title="Collections Rate"
@@ -193,7 +193,7 @@ function MetricsErrorFallback({ error }: { error: Error }) {
         <div>
           <h3 className="font-medium text-red-800">Failed to Load Metrics</h3>
           <p className="text-sm text-red-600 mt-1">{error.message}</p>
-          <button 
+          <button
             className="text-sm text-red-800 underline mt-2 hover:no-underline"
             onClick={() => window.location.reload()}
           >

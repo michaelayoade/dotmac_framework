@@ -18,7 +18,7 @@ import {
   Clock,
   XCircle
 } from 'lucide-react';
-import { StatusBadge } from '@dotmac/primitives/indicators/StatusIndicators';
+import { StatusBadge } from '@dotmac/providers/indicators/StatusIndicators';
 import { DataTable, type TableColumn } from '../ui/DataTable';
 import { useInvoices } from '../../hooks/useBillingData';
 import type { Invoice, BillingFilters, InvoiceStatus } from '../../types/billing';
@@ -170,10 +170,10 @@ export function InvoicesTable({ className = '', pageSize = 10 }: InvoicesTablePr
       sortable: true,
       accessor: (invoice) => {
         const isOverdue = invoice.status === 'overdue';
-        const daysPastDue = isOverdue 
+        const daysPastDue = isOverdue
           ? Math.floor((Date.now() - new Date(invoice.dueDate).getTime()) / (1000 * 60 * 60 * 24))
           : 0;
-        
+
         return (
           <div>
             <div className="text-sm text-gray-900">

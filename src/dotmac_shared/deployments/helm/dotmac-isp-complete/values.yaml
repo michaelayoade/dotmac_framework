@@ -1,0 +1,728 @@
+# ============================================================================
+# DotMac Complete ISP Framework - Helm Values
+# Includes: ISP Framework + FreeRADIUS + Ansible + VOLTHA + Infrastructure
+# ============================================================================
+
+global:
+  imageRegistry: "registry.dotmac.com"
+  imageTag: "latest"
+  imagePullPolicy: IfNotPresent
+  storageClass: "fast-ssd"
+
+  # Shared configuration
+  domain: "dotmac.local"
+  timezone: "UTC"
+
+  # Resource tiers for multi-tenancy
+  resourceTiers:
+    starter:
+      cpu: "500m"
+      memory: "1Gi"
+      storage: "5Gi"
+      maxCustomers: 500
+    standard:
+      cpu: "1000m"
+      memory: "2Gi"
+      storage: "10Gi"
+      maxCustomers: 2000
+    premium:
+      cpu: "2000m"
+      memory: "4Gi"
+      storage: "20Gi"
+      maxCustomers: 5000
+    enterprise:
+      cpu: "4000m"
+      memory: "8Gi"
+      storage: "50Gi"
+      maxCustomers: 10000
+
+# ============================================================================
+# CORE INFRASTRUCTURE
+# ============================================================================
+
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: "dotmac-postgres-2024!"
+    database: "dotmac_isp"
+  primary:
+    persistence:
+      enabled: true
+      size: 100Gi
+      storageClass: "fast-ssd"
+    resources:
+      requests:
+        memory: "2Gi"
+        cpu: "1000m"
+      limits:
+        memory: "8Gi"
+        cpu: "4000m"
+    # Initialize multiple databases for different services
+    initdb:
+      scripts:
+        init-databases.sql: |
+          -- ISP Framework databases
+          CREATE DATABASE dotmac_isp;
+          CREATE DATABASE mgmt_platform;
+          CREATE DATABASE dotmac_tenants;
+          CREATE DATABASE dotmac_analytics;
+
+          -- FreeRADIUS database
+          CREATE DATABASE radius;
+
+          -- VOLTHA database
+          CREATE DATABASE voltha;
+
+          -- Grant permissions
+          GRANT ALL PRIVILEGES ON DATABASE dotmac_isp TO postgres;
+          GRANT ALL PRIVILEGES ON DATABASE mgmt_platform TO postgres;
+          GRANT ALL PRIVILEGES ON DATABASE dotmac_tenants TO postgres;
+          GRANT ALL PRIVILEGES ON DATABASE dotmac_analytics TO postgres;
+          GRANT ALL PRIVILEGES ON DATABASE radius TO postgres;
+          GRANT ALL PRIVILEGES ON DATABASE voltha TO postgres;
+
+redis:
+  enabled: true
+  auth:
+    password: "dotmac-redis-2024!"
+  master:
+    persistence:
+      enabled: true
+      size: 50Gi
+    resources:
+      requests:
+        memory: "1Gi"
+        cpu: "500m"
+      limits:
+        memory: "4Gi"
+        cpu: "2000m"
+
+clickhouse:
+  enabled: true
+  auth:
+    password: "dotmac-clickhouse-2024!"
+  persistence:
+    enabled: true
+    size: 200Gi
+  resources:
+    requests:
+      memory: "2Gi"
+      cpu: "1000m"
+    limits:
+      memory: "8Gi"
+      cpu: "4000m"
+
+openbao:
+  enabled: true
+  server:
+    ha:
+      enabled: true
+      replicas: 3
+    dataStorage:
+      enabled: true
+      size: 20Gi
+    resources:
+      requests:
+        memory: "512Mi"
+        cpu: "500m"
+      limits:
+        memory: "2Gi"
+        cpu: "1000m"
+
+# ============================================================================
+# ISP FRAMEWORK APPLICATION
+# ============================================================================
+
+ispFramework:
+  enabled: true
+  replicaCount: 3
+  image:
+    repository: dotmac/isp-framework-complete
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  resources:
+    requests:
+      memory: "1Gi"
+      cpu: "1000m"
+    limits:
+      memory: "4Gi"
+      cpu: "2000m"
+
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 15
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+  service:
+    type: ClusterIP
+    port: 8000
+    targetPort: 8000
+
+  env:
+    ENVIRONMENT: "production"
+    LOG_LEVEL: "INFO"
+    DEBUG: "false"
+
+    # Database connections
+    DATABASE_URL: "postgresql://postgres:dotmac-postgres-2024!@postgresql:5432/dotmac_isp"
+    REDIS_URL: "redis://:dotmac-redis-2024!@redis-master:6379/0"
+    CLICKHOUSE_URL: "clickhouse://default:dotmac-clickhouse-2024!@clickhouse:9000"
+    VAULT_URL: "http://openbao:8200"
+
+    # Service integrations
+    FREERADIUS_ENABLED: "true"
+    FREERADIUS_HOST: "freeradius"
+    FREERADIUS_SECRET: "testing123"
+    FREERADIUS_DB_URL: "postgresql://postgres:dotmac-postgres-2024!@postgresql:5432/radius"
+
+    ANSIBLE_ENABLED: "true"
+    ANSIBLE_VAULT_PASSWORD_FILE: "/etc/ansible/vault_pass"
+
+    VOLTHA_ENABLED: "true"
+    VOLTHA_GRPC_ENDPOINT: "voltha-api:50057"
+    VOLTHA_DB_URL: "postgresql://postgres:dotmac-postgres-2024!@postgresql:5432/voltha"
+
+    # SignOz observability
+    SIGNOZ_ENDPOINT: "signoz-collector:4317"
+    OTEL_RESOURCE_ATTRIBUTES: "service.name=dotmac-isp-framework,service.version=1.0.0"
+
+  healthcheck:
+    enabled: true
+    livenessProbe:
+      httpGet:
+        path: /health
+        port: 8000
+      initialDelaySeconds: 60
+      periodSeconds: 30
+      timeoutSeconds: 10
+    readinessProbe:
+      httpGet:
+        path: /ready
+        port: 8000
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+
+# ============================================================================
+# FREERADIUS INTEGRATION
+# ============================================================================
+
+freeradius:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: dotmac/freeradius-integrated
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+
+  service:
+    type: ClusterIP
+    ports:
+      auth: 1812
+      acct: 1813
+
+  # FreeRADIUS configuration
+  config:
+    clients:
+      - name: "docker-network"
+        ipaddr: "172.16.0.0/12"
+        secret: "testing123"
+        nastype: "other"
+      - name: "kubernetes-pods"
+        ipaddr: "10.244.0.0/16"
+        secret: "testing123"
+        nastype: "other"
+
+    # SQL configuration for PostgreSQL backend
+    sql:
+      driver: "postgresql"
+      server: "postgresql"
+      port: 5432
+      login: "postgres"
+      password: "dotmac-postgres-2024!"
+      radius_db: "radius"
+
+    # Authentication methods
+    modules:
+      - pap
+      - chap
+      - mschap
+      - digest
+      - sql
+      - files
+      - exec
+
+  # Initialize RADIUS database schema
+  initContainers:
+    - name: radius-schema-init
+      image: postgres:15-alpine
+      command:
+        - /bin/bash
+        - -c
+        - |
+          export PGPASSWORD="dotmac-postgres-2024!"
+
+          # Wait for PostgreSQL to be ready
+          until pg_isready -h postgresql -p 5432 -U postgres; do
+            echo "Waiting for PostgreSQL..."
+            sleep 2
+          done
+
+          # Create FreeRADIUS schema
+          psql -h postgresql -U postgres -d radius -f /schema/radius-schema.sql
+      volumeMounts:
+        - name: radius-schema
+          mountPath: /schema
+
+  volumes:
+    - name: radius-schema
+      configMap:
+        name: freeradius-schema
+
+  persistence:
+    enabled: true
+    size: 1Gi
+
+# ============================================================================
+# ANSIBLE AUTOMATION ENGINE
+# ============================================================================
+
+ansible:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: dotmac/ansible-engine
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "500m"
+    limits:
+      memory: "2Gi"
+      cpu: "1000m"
+
+  service:
+    type: ClusterIP
+    port: 8080
+
+  # Ansible configuration
+  config:
+    # Network device collections
+    collections:
+      - cisco.ios
+      - cisco.nxos
+      - arista.eos
+      - juniper.device
+      - ansible.netcommon
+      - community.general
+
+    # Vault configuration for encrypted variables
+    vault:
+      enabled: true
+      passwordFile: "/etc/ansible/vault_pass"
+
+    # Inventory configuration
+    inventory:
+      plugin: "advanced_host_list"
+      keyed_groups:
+        - key: "device_type"
+          prefix: "type"
+        - key: "site"
+          prefix: "site"
+
+    # SSH configuration
+    ssh:
+      hostKeyChecking: false
+      controlMaster: auto
+      controlPersist: "60s"
+      timeout: 30
+
+  # Playbooks storage
+  persistence:
+    playbooks:
+      enabled: true
+      size: 10Gi
+      mountPath: /etc/ansible/playbooks
+    vault:
+      enabled: true
+      size: 1Gi
+      mountPath: /etc/ansible/vault
+
+  # Network device credentials (stored in vault)
+  secrets:
+    vaultPassword: "ansible-vault-password-2024!"
+    devices:
+      cisco:
+        username: "admin"
+        password: "cisco123!"
+      arista:
+        username: "admin"
+        password: "arista123!"
+      juniper:
+        username: "root"
+        password: "juniper123!"
+
+# ============================================================================
+# VOLTHA GPON MANAGEMENT
+# ============================================================================
+
+voltha:
+  enabled: true
+
+  # VOLTHA Core
+  core:
+    replicaCount: 2
+    image:
+      repository: voltha/voltha-core
+      tag: "2.11.0"
+    resources:
+      requests:
+        memory: "1Gi"
+        cpu: "500m"
+      limits:
+        memory: "4Gi"
+        cpu: "2000m"
+    service:
+      type: ClusterIP
+      grpcPort: 50057
+      restPort: 8882
+
+  # VOLTHA API Server
+  api:
+    replicaCount: 2
+    image:
+      repository: voltha/voltha-api-server
+      tag: "2.11.0"
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "250m"
+      limits:
+        memory: "1Gi"
+        cpu: "500m"
+    service:
+      type: ClusterIP
+      grpcPort: 55555
+
+  # OpenOLT Agent (for GPON OLT integration)
+  openolt:
+    enabled: true
+    replicaCount: 1
+    image:
+      repository: voltha/voltha-openolt-adapter
+      tag: "4.4.11"
+    resources:
+      requests:
+        memory: "512Mi"
+        cpu: "500m"
+      limits:
+        memory: "2Gi"
+        cpu: "1000m"
+    service:
+      type: ClusterIP
+      port: 50062
+
+  # OpenONU Agent (for GPON ONU management)
+  openonu:
+    enabled: true
+    replicaCount: 1
+    image:
+      repository: voltha/voltha-openonu-adapter-go
+      tag: "2.11.5"
+    resources:
+      requests:
+        memory: "512Mi"
+        cpu: "500m"
+      limits:
+        memory: "2Gi"
+        cpu: "1000m"
+    service:
+      type: ClusterIP
+      port: 50063
+
+  # ETCD for VOLTHA coordination
+  etcd:
+    enabled: true
+    replicaCount: 3
+    persistence:
+      enabled: true
+      size: 20Gi
+    resources:
+      requests:
+        memory: "512Mi"
+        cpu: "500m"
+      limits:
+        memory: "2Gi"
+        cpu: "1000m"
+
+  # Kafka for VOLTHA messaging
+  kafka:
+    enabled: true
+    replicaCount: 3
+    persistence:
+      enabled: true
+      size: 50Gi
+    resources:
+      requests:
+        memory: "1Gi"
+        cpu: "500m"
+      limits:
+        memory: "4Gi"
+        cpu: "2000m"
+    zookeeper:
+      enabled: true
+      replicaCount: 3
+      persistence:
+        enabled: true
+        size: 10Gi
+
+# ============================================================================
+# SIGNOZ OBSERVABILITY STACK
+# ============================================================================
+
+signoz:
+  enabled: true
+
+  collector:
+    replicaCount: 3
+    image:
+      repository: signoz/signoz-otel-collector
+      tag: "0.88.11"
+    resources:
+      requests:
+        memory: "512Mi"
+        cpu: "500m"
+      limits:
+        memory: "2Gi"
+        cpu: "1000m"
+    service:
+      type: ClusterIP
+      grpcPort: 4317
+      httpPort: 4318
+
+  query:
+    replicaCount: 2
+    image:
+      repository: signoz/query-service
+      tag: "0.40.0"
+    resources:
+      requests:
+        memory: "1Gi"
+        cpu: "500m"
+      limits:
+        memory: "4Gi"
+        cpu: "2000m"
+    service:
+      type: ClusterIP
+      port: 8080
+
+  frontend:
+    replicaCount: 2
+    image:
+      repository: signoz/frontend
+      tag: "0.40.0"
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "250m"
+      limits:
+        memory: "1Gi"
+        cpu: "500m"
+    service:
+      type: ClusterIP
+      port: 3301
+
+# ============================================================================
+# MANAGEMENT PLATFORM
+# ============================================================================
+
+managementPlatform:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: dotmac/management-platform
+    tag: latest
+
+  resources:
+    requests:
+      memory: "1Gi"
+      cpu: "500m"
+    limits:
+      memory: "4Gi"
+      cpu: "2000m"
+
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 8
+    targetCPUUtilizationPercentage: 70
+
+  service:
+    type: ClusterIP
+    port: 8000
+
+  env:
+    ENVIRONMENT: "production"
+    DATABASE_URL: "postgresql://postgres:dotmac-postgres-2024!@postgresql:5432/mgmt_platform"
+    REDIS_URL: "redis://:dotmac-redis-2024!@redis-master:6379/1"
+    ISP_FRAMEWORK_URL: "http://isp-framework:8000"
+
+# ============================================================================
+# BACKGROUND WORKERS
+# ============================================================================
+
+workers:
+  celery:
+    enabled: true
+    worker:
+      replicaCount: 4
+      resources:
+        requests:
+          memory: "512Mi"
+          cpu: "500m"
+        limits:
+          memory: "2Gi"
+          cpu: "1000m"
+    beat:
+      replicaCount: 1
+      resources:
+        requests:
+          memory: "256Mi"
+          cpu: "250m"
+        limits:
+          memory: "1Gi"
+          cpu: "500m"
+
+# ============================================================================
+# INGRESS AND NETWORKING
+# ============================================================================
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+
+  tls:
+    enabled: true
+    secretName: dotmac-tls
+
+  hosts:
+    - host: api.dotmac.local
+      paths:
+        - path: /
+          service: management-platform
+          port: 8000
+    - host: isp.dotmac.local
+      paths:
+        - path: /
+          service: isp-framework
+          port: 8000
+    - host: observability.dotmac.local
+      paths:
+        - path: /
+          service: signoz-frontend
+          port: 3301
+    - host: voltha.dotmac.local
+      paths:
+        - path: /
+          service: voltha-api
+          port: 55555
+
+# ============================================================================
+# SECURITY AND RBAC
+# ============================================================================
+
+security:
+  networkPolicies:
+    enabled: true
+
+  podSecurityPolicy:
+    enabled: true
+
+  rbac:
+    enabled: true
+
+  serviceMonitor:
+    enabled: true
+
+# ============================================================================
+# MONITORING AND ALERTING
+# ============================================================================
+
+monitoring:
+  prometheus:
+    enabled: true
+    server:
+      persistentVolume:
+        enabled: true
+        size: 100Gi
+
+  grafana:
+    enabled: true
+    persistence:
+      enabled: true
+      size: 10Gi
+    adminPassword: "dotmac-grafana-2024!"
+
+# ============================================================================
+# BACKUP AND DISASTER RECOVERY
+# ============================================================================
+
+backup:
+  enabled: true
+  schedule: "0 2 * * *" # Daily at 2 AM
+  retention: "30d"
+
+  s3:
+    enabled: true
+    bucket: "dotmac-backups"
+    region: "us-east-1"
+    accessKey: "" # Set via secret
+    secretKey: "" # Set via secret
+
+  databases:
+    - name: "dotmac_isp"
+      type: "postgresql"
+    - name: "radius"
+      type: "postgresql"
+    - name: "voltha"
+      type: "postgresql"
+
+# ============================================================================
+# TENANT MANAGEMENT
+# ============================================================================
+
+tenantManagement:
+  enabled: true
+
+  multiTenant:
+    enabled: true
+    isolationLevel: "namespace" # namespace, container, or process
+    maxTenantsPerCluster: 100
+
+  # Automatic tenant provisioning
+  autoProvisioning:
+    enabled: true
+    defaultTier: "standard"
+
+  # DNS automation for tenant subdomains
+  dnsAutomation:
+    enabled: true
+    provider: "cloudflare" # cloudflare, route53, or custom
+    baseDomain: "dotmac.com"

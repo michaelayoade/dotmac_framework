@@ -1,23 +1,31 @@
+/**
+ * DRY Jest configuration for Technician Mobile App - extends shared base config
+ * Specialized for mobile testing with memory optimizations
+ */
+
 const nextJest = require('next/jest');
 
 const createJestConfig = nextJest({
   dir: './',
 });
 
+// Import our DRY base configuration
+const baseConfig = require('../../testing/jest.config.base.js');
+
 const customJestConfig = {
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
-  testEnvironment: 'jest-environment-jsdom',
-  moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/src/$1',
-    '^@/components/(.*)$': '<rootDir>/src/components/$1',
-    '^@/lib/(.*)$': '<rootDir>/src/lib/$1',
-    '^@/hooks/(.*)$': '<rootDir>/src/hooks/$1',
-    'lucide-react': 'identity-obj-proxy',
-    'framer-motion': 'identity-obj-proxy',
-    'framer-motion/dist/es/motion': 'identity-obj-proxy',
-    '^dexie$': '<rootDir>/src/__tests__/mocks/dexie.js',
-  },
+  ...baseConfig,
+  displayName: 'Technician Mobile App',
+
+  // Mobile-specific setup files
   setupFiles: ['<rootDir>/src/__tests__/setup/global-setup.ts'],
+  setupFilesAfterEnv: [
+    '<rootDir>/../../testing/setup/jest.setup.ts',
+    '<rootDir>/jest.setup.js'
+  ],
+
+  testPathIgnorePatterns: ['<rootDir>/.next/', '<rootDir>/node_modules/', '<rootDir>/cypress/'],
+
+  // Mobile-optimized coverage with granular thresholds
   collectCoverageFrom: [
     'src/**/*.{js,jsx,ts,tsx}',
     '!src/**/*.d.ts',
@@ -28,6 +36,7 @@ const customJestConfig = {
     '!src/**/*.test.{js,jsx,ts,tsx}',
     '!src/**/*.spec.{js,jsx,ts,tsx}',
   ],
+
   coverageThreshold: {
     global: {
       branches: 75,
@@ -48,39 +57,54 @@ const customJestConfig = {
       statements: 75,
     },
   },
-  testPathIgnorePatterns: ['<rootDir>/.next/', '<rootDir>/node_modules/', '<rootDir>/cypress/'],
-  testMatch: [
-    '<rootDir>/src/**/__tests__/**/*.{js,jsx,ts,tsx}',
-    '<rootDir>/src/**/*.{test,spec}.{js,jsx,ts,tsx}',
-  ],
-  transform: {
-    '^.+\\.(js|jsx|ts|tsx)$': ['babel-jest', { presets: ['next/babel'] }],
+
+  // Merge DRY module mappings with mobile-specific ones
+  moduleNameMapper: {
+    ...baseConfig.moduleNameMapper,
+
+    // App-specific aliases
+    '^@/(.*)$': '<rootDir>/src/$1',
+    '^@/components/(.*)$': '<rootDir>/src/components/$1',
+    '^@/lib/(.*)$': '<rootDir>/src/lib/$1',
+    '^@/hooks/(.*)$': '<rootDir>/src/hooks/$1',
+
+    // DRY package aliases
+    '^@dotmac/(.*)$': '<rootDir>/../../packages/$1/src',
+
+    // Mobile-specific mocks
+    'lucide-react': 'identity-obj-proxy',
+    'framer-motion': 'identity-obj-proxy',
+    'framer-motion/dist/es/motion': 'identity-obj-proxy',
+    '^dexie$': '<rootDir>/src/__tests__/mocks/dexie.js',
   },
-  transformIgnorePatterns: [
-    '/node_modules/',
-    '^.+\\.module\\.(css|sass|scss)$',
-  ],
+
   moduleDirectories: ['node_modules', '<rootDir>/'],
+
   testEnvironmentOptions: {
     url: 'http://localhost:3003',
   },
+
   globals: {
     'ts-jest': {
       tsconfig: 'tsconfig.json',
     },
   },
+
   testTimeout: 15000,
-  maxWorkers: 1, // Reduce memory usage
+
+  // Mobile memory optimizations
+  maxWorkers: 1,
   clearMocks: true,
   restoreMocks: true,
   resetMocks: true,
-  // Memory optimizations
   workerIdleMemoryLimit: '512MB',
   logHeapUsage: true,
-  detectLeaks: false, // Disable leak detection to save memory
-  // Optimize module handling
+  detectLeaks: false,
+
+  // Optimize module handling for mobile libraries
   transformIgnorePatterns: [
     'node_modules/(?!(framer-motion|lucide-react)/)',
+    '^.+\\.module\\.(css|sass|scss)$',
   ],
 };
 

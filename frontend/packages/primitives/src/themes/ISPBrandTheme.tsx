@@ -6,13 +6,7 @@
 'use client';
 
 import { createContext, useContext, ReactNode } from 'react';
-import { type ClassValue, clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-
-// Local cn utility
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+import { cn } from '../utils/cn';
 
 // Brand Colors - ISP specific color palette
 export const ISPColors = {

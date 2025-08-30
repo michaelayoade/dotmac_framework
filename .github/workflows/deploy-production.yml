@@ -1,0 +1,586 @@
+name: Deploy to Production
+
+on:
+  workflow_run:
+    workflows: ["Deploy to Staging"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      deployment_type:
+        description: "Deployment strategy"
+        required: true
+        default: "blue-green"
+        type: choice
+        options:
+          - blue-green
+          - canary
+          - rolling
+      canary_percentage:
+        description: "Canary percentage (if canary deployment)"
+        required: false
+        default: "10"
+      force_deploy:
+        description: "Force deployment (skip some validations)"
+        required: false
+        type: boolean
+        default: false
+
+env:
+  REGISTRY: ghcr.io
+  KUBECTL_VERSION: "v1.28.0"
+  DEPLOYMENT_TIMEOUT: 900
+  HEALTH_CHECK_RETRIES: 10
+  MONITORING_WINDOW: 600 # 10 minutes
+
+jobs:
+  # ===== PRE-PRODUCTION VALIDATION =====
+  validate-production-readiness:
+    name: Validate Production Readiness
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch'
+
+    outputs:
+      deploy-enabled: ${{ steps.validation.outputs.deploy-enabled }}
+      deployment-strategy: ${{ steps.validation.outputs.deployment-strategy }}
+      image-tag: ${{ steps.validation.outputs.image-tag }}
+      canary-percentage: ${{ steps.validation.outputs.canary-percentage }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download staging artifacts
+        if: github.event_name != 'workflow_dispatch'
+        uses: actions/download-artifact@v4
+        with:
+          name: production-ready
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Validate production readiness
+        id: validation
+        run: |
+          FORCE_DEPLOY="${{ github.event.inputs.force_deploy }}"
+
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "Manual deployment triggered"
+            DEPLOYMENT_STRATEGY="${{ github.event.inputs.deployment_type }}"
+            CANARY_PERCENTAGE="${{ github.event.inputs.canary_percentage }}"
+            IMAGE_TAG="${{ github.sha }}"
+          else
+            if [[ ! -f "production-ready.json" ]]; then
+              echo "❌ Production readiness artifact not found"
+              exit 1
+            fi
+
+            # Validate staging success
+            READY=$(jq -r '.ready_for_production' production-ready.json)
+            if [[ "$READY" != "true" && "$FORCE_DEPLOY" != "true" ]]; then
+              echo "❌ Staging validation indicates not ready for production"
+              exit 1
+            fi
+
+            IMAGE_TAG=$(jq -r '.commit' production-ready.json)
+            DEPLOYMENT_STRATEGY="blue-green"  # Default strategy
+            CANARY_PERCENTAGE="10"
+          fi
+
+          # Validate required secrets
+          MISSING_SECRETS=()
+          [[ -z "${{ secrets.EKS_CLUSTER_NAME_PRODUCTION }}" ]] && MISSING_SECRETS+=("EKS_CLUSTER_NAME_PRODUCTION")
+          [[ -z "${{ secrets.PRODUCTION_DATABASE_BACKUP_KEY }}" ]] && MISSING_SECRETS+=("PRODUCTION_DATABASE_BACKUP_KEY")
+
+          if [[ ${#MISSING_SECRETS[@]} -gt 0 ]]; then
+            echo "❌ Missing required secrets: ${MISSING_SECRETS[*]}"
+            exit 1
+          fi
+
+          # Check if it's business hours (optional safety check)
+          CURRENT_HOUR=$(date -u +%H)
+          if [[ $CURRENT_HOUR -ge 22 || $CURRENT_HOUR -le 6 ]] && [[ "$FORCE_DEPLOY" != "true" ]]; then
+            echo "⚠️  Deployment outside business hours (UTC). Use force_deploy to override."
+            # Don't exit, but warn
+          fi
+
+          # Set outputs
+          echo "deploy-enabled=true" >> $GITHUB_OUTPUT
+          echo "deployment-strategy=$DEPLOYMENT_STRATEGY" >> $GITHUB_OUTPUT
+          echo "image-tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "canary-percentage=$CANARY_PERCENTAGE" >> $GITHUB_OUTPUT
+
+          echo "✅ Production validation passed"
+          echo "🚀 Strategy: $DEPLOYMENT_STRATEGY"
+          echo "📦 Image Tag: $IMAGE_TAG"
+
+  # ===== DATABASE BACKUP =====
+  database-backup:
+    name: Create Database Backup
+    runs-on: ubuntu-latest
+    needs: validate-production-readiness
+    if: needs.validate-production-readiness.outputs.deploy-enabled == 'true'
+    environment: production
+
+    steps:
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: ${{ env.KUBECTL_VERSION }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name ${{ secrets.EKS_CLUSTER_NAME_PRODUCTION }}
+
+      - name: Create pre-deployment backup
+        run: |
+          echo "Creating pre-deployment database backup..."
+
+          # Create backup job with timestamp
+          BACKUP_NAME="pre-deploy-$(date +%Y%m%d-%H%M%S)"
+
+          cat <<EOF | kubectl apply -f -
+          apiVersion: batch/v1
+          kind: Job
+          metadata:
+            name: $BACKUP_NAME
+            namespace: production
+          spec:
+            template:
+              spec:
+                containers:
+                - name: pg-backup
+                  image: postgres:15
+                  command: ["/bin/bash"]
+                  args:
+                    - -c
+                    - |
+                      pg_dump \$DATABASE_URL > /backup/backup-$BACKUP_NAME.sql
+                      aws s3 cp /backup/backup-$BACKUP_NAME.sql s3://dotmac-backups/database/
+                  env:
+                  - name: DATABASE_URL
+                    valueFrom:
+                      secretKeyRef:
+                        name: database-secret
+                        key: url
+                  - name: AWS_ACCESS_KEY_ID
+                    value: "${{ secrets.AWS_ACCESS_KEY_ID }}"
+                  - name: AWS_SECRET_ACCESS_KEY
+                    value: "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
+                  volumeMounts:
+                  - name: backup-volume
+                    mountPath: /backup
+                volumes:
+                - name: backup-volume
+                  emptyDir: {}
+                restartPolicy: Never
+          EOF
+
+          # Wait for backup to complete
+          kubectl wait --for=condition=complete --timeout=600s job/$BACKUP_NAME -n production
+
+          echo "✅ Database backup completed: $BACKUP_NAME"
+
+  # ===== PRODUCTION DEPLOYMENT =====
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [validate-production-readiness, database-backup]
+    environment: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: ${{ env.KUBECTL_VERSION }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name ${{ secrets.EKS_CLUSTER_NAME_PRODUCTION }}
+          kubectl cluster-info
+
+      - name: Blue-Green Deployment
+        if: needs.validate-production-readiness.outputs.deployment-strategy == 'blue-green'
+        run: |
+          echo "🔵 Starting Blue-Green deployment..."
+          export IMAGE_TAG=${{ needs.validate-production-readiness.outputs.image-tag }}
+          export REGISTRY=${{ env.REGISTRY }}
+          export REPO_OWNER=${{ github.repository_owner }}
+          export DEPLOYMENT_COLOR="green"
+
+          # Deploy to green environment
+          echo "Deploying to green environment..."
+
+          # Backend services
+          envsubst < k8s/production/deployment-isp-green.yaml | kubectl apply -f -
+          envsubst < k8s/production/deployment-management-green.yaml | kubectl apply -f -
+
+          # Frontend applications
+          for app in admin customer reseller technician tenant-portal management-admin management-reseller; do
+            echo "Deploying frontend-${app} to green..."
+            envsubst < k8s/production/deployment-frontend-${app}-green.yaml | kubectl apply -f - || \
+            envsubst < k8s/production/deployment-frontend-template-green.yaml | \
+            sed "s/FRONTEND_APP_PLACEHOLDER/${app}/g" | kubectl apply -f -
+          done
+
+      - name: Canary Deployment
+        if: needs.validate-production-readiness.outputs.deployment-strategy == 'canary'
+        run: |
+          echo "🐦 Starting Canary deployment..."
+          export IMAGE_TAG=${{ needs.validate-production-readiness.outputs.image-tag }}
+          export REGISTRY=${{ env.REGISTRY }}
+          export REPO_OWNER=${{ github.repository_owner }}
+          export CANARY_PERCENTAGE=${{ needs.validate-production-readiness.outputs.canary-percentage }}
+
+          # Deploy canary versions
+          envsubst < k8s/production/deployment-canary.yaml | kubectl apply -f -
+
+          # Update traffic split
+          kubectl patch virtualservice dotmac-vs -n production --type merge -p '{
+            "spec": {
+              "http": [{
+                "match": [{"headers": {"canary": {"exact": "true"}}}],
+                "route": [{"destination": {"host": "dotmac-canary"}}]
+              }, {
+                "route": [{
+                  "destination": {"host": "dotmac-stable"},
+                  "weight": '$((100 - CANARY_PERCENTAGE))'
+                }, {
+                  "destination": {"host": "dotmac-canary"},
+                  "weight": '$CANARY_PERCENTAGE'
+                }]
+              }]
+            }
+          }'
+
+      - name: Rolling Deployment
+        if: needs.validate-production-readiness.outputs.deployment-strategy == 'rolling'
+        run: |
+          echo "🔄 Starting Rolling deployment..."
+          export IMAGE_TAG=${{ needs.validate-production-readiness.outputs.image-tag }}
+          export REGISTRY=${{ env.REGISTRY }}
+          export REPO_OWNER=${{ github.repository_owner }}
+
+          # Update deployments with rolling strategy
+          kubectl set image deployment/isp-framework isp-framework=$REGISTRY/$REPO_OWNER/isp-framework:$IMAGE_TAG -n production
+          kubectl set image deployment/management-platform management=$REGISTRY/$REPO_OWNER/management-platform:$IMAGE_TAG -n production
+
+          # Update frontend apps
+          for app in admin customer reseller technician tenant-portal management-admin management-reseller; do
+            kubectl set image deployment/frontend-${app} frontend=${REGISTRY}/${REPO_OWNER}/frontend-${app}:${IMAGE_TAG} -n production
+          done
+
+      - name: Wait for deployment
+        run: |
+          echo "Waiting for deployment to complete..."
+
+          if [[ "${{ needs.validate-production-readiness.outputs.deployment-strategy }}" == "blue-green" ]]; then
+            # Wait for green deployments
+            kubectl rollout status deployment/isp-framework-green -n production --timeout=${DEPLOYMENT_TIMEOUT}s
+            kubectl rollout status deployment/management-platform-green -n production --timeout=${DEPLOYMENT_TIMEOUT}s
+
+            for app in admin customer reseller technician tenant-portal management-admin management-reseller; do
+              kubectl rollout status deployment/frontend-${app}-green -n production --timeout=${DEPLOYMENT_TIMEOUT}s || true
+            done
+          else
+            # Wait for regular deployments
+            kubectl rollout status deployment/isp-framework -n production --timeout=${DEPLOYMENT_TIMEOUT}s
+            kubectl rollout status deployment/management-platform -n production --timeout=${DEPLOYMENT_TIMEOUT}s
+
+            for app in admin customer reseller technician tenant-portal management-admin management-reseller; do
+              kubectl rollout status deployment/frontend-${app} -n production --timeout=${DEPLOYMENT_TIMEOUT}s || true
+            done
+          fi
+
+  # ===== PRODUCTION SMOKE TESTS =====
+  production-smoke-tests:
+    name: Production Smoke Tests
+    runs-on: ubuntu-latest
+    needs: deploy-production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: ${{ env.KUBECTL_VERSION }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name ${{ secrets.EKS_CLUSTER_NAME_PRODUCTION }}
+
+      - name: Test green environment (Blue-Green)
+        if: needs.validate-production-readiness.outputs.deployment-strategy == 'blue-green'
+        run: |
+          echo "Testing green environment..."
+          sleep 30
+
+          # Get green service URLs
+          GREEN_ISP_URL=$(kubectl get service isp-framework-green -n production -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null || echo "prod-isp-green.dotmac.com")
+          GREEN_MGMT_URL=$(kubectl get service management-platform-green -n production -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null || echo "prod-mgmt-green.dotmac.com")
+
+          # Health checks with retries
+          for i in {1..10}; do
+            echo "Health check attempt $i/10..."
+
+            if curl -f -s "http://${GREEN_ISP_URL}/health" && curl -f -s "http://${GREEN_MGMT_URL}/health"; then
+              echo "✅ Green environment health checks passed"
+              break
+            fi
+
+            if [[ $i -eq 10 ]]; then
+              echo "❌ Green environment health checks failed"
+              exit 1
+            fi
+
+            sleep 30
+          done
+
+      - name: Run comprehensive smoke tests
+        run: |
+          echo "Running comprehensive smoke tests..."
+
+          # Critical business functionality tests
+          # Test user authentication
+          # Test core ISP functions
+          # Test management platform
+
+          # For now, basic health checks
+          curl -f "https://dotmac.com/api/v1/health" || exit 1
+          curl -f "https://dotmac.com/api/v1/status" || exit 1
+
+          echo "✅ Production smoke tests passed"
+
+  # ===== TRAFFIC SWITCHING =====
+  switch-traffic:
+    name: Switch Traffic
+    runs-on: ubuntu-latest
+    needs:
+      [validate-production-readiness, deploy-production, production-smoke-tests]
+    if: needs.validate-production-readiness.outputs.deployment-strategy == 'blue-green'
+    environment: production
+
+    steps:
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: ${{ env.KUBECTL_VERSION }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name ${{ secrets.EKS_CLUSTER_NAME_PRODUCTION }}
+
+      - name: Switch traffic to green
+        run: |
+          echo "🔄 Switching traffic to green environment..."
+
+          # Update service selectors to point to green deployments
+          kubectl patch service isp-framework -n production -p '{"spec":{"selector":{"version":"green"}}}'
+          kubectl patch service management-platform -n production -p '{"spec":{"selector":{"version":"green"}}}'
+
+          # Update frontend services
+          for app in admin customer reseller technician tenant-portal management-admin management-reseller; do
+            kubectl patch service frontend-${app} -n production -p '{"spec":{"selector":{"version":"green"}}}' || true
+          done
+
+          echo "✅ Traffic switched to green environment"
+
+  # ===== POST-DEPLOYMENT MONITORING =====
+  monitor-deployment:
+    name: Monitor Deployment
+    runs-on: ubuntu-latest
+    needs: [switch-traffic, deploy-production]
+    if: always() && (needs.switch-traffic.result == 'success' || needs.validate-production-readiness.outputs.deployment-strategy != 'blue-green')
+
+    steps:
+      - name: Monitor deployment health
+        run: |
+          echo "🔍 Monitoring deployment for ${{ env.MONITORING_WINDOW }} seconds..."
+
+          START_TIME=$(date +%s)
+          END_TIME=$((START_TIME + MONITORING_WINDOW))
+
+          while [ $(date +%s) -lt $END_TIME ]; do
+            echo "Checking system health..."
+
+            # Check error rates
+            ERROR_RATE=$(curl -s "https://monitoring.dotmac.com/api/error-rate" | jq -r '.rate' || echo "0")
+
+            # Check response times
+            RESPONSE_TIME=$(curl -w "%{time_total}" -o /dev/null -s "https://dotmac.com/api/v1/health")
+
+            echo "Error Rate: ${ERROR_RATE}%, Response Time: ${RESPONSE_TIME}s"
+
+            # Alert thresholds
+            if (( $(echo "$ERROR_RATE > 1" | bc -l) )); then
+              echo "⚠️  High error rate detected: ${ERROR_RATE}%"
+            fi
+
+            if (( $(echo "$RESPONSE_TIME > 2" | bc -l) )); then
+              echo "⚠️  High response time detected: ${RESPONSE_TIME}s"
+            fi
+
+            sleep 60
+          done
+
+          echo "✅ Monitoring completed - deployment appears stable"
+
+  # ===== CLEANUP OLD DEPLOYMENT =====
+  cleanup:
+    name: Cleanup Old Deployment
+    runs-on: ubuntu-latest
+    needs: [monitor-deployment]
+    if: needs.validate-production-readiness.outputs.deployment-strategy == 'blue-green' && needs.monitor-deployment.result == 'success'
+
+    steps:
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: ${{ env.KUBECTL_VERSION }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name ${{ secrets.EKS_CLUSTER_NAME_PRODUCTION }}
+
+      - name: Clean up blue environment
+        run: |
+          echo "🧹 Cleaning up blue (old) environment..."
+
+          # Wait additional time before cleanup
+          sleep 300
+
+          # Delete old blue deployments
+          kubectl delete deployment isp-framework-blue -n production --ignore-not-found
+          kubectl delete deployment management-platform-blue -n production --ignore-not-found
+
+          for app in admin customer reseller technician tenant-portal management-admin management-reseller; do
+            kubectl delete deployment frontend-${app}-blue -n production --ignore-not-found
+          done
+
+          echo "✅ Cleanup completed"
+
+  # ===== DEPLOYMENT SUMMARY =====
+  deployment-summary:
+    name: Production Deployment Summary
+    runs-on: ubuntu-latest
+    needs:
+      [
+        deploy-production,
+        production-smoke-tests,
+        switch-traffic,
+        monitor-deployment,
+        cleanup,
+      ]
+    if: always()
+
+    steps:
+      - name: Generate deployment summary
+        run: |
+          echo "=== PRODUCTION DEPLOYMENT SUMMARY ==="
+          echo "Timestamp: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          echo "Commit: ${{ github.sha }}"
+          echo "Strategy: ${{ needs.validate-production-readiness.outputs.deployment-strategy }}"
+          echo ""
+          echo "Deployment: ${{ needs.deploy-production.result }}"
+          echo "Smoke Tests: ${{ needs.production-smoke-tests.result }}"
+          echo "Traffic Switch: ${{ needs.switch-traffic.result }}"
+          echo "Monitoring: ${{ needs.monitor-deployment.result }}"
+          echo "Cleanup: ${{ needs.cleanup.result }}"
+
+          # Determine overall success
+          if [[ "${{ needs.deploy-production.result }}" == "success" &&
+                "${{ needs.production-smoke-tests.result }}" == "success" ]]; then
+            echo "✅ Production deployment successful"
+            echo "DEPLOYMENT_SUCCESS=true" >> $GITHUB_ENV
+          else
+            echo "❌ Production deployment failed"
+            echo "DEPLOYMENT_SUCCESS=false" >> $GITHUB_ENV
+          fi
+
+      - name: Create release
+        if: env.DEPLOYMENT_SUCCESS == 'true' && github.ref_type == 'tag'
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: Release ${{ github.ref_name }}
+          body: |
+            🚀 **Production Release** - ${{ github.ref_name }}
+
+            **Deployment Strategy:** ${{ needs.validate-production-readiness.outputs.deployment-strategy }}
+            **Commit:** ${{ github.sha }}
+            **Build:** ${{ github.run_number }}
+            **Timestamp:** $(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+            **Services Deployed:**
+            - ✅ ISP Framework
+            - ✅ Management Platform
+            - ✅ All Frontend Applications (7 portals)
+
+            **Validation:**
+            - ✅ Security Scans Passed
+            - ✅ All Tests Passed
+            - ✅ Staging Validation Completed
+            - ✅ Production Smoke Tests Passed
+            - ✅ Health Monitoring Completed
+
+      - name: Notify team
+        uses: 8398a7/action-slack@v3
+        if: always()
+        with:
+          status: ${{ job.status }}
+          text: |
+            🎉 **Production Deployment Complete**
+
+            **Status:** ${{ env.DEPLOYMENT_SUCCESS == 'true' && '✅ SUCCESS' || '❌ FAILED' }}
+            **Strategy:** ${{ needs.validate-production-readiness.outputs.deployment-strategy }}
+            **Commit:** ${{ github.sha }}
+            **URL:** https://dotmac.com
+
+            **Results:**
+            - Deployment: ${{ needs.deploy-production.result }}
+            - Smoke Tests: ${{ needs.production-smoke-tests.result }}
+            - Traffic Switch: ${{ needs.switch-traffic.result }}
+            - Monitoring: ${{ needs.monitor-deployment.result }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

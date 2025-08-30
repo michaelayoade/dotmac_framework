@@ -5,8 +5,8 @@ import {
 	usePartnerDataWithErrorBoundary,
 	usePortalAuth,
 } from "@dotmac/headless";
-import { ErrorBoundary } from "@dotmac/primitives";
-import { Badge, Button, Card, Input } from "@dotmac/styled-components";
+import { ErrorBoundary } from "@dotmac/providers";
+import { Badge, Button, Card, Input } from "@dotmac/ui";
 import {
 	AlertCircle,
 	Calendar,

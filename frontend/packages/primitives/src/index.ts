@@ -12,35 +12,18 @@ export { clsx } from 'clsx';
 // Export what's actually implemented
 export * from './composition';
 export * from './data-display';
-// Export table components explicitly
-export { 
-  Table, 
-  TableCell, 
-  TableFooter, 
-  TableHeader, 
-  TableRow, 
-  TableBody,
-  TableCaption,
-  TableHead
-} from './data-display/TableComponents';
+export * from './dashboard';
+export * from './charts';
+export * from './maps';
+export * from './visualizations';
 export * from './error';
 export * from './feedback';
 export * from './forms';
 export * from './layout';
-// Export Modal explicitly
 export { VirtualizedTable } from './performance/VirtualizedTable';
-export { Modal } from './layout/Modal';
 export * from './navigation';
-// Export navigation hooks specifically
-export { useNavigation } from './navigation/Navigation';
-// Export toast hooks from notification system
-export { useToast } from './feedback/NotificationSystem';
-// Export modal hooks
-export { useModal, useModalContext } from './feedback/hooks';
-// Export notification provider
-export { NotificationProvider } from './feedback/NotificationSystem';
 export * from './theming';
-export * from './types';
+export { UniversalThemeProvider, useUniversalTheme, ThemeAware, PortalBrand } from './themes/UniversalTheme';
 export * from './ui';
 // Export utils excluding conflicting form utilities
 export * from './utils/bundle-optimization';
@@ -59,18 +42,6 @@ export * from './indicators/StatusIndicators';
 // Export ErrorBoundary explicitly to avoid conflicts with error/ErrorBoundary
 export { ErrorBoundary as ComponentErrorBoundary } from './components/ErrorBoundary';
 export * from './utils/security';
-// Export a11y utilities with specific exports to avoid conflicts
-export { 
-  announceToScreenReader, 
-  generateChartDescription,
-  useKeyboardNavigation as useA11yKeyboardNavigation,
-  ARIA_ROLES as ARIA_LABELS,
-  ARIA_ROLES as A11Y_ROLES,
-  ARIA_ROLES
-} from './utils/a11y';
-export * from './utils/a11y-testing';
-export * from './types/chart';
-export * from './types/status';
 export * from './animations/Animations';
 export * from './themes/ISPBrandTheme';
 export * from './security/CSRFProtection';

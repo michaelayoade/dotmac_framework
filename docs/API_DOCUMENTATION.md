@@ -5,11 +5,106 @@
 The DotMac API is a RESTful service built with FastAPI that provides comprehensive ISP management capabilities. All endpoints require authentication unless specified otherwise.
 
 ## Base URL
+
 ```
 Production: https://api.dotmac.cloud
 Staging: https://staging-api.dotmac.cloud
 Development: http://localhost:8000
 ```
+
+## Health & Monitoring Endpoints
+
+The platform provides Kubernetes-compatible health probes for container lifecycle management:
+
+### Liveness Probe
+
+```http
+GET /health/live
+```
+
+**Description:** Indicates if the container should be restarted by Kubernetes.
+
+**Response (Healthy):**
+
+```json
+{
+  "status": "healthy",
+  "service": "DotMac ISP Framework",
+  "version": "1.0.0",
+  "uptime": 3600.5,
+  "timestamp": 1703001600.0
+}
+```
+
+**Response (Unhealthy):**
+
+```json
+{
+  "status": "unhealthy",
+  "service": "DotMac ISP Framework",
+  "reason": "health_check_failed",
+  "failed_checks": ["database", "observability"],
+  "timestamp": 1703001600.0
+}
+```
+
+### Readiness Probe
+
+```http
+GET /health/ready
+```
+
+**Description:** Indicates if the service can receive traffic.
+
+**Response (Ready):**
+
+```json
+{
+  "status": "ready",
+  "service": "DotMac ISP Framework",
+  "version": "1.0.0",
+  "timestamp": 1703001600.0
+}
+```
+
+**Response (Not Ready):**
+
+```json
+{
+  "status": "not_ready",
+  "service": "DotMac ISP Framework",
+  "reason": "startup_incomplete",
+  "timestamp": 1703001600.0
+}
+```
+
+### Startup Probe
+
+```http
+GET /health/startup
+```
+
+**Description:** Indicates if the application has completed initialization.
+
+**Response (Started):**
+
+```json
+{
+  "status": "started",
+  "service": "DotMac ISP Framework",
+  "version": "1.0.0",
+  "startup_duration": 5.2,
+  "timestamp": 1703001600.0
+}
+```
+
+### Legacy Health Check
+
+```http
+GET /health
+```
+
+**Description:** Backwards compatibility endpoint (same as `/health/live`).
 
 ## Authentication
 
@@ -31,6 +126,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "access_token": "eyJhbGciOiJIUzI1NiIs...",
@@ -55,6 +151,7 @@ Authorization: Bearer {refresh_token}
 ### Request Headers
 
 All authenticated requests must include:
+
 ```http
 Authorization: Bearer {access_token}
 X-Tenant-ID: tenant_001
@@ -72,6 +169,7 @@ X-Request-ID: unique_request_id
 | WebSocket | 1 connection | Per user |
 
 Rate limit headers in response:
+
 ```http
 X-RateLimit-Limit: 100
 X-RateLimit-Remaining: 95
@@ -114,6 +212,7 @@ GET /api/v1/customers
 ```
 
 **Query Parameters:**
+
 - `page` (int): Page number (default: 1)
 - `limit` (int): Items per page (default: 20, max: 100)
 - `search` (string): Search term
@@ -121,6 +220,7 @@ GET /api/v1/customers
 - `sort` (string): Sort field (e.g., `created_at`, `-name`)
 
 **Response:**
+
 ```json
 {
   "data": [
@@ -152,6 +252,7 @@ GET /api/v1/customers/{customer_id}
 ```
 
 **Response:**
+
 ```json
 {
   "data": {
@@ -231,6 +332,7 @@ GET /api/v1/services
 ```
 
 **Query Parameters:**
+
 - `customer_id` (string): Filter by customer
 - `type` (enum): `internet`, `voip`, `iptv`, `bundle`
 - `status` (enum): `active`, `suspended`, `terminated`
@@ -259,6 +361,7 @@ Content-Type: application/json
 ### Service Actions
 
 #### Suspend Service
+
 ```http
 POST /api/v1/services/{service_id}/suspend
 Content-Type: application/json
@@ -270,11 +373,13 @@ Content-Type: application/json
 ```
 
 #### Resume Service
+
 ```http
 POST /api/v1/services/{service_id}/resume
 ```
 
 #### Upgrade/Downgrade Service
+
 ```http
 POST /api/v1/services/{service_id}/change-plan
 Content-Type: application/json
@@ -294,6 +399,7 @@ GET /api/v1/invoices
 ```
 
 **Query Parameters:**
+
 - `customer_id` (string): Filter by customer
 - `status` (enum): `draft`, `sent`, `paid`, `overdue`, `cancelled`
 - `date_from` (date): Start date filter
@@ -347,11 +453,13 @@ DELETE /api/v1/payment-methods/{method_id}
 ### IP Address Management
 
 #### List IP Pools
+
 ```http
 GET /api/v1/network/ip-pools
 ```
 
 #### Allocate IP Address
+
 ```http
 POST /api/v1/network/ip-allocations
 Content-Type: application/json
@@ -365,6 +473,7 @@ Content-Type: application/json
 ```
 
 #### Release IP Address
+
 ```http
 DELETE /api/v1/network/ip-allocations/{allocation_id}
 ```
@@ -372,11 +481,13 @@ DELETE /api/v1/network/ip-allocations/{allocation_id}
 ### Equipment Management
 
 #### List Equipment
+
 ```http
 GET /api/v1/network/equipment
 ```
 
 #### Register Equipment
+
 ```http
 POST /api/v1/network/equipment
 Content-Type: application/json
@@ -409,6 +520,7 @@ GET /api/v1/tickets
 ```
 
 **Query Parameters:**
+
 - `status` (enum): `open`, `in_progress`, `resolved`, `closed`
 - `priority` (enum): `low`, `medium`, `high`, `critical`
 - `assigned_to` (string): Filter by assigned user
@@ -495,7 +607,7 @@ ws.onopen = () => {
     type: 'auth',
     token: 'your_jwt_token'
   }));
-  
+
   ws.send(JSON.stringify({
     type: 'subscribe',
     channels: ['tickets', 'network_status']
@@ -572,6 +684,7 @@ GET /api/v1/customers?page=2&limit=50
 ```
 
 **Response Headers:**
+
 ```http
 X-Total-Count: 500
 X-Page-Count: 10
@@ -592,6 +705,7 @@ GET /api/v1/customers?filter[status]=active&filter[created_at][gte]=2024-01-01
 ```http
 GET /api/v1/customers?sort=-created_at,name
 ```
+
 - Prefix with `-` for descending order
 - Multiple fields separated by comma
 
@@ -643,10 +757,12 @@ def verify_webhook(payload: str, signature: str, secret: str) -> bool:
 ## API Versioning
 
 The API uses URL versioning:
+
 - Current: `/api/v1/`
 - Previous: `/api/v0/` (deprecated)
 
 Version sunset notice provided via:
+
 ```http
 Sunset: Sat, 31 Dec 2024 23:59:59 GMT
 Deprecation: true
@@ -702,6 +818,7 @@ client.invoices.create({
 ### Sandbox Environment
 
 Test endpoint: `https://sandbox.dotmac.cloud`
+
 - Full API functionality
 - Data reset daily
 - Test credit cards accepted

@@ -6,6 +6,7 @@
 'use client';
 
 import React, { createContext, type ReactNode, useContext, useEffect, useState } from 'react';
+import { secureStorage } from '@dotmac/headless';
 import {
   networkMonitor,
   pwaInstaller,
@@ -124,11 +125,13 @@ function PWAInstallBanner({ onInstall }: PWAInstallBannerProps) {
   const [isInstalling, setIsInstalling] = useState(false);
 
   useEffect(() => {
-    // Check if user has dismissed the banner before
-    const dismissed = localStorage.getItem('pwa-install-dismissed');
-    if (dismissed === 'true') {
-      setIsDismissed(true);
-    }
+    // Check if user has dismissed the banner before (secure, non-sensitive storage)
+    (async () => {
+      const dismissed = await secureStorage.getItem<boolean>('pwa-install-dismissed');
+      if (dismissed === true) {
+        setIsDismissed(true);
+      }
+    })();
   }, []);
 
   const handleInstall = async () => {
@@ -145,7 +148,8 @@ function PWAInstallBanner({ onInstall }: PWAInstallBannerProps) {
 
   const handleDismiss = () => {
     setIsDismissed(true);
-    localStorage.setItem('pwa-install-dismissed', 'true');
+    // Persist dismissal with TTL (30 days)
+    void secureStorage.setItem('pwa-install-dismissed', true, { ttl: 30 * 24 * 60 * 60 * 1000 });
   };
 
   if (isDismissed) return null;

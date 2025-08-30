@@ -1,0 +1,1 @@
+export { useCommunicationSystem } from './useCommunicationSystem';

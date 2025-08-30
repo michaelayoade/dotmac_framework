@@ -43,7 +43,9 @@
       "@dotmac/testing": ["./packages/testing/src"],
       "@dotmac/testing/*": ["./packages/testing/src/*"],
       "@dotmac/security": ["./packages/security/src"],
-      "@dotmac/security/*": ["./packages/security/src/*"]
+      "@dotmac/security/*": ["./packages/security/src/*"],
+      "@dotmac/monitoring": ["./packages/monitoring/src"],
+      "@dotmac/monitoring/*": ["./packages/monitoring/src/*"]
     },
     "outDir": "dist",
     "rootDir": ".",
@@ -92,6 +94,9 @@
     },
     {
       "path": "./packages/security"
+    },
+    {
+      "path": "./packages/monitoring"
     }
   ]
 }

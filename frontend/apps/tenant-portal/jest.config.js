@@ -12,16 +12,17 @@ const createJestConfig = nextJest({
 const customJestConfig = {
   testEnvironment: 'jsdom',
   setupFilesAfterEnv: ['<rootDir>/src/__tests__/setup.ts'],
-  
+
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
+    '^@dotmac/(.*)$': '<rootDir>/../../packages/$1/src',
   },
-  
+
   testMatch: [
     '<rootDir>/src/**/__tests__/**/*.{test,spec}.{js,jsx,ts,tsx}',
     '<rootDir>/src/**/*.{test,spec}.{js,jsx,ts,tsx}',
   ],
-  
+
   testPathIgnorePatterns: [
     '<rootDir>/.next/',
     '<rootDir>/node_modules/',
@@ -33,7 +34,7 @@ const customJestConfig = {
     '<rootDir>/src/__tests__/e2e/global-teardown.ts',
     '<rootDir>/src/__tests__/mocks/',
   ],
-  
+
   collectCoverage: false,
   testTimeout: 10000,
   verbose: true,

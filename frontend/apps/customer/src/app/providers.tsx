@@ -1,40 +1,61 @@
 'use client';
 
-import { NotificationProvider } from '@dotmac/primitives';
-import { ThemeProvider } from '@dotmac/styled-components';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { PortalProviderFactory, PackageIntegrations } from '@dotmac/portal-components';
+import { QueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 import type { ReactNode } from 'react';
-
-import { AuthProvider } from '../components/auth/AuthProvider';
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      retry: (failureCount, error: unknown) => {
-        if (error?.status === 401 || error?.status === 403) {
-          return false;
-        }
-        return failureCount < 3;
-      },
-    },
-  },
-});
 
 interface ProvidersProps {
   children: ReactNode;
 }
 
 export function Providers({ children }: ProvidersProps) {
+  const [queryClient] = useState(() => new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 5 * 60 * 1000, // 5 minutes
+        retry: (failureCount, error: unknown) => {
+          if ((error as any)?.status === 401 || (error as any)?.status === 403) {
+            return false;
+          }
+          return failureCount < 3;
+        },
+      },
+    },
+  }));
+
+  const tenantId = process.env.NEXT_PUBLIC_TENANT_ID || 'customer';
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider portal="customer">
-        <AuthProvider>
-          <NotificationProvider maxNotifications={3} defaultDuration={4000}>
-            {children}
-          </NotificationProvider>
-        </AuthProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
+    <PortalProviderFactory
+      config={{
+        portal: 'customer',
+        authVariant: 'customer',
+        apiBaseUrl,
+        queryClient,
+        features: {
+          notifications: true,
+          realtime: false,
+          analytics: false,
+          tenantManagement: true,
+          errorHandling: true,
+          toasts: true,
+          devtools: process.env.NODE_ENV === 'development'
+        }
+      }}
+      customProviders={
+        <PackageIntegrations
+          tenantId={tenantId}
+          enableNetwork={false} // Customers don't need network management
+          enableAssets={false}  // Customers don't need asset management
+          enableJourneys={true} // Enable journey tracking for customer experience
+        >
+          {children}
+        </PackageIntegrations>
+      }
+    >
+      {children}
+    </PortalProviderFactory>
   );
 }

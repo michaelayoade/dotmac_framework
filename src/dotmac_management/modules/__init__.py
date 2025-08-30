@@ -1,0 +1,3 @@
+"""
+Management Platform modules package.
+"""

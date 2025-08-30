@@ -16,7 +16,7 @@ import {
   SearchIcon,
   FilterIcon,
 } from 'lucide-react';
-import { StatusBadge } from '@dotmac/primitives/indicators/StatusIndicators';
+import { StatusBadge } from '@dotmac/providers/indicators/StatusIndicators';
 import type { Invoice } from '../../../types/billing';
 
 interface InvoiceManagementProps {
@@ -78,7 +78,7 @@ export function InvoiceManagement({ invoices, onInvoiceAction }: InvoiceManageme
             {selectedItems.size > 0 && (
               <div className='flex items-center gap-2'>
                 <span className='text-sm text-gray-600'>{selectedItems.size} selected</span>
-                <button 
+                <button
                   onClick={() => handleInvoiceAction('bulk-reminder', Array.from(selectedItems).join(','))}
                   className='px-3 py-2 bg-blue-100 text-blue-800 rounded-lg text-sm font-medium hover:bg-blue-200'
                 >

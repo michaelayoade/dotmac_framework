@@ -1,7 +1,7 @@
 "use client";
 
 import { useCachedData } from "@dotmac/headless";
-import { Card } from "@dotmac/styled-components/reseller";
+import { Card } from "@dotmac/ui/reseller";
 import {
 	type ColumnDef,
 	flexRender,

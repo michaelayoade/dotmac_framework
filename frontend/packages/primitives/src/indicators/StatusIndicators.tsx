@@ -7,8 +7,6 @@
 'use client';
 
 import { cva, type VariantProps } from 'class-variance-authority';
-import { type ClassValue, clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
 import { useMemo, useCallback } from 'react';
 import { sanitizeText, validateClassName, validateData } from '../utils/security';
 import {
@@ -40,11 +38,7 @@ import type {
   AlertSeverityConfig
 } from '../types/status';
 import { ErrorBoundary } from '../components/ErrorBoundary';
-
-// Local cn utility
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+import { cn } from '../utils/cn';
 
 // Enhanced status badge variants
 const statusBadgeVariants = cva(
@@ -201,7 +195,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
   }, [onClick, handleClick]);
 
   const dotSize = size === 'sm' ? 'sm' : size === 'lg' ? 'lg' : 'md';
-  
+
   // Determine animation behavior based on reduced motion preference
   const shouldAnimate = animated && !prefersReducedMotion;
   const shouldPulse = pulse && !prefersReducedMotion;
@@ -209,7 +203,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
   return (
     <ErrorBoundary
       fallback={
-        <span 
+        <span
           className="inline-flex items-center px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs"
           role="status"
           aria-label="Status indicator error"
@@ -218,14 +212,14 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
         </span>
       }
     >
-      <span 
+      <span
         id={badgeId}
         className={cn(
-          statusBadgeVariants({ 
-            variant: safeVariant, 
-            size, 
-            animated: shouldAnimate 
-          }), 
+          statusBadgeVariants({
+            variant: safeVariant,
+            size,
+            animated: shouldAnimate
+          }),
           safeClassName,
           // Focus styles for accessibility
           onClick && 'focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 cursor-pointer',
@@ -243,7 +237,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
         <span className="sr-only">
           {accessibleStatusText}
         </span>
-        
+
         {/* Visual status dot */}
         {showDot && (
           <span
@@ -257,7 +251,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
             aria-hidden="true"
           />
         )}
-        
+
         {/* Main content with text indicator for color independence */}
         <span className="flex items-center gap-1">
           {/* Text indicator for accessibility */}
@@ -266,7 +260,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
           </span>
           {safeChildren}
         </span>
-        
+
         {/* Description for interactive elements */}
         {onClick && (
           <span id={`${badgeId}-description`} className="sr-only">
@@ -279,8 +273,8 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
 };
 
 // Security-hardened service uptime indicator
-export const UptimeIndicator: React.FC<UptimeIndicatorProps> = ({ 
-  uptime, 
+export const UptimeIndicator: React.FC<UptimeIndicatorProps> = ({
+  uptime,
   className,
   showLabel = true,
   'aria-label': ariaLabel
@@ -303,34 +297,34 @@ export const UptimeIndicator: React.FC<UptimeIndicatorProps> = ({
   // Memoized status calculation
   const uptimeStatus = useMemo((): UptimeStatus => {
     const percentage = validatedUptime;
-    
+
     if (percentage >= 99.9) {
-      return { 
-        status: 'excellent', 
-        color: 'text-green-600', 
+      return {
+        status: 'excellent',
+        color: 'text-green-600',
         bg: 'bg-green-500',
         label: 'Excellent'
       };
     }
     if (percentage >= 99.5) {
-      return { 
-        status: 'good', 
-        color: 'text-blue-600', 
+      return {
+        status: 'good',
+        color: 'text-blue-600',
         bg: 'bg-blue-500',
         label: 'Good'
       };
     }
     if (percentage >= 98) {
-      return { 
-        status: 'fair', 
-        color: 'text-yellow-600', 
+      return {
+        status: 'fair',
+        color: 'text-yellow-600',
         bg: 'bg-yellow-500',
         label: 'Fair'
       };
     }
-    return { 
-      status: 'poor', 
-      color: 'text-red-600', 
+    return {
+      status: 'poor',
+      color: 'text-red-600',
       bg: 'bg-red-500',
       label: 'Poor'
     };
@@ -350,7 +344,7 @@ export const UptimeIndicator: React.FC<UptimeIndicatorProps> = ({
         </div>
       }
     >
-      <div 
+      <div
         className={cn('flex items-center space-x-3', safeClassName)}
         role="progressbar"
         aria-valuenow={validatedUptime}
@@ -406,11 +400,11 @@ export const NetworkPerformanceIndicator: React.FC<NetworkPerformanceProps> = ({
   // Centralized status configuration
   const networkStatus = useMemo((): NetworkMetrics => {
     const { latency: lat, packetLoss: loss, bandwidth: bw } = validatedMetrics;
-    
+
     // Latency status
     let latencyStatus: 'excellent' | 'good' | 'fair' | 'poor';
     let latencyVariant: 'online' | 'active' | 'maintenance' | 'offline';
-    
+
     if (lat < 20) {
       latencyStatus = 'excellent';
       latencyVariant = 'online';
@@ -424,11 +418,11 @@ export const NetworkPerformanceIndicator: React.FC<NetworkPerformanceProps> = ({
       latencyStatus = 'poor';
       latencyVariant = 'offline';
     }
-    
+
     // Packet loss status
     let packetLossStatus: 'excellent' | 'good' | 'fair' | 'poor';
     let packetLossVariant: 'online' | 'active' | 'maintenance' | 'offline';
-    
+
     if (loss < 0.01) {
       packetLossStatus = 'excellent';
       packetLossVariant = 'online';
@@ -442,11 +436,11 @@ export const NetworkPerformanceIndicator: React.FC<NetworkPerformanceProps> = ({
       packetLossStatus = 'poor';
       packetLossVariant = 'offline';
     }
-    
+
     // Bandwidth status
     let bandwidthStatus: 'high' | 'medium' | 'low';
     let bandwidthVariant: 'online' | 'maintenance' | 'offline';
-    
+
     if (bw > 80) {
       bandwidthStatus = 'high';
       bandwidthVariant = 'online';
@@ -457,7 +451,7 @@ export const NetworkPerformanceIndicator: React.FC<NetworkPerformanceProps> = ({
       bandwidthStatus = 'low';
       bandwidthVariant = 'offline';
     }
-    
+
     return {
       latency: {
         value: lat,
@@ -572,8 +566,8 @@ export const NetworkPerformanceIndicator: React.FC<NetworkPerformanceProps> = ({
 };
 
 // Security-hardened service tier indicator
-export const ServiceTierIndicator: React.FC<ServiceTierProps> = ({ 
-  tier, 
+export const ServiceTierIndicator: React.FC<ServiceTierProps> = ({
+  tier,
   className,
   onClick,
   'aria-label': ariaLabel
@@ -642,7 +636,7 @@ export const ServiceTierIndicator: React.FC<ServiceTierProps> = ({
         </div>
       }
     >
-      <div 
+      <div
         className={cn('flex items-center space-x-2', safeClassName)}
         onClick={onClick ? handleClick : undefined}
         role={onClick ? 'button' : 'status'}
@@ -744,7 +738,7 @@ export const AlertSeverityIndicator: React.FC<AlertSeverityProps> = ({
   // Format timestamp safely
   const formattedTimestamp = useMemo(() => {
     if (!timestamp) return null;
-    
+
     try {
       return timestamp.toLocaleString();
     } catch (error) {

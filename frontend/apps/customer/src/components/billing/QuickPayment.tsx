@@ -1,6 +1,6 @@
 'use client';
 
-import { Card } from '@dotmac/styled-components/customer';
+import { Card } from '@dotmac/ui/customer';
 import {
   AlertCircle,
   ArrowRight,

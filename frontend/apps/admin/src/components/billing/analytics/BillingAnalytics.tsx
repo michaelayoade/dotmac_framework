@@ -10,17 +10,17 @@ import {
   FadeInWhenVisible,
   AnimatedCounter,
   AnimatedProgressBar,
-} from '@dotmac/primitives/animations/Animations';
+} from '@dotmac/providers/animations/Animations';
 import {
   RevenueChart,
   ServiceStatusChart,
-} from '@dotmac/primitives/charts/InteractiveChart';
+} from '@dotmac/providers/charts/InteractiveChart';
 import {
   StatusBadge,
   UptimeIndicator,
   AlertSeverityIndicator,
   NetworkPerformanceIndicator,
-} from '@dotmac/primitives/indicators/StatusIndicators';
+} from '@dotmac/providers/indicators/StatusIndicators';
 import type { Metrics } from '../../../types/billing';
 
 interface BillingAnalyticsProps {

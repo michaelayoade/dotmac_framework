@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 
-import { TenantAuthProvider } from '@/components/auth/TenantAuthProvider';
+import { TenantAuthProvider } from '@/components/auth/TenantAuthProviderNew';
 import { ToastProvider } from '@dotmac/primitives';
 import { PageErrorBoundary } from '@/components/error/ErrorBoundary';
 import { setupGlobalErrorHandlers } from '@/lib/error-handling';

@@ -10,7 +10,7 @@ import {
   PaginationState,
   SelectionState,
   LoadingState,
-} from '../stores/appStore';
+} from "@dotmac/headless/stores";
 
 // Main app state hook
 export const useAppState = () => useAppStore();

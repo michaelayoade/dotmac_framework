@@ -5,7 +5,7 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
-import { getApiClient } from '../api/client';
+import { getApiClient } from "@dotmac/headless/api";
 import type { Tenant, User } from '../types';
 
 interface TenantPermissions {

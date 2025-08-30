@@ -1,6 +1,6 @@
 "use client";
 
-import { Card } from "@dotmac/styled-components/reseller";
+import { Card } from "@dotmac/ui/reseller";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AnimatePresence, motion } from "framer-motion";
 import {

@@ -1,7 +1,7 @@
 /**
  * Usage Charts Section - Decomposed from CustomerDashboard
  */
-import { LinearProgress } from '../../ui/ProgressIndicator';
+import { Progress } from '@dotmac/primitives';
 import { TrendingUp, Download, Upload, Calendar } from 'lucide-react';
 import React, { useState } from 'react';
 
@@ -37,7 +37,7 @@ export function UsageChartsSection({
   className = ''
 }: UsageChartsSectionProps) {
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d'>('30d');
-  
+
   const usagePercentage = (currentUsage.total / currentUsage.limit) * 100;
   const downloadPercentage = (currentUsage.download / currentUsage.limit) * 100;
   const uploadPercentage = (currentUsage.upload / currentUsage.limit) * 100;
@@ -103,12 +103,12 @@ export function UsageChartsSection({
             <div className="text-2xl font-bold text-gray-900 mb-2">
               {currentUsage.total.toFixed(1)} GB
             </div>
-            <LinearProgress
+            <Progress
               value={currentUsage.total}
               max={currentUsage.limit}
-              color={getUsageColor(usagePercentage)}
               size="md"
-              showPercentage={false}
+              variant={getUsageColor(usagePercentage) === 'red' ? 'error' : getUsageColor(usagePercentage) === 'yellow' ? 'warning' : 'default'}
+              showValue={false}
             />
             <div className="flex justify-between items-center mt-2">
               <span className="text-xs text-gray-500">
@@ -129,12 +129,12 @@ export function UsageChartsSection({
             <div className="text-2xl font-bold text-blue-900 mb-2">
               {currentUsage.download.toFixed(1)} GB
             </div>
-            <LinearProgress
+            <Progress
               value={currentUsage.download}
               max={currentUsage.limit}
-              color="blue"
               size="sm"
-              showPercentage={false}
+              variant="default"
+              showValue={false}
             />
             <p className="text-xs text-blue-600 mt-2">
               {downloadPercentage.toFixed(1)}% of limit
@@ -150,12 +150,12 @@ export function UsageChartsSection({
             <div className="text-2xl font-bold text-green-900 mb-2">
               {currentUsage.upload.toFixed(1)} GB
             </div>
-            <LinearProgress
+            <Progress
               value={currentUsage.upload}
               max={currentUsage.limit}
-              color="green"
               size="sm"
-              showPercentage={false}
+              variant="success"
+              showValue={false}
             />
             <p className="text-xs text-green-600 mt-2">
               {uploadPercentage.toFixed(1)}% of limit

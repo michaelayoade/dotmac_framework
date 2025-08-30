@@ -16,7 +16,8 @@ import {
   CloudIcon,
 } from '@heroicons/react/24/outline';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { useToast } from '@/components/ui/Toast';
+import { useToast } from '@dotmac/headless';
+import { useConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { tenantApi, billingApi, monitoringApi } from '@/lib/api';
 import { Tenant, TenantStatus } from '@/types/tenant';
 import { useAppNavigation, routes } from '@/lib/navigation';
@@ -28,18 +29,19 @@ interface TenantManagementProps {
   compact?: boolean;
 }
 
-export function TenantManagement({ 
-  showCreateButton = true, 
-  showStats = true, 
-  compact = false 
+export function TenantManagement({
+  showCreateButton = true,
+  showStats = true,
+  compact = false
 }: TenantManagementProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
-  
+
   const { success, error } = useToast();
   const queryClient = useQueryClient();
   const { push } = useAppNavigation();
+  const { confirm, ConfirmDialog } = useConfirmDialog();
 
   // Fetch tenants
   const { data: tenantsData, isLoading: tenantsLoading, error: fetchError } = useQuery({
@@ -74,7 +76,7 @@ export function TenantManagement({
 
   // Status update mutation
   const updateStatusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: TenantStatus }) => 
+    mutationFn: ({ id, status }: { id: string; status: TenantStatus }) =>
       tenantApi.updateStatus(id, status),
     onSuccess: () => {
       success('Tenant status updated successfully');
@@ -86,9 +88,15 @@ export function TenantManagement({
   });
 
   const handleDeleteTenant = async (tenant: Tenant) => {
-    if (window.confirm(`Are you sure you want to delete tenant "${tenant.name}"? This action cannot be undone.`)) {
-      deleteTenantMutation.mutate(tenant.id);
-    }
+    await confirm({
+      title: 'Delete Tenant',
+      message: `Are you sure you want to delete tenant "${tenant.name}"? This action cannot be undone.`,
+      variant: 'danger',
+      confirmText: 'Delete Tenant',
+      onConfirm: () => {
+        deleteTenantMutation.mutate(tenant.id);
+      },
+    });
   };
 
   const handleStatusUpdate = (tenant: Tenant, status: TenantStatus) => {
@@ -99,7 +107,7 @@ export function TenantManagement({
 
   const getStatusBadge = (status: TenantStatus) => {
     const baseClasses = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium';
-    
+
     switch (status) {
       case TenantStatus.ACTIVE:
         return `${baseClasses} bg-success-100 text-success-800`;
@@ -170,8 +178,8 @@ export function TenantManagement({
                   <div className="flex items-center">
                     <div className="flex-shrink-0">
                       <Icon className={`h-8 w-8 ${
-                        item.changeType === 'positive' 
-                          ? 'text-success-600' 
+                        item.changeType === 'positive'
+                          ? 'text-success-600'
                           : item.changeType === 'negative'
                           ? 'text-danger-600'
                           : 'text-gray-600'
@@ -194,8 +202,8 @@ export function TenantManagement({
                   </div>
                   <div className="mt-2">
                     <div className={`text-sm ${
-                      item.changeType === 'positive' 
-                        ? 'text-success-600' 
+                      item.changeType === 'positive'
+                        ? 'text-success-600'
                         : item.changeType === 'negative'
                         ? 'text-danger-600'
                         : 'text-gray-600'
@@ -300,7 +308,7 @@ export function TenantManagement({
               <UsersIcon className="mx-auto h-12 w-12 text-gray-400" />
               <h3 className="mt-2 text-sm font-medium text-gray-900">No tenants found</h3>
               <p className="mt-1 text-sm text-gray-500">
-                {searchTerm || selectedStatus !== 'all' 
+                {searchTerm || selectedStatus !== 'all'
                   ? 'Try adjusting your search or filters'
                   : 'Create your first tenant to get started'
                 }
@@ -437,7 +445,7 @@ export function TenantManagement({
                   Next
                 </button>
               </div>
-              
+
               <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                 <div>
                   <p className="text-sm text-gray-700">
@@ -480,6 +488,9 @@ export function TenantManagement({
           </div>
         )}
       </div>
+
+      {/* Confirmation Dialog */}
+      <ConfirmDialog />
     </div>
   );
 }

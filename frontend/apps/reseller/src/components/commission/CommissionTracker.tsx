@@ -1,6 +1,6 @@
 "use client";
 
-import { Card } from "@dotmac/styled-components/reseller";
+import { Card } from "@dotmac/ui/reseller";
 import {
 	endOfMonth,
 	endOfYear,

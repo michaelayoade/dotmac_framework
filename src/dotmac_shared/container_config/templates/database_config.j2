@@ -1,0 +1,237 @@
+# Database Configuration Template
+# Generated: {{ now() }}
+# Tenant: {{ tenant.name }} ({{ tenant.tenant_id }})
+# Environment: {{ environment }}
+
+# PostgreSQL Configuration
+postgresql:
+  # Connection Details
+  host: "{{ tenant.slug }}-db.{{ environment }}.dotmac.io"
+  port: 5432
+  database: "isp_{{ tenant.slug }}_{{ environment }}"
+  username: "isp_{{ tenant.slug }}"
+  password: {{ generate_secret_placeholder('database_password') }}
+
+  # Connection Pool Configuration
+  pool_config:
+    # Base pool size scaled by subscription plan
+    pool_size: {{ merge_configs(
+      {'basic': 5, 'premium': 15, 'enterprise': 30}[tenant.plan],
+      database_overrides.get('pool_size', 0)
+    ) }}
+
+    # Maximum overflow connections
+    max_overflow: {{ merge_configs(
+      {'basic': 10, 'premium': 30, 'enterprise': 60}[tenant.plan],
+      database_overrides.get('max_overflow', 0)
+    ) }}
+
+    # Pool timeout settings
+    pool_timeout: {{ 30 if environment == 'development' else 60 }}
+    pool_recycle: {{ 3600 if environment == 'development' else 1800 }}
+    pool_pre_ping: true
+
+    # Connection validation
+    pool_reset_on_return: "commit"
+    pool_use_lifo: true
+
+  # SSL/TLS Configuration
+  ssl_config:
+    ssl_mode: "{{ 'prefer' if environment == 'development' else 'require' }}"
+    ssl_cert: "{{ generate_secret_placeholder('db_ssl_cert') if environment == 'production' else '' }}"
+    ssl_key: "{{ generate_secret_placeholder('db_ssl_key') if environment == 'production' else '' }}"
+    ssl_ca: "{{ generate_secret_placeholder('db_ssl_ca') if environment == 'production' else '' }}"
+
+  # Connection Timeouts
+  timeouts:
+    connect_timeout: 10
+    query_timeout: {{ 300 if tenant.plan == 'enterprise' else 60 }}
+    socket_timeout: 30
+    keepalive_timeout: 600
+
+  # Advanced Settings
+  advanced:
+    application_name: "isp_framework_{{ tenant.slug }}"
+    search_path: "public,tenant_{{ tenant.slug }}"
+    timezone: "{{ tenant.metadata.timezone | default('UTC') }}"
+    statement_timeout: "{{ '0' if tenant.plan == 'enterprise' else '300s' }}"
+    idle_in_transaction_session_timeout: "600s"
+
+    # Connection charset and encoding
+    client_encoding: "UTF8"
+    default_transaction_isolation: "READ_COMMITTED"
+
+  # Read Replicas (Enterprise only)
+  {% if tenant.plan == 'enterprise' %}
+  read_replicas:
+    - host: "{{ tenant.slug }}-db-read-1.{{ environment }}.dotmac.io"
+      port: 5432
+      weight: 1
+    {% if environment == 'production' %}
+    - host: "{{ tenant.slug }}-db-read-2.{{ environment }}.dotmac.io"
+      port: 5432
+      weight: 1
+    {% endif %}
+
+  read_replica_config:
+    load_balance: true
+    fallback_to_primary: true
+    max_lag_seconds: 60
+  {% endif %}
+
+# Connection String Templates
+connection_strings:
+  # Primary connection (read/write)
+  primary: "postgresql://{{ '${USERNAME}' }}:{{ '${PASSWORD}' }}@{{ '${HOST}' }}:{{ '${PORT}' }}/{{ '${DATABASE}' }}?sslmode={{ '${SSL_MODE}' }}&application_name={{ '${APP_NAME}' }}"
+
+  # Read-only connection
+  readonly: "postgresql://{{ '${USERNAME}' }}:{{ '${PASSWORD}' }}@{{ '${READ_HOST}' }}:{{ '${PORT}' }}/{{ '${DATABASE}' }}?sslmode={{ '${SSL_MODE}' }}&application_name={{ '${APP_NAME}' }}_readonly"
+
+  # Async connection (for async drivers)
+  async: "postgresql+asyncpg://{{ '${USERNAME}' }}:{{ '${PASSWORD}' }}@{{ '${HOST}' }}:{{ '${PORT}' }}/{{ '${DATABASE}' }}?ssl={{ '${SSL_MODE}' }}"
+
+# Backup Configuration
+backup:
+  enabled: {{ 'true' if environment == 'production' else 'false' }}
+  {% if environment == 'production' %}
+  schedule: "0 2 * * *"  # Daily at 2 AM
+  retention_days: {{ 90 if tenant.plan == 'enterprise' else 30 }}
+  compression: true
+  encryption: {{ 'true' if tenant.plan == 'enterprise' else 'false' }}
+
+  storage:
+    type: "s3"
+    bucket: "dotmac-db-backups-{{ environment }}"
+    prefix: "{{ tenant.slug }}/"
+
+  notification:
+    on_success: {{ 'true' if tenant.plan == 'enterprise' else 'false' }}
+    on_failure: true
+    email: "{{ tenant.contacts.technical | default(tenant.contacts.admin) }}"
+  {% endif %}
+
+# Monitoring and Metrics
+monitoring:
+  # Connection pool monitoring
+  pool_metrics:
+    enabled: true
+    collection_interval: 30
+    metrics:
+      - "pool_size"
+      - "checked_in_connections"
+      - "checked_out_connections"
+      - "overflow_connections"
+      - "invalid_connections"
+
+  # Query performance monitoring
+  query_metrics:
+    enabled: {{ 'true' if tenant.plan in ['premium', 'enterprise'] else 'false' }}
+    slow_query_threshold_ms: {{ 100 if tenant.plan == 'enterprise' else 1000 }}
+    log_slow_queries: true
+
+  # Health checks
+  health_check:
+    enabled: true
+    interval: 30
+    timeout: 10
+    query: "SELECT 1"
+
+# Migration Configuration
+migrations:
+  auto_migrate: {{ 'false' if environment == 'production' else 'true' }}
+  migration_timeout: 300
+
+  # Schema versioning
+  version_table: "alembic_version"
+  version_table_schema: "public"
+
+  # Migration locks (prevent concurrent migrations)
+  use_advisory_locks: true
+  lock_timeout: 60
+
+# Environment-specific Configuration
+{% if environment == 'development' %}
+development:
+  # Development-specific overrides
+  log_queries: true
+  log_query_parameters: true
+
+  # Relaxed settings for development
+  pool_config:
+    pool_size: 3
+    max_overflow: 5
+    pool_timeout: 10
+
+  # Development database seeding
+  seed_data: true
+  sample_data_size: "small"
+
+{% elif environment == 'staging' %}
+staging:
+  # Staging mirrors production but with reduced scale
+  log_queries: false
+  log_query_parameters: false
+
+  # Performance testing settings
+  connection_tracing: {{ 'true' if tenant.plan == 'enterprise' else 'false' }}
+
+{% elif environment == 'production' %}
+production:
+  # Production hardening
+  log_queries: false
+  log_query_parameters: false
+
+  # Enhanced security
+  ssl_config:
+    ssl_mode: "require"
+    verify_ca: true
+    verify_full: true
+
+  # Performance optimization
+  prepared_statements: true
+  statement_cache_size: 100
+
+  # Connection limits per tenant plan
+  max_connections: {{ {'basic': 50, 'premium': 150, 'enterprise': 300}[tenant.plan] }}
+
+  # Maintenance windows
+  maintenance_window:
+    day: "sunday"
+    start_time: "02:00"
+    duration_hours: 2
+    timezone: "{{ tenant.metadata.timezone | default('UTC') }}"
+{% endif %}
+
+# Tenant-specific Configuration
+tenant_config:
+  tenant_id: "{{ tenant.tenant_id }}"
+  schema_prefix: "tenant_{{ tenant.slug }}"
+
+  # Data retention policies
+  data_retention:
+    logs: "{{ 30 if tenant.plan == 'basic' else 90 }}d"
+    analytics: "{{ 90 if tenant.plan == 'basic' else 365 }}d"
+    backups: "{{ 30 if tenant.plan == 'basic' else 90 }}d"
+
+  # Resource quotas
+  quotas:
+    max_database_size: "{{ tenant.limits.max_database_size_gb }}GB"
+    max_connections: {{ tenant.limits.max_database_connections }}
+    max_queries_per_hour: {{ (tenant.plan | resource_limit('api')) * 10 }}
+
+# Custom Extensions and Functions
+{% if tenant.plan == 'enterprise' %}
+extensions:
+  enabled:
+    - "uuid-ossp"
+    - "pgcrypto"
+    - "pg_stat_statements"
+    - "pg_trgm"
+    - "btree_gin"
+    - "btree_gist"
+
+custom_functions:
+  audit_triggers: true
+  row_level_security: true
+  custom_aggregates: true
+{% endif %}

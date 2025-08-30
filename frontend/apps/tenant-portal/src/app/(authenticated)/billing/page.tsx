@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { 
-  CreditCard, 
-  Download, 
+import {
+  CreditCard,
+  Download,
   Calendar,
   DollarSign,
   TrendingUp,
@@ -11,7 +11,7 @@ import {
   CheckCircle,
   ExternalLink,
 } from 'lucide-react';
-import { useTenantAuth } from '@/components/auth/TenantAuthProvider';
+import { useTenantAuth } from '@/components/auth/TenantAuthProviderNew';
 
 interface PaymentMethod {
   payment_method_id: string;
@@ -298,13 +298,13 @@ export default function BillingPage() {
               <div className="font-medium">Update Payment Method</div>
               <div className="text-sm text-gray-500 mt-1">Change your billing card</div>
             </button>
-            
+
             <button className="tenant-button-secondary text-left p-4 h-auto">
               <Download className="h-6 w-6 mb-2" />
               <div className="font-medium">Download Invoices</div>
               <div className="text-sm text-gray-500 mt-1">Get PDF receipts</div>
             </button>
-            
+
             <button className="tenant-button-secondary text-left p-4 h-auto">
               <TrendingUp className="h-6 w-6 mb-2" />
               <div className="font-medium">Upgrade Plan</div>
@@ -320,7 +320,7 @@ export default function BillingPage() {
             <div className="px-6 py-4 border-b border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900">Invoice History</h3>
             </div>
-            
+
             <div className="overflow-hidden">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
@@ -402,12 +402,12 @@ export default function BillingPage() {
                       </div>
                     </div>
                   </div>
-                  
+
                   {method.is_default && (
                     <span className="status-active">Default</span>
                   )}
                 </div>
-                
+
                 <div className="mt-4 flex space-x-2">
                   {!method.is_default && (
                     <button className="text-sm text-tenant-600 hover:text-tenant-700">

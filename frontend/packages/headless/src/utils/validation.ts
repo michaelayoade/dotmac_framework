@@ -24,7 +24,7 @@ export interface ValidationOptions {
  * Main input sanitization function - the missing function that was causing build errors
  */
 export function sanitizeInput(
-  input: unknown, 
+  input: unknown,
   type: 'text' | 'email' | 'phone' | 'url' | 'html' | 'alphanumeric' = 'text',
   options: { maxLength?: number; allowHTML?: boolean } = {}
 ): string {
@@ -33,7 +33,7 @@ export function sanitizeInput(
   }
 
   const stringValue = String(input).trim();
-  
+
   if (!stringValue) {
     return '';
   }
@@ -44,26 +44,26 @@ export function sanitizeInput(
     case 'email':
       const emailResult = sanitizeEmail(stringValue);
       return emailResult || '';
-      
+
     case 'phone':
       // Remove all non-digit characters except + and -
       return stringValue.replace(/[^\d+\-\s()]/g, '').substring(0, maxLength);
-      
+
     case 'url':
       // Basic URL sanitization - remove dangerous protocols
       const urlCleaned = stringValue.replace(/^(javascript|data|vbscript):/i, '');
       return urlCleaned.substring(0, maxLength);
-      
+
     case 'html':
       if (allowHTML) {
         return sanitizeHTML(stringValue, { maxLength });
       }
       return sanitizeText(stringValue, maxLength);
-      
+
     case 'alphanumeric':
       // Allow only alphanumeric characters, spaces, and common punctuation
       return stringValue.replace(/[^a-zA-Z0-9\s\-_.,!?]/g, '').substring(0, maxLength);
-      
+
     case 'text':
     default:
       return sanitizeText(stringValue, maxLength);
@@ -107,7 +107,7 @@ export function validateInput(
   }
 
   // Sanitize if requested
-  const processedValue = sanitize 
+  const processedValue = sanitize
     ? sanitizeInput(stringValue, type as any, { maxLength, allowHTML })
     : stringValue;
 
@@ -202,7 +202,7 @@ export function validateFormData(
   for (const [field, rules] of Object.entries(schema)) {
     const value = data[field];
     const result = validateInput(value, rules.type, rules);
-    
+
     if (!result.isValid) {
       errors[field] = result.error || 'Invalid value';
     } else {
@@ -233,21 +233,21 @@ export interface RateLimitConfig {
  */
 export function createRateLimit(config: RateLimitConfig) {
   const attempts = new Map<string, { count: number; resetTime: number }>();
-  
+
   return {
     async checkLimit(key: string): Promise<{ allowed: boolean; remainingRequests: number; resetTime: number }> {
       const now = Date.now();
       const windowStart = now - config.windowMs;
-      
+
       // Clean old entries
       for (const [k, v] of attempts.entries()) {
         if (v.resetTime < now) {
           attempts.delete(k);
         }
       }
-      
+
       const current = attempts.get(key) || { count: 0, resetTime: now + config.windowMs };
-      
+
       if (current.count >= config.maxRequests && current.resetTime > now) {
         return {
           allowed: false,
@@ -255,23 +255,23 @@ export function createRateLimit(config: RateLimitConfig) {
           resetTime: current.resetTime
         };
       }
-      
+
       if (current.resetTime <= now) {
         current.count = 1;
         current.resetTime = now + config.windowMs;
       } else {
         current.count++;
       }
-      
+
       attempts.set(key, current);
-      
+
       return {
         allowed: true,
         remainingRequests: Math.max(0, config.maxRequests - current.count),
         resetTime: current.resetTime
       };
     },
-    
+
     async clearLimit(key: string): Promise<void> {
       attempts.delete(key);
     }
@@ -287,20 +287,34 @@ export const VALIDATION_PATTERNS = {
   url: /^https?:\/\/(?:[-\w.])+(?::[0-9]+)?(?:\/(?:[\w/_.])*(?:\?(?:[\w&%=.]*))?(?:#(?:\w*))?)?$/,
 };
 
-// Common validation schemas
+/**
+ * DEPRECATED: Plugin validation has been moved to use existing validation systems
+ * This section remains for backward compatibility but should use @dotmac/primitives
+ *
+ * @deprecated Use validationPatterns and validate from '@dotmac/primitives'
+ */
+
+// Re-export placeholder for backward compatibility
+export const PLUGIN_PATTERNS = {
+  email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+  phone: /^\+?[\d\s-()]+$/,
+  url: /^https?:\/\/[^\s]+$/
+};
+
+// Legacy schemas - consider migrating to existing validation system
 export const COMMON_SCHEMAS = {
   login: {
     email: { type: 'email', required: true, maxLength: 255 },
     password: { type: 'password', required: true, minLength: 8, maxLength: 128 }
   },
-  
+
   registration: {
     email: { type: 'email', required: true, maxLength: 255 },
     password: { type: 'password', required: true, minLength: 8, maxLength: 128 },
     name: { type: 'text', required: true, minLength: 2, maxLength: 100 },
     phone: { type: 'phone', required: false, maxLength: 20 }
   },
-  
+
   profile: {
     name: { type: 'text', required: true, minLength: 2, maxLength: 100 },
     phone: { type: 'phone', required: false, maxLength: 20 },

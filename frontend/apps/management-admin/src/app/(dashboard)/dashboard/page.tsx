@@ -1,15 +1,16 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { 
-  UsersIcon, 
-  CreditCardIcon, 
-  CloudIcon, 
+import {
+  UsersIcon,
+  CreditCardIcon,
+  CloudIcon,
   ExclamationTriangleIcon,
   CheckCircleIcon,
 } from '@heroicons/react/24/outline';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { TenantManagement } from '@/components/tenant/TenantManagement';
+import { DashboardGrid, PackageDashboardWidgets } from '@dotmac/portal-components';
 import { tenantApi, monitoringApi } from '@/lib/api';
 import { useAppNavigation, routes } from '@/lib/navigation';
 import { useErrorHandler } from '@/lib/error-handling';
@@ -18,7 +19,7 @@ import type { DashboardStatsResponse } from '@/types/dashboard';
 export default function DashboardPage() {
   const { push } = useAppNavigation();
   const { handleRetryableError } = useErrorHandler();
-  
+
   // Fetch dashboard data with real API and error handling
   const { data: dashboardData, isLoading: dashboardLoading, error: dashboardError } = useQuery({
     queryKey: ['dashboard-stats'],
@@ -90,11 +91,11 @@ export default function DashboardPage() {
     },
     {
       name: 'System Health',
-      value: dashboardData.data.system.health === 'healthy' ? 'Healthy' : 
+      value: dashboardData.data.system.health === 'healthy' ? 'Healthy' :
              dashboardData.data.system.health === 'warning' ? 'Warning' : 'Critical',
-      change: dashboardData.data.system.health === 'healthy' ? 'All systems operational' : 
+      change: dashboardData.data.system.health === 'healthy' ? 'All systems operational' :
               dashboardData.data.system.health === 'warning' ? 'Some issues detected' : 'Critical issues',
-      changeType: dashboardData.data.system.health === 'healthy' ? 'positive' : 
+      changeType: dashboardData.data.system.health === 'healthy' ? 'positive' :
                   dashboardData.data.system.health === 'warning' ? 'neutral' : 'negative',
       icon: dashboardData.data.system.health === 'healthy' ? CheckCircleIcon : ExclamationTriangleIcon,
       href: routes.monitoring,
@@ -146,48 +147,20 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((item) => {
-          const Icon = item.icon;
-          return (
-            <div
-              key={item.name}
-              className="card hover:shadow-md transition-shadow cursor-pointer"
-              onClick={() => push(item.href)}
-            >
-              <div className="card-content">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <Icon className={`h-8 w-8 ${
-                      item.changeType === 'positive' ? 'text-success-600' : 'text-danger-600'
-                    }`} />
-                  </div>
-                  <div className="ml-4 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">
-                        {item.name}
-                      </dt>
-                      <dd className="text-lg font-medium text-gray-900">
-                        {dashboardLoading ? (
-                          <LoadingSpinner size="small" />
-                        ) : (
-                          item.value
-                        )}
-                      </dd>
-                    </dl>
-                  </div>
-                </div>
-                <div className="mt-2">
-                  <div className={`text-sm ${
-                    item.changeType === 'positive' ? 'text-success-600' : 'text-danger-600'
-                  }`}>
-                    {item.change}
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        })}
+      <DashboardGrid
+        stats={stats.map(item => ({
+          ...item,
+          onClick: () => push(item.href),
+          loading: dashboardLoading
+        }))}
+        columns={4}
+        loading={dashboardLoading}
+      />
+
+      {/* Package Dashboard Widgets */}
+      <div className="space-y-4">
+        <h2 className="text-lg font-medium text-gray-900">System Overview</h2>
+        <PackageDashboardWidgets layout="grid" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

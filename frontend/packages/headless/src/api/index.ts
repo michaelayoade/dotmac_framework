@@ -5,6 +5,9 @@ export { getApiClient, createApiClient } from './client';
 export * from './config';
 export { checkApiHealth, initializeApi, requireApiClient } from './config';
 
+// Hook exports
+export { useApiClient } from '../hooks/useApiClient';
+
 // ISP Framework API Client
 export * from './isp-client';
 export { getISPApiClient, createISPApiClient } from './isp-client';

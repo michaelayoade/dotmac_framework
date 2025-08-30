@@ -1,9 +1,10 @@
 'use client';
 
 import { useOfflineSync, useTenantStore } from '@dotmac/headless';
-import { NetworkDeviceWidget, RealTimeMetricsWidget } from '@dotmac/primitives';
-import { AdminCard as Card } from '@dotmac/styled-components/admin';
-import { AlertTriangle, Database, Network, TrendingUp, Users, Wifi, WifiOff } from 'lucide-react';
+import { NetworkDeviceWidget, RealTimeMetricsWidget } from '@dotmac/providers';
+import { AdminCard as Card } from '@dotmac/ui/admin';
+import { UniversalAuditDashboard, useAdminAudit } from '@dotmac/audit-system';
+import { AlertTriangle, Database, Network, TrendingUp, Users, Wifi, WifiOff, Activity } from 'lucide-react';
 
 // Mock data - in real app this would come from API
 const mockMetrics = {
@@ -51,6 +52,12 @@ const mockDevices = [
 export function DashboardOverview() {
   const { currentTenant: _currentTenant } = useTenantStore();
   const { isOnline, pendingOperations } = useOfflineSync();
+
+  // Initialize audit tracking for admin actions
+  const audit = useAdminAudit({
+    userId: 'admin-user', // In real app, get from auth context
+    enableAutoTracking: true
+  });
 
   return (
     <div className='space-y-6'>
@@ -178,6 +185,12 @@ export function DashboardOverview() {
           <button
             type='button'
             className='rounded-lg border p-4 text-center transition-colors hover:bg-gray-50'
+            onClick={() => audit.logUserAction('add_customer_initiated', {
+              actionCategory: 'customer_management',
+              actionDescription: 'Admin initiated add customer workflow',
+              severity: 'low'
+            })}
+            data-audit-action="add_customer_initiated"
           >
             <Users className='mx-auto mb-2 h-6 w-6 text-gray-600' />
             <span className='font-medium text-sm'>Add Customer</span>
@@ -185,6 +198,12 @@ export function DashboardOverview() {
           <button
             type='button'
             className='rounded-lg border p-4 text-center transition-colors hover:bg-gray-50'
+            onClick={() => audit.logUserAction('network_config_accessed', {
+              actionCategory: 'network_operations',
+              actionDescription: 'Admin accessed network configuration',
+              severity: 'medium'
+            })}
+            data-audit-action="network_config_accessed"
           >
             <Network className='mx-auto mb-2 h-6 w-6 text-gray-600' />
             <span className='font-medium text-sm'>Network Config</span>
@@ -192,6 +211,12 @@ export function DashboardOverview() {
           <button
             type='button'
             className='rounded-lg border p-4 text-center transition-colors hover:bg-gray-50'
+            onClick={() => audit.logUserAction('alerts_viewed', {
+              actionCategory: 'system_admin',
+              actionDescription: 'Admin viewed system alerts',
+              severity: 'low'
+            })}
+            data-audit-action="alerts_viewed"
           >
             <AlertTriangle className='mx-auto mb-2 h-6 w-6 text-gray-600' />
             <span className='font-medium text-sm'>View Alerts</span>
@@ -199,11 +224,39 @@ export function DashboardOverview() {
           <button
             type='button'
             className='rounded-lg border p-4 text-center transition-colors hover:bg-gray-50'
+            onClick={() => audit.logUserAction('system_backup_initiated', {
+              actionCategory: 'system_admin',
+              actionDescription: 'Admin initiated system backup',
+              severity: 'high'
+            })}
+            data-audit-action="system_backup_initiated"
           >
             <Database className='mx-auto mb-2 h-6 w-6 text-gray-600' />
             <span className='font-medium text-sm'>System Backup</span>
           </button>
         </div>
+      </Card>
+
+      {/* Audit & Activity Dashboard */}
+      <Card className='p-6'>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className='font-semibold text-gray-900 text-lg flex items-center'>
+            <Activity className='mr-2 h-5 w-5' />
+            Audit & Activity
+          </h3>
+        </div>
+        <UniversalAuditDashboard
+          portalType="admin"
+          userId="admin-user"
+          enableRealTime={true}
+          showCompliancePanel={true}
+          showMetricsOverview={false} // Already have metrics above
+          compactMode={true}
+          onEventClick={(event) => {
+            console.log('Admin audit event:', event);
+            // Could open modal or navigate to detail view
+          }}
+        />
       </Card>
     </div>
   );

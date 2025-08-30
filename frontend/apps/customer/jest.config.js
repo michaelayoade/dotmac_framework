@@ -1,66 +1,25 @@
+/**
+ * DRY Jest configuration for Customer Portal - extends shared base config
+ */
+
+// Import our DRY base configuration
+const baseConfig = require('../../testing/jest.config.base.js');
+
 /** @type {import('jest').Config} */
 module.exports = {
+  ...baseConfig,
   displayName: 'Customer App Tests',
-  testEnvironment: 'jsdom',
 
-  // Test file patterns
-  testMatch: [
-    '<rootDir>/src/**/__tests__/**/*.test.[jt]s?(x)',
-    '<rootDir>/src/**/*.test.[jt]s?(x)',
-  ],
-  testPathIgnorePatterns: [
-    '/node_modules/',
-    '/.next/',
-    '/dist/',
-    '.*\\.e2e\\.test\\.[jt]sx?$',
-  ],
-
-  // Setup files
+  // Setup files - DRY setup first, then app-specific
   setupFilesAfterEnv: [
+    '<rootDir>/../../testing/setup/jest.setup.ts',
     '<rootDir>/jest-setup.js'
   ],
 
-  // Transform configuration
-  transform: {
-    '^.+\\.(js|jsx|ts|tsx)$': [
-      '@swc/jest',
-      {
-        jsc: {
-          parser: {
-            syntax: 'typescript',
-            tsx: true,
-            decorators: true,
-          },
-          transform: {
-            react: {
-              runtime: 'automatic',
-            },
-          },
-        },
-      },
-    ],
-  },
+  // Next.js specific ignore patterns
+  testPathIgnorePatterns: ['<rootDir>/.next/', '<rootDir>/node_modules/'],
 
-  // Module name mapping
-  moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/src/$1',
-    '^~/(.*)$': '<rootDir>/src/$1',
-    '^@dotmac/headless$': '<rootDir>/../../packages/headless/src',
-    '^@dotmac/headless/(.*)$': '<rootDir>/../../packages/headless/src/$1',
-    '^@dotmac/primitives$': '<rootDir>/../../packages/primitives/src',
-    '^@dotmac/primitives/(.*)$': '<rootDir>/../../packages/primitives/src/$1',
-    '^@dotmac/styled-components$': '<rootDir>/../../packages/styled-components/src',
-    '^@dotmac/styled-components/(.*)$': '<rootDir>/../../packages/styled-components/src/$1',
-    '^@dotmac/mapping$': '<rootDir>/../../packages/mapping/src',
-    '^@dotmac/mapping/(.*)$': '<rootDir>/../../packages/mapping/src/$1',
-    '^@dotmac/testing$': '<rootDir>/../../packages/testing/src',
-    '^@dotmac/testing/(.*)$': '<rootDir>/../../packages/testing/src/$1',
-    '\\.(css|less|scss)$': 'identity-obj-proxy',
-    '\\.(jpg|jpeg|png|gif|svg)$': '<rootDir>/__mocks__/fileMock.js',
-  },
-
-  // Coverage configuration
-  collectCoverage: true,
+  // Customer-specific coverage (extends base config)
   collectCoverageFrom: [
     'src/**/*.{ts,tsx}',
     '!src/**/*.d.ts',
@@ -73,7 +32,7 @@ module.exports = {
     '!src/app/**/not-found.tsx',
     '!src/app/globals.css',
   ],
-  
+
   // High coverage thresholds for Phase 2
   coverageThreshold: {
     global: {
@@ -82,6 +41,18 @@ module.exports = {
       functions: 90,
       lines: 90,
     },
+  },
+
+  // Merge DRY module mappings with app-specific ones
+  moduleNameMapper: {
+    ...baseConfig.moduleNameMapper,
+
+    // App-specific aliases
+    '^@/(.*)$': '<rootDir>/src/$1',
+    '^~/(.*)$': '<rootDir>/src/$1',
+
+    // Override base for local package resolution
+    '^@dotmac/(.*)$': '<rootDir>/../../packages/$1/src',
   },
 
   coverageDirectory: '<rootDir>/coverage',
@@ -98,7 +69,4 @@ module.exports = {
 
   // Verbose output for better debugging
   verbose: true,
-
-  // Performance
-  maxWorkers: '50%',
 };

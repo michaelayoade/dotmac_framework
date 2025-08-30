@@ -1,0 +1,121 @@
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "dotmac-project-management"
+version = "1.0.0"
+description = "Universal project management system for multi-phase projects, installations, deployments, and service delivery"
+readme = "README.md"
+authors = ["DotMac Framework Team <support@dotmac.com>"]
+license = "MIT"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Office/Business",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Software Development :: Project Management",
+]
+keywords = [
+    "project-management",
+    "project-tracking",
+    "installation-projects",
+    "deployment-management",
+    "workflow-automation",
+    "milestone-tracking",
+    "resource-management",
+    "phase-management",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "sqlalchemy>=2.0.0",
+    "pydantic>=2.0.0",
+    "alembic>=1.10.0",
+    "asyncpg>=0.28.0",
+    "fastapi>=0.100.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "mypy>=1.0.0",
+]
+
+testing = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0.0",
+    "coverage[toml]>=7.0.0",
+    "factory-boy>=3.2.0",
+]
+
+workflows = [
+    "celery>=5.3.0",
+    "redis>=4.5.0",
+    "apscheduler>=3.10.0",
+]
+
+notifications = [
+    "aiosmtplib>=2.0.0",
+    "jinja2>=3.1.0",
+    "twilio>=8.2.0",
+]
+
+integrations = [
+    "httpx>=0.24.0",
+    "pydantic-settings>=2.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/dotmac-framework/project-management"
+Documentation = "https://dotmac-project-management.readthedocs.io"
+Repository = "https://github.com/dotmac-framework/project-management.git"
+Issues = "https://github.com/dotmac-framework/project-management/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["dotmac_shared.project_management*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_functions = ["test_*"]
+asyncio_mode = "auto"
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--cov=dotmac_shared.project_management",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+]
+
+[tool.coverage.run]
+source = ["dotmac_shared/project_management"]
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "*/__init__.py",
+]
+
+[tool.black]
+line-length = 100
+target-version = ['py38', 'py39', 'py310', 'py311']
+include = '\.pyi?$'
+
+[tool.mypy]
+python_version = "3.8"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true

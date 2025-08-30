@@ -1,0 +1,461 @@
+name: Security Monitoring
+
+on:
+  schedule:
+    # Run security scans daily at 2 AM UTC
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+    inputs:
+      scan_type:
+        description: "Type of security scan"
+        required: false
+        default: "full"
+        type: choice
+        options:
+          - full
+          - secrets
+          - dependencies
+          - containers
+      severity_threshold:
+        description: "Minimum severity level to report"
+        required: false
+        default: "medium"
+        type: choice
+        options:
+          - low
+          - medium
+          - high
+          - critical
+
+env:
+  REGISTRY: ghcr.io
+  SECURITY_SEVERITY_THRESHOLD: ${{ github.event.inputs.severity_threshold || 'medium' }}
+
+jobs:
+  # ===== SECRET SCANNING =====
+  secret-scan:
+    name: Secret Detection
+    runs-on: ubuntu-latest
+    if: github.event.inputs.scan_type == 'secrets' || github.event.inputs.scan_type == 'full' || github.event_name == 'schedule'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run GitLeaks secret scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+      - name: Run TruffleHog secret scan
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: main
+          head: HEAD
+          extra_args: --debug --only-verified
+
+      - name: Upload secret scan results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: secret-scan-results
+          path: |
+            results.json
+            gitleaks-report.json
+          retention-days: 30
+
+  # ===== DEPENDENCY SCANNING =====
+  dependency-scan:
+    name: Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+    if: github.event.inputs.scan_type == 'dependencies' || github.event.inputs.scan_type == 'full' || github.event_name == 'schedule'
+
+    strategy:
+      matrix:
+        component:
+          - name: frontend
+            path: ./frontend
+            package_manager: pnpm
+          - name: backend
+            path: ./src
+            package_manager: pip
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js (for frontend)
+        if: matrix.component.name == 'frontend'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18.x"
+
+      - name: Setup Python (for backend)
+        if: matrix.component.name == 'backend'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run Snyk dependency scan
+        uses: snyk/actions/node@master
+        if: matrix.component.name == 'frontend'
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=${{ env.SECURITY_SEVERITY_THRESHOLD }}
+          command: test
+
+      - name: Run Snyk Python scan
+        uses: snyk/actions/python@master
+        if: matrix.component.name == 'backend'
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=${{ env.SECURITY_SEVERITY_THRESHOLD }}
+          command: test
+
+      - name: Run Safety check (Python)
+        if: matrix.component.name == 'backend'
+        run: |
+          pip install safety
+          safety check --json --output safety-report.json || true
+        working-directory: ${{ matrix.component.path }}
+
+      - name: Run audit (Node.js)
+        if: matrix.component.name == 'frontend'
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm audit --audit-level moderate --json > audit-report.json || true
+        working-directory: ${{ matrix.component.path }}
+
+      - name: Upload dependency scan results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dependency-scan-${{ matrix.component.name }}
+          path: |
+            ${{ matrix.component.path }}/safety-report.json
+            ${{ matrix.component.path }}/audit-report.json
+            snyk-results.json
+          retention-days: 30
+
+  # ===== CONTAINER SCANNING =====
+  container-scan:
+    name: Container Security Scan
+    runs-on: ubuntu-latest
+    if: github.event.inputs.scan_type == 'containers' || github.event.inputs.scan_type == 'full' || github.event_name == 'schedule'
+
+    strategy:
+      matrix:
+        image:
+          - name: isp-framework
+            dockerfile: ./Dockerfile
+            context: .
+          - name: management-platform
+            dockerfile: ./docker/Dockerfile.management
+            context: .
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image for scanning
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.image.context }}
+          file: ${{ matrix.image.dockerfile }}
+          push: false
+          tags: ${{ matrix.image.name }}:scan
+          load: true
+
+      - name: Run Trivy container scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ matrix.image.name }}:scan
+          format: "sarif"
+          output: "trivy-${{ matrix.image.name }}.sarif"
+
+      - name: Run Grype container scan
+        uses: anchore/scan-action@v3
+        with:
+          image: ${{ matrix.image.name }}:scan
+          fail-build: false
+          severity-cutoff: ${{ env.SECURITY_SEVERITY_THRESHOLD }}
+          output-format: sarif
+
+      - name: Upload container scan results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: "trivy-${{ matrix.image.name }}.sarif"
+
+      - name: Upload Grype results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: container-scan-${{ matrix.image.name }}
+          path: |
+            trivy-${{ matrix.image.name }}.sarif
+            results.sarif
+          retention-days: 30
+
+  # ===== CODE QUALITY SECURITY =====
+  code-security-scan:
+    name: Code Security Analysis
+    runs-on: ubuntu-latest
+    if: github.event.inputs.scan_type == 'full' || github.event_name == 'schedule'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript,python
+          queries: security-extended
+
+      - name: Setup Python for Bandit
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run Bandit security linter
+        run: |
+          pip install bandit[toml]
+          bandit -r src/ -f json -o bandit-report.json || true
+
+      - name: Run Semgrep security analysis
+        uses: returntocorp/semgrep-action@v1
+        with:
+          publishToken: ${{ secrets.SEMGREP_APP_TOKEN }}
+          config: >-
+            p/security-audit
+            p/secrets
+            p/owasp-top-ten
+            p/xss
+            p/sql-injection
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+
+      - name: Upload code security results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: code-security-scan
+          path: |
+            bandit-report.json
+            .semgrep/output/
+          retention-days: 30
+
+  # ===== INFRASTRUCTURE SECURITY =====
+  infrastructure-scan:
+    name: Infrastructure Security
+    runs-on: ubuntu-latest
+    if: github.event.inputs.scan_type == 'full' || github.event_name == 'schedule'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Checkov infrastructure scan
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: .
+          framework: kubernetes,dockerfile,github_actions
+          output_format: sarif
+          output_file_path: checkov-results.sarif
+
+      - name: Run Terrascan
+        uses: tenable/terrascan-action@main
+        with:
+          iac_type: "k8s"
+          iac_version: "v1"
+          policy_type: "k8s"
+          only_warn: true
+          sarif_upload: true
+
+      - name: Upload infrastructure scan results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: checkov-results.sarif
+
+      - name: Upload Terrascan results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: infrastructure-scan
+          path: |
+            checkov-results.sarif
+            terrascan_results.sarif
+          retention-days: 30
+
+  # ===== COMPLIANCE CHECKING =====
+  compliance-scan:
+    name: Compliance & License Check
+    runs-on: ubuntu-latest
+    if: github.event.inputs.scan_type == 'full' || github.event_name == 'schedule'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18.x"
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install license checkers
+        run: |
+          npm install -g license-checker
+          pip install pip-licenses
+
+      - name: Check frontend licenses
+        run: |
+          cd frontend
+          pnpm install --frozen-lockfile
+          license-checker --json --out ../frontend-licenses.json
+          license-checker --onlyAllow 'MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC;0BSD' --excludePrivatePackages || echo "License compliance issues detected"
+
+      - name: Check backend licenses
+        run: |
+          cd src
+          pip install -r requirements.txt
+          pip-licenses --format=json --output-file=../backend-licenses.json
+          pip-licenses --allow-only='MIT License;Apache Software License;BSD License;Python Software Foundation License' || echo "License compliance issues detected"
+
+      - name: Generate SBOM (Software Bill of Materials)
+        uses: anchore/sbom-action@v0
+        with:
+          path: ./
+          format: spdx-json
+
+      - name: Upload compliance results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: compliance-scan
+          path: |
+            frontend-licenses.json
+            backend-licenses.json
+            *.spdx.json
+          retention-days: 90
+
+  # ===== SECURITY SUMMARY =====
+  security-summary:
+    name: Security Scan Summary
+    runs-on: ubuntu-latest
+    needs:
+      [
+        secret-scan,
+        dependency-scan,
+        container-scan,
+        code-security-scan,
+        infrastructure-scan,
+        compliance-scan,
+      ]
+    if: always()
+
+    steps:
+      - name: Download all scan results
+        uses: actions/download-artifact@v4
+        with:
+          path: ./scan-results
+
+      - name: Generate security summary
+        run: |
+          echo "=== SECURITY MONITORING SUMMARY ===" > security-summary.md
+          echo "**Scan Date:** $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> security-summary.md
+          echo "**Repository:** ${{ github.repository }}" >> security-summary.md
+          echo "**Commit:** ${{ github.sha }}" >> security-summary.md
+          echo "" >> security-summary.md
+
+          echo "## Scan Results" >> security-summary.md
+          echo "- **Secret Scan:** ${{ needs.secret-scan.result }}" >> security-summary.md
+          echo "- **Dependency Scan:** ${{ needs.dependency-scan.result }}" >> security-summary.md
+          echo "- **Container Scan:** ${{ needs.container-scan.result }}" >> security-summary.md
+          echo "- **Code Security:** ${{ needs.code-security-scan.result }}" >> security-summary.md
+          echo "- **Infrastructure:** ${{ needs.infrastructure-scan.result }}" >> security-summary.md
+          echo "- **Compliance:** ${{ needs.compliance-scan.result }}" >> security-summary.md
+          echo "" >> security-summary.md
+
+          # Count issues from scan results
+          if [ -d "./scan-results" ]; then
+            echo "## Issue Summary" >> security-summary.md
+            find ./scan-results -name "*.json" -o -name "*.sarif" | wc -l | xargs echo "Total scan files:" >> security-summary.md
+          fi
+
+          # Determine overall status
+          if [[ "${{ needs.secret-scan.result }}" == "failure" ||
+                "${{ needs.dependency-scan.result }}" == "failure" ||
+                "${{ needs.container-scan.result }}" == "failure" ]]; then
+            echo "❌ **CRITICAL SECURITY ISSUES DETECTED**" >> security-summary.md
+            echo "SECURITY_STATUS=CRITICAL" >> $GITHUB_ENV
+          else
+            echo "✅ **No critical security issues detected**" >> security-summary.md
+            echo "SECURITY_STATUS=CLEAN" >> $GITHUB_ENV
+          fi
+
+      - name: Upload security summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-summary
+          path: security-summary.md
+          retention-days: 90
+
+      - name: Create security issue (if critical)
+        if: env.SECURITY_STATUS == 'CRITICAL'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const summary = fs.readFileSync('security-summary.md', 'utf8');
+
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 Critical Security Issues Detected - ${new Date().toISOString().split('T')[0]}`,
+              body: `## Automated Security Scan Alert\n\n${summary}\n\n**Action Required:** Please review the scan results and address critical security issues immediately.\n\n**Scan Details:** [View workflow run](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`,
+              labels: ['security', 'critical', 'automated']
+            });
+
+      - name: Notify security team
+        uses: 8398a7/action-slack@v3
+        if: always()
+        with:
+          status: ${{ job.status }}
+          text: |
+            🔒 **Security Monitoring Report**
+
+            **Status:** ${{ env.SECURITY_STATUS == 'CRITICAL' && '🚨 CRITICAL ISSUES' || '✅ CLEAN' }}
+            **Repository:** ${{ github.repository }}
+            **Scan Date:** $(date -u +%Y-%m-%d)
+
+            **Results:**
+            - Secret Scan: ${{ needs.secret-scan.result }}
+            - Dependency Scan: ${{ needs.dependency-scan.result }}
+            - Container Scan: ${{ needs.container-scan.result }}
+            - Code Security: ${{ needs.code-security-scan.result }}
+            - Infrastructure: ${{ needs.infrastructure-scan.result }}
+            - Compliance: ${{ needs.compliance-scan.result }}
+
+            [View Detailed Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

@@ -1,6 +1,6 @@
 'use client';
 
-import { ErrorBoundary } from '@dotmac/primitives/error';
+import { ErrorBoundary } from '@dotmac/providers/error';
 import type React from 'react';
 
 export default function ErrorBoundaryClient({

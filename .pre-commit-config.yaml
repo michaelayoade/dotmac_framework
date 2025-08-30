@@ -3,6 +3,26 @@
 # Run: pre-commit install to enable
 
 repos:
+  # DRY Pattern Enforcement (MANDATORY)
+  - repo: local
+    hooks:
+      - id: dry-pattern-validation
+        name: "DRY Pattern Validation (MANDATORY)"
+        entry: poetry run validate-dry
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [commit, push]
+        verbose: true
+
+      - id: enforce-dry-patterns
+        name: "Enforce DRY Patterns (STRICT)"
+        entry: poetry run enforce-patterns
+        language: system
+        types: [python]
+        stages: [push]
+        verbose: true
+
   # Python code formatting
   - repo: https://github.com/psf/black
     rev: 24.4.2
@@ -40,17 +60,18 @@ repos:
     rev: v1.10.0
     hooks:
       - id: mypy
-        additional_dependencies: [
-          types-requests,
-          types-PyYAML,
-          types-redis,
-          types-psycopg2,
-          pydantic,
-          fastapi,
-          sqlalchemy,
-          httpx,
-          pytest-asyncio,
-        ]
+        additional_dependencies:
+          [
+            types-requests,
+            types-PyYAML,
+            types-redis,
+            types-psycopg2,
+            pydantic,
+            fastapi,
+            sqlalchemy,
+            httpx,
+            pytest-asyncio,
+          ]
         args: [--ignore-missing-imports, --no-error-summary]
         exclude: ^(tests/|.*/tests/|migrations/|.*/migrations/).*$
 
@@ -77,7 +98,7 @@ repos:
     rev: v0.9.0.6
     hooks:
       - id: shellcheck
-        args: ['-e', 'SC1091']  # Ignore "not following" sourced files
+        args: ["-e", "SC1091"] # Ignore "not following" sourced files
 
   # Dockerfile linting
   - repo: https://github.com/hadolint/hadolint
@@ -99,7 +120,7 @@ repos:
     rev: v0.39.0
     hooks:
       - id: markdownlint
-        args: ['--fix']
+        args: ["--fix"]
 
   # Commit message linting
   - repo: https://github.com/compilerla/conventional-pre-commit

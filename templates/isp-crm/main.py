@@ -1,17 +1,15 @@
 from datetime import datetime
 from typing import Any, Dict, Optional
 
+from dotmac_analytics import AnalyticsClient
+from dotmac_billing import QuoteService
 from dotmac_communications import CommunicationsClient
+from dotmac_core_events import EventBus
+from dotmac_identity import CustomerService, LeadService
 from fastapi import FastAPI, HTTPException
 from orchestration import CustomerJourney, LeadFlow, SalesPipeline
 from pydantic import BaseModel
 from services import CampaignService, LeadService, OpportunityService
-
-from dotmac_analytics import AnalyticsClient
-from dotmac_billing import QuoteService
-from dotmac_core_events import EventBus
-from dotmac_identity import CustomerService, LeadService
-
 
 app = FastAPI(title="DotMac CRM Orchestration Service")
 event_bus = EventBus()
@@ -394,4 +392,7 @@ async def health_check():
 
 if __name__ == "__main__":
     import uvicorn
+
+from dotmac_shared.api.exception_handlers import standard_exception_handler
+
     uvicorn.run(app, host="127.0.0.1", port=8000)

@@ -1,9 +1,9 @@
 'use client';
 
 import { usePortalAuth } from '@dotmac/headless';
-import { OptimizedImage } from '@dotmac/primitives';
-import { Button, Input } from '@dotmac/styled-components/customer';
-import { Card } from '@dotmac/primitives';
+import { OptimizedImage } from '@dotmac/providers';
+import { Button, Input } from '@dotmac/ui/customer';
+import { Card } from '@dotmac/providers';
 import { clsx } from 'clsx';
 import { AlertCircle, CreditCard, Eye, EyeOff, Mail, User } from 'lucide-react';
 import { useId, useState } from 'react';

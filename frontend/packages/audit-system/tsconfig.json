@@ -1,0 +1,13 @@
+{
+  "extends": "@dotmac/typescript-config/react-library.json",
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "baseUrl": "./src",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["src/**/*", "src/**/*.tsx", "src/**/*.ts"],
+  "exclude": ["dist/**/*", "node_modules/**/*"]
+}

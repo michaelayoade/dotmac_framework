@@ -130,8 +130,7 @@ export { CustomerButton as Button } from './Button';
 export { CustomerCard as Card } from './Card';
 export { CustomerInput as Input } from './Input';
 
-// Export Avatar from primitives for compatibility
-export { Avatar } from '@dotmac/primitives';
+// Note: Avatar component not available in primitives yet
 // Theme utilities
 export { cn, createPortalTheme } from '../lib/utils';
 export type { CustomerButtonProps } from './Button';

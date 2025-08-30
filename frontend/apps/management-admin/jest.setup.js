@@ -187,6 +187,13 @@ Object.defineProperty(global, 'document', {
     body: {
       appendChild: jest.fn(),
       removeChild: jest.fn(),
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+    },
+    documentElement: {
+      style: {
+        setProperty: jest.fn(),
+      },
     },
   },
   writable: true,

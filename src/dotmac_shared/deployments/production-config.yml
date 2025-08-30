@@ -1,0 +1,506 @@
+# Production Configuration for DotMac Framework
+# Intelligent CI/CD Pipeline - Environment Management
+
+environment: production
+deployment_mode: intelligent_cicd
+framework_version: "1.0.0"
+
+# Domain and SSL Configuration
+domain: dotmac.framework
+ssl_enabled: true
+ssl_certificate_path: /etc/ssl/certs/dotmac-framework.crt
+ssl_private_key_path: /etc/ssl/private/dotmac-framework.key
+
+# Intelligent Pipeline Settings
+intelligent_pipeline:
+  test_success_threshold: 100.0 # Must be 100% for automatic deployment
+  quality_gate_enforcement: strict
+  auto_deployment_enabled: true
+  auto_remediation_enabled: true
+  max_remediation_attempts: 3
+  deployment_timeout: 1800 # 30 minutes
+  rollback_timeout: 300 # 5 minutes
+
+# Portal Applications Configuration
+portals:
+  frontend:
+    admin:
+      port: 3001
+      path: frontend/apps/admin
+      replicas: 2
+      resources:
+        cpu_limit: "1000m"
+        memory_limit: "1Gi"
+        cpu_request: "500m"
+        memory_request: "512Mi"
+      environment_variables:
+        NODE_ENV: production
+        NEXT_PUBLIC_ENV: production
+        NEXT_PUBLIC_API_URL: https://api.dotmac.framework
+        NEXT_PUBLIC_PORTAL_TYPE: admin
+      health_check:
+        path: /api/health
+        interval: 30
+        timeout: 5
+        retries: 3
+
+    customer:
+      port: 3002
+      path: frontend/apps/customer
+      replicas: 3 # Higher load expected
+      resources:
+        cpu_limit: "800m"
+        memory_limit: "1Gi"
+        cpu_request: "400m"
+        memory_request: "512Mi"
+      environment_variables:
+        NODE_ENV: production
+        NEXT_PUBLIC_ENV: production
+        NEXT_PUBLIC_API_URL: https://api.dotmac.framework
+        NEXT_PUBLIC_PORTAL_TYPE: customer
+      health_check:
+        path: /api/health
+        interval: 30
+        timeout: 5
+        retries: 3
+
+    reseller:
+      port: 3003
+      path: frontend/apps/reseller
+      replicas: 2
+      resources:
+        cpu_limit: "800m"
+        memory_limit: "1Gi"
+        cpu_request: "400m"
+        memory_request: "512Mi"
+      environment_variables:
+        NODE_ENV: production
+        NEXT_PUBLIC_ENV: production
+        NEXT_PUBLIC_API_URL: https://api.dotmac.framework
+        NEXT_PUBLIC_PORTAL_TYPE: reseller
+      health_check:
+        path: /api/health
+        interval: 30
+        timeout: 5
+        retries: 3
+
+    technician:
+      port: 3004
+      path: frontend/apps/technician
+      replicas: 2
+      resources:
+        cpu_limit: "600m"
+        memory_limit: "768Mi"
+        cpu_request: "300m"
+        memory_request: "384Mi"
+      environment_variables:
+        NODE_ENV: production
+        NEXT_PUBLIC_ENV: production
+        NEXT_PUBLIC_API_URL: https://api.dotmac.framework
+        NEXT_PUBLIC_PORTAL_TYPE: technician
+        NEXT_PUBLIC_OFFLINE_SUPPORT: true
+      health_check:
+        path: /api/health
+        interval: 30
+        timeout: 5
+        retries: 3
+
+  backend:
+    api_gateway:
+      port: 8000
+      service: dotmac_api_gateway
+      replicas: 3
+      resources:
+        cpu_limit: "1500m"
+        memory_limit: "2Gi"
+        cpu_request: "750m"
+        memory_request: "1Gi"
+      environment_variables:
+        ENVIRONMENT: production
+        LOG_LEVEL: info
+        CORS_ORIGINS: "https://admin.dotmac.framework,https://customer.dotmac.framework,https://reseller.dotmac.framework,https://technician.dotmac.framework"
+        RATE_LIMIT_REQUESTS_PER_MINUTE: 1000
+      health_check:
+        path: /health
+        interval: 30
+        timeout: 5
+        retries: 3
+
+    identity:
+      port: 8001
+      service: dotmac_identity
+      replicas: 2
+      resources:
+        cpu_limit: "1000m"
+        memory_limit: "1Gi"
+        cpu_request: "500m"
+        memory_request: "512Mi"
+      environment_variables:
+        ENVIRONMENT: production
+        JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+        JWT_ACCESS_TOKEN_EXPIRE_MINUTES: 60
+        PASSWORD_RESET_TOKEN_EXPIRE_HOURS: 1
+      health_check:
+        path: /health
+        interval: 30
+        timeout: 5
+        retries: 3
+
+    billing:
+      port: 8002
+      service: dotmac_billing
+      replicas: 2
+      resources:
+        cpu_limit: "1000m"
+        memory_limit: "1Gi"
+        cpu_request: "500m"
+        memory_request: "512Mi"
+      environment_variables:
+        ENVIRONMENT: production
+        PAYMENT_PROCESSOR_API_KEY: ${PAYMENT_PROCESSOR_API_KEY}
+        STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      health_check:
+        path: /health
+        interval: 30
+        timeout: 5
+        retries: 3
+
+# Load Balancer Configuration
+load_balancer:
+  type: nginx
+  port: 80
+  ssl_port: 443
+  worker_processes: auto
+  worker_connections: 1024
+  client_max_body_size: 50M
+  proxy_read_timeout: 60
+  proxy_connect_timeout: 60
+  proxy_send_timeout: 60
+
+  # Backend pools for load distribution
+  backend_pools:
+    api:
+      servers:
+        - localhost:8000 weight=3
+        - localhost:8001 weight=1 backup
+    frontend:
+      admin:
+        - localhost:3001
+      customer:
+        - localhost:3002 weight=3
+      reseller:
+        - localhost:3003
+      technician:
+        - localhost:3004
+
+  # Rate limiting
+  rate_limiting:
+    enabled: true
+    requests_per_minute: 60
+    burst: 20
+
+  # Security headers
+  security_headers:
+    x_frame_options: DENY
+    x_content_type_options: nosniff
+    x_xss_protection: "1; mode=block"
+    strict_transport_security: "max-age=63072000; includeSubDomains; preload"
+    content_security_policy: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' https:; connect-src 'self' https:; media-src 'self'; object-src 'none'; child-src 'self'; frame-ancestors 'none'; form-action 'self'; base-uri 'self';"
+
+# Database Configuration
+databases:
+  primary:
+    type: postgresql
+    host: ${DATABASE_HOST:-localhost}
+    port: ${DATABASE_PORT:-5432}
+    database: ${DATABASE_NAME:-dotmac_prod}
+    username: ${DATABASE_USER:-dotmac_user}
+    password: ${DATABASE_PASSWORD}
+    pool_size: 20
+    max_overflow: 30
+    pool_timeout: 30
+    pool_recycle: 1800
+    ssl_mode: require
+
+  analytics:
+    type: timescaledb
+    host: ${TIMESCALE_HOST:-localhost}
+    port: ${TIMESCALE_PORT:-5432}
+    database: ${TIMESCALE_DATABASE:-dotmac_analytics}
+    username: ${TIMESCALE_USER:-dotmac_analytics}
+    password: ${TIMESCALE_PASSWORD}
+    pool_size: 10
+    max_overflow: 20
+
+  cache:
+    type: redis
+    host: ${REDIS_HOST:-localhost}
+    port: ${REDIS_PORT:-6379}
+    password: ${REDIS_PASSWORD}
+    database: 0
+    max_connections: 50
+    connection_pool_timeout: 20
+
+# Monitoring and Observability
+monitoring:
+  enabled: true
+  metrics_collection_interval: 15 # seconds
+  log_level: info
+  log_rotation:
+    max_size: 100MB
+    max_files: 10
+    compress: true
+
+  prometheus:
+    enabled: true
+    port: 9090
+    scrape_interval: 15s
+    retention: 30d
+    external_labels:
+      environment: production
+      cluster: dotmac-framework
+
+  grafana:
+    enabled: true
+    port: 3000
+    admin_password: ${GRAFANA_ADMIN_PASSWORD}
+    auto_provisioning: true
+
+  alerting:
+    enabled: true
+    alertmanager_port: 9093
+    channels:
+      slack:
+        webhook_url: ${SLACK_WEBHOOK_URL}
+        channel: "#production-alerts"
+      email:
+        smtp_server: smtp.gmail.com
+        smtp_port: 587
+        username: ${ALERT_EMAIL_USERNAME}
+        password: ${ALERT_EMAIL_PASSWORD}
+        from_email: alerts@dotmac.framework
+        to_emails:
+          - ops@dotmac.framework
+          - devops@dotmac.framework
+
+  # Application Performance Monitoring
+  apm:
+    enabled: true
+    service_name: dotmac-framework
+    environment: production
+    sample_rate: 0.1
+    capture_body: errors
+
+  # Log aggregation
+  logging:
+    centralized: true
+    log_shipper: fluentd
+    elasticsearch_url: ${ELASTICSEARCH_URL}
+    log_retention_days: 30
+
+# Security Configuration
+security:
+  jwt:
+    secret_key: ${JWT_SECRET_KEY}
+    algorithm: HS256
+    access_token_expire_minutes: 60
+    refresh_token_expire_days: 30
+
+  encryption:
+    fernet_key: ${FERNET_ENCRYPTION_KEY}
+
+  cors:
+    enabled: true
+    allowed_origins:
+      - https://admin.dotmac.framework
+      - https://customer.dotmac.framework
+      - https://reseller.dotmac.framework
+      - https://technician.dotmac.framework
+    allow_credentials: true
+    allowed_methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
+    allowed_headers: ["*"]
+
+  rate_limiting:
+    enabled: true
+    default_rate_limit: "1000/hour"
+    burst_limit: 50
+
+  # API Security
+  api_security:
+    require_https: true
+    api_key_header: X-API-Key
+    request_id_header: X-Request-ID
+
+  # Content Security Policy
+  csp:
+    enabled: true
+    report_only: false
+    report_uri: /api/security/csp-report
+
+# Performance Configuration
+performance:
+  # Caching
+  caching:
+    enabled: true
+    default_ttl: 300 # 5 minutes
+    redis_url: ${REDIS_URL}
+
+  # Database connection pooling
+  database_pooling:
+    enabled: true
+    pool_size: 20
+    max_overflow: 30
+    pool_timeout: 30
+
+  # Asset optimization
+  assets:
+    compression: gzip
+    caching_headers: true
+    cdn_enabled: false # Set to true if using CDN
+
+  # Performance thresholds
+  thresholds:
+    response_time_p95: 500 # ms
+    response_time_p99: 1000 # ms
+    memory_usage_warning: 75 # %
+    memory_usage_critical: 90 # %
+    cpu_usage_warning: 70 # %
+    cpu_usage_critical: 85 # %
+    disk_usage_warning: 80 # %
+    disk_usage_critical: 95 # %
+
+# Resource Limits and Scaling
+scaling:
+  auto_scaling:
+    enabled: true
+    min_replicas: 1
+    max_replicas: 10
+    target_cpu_utilization: 70
+    target_memory_utilization: 80
+
+  resource_requests:
+    cpu: 500m
+    memory: 512Mi
+
+  resource_limits:
+    cpu: 2000m
+    memory: 2Gi
+
+  # Horizontal Pod Autoscaler
+  hpa:
+    enabled: true
+    metrics:
+      - type: Resource
+        resource:
+          name: cpu
+          target:
+            type: Utilization
+            averageUtilization: 70
+      - type: Resource
+        resource:
+          name: memory
+          target:
+            type: Utilization
+            averageUtilization: 80
+
+# Backup and Disaster Recovery
+backup:
+  enabled: true
+  schedule: "0 2 * * *" # Daily at 2 AM
+  retention_days: 30
+  storage_type: s3
+  s3_bucket: ${BACKUP_S3_BUCKET}
+
+  databases:
+    - primary
+    - analytics
+
+  files:
+    - /var/log/dotmac
+    - /etc/ssl/dotmac
+    - monitoring-config/
+    - deployment-logs/
+
+# Networking
+networking:
+  service_mesh:
+    enabled: false # Enable if using Istio/Linkerd
+
+  ingress:
+    enabled: true
+    class: nginx
+    annotations:
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+
+  # Service discovery
+  service_discovery:
+    enabled: true
+    type: dns
+
+  # Network policies
+  network_policies:
+    enabled: true
+    default_deny: false
+
+# Environment-specific Settings
+environment_overrides:
+  development:
+    log_level: debug
+    ssl_enabled: false
+    monitoring:
+      retention: 7d
+    security:
+      cors:
+        allowed_origins:
+          [
+            "http://localhost:3000",
+            "http://localhost:3001",
+            "http://localhost:3002",
+            "http://localhost:3003",
+            "http://localhost:3004",
+          ]
+
+  staging:
+    log_level: info
+    ssl_enabled: true
+    monitoring:
+      retention: 15d
+    replicas:
+      min: 1
+      max: 3
+
+  production:
+    log_level: warn
+    ssl_enabled: true
+    monitoring:
+      retention: 30d
+    replicas:
+      min: 2
+      max: 10
+
+# Feature Flags
+features:
+  intelligent_deployment: true
+  auto_remediation: true
+  performance_monitoring: true
+  security_monitoring: true
+  user_analytics: true
+  a11y_monitoring: true
+  real_time_alerts: true
+  deployment_rollback: true
+  canary_deployments: false # Future feature
+  blue_green_deployments: false # Future feature
+
+# Maintenance
+maintenance:
+  maintenance_mode: false
+  maintenance_message: "DotMac Framework is currently undergoing maintenance. Please check back shortly."
+  allowed_ips: [] # IPs that can access during maintenance
+
+  # Scheduled maintenance windows
+  windows:
+    - day: Sunday
+      start_time: "02:00"
+      end_time: "04:00"
+      timezone: UTC

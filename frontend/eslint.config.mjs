@@ -7,6 +7,10 @@ import jsxA11y from 'eslint-plugin-jsx-a11y';
 import importPlugin from 'eslint-plugin-import';
 import prettier from 'eslint-plugin-prettier';
 import prettierConfig from 'eslint-config-prettier';
+import security from 'eslint-plugin-security';
+// Governance custom rules (flat-config plugin shim)
+import enforceProviderPattern from './packages/governance/eslint-rules/enforce-provider-pattern.js';
+import noDuplicateComponents from './packages/governance/eslint-rules/no-duplicate-components.js';
 
 export default [
   js.configs.recommended,
@@ -69,6 +73,13 @@ export default [
       'jsx-a11y': jsxA11y,
       import: importPlugin,
       prettier: prettier,
+      security: security,
+      '@dotmac/governance': {
+        rules: {
+          'enforce-provider-pattern': enforceProviderPattern,
+          'no-duplicate-components': noDuplicateComponents,
+        },
+      },
     },
     rules: {
       ...typescript.configs.recommended.rules,
@@ -105,7 +116,10 @@ export default [
       ],
       'import/no-unresolved': 'off',
       'import/named': 'off',
-      
+      // Governance rules (single source of truth)
+      '@dotmac/governance/no-duplicate-components': 'error',
+      '@dotmac/governance/enforce-provider-pattern': 'error',
+
       // Security Rules - Prevent common vulnerabilities
       'no-eval': 'error',
       'no-implied-eval': 'error',
@@ -113,7 +127,7 @@ export default [
       'no-script-url': 'error',
       'no-alert': 'error',
       'no-console': ['warn', { allow: ['warn', 'error'] }],
-      
+
       // Prevent dangerous patterns
       'no-caller': 'error',
       'no-extend-native': 'error',
@@ -135,18 +149,18 @@ export default [
       'no-useless-concat': 'error',
       'no-void': 'error',
       'no-with': 'error',
-      
-      // Security-specific React rules  
+
+      // Security-specific React rules
       'react/no-danger': 'error',
       'react/no-danger-with-children': 'error',
       'react/jsx-no-script-url': 'error',
       'react/jsx-no-target-blank': ['error', { enforceDynamicLinks: 'always' }],
-      
+
       // TypeScript security rules (disabled for non-TS files)
       '@typescript-eslint/no-implied-eval': 'off',
-      '@typescript-eslint/no-misused-promises': 'off', 
+      '@typescript-eslint/no-misused-promises': 'off',
       '@typescript-eslint/no-floating-promises': 'off',
-      
+
       // Code Complexity Rules (CRITICAL - CLAUDE.md Requirements)
       'complexity': ['error', { max: 10 }],
       'max-lines-per-function': ['error', { max: 50 }],
@@ -156,6 +170,9 @@ export default [
       'max-lines': ['error', { max: 300 }],
       'max-nested-callbacks': ['error', { max: 3 }],
 
+      // Security plugin rules
+      'security/detect-object-injection': 'warn',
+
       // Custom security patterns
       'no-restricted-globals': [
         'error',
@@ -164,7 +181,7 @@ export default [
           message: 'Use secureStorage utility instead of direct localStorage access for security.'
         },
         {
-          name: 'sessionStorage', 
+          name: 'sessionStorage',
           message: 'Use secureStorage utility instead of direct sessionStorage access for security.'
         }
       ],
@@ -226,7 +243,7 @@ export default [
     rules: {
       // Enable TypeScript security rules for TS files only
       '@typescript-eslint/no-implied-eval': 'error',
-      '@typescript-eslint/no-misused-promises': 'error', 
+      '@typescript-eslint/no-misused-promises': 'error',
       '@typescript-eslint/no-floating-promises': 'error',
     },
   },

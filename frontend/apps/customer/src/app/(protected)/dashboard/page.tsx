@@ -6,13 +6,13 @@
 'use client';
 
 import { Suspense } from 'react';
-import { ComponentErrorBoundary } from '../../../components/common/ErrorBoundary';
+import { ErrorBoundary as ComponentErrorBoundary } from '@dotmac/providers';
 import { LazyCustomerDashboard } from '../../../components/lazy/LazyComponents';
 
 export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50">
-      <ComponentErrorBoundary>
+      <ComponentErrorBoundary portal="customer">
         <Suspense
           fallback={
             <div className="animate-pulse p-6">

@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Input } from '@dotmac/styled-components/admin';
+import { Button, Input } from '@dotmac/ui/admin';
 import { AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useId, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -33,29 +33,29 @@ export function LoginForm() {
     schema: LoginSchema,
     onSubmit: async (data) => {
       clearError();
-      
+
       try {
         const result = await login({ email: data.email, password: data.password });
-        
+
         if (result.success) {
-          trackLoginAttempt(true, undefined, { 
+          trackLoginAttempt(true, undefined, {
             email: data.email,
             userId: result.user?.id,
             method: 'password'
           });
-          
+
           // Redirect to dashboard or intended page
           const redirect = new URLSearchParams(window.location.search).get('redirect');
           router.push(redirect || '/dashboard');
         } else {
           const error = new Error(result.error || 'Login failed');
-          trackLoginAttempt(false, error, { 
+          trackLoginAttempt(false, error, {
             email: data.email,
             method: 'password'
           });
         }
       } catch (error) {
-        trackLoginAttempt(false, error as Error, { 
+        trackLoginAttempt(false, error as Error, {
           email: data.email,
           method: 'password'
         });

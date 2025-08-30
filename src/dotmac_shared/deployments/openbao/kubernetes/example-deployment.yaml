@@ -1,0 +1,311 @@
+---
+# Example deployment showing OpenBao integration
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dotmac-identity
+  namespace: dotmac
+  labels:
+    app: dotmac-identity
+    service: identity
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: dotmac-identity
+  template:
+    metadata:
+      labels:
+        app: dotmac-identity
+        service: identity
+    spec:
+      serviceAccountName: dotmac-identity
+
+      # Init container to wait for OpenBao
+      initContainers:
+        - name: wait-for-openbao
+          image: busybox:latest
+          command: ["sh", "-c"]
+          args:
+            - |
+              until nc -z openbao.dotmac.svc.cluster.local 8200; do
+                echo "Waiting for OpenBao..."
+                sleep 2
+              done
+              echo "OpenBao is ready"
+
+      containers:
+        - name: identity
+          image: dotmac/identity:latest
+          imagePullPolicy: Always
+
+          # Environment variables
+          env:
+            - name: SERVICE_NAME
+              value: "identity"
+            - name: ENVIRONMENT
+              value: "production"
+            - name: PORT
+              value: "8000"
+            - name: OPENBAO_ENABLED
+              value: "true"
+            - name: BAO_ADDR
+              value: "http://openbao.dotmac.svc.cluster.local:8200"
+
+            # Database configuration (base URL, credentials from OpenBao)
+            - name: DB_HOST
+              value: "postgres.dotmac.svc.cluster.local"
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_NAME
+              value: "dotmac_identity"
+
+            # Redis configuration (base URL, password from OpenBao)
+            - name: REDIS_HOST
+              value: "redis.dotmac.svc.cluster.local"
+            - name: REDIS_PORT
+              value: "6379"
+            - name: REDIS_DB
+              value: "0"
+
+            # SignOz/OTEL configuration
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "signoz-otel-collector.observability.svc.cluster.local:4317"
+            - name: OTEL_SERVICE_NAME
+              value: "dotmac-identity"
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: "service.namespace=dotmac,deployment.environment=production"
+
+            # Get secrets from mounted volume
+            - name: JWT_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: dotmac-identity-secrets
+                  key: JWT_SECRET_KEY
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: dotmac-identity-secrets
+                  key: SECRET_KEY
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: dotmac-identity-secrets
+                  key: API_KEY
+            - name: ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: dotmac-identity-secrets
+                  key: ENCRYPTION_KEY
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: dotmac-identity-secrets
+                  key: REDIS_PASSWORD
+            - name: SIGNOZ_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: dotmac-identity-secrets
+                  key: SIGNOZ_ENDPOINT
+            - name: SIGNOZ_ACCESS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: dotmac-identity-secrets
+                  key: SIGNOZ_ACCESS_TOKEN
+
+          # Mount OpenBao credentials
+          volumeMounts:
+            - name: openbao-creds
+              mountPath: /var/run/secrets/openbao
+              readOnly: true
+            - name: secrets-store
+              mountPath: /mnt/secrets-store
+              readOnly: true
+
+          # Resource limits
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+
+          # Health checks
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          # Security context
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+
+      # Volumes
+      volumes:
+        # OpenBao AppRole credentials (created by init script)
+        - name: openbao-creds
+          secret:
+            secretName: dotmac-identity-openbao-creds
+            items:
+              - key: role-id
+                path: identity-role-id
+              - key: secret-id
+                path: identity-secret-id
+
+        # Secrets from OpenBao via CSI driver
+        - name: secrets-store
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: openbao-dotmac-identity
+
+---
+# Service account for the deployment
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: dotmac-identity
+  namespace: dotmac
+
+---
+# Service for the deployment
+apiVersion: v1
+kind: Service
+metadata:
+  name: dotmac-identity
+  namespace: dotmac
+  labels:
+    app: dotmac-identity
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8000
+      targetPort: 8000
+      protocol: TCP
+      name: http
+  selector:
+    app: dotmac-identity
+
+---
+# HorizontalPodAutoscaler for automatic scaling
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: dotmac-identity
+  namespace: dotmac
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: dotmac-identity
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+
+---
+# NetworkPolicy for security
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: dotmac-identity
+  namespace: dotmac
+spec:
+  podSelector:
+    matchLabels:
+      app: dotmac-identity
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow from API Gateway
+    - from:
+        - podSelector:
+            matchLabels:
+              app: dotmac-api-gateway
+      ports:
+        - protocol: TCP
+          port: 8000
+    # Allow from ingress controller
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 8000
+  egress:
+    # Allow to PostgreSQL
+    - to:
+        - podSelector:
+            matchLabels:
+              app: postgres
+      ports:
+        - protocol: TCP
+          port: 5432
+    # Allow to Redis
+    - to:
+        - podSelector:
+            matchLabels:
+              app: redis
+      ports:
+        - protocol: TCP
+          port: 6379
+    # Allow to OpenBao
+    - to:
+        - podSelector:
+            matchLabels:
+              app: openbao
+      ports:
+        - protocol: TCP
+          port: 8200
+    # Allow to SignOz collector
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: observability
+      ports:
+        - protocol: TCP
+          port: 4317
+    # Allow DNS
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53

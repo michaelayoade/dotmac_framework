@@ -1,0 +1,26 @@
+# Troubleshooting Guide
+
+## Common Issues
+
+{% for issue in critical_issues %}
+### {{ issue.category }}: {{ issue.description }}
+
+**Location**: `{{ issue.location }}`
+
+**Problem**: {{ issue.description }}
+
+{% if issue.actual_code %}
+**Current Implementation**:
+```
+{{ issue.actual_code }}
+```
+{% endif %}
+
+**Fix**: {{ issue.fix_suggestion }}
+
+**Business Impact**: {{ issue.business_impact }}
+
+---
+{% endfor %}
+
+*Auto-generated on {{ generation_date }}*

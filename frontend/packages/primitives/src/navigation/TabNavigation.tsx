@@ -3,10 +3,7 @@
  */
 
 import React from 'react';
-import { clsx } from 'clsx';
-
-// Simple class name utility
-const cn = (...classes: (string | undefined)[]) => clsx(classes);
+import { cn } from '../utils/cn';
 
 // Tab Navigation Container
 export interface TabNavigationProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -42,7 +39,7 @@ export interface TabItemProps extends React.ButtonHTMLAttributes<HTMLButtonEleme
 export const TabItem = React.forwardRef<HTMLButtonElement, TabItemProps>(
   ({ className, active = false, variant = 'default', children, ...props }, ref) => {
     const baseStyles = 'px-3 py-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2';
-    
+
     const variantStyles = {
       default: active
         ? 'border-b-2 border-blue-500 text-blue-600'

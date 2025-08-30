@@ -1,0 +1,87 @@
+{
+  "name": "@dotmac/field-ops",
+  "version": "0.1.0",
+  "description": "Field operations and work order management system",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./work-orders": {
+      "import": "./dist/work-orders.mjs",
+      "require": "./dist/work-orders.js",
+      "types": "./dist/work-orders.d.ts"
+    },
+    "./forms": {
+      "import": "./dist/forms.mjs",
+      "require": "./dist/forms.js",
+      "types": "./dist/forms.d.ts"
+    },
+    "./analytics": {
+      "import": "./dist/analytics.mjs",
+      "require": "./dist/analytics.js",
+      "types": "./dist/analytics.d.ts"
+    },
+    "./sync": {
+      "import": "./dist/sync.mjs",
+      "require": "./dist/sync.js",
+      "types": "./dist/sync.d.ts"
+    },
+    "./workflows": {
+      "import": "./dist/workflows.mjs",
+      "require": "./dist/workflows.js",
+      "types": "./dist/workflows.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "eslint src/**/*.{ts,tsx}",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@dotmac/headless": "workspace:*",
+    "@dotmac/primitives": "workspace:*",
+    "@dotmac/mapping": "workspace:*",
+    "@dotmac/ml-analytics": "workspace:*",
+    "@dotmac/mobile": "workspace:*",
+    "@dotmac/providers": "workspace:*",
+    "@dotmac/file-system": "workspace:*",
+    "@dotmac/auth": "workspace:*",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-hook-form": "^7.48.2",
+    "@hookform/resolvers": "^3.3.2",
+    "zod": "^3.22.4",
+    "lucide-react": "^0.363.0",
+    "framer-motion": "^10.16.16",
+    "react-signature-canvas": "^1.0.6",
+    "react-webcam": "^7.1.1",
+    "dexie": "^3.2.4",
+    "idb": "^8.0.0",
+    "date-fns": "^2.30.0"
+  },
+  "devDependencies": {
+    "@dotmac/typescript-config": "workspace:*",
+    "@dotmac/eslint-config": "workspace:*",
+    "typescript": "^5.2.2",
+    "tsup": "^7.2.0"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "keywords": [
+    "field-operations",
+    "work-orders",
+    "gps-tracking",
+    "mobile-workflows",
+    "technician-portal"
+  ],
+  "author": "DotMac Framework",
+  "license": "MIT"
+}

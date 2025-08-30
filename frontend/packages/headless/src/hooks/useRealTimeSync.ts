@@ -5,8 +5,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { io, type Socket } from 'socket.io-client';
 
-import { useAuthStore } from '../stores/authStore';
-import { useTenantStore } from '../stores/tenantStore';
+import { useAuthStore } from "@dotmac/headless/auth";
+import { useTenantStore } from "@dotmac/headless/stores";
 
 export interface RealTimeEvent {
   type: string;
