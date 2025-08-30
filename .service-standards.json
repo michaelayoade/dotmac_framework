@@ -1,0 +1,29 @@
+{
+  "enabled": false,
+  "service_standards": {
+    "patterns": {
+      "deprecated": {
+        "patterns": [],
+        "classes": []
+      }
+    },
+    "rules": {
+      "async_patterns": {
+        "required_methods": [
+          "create",
+          "update",
+          "delete",
+          "get_by_id",
+          "list"
+        ]
+      }
+    },
+    "migration_guide": {
+      "steps": [
+        "Inherit from BaseTenantService[Model, CreateSchema, UpdateSchema, ResponseSchema]",
+        "Implement async CRUD methods (create, update, delete, get_by_id, list)",
+        "Prefer consolidated service imports from modules/*/service.py"
+      ]
+    }
+  }
+}

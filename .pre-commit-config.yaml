@@ -8,7 +8,8 @@ repos:
     hooks:
       - id: dry-pattern-validation
         name: "DRY Pattern Validation (MANDATORY)"
-        entry: poetry run validate-dry
+        entry: python3
+        args: ["tools/run_dry_validation.py"]
         language: system
         pass_filenames: false
         always_run: true
@@ -17,7 +18,8 @@ repos:
 
       - id: enforce-dry-patterns
         name: "Enforce DRY Patterns (STRICT)"
-        entry: poetry run enforce-patterns
+        entry: python3
+        args: ["tools/enforce_patterns.py"]
         language: system
         types: [python]
         stages: [push]
