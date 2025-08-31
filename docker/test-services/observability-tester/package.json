@@ -1,0 +1,12 @@
+{
+  "name": "observability-integration-tester",
+  "version": "1.0.0",
+  "description": "Integration tests for observability across DotMac portals",
+  "main": "observability_integration_tester.py",
+  "scripts": {
+    "test": "python3 observability_integration_tester.py"
+  },
+  "keywords": ["observability", "testing", "telemetry", "tracing"],
+  "author": "DotMac Framework",
+  "license": "MIT"
+}

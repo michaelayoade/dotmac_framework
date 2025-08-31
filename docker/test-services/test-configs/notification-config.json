@@ -1,0 +1,69 @@
+{
+  "smtp": {
+    "test_scenarios": [
+      {
+        "name": "basic_send",
+        "description": "Test basic SMTP email sending",
+        "enabled": true
+      },
+      {
+        "name": "multipart_send", 
+        "description": "Test multipart SMTP email",
+        "enabled": true
+      },
+      {
+        "name": "tenant_isolation",
+        "description": "Test SMTP tenant header isolation",
+        "enabled": true
+      }
+    ]
+  },
+  "sms": {
+    "test_scenarios": [
+      {
+        "name": "sms_send",
+        "description": "Test SMS sending through sink",
+        "enabled": true
+      },
+      {
+        "name": "sms_receive",
+        "description": "Test SMS receiving through webhook",
+        "enabled": true
+      },
+      {
+        "name": "tenant_isolation",
+        "description": "Test SMS tenant message filtering",
+        "enabled": true
+      }
+    ]
+  },
+  "workflow": {
+    "test_scenarios": [
+      {
+        "name": "coordinated_notification",
+        "description": "Test coordinated email/SMS workflow",
+        "enabled": true
+      }
+    ]
+  },
+  "tenants": [
+    {
+      "id": "tenant-001",
+      "name": "Test Tenant Alpha",
+      "email_domain": "alpha.test.dotmac.local",
+      "sms_number_range": "+15550010XX"
+    },
+    {
+      "id": "tenant-002", 
+      "name": "Test Tenant Beta",
+      "email_domain": "beta.test.dotmac.local",
+      "sms_number_range": "+15550020XX"
+    },
+    {
+      "id": "tenant-003",
+      "name": "Test Tenant Gamma", 
+      "email_domain": "gamma.test.dotmac.local",
+      "sms_number_range": "+15550030XX"
+    }
+  ]
+}

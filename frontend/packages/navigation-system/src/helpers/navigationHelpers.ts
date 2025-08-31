@@ -69,16 +69,28 @@ export class NavigationBuilder {
 export const NavigationPresets = {
   admin: () => NavigationBuilder.create()
     .addItem('dashboard', 'Dashboard', '/dashboard', { icon: require('lucide-react').Home })
-    .addItem('users', 'Users', '/users', { icon: require('lucide-react').Users })
-    .addItem('analytics', 'Analytics', '/analytics', { icon: require('lucide-react').BarChart })
+    .addItem('customers', 'Customers', '/customers', { icon: require('lucide-react').Users })
+    .addGroup('billing', 'Billing', [
+      { id: 'billing-overview', label: 'Overview', href: '/billing' },
+      { id: 'currency-management', label: 'Currency Management', href: '/billing/currency-management' },
+    ], { icon: require('lucide-react').CreditCard })
+    .addItem('services', 'Services', '/services', { icon: require('lucide-react').Network })
+    .addItem('helpdesk', 'Help Desk', '/helpdesk', { icon: require('lucide-react').Headphones })
+    .addItem('monitoring', 'Monitoring', '/monitoring', { icon: require('lucide-react').Activity })
+    .addItem('network', 'Network', '/network', { icon: require('lucide-react').Wifi })
     .addItem('security', 'Security', '/security', { icon: require('lucide-react').Shield })
+    .addItem('business-rules', 'Business Rules', '/business-rules', { icon: require('lucide-react').Settings2 })
+    .addItem('configuration', 'Configuration', '/configuration', { icon: require('lucide-react').Cog })
     .addItem('settings', 'Settings', '/settings', { icon: require('lucide-react').Settings })
     .build(),
 
   customer: () => NavigationBuilder.create()
     .addItem('dashboard', 'Dashboard', '/dashboard', { icon: require('lucide-react').Home })
     .addItem('account', 'My Account', '/account', { icon: require('lucide-react').User })
-    .addItem('billing', 'Billing', '/billing', { icon: require('lucide-react').CreditCard })
+    .addGroup('billing', 'Billing', [
+      { id: 'billing-overview', label: 'Overview', href: '/billing' },
+      { id: 'make-payment', label: 'Make Payment', href: '/billing/payment' },
+    ], { icon: require('lucide-react').CreditCard })
     .addItem('services', 'Services', '/services', { icon: require('lucide-react').FileText })
     .addItem('support', 'Support', '/support', { icon: require('lucide-react').Headphones })
     .addItem('settings', 'Settings', '/settings', { icon: require('lucide-react').Settings })

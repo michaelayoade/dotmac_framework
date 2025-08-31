@@ -7,10 +7,12 @@ import logging
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status
 from pydantic import BaseModel
 
+from dotmac_shared.api.dependencies import StandardDeps
 from dotmac_shared.api.exception_handlers import standard_exception_handler
+from dotmac_shared.api.router_factory import RouterFactory
 from dotmac_shared.auth.dependencies import (
     get_current_user,
     get_permission_manager,
@@ -36,8 +38,11 @@ from .services import (
 
 logger = logging.getLogger(__name__)
 
-# Router instance
-router = APIRouter(prefix="/identity", tags=["identity"])
+# Use RouterFactory for standardized router creation
+identity_router = RouterFactory.create_standard_router(
+    prefix="/identity", 
+    tags=["identity", "authentication", "user-management"]
+)
 
 
 # Request/Response models
@@ -79,7 +84,7 @@ class PortalAccessRequest(BaseModel):
 
 
 # Authentication endpoints
-@router.post("/auth/login", response_model=Dict[str, Any])
+@identity_router.post("/auth/login", response_model=Dict[str, Any])
 @standard_exception_handler
 async def login(
     request: LoginRequest,
@@ -111,7 +116,7 @@ async def login(
         )
 
 
-@router.post("/auth/logout")
+@identity_router.post("/auth/logout")
 @standard_exception_handler
 async def logout(
     session_id: str,
@@ -136,7 +141,7 @@ async def logout(
 
 
 # User management endpoints
-@router.post("/users", response_model=Dict[str, Any])
+@identity_router.post("/users", response_model=Dict[str, Any])
 @standard_exception_handler
 async def create_user(
     request: UserCreateRequest,
@@ -168,7 +173,7 @@ async def create_user(
         )
 
 
-@router.get("/users/{user_id}", response_model=Dict[str, Any])
+@identity_router.get("/users/{user_id}", response_model=Dict[str, Any])
 @standard_exception_handler
 async def get_user(
     user_id: UUID,
@@ -198,7 +203,7 @@ async def get_user(
         )
 
 
-@router.get("/users", response_model=List[Dict[str, Any]])
+@identity_router.get("/users", response_model=List[Dict[str, Any]])
 @standard_exception_handler
 async def list_users(
     portal_type: Optional[str] = None,
@@ -227,7 +232,7 @@ async def list_users(
 
 
 # Customer management endpoints
-@router.post("/customers", response_model=Dict[str, Any])
+@identity_router.post("/customers", response_model=Dict[str, Any])
 @standard_exception_handler
 async def create_customer(
     request: CustomerCreateRequest,
@@ -259,7 +264,7 @@ async def create_customer(
         )
 
 
-@router.get("/customers/{customer_id}", response_model=Dict[str, Any])
+@identity_router.get("/customers/{customer_id}", response_model=Dict[str, Any])
 @standard_exception_handler
 async def get_customer(
     customer_id: UUID,
@@ -289,7 +294,7 @@ async def get_customer(
         )
 
 
-@router.get("/customers", response_model=List[Dict[str, Any]])
+@identity_router.get("/customers", response_model=List[Dict[str, Any]])
 @standard_exception_handler
 async def list_customers(
     status: Optional[str] = None,
@@ -319,7 +324,7 @@ async def list_customers(
 
 
 # Portal access management endpoints
-@router.post("/portal-access", response_model=Dict[str, Any])
+@identity_router.post("/portal-access", response_model=Dict[str, Any])
 @standard_exception_handler
 async def create_portal_access(
     request: PortalAccessRequest,
@@ -359,7 +364,7 @@ async def create_portal_access(
         )
 
 
-@router.get("/portal-access/{user_id}/{portal_type}", response_model=Dict[str, Any])
+@identity_router.get("/portal-access/{user_id}/{portal_type}", response_model=Dict[str, Any])
 @standard_exception_handler
 async def get_portal_access(
     user_id: UUID,
@@ -390,7 +395,7 @@ async def get_portal_access(
         )
 
 
-@router.get("/portal-users/{portal_type}", response_model=List[Dict[str, Any]])
+@identity_router.get("/portal-users/{portal_type}", response_model=List[Dict[str, Any]])
 @standard_exception_handler
 async def list_portal_users(
     portal_type: str,
@@ -412,7 +417,7 @@ async def list_portal_users(
 
 
 # Health check endpoint
-@router.get("/health")
+@identity_router.get("/health")
 @standard_exception_handler
 async def identity_health():
     """Identity module health check."""
@@ -423,6 +428,6 @@ async def identity_health():
         "features": ["authentication", "users", "customers", "portal_access"]
     }
 
-
-# Export router
-__all__ = ['router']
+# Export the router for inclusion in main app
+router = identity_router
+__all__ = ["router", "identity_router"]

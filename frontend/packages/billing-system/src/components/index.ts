@@ -5,6 +5,10 @@ export { UniversalPaymentMethodManager } from './UniversalPaymentMethodManager';
 export { UniversalBillingHistory } from './UniversalBillingHistory';
 export { UniversalPaymentFailureHandler } from './UniversalPaymentFailureHandler';
 
+// Multi-Currency Components
+export { MultiCurrencyPaymentForm } from './MultiCurrencyPaymentForm';
+export { CurrencyManagementPanel } from './CurrencyManagementPanel';
+
 // Re-export from headless for convenience
 export { useBillingSystem } from '../hooks/useBillingSystem';
 

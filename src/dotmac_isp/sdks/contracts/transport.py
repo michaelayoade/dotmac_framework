@@ -61,7 +61,7 @@ class TransportConfig:
     """Transport configuration."""
 
     protocol: TransportProtocol = TransportProtocol.HTTPS
-    host: str = "localhost"
+    host: str = "api.dotmac.local"
     port: int = 443
     base_path: str = "/api/v1"
     timeout: float = 30.0

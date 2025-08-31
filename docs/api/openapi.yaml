@@ -1,0 +1,741 @@
+components:
+  parameters:
+    OrderParam:
+      description: Sort order
+      in: query
+      name: order
+      required: false
+      schema:
+        default: desc
+        enum:
+        - asc
+        - desc
+        type: string
+    PageParam:
+      description: Page number for pagination
+      in: query
+      name: page
+      required: false
+      schema:
+        default: 1
+        minimum: 1
+        type: integer
+    SizeParam:
+      description: Number of items per page
+      in: query
+      name: size
+      required: false
+      schema:
+        default: 50
+        maximum: 500
+        minimum: 1
+        type: integer
+    SortParam:
+      description: Field to sort by
+      in: query
+      name: sort
+      required: false
+      schema:
+        default: created_at
+        type: string
+  responses:
+    400BadRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+      description: Bad Request - Invalid input parameters
+    401Unauthorized:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+      description: Unauthorized - Invalid or missing authentication
+    403Forbidden:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+      description: Forbidden - Insufficient permissions
+    404NotFound:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+      description: Not Found - Resource does not exist
+    422ValidationError:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+      description: Validation Error - Invalid data format
+    500InternalError:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+      description: Internal Server Error
+  schemas:
+    Address:
+      properties:
+        city:
+          maxLength: 100
+          type: string
+        country:
+          default: US
+          maxLength: 100
+          type: string
+        postal_code:
+          maxLength: 20
+          type: string
+        state:
+          maxLength: 100
+          type: string
+        street:
+          maxLength: 200
+          type: string
+      required:
+      - street
+      - city
+      - state
+      - postal_code
+      type: object
+    BaseResponse:
+      properties:
+        created_at:
+          format: date-time
+          type: string
+        id:
+          format: uuid
+          type: string
+        tenant_id:
+          format: uuid
+          type: string
+        updated_at:
+          format: date-time
+          type: string
+      required:
+      - id
+      - created_at
+      - updated_at
+      - tenant_id
+      type: object
+    Customer:
+      allOf:
+      - $ref: '#/components/schemas/BaseResponse'
+      - properties:
+          address:
+            $ref: '#/components/schemas/Address'
+          billing_info:
+            $ref: '#/components/schemas/BillingInfo'
+          email:
+            format: email
+            type: string
+          first_name:
+            maxLength: 100
+            type: string
+          last_name:
+            maxLength: 100
+            type: string
+          phone:
+            pattern: ^\+?[1-9]\d{1,14}$
+            type: string
+          services:
+            items:
+              $ref: '#/components/schemas/Service'
+            type: array
+          status:
+            enum:
+            - active
+            - suspended
+            - terminated
+            type: string
+        required:
+        - first_name
+        - last_name
+        - email
+        - status
+        type: object
+    CustomerCreate:
+      properties:
+        address:
+          $ref: '#/components/schemas/AddressCreate'
+        billing_info:
+          $ref: '#/components/schemas/BillingInfoCreate'
+        email:
+          format: email
+          type: string
+        first_name:
+          maxLength: 100
+          type: string
+        last_name:
+          maxLength: 100
+          type: string
+        phone:
+          pattern: ^\+?[1-9]\d{1,14}$
+          type: string
+      required:
+      - first_name
+      - last_name
+      - email
+      type: object
+    ErrorResponse:
+      properties:
+        details:
+          type: object
+        error:
+          type: string
+        message:
+          type: string
+        timestamp:
+          format: date-time
+          type: string
+      required:
+      - error
+      - message
+      - timestamp
+      type: object
+    Invoice:
+      allOf:
+      - $ref: '#/components/schemas/BaseResponse'
+      - properties:
+          amount:
+            format: decimal
+            minimum: 0
+            type: number
+          customer_id:
+            format: uuid
+            type: string
+          due_date:
+            format: date
+            type: string
+          invoice_number:
+            maxLength: 50
+            type: string
+          line_items:
+            items:
+              $ref: '#/components/schemas/InvoiceLineItem'
+            type: array
+          paid_date:
+            format: date
+            nullable: true
+            type: string
+          status:
+            enum:
+            - draft
+            - sent
+            - paid
+            - overdue
+            - cancelled
+            type: string
+          tax_amount:
+            format: decimal
+            minimum: 0
+            type: number
+          total_amount:
+            format: decimal
+            minimum: 0
+            type: number
+        required:
+        - invoice_number
+        - customer_id
+        - amount
+        - total_amount
+        - status
+        - due_date
+        type: object
+    NetworkDevice:
+      allOf:
+      - $ref: '#/components/schemas/BaseResponse'
+      - properties:
+          configuration:
+            type: object
+          device_type:
+            enum:
+            - router
+            - switch
+            - firewall
+            - access_point
+            - ont
+            - olt
+            type: string
+          ip_address:
+            format: ipv4
+            type: string
+          last_seen:
+            format: date-time
+            type: string
+          location:
+            maxLength: 200
+            type: string
+          mac_address:
+            pattern: ^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$
+            type: string
+          manufacturer:
+            maxLength: 100
+            type: string
+          model:
+            maxLength: 100
+            type: string
+          name:
+            maxLength: 100
+            type: string
+          status:
+            enum:
+            - online
+            - offline
+            - maintenance
+            - error
+            type: string
+        required:
+        - name
+        - device_type
+        - model
+        - manufacturer
+        - ip_address
+        - status
+        type: object
+    PaginatedResponse:
+      properties:
+        has_next:
+          type: boolean
+        has_prev:
+          type: boolean
+        items:
+          type: array
+        page:
+          minimum: 1
+          type: integer
+        pages:
+          minimum: 1
+          type: integer
+        size:
+          minimum: 1
+          type: integer
+        total:
+          minimum: 0
+          type: integer
+      required:
+      - items
+      - total
+      - page
+      - size
+      - pages
+      - has_next
+      - has_prev
+      type: object
+    Service:
+      allOf:
+      - $ref: '#/components/schemas/BaseResponse'
+      - properties:
+          customer_id:
+            format: uuid
+            type: string
+          installation_date:
+            format: date
+            type: string
+          last_payment_date:
+            format: date
+            type: string
+          monthly_rate:
+            format: decimal
+            type: number
+          name:
+            maxLength: 200
+            type: string
+          plan:
+            $ref: '#/components/schemas/ServicePlan'
+          status:
+            enum:
+            - pending
+            - active
+            - suspended
+            - terminated
+            type: string
+          type:
+            enum:
+            - internet
+            - voip
+            - tv
+            - bundle
+            type: string
+        required:
+        - name
+        - type
+        - plan
+        - status
+        - customer_id
+        - monthly_rate
+        type: object
+    Ticket:
+      allOf:
+      - $ref: '#/components/schemas/BaseResponse'
+      - properties:
+          assigned_to:
+            format: uuid
+            nullable: true
+            type: string
+          category:
+            enum:
+            - technical
+            - billing
+            - sales
+            - general
+            type: string
+          comments:
+            items:
+              $ref: '#/components/schemas/TicketComment'
+            type: array
+          customer_id:
+            format: uuid
+            type: string
+          description:
+            type: string
+          priority:
+            enum:
+            - low
+            - medium
+            - high
+            - critical
+            type: string
+          resolution:
+            nullable: true
+            type: string
+          status:
+            enum:
+            - open
+            - in_progress
+            - waiting
+            - resolved
+            - closed
+            type: string
+          subject:
+            maxLength: 200
+            type: string
+          ticket_number:
+            maxLength: 20
+            type: string
+        required:
+        - ticket_number
+        - customer_id
+        - subject
+        - description
+        - priority
+        - status
+        - category
+        type: object
+    User:
+      allOf:
+      - $ref: '#/components/schemas/BaseResponse'
+      - properties:
+          email:
+            format: email
+            type: string
+          first_name:
+            maxLength: 100
+            type: string
+          is_active:
+            default: true
+            type: boolean
+          last_login:
+            format: date-time
+            nullable: true
+            type: string
+          last_name:
+            maxLength: 100
+            type: string
+          permissions:
+            items:
+              type: string
+            type: array
+          role:
+            enum:
+            - admin
+            - manager
+            - technician
+            - support
+            - readonly
+            type: string
+          username:
+            maxLength: 50
+            type: string
+        required:
+        - username
+        - email
+        - first_name
+        - last_name
+        - role
+        type: object
+  securitySchemes:
+    BearerAuth:
+      bearerFormat: JWT
+      scheme: bearer
+      type: http
+info:
+  contact:
+    email: support@dotmac.platform
+    name: DotMac Platform Support
+  description: "\n# DotMac Platform API Documentation\n\nComplete API reference for\
+    \ the DotMac ISP Management Platform. This API provides comprehensive \nfunctionality\
+    \ for managing Internet Service Provider operations including:\n\n- Customer Management\
+    \ & Service Provisioning\n- Billing & Financial Operations  \n- Network Operations\
+    \ & Device Management\n- Support Ticketing & Field Operations\n- User Management\
+    \ & Portal Services\n- Analytics & Reporting\n\n## Authentication\n\nAll API endpoints\
+    \ require authentication via JWT tokens:\n\n```http\nAuthorization: Bearer <jwt_token>\n\
+    ```\n\n## Rate Limiting\n\nAPI calls are rate limited per tenant:\n- **Standard**:\
+    \ 1000 requests/hour\n- **Premium**: 10000 requests/hour  \n- **Enterprise**:\
+    \ Unlimited\n\n## Error Handling\n\nAll endpoints return standardized error responses:\n\
+    \n```json\n{\n  \"error\": \"error_code\",\n  \"message\": \"Human readable error\
+    \ message\",\n  \"details\": {},\n  \"timestamp\": \"2024-01-01T00:00:00Z\"\n\
+    }\n```\n\n## Pagination\n\nList endpoints support pagination via query parameters:\n\
+    - `page`: Page number (default: 1)\n- `size`: Items per page (default: 50, max:\
+    \ 500)\n- `sort`: Sort field (default: created_at)\n- `order`: Sort order (asc/desc,\
+    \ default: desc)\n\n## Multi-Tenancy\n\nAll operations are automatically scoped\
+    \ to the authenticated tenant. Cross-tenant \naccess is not permitted and will\
+    \ result in 403 Forbidden responses.\n            "
+  license:
+    name: Commercial License
+    url: https://dotmac.platform/license
+  title: DotMac ISP Management Platform API
+  version: 1.0.0
+openapi: 3.0.3
+paths:
+  /customers:
+    get:
+      description: Retrieve a paginated list of customers
+      parameters:
+      - $ref: '#/components/parameters/PageParam'
+      - $ref: '#/components/parameters/SizeParam'
+      - $ref: '#/components/parameters/SortParam'
+      - $ref: '#/components/parameters/OrderParam'
+      - description: Filter by customer status
+        in: query
+        name: status
+        required: false
+        schema:
+          enum:
+          - active
+          - suspended
+          - terminated
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/PaginatedResponse'
+                - properties:
+                    items:
+                      items:
+                        $ref: '#/components/schemas/Customer'
+                      type: array
+          description: List of customers retrieved successfully
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+      summary: List customers
+      tags:
+      - Customer Management
+    post:
+      description: Create a new customer account
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerCreate'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+          description: Customer created successfully
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+      summary: Create customer
+      tags:
+      - Customer Management
+  /customers/{customer_id}:
+    delete:
+      description: Delete a customer account (soft delete)
+      parameters:
+      - in: path
+        name: customer_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+      responses:
+        '204':
+          description: Customer deleted successfully
+        '404':
+          $ref: '#/components/responses/404NotFound'
+      summary: Delete customer
+      tags:
+      - Customer Management
+    get:
+      description: Retrieve a specific customer by ID
+      parameters:
+      - in: path
+        name: customer_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+          description: Customer retrieved successfully
+        '404':
+          $ref: '#/components/responses/404NotFound'
+      summary: Get customer
+      tags:
+      - Customer Management
+    put:
+      description: Update customer information
+      parameters:
+      - in: path
+        name: customer_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerCreate'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+          description: Customer updated successfully
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+      summary: Update customer
+      tags:
+      - Customer Management
+  /devices:
+    get:
+      description: Retrieve a paginated list of network devices
+      responses:
+        '200':
+          description: Devices retrieved successfully
+      summary: List network devices
+      tags:
+      - Network Operations
+    post:
+      description: Register a new network device
+      responses:
+        '201':
+          description: Device added successfully
+      summary: Add network device
+      tags:
+      - Network Operations
+  /invoices:
+    get:
+      description: Retrieve a paginated list of invoices
+      responses:
+        '200':
+          description: Invoices retrieved successfully
+      summary: List invoices
+      tags:
+      - Billing & Finance
+    post:
+      description: Generate a new invoice
+      responses:
+        '201':
+          description: Invoice created successfully
+      summary: Create invoice
+      tags:
+      - Billing & Finance
+  /services:
+    get:
+      description: Retrieve a paginated list of services
+      responses:
+        '200':
+          description: Services retrieved successfully
+      summary: List services
+      tags:
+      - Service Management
+    post:
+      description: Create a new service
+      responses:
+        '201':
+          description: Service created successfully
+      summary: Create service
+      tags:
+      - Service Management
+  /tickets:
+    get:
+      description: Retrieve a paginated list of support tickets
+      responses:
+        '200':
+          description: Tickets retrieved successfully
+      summary: List tickets
+      tags:
+      - Support & Ticketing
+    post:
+      description: Create a new support ticket
+      responses:
+        '201':
+          description: Ticket created successfully
+      summary: Create ticket
+      tags:
+      - Support & Ticketing
+  /users:
+    get:
+      description: Retrieve a paginated list of users
+      responses:
+        '200':
+          description: Users retrieved successfully
+      summary: List users
+      tags:
+      - User Management
+    post:
+      description: Create a new user account
+      responses:
+        '201':
+          description: User created successfully
+      summary: Create user
+      tags:
+      - User Management
+security:
+- BearerAuth: []
+servers:
+- description: Production Server
+  url: https://api.dotmac.platform/v1
+- description: Staging Server
+  url: https://staging-api.dotmac.platform/v1
+- description: Development Server
+  url: http://localhost:8000/v1
+tags:
+- description: Customer lifecycle management operations
+  name: Customer Management
+- description: Service provisioning and lifecycle management
+  name: Service Management
+- description: Billing, invoicing, and financial operations
+  name: Billing & Finance
+- description: Customer support and ticketing system
+  name: Support & Ticketing
+- description: Network device and infrastructure management
+  name: Network Operations
+- description: User account and permission management
+  name: User Management
+- description: Business intelligence and reporting
+  name: Analytics & Reporting
+- description: Field technician and workforce management
+  name: Field Operations

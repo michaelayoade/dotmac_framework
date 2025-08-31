@@ -1,0 +1,71 @@
+{
+  "common": {
+    "welcome": "Welcome",
+    "login": "Sign In",
+    "logout": "Sign Out",
+    "dashboard": "Dashboard",
+    "settings": "Settings",
+    "profile": "Profile",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "warning": "Warning",
+    "info": "Information"
+  },
+  "navigation": {
+    "home": "Home",
+    "customers": "Customers",
+    "billing": "Billing",
+    "reports": "Reports",
+    "support": "Support",
+    "admin": "Administration"
+  },
+  "forms": {
+    "email": "Email Address",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "company": "Company",
+    "phone": "Phone Number",
+    "address": "Address",
+    "city": "City",
+    "state": "State",
+    "zipCode": "ZIP Code",
+    "country": "Country"
+  },
+  "validation": {
+    "required": "This field is required",
+    "invalidEmail": "Please enter a valid email address",
+    "passwordTooShort": "Password must be at least 8 characters",
+    "passwordsMismatch": "Passwords do not match",
+    "invalidPhoneNumber": "Please enter a valid phone number"
+  },
+  "billing": {
+    "invoice": "Invoice",
+    "amount": "Amount",
+    "dueDate": "Due Date",
+    "paid": "Paid",
+    "unpaid": "Unpaid",
+    "overdue": "Overdue",
+    "payNow": "Pay Now",
+    "downloadInvoice": "Download Invoice",
+    "paymentHistory": "Payment History"
+  },
+  "currency": {
+    "usd": "US Dollar",
+    "eur": "Euro",
+    "sar": "Saudi Riyal"
+  },
+  "dates": {
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "thisWeek": "This Week",
+    "thisMonth": "This Month",
+    "thisYear": "This Year"
+  }
+}

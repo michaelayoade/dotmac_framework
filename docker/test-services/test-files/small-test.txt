@@ -1,0 +1,3 @@
+This is a small test file for file storage testing.
+It contains some basic text content to validate upload functionality.
+The file is designed to be under the chunk size threshold.

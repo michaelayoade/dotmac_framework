@@ -47,8 +47,9 @@ class InteractionMessage(BaseModel):
     message_type: str = "text"  # text, attachment, system_note
     extra_data: Dict[str, Any] = Field(default_factory=dict, alias="metadata")
 
-    model_config = ConfigDict()
-        populate_by_name = True
+    model_config = ConfigDict(
+        populate_by_name=True
+    )
 
 
 class InteractionModel(BaseModel):
@@ -106,8 +107,9 @@ class InteractionModel(BaseModel):
     # Additional data - using alias to avoid SQLAlchemy conflict
     extra_data: Dict[str, Any] = Field(default_factory=dict, alias="metadata")
 
-    model_config = ConfigDict()
-        populate_by_name = True
+    model_config = ConfigDict(
+        populate_by_name=True
+    )
 
 
 class CreateInteractionRequest(BaseModel):
@@ -124,8 +126,9 @@ class CreateInteractionRequest(BaseModel):
     due_date: Optional[datetime] = None
     extra_data: Dict[str, Any] = Field(default_factory=dict, alias="metadata")
 
-    model_config = ConfigDict()
-        populate_by_name = True
+    model_config = ConfigDict(
+        populate_by_name=True
+    )
 
 
 class UpdateInteractionRequest(BaseModel):
@@ -145,5 +148,6 @@ class UpdateInteractionRequest(BaseModel):
     satisfaction_score: Optional[int] = Field(None, ge=1, le=5)
     extra_data: Optional[Dict[str, Any]] = Field(None, alias="metadata")
 
-    model_config = ConfigDict()
-        populate_by_name = True
+    model_config = ConfigDict(
+        populate_by_name=True
+    )

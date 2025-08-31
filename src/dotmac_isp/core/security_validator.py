@@ -310,14 +310,17 @@ class EndpointSecurityValidator:
 
         if report.critical_issues:
             for issue in report.critical_issues:
+                logger.critical(f"Critical security issue: {issue}")
 
         if report.recommendations:
             for rec in report.recommendations:
+                logger.info(f"Security recommendation: {rec}")
 
         # Show worst endpoints
         worst_endpoints = sorted(report.endpoints, key=lambda x: x.security_score)[:5]
         if worst_endpoints:
             for endpoint in worst_endpoints:
+                logger.warning(f"Low security score endpoint: {endpoint.path} (score: {endpoint.security_score})")
 
 
 def validate_endpoint_security(router_paths: List[str] = None) -> SecurityValidationReport:

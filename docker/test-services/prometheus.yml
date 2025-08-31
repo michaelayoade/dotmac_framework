@@ -1,0 +1,28 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'otel-collector'
+    static_configs:
+      - targets: ['otel-collector:8888', 'otel-collector:8889']
+
+  # Portal applications (when running)
+  - job_name: 'dotmac-portals'
+    static_configs:
+      - targets: 
+        - 'host.docker.internal:3001'  # admin
+        - 'host.docker.internal:3002'  # customer  
+        - 'host.docker.internal:3003'  # technician
+        - 'host.docker.internal:3004'  # reseller
+    metrics_path: '/api/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s

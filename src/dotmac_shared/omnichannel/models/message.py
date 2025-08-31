@@ -65,8 +65,9 @@ class Message(BaseModel):
     # Additional data
     extra_data: Dict[str, Any] = Field(default_factory=dict, alias="metadata")
 
-    model_config = ConfigDict()
-        populate_by_name = True
+    model_config = ConfigDict(
+        populate_by_name=True
+    )
 
 
 class MessageResult(BaseModel):
@@ -98,8 +99,9 @@ class MessageResult(BaseModel):
     # Additional data
     extra_data: Dict[str, Any] = Field(default_factory=dict, alias="metadata")
 
-    model_config = ConfigDict()
-        populate_by_name = True
+    model_config = ConfigDict(
+        populate_by_name=True
+    )
 
 
 class BulkMessageRequest(BaseModel):
@@ -119,8 +121,9 @@ class BulkMessageRequest(BaseModel):
     # Timing
     scheduled_at: Optional[datetime] = None
 
-    model_config = ConfigDict()
-        populate_by_name = True
+    model_config = ConfigDict(
+        populate_by_name=True
+    )
 
 
 class BulkMessageResult(BaseModel):
@@ -184,5 +187,6 @@ class MessageTemplate(BaseModel):
     # Additional data
     extra_data: Dict[str, Any] = Field(default_factory=dict, alias="metadata")
 
-    model_config = ConfigDict()
-        populate_by_name = True
+    model_config = ConfigDict(
+        populate_by_name=True
+    )

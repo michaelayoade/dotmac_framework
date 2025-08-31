@@ -1,0 +1,1080 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "DotMac ISP Management Platform API",
+    "version": "1.0.0",
+    "description": "\n# DotMac Platform API Documentation\n\nComplete API reference for the DotMac ISP Management Platform. This API provides comprehensive \nfunctionality for managing Internet Service Provider operations including:\n\n- Customer Management & Service Provisioning\n- Billing & Financial Operations  \n- Network Operations & Device Management\n- Support Ticketing & Field Operations\n- User Management & Portal Services\n- Analytics & Reporting\n\n## Authentication\n\nAll API endpoints require authentication via JWT tokens:\n\n```http\nAuthorization: Bearer <jwt_token>\n```\n\n## Rate Limiting\n\nAPI calls are rate limited per tenant:\n- **Standard**: 1000 requests/hour\n- **Premium**: 10000 requests/hour  \n- **Enterprise**: Unlimited\n\n## Error Handling\n\nAll endpoints return standardized error responses:\n\n```json\n{\n  \"error\": \"error_code\",\n  \"message\": \"Human readable error message\",\n  \"details\": {},\n  \"timestamp\": \"2024-01-01T00:00:00Z\"\n}\n```\n\n## Pagination\n\nList endpoints support pagination via query parameters:\n- `page`: Page number (default: 1)\n- `size`: Items per page (default: 50, max: 500)\n- `sort`: Sort field (default: created_at)\n- `order`: Sort order (asc/desc, default: desc)\n\n## Multi-Tenancy\n\nAll operations are automatically scoped to the authenticated tenant. Cross-tenant \naccess is not permitted and will result in 403 Forbidden responses.\n            ",
+    "contact": {
+      "name": "DotMac Platform Support",
+      "email": "support@dotmac.platform"
+    },
+    "license": {
+      "name": "Commercial License",
+      "url": "https://dotmac.platform/license"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.dotmac.platform/v1",
+      "description": "Production Server"
+    },
+    {
+      "url": "https://staging-api.dotmac.platform/v1",
+      "description": "Staging Server"
+    },
+    {
+      "url": "http://localhost:8000/v1",
+      "description": "Development Server"
+    }
+  ],
+  "security": [
+    {
+      "BearerAuth": []
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "BaseResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "id",
+          "created_at",
+          "updated_at",
+          "tenant_id"
+        ]
+      },
+      "Customer": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "first_name": {
+                "type": "string",
+                "maxLength": 100
+              },
+              "last_name": {
+                "type": "string",
+                "maxLength": 100
+              },
+              "email": {
+                "type": "string",
+                "format": "email"
+              },
+              "phone": {
+                "type": "string",
+                "pattern": "^\\+?[1-9]\\d{1,14}$"
+              },
+              "address": {
+                "$ref": "#/components/schemas/Address"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "active",
+                  "suspended",
+                  "terminated"
+                ]
+              },
+              "billing_info": {
+                "$ref": "#/components/schemas/BillingInfo"
+              },
+              "services": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Service"
+                }
+              }
+            },
+            "required": [
+              "first_name",
+              "last_name",
+              "email",
+              "status"
+            ]
+          }
+        ]
+      },
+      "CustomerCreate": {
+        "type": "object",
+        "properties": {
+          "first_name": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "last_name": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "phone": {
+            "type": "string",
+            "pattern": "^\\+?[1-9]\\d{1,14}$"
+          },
+          "address": {
+            "$ref": "#/components/schemas/AddressCreate"
+          },
+          "billing_info": {
+            "$ref": "#/components/schemas/BillingInfoCreate"
+          }
+        },
+        "required": [
+          "first_name",
+          "last_name",
+          "email"
+        ]
+      },
+      "Service": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "maxLength": 200
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "internet",
+                  "voip",
+                  "tv",
+                  "bundle"
+                ]
+              },
+              "plan": {
+                "$ref": "#/components/schemas/ServicePlan"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "pending",
+                  "active",
+                  "suspended",
+                  "terminated"
+                ]
+              },
+              "customer_id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "monthly_rate": {
+                "type": "number",
+                "format": "decimal"
+              },
+              "installation_date": {
+                "type": "string",
+                "format": "date"
+              },
+              "last_payment_date": {
+                "type": "string",
+                "format": "date"
+              }
+            },
+            "required": [
+              "name",
+              "type",
+              "plan",
+              "status",
+              "customer_id",
+              "monthly_rate"
+            ]
+          }
+        ]
+      },
+      "Invoice": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "invoice_number": {
+                "type": "string",
+                "maxLength": 50
+              },
+              "customer_id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "amount": {
+                "type": "number",
+                "format": "decimal",
+                "minimum": 0
+              },
+              "tax_amount": {
+                "type": "number",
+                "format": "decimal",
+                "minimum": 0
+              },
+              "total_amount": {
+                "type": "number",
+                "format": "decimal",
+                "minimum": 0
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "draft",
+                  "sent",
+                  "paid",
+                  "overdue",
+                  "cancelled"
+                ]
+              },
+              "due_date": {
+                "type": "string",
+                "format": "date"
+              },
+              "paid_date": {
+                "type": "string",
+                "format": "date",
+                "nullable": true
+              },
+              "line_items": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/InvoiceLineItem"
+                }
+              }
+            },
+            "required": [
+              "invoice_number",
+              "customer_id",
+              "amount",
+              "total_amount",
+              "status",
+              "due_date"
+            ]
+          }
+        ]
+      },
+      "Ticket": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "ticket_number": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "customer_id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "subject": {
+                "type": "string",
+                "maxLength": 200
+              },
+              "description": {
+                "type": "string"
+              },
+              "priority": {
+                "type": "string",
+                "enum": [
+                  "low",
+                  "medium",
+                  "high",
+                  "critical"
+                ]
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "open",
+                  "in_progress",
+                  "waiting",
+                  "resolved",
+                  "closed"
+                ]
+              },
+              "category": {
+                "type": "string",
+                "enum": [
+                  "technical",
+                  "billing",
+                  "sales",
+                  "general"
+                ]
+              },
+              "assigned_to": {
+                "type": "string",
+                "format": "uuid",
+                "nullable": true
+              },
+              "resolution": {
+                "type": "string",
+                "nullable": true
+              },
+              "comments": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/TicketComment"
+                }
+              }
+            },
+            "required": [
+              "ticket_number",
+              "customer_id",
+              "subject",
+              "description",
+              "priority",
+              "status",
+              "category"
+            ]
+          }
+        ]
+      },
+      "NetworkDevice": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "maxLength": 100
+              },
+              "device_type": {
+                "type": "string",
+                "enum": [
+                  "router",
+                  "switch",
+                  "firewall",
+                  "access_point",
+                  "ont",
+                  "olt"
+                ]
+              },
+              "model": {
+                "type": "string",
+                "maxLength": 100
+              },
+              "manufacturer": {
+                "type": "string",
+                "maxLength": 100
+              },
+              "ip_address": {
+                "type": "string",
+                "format": "ipv4"
+              },
+              "mac_address": {
+                "type": "string",
+                "pattern": "^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$"
+              },
+              "location": {
+                "type": "string",
+                "maxLength": 200
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "online",
+                  "offline",
+                  "maintenance",
+                  "error"
+                ]
+              },
+              "last_seen": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "configuration": {
+                "type": "object"
+              }
+            },
+            "required": [
+              "name",
+              "device_type",
+              "model",
+              "manufacturer",
+              "ip_address",
+              "status"
+            ]
+          }
+        ]
+      },
+      "User": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "username": {
+                "type": "string",
+                "maxLength": 50
+              },
+              "email": {
+                "type": "string",
+                "format": "email"
+              },
+              "first_name": {
+                "type": "string",
+                "maxLength": 100
+              },
+              "last_name": {
+                "type": "string",
+                "maxLength": 100
+              },
+              "role": {
+                "type": "string",
+                "enum": [
+                  "admin",
+                  "manager",
+                  "technician",
+                  "support",
+                  "readonly"
+                ]
+              },
+              "is_active": {
+                "type": "boolean",
+                "default": true
+              },
+              "last_login": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true
+              },
+              "permissions": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "username",
+              "email",
+              "first_name",
+              "last_name",
+              "role"
+            ]
+          }
+        ]
+      },
+      "Address": {
+        "type": "object",
+        "properties": {
+          "street": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "city": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "state": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "postal_code": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "country": {
+            "type": "string",
+            "maxLength": 100,
+            "default": "US"
+          }
+        },
+        "required": [
+          "street",
+          "city",
+          "state",
+          "postal_code"
+        ]
+      },
+      "PaginatedResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array"
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "pages": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "has_next": {
+            "type": "boolean"
+          },
+          "has_prev": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "size",
+          "pages",
+          "has_next",
+          "has_prev"
+        ]
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "details": {
+            "type": "object"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "error",
+          "message",
+          "timestamp"
+        ]
+      }
+    },
+    "responses": {
+      "400BadRequest": {
+        "description": "Bad Request - Invalid input parameters",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "401Unauthorized": {
+        "description": "Unauthorized - Invalid or missing authentication",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "403Forbidden": {
+        "description": "Forbidden - Insufficient permissions",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "404NotFound": {
+        "description": "Not Found - Resource does not exist",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "422ValidationError": {
+        "description": "Validation Error - Invalid data format",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "500InternalError": {
+        "description": "Internal Server Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "parameters": {
+      "PageParam": {
+        "name": "page",
+        "in": "query",
+        "description": "Page number for pagination",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1
+        }
+      },
+      "SizeParam": {
+        "name": "size",
+        "in": "query",
+        "description": "Number of items per page",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 500,
+          "default": 50
+        }
+      },
+      "SortParam": {
+        "name": "sort",
+        "in": "query",
+        "description": "Field to sort by",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "default": "created_at"
+        }
+      },
+      "OrderParam": {
+        "name": "order",
+        "in": "query",
+        "description": "Sort order",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "asc",
+            "desc"
+          ],
+          "default": "desc"
+        }
+      }
+    }
+  },
+  "paths": {
+    "/customers": {
+      "get": {
+        "tags": [
+          "Customer Management"
+        ],
+        "summary": "List customers",
+        "description": "Retrieve a paginated list of customers",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PageParam"
+          },
+          {
+            "$ref": "#/components/parameters/SizeParam"
+          },
+          {
+            "$ref": "#/components/parameters/SortParam"
+          },
+          {
+            "$ref": "#/components/parameters/OrderParam"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by customer status",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "active",
+                "suspended",
+                "terminated"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of customers retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PaginatedResponse"
+                    },
+                    {
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Customer"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/401Unauthorized"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Customer Management"
+        ],
+        "summary": "Create customer",
+        "description": "Create a new customer account",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Customer created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Customer"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400BadRequest"
+          },
+          "422": {
+            "$ref": "#/components/responses/422ValidationError"
+          }
+        }
+      }
+    },
+    "/customers/{customer_id}": {
+      "get": {
+        "tags": [
+          "Customer Management"
+        ],
+        "summary": "Get customer",
+        "description": "Retrieve a specific customer by ID",
+        "parameters": [
+          {
+            "name": "customer_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Customer retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Customer"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/404NotFound"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Customer Management"
+        ],
+        "summary": "Update customer",
+        "description": "Update customer information",
+        "parameters": [
+          {
+            "name": "customer_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Customer updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Customer"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/404NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/422ValidationError"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Customer Management"
+        ],
+        "summary": "Delete customer",
+        "description": "Delete a customer account (soft delete)",
+        "parameters": [
+          {
+            "name": "customer_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Customer deleted successfully"
+          },
+          "404": {
+            "$ref": "#/components/responses/404NotFound"
+          }
+        }
+      }
+    },
+    "/services": {
+      "get": {
+        "tags": [
+          "Service Management"
+        ],
+        "summary": "List services",
+        "description": "Retrieve a paginated list of services",
+        "responses": {
+          "200": {
+            "description": "Services retrieved successfully"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Service Management"
+        ],
+        "summary": "Create service",
+        "description": "Create a new service",
+        "responses": {
+          "201": {
+            "description": "Service created successfully"
+          }
+        }
+      }
+    },
+    "/invoices": {
+      "get": {
+        "tags": [
+          "Billing & Finance"
+        ],
+        "summary": "List invoices",
+        "description": "Retrieve a paginated list of invoices",
+        "responses": {
+          "200": {
+            "description": "Invoices retrieved successfully"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Billing & Finance"
+        ],
+        "summary": "Create invoice",
+        "description": "Generate a new invoice",
+        "responses": {
+          "201": {
+            "description": "Invoice created successfully"
+          }
+        }
+      }
+    },
+    "/tickets": {
+      "get": {
+        "tags": [
+          "Support & Ticketing"
+        ],
+        "summary": "List tickets",
+        "description": "Retrieve a paginated list of support tickets",
+        "responses": {
+          "200": {
+            "description": "Tickets retrieved successfully"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Support & Ticketing"
+        ],
+        "summary": "Create ticket",
+        "description": "Create a new support ticket",
+        "responses": {
+          "201": {
+            "description": "Ticket created successfully"
+          }
+        }
+      }
+    },
+    "/devices": {
+      "get": {
+        "tags": [
+          "Network Operations"
+        ],
+        "summary": "List network devices",
+        "description": "Retrieve a paginated list of network devices",
+        "responses": {
+          "200": {
+            "description": "Devices retrieved successfully"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Network Operations"
+        ],
+        "summary": "Add network device",
+        "description": "Register a new network device",
+        "responses": {
+          "201": {
+            "description": "Device added successfully"
+          }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "tags": [
+          "User Management"
+        ],
+        "summary": "List users",
+        "description": "Retrieve a paginated list of users",
+        "responses": {
+          "200": {
+            "description": "Users retrieved successfully"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "User Management"
+        ],
+        "summary": "Create user",
+        "description": "Create a new user account",
+        "responses": {
+          "201": {
+            "description": "User created successfully"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Customer Management",
+      "description": "Customer lifecycle management operations"
+    },
+    {
+      "name": "Service Management",
+      "description": "Service provisioning and lifecycle management"
+    },
+    {
+      "name": "Billing & Finance",
+      "description": "Billing, invoicing, and financial operations"
+    },
+    {
+      "name": "Support & Ticketing",
+      "description": "Customer support and ticketing system"
+    },
+    {
+      "name": "Network Operations",
+      "description": "Network device and infrastructure management"
+    },
+    {
+      "name": "User Management",
+      "description": "User account and permission management"
+    },
+    {
+      "name": "Analytics & Reporting",
+      "description": "Business intelligence and reporting"
+    },
+    {
+      "name": "Field Operations",
+      "description": "Field technician and workforce management"
+    }
+  ]
+}

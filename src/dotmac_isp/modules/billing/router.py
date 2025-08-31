@@ -7,7 +7,7 @@ import io
 from typing import Any, Dict
 from uuid import UUID
 
-from fastapi import File, UploadFile, billing_exception_handler
+from fastapi import File, UploadFile
 from fastapi.responses import StreamingResponse
 
 from dotmac_shared.api.dependencies import (

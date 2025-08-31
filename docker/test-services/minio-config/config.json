@@ -1,0 +1,28 @@
+{
+  "version": "33",
+  "credential": {
+    "accessKey": "admin",
+    "secretKey": "password123"
+  },
+  "region": "us-east-1",
+  "browser": "on",
+  "worm": "off",
+  "domain": "",
+  "storageclass": {
+    "standard": "",
+    "rrs": ""
+  },
+  "cache": {
+    "drives": [],
+    "expiry": 90,
+    "quota": 80
+  },
+  "notify": {
+    "webhook": {
+      "1": {
+        "enable": false,
+        "endpoint": ""
+      }
+    }
+  }
+}

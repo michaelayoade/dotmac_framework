@@ -5,20 +5,25 @@ from datetime import date, datetime
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from dotmac_isp.shared.database import get_db
-from dotmac_shared.api.dependencies import get_current_tenant, get_current_user
+from dotmac_shared.api.dependencies import get_current_tenant, get_current_user, StandardDeps
 from dotmac_shared.api.exception_handlers import standard_exception_handler
 from dotmac_shared.api.pagination import PaginationParams
+from dotmac_shared.api.router_factory import RouterFactory
 
 from . import schemas
 from .service import ServicesService
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/services", tags=["services"])
+# Use RouterFactory for standardized router creation
+services_router = RouterFactory.create_standard_router(
+    prefix="/services", 
+    tags=["services", "service-plans", "subscriptions"]
+)
 
 
 def get_services_service(
@@ -33,7 +38,7 @@ def get_services_service(
 # SERVICE PLAN ENDPOINTS
 # =================================================================
 
-@router.post("/plans", response_model=schemas.ServicePlanResponse, status_code=status.HTTP_201_CREATED)
+@services_router.post("/plans", response_model=schemas.ServicePlanResponse, status_code=status.HTTP_201_CREATED)
 @standard_exception_handler
 async def create_service_plan(
     plan_data: schemas.ServicePlanCreate,
@@ -44,7 +49,7 @@ async def create_service_plan(
     return await service.create_service_plan(plan_data)
 
 
-@router.get("/plans", response_model=List[schemas.ServicePlanResponse])
+@services_router.get("/plans", response_model=List[schemas.ServicePlanResponse])
 @standard_exception_handler
 async def list_service_plans(
     service_type: Optional[str] = Query(None, description="Filter by service type"),
@@ -70,7 +75,7 @@ async def list_service_plans(
     )
 
 
-@router.get("/plans/public", response_model=List[schemas.ServicePlanResponse])
+@services_router.get("/plans/public", response_model=List[schemas.ServicePlanResponse])
 @standard_exception_handler
 async def get_public_service_plans(
     service: ServicesService = Depends(get_services_service)
@@ -79,7 +84,7 @@ async def get_public_service_plans(
     return await service.get_public_service_plans()
 
 
-@router.get("/plans/by-type/{service_type}", response_model=List[schemas.ServicePlanResponse])
+@services_router.get("/plans/by-type/{service_type}", response_model=List[schemas.ServicePlanResponse])
 @standard_exception_handler
 async def get_service_plans_by_type(
     service_type: str,
@@ -90,7 +95,7 @@ async def get_service_plans_by_type(
     return await service.get_service_plans_by_type(service_type)
 
 
-@router.get("/plans/{plan_id}", response_model=schemas.ServicePlanResponse)
+@services_router.get("/plans/{plan_id}", response_model=schemas.ServicePlanResponse)
 @standard_exception_handler
 async def get_service_plan(
     plan_id: UUID,
@@ -104,7 +109,7 @@ async def get_service_plan(
     return plan
 
 
-@router.get("/plans/by-code/{plan_code}", response_model=schemas.ServicePlanResponse)
+@services_router.get("/plans/by-code/{plan_code}", response_model=schemas.ServicePlanResponse)
 @standard_exception_handler
 async def get_service_plan_by_code(
     plan_code: str,
@@ -122,7 +127,7 @@ async def get_service_plan_by_code(
 # SERVICE INSTANCE ENDPOINTS
 # =================================================================
 
-@router.post("/activate", response_model=schemas.ServiceActivationResponse, status_code=status.HTTP_201_CREATED)
+@services_router.post("/activate", response_model=schemas.ServiceActivationResponse, status_code=status.HTTP_201_CREATED)
 @standard_exception_handler
 async def activate_service(
     activation_request: schemas.ServiceActivationRequest,
@@ -133,7 +138,7 @@ async def activate_service(
     return await service.activate_service(activation_request)
 
 
-@router.get("/instances", response_model=List[schemas.ServiceInstanceResponse])
+@services_router.get("/instances", response_model=List[schemas.ServiceInstanceResponse])
 @standard_exception_handler
 async def list_service_instances(
     customer_id: Optional[UUID] = Query(None, description="Filter by customer ID"),
@@ -160,7 +165,7 @@ async def list_service_instances(
     )
 
 
-@router.get("/instances/{service_id}", response_model=schemas.ServiceInstanceResponse)
+@services_router.get("/instances/{service_id}", response_model=schemas.ServiceInstanceResponse)
 @standard_exception_handler
 async def get_service_instance(
     service_id: UUID,
@@ -174,7 +179,7 @@ async def get_service_instance(
     return instance
 
 
-@router.get("/instances/by-number/{service_number}", response_model=schemas.ServiceInstanceResponse)
+@services_router.get("/instances/by-number/{service_number}", response_model=schemas.ServiceInstanceResponse)
 @standard_exception_handler
 async def get_service_by_number(
     service_number: str,
@@ -188,7 +193,7 @@ async def get_service_by_number(
     return instance
 
 
-@router.patch("/instances/{service_id}/status", response_model=schemas.ServiceInstanceResponse)
+@services_router.patch("/instances/{service_id}/status", response_model=schemas.ServiceInstanceResponse)
 @standard_exception_handler
 async def update_service_status(
     service_id: UUID,
@@ -201,7 +206,7 @@ async def update_service_status(
     return await service.update_service_status(service_id, status_update, user_id)
 
 
-@router.post("/instances/{service_id}/suspend", response_model=schemas.ServiceInstanceResponse)
+@services_router.post("/instances/{service_id}/suspend", response_model=schemas.ServiceInstanceResponse)
 @standard_exception_handler
 async def suspend_service(
     service_id: UUID,
@@ -214,7 +219,7 @@ async def suspend_service(
     return await service.suspend_service(service_id, reason, user_id)
 
 
-@router.post("/instances/{service_id}/reactivate", response_model=schemas.ServiceInstanceResponse)
+@services_router.post("/instances/{service_id}/reactivate", response_model=schemas.ServiceInstanceResponse)
 @standard_exception_handler
 async def reactivate_service(
     service_id: UUID,
@@ -227,7 +232,7 @@ async def reactivate_service(
     return await service.reactivate_service(service_id, reason, user_id)
 
 
-@router.post("/instances/{service_id}/cancel", response_model=schemas.ServiceInstanceResponse)
+@services_router.post("/instances/{service_id}/cancel", response_model=schemas.ServiceInstanceResponse)
 @standard_exception_handler
 async def cancel_service(
     service_id: UUID,
@@ -245,7 +250,7 @@ async def cancel_service(
 # PROVISIONING ENDPOINTS
 # =================================================================
 
-@router.get("/provisioning/pending", response_model=List[schemas.ProvisioningTaskResponse])
+@services_router.get("/provisioning/pending", response_model=List[schemas.ProvisioningTaskResponse])
 @standard_exception_handler
 async def get_pending_provisioning(
     service: ServicesService = Depends(get_services_service),
@@ -255,7 +260,7 @@ async def get_pending_provisioning(
     return await service.get_pending_provisioning()
 
 
-@router.patch("/provisioning/{provisioning_id}/assign", response_model=schemas.ProvisioningTaskResponse)
+@services_router.patch("/provisioning/{provisioning_id}/assign", response_model=schemas.ProvisioningTaskResponse)
 @standard_exception_handler
 async def assign_provisioning_technician(
     provisioning_id: UUID,
@@ -267,7 +272,7 @@ async def assign_provisioning_technician(
     return await service.assign_provisioning_technician(provisioning_id, technician_id)
 
 
-@router.patch("/provisioning/{provisioning_id}/complete", response_model=schemas.ProvisioningTaskResponse)
+@services_router.patch("/provisioning/{provisioning_id}/complete", response_model=schemas.ProvisioningTaskResponse)
 @standard_exception_handler
 async def complete_provisioning(
     provisioning_id: UUID,
@@ -283,7 +288,7 @@ async def complete_provisioning(
 # USAGE AND ANALYTICS ENDPOINTS
 # =================================================================
 
-@router.post("/instances/{service_id}/usage", response_model=schemas.ServiceUsageResponse, status_code=status.HTTP_201_CREATED)
+@services_router.post("/instances/{service_id}/usage", response_model=schemas.ServiceUsageResponse, status_code=status.HTTP_201_CREATED)
 @standard_exception_handler
 async def record_service_usage(
     service_id: UUID,
@@ -305,7 +310,7 @@ async def record_service_usage(
     )
 
 
-@router.get("/instances/{service_id}/usage", response_model=List[schemas.ServiceUsageResponse])
+@services_router.get("/instances/{service_id}/usage", response_model=List[schemas.ServiceUsageResponse])
 @standard_exception_handler
 async def get_service_usage(
     service_id: UUID,
@@ -318,7 +323,7 @@ async def get_service_usage(
     return await service.get_service_usage(service_id, start_date, end_date)
 
 
-@router.get("/dashboard", response_model=schemas.ServiceDashboard)
+@services_router.get("/dashboard", response_model=schemas.ServiceDashboard)
 @standard_exception_handler
 async def get_service_dashboard(
     service: ServicesService = Depends(get_services_service),
@@ -332,7 +337,7 @@ async def get_service_dashboard(
 # BULK OPERATIONS ENDPOINTS
 # =================================================================
 
-@router.post("/bulk-operation", response_model=schemas.BulkServiceOperationResponse)
+@services_router.post("/bulk-operation", response_model=schemas.BulkServiceOperationResponse)
 @standard_exception_handler
 async def bulk_service_operation(
     bulk_request: schemas.BulkServiceOperation,
@@ -405,5 +410,6 @@ async def bulk_service_operation(
     )
 
 
-# Export router
-__all__ = ["router"]
+# Export the router for inclusion in main app
+router = services_router
+__all__ = ["router", "services_router"]

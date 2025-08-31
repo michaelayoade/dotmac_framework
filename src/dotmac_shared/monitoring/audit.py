@@ -219,17 +219,22 @@ class AuditEvent:
         return json.dumps(self.to_dict(), default=str, separators=(",", ":"))
 
 
-class AuditStore:
+from abc import ABC, abstractmethod
+
+class AuditStore(ABC):
     """Abstract base class for audit event storage backends."""
 
+    @abstractmethod
     def store_event(self, event: AuditEvent) -> bool:
         """Store a single audit event."""
-        raise NotImplementedError
+        pass
 
+    @abstractmethod
     def store_events(self, events: List[AuditEvent]) -> int:
         """Store multiple audit events. Returns number of events successfully stored."""
-        raise NotImplementedError
+        pass
 
+    @abstractmethod
     def query_events(
         self,
         start_time: Optional[float] = None,
@@ -242,7 +247,7 @@ class AuditStore:
         offset: int = 0,
     ) -> List[AuditEvent]:
         """Query stored audit events."""
-        raise NotImplementedError
+        pass
 
 
 class InMemoryAuditStore(AuditStore):

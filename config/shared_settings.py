@@ -51,7 +51,7 @@ class SharedSettings(BaseSettings):
     database_url: str = Field(
         default_factory=lambda: os.getenv(
             "DATABASE_URL",
-            "postgresql+asyncpg://postgres:postgres@localhost/dotmac_framework",
+            "postgresql+asyncpg://user:password@db:5432/dotmac_framework",
         ),
         description="Primary database URL",
     )
@@ -64,7 +64,7 @@ class SharedSettings(BaseSettings):
 
     # Redis settings
     redis_url: str = Field(
-        default_factory=lambda: os.getenv("REDIS_URL", "redis://localhost:6379/0"),
+        default_factory=lambda: os.getenv("REDIS_URL", "redis://redis:6379/0"),
         description="Redis connection URL",
     )
     redis_max_connections: int = Field(default=10, description="Redis max connections")
@@ -73,7 +73,7 @@ class SharedSettings(BaseSettings):
     api_v1_prefix: str = Field(default="/api/v1", description="API v1 prefix")
     cors_origins: List[str] = Field(
         default_factory=lambda: os.getenv(
-            "CORS_ORIGINS", "http://localhost:3000,http://localhost:8080"
+            "CORS_ORIGINS", "https://app.dotmac.local,https://admin.dotmac.local"
         ).split(","),
         description="CORS allowed origins",
     )

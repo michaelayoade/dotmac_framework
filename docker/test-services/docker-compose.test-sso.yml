@@ -1,0 +1,61 @@
+# Docker Compose for SSO E2E Testing Infrastructure
+# Provides mock identity provider for OIDC and SAML testing
+
+version: '3.8'
+
+services:
+  # Mock Identity Provider for OIDC/SAML SSO testing
+  test-sso-provider:
+    build:
+      context: ./mock-identity-provider
+      dockerfile: Dockerfile
+    container_name: dotmac-test-sso-provider
+    ports:
+      - "8040:8040"
+    environment:
+      - NODE_ENV=test
+      - PORT=8040
+      - LOG_LEVEL=info
+    volumes:
+      - sso_data:/app/data
+    networks:
+      - test-sso-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8040/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Test runner for SSO scenarios
+  sso-test-runner:
+    build:
+      context: ./sso-tester
+      dockerfile: Dockerfile
+    container_name: dotmac-sso-test-runner
+    depends_on:
+      test-sso-provider:
+        condition: service_healthy
+    environment:
+      - SSO_PROVIDER_URL=http://test-sso-provider:8040
+      - TEST_MODE=e2e
+      - PORTAL_URLS=http://host.docker.internal:3001,http://host.docker.internal:3002,http://host.docker.internal:3003,http://host.docker.internal:3004
+    volumes:
+      - ./sso-test-results:/app/results
+    networks:
+      - test-sso-network
+    profiles:
+      - testing
+    command: ["npm", "run", "test"]
+
+volumes:
+  sso_data:
+    driver: local
+
+networks:
+  test-sso-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16

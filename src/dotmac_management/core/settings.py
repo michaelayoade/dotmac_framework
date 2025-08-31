@@ -160,9 +160,10 @@ class ManagementPlatformSettings(SharedSettings):
             raise ValueError(f"Compliance level must be one of {allowed}")
         return v
 
-    model_config = ConfigDict()
-        env_file = ".env"
-        case_sensitive = False
+    model_config = ConfigDict(
+        env_file=".env",
+        case_sensitive=False
+    )
 
 
 @lru_cache()

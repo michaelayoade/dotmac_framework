@@ -15,10 +15,11 @@ from pydantic_settings import BaseSettings
 class BaseServiceSettings(BaseSettings):
     """BaseServiceSettings implementation."""
 
-    model_config = ConfigDict()
-        env_file = ".env"
-        case_sensitive = False
-        extra = "allow"
+    model_config = ConfigDict(
+        env_file=".env",
+        case_sensitive=False,
+        extra="allow"
+    )
 
 
 class Settings(BaseServiceSettings):

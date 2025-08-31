@@ -140,8 +140,9 @@ class AgentModel(BaseModel):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     extra_data: Dict[str, Any] = Field(default_factory=dict, alias="metadata")
 
-    model_config = ConfigDict()
-        use_enum_values = True
+    model_config = ConfigDict(
+        use_enum_values=True
+    )
 
 
 class TeamModel(BaseModel):

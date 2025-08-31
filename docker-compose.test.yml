@@ -1,0 +1,439 @@
+version: '3.8'
+
+# Include external test service configurations
+include:
+  - docker/test-services/docker-compose.test-notifications.yml
+  - docker/test-services/docker-compose.test-filestorage.yml
+
+services:
+  # PostgreSQL Test Database
+  postgres-test:
+    image: postgres:16-alpine
+    container_name: dotmac-postgres-test
+    environment:
+      POSTGRES_DB: dotmac_test
+      POSTGRES_USER: dotmac_test
+      POSTGRES_PASSWORD: test_password_123
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+      - ./docker/test-data/init-test-db.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    ports:
+      - "5433:5432"
+    networks:
+      - dotmac-test
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dotmac_test -d dotmac_test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    command: >
+      postgres
+      -c shared_preload_libraries=pg_stat_statements
+      -c pg_stat_statements.track=all
+      -c max_connections=200
+
+  # Redis Test Cache
+  redis-test:
+    image: redis:7-alpine
+    container_name: dotmac-redis-test
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_test_data:/data
+    ports:
+      - "6380:6379"
+    networks:
+      - dotmac-test
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+  # RabbitMQ Message Queue for E2E Testing
+  rabbitmq-test:
+    image: rabbitmq:3-management-alpine
+    container_name: dotmac-rabbitmq-test
+    environment:
+      RABBITMQ_DEFAULT_USER: dotmac_test
+      RABBITMQ_DEFAULT_PASS: test_password_123
+      RABBITMQ_DEFAULT_VHOST: dotmac_test
+    volumes:
+      - rabbitmq_test_data:/var/lib/rabbitmq
+    ports:
+      - "5673:5672"
+      - "15673:15672"
+    networks:
+      - dotmac-test
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  # Test Runner Container
+  test-runner:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.test-runner
+    container_name: dotmac-test-runner
+    environment:
+      # Core Configuration
+      ENVIRONMENT: "test"
+      DEBUG: "true"
+      LOG_LEVEL: "DEBUG"
+      PYTHONPATH: "/app/src:/app/shared"
+      
+      # Database Configuration
+      DATABASE_URL: "postgresql+asyncpg://dotmac_test:test_password_123@postgres-test:5432/dotmac_test"
+      TEST_DATABASE_URL: "postgresql+asyncpg://dotmac_test:test_password_123@postgres-test:5432/dotmac_test"
+      
+      # Redis Configuration
+      REDIS_URL: "redis://redis-test:6379/0"
+      REDIS_TEST_URL: "redis://redis-test:6379/1"
+      
+      # Message Queue Configuration
+      CELERY_BROKER_URL: "pyamqp://dotmac_test:test_password_123@rabbitmq-test:5672/dotmac_test"
+      CELERY_RESULT_BACKEND: "redis://redis-test:6379/2"
+      
+      # Test Configuration
+      PYTEST_MARKERS: "e2e"
+      TEST_TIMEOUT: "300"
+      MAX_TEST_RETRIES: "2"
+      
+      # External Service URLs (for integration testing)
+      NOTIFICATION_SERVICE_URL: "http://notification-tester:8080"
+      FILE_STORAGE_SERVICE_URL: "http://file-storage-tester:8081"
+      SMTP_HOST: "test-smtp"
+      SMTP_PORT: "1025"
+      
+      # Security (Test Keys Only)
+      JWT_SECRET_KEY: "test-jwt-secret-key-for-e2e-only"
+      ENCRYPTION_KEY: "test-encryption-key-32-chars-long"
+      
+      # Feature Flags for Testing
+      ENABLE_TEST_ENDPOINTS: "true"
+      SKIP_EMAIL_VERIFICATION: "true"
+      ENABLE_MOCK_PAYMENTS: "true"
+      ENABLE_MOCK_NOTIFICATIONS: "true"
+      
+      # Observability
+      OTEL_RESOURCE_ATTRIBUTES: "service.name=dotmac-test-runner,environment=test"
+      
+    volumes:
+      - ./src:/app/src:ro
+      - ./tests:/app/tests:ro
+      - ./shared:/app/shared:ro
+      - test_reports:/app/test-reports
+      - test_artifacts:/app/artifacts
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+      rabbitmq-test:
+        condition: service_healthy
+    networks:
+      - dotmac-test
+    working_dir: /app
+    command: ["tail", "-f", "/dev/null"]  # Keep running for exec commands
+
+  # ISP API Service for E2E Testing
+  dotmac-isp-test:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.isp-service
+    container_name: dotmac-isp-test
+    environment:
+      # Core Configuration
+      TENANT_ID: "e2e-test-tenant"
+      ENVIRONMENT: "test"
+      DEBUG: "true"
+      LOG_LEVEL: "DEBUG"
+      PYTHONPATH: "/app/src:/app/shared"
+      
+      # Database Configuration
+      DATABASE_URL: "postgresql+asyncpg://dotmac_test:test_password_123@postgres-test:5432/dotmac_test"
+      DATABASE_SCHEMA: "public"
+      
+      # Redis Configuration
+      REDIS_URL: "redis://redis-test:6379/0"
+      REDIS_NAMESPACE: "e2e:test:"
+      
+      # Message Queue Configuration
+      CELERY_BROKER_URL: "pyamqp://dotmac_test:test_password_123@rabbitmq-test:5672/dotmac_test"
+      CELERY_RESULT_BACKEND: "redis://redis-test:6379/2"
+      
+      # API Configuration
+      API_HOST: "0.0.0.0"
+      API_PORT: "8000"
+      CORS_ORIGINS: '["http://localhost:3001", "http://localhost:3002"]'
+      
+      # Security Configuration
+      JWT_SECRET_KEY: "test-jwt-secret-key-for-e2e-only"
+      ENCRYPTION_KEY: "test-encryption-key-32-chars-long"
+      
+      # Feature Flags
+      ENABLE_TEST_ENDPOINTS: "true"
+      ENABLE_MOCK_PAYMENTS: "true"
+      ENABLE_MOCK_NOTIFICATIONS: "true"
+      SKIP_EMAIL_VERIFICATION: "true"
+      
+      # File Storage Configuration
+      FILE_STORAGE_BACKEND: "local"
+      FILE_STORAGE_PATH: "/app/test-uploads"
+      
+      # External Service URLs
+      NOTIFICATION_SERVICE_URL: "http://notification-tester:8080"
+      
+    volumes:
+      - ./src:/app/src:ro
+      - ./shared:/app/shared:ro
+      - test_uploads:/app/test-uploads
+      - test_logs:/app/logs
+    ports:
+      - "8001:8000"
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+      rabbitmq-test:
+        condition: service_healthy
+    networks:
+      - dotmac-test
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+  # Celery Worker for Background Tasks
+  celery-worker-test:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.isp-service
+    container_name: dotmac-celery-worker-test
+    environment:
+      TENANT_ID: "e2e-test-tenant"
+      DATABASE_URL: "postgresql+asyncpg://dotmac_test:test_password_123@postgres-test:5432/dotmac_test"
+      REDIS_URL: "redis://redis-test:6379/0"
+      CELERY_BROKER_URL: "pyamqp://dotmac_test:test_password_123@rabbitmq-test:5672/dotmac_test"
+      CELERY_RESULT_BACKEND: "redis://redis-test:6379/2"
+      PYTHONPATH: "/app/src:/app/shared"
+      ENABLE_MOCK_NOTIFICATIONS: "true"
+      LOG_LEVEL: "INFO"
+    volumes:
+      - ./src:/app/src:ro
+      - ./shared:/app/shared:ro
+      - test_logs:/app/logs
+    depends_on:
+      - dotmac-isp-test
+    networks:
+      - dotmac-test
+    command: ["celery", "-A", "dotmac_isp.core.celery_app", "worker", "--loglevel=info", "--concurrency=2"]
+
+  # Management Platform API for E2E Testing
+  dotmac-management-test:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.management-service
+    container_name: dotmac-management-test
+    environment:
+      ENVIRONMENT: "test"
+      DEBUG: "true"
+      DATABASE_URL: "postgresql+asyncpg://dotmac_test:test_password_123@postgres-test:5432/dotmac_test"
+      REDIS_URL: "redis://redis-test:6379/3"
+      PYTHONPATH: "/app/src:/app/shared"
+      API_HOST: "0.0.0.0"
+      API_PORT: "8000"
+      JWT_SECRET_KEY: "test-jwt-secret-key-for-e2e-only"
+      ENABLE_TEST_ENDPOINTS: "true"
+    volumes:
+      - ./src:/app/src:ro
+      - ./shared:/app/shared:ro
+    ports:
+      - "8002:8000"
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+    networks:
+      - dotmac-test
+    profiles: ["management"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # Test Services Integration
+
+  # Notification Testing Service
+  notification-tester:
+    image: dotmac-notification-tester:latest
+    container_name: dotmac-notification-tester-e2e
+    ports:
+      - "8080:8080"
+    environment:
+      SMTP_HOST: test-smtp
+      SMTP_PORT: 1025
+      SMS_WEBHOOK_URL: http://test-sms:3030/webhook
+      TEST_EMAIL_DOMAIN: test.dotmac.local
+    depends_on:
+      - test-smtp
+      - test-sms
+    networks:
+      - dotmac-test
+    profiles: ["notifications"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # SMTP Test Server
+  test-smtp:
+    image: mailhog/mailhog:v1.0.1
+    container_name: dotmac-test-smtp-e2e
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # Web UI
+    environment:
+      MH_STORAGE: memory
+    networks:
+      - dotmac-test
+    profiles: ["notifications"]
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8025/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # SMS Test Sink
+  test-sms:
+    image: dotmac-sms-sink:latest
+    container_name: dotmac-test-sms-e2e
+    ports:
+      - "3030:3030"
+    environment:
+      NODE_ENV: test
+      SMS_SINK_PORT: 3030
+    networks:
+      - dotmac-test
+    profiles: ["notifications"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3030/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # File Storage Testing Service
+  file-storage-tester:
+    image: dotmac-file-storage-tester:latest
+    container_name: dotmac-file-storage-tester-e2e
+    ports:
+      - "8081:8080"
+    environment:
+      S3_ENDPOINT: http://test-minio:9000
+      S3_ACCESS_KEY: admin
+      S3_SECRET_KEY: password123
+      S3_USE_SSL: "false"
+      CLAMAV_HOST: test-clamav
+      CLAMAV_PORT: 3310
+      TEST_BUCKET_PREFIX: dotmac-test
+      MAX_FILE_SIZE: 104857600
+      ANTIVIRUS_ENABLED: "true"
+    depends_on:
+      - test-minio
+      - test-clamav
+    networks:
+      - dotmac-test
+    profiles: ["files"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # MinIO S3 Test Storage
+  test-minio:
+    image: minio/minio:RELEASE.2024-08-29T01-40-52Z
+    container_name: dotmac-test-minio-e2e
+    ports:
+      - "9000:9000"   # S3 API
+      - "9001:9001"   # Web Console
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: password123
+      MINIO_DOMAIN: minio.test.dotmac.local
+    volumes:
+      - minio_test_data:/data
+    networks:
+      - dotmac-test
+    profiles: ["files"]
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # ClamAV Antivirus Scanner
+  test-clamav:
+    image: clamav/clamav:1.2.1
+    container_name: dotmac-test-clamav-e2e
+    ports:
+      - "3310:3310"
+    environment:
+      CLAMAV_NO_FRESHCLAMD: "true"
+    volumes:
+      - clamav_test_data:/var/lib/clamav
+    networks:
+      - dotmac-test
+    profiles: ["files"]
+    healthcheck:
+      test: ["CMD", "clamdscan", "--version"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  postgres_test_data:
+    name: dotmac-postgres-test-data
+  redis_test_data:
+    name: dotmac-redis-test-data
+  rabbitmq_test_data:
+    name: dotmac-rabbitmq-test-data
+  minio_test_data:
+    name: dotmac-minio-test-data
+  clamav_test_data:
+    name: dotmac-clamav-test-data
+  test_reports:
+    name: dotmac-test-reports
+  test_artifacts:
+    name: dotmac-test-artifacts
+  test_uploads:
+    name: dotmac-test-uploads
+  test_logs:
+    name: dotmac-test-logs
+
+networks:
+  dotmac-test:
+    name: dotmac-test-network
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16
+
+# Test Service Profiles
+# Use --profile notifications to include notification testing services  
+# Use --profile filestorage to include file storage testing services
+# Example: docker-compose --profile notifications --profile filestorage up -d

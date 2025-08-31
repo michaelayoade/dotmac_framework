@@ -64,8 +64,9 @@ class MetricSummary(BaseModel):
     change_percentage: float
     timestamp: datetime
 
-    model_config = ConfigDict()
-        json_encoders = {datetime: lambda v: v.isoformat()}
+    model_config = ConfigDict(
+        json_encoders={datetime: lambda v: v.isoformat()}
+    )
 
 
 class PerformanceOverview(BaseModel):
@@ -87,8 +88,9 @@ class PerformanceOverview(BaseModel):
     alerts_count: int = Field(description="Active alerts count")
     timestamp: datetime
 
-    model_config = ConfigDict()
-        json_encoders = {datetime: lambda v: v.isoformat()}
+    model_config = ConfigDict(
+        json_encoders={datetime: lambda v: v.isoformat()}
+    )
 
 
 class AlertSummary(BaseModel):
@@ -103,8 +105,9 @@ class AlertSummary(BaseModel):
     duration_minutes: int
     timestamp: datetime
 
-    model_config = ConfigDict()
-        json_encoders = {datetime: lambda v: v.isoformat()}
+    model_config = ConfigDict(
+        json_encoders={datetime: lambda v: v.isoformat()}
+    )
 
 
 class SlowQueryInfo(BaseModel):
@@ -119,8 +122,9 @@ class SlowQueryInfo(BaseModel):
     query_type: str
     last_seen: datetime
 
-    model_config = ConfigDict()
-        json_encoders = {datetime: lambda v: v.isoformat()}
+    model_config = ConfigDict(
+        json_encoders={datetime: lambda v: v.isoformat()}
+    )
 
 
 # Create router

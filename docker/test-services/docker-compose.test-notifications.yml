@@ -1,0 +1,84 @@
+version: '3.8'
+
+services:
+  # Test SMTP Server (MailHog for development/testing)
+  test-smtp:
+    image: mailhog/mailhog:v1.0.1
+    container_name: dotmac-test-smtp
+    ports:
+      - "1025:1025"  # SMTP server
+      - "8025:8025"  # Web UI
+    environment:
+      MH_STORAGE: memory  # Use in-memory storage for testing
+    networks:
+      - dotmac-test
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8025/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Test SMS Sink (Custom container for SMS testing)
+  test-sms:
+    build:
+      context: ./sms-sink
+      dockerfile: Dockerfile
+    container_name: dotmac-test-sms
+    ports:
+      - "3030:3030"  # SMS webhook receiver and management UI
+    environment:
+      NODE_ENV: test
+      SMS_SINK_PORT: 3030
+      SMS_UI_PORT: 8030
+    volumes:
+      - test-sms-log:/app/logs
+    networks:
+      - dotmac-test
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3030/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Notification Testing Service
+  notification-tester:
+    build:
+      context: ./notification-tester
+      dockerfile: Dockerfile
+    container_name: dotmac-notification-tester
+    ports:
+      - "8080:8080"  # Health check and results API
+    depends_on:
+      test-smtp:
+        condition: service_healthy
+      test-sms:
+        condition: service_healthy
+    environment:
+      SMTP_HOST: test-smtp
+      SMTP_PORT: 1025
+      SMS_WEBHOOK_URL: http://test-sms:3030/webhook
+      SMS_SEND_URL: http://test-sms:3030/send
+      SMS_MANAGEMENT_URL: http://test-sms:3030
+      TEST_EMAIL_DOMAIN: test.dotmac.local
+      TEST_SMS_PROVIDER: test-sink
+    volumes:
+      - ./test-configs:/app/configs:ro
+      - notification-test-results:/app/results
+    networks:
+      - dotmac-test
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+networks:
+  dotmac-test:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  test-sms-log:
+  notification-test-results:

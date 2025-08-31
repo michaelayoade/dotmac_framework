@@ -1,0 +1,27 @@
+{
+  "name": "dotmac-sms-sink",
+  "version": "1.0.0",
+  "description": "SMS testing sink for DotMac Framework",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "helmet": "^7.0.0",
+    "winston": "^3.10.0",
+    "uuid": "^9.0.0",
+    "body-parser": "^1.20.2",
+    "express-rate-limit": "^6.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.0",
+    "jest": "^29.6.0"
+  },
+  "keywords": ["sms", "testing", "sink", "dotmac"],
+  "author": "DotMac Team",
+  "license": "MIT"
+}

@@ -194,7 +194,7 @@ jobs:
       - name: Start test environment
         run: |
           echo "::group::Starting Test Environment"
-          docker-compose -f docker-compose.test.yml up -d --build
+          docker-compose -f docker-compose.test.yml --profile notifications --profile filestorage up -d --build
           echo "::endgroup::"
 
       - name: Wait for services to be ready
@@ -224,7 +224,7 @@ jobs:
 
       - name: Stop test environment
         run: |
-          docker-compose -f docker-compose.test.yml down -v
+          docker-compose -f docker-compose.test.yml --profile notifications --profile filestorage down -v
         if: always()
 
       - name: Upload E2E test results

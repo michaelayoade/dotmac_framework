@@ -238,13 +238,14 @@ class BaseSecureModel(BaseModel):
     Base Pydantic model with security validations
     """
 
-    model_config = ConfigDict()
+    model_config = ConfigDict(
         # Security configurations
-        validate_assignment = True
-        use_enum_values = True
-        extra = "forbid"  # Prevent additional fields
-        str_max_length = 10000  # Prevent extremely long strings
-        str_strip_whitespace = True
+        validate_assignment=True,
+        use_enum_values=True,
+        extra="forbid",  # Prevent additional fields
+        str_max_length=10000,  # Prevent extremely long strings
+        str_strip_whitespace=True
+    )
 
     @field_validator("*", mode="before")
     @classmethod

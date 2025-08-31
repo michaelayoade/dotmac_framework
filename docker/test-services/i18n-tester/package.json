@@ -1,0 +1,19 @@
+{
+  "name": "i18n-integration-tester",
+  "version": "1.0.0",
+  "description": "Internationalization Integration Testing Suite",
+  "scripts": {
+    "test": "python i18n_integration_tester.py"
+  },
+  "keywords": [
+    "i18n",
+    "localization",
+    "rtl",
+    "currency",
+    "dates",
+    "testing",
+    "integration"
+  ],
+  "author": "DotMac Framework",
+  "license": "MIT"
+}

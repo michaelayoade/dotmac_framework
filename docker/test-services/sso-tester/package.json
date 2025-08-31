@@ -1,0 +1,17 @@
+{
+  "name": "sso-integration-tester",
+  "version": "1.0.0",
+  "description": "SSO Integration Testing Suite",
+  "scripts": {
+    "test": "python sso_integration_tester.py"
+  },
+  "keywords": [
+    "sso",
+    "oidc",
+    "saml",
+    "testing",
+    "integration"
+  ],
+  "author": "DotMac Framework",
+  "license": "MIT"
+}

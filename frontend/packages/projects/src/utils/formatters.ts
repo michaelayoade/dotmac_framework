@@ -153,11 +153,11 @@ export const statusFormatters = {
 };
 
 export const numberFormatters = {
+  // Use unified currency formatter from utils package
   formatCurrency(amount: number, currency: string = 'USD'): string {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency
-    }).format(amount);
+    // Import dynamically to avoid circular dependencies
+    const { formatCurrency } = require('@dotmac/utils/formatting');
+    return formatCurrency(amount, { currency: currency as any });
   },
 
   formatNumber(value: number, decimals: number = 0): string {

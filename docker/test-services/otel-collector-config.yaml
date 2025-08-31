@@ -1,0 +1,86 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+        cors:
+          allowed_origins:
+            - "http://localhost:3001"
+            - "http://localhost:3002"
+            - "http://localhost:3003"
+            - "http://localhost:3004"
+            - "http://host.docker.internal:3001"
+            - "http://host.docker.internal:3002"
+            - "http://host.docker.internal:3003"
+            - "http://host.docker.internal:3004"
+
+processors:
+  batch:
+    timeout: 1s
+    send_batch_size: 1024
+  
+  # Add tenant-scoped processing
+  attributes:
+    actions:
+      - key: tenant.id
+        action: upsert
+        from_attribute: tenantId
+      - key: user.id  
+        action: upsert
+        from_attribute: userId
+      - key: service.environment
+        value: "test"
+        action: upsert
+
+  # Memory limiter to prevent OOM
+  memory_limiter:
+    limit_mib: 256
+    check_interval: 5s
+
+exporters:
+  # OTLP for Jaeger traces
+  otlp/jaeger:
+    endpoint: jaeger:14250
+    tls:
+      insecure: true
+
+  # Prometheus for metrics  
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+    metric_expiration: 180m
+    enable_open_metrics: true
+
+  # OTLP HTTP for traces
+  otlphttp/jaeger:
+    endpoint: http://jaeger:14268/api/traces
+    tls:
+      insecure: true
+
+  # Logging for debugging
+  logging:
+    loglevel: debug
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch, attributes]
+      exporters: [otlphttp/jaeger, logging]
+
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, batch, attributes]
+      exporters: [prometheus, logging]
+
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch, attributes]
+      exporters: [logging]
+
+  extensions: [health_check]
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133

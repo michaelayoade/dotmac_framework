@@ -3,14 +3,8 @@
  * Consistent data formatting across all portals
  */
 
-export const formatCurrency = (amount: number, currency: string = 'USD'): string => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  }).format(amount);
-};
+// Re-export unified currency formatter from utils package
+export { formatCurrency } from '@dotmac/utils/formatting';
 
 export const formatPercent = (value: number, decimals: number = 1): string => {
   return `${value.toFixed(decimals)}%`;

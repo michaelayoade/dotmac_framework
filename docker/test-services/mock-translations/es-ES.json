@@ -1,0 +1,71 @@
+{
+  "common": {
+    "welcome": "Bienvenido",
+    "login": "Iniciar Sesión",
+    "logout": "Cerrar Sesión",
+    "dashboard": "Panel de Control",
+    "settings": "Configuración",
+    "profile": "Perfil",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "warning": "Advertencia",
+    "info": "Información"
+  },
+  "navigation": {
+    "home": "Inicio",
+    "customers": "Clientes",
+    "billing": "Facturación",
+    "reports": "Informes",
+    "support": "Soporte",
+    "admin": "Administración"
+  },
+  "forms": {
+    "email": "Dirección de Correo",
+    "password": "Contraseña",
+    "confirmPassword": "Confirmar Contraseña",
+    "firstName": "Nombre",
+    "lastName": "Apellido",
+    "company": "Empresa",
+    "phone": "Número de Teléfono",
+    "address": "Dirección",
+    "city": "Ciudad",
+    "state": "Provincia",
+    "zipCode": "Código Postal",
+    "country": "País"
+  },
+  "validation": {
+    "required": "Este campo es obligatorio",
+    "invalidEmail": "Por favor ingrese un correo electrónico válido",
+    "passwordTooShort": "La contraseña debe tener al menos 8 caracteres",
+    "passwordsMismatch": "Las contraseñas no coinciden",
+    "invalidPhoneNumber": "Por favor ingrese un número de teléfono válido"
+  },
+  "billing": {
+    "invoice": "Factura",
+    "amount": "Importe",
+    "dueDate": "Fecha de Vencimiento",
+    "paid": "Pagado",
+    "unpaid": "Sin Pagar",
+    "overdue": "Vencido",
+    "payNow": "Pagar Ahora",
+    "downloadInvoice": "Descargar Factura",
+    "paymentHistory": "Historial de Pagos"
+  },
+  "currency": {
+    "usd": "Dólar Estadounidense",
+    "eur": "Euro",
+    "sar": "Riyal Saudí"
+  },
+  "dates": {
+    "today": "Hoy",
+    "yesterday": "Ayer",
+    "thisWeek": "Esta Semana",
+    "thisMonth": "Este Mes",
+    "thisYear": "Este Año"
+  }
+}

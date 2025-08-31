@@ -1,0 +1,53 @@
+# Docker Compose for I18n E2E Testing Infrastructure
+# Provides i18n testing services for localization, RTL, currency/date formatting
+
+version: '3.8'
+
+services:
+  # I18n Integration Test Runner
+  i18n-test-runner:
+    build:
+      context: ./i18n-tester
+      dockerfile: Dockerfile
+    container_name: dotmac-i18n-test-runner
+    environment:
+      - BASE_URL=http://host.docker.internal:3001
+      - TEST_MODE=e2e
+      - SUPPORTED_LOCALES=en-US,ar-SA,es-ES,fr-FR,de-DE
+      - RTL_LOCALES=ar-SA,he-IL
+    volumes:
+      - ./i18n-test-results:/app/results
+    networks:
+      - test-i18n-network
+    profiles:
+      - testing
+    command: ["python", "i18n_integration_tester.py"]
+
+  # Mock Translation Service (for advanced testing)
+  mock-translation-service:
+    image: nginx:alpine
+    container_name: dotmac-mock-translation-service
+    ports:
+      - "8050:80"
+    volumes:
+      - ./mock-translations:/usr/share/nginx/html:ro
+    networks:
+      - test-i18n-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+volumes:
+  i18n_test_results:
+    driver: local
+
+networks:
+  test-i18n-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.26.0.0/16

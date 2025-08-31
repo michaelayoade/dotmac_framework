@@ -1,5 +1,6 @@
 """Core configuration utilities for SDKs."""
 
+import os
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
@@ -8,10 +9,10 @@ from typing import Any, Dict, Optional
 class SDKConfig:
     """Base SDK configuration."""
 
-    base_url: str = "http://localhost:8000"
-    timeout: int = 30
-    retries: int = 3
-    api_key: Optional[str] = None
+    base_url: str = os.getenv("DOTMAC_API_BASE_URL", "https://api.dotmac.local")
+    timeout: int = int(os.getenv("DOTMAC_API_TIMEOUT", "30"))
+    retries: int = int(os.getenv("DOTMAC_API_RETRIES", "3"))
+    api_key: Optional[str] = os.getenv("DOTMAC_API_KEY")
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert config to dictionary."""

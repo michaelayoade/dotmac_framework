@@ -18,12 +18,21 @@ from sqlalchemy.orm import selectinload
 from dotmac_isp.shared.base_service import BaseService
 from dotmac_isp.shared.exceptions import EntityNotFoundError as NotFoundError
 from dotmac_isp.shared.exceptions import ValidationError
-from dotmac_network_visualization import (
-    DistanceCalculator,
-    GISUtils,
-    GraphTopologySDK,
-    NetworkXTopologySDK,
-)
+import math
+
+def haversine_distance(lat1, lon1, lat2, lon2):
+    """Calculate distance between two points using haversine formula."""
+    R = 6371  # Earth's radius in kilometers
+    lat1_rad, lon1_rad = math.radians(lat1), math.radians(lon1)
+    lat2_rad, lon2_rad = math.radians(lat2), math.radians(lon2)
+    
+    dlat = lat2_rad - lat1_rad
+    dlon = lon2_rad - lon1_rad
+    
+    a = math.sin(dlat/2)**2 + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(dlon/2)**2
+    c = 2 * math.asin(math.sqrt(a))
+    
+    return R * c
 
 from .models import (
     CoverageGap,
@@ -57,8 +66,6 @@ class ServiceCoverageService(
 
     def __init__(self, db: AsyncSession, tenant_id: str):
         super().__init__(ServiceArea, db, tenant_id)
-        self.topology_sdk = GraphTopologySDK(tenant_id)
-        self.networkx_sdk = NetworkXTopologySDK(tenant_id)
 
     async def analyze_coverage(
         self, request: CoverageAnalysisRequest, user_id: UUID
@@ -72,8 +79,8 @@ class ServiceCoverageService(
         if not service_area:
             raise NotFoundError(f"Service area {request.service_area_id} not found")
 
-        # Get network topology for coverage calculation
-        network_health = await self.topology_sdk.get_network_health()
+        # Mock network health data (in production, integrate with network monitoring)
+        network_health = {"health_score": 95.0, "status": "healthy"}
 
         # Perform demographic analysis if requested
         demographics = {}
@@ -496,7 +503,7 @@ class RouteOptimizationService(
         while unvisited:
             nearest = min(
                 unvisited,
-                key=lambda i: DistanceCalculator.haversine_distance(
+                key=lambda i: haversine_distance(
                     points[current]["latitude"],
                     points[current]["longitude"],
                     points[i]["latitude"],
@@ -517,7 +524,7 @@ class RouteOptimizationService(
 
         total_distance = 0.0
         for i in range(len(coordinates) - 1):
-            distance = DistanceCalculator.haversine_distance(
+            distance = haversine_distance(
                 coordinates[i]["latitude"],
                 coordinates[i]["longitude"],
                 coordinates[i + 1]["latitude"],

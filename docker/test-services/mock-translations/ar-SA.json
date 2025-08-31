@@ -1,0 +1,71 @@
+{
+  "common": {
+    "welcome": "مرحباً",
+    "login": "تسجيل الدخول",
+    "logout": "تسجيل الخروج",
+    "dashboard": "لوحة التحكم",
+    "settings": "الإعدادات",
+    "profile": "الملف الشخصي",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "loading": "جاري التحميل...",
+    "error": "خطأ",
+    "success": "نجح",
+    "warning": "تحذير",
+    "info": "معلومات"
+  },
+  "navigation": {
+    "home": "الرئيسية",
+    "customers": "العملاء",
+    "billing": "الفواتير",
+    "reports": "التقارير",
+    "support": "الدعم",
+    "admin": "الإدارة"
+  },
+  "forms": {
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "confirmPassword": "تأكيد كلمة المرور",
+    "firstName": "الاسم الأول",
+    "lastName": "اسم العائلة",
+    "company": "الشركة",
+    "phone": "رقم الهاتف",
+    "address": "العنوان",
+    "city": "المدينة",
+    "state": "المنطقة",
+    "zipCode": "الرمز البريدي",
+    "country": "البلد"
+  },
+  "validation": {
+    "required": "هذا الحقل مطلوب",
+    "invalidEmail": "يرجى إدخال بريد إلكتروني صحيح",
+    "passwordTooShort": "كلمة المرور يجب أن تكون 8 أحرف على الأقل",
+    "passwordsMismatch": "كلمات المرور غير متطابقة",
+    "invalidPhoneNumber": "يرجى إدخال رقم هاتف صحيح"
+  },
+  "billing": {
+    "invoice": "الفاتورة",
+    "amount": "المبلغ",
+    "dueDate": "تاريخ الاستحقاق",
+    "paid": "مدفوع",
+    "unpaid": "غير مدفوع",
+    "overdue": "متأخر",
+    "payNow": "ادفع الآن",
+    "downloadInvoice": "تحميل الفاتورة",
+    "paymentHistory": "تاريخ المدفوعات"
+  },
+  "currency": {
+    "usd": "الدولار الأمريكي",
+    "eur": "اليورو",
+    "sar": "الريال السعودي"
+  },
+  "dates": {
+    "today": "اليوم",
+    "yesterday": "أمس",
+    "thisWeek": "هذا الأسبوع",
+    "thisMonth": "هذا الشهر",
+    "thisYear": "هذا العام"
+  }
+}

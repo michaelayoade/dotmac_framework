@@ -17,8 +17,13 @@ def format_phone(phone: str, format_type: str = "us") -> str:
     return phone
 
 
-def format_currency(amount: float, currency: str = "USD") -> str:
-    """Format currency amount."""
-    if currency == "USD":
-        return f"${amount:,.2f}"
-    return f"{amount:,.2f} {currency}"
+# Import unified currency formatter from shared module
+try:
+    from dotmac_shared.formatting import format_currency
+except ImportError:
+    # Fallback implementation if shared module not available
+    def format_currency(amount: float, currency: str = "USD") -> str:
+        """Format currency amount - fallback implementation."""
+        if currency == "USD":
+            return f"${amount:,.2f}"
+        return f"{amount:,.2f} {currency}"

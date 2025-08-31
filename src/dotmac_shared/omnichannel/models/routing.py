@@ -52,8 +52,9 @@ class RoutingResult(BaseModel):
     # Additional data
     extra_data: Dict[str, Any] = Field(default_factory=dict, alias="metadata")
 
-    model_config = ConfigDict()
-        populate_by_name = True
+    model_config = ConfigDict(
+        populate_by_name=True
+    )
 
 
 class RoutingRule(BaseModel):
@@ -88,8 +89,9 @@ class RoutingRule(BaseModel):
     # Additional data
     extra_data: Dict[str, Any] = Field(default_factory=dict, alias="metadata")
 
-    model_config = ConfigDict()
-        populate_by_name = True
+    model_config = ConfigDict(
+        populate_by_name=True
+    )
 
 
 class RoutingAction(BaseModel):
@@ -136,8 +138,9 @@ class RoutingConfiguration(BaseModel):
     # Updated timestamp
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
-    model_config = ConfigDict()
-        populate_by_name = True
+    model_config = ConfigDict(
+        populate_by_name=True
+    )
 
 
 class SkillRequirement(BaseModel):
@@ -184,8 +187,9 @@ class RoutingContext(BaseModel):
     # Additional context
     extra_data: Dict[str, Any] = Field(default_factory=dict, alias="metadata")
 
-    model_config = ConfigDict()
-        populate_by_name = True
+    model_config = ConfigDict(
+        populate_by_name=True
+    )
 
 
 class RoutingMetrics(BaseModel):

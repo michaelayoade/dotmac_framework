@@ -188,6 +188,10 @@ jobs:
         working-directory: frontend
         run: npx playwright test -c playwright.config.unified.ts --project=chromium
 
+      - name: Run workflow automation E2E tests
+        working-directory: frontend
+        run: npx playwright test tests/e2e/workflow-automation/ --project=chromium
+
       - name: Run Admin portal E2E (Chromium)
         working-directory: frontend
         run: npx playwright test -c apps/admin/playwright.config.ts --project=chromium
@@ -199,6 +203,20 @@ jobs:
       - name: Run Reseller portal E2E (Chromium)
         working-directory: frontend
         run: npx playwright test -c apps/reseller/playwright.config.ts --project=chromium
+
+      - name: Upload Workflow Automation E2E report
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: workflow-automation-e2e-report
+          path: frontend/test-results/workflow-automation-e2e-report/
+
+      - name: Upload Workflow Automation JUnit results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: workflow-automation-e2e-junit
+          path: frontend/test-results/workflow-automation-results.xml
 
       - name: Upload Admin E2E report
         uses: actions/upload-artifact@v3

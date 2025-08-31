@@ -16,13 +16,36 @@ export function formatFileSize(bytes: number): string {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
-// Currency formatting
-export function formatCurrency(amount: number, currency = 'USD', locale = 'en-US'): string {
-  return new Intl.NumberFormat(locale, {
-    style: 'currency',
-    currency,
-  }).format(amount);
-}
+// Currency formatting - Re-export from dedicated currency module
+export {
+  formatCurrency,
+  formatCurrencyCompact,
+  formatCurrencyNumeric,
+  formatCurrencyWithSign,
+  formatUSD,
+  formatEUR,
+  formatGBP,
+  formatJPY,
+  formatPluginPrice,
+  getCurrencyInfo,
+  isSupportedCurrency,
+  getSupportedCurrencies,
+  getCurrencyOptions,
+  CURRENCY_INFO,
+  type SupportedCurrency,
+  type CurrencyFormatOptions,
+} from './currency';
+
+// Re-export convenience currency formatters
+export {
+  formatNGN,
+  formatZAR,
+  formatCNY,
+  formatINR,
+  formatKRW,
+  formatBRL,
+  formatMXN,
+} from './convenience';
 
 // Percentage formatting
 export function formatPercentage(value: number, decimals = 1): string {

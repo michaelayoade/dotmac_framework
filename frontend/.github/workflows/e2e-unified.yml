@@ -79,6 +79,17 @@ jobs:
             --output-dir=test-results/shard-${{ matrix.shard }}
         env:
           PLAYWRIGHT_HTML_REPORT: test-results/shard-${{ matrix.shard }}/html-report
+      
+      - name: Run workflow automation tests (shard 1 only)
+        if: matrix.shard == 1
+        run: |
+          pnpm exec playwright test \
+            tests/e2e/workflow-automation/ \
+            --project=chromium \
+            --reporter=html,junit \
+            --output-dir=test-results/workflow-automation
+        env:
+          PLAYWRIGHT_HTML_REPORT: test-results/workflow-automation/html-report
           
       - name: Upload test results
         uses: actions/upload-artifact@v4
@@ -87,6 +98,7 @@ jobs:
           name: e2e-results-shard-${{ matrix.shard }}
           path: |
             test-results/shard-${{ matrix.shard }}/
+            test-results/workflow-automation/
             playwright-report/
           retention-days: 7
           

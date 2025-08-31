@@ -186,17 +186,8 @@ export function formatInstallationDate(dateString: string): string {
   }
 }
 
-export function formatPluginPrice(price?: number, currency = 'USD'): string {
-  if (!price || price === 0) {
-    return 'Free';
-  }
-
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: currency,
-    minimumFractionDigits: 2
-  }).format(price);
-}
+// Re-export unified currency formatter from utils package
+export { formatPluginPrice } from '@dotmac/utils/formatting';
 
 export function formatMarketplaceItemSummary(item: PluginMarketplaceItem): string {
   const parts = [

@@ -67,9 +67,12 @@ class SecretEncryption:
             return False
 
 
-class SecretStore:
+from abc import ABC, abstractmethod
+
+class SecretStore(ABC):
     """Abstract secret storage interface."""
 
+    @abstractmethod
     async def store_secret(
         self,
         tenant_id: UUID,
@@ -78,25 +81,29 @@ class SecretStore:
         metadata: Dict[str, Any] = None,
     ) -> bool:
         """Store an encrypted secret."""
-        raise NotImplementedError
+        pass
 
+    @abstractmethod
     async def get_secret(self, tenant_id: UUID, key: str) -> Optional[str]:
         """Retrieve an encrypted secret."""
-        raise NotImplementedError
+        pass
 
+    @abstractmethod
     async def delete_secret(self, tenant_id: UUID, key: str) -> bool:
         """Delete a secret."""
-        raise NotImplementedError
+        pass
 
+    @abstractmethod
     async def list_secrets(self, tenant_id: UUID) -> List[str]:
         """List secret keys for a tenant."""
-        raise NotImplementedError
+        pass
 
+    @abstractmethod
     async def rotate_secret(
         self, tenant_id: UUID, key: str, new_encrypted_value: str
     ) -> bool:
         """Rotate a secret."""
-        raise NotImplementedError
+        pass
 
 
 class InMemorySecretStore(SecretStore):

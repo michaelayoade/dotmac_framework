@@ -42,6 +42,12 @@ from .core.models import (
     PricingTier,
     Subscription,
 )
+# Multi-currency exchange models
+from .core.exchange_models import (
+    CustomerCurrency,
+    ManualExchangeRate,
+    MultiCurrencyPayment,
+)
 from .schemas.billing_schemas import (
     CustomerCreate,
     CustomerUpdate,
@@ -49,7 +55,17 @@ from .schemas.billing_schemas import (
     PaymentCreate,
     SubscriptionCreate,
 )
+from .schemas.exchange_schemas import (
+    CustomerCurrencyCreate,
+    CustomerCurrencyResponse,
+    ManualExchangeRateCreate,
+    ManualExchangeRateResponse,
+    CurrencyConversionRequest,
+    CurrencyConversionResponse,
+    PaymentWithExchangeRateCreate,
+)
 from .services.billing_service import BillingService
+from .services.exchange_service import ExchangeRateService
 
 # Note: InvoiceService, PaymentService, SubscriptionService are protocols - concrete implementations in billing_service
 from .services.protocols import InvoiceServiceProtocol as InvoiceService
@@ -64,8 +80,13 @@ __all__ = [
     "Payment",
     "BillingPeriod",
     "PricingTier",
+    # Multi-currency models
+    "CustomerCurrency",
+    "ManualExchangeRate", 
+    "MultiCurrencyPayment",
     # Services
     "BillingService",
+    "ExchangeRateService",
     "InvoiceService",
     "PaymentService",
     "SubscriptionService",
@@ -75,6 +96,14 @@ __all__ = [
     "InvoiceCreate",
     "PaymentCreate",
     "SubscriptionCreate",
+    # Exchange schemas
+    "CustomerCurrencyCreate",
+    "CustomerCurrencyResponse", 
+    "ManualExchangeRateCreate",
+    "ManualExchangeRateResponse",
+    "CurrencyConversionRequest",
+    "CurrencyConversionResponse",
+    "PaymentWithExchangeRateCreate",
     # Factory
     "BillingServiceFactory",
     "create_basic_billing_service",
