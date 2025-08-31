@@ -14,6 +14,8 @@ import {
   TrendingUp,
   UserX,
 } from 'lucide-react';
+import { UniversalMetricsGrid, MetricData } from '@dotmac/dashboard';
+import { formatCurrency, formatNumber, formatPercent } from '@dotmac/utils';
 
 import AdminLayout from '../layout/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';

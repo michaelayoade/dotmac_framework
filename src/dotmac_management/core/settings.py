@@ -10,7 +10,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, ConfigDict
 from pydantic_settings import BaseSettings
 
 # Import shared settings
@@ -160,9 +160,7 @@ class ManagementPlatformSettings(SharedSettings):
             raise ValueError(f"Compliance level must be one of {allowed}")
         return v
 
-    class Config:
-        """Config implementation."""
-
+    model_config = ConfigDict()
         env_file = ".env"
         case_sensitive = False
 

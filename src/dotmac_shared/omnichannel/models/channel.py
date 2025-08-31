@@ -7,7 +7,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class ChannelStatus(str, Enum):
@@ -60,10 +60,9 @@ class ChannelConfig(BaseModel):
     # Additional data
     extra_data: Dict[str, Any] = Field(default_factory=dict, alias="metadata")
 
-    class Config:
-        """Config implementation."""
-
-        populate_by_name = True
+    model_config = ConfigDict(
+        populate_by_name=True
+    )
 
 
 class ChannelStatusInfo(BaseModel):
@@ -98,10 +97,9 @@ class ChannelStatusInfo(BaseModel):
     # Additional data
     extra_data: Dict[str, Any] = Field(default_factory=dict, alias="metadata")
 
-    class Config:
-        """Config implementation."""
-
-        populate_by_name = True
+    model_config = ConfigDict(
+        populate_by_name=True
+    )
 
 
 class ChannelCapabilities(BaseModel):
@@ -144,10 +142,9 @@ class ChannelCapabilities(BaseModel):
     cost_per_message: Optional[float] = None
     currency: str = "USD"
 
-    class Config:
-        """Config implementation."""
-
-        populate_by_name = True
+    model_config = ConfigDict(
+        populate_by_name=True
+    )
 
 
 class ChannelMetrics(BaseModel):
@@ -220,7 +217,6 @@ class ChannelAlert(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     last_triggered: Optional[datetime] = None
 
-    class Config:
-        """Config implementation."""
-
-        populate_by_name = True
+    model_config = ConfigDict(
+        populate_by_name=True
+    )

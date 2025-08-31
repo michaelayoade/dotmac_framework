@@ -23,7 +23,7 @@ import { clsx } from 'clsx';
 import { ArrowUpDown, ArrowUp, ArrowDown, Search, Filter, MoreHorizontal } from 'lucide-react';
 import { Button } from '@dotmac/primitives';
 import { Input } from '@dotmac/primitives';
-import { registerComponent } from '@dotmac/registry';
+import { withComponentRegistration } from '@dotmac/registry';
 import { useInputValidation } from '@dotmac/security';
 
 // Data table types
@@ -75,37 +75,7 @@ export interface DataTableProps<TData = any> {
   caption?: string;
 }
 
-@registerComponent({
-  name: 'DataTable',
-  category: 'data-display',
-  portal: 'shared',
-  version: '1.0.0',
-  description: 'Advanced data table with virtualization and security features',
-  props: {
-    data: { type: 'Array', required: true, description: 'Table data array' },
-    columns: { type: 'Array', required: true, description: 'Column definitions' },
-    enableVirtualization: { type: 'boolean', defaultValue: false, description: 'Enable row virtualization for large datasets' },
-    enableSorting: { type: 'boolean', defaultValue: true, description: 'Enable column sorting' },
-    enableFiltering: { type: 'boolean', defaultValue: true, description: 'Enable column filtering' },
-  },
-  accessibility: {
-    ariaSupport: true,
-    keyboardSupport: true,
-    screenReaderSupport: true,
-    wcagLevel: 'AA',
-  },
-  security: {
-    xssProtection: true,
-    inputSanitization: true,
-    outputEncoding: true,
-  },
-  performance: {
-    lazyLoading: true,
-    memoization: true,
-    renderingCost: 'medium',
-  },
-})
-export function DataTable<TData = any>({
+function DataTableImpl<TData = any>({
   data,
   columns,
   enableVirtualization = false,
@@ -507,3 +477,34 @@ export function DataTable<TData = any>({
     </div>
   );
 }
+
+export const DataTable = withComponentRegistration(DataTableImpl as any, {
+  name: 'DataTable',
+  category: 'data-display',
+  portal: 'shared',
+  version: '1.0.0',
+  description: 'Advanced data table with virtualization and security features',
+  props: {
+    data: { type: 'Array', required: true, description: 'Table data array' },
+    columns: { type: 'Array', required: true, description: 'Column definitions' },
+    enableVirtualization: { type: 'boolean', defaultValue: false, description: 'Enable row virtualization for large datasets' },
+    enableSorting: { type: 'boolean', defaultValue: true, description: 'Enable column sorting' },
+    enableFiltering: { type: 'boolean', defaultValue: true, description: 'Enable column filtering' },
+  },
+  accessibility: {
+    ariaSupport: true,
+    keyboardSupport: true,
+    screenReaderSupport: true,
+    wcagLevel: 'AA',
+  },
+  security: {
+    xssProtection: true,
+    inputSanitization: true,
+    outputEncoding: true,
+  },
+  performance: {
+    lazyLoading: true,
+    memoization: true,
+    renderingCost: 'medium',
+  },
+});

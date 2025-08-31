@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 try:
-    from pydantic import BaseModel
+    from pydantic import BaseModel, ConfigDict
     from pydantic_settings import BaseSettings
 
     PYDANTIC_AVAILABLE = True
@@ -207,11 +207,10 @@ class MonitoringSettings(BaseSettings if PYDANTIC_AVAILABLE else dict):
         environment: Optional[str] = None
         labels: Dict[str, str] = {}
 
-        class Config:
-            """Config implementation."""
-
-            env_prefix = "MONITORING_"
-            case_sensitive = False
+        model_config = ConfigDict(
+            env_prefix="MONITORING_",
+            case_sensitive=False
+        )
 
     else:
 

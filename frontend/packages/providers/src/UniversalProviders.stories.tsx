@@ -44,7 +44,7 @@ import { UniversalProviders } from '@dotmac/providers';
   argTypes: {
     portal: {
       control: { type: 'select' },
-      options: ['admin', 'customer', 'reseller', 'technician', 'management'],
+      options: ['admin', 'customer', 'reseller', 'technician', 'management', 'management-admin', 'management-reseller', 'tenant-portal'],
       description: 'Portal type for configuration',
     },
     authVariant: {

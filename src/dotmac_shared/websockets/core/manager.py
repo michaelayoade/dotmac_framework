@@ -320,7 +320,7 @@ class WebSocketManager:
 
             # Send message
             message_json = (
-                envelope.json()
+                envelope.model_dump_json()
                 if isinstance(envelope, MessageEnvelope)
                 else json.dumps(message)
             )

@@ -9,13 +9,7 @@ import React from 'react';
 import { AuthErrorProvider } from '../AuthErrorProvider';
 import { useStandardErrorHandler } from '@dotmac/headless/hooks/useStandardErrorHandler';
 
-// Mock Next.js router
-jest.mock('next/navigation');
-const mockRouter = {
-  push: jest.fn(),
-  replace: jest.fn(),
-};
-(useRouter as jest.Mock).mockReturnValue(mockRouter);
+// Next.js router is now globally mocked
 
 // Mock platform error handler
 const mockHandleError = jest.fn();

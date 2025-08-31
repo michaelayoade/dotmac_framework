@@ -240,19 +240,8 @@ def require_monitoring_write():
     return require_permissions(["monitoring:write"])
 
 
-# Helper function to get user dict for backward compatibility
-def get_current_user_dict(
-    current_user: CurrentUser = Depends(get_current_user),
-) -> dict:
-    """Get current user as dictionary (for backward compatibility)."""
-    return {
-        "user_id": current_user.user_id,
-        "email": current_user.email,
-        "role": current_user.role,
-        "tenant_id": current_user.tenant_id,
-        "is_active": current_user.is_active,
-        "permissions": current_user.permissions,
-    }
+# NO BACKWARD COMPATIBILITY - Use CurrentUser model directly
+# BREAKING: Replace get_current_user_dict() with get_current_user()
 
 
 def get_current_tenant_id(

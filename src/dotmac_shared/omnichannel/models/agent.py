@@ -7,7 +7,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 
 class AgentStatus(str, Enum):
@@ -116,12 +116,12 @@ class AgentModel(BaseModel):
     # Additional data
     extra_data: Dict[str, Any] = Field(default_factory=dict, alias="metadata")
 
-    class Config:
-        """Config implementation."""
+    model_config = ConfigDict(
+        populate_by_name=True
+    )
 
-        populate_by_name = True
-
-    @validator("current_interaction_count")
+    @field_validator("current_interaction_count")
+    @classmethod
     def validate_interaction_count(cls, v, values):
         """Ensure current count doesn't exceed maximum."""
         max_concurrent = values.get("max_concurrent_interactions", 5)
@@ -152,14 +152,13 @@ class CreateAgentRequest(BaseModel):
 
     extra_data: Dict[str, Any] = Field(default_factory=dict, alias="metadata")
 
-    class Config:
-        """Config implementation."""
-
-        populate_by_name = True
+    model_config = ConfigDict(
+        populate_by_name=True
+    )
 
 
 class UpdateAgentRequest(BaseModel):
-    """Request to update agent information."""
+    """Request to update an existing agent."""
 
     full_name: Optional[str] = Field(None, min_length=1)
     email: Optional[str] = Field(None, pattern=r"^[^@]+@[^@]+\.[^@]+$")
@@ -178,7 +177,6 @@ class UpdateAgentRequest(BaseModel):
 
     extra_data: Optional[Dict[str, Any]] = Field(None, alias="metadata")
 
-    class Config:
-        """Config implementation."""
-
-        populate_by_name = True
+    model_config = ConfigDict(
+        populate_by_name=True
+    )

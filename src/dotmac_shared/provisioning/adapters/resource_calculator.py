@@ -360,7 +360,7 @@ class ResourceCalculator:
         if errors:
             raise ResourceCalculationError(
                 f"Resource limits exceeded: {'; '.join(errors)}",
-                requested_resources=resources.dict(),
+                requested_resources=resources.model_dump(),
             )
 
         return True

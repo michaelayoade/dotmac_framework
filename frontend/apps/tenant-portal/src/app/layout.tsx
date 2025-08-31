@@ -2,9 +2,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 
-import { TenantAuthProvider } from '@/components/auth/TenantAuthProviderNew';
-import { ToastProvider } from '@dotmac/primitives';
-import { PageErrorBoundary } from '@/components/error/ErrorBoundary';
+import { PortalProviderFactory } from '@dotmac/portal-components';
 import { setupGlobalErrorHandlers } from '@/lib/error-handling';
 import { initializePerformanceMonitoring } from '@/lib/performance-monitoring';
 import { initializeAssetOptimization } from '@/lib/asset-optimization';
@@ -38,13 +36,23 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <PageErrorBoundary name="RootLayout">
-          <TenantAuthProvider>
-            <ToastProvider>
-              {children}
-            </ToastProvider>
-          </TenantAuthProvider>
-        </PageErrorBoundary>
+        <PortalProviderFactory
+          config={{
+            portal: 'tenant-portal',
+            authVariant: 'enterprise',
+            density: 'cozy',
+            colorScheme: 'system',
+            features: {
+              notifications: true,
+              tenantManagement: true,
+              analytics: true,
+              errorHandling: true,
+              devtools: process.env.NODE_ENV === 'development'
+            }
+          }}
+        >
+          {children}
+        </PortalProviderFactory>
       </body>
     </html>
   );

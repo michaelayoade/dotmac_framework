@@ -9,7 +9,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field, validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, ConfigDict
 
 from .user_schemas import UserStatus, UserType
 
@@ -82,7 +82,8 @@ class UserRegistration(BaseModel):
     # Platform-specific registration data
     platform_specific: Dict[str, Any] = Field(default_factory=dict)
 
-    @validator("username")
+    @field_validator("username")
+    @classmethod
     def validate_username(cls, v):
         """Validate username format."""
         if not v.replace("_", "").replace("-", "").replace(".", "").isalnum():
@@ -91,7 +92,8 @@ class UserRegistration(BaseModel):
             )
         return v.lower()
 
-    @validator("password")
+    @field_validator("password")
+    @classmethod
     def validate_password(cls, v):
         """Validate password strength."""
         if len(v) < 8:
@@ -197,18 +199,9 @@ class UserLifecycleEvent(BaseModel):
     parent_event_id: Optional[UUID] = None
     correlation_id: Optional[str] = None
 
-    class Config:
-        """Pydantic configuration."""
-
-        orm_mode = True
-
-
-class UserVerificationRequest(BaseModel):
-    """Schema for user verification requests."""
-
-    user_id: UUID
-    verification_type: VerificationType
-    verification_value: str  # email, phone, document ID, etc.
+    model_config = ConfigDict(
+        orm_mode=True
+    )# email, phone, document ID, etc.
 
     # Request context
     requested_by: Optional[UUID] = None

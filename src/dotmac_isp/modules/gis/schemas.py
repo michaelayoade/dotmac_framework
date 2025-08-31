@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from pydantic import Field, validator
+from pydantic import Field, field_validator
 
 from dotmac_shared.schemas.base_schemas import (
     BaseCreateSchema,
@@ -37,7 +37,8 @@ class ServiceAreaCreate(BaseCreateSchema, GeoLocationMixin):
     )
     service_types: List[ServiceTypeEnum] = Field(..., description="Available services")
 
-    @validator("polygon_coordinates")
+    @field_validator("polygon_coordinates")
+    @classmethod
     def validate_polygon(cls, v):
         """Validate polygon has minimum 3 points."""
         if len(v) < 3:
@@ -189,12 +190,13 @@ class TerritoryCreate(BaseCreateSchema):
     )
     territory_type: str = Field("sales", description="Territory type")
     color: Optional[str] = Field(
-        None, regex=r"^#[0-9A-Fa-f]{6}$", description="Hex color"
+        None, pattern=r"^#[0-9A-Fa-f]{6}$", description="Hex color"
     )
     assigned_user_id: Optional[UUID] = None
     revenue_target: Optional[float] = Field(None, ge=0)
 
-    @validator("boundary_coordinates")
+    @field_validator("boundary_coordinates")
+    @classmethod
     def validate_boundary(cls, v):
         """Validate territory boundary."""
         if len(v) < 3:
@@ -209,7 +211,7 @@ class TerritoryUpdate(BaseUpdateSchema):
     description: Optional[str] = Field(None, max_length=1000)
     boundary_coordinates: Optional[List[Dict[str, float]]] = None
     territory_type: Optional[str] = None
-    color: Optional[str] = Field(None, regex=r"^#[0-9A-Fa-f]{6}$")
+    color: Optional[str] = Field(None, pattern=r"^#[0-9A-Fa-f]{6}$")
     assigned_user_id: Optional[UUID] = None
     revenue_target: Optional[float] = Field(None, ge=0)
     is_active: Optional[bool] = None
@@ -245,7 +247,8 @@ class RouteOptimizationRequest(BaseCreateSchema):
     vehicle_type: str = Field("truck", description="Vehicle type")
     constraints: Dict[str, Any] = Field({}, description="Route constraints")
 
-    @validator("start_coordinates")
+    @field_validator("start_coordinates")
+    @classmethod
     def validate_start_coords(cls, v):
         """Validate start coordinates."""
         required_keys = ["latitude", "longitude"]

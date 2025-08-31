@@ -462,7 +462,7 @@ class TemplateManager:
         filename = f"{template.name}-{template.infrastructure_type.value}.yaml"
         filepath = self.template_dir / filename
 
-        template_data = template.dict()
+        template_data = template.model_dump()
         with open(filepath, "w") as f:
             yaml.dump(template_data, f, default_flow_style=False)
 

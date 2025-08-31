@@ -7,6 +7,8 @@
  */
 
 import { test, expect } from '@playwright/test';
+import { setupAuth } from '../../../../tests/auth/auth-helpers';
+import { APIBehaviorTester } from '../../../../tests/fixtures/api-behaviors';
 import {
   performLogin,
   performLogout,
@@ -66,8 +68,10 @@ class SalesProcessJourney {
 
 test.describe('Complete sales process from lead to activation', () => {
   test.beforeEach(async ({ page }) => {
-    // Set up test context
-    await page.goto('http://localhost:3002');
+    await setupAuth(page, 'reseller');
+    const api = new APIBehaviorTester(page, { enableMocking: true });
+    await api.setupResellerMocks();
+    await page.goto('http://localhost:3003');
   });
 
   test.afterEach(async ({ page }) => {
@@ -100,11 +104,17 @@ test.describe('Complete sales process from lead to activation', () => {
       await journey.scheduleInstallation();
     });
 
+    // Verify API flows occurred
+    const api = new APIBehaviorTester(page, { enableMocking: true });
+    await api.validateDataFlows([
+      { endpoint: '/api/v1/reseller/leads', method: 'POST' },
+      { endpoint: '/api/v1/reseller/quotes', method: 'POST' },
+      { endpoint: '/api/v1/reseller/orders', method: 'POST' },
+    ]);
+
     // Verify journey completion
     await test.step('verify completion', async () => {
-
-    // Verify sales-process completion
-    await expect(this.page.getByTestId('journey-complete')).toBeVisible();
+      await expect(page.getByTestId('journey-complete')).toBeVisible();
     });
   });
 

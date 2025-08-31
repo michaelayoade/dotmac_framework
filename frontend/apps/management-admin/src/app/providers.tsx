@@ -36,7 +36,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <PortalProviderFactory
       config={{
-        portal: 'management',
+        portal: 'management-admin',
         authVariant: 'enterprise',
         apiBaseUrl: managementApiUrl,
         queryClient,

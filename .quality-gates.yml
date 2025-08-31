@@ -153,10 +153,10 @@ api:
     require_error_schemas: true
     max_response_size: 10        # MB
     
-  # Versioning requirements
+  # Versioning requirements - NO BACKWARD COMPATIBILITY
   versioning:
     require_version_in_url: true
-    maintain_backward_compatibility: true
+    maintain_backward_compatibility: false  # BREAKING: Pure DRY patterns only
 
 # Documentation Requirements
 documentation:

@@ -184,15 +184,63 @@ jobs:
       - name: Build applications
         run: pnpm run build
 
-      - name: Run Playwright tests
-        run: pnpm run test:e2e
+      - name: Run platform-wide E2E (unified config)
+        working-directory: frontend
+        run: npx playwright test -c playwright.config.unified.ts --project=chromium
 
-      - name: Upload Playwright report
+      - name: Run Admin portal E2E (Chromium)
+        working-directory: frontend
+        run: npx playwright test -c apps/admin/playwright.config.ts --project=chromium
+
+      - name: Run Customer portal E2E (Chromium)
+        working-directory: frontend
+        run: npx playwright test -c apps/customer/playwright.config.ts --project=chromium
+
+      - name: Run Reseller portal E2E (Chromium)
+        working-directory: frontend
+        run: npx playwright test -c apps/reseller/playwright.config.ts --project=chromium
+
+      - name: Upload Admin E2E report
         uses: actions/upload-artifact@v3
         if: always()
         with:
-          name: playwright-report
-          path: playwright-report/
+          name: admin-e2e-report
+          path: frontend/test-results/admin-e2e-report/
+
+      - name: Upload Admin JUnit results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: admin-e2e-junit
+          path: frontend/test-results/admin-results.xml
+
+      - name: Upload Customer E2E report
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: customer-e2e-report
+          path: frontend/test-results/customer-e2e-report/
+
+      - name: Upload Customer JUnit results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: customer-e2e-junit
+          path: frontend/test-results/customer-results.xml
+
+      - name: Upload Reseller E2E report
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: reseller-e2e-report
+          path: frontend/test-results/reseller-e2e-report/
+
+      - name: Upload Reseller JUnit results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: reseller-e2e-junit
+          path: frontend/test-results/reseller-results.xml
 
       - name: Run visual regression tests
         run: pnpm run test:visual-regression
@@ -255,10 +303,14 @@ jobs:
       - name: Build applications
         run: pnpm run build
 
+      - name: Enforce bundle size (Customer)
+        run: npx size-limit --files apps/customer/.next/static/chunks/*.js --limit 350 KB
+
       - name: Analyze bundle size
         run: pnpm run bundle:analyze
 
       - name: Run Lighthouse CI
+        working-directory: frontend
         run: |
           npm install -g @lhci/cli@0.12.x
           lhci autorun

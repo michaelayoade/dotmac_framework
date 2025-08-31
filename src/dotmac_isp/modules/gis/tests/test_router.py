@@ -87,7 +87,7 @@ class TestServiceAreaEndpoints:
                 )
 
                 assert response.status_code == 201
-                data = response.json()
+                data = response.model_dump_json()
                 assert data["name"] == "Test Service Area"
                 assert data["coverage_percentage"] == 85.0
                 assert len(data["service_types"]) == 2
@@ -122,7 +122,7 @@ class TestServiceAreaEndpoints:
                 )
 
                 assert response.status_code == 200
-                data = response.json()
+                data = response.model_dump_json()
                 assert len(data) == 2
                 assert data[0]["name"] == "Area 1"
                 assert data[1]["name"] == "Area 2"
@@ -149,7 +149,7 @@ class TestServiceAreaEndpoints:
                 )
 
                 assert response.status_code == 200
-                data = response.json()
+                data = response.model_dump_json()
                 assert data["id"] == str(area_id)
                 assert data["name"] == "Test Service Area"
 
@@ -178,7 +178,7 @@ class TestServiceAreaEndpoints:
                 )
 
                 assert response.status_code == 200
-                data = response.json()
+                data = response.model_dump_json()
                 assert data["coverage_percentage"] == 85.5
                 assert data["total_nodes"] == 12
 
@@ -214,7 +214,7 @@ class TestNetworkNodeEndpoints:
                 )
 
                 assert response.status_code == 201
-                data = response.json()
+                data = response.model_dump_json()
                 assert data["name"] == "Test Router"
                 assert data["node_type"] == "core_router"
                 assert data["bandwidth_mbps"] == 10000
@@ -254,7 +254,7 @@ class TestNetworkNodeEndpoints:
                 )
 
                 assert response.status_code == 200
-                data = response.json()
+                data = response.model_dump_json()
                 assert len(data) == 2
                 assert data[0]["name"] == "Router 1"
                 assert data[1]["name"] == "WiFi AP 1"
@@ -296,7 +296,7 @@ class TestTerritoryEndpoints:
                 )
 
                 assert response.status_code == 201
-                data = response.json()
+                data = response.model_dump_json()
                 assert data["name"] == "Northwest Territory"
                 assert data["territory_type"] == "sales"
                 assert data["revenue_target"] == 500000.0
@@ -326,7 +326,7 @@ class TestTerritoryEndpoints:
                 )
 
                 assert response.status_code == 200
-                data = response.json()
+                data = response.model_dump_json()
                 assert data["revenue_achievement"] == 85.0
                 assert data["performance_grade"] == "B+"
 
@@ -372,7 +372,7 @@ class TestRouteOptimizationEndpoints:
                 )
 
                 assert response.status_code == 200
-                data = response.json()
+                data = response.model_dump_json()
                 assert data["total_distance_km"] == 8.5
                 assert data["estimated_duration_minutes"] == 120
                 assert len(data["optimized_route"]) == 3
@@ -412,7 +412,7 @@ class TestRouteOptimizationEndpoints:
                 )
 
                 assert response.status_code == 200
-                data = response.json()
+                data = response.model_dump_json()
                 assert data["total_routes"] == 1
                 assert data["total_distance_km"] == 15.2
 
@@ -500,7 +500,7 @@ class TestGISAnalyticsEndpoints:
                 )
 
                 assert response.status_code == 200
-                data = response.json()
+                data = response.model_dump_json()
                 assert data["total_service_areas"] == 25
                 assert data["average_coverage"] == 82.5
 
@@ -531,6 +531,6 @@ class TestGISAnalyticsEndpoints:
                 )
 
                 assert response.status_code == 200
-                data = response.json()
+                data = response.model_dump_json()
                 assert data["total_territories"] == 12
                 assert len(data["top_performers"]) == 2

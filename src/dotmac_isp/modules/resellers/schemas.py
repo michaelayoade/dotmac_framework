@@ -8,7 +8,7 @@ from decimal import Decimal
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 from dotmac_shared.api.exception_handlers import standard_exception_handler
 
@@ -38,42 +38,50 @@ class CommissionStatusEnum(str, Enum):
     PENDING = "PENDING"
     CALCULATED = "CALCULATED"
     PAID = "PAID"
-    DISPUTED = "DISPUTED"
+    CANCELLED = "CANCELLED"
+
+
+class ResellerStatusEnum(str, Enum):
+    """ResellerStatusEnum implementation."""
+
+    ACTIVE = "ACTIVE"
+    INACTIVE = "INACTIVE"
+    SUSPENDED = "SUSPENDED"
+    TERMINATED = "TERMINATED"
 
 
 # Request schemas
 class ResellerCreate(BaseModel):
-    """Schema for creating a new reseller."""
+    """Schema for creating new resellers."""
 
     company_name: str = Field(..., min_length=1, max_length=200)
-    business_registration_number: Optional[str] = Field(None, max_length=100)
-    tax_identification_number: Optional[str] = Field(None, max_length=100)
-    reseller_type: ResellerTypeEnum = Field(default=ResellerTypeEnum.PARTNER)
-    reseller_tier: ResellerTierEnum = Field(default=ResellerTierEnum.BRONZE)
-    commission_rate: Decimal = Field(default=Decimal("0.10"), ge=0, le=1)
+    reseller_type: ResellerTypeEnum
+    reseller_tier: ResellerTierEnum = ResellerTierEnum.BRONZE
+    commission_rate: Decimal = Field(..., ge=0, le=1)
 
     # Contact information
-    contact_email: str = Field(..., regex=r"^[^@]+@[^@]+\.[^@]+$")
+    contact_email: str = Field(..., pattern=r"^[^@]+@[^@]+\.[^@]+$")
     contact_phone: Optional[str] = Field(None, max_length=20)
-    contact_person: Optional[str] = Field(None, max_length=100)
+    contact_person: str = Field(..., min_length=1, max_length=100)
 
     # Address information
     billing_address: Optional[str] = Field(None, max_length=500)
     shipping_address: Optional[str] = Field(None, max_length=500)
-
-    # Business information
     website: Optional[str] = Field(None, max_length=200)
-    territories: List[str] = Field(default_factory=list)
 
     # Contract information
-    contract_start_date: str = Field(...)  # ISO format datetime
-    contract_end_date: Optional[str] = None  # ISO format datetime
+    contract_start_date: str = Field(..., description="ISO format datetime")
+    contract_end_date: Optional[str] = Field(None, description="ISO format datetime")
+
+    # Business information
+    territories: List[str] = Field(default_factory=list)
 
     # Performance and targets
     performance_targets: Dict[str, Any] = Field(default_factory=dict)
     notes: Optional[str] = Field(None, max_length=1000)
 
-    @validator("contract_start_date")
+    @field_validator("contract_start_date")
+    @classmethod
     def validate_start_date(cls, v):
         try:
             datetime.fromisoformat(v)
@@ -81,7 +89,8 @@ class ResellerCreate(BaseModel):
         except ValueError:
             raise ValueError("contract_start_date must be valid ISO format datetime")
 
-    @validator("contract_end_date")
+    @field_validator("contract_end_date")
+    @classmethod
     def validate_end_date(cls, v):
         if v is None:
             return v
@@ -91,10 +100,7 @@ class ResellerCreate(BaseModel):
         except ValueError:
             raise ValueError("contract_end_date must be valid ISO format datetime")
 
-    class Config:
-        """Config implementation."""
-
-        json_encoders = {Decimal: str}
+    model_config = ConfigDict(json_encoders={Decimal: str})
 
 
 class ResellerUpdate(BaseModel):
@@ -105,7 +111,7 @@ class ResellerUpdate(BaseModel):
     reseller_tier: Optional[ResellerTierEnum] = None
     commission_rate: Optional[Decimal] = Field(None, ge=0, le=1)
 
-    contact_email: Optional[str] = Field(None, regex=r"^[^@]+@[^@]+\.[^@]+$")
+    contact_email: Optional[str] = Field(None, pattern=r"^[^@]+@[^@]+\.[^@]+$")
     contact_phone: Optional[str] = Field(None, max_length=20)
     contact_person: Optional[str] = Field(None, max_length=100)
 
@@ -117,10 +123,7 @@ class ResellerUpdate(BaseModel):
     performance_targets: Optional[Dict[str, Any]] = None
     notes: Optional[str] = Field(None, max_length=1000)
 
-    class Config:
-        """Config implementation."""
-
-        json_encoders = {Decimal: str}
+    model_config = ConfigDict(json_encoders={Decimal: str})
 
 
 class ResellerOpportunityCreate(BaseModel):
@@ -130,10 +133,7 @@ class ResellerOpportunityCreate(BaseModel):
     commission_override: Optional[Decimal] = Field(None, ge=0, le=1)
     notes: Optional[str] = Field(None, max_length=500)
 
-    class Config:
-        """Config implementation."""
-
-        json_encoders = {Decimal: str}
+    model_config = ConfigDict(json_encoders={Decimal: str})
 
 
 class CommissionCalculation(BaseModel):
@@ -143,10 +143,7 @@ class CommissionCalculation(BaseModel):
     sale_amount: Decimal = Field(..., gt=0)
     commission_override: Optional[Decimal] = Field(None, ge=0, le=1)
 
-    class Config:
-        """Config implementation."""
-
-        json_encoders = {Decimal: str}
+    model_config = ConfigDict(json_encoders={Decimal: str})
 
 
 class CommissionRecord(BaseModel):
@@ -159,10 +156,7 @@ class CommissionRecord(BaseModel):
     commission_rate: Decimal = Field(..., ge=0, le=1)
     commission_amount: Decimal = Field(..., ge=0)
 
-    class Config:
-        """Config implementation."""
-
-        json_encoders = {Decimal: str}
+    model_config = ConfigDict(json_encoders={Decimal: str})
 
 
 # Response schemas
@@ -175,11 +169,11 @@ class ResellerResponse(BaseModel):
     reseller_type: str
     reseller_tier: str
     commission_rate: float
-
+    
     contact_email: str
     contact_phone: Optional[str]
-    contact_person: Optional[str]
-
+    contact_person: str
+    
     billing_address: Optional[str]
     shipping_address: Optional[str]
     website: Optional[str]
@@ -190,10 +184,7 @@ class ResellerResponse(BaseModel):
     created_at: str
     updated_at: str
 
-    class Config:
-        """Config implementation."""
-
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ResellerOpportunityResponse(BaseModel):
@@ -208,10 +199,7 @@ class ResellerOpportunityResponse(BaseModel):
     status: str
     created_at: str
 
-    class Config:
-        """Config implementation."""
-
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CommissionResponse(BaseModel):
@@ -226,10 +214,7 @@ class CommissionResponse(BaseModel):
     calculated_date: str
     created_at: str
 
-    class Config:
-        """Config implementation."""
-
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CommissionCalculationResponse(BaseModel):
@@ -241,10 +226,7 @@ class CommissionCalculationResponse(BaseModel):
     commission_amount: float
     calculated_at: str
 
-    class Config:
-        """Config implementation."""
-
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ResellerPerformanceResponse(BaseModel):
@@ -257,10 +239,7 @@ class ResellerPerformanceResponse(BaseModel):
     metrics: Dict[str, Any]
     calculated_at: str
 
-    class Config:
-        """Config implementation."""
-
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ResellerListResponse(BaseModel):
@@ -271,10 +250,7 @@ class ResellerListResponse(BaseModel):
     limit: int
     offset: int
 
-    class Config:
-        """Config implementation."""
-
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # Health check schema
@@ -288,7 +264,4 @@ class ResellerHealthResponse(BaseModel):
     event_bus: str
     timestamp: str
 
-    class Config:
-        """Config implementation."""
-
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

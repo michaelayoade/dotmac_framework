@@ -302,7 +302,7 @@ class WebhookEndpointCreate(BaseModel):
 
     name: str = Field(..., min_length=3, max_length=100, description="Webhook name")
     url: str = Field(..., description="Webhook URL")
-    events: List[str] = Field(..., min_items=1, description="Events to subscribe to")
+    events: List[str] = Field(..., min_length=1, description="Events to subscribe to")
     secret: Optional[str] = Field(None, description="Webhook secret")
 
 

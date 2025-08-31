@@ -394,13 +394,13 @@ class ManagementPlatformUserAdapter(BaseUserAdapter):
             enhanced_users = []
             for user in search_result.users:
                 tenant_info = await self._get_user_tenant_info(user.id)
-                enhanced_user = user.dict()
+                enhanced_user = user.model_dump()
                 enhanced_user["tenant_memberships"] = tenant_info
                 enhanced_users.append(enhanced_user)
 
             search_result.users = enhanced_users
 
-        return search_result.dict()
+        return search_result.model_dump()
 
     async def get_user_audit_trail(
         self,

@@ -172,7 +172,7 @@ class UnifiedServiceFactory:
         for service_name, service in self.services.items():
             if hasattr(service, "health_check"):
                 service_health = await service.health_check()
-                health_status["services"][service_name] = service_health.dict()
+                health_status["services"][service_name] = service_health.model_dump()
 
                 if service_health.status.value != "ready":
                     failed_services += 1

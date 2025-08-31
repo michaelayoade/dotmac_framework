@@ -3,6 +3,7 @@
   "compilerOptions": {
     "outDir": "dist",
     "declaration": true,
+    "noEmitOnError": false,
     "declarationMap": true,
     "sourceMap": true,
     "baseUrl": ".",
@@ -19,6 +20,7 @@
     "**/*.test.ts",
     "**/*.test.tsx",
     "**/*.spec.ts",
-    "**/*.spec.tsx"
+    "**/*.spec.tsx",
+    "**/*.stories.*"
   ]
 }

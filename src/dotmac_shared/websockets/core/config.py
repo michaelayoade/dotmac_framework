@@ -8,7 +8,7 @@ import os
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 
 class LogLevel(str, Enum):
@@ -155,7 +155,8 @@ class WebSocketConfig(BaseModel):
         description="WebSocket buffer size in bytes",
     )
 
-    @validator("max_connections")
+    @field_validator("max_connections")
+    @classmethod
     def validate_max_connections(cls, v):
         if v <= 0:
             raise ValueError("max_connections must be positive")
@@ -163,19 +164,22 @@ class WebSocketConfig(BaseModel):
             raise ValueError("max_connections too high (max 50000)")
         return v
 
-    @validator("heartbeat_interval")
+    @field_validator("heartbeat_interval")
+    @classmethod
     def validate_heartbeat_interval(cls, v):
         if v < 10 or v > 300:
             raise ValueError("heartbeat_interval must be between 10 and 300 seconds")
         return v
 
-    @validator("redis_url")
+    @field_validator("redis_url")
+    @classmethod
     def validate_redis_url(cls, v):
         if not v.startswith(("redis://", "rediss://")):
             raise ValueError("redis_url must start with redis:// or rediss://")
         return v
 
-    @validator("cors_origins")
+    @field_validator("cors_origins")
+    @classmethod
     def validate_cors_origins(cls, v):
         if not v:
             raise ValueError("cors_origins cannot be empty")
@@ -193,7 +197,7 @@ class WebSocketConfig(BaseModel):
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert config to dictionary."""
-        return self.dict()
+        return self.model_dump()
 
     @classmethod
     def from_env(cls) -> "WebSocketConfig":

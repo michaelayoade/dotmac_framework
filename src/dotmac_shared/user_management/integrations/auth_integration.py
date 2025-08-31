@@ -427,7 +427,7 @@ class AuthIntegration:
             "refresh_token": refresh_token,
             "token_type": "bearer",
             "expires_in": self.jwt_manager.access_token_expiry,
-            "user": user.dict(),
+            "user": user.model_dump(),
         }
 
     # User Verification Helpers

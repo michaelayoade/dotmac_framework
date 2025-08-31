@@ -3,7 +3,7 @@ import { Inter } from 'next/font/google';
 import type React from 'react';
 
 import './globals.css';
-import { RootErrorBoundary } from '../components/common/RootErrorBoundary';
+import { UniversalProviders } from '@dotmac/providers';
 import { ServiceWorkerProvider } from '../components/providers/ServiceWorkerProvider';
 import { CustomerPortalAudit } from '@dotmac/headless';
 
@@ -39,11 +39,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="icon" href="/favicon.ico" />
       </head>
       <body className={inter.className}>
-        <RootErrorBoundary>
+        <UniversalProviders 
+          portal="customer"
+          features={{
+            notifications: true,
+            pwa: true,
+            offline: true,
+            analytics: true
+          }}
+        >
           <CustomerPortalAudit>
             <ServiceWorkerProvider>{children}</ServiceWorkerProvider>
           </CustomerPortalAudit>
-        </RootErrorBoundary>
+        </UniversalProviders>
       </body>
     </html>
   );

@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse, StreamingResponse
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, validator, ConfigDict
 
 from dotmac_isp.core.performance_monitor import (
     AlertLevel,
@@ -64,9 +64,7 @@ class MetricSummary(BaseModel):
     change_percentage: float
     timestamp: datetime
 
-    class Config:
-        """Config implementation."""
-
+    model_config = ConfigDict()
         json_encoders = {datetime: lambda v: v.isoformat()}
 
 
@@ -89,9 +87,7 @@ class PerformanceOverview(BaseModel):
     alerts_count: int = Field(description="Active alerts count")
     timestamp: datetime
 
-    class Config:
-        """Config implementation."""
-
+    model_config = ConfigDict()
         json_encoders = {datetime: lambda v: v.isoformat()}
 
 
@@ -107,9 +103,7 @@ class AlertSummary(BaseModel):
     duration_minutes: int
     timestamp: datetime
 
-    class Config:
-        """Config implementation."""
-
+    model_config = ConfigDict()
         json_encoders = {datetime: lambda v: v.isoformat()}
 
 
@@ -125,9 +119,7 @@ class SlowQueryInfo(BaseModel):
     query_type: str
     last_seen: datetime
 
-    class Config:
-        """Config implementation."""
-
+    model_config = ConfigDict()
         json_encoders = {datetime: lambda v: v.isoformat()}
 
 

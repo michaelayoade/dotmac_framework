@@ -338,7 +338,7 @@ class ApiKeyResponse(BaseModel):
 class UserBulkOperation(BaseModel):
     """Bulk user operation schema."""
 
-    user_ids: List[UUID] = Field(..., min_items=1, description="List of user IDs")
+    user_ids: List[UUID] = Field(..., min_length=1, description="List of user IDs")
     operation: str = Field(..., description="Operation to perform")
     parameters: Optional[Dict[str, Any]] = Field(
         None, description="Operation parameters"
@@ -359,7 +359,7 @@ class UserBulkOperationResult(BaseModel):
 class UserImport(BaseModel):
     """User import schema."""
 
-    users: List[UserCreate] = Field(..., min_items=1, description="Users to import")
+    users: List[UserCreate] = Field(..., min_length=1, description="Users to import")
     tenant_id: Optional[UUID] = Field(None, description="Target tenant ID")
     send_invitations: bool = Field(default=True, description="Send invitation emails")
     skip_existing: bool = Field(

@@ -58,8 +58,8 @@ class GUID(TypeDecorator):
             return value
 
 
-# Make GUID available as UUID for backward compatibility
-UUID = GUID
+# NO BACKWARD COMPATIBILITY - Use GUID directly
+# BREAKING: Replace all UUID references with GUID
 
 
 @as_declarative()

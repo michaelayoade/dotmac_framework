@@ -106,7 +106,7 @@ async def get_service_area_nodes(
     result = await deps.db.execute(query)
     nodes = result.scalars().all()
 
-    return [NetworkNodeResponse.from_orm(node) for node in nodes]
+    return [NetworkNodeResponse.model_validate(node) for node in nodes]
 
 
 # ============================================================================
@@ -160,7 +160,7 @@ async def find_nodes_by_location(
         if distance <= radius_km:
             nearby_nodes.append(node)
 
-    return [NetworkNodeResponse.from_orm(node) for node in nearby_nodes]
+    return [NetworkNodeResponse.model_validate(node) for node in nearby_nodes]
 
 
 # ============================================================================
@@ -192,7 +192,7 @@ async def find_territories_containing_point(
     territories = await service.find_territories_containing_point(
         latitude, longitude, deps.user_id
     )
-    return [TerritoryResponse.from_orm(t) for t in territories]
+    return [TerritoryResponse.model_validate(t) for t in territories]
 
 
 @territories_router.get("/{territory_id}/metrics")
@@ -244,7 +244,7 @@ async def list_route_optimizations(
     result = await deps.db.execute(query)
     optimizations = result.scalars().all()
 
-    return [RouteOptimizationResponse.from_orm(opt) for opt in optimizations]
+    return [RouteOptimizationResponse.model_validate(opt) for opt in optimizations]
 
 
 # ============================================================================

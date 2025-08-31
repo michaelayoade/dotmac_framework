@@ -10,7 +10,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field, validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, ConfigDict
 
 
 class UserType(str, Enum):
@@ -134,7 +134,8 @@ class UserBase(BaseModel):
     is_active: bool = True
     is_verified: bool = False
 
-    @validator("username")
+    @field_validator("username")
+    @classmethod
     def validate_username(cls, v):
         """Validate username format."""
         if not v.replace("_", "").replace("-", "").replace(".", "").isalnum():
@@ -143,7 +144,8 @@ class UserBase(BaseModel):
             )
         return v.lower()
 
-    @validator("first_name", "last_name")
+    @field_validator("first_name", "last_name")
+    @classmethod
     def validate_names(cls, v):
         """Validate name fields."""
         if not v.replace(" ", "").replace("-", "").replace("'", "").isalpha():
@@ -170,7 +172,8 @@ class UserCreate(UserBase):
     permissions: List[str] = Field(default_factory=list)
     platform_specific: Dict[str, Any] = Field(default_factory=dict)
 
-    @validator("password")
+    @field_validator("password")
+    @classmethod
     def validate_password(cls, v):
         """Validate password strength."""
         if len(v) < 8:
@@ -189,7 +192,8 @@ class UserCreate(UserBase):
 
         return v
 
-    @validator("password_confirm")
+    @field_validator("password_confirm")
+    @classmethod
     def validate_password_confirm(cls, v, values):
         """Validate password confirmation matches."""
         if v and "password" in values and v != values["password"]:
@@ -218,7 +222,8 @@ class UserUpdate(BaseModel):
     permissions: Optional[List[str]] = None
     platform_specific: Optional[Dict[str, Any]] = None
 
-    @validator("first_name", "last_name")
+    @field_validator("first_name", "last_name")
+    @classmethod
     def validate_names(cls, v):
         """Validate name fields."""
         if v and not v.replace(" ", "").replace("-", "").replace("'", "").isalpha():
@@ -259,27 +264,13 @@ class UserResponse(UserBase):
     last_failed_login: Optional[datetime] = None
     password_changed_at: Optional[datetime] = None
 
-    class Config:
-        """Pydantic configuration."""
-
-        orm_mode = True
-        use_enum_values = True
-
-
-class UserSummary(BaseModel):
-    """Lightweight user summary for lists and references."""
-
-    id: UUID
-    username: str
-    email: EmailStr
-    first_name: str
-    last_name: str
-    user_type: UserType
-    status: UserStatus
-    is_active: bool
-    created_at: datetime
     last_login: Optional[datetime] = None
     avatar_url: Optional[str] = None
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        use_enum_values=True
+    )
 
     @property
     def full_name(self) -> str:
@@ -290,12 +281,6 @@ class UserSummary(BaseModel):
     def display_name(self) -> str:
         """Get user's display name (full name or username)."""
         return self.full_name if self.first_name and self.last_name else self.username
-
-    class Config:
-        """Pydantic configuration."""
-
-        orm_mode = True
-        use_enum_values = True
 
 
 class UserSearchQuery(BaseModel):

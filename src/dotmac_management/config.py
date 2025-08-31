@@ -7,7 +7,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import List, Optional
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, ConfigDict
 from pydantic_settings import BaseSettings
 
 
@@ -15,9 +15,7 @@ from pydantic_settings import BaseSettings
 class BaseServiceSettings(BaseSettings):
     """BaseServiceSettings implementation."""
 
-    class Config:
-        """Config implementation."""
-
+    model_config = ConfigDict()
         env_file = ".env"
         case_sensitive = False
         extra = "allow"

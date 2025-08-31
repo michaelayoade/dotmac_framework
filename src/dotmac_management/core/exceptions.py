@@ -83,11 +83,8 @@ class DatabaseError(DotMacError):
     pass
 
 
-# Legacy exception for backward compatibility
-class DotMacException(DotMacError):
-    """Legacy exception name - use DotMacError instead."""
-
-    pass
+# NO BACKWARD COMPATIBILITY - Use DotMacError directly
+# BREAKING: Replace DotMacException with DotMacError
 
 
 # Tenant-specific exceptions

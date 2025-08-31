@@ -402,7 +402,7 @@ class InvoiceCreate(InvoiceBase):
     """Schema for creating an invoice."""
 
     line_items: List[InvoiceLineItemBase] = Field(
-        ..., min_items=1, description="Invoice line items"
+        ..., min_length=1, description="Invoice line items"
     )
     tenant_id: Optional[UUID] = Field(None, description="Tenant ID")
     custom_metadata: Optional[Dict[str, Any]] = Field(

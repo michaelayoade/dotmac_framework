@@ -1,135 +1,87 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "globalDependencies": ["**/.env.*local"],
-  "remoteCache": {
-    "enabled": true
-  },
   "pipeline": {
-    
-    // === FOUNDATION LAYER (Parallel) ===
-    "build:foundation": {
-      "dependsOn": [],
-      "outputs": ["dist/**"],
+    "build": {
+      "dependsOn": ["^build", "type-check"],
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"],
+      "env": ["NODE_ENV"],
       "inputs": ["src/**", "!src/**/*.test.*", "!src/**/*.spec.*"],
-      "cache": true,
-      "env": ["NODE_ENV"]
-    },
-    
-    // === TYPE CHECKING (Parallel with builds) ===
-    "type-check": {
-      "dependsOn": [],
-      "inputs": ["src/**/*.{ts,tsx}", "tsconfig.json", "**/*.d.ts"],
-      "outputs": [],
       "cache": true
     },
-    
-    // === PACKAGE BUILD LAYERS ===
-    "build:base-packages": {
-      "dependsOn": ["^build:foundation"],
-      "outputs": ["dist/**"],
-      "inputs": ["src/**", "!src/**/*.test.*"],
-      "cache": true,
-      "env": ["NODE_ENV"]
-    },
-    
-    "build:ui-packages": {
-      "dependsOn": ["^build:base-packages", "build:foundation"],
-      "outputs": ["dist/**", "storybook-static/**"],
-      "inputs": ["src/**", "!src/**/*.test.*"],
-      "cache": true,
-      "env": ["NODE_ENV"]
-    },
-    
-    "build:logic-packages": {
-      "dependsOn": ["^build:ui-packages", "build:base-packages"],
-      "outputs": ["dist/**"],
-      "inputs": ["src/**", "!src/**/*.test.*"],
-      "cache": true,
-      "env": ["NODE_ENV"]
-    },
-    
-    // === APPLICATION BUILDS ===
-    "build": {
-      "dependsOn": ["^build:logic-packages", "^build:ui-packages", "type-check"],
+    "build:optimized": {
+      "dependsOn": ["^build", "type-check"],
       "outputs": [".next/**", "!.next/cache/**", "dist/**"],
-      "inputs": ["src/**", "public/**", "!src/**/*.test.*"],
-      "cache": true,
-      "env": ["NODE_ENV", "NEXT_PUBLIC_*"]
+      "env": ["NODE_ENV", "ANALYZE", "BUNDLE_ANALYZE"],
+      "inputs": ["src/**", "!src/**/*.test.*", "!src/**/*.spec.*"],
+      "cache": true
     },
-    
-    // === DEVELOPMENT ===
     "dev": {
       "cache": false,
       "persistent": true,
-      "dependsOn": ["^build:logic-packages"]
+      "dependsOn": ["^build"]
     },
-    
-    // === TESTING OPTIMIZATION ===
-    "test:unit": {
-      "dependsOn": ["type-check"],
+    "test": {
+      "dependsOn": ["^build"],
       "outputs": ["coverage/**"],
       "inputs": ["src/**/*.{ts,tsx}", "**/*.test.{ts,tsx}", "**/*.spec.{ts,tsx}"],
       "cache": true
     },
-    
-    "test:integration": {
-      "dependsOn": ["^build:base-packages", "type-check"],
+    "test:unit": {
+      "dependsOn": ["^build"],
       "outputs": ["coverage/**"],
-      "inputs": ["src/**/*.{ts,tsx}", "**/*.integration.test.{ts,tsx}"],
       "cache": true
     },
-    
+    "test:integration": {
+      "dependsOn": ["^build"],  
+      "outputs": ["coverage/**"],
+      "cache": true
+    },
     "test:e2e": {
       "dependsOn": ["build"],
       "outputs": ["test-results/**", "playwright-report/**"],
-      "inputs": ["**/*.e2e.test.{ts,tsx}", "playwright.config.ts"],
-      "cache": true
+      "cache": false
     },
-    
-    // === LINTING & FORMATTING (Parallel) ===
     "lint": {
-      "dependsOn": [],
-      "inputs": ["src/**/*.{ts,tsx,js,jsx}", "eslint.config.*"],
+      "dependsOn": ["^build"],
+      "inputs": ["src/**/*.{ts,tsx,js,jsx}", "**/*.{ts,tsx,js,jsx}"],
+      "cache": true
+    },
+    "lint:fix": {
+      "dependsOn": ["^build"],
+      "cache": false
+    },
+    "type-check": {
+      "dependsOn": ["^build"],
+      "inputs": ["src/**/*.{ts,tsx}", "**/*.{ts,tsx}", "!**/*.test.*", "!**/*.spec.*"],
       "outputs": [],
       "cache": true
     },
-    
+    "type-check:fast": {
+      "inputs": ["src/**/*.{ts,tsx}", "**/*.{ts,tsx}", "!**/*.test.*", "!**/*.spec.*"],
+      "outputs": [],
+      "cache": true
+    },
     "format": {
-      "dependsOn": [],
-      "inputs": ["**/*.{ts,tsx,js,jsx,json,css,md}", ".prettierrc*"],
-      "outputs": [],
-      "cache": true
-    },
-    
-    // === STORYBOOK OPTIMIZATION ===
-    "storybook:build": {
-      "dependsOn": ["^build:ui-packages"],
-      "outputs": ["storybook-static/**"],
-      "inputs": ["src/**/*.stories.*", ".storybook/**"],
-      "cache": true
-    },
-    
-    // === RELEASE PIPELINE ===
-    "build:ci": {
-      "dependsOn": ["build", "test:unit", "lint", "type-check"],
-      "outputs": [".next/**", "dist/**"],
-      "cache": true
-    },
-    
-    "build:release": {
-      "dependsOn": ["build:ci", "test:integration"],
       "cache": false,
-      "outputs": [".next/**", "dist/**"]
+      "inputs": ["**/*.{ts,tsx,js,jsx,json,css,md}"]
+    },
+    "clean": {
+      "cache": false,
+      "outputs": []
+    },
+    "bundle-analyze": {
+      "dependsOn": ["build:optimized"],
+      "outputs": ["bundle-report/**"],
+      "cache": false
     }
   },
-  
-  "globalEnv": ["NODE_ENV", "CI", "VERCEL_ENV"],
-  
-  // === CACHE OPTIMIZATION ===
-  "cacheConfig": {
-    "signature": true,
-    "remote": {
-      "enabled": true
-    }
-  }
+  "remoteCache": {
+    "signature": true
+  },
+  "globalEnv": [
+    "NODE_ENV",
+    "ANALYZE",
+    "BUNDLE_ANALYZE"
+  ]
 }

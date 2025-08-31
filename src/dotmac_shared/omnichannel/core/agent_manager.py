@@ -23,7 +23,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Set, Union
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from sqlalchemy import and_, delete, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -140,9 +140,7 @@ class AgentModel(BaseModel):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     extra_data: Dict[str, Any] = Field(default_factory=dict, alias="metadata")
 
-    class Config:
-        """Config implementation."""
-
+    model_config = ConfigDict()
         use_enum_values = True
 
 

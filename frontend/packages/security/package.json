@@ -13,6 +13,7 @@
     }
   },
   "scripts": {
+    "prebuild": "tsc -p tsconfig.json --emitDeclarationOnly",
     "build": "tsup",
     "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
     "lint": "eslint src/",

@@ -115,9 +115,9 @@ export default defineConfig({
     },
   ],
 
-  /* Global setup files */
-  globalSetup: require.resolve('./global-setup.ts'),
-  globalTeardown: require.resolve('./global-teardown.ts'),
+  /* Global setup files (unified) */
+  globalSetup: require.resolve('../setup/unified-global-setup.ts'),
+  globalTeardown: require.resolve('../setup/unified-global-teardown.ts'),
 
   /* Run your local dev server before starting the tests */
   webServer: process.env.CI

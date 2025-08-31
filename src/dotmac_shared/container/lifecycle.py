@@ -188,11 +188,7 @@ class ContainerLifecycleManager:
                     },
                 )
 
-        # Backwards compatibility endpoint
-        @self.app.get("/health", tags=["health"])
-        async def health_check():
-            """Traditional health check endpoint for backwards compatibility."""
-            return await liveness_probe()
+        # NO BACKWARD COMPATIBILITY - Use /health/live and /health/ready only
 
     def setup_signal_handlers(self):
         """Setup signal handlers for graceful shutdown in containers."""

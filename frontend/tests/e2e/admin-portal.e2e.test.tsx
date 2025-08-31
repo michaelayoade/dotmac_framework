@@ -4,9 +4,18 @@
  */
 
 import { test, expect } from '@playwright/test';
+import { setupAuth } from '../auth/auth-helpers';
+import { APIBehaviorTester } from '../fixtures/api-behaviors';
 
 test.describe('Admin Portal E2E Tests', () => {
   test.beforeEach(async ({ page }) => {
+    // Ensure authenticated session for protected routes
+    await setupAuth(page, 'admin');
+    const api = new APIBehaviorTester(page, { enableMocking: true });
+    // Minimal admin mocks for stability
+    await api.mockAndLog(/\/api\/v1\/admin\/customers.*/, async () => ({ body: { customers: [], total: 0 } }));
+    await api.mockAndLog(/\/api\/v1\/admin\/dashboard.*/, async () => ({ body: { ok: true } }));
+
     // Navigate to admin portal
     await page.goto('/admin');
 

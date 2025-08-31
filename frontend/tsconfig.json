@@ -45,7 +45,9 @@
       "@dotmac/security": ["./packages/security/src"],
       "@dotmac/security/*": ["./packages/security/src/*"],
       "@dotmac/monitoring": ["./packages/monitoring/src"],
-      "@dotmac/monitoring/*": ["./packages/monitoring/src/*"]
+      "@dotmac/monitoring/*": ["./packages/monitoring/src/*"],
+      "@dotmac/patterns": ["./packages/patterns/src"],
+      "@dotmac/patterns/*": ["./packages/patterns/src/*"]
     },
     "outDir": "dist",
     "rootDir": ".",
@@ -97,6 +99,9 @@
     },
     {
       "path": "./packages/monitoring"
+    },
+    {
+      "path": "./packages/patterns"
     }
   ]
 }

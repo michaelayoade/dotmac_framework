@@ -24,7 +24,7 @@ from uuid import UUID, uuid4
 
 import httpx
 from jinja2 import BaseLoader, Environment, select_autoescape
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 from dotmac_shared.plugins.adapters.communication import (
     MessagePriority as PluginMessagePriority,
@@ -145,9 +145,7 @@ class OutboundMessage(BaseModel):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     extra_data: Dict[str, Any] = Field(default_factory=dict, alias="metadata")
 
-    class Config:
-        """Config implementation."""
-
+    model_config = ConfigDict()
         use_enum_values = True
 
 
@@ -186,9 +184,7 @@ class InboundMessage(BaseModel):
     received_at: datetime = Field(default_factory=datetime.utcnow)
     extra_data: Dict[str, Any] = Field(default_factory=dict, alias="metadata")
 
-    class Config:
-        """Config implementation."""
-
+    model_config = ConfigDict()
         use_enum_values = True
 
 

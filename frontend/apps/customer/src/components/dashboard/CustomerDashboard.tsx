@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { AlertCircle, Settings } from 'lucide-react';
+import { UniversalMetricsGrid, MetricData } from '@dotmac/dashboard';
+import { formatCurrency, formatNumber } from '@dotmac/utils';
 import { useSecureAuth } from '../auth/SecureAuthProvider';
 import { CustomerOnboardingWorkflow } from '../onboarding';
 

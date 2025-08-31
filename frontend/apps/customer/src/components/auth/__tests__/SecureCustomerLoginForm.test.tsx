@@ -11,14 +11,7 @@ import { useAuthActions } from '../SecureAuthProvider';
 import { SecureCustomerLoginForm } from '../SecureCustomerLoginForm';
 import { useStandardErrorHandler } from '@dotmac/headless/hooks/useStandardErrorHandler';
 
-// Mock Next.js router
-jest.mock('next/navigation');
-const mockRouter = {
-  push: jest.fn(),
-  replace: jest.fn(),
-  back: jest.fn(),
-};
-(useRouter as jest.Mock).mockReturnValue(mockRouter);
+// Next.js router is now globally mocked
 
 // Mock the auth provider
 jest.mock('../SecureAuthProvider');

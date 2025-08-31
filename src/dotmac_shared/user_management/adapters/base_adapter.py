@@ -116,7 +116,7 @@ class BaseUserAdapter(ABC):
     async def get_user_profile(self, user_id: UUID) -> Optional[Dict[str, Any]]:
         """Get user profile information."""
         profile = await self.profile_manager.get_user_profile(user_id)
-        return profile.dict() if profile else None
+        return profile.model_dump() if profile else None
 
     async def update_user_profile(
         self,
@@ -128,7 +128,7 @@ class BaseUserAdapter(ABC):
         updated_profile = await self.profile_manager.update_user_profile(
             user_id, profile_updates, updated_by
         )
-        return updated_profile.dict() if updated_profile else None
+        return updated_profile.model_dump() if updated_profile else None
 
     async def upload_user_avatar(
         self, user_id: UUID, avatar_data: bytes, filename: str, content_type: str
@@ -205,7 +205,7 @@ class BaseUserAdapter(ABC):
 
         return {
             "success": success,
-            "user": user.dict() if user else None,
+            "user": user.model_dump() if user else None,
             "tokens": tokens,
         }
 
@@ -252,7 +252,7 @@ class BaseUserAdapter(ABC):
         """Enhance user response with platform-specific data."""
 
         # Create enhanced user response
-        user_dict = user.dict()
+        user_dict = user.model_dump()
 
         # Add platform-specific enhancements
         current_platform_data = user_dict.get("platform_specific", {})
@@ -376,7 +376,7 @@ class BaseUserAdapter(ABC):
                 user = await self.register_user(registration)
 
                 results["results"].append(
-                    {"index": i, "success": True, "user": user.dict()}
+                    {"index": i, "success": True, "user": user.model_dump()}
                 )
                 results["successful"] += 1
 

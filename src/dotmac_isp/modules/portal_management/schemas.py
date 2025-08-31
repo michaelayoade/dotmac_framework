@@ -246,7 +246,7 @@ class PortalAccountAdminUpdate(PortalAccountUpdate):
 class PortalBulkOperationRequest(BaseModel):
     """Schema for bulk operations on Portal Accounts."""
 
-    portal_account_ids: List[UUID] = Field(..., min_items=1, max_items=100)
+    portal_account_ids: List[UUID] = Field(..., min_length=1, max_length=100)
     operation: str = Field(..., pattern="^(activate|suspend|lock|unlock|reset_2fa)$")
     reason: Optional[str] = Field(None, max_length=255)
 

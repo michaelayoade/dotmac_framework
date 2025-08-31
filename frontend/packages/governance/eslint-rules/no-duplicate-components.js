@@ -55,6 +55,7 @@ module.exports = createRule({
       description: 'Prevent duplicate components that should use @dotmac/ui',
       recommended: 'error'
     },
+    hasSuggestions: true,
     fixable: 'code',
     schema: [
       {

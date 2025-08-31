@@ -411,7 +411,7 @@ class MetricsCollector:
                     response = await client.get(url)
 
                     if response.status_code == 200:
-                        data = response.json()
+                        data = response.model_dump_json()
                         if isinstance(data, dict):
                             # Extract numeric values
                             metrics = {}

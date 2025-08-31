@@ -355,7 +355,7 @@ class UserRepository:
         # Update profile data
         if update_data.profile is not None:
             user_model.profile_data = (
-                update_data.profile.dict() if update_data.profile else None
+                update_data.profile.model_dump() if update_data.profile else None
             )
 
         # Update platform-specific data

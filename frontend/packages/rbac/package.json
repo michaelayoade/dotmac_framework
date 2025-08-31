@@ -10,6 +10,7 @@
     "README.md"
   ],
   "scripts": {
+    "prebuild": "tsc -p tsconfig.json --emitDeclarationOnly",
     "build": "tsup src/index.ts --format cjs,esm --clean",
     "dev": "tsup src/index.ts --format cjs,esm --watch",
     "type-check": "tsc --noEmit",

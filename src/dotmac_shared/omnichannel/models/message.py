@@ -7,7 +7,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class MessageStatus(str, Enum):
@@ -65,9 +65,7 @@ class Message(BaseModel):
     # Additional data
     extra_data: Dict[str, Any] = Field(default_factory=dict, alias="metadata")
 
-    class Config:
-        """Config implementation."""
-
+    model_config = ConfigDict()
         populate_by_name = True
 
 
@@ -100,16 +98,14 @@ class MessageResult(BaseModel):
     # Additional data
     extra_data: Dict[str, Any] = Field(default_factory=dict, alias="metadata")
 
-    class Config:
-        """Config implementation."""
-
+    model_config = ConfigDict()
         populate_by_name = True
 
 
 class BulkMessageRequest(BaseModel):
     """Request for sending bulk messages."""
 
-    messages: List[Message] = Field(..., min_items=1, max_items=1000)
+    messages: List[Message] = Field(..., min_length=1, max_length=1000)
     channel: str = Field(..., min_length=1)
 
     # Batch settings
@@ -123,9 +119,7 @@ class BulkMessageRequest(BaseModel):
     # Timing
     scheduled_at: Optional[datetime] = None
 
-    class Config:
-        """Config implementation."""
-
+    model_config = ConfigDict()
         populate_by_name = True
 
 
@@ -190,7 +184,5 @@ class MessageTemplate(BaseModel):
     # Additional data
     extra_data: Dict[str, Any] = Field(default_factory=dict, alias="metadata")
 
-    class Config:
-        """Config implementation."""
-
+    model_config = ConfigDict()
         populate_by_name = True

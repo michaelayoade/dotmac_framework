@@ -1,52 +1,25 @@
 {
   "name": "@dotmac/utils",
   "version": "1.0.0",
-  "description": "Shared utilities and common functions for DotMac Framework",
-  "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
-    },
-    "./sanitization": {
-      "types": "./dist/sanitization/index.d.ts",
-      "import": "./dist/sanitization/index.mjs",
-      "require": "./dist/sanitization/index.js"
-    },
-    "./validation": {
-      "types": "./dist/validation/index.d.ts",
-      "import": "./dist/validation/index.mjs",
-      "require": "./dist/validation/index.js"
-    }
-  },
+  "description": "Shared utility functions for DotMac ISP platform",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --clean && tsc --emitDeclarationOnly --outDir dist",
-    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
-    "lint": "eslint src/",
-    "type-check": "tsc --noEmit",
-    "clean": "rm -rf dist",
-    "test": "jest"
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "type-check": "tsc --noEmit"
   },
+  "keywords": ["utils", "helpers", "utilities", "typescript"],
+  "author": "DotMac Team",
+  "license": "MIT",
   "dependencies": {
-    "zod": "^3.22.4",
-    "dompurify": "^3.0.5",
-    "crypto-js": "^4.1.1",
-    "clsx": "^2.1.1"
+    "date-fns": "^2.30.0",
+    "lodash-es": "^4.17.21"
   },
   "devDependencies": {
-    "@dotmac/typescript-config": "workspace:*",
-    "@types/crypto-js": "^4.1.2",
-    "@types/dompurify": "^3.0.3",
-    "typescript": "^5.3.3",
-    "tsup": "^8.0.2"
-  },
-  "keywords": [
-    "utilities",
-    "validation",
-    "sanitization",
-    "dotmac"
-  ]
+    "@types/lodash-es": "^4.17.0",
+    "typescript": "^5.0.0",
+    "tsup": "^8.0.0"
+  }
 }

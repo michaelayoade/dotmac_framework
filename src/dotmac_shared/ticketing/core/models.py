@@ -7,7 +7,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from sqlalchemy import (
     JSON,
     Boolean,
@@ -18,7 +18,7 @@ from sqlalchemy import (
     String,
     Text,
 )
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import relationship
 
 Base = declarative_base()
@@ -290,11 +290,10 @@ class TicketResponse(BaseModel):
     comment_count: Optional[int] = None
     attachment_count: Optional[int] = None
 
-    class Config:
-        """Config implementation."""
-
-        from_attributes = True
-        populate_by_name = True
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True
+    )
 
 
 class CommentCreate(BaseModel):
@@ -319,8 +318,7 @@ class CommentResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        """Config implementation."""
-
-        from_attributes = True
-        populate_by_name = True
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True
+    )

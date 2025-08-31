@@ -1,64 +1,32 @@
 {
   "name": "@dotmac/forms",
   "version": "1.0.0",
-  "description": "Universal Form & Data Entry Patterns for DotMac Framework",
+  "description": "Universal form validation and components for DotMac ISP platform",
   "main": "dist/index.js",
+  "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc && tsc-alias",
-    "dev": "tsc --watch",
-    "type-check": "tsc --noEmit",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
-    "lint": "eslint src --ext .ts,.tsx",
-    "lint:fix": "eslint src --ext .ts,.tsx --fix"
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "type-check": "tsc --noEmit"
   },
+  "keywords": ["forms", "validation", "react", "typescript"],
+  "author": "DotMac Team",
+  "license": "MIT",
   "dependencies": {
-    "@dotmac/primitives": "workspace:*",
-    "@dotmac/headless": "workspace:*",
-    "@hookform/resolvers": "^3.3.0",
-    "react": "^18.3.0",
-    "react-dom": "^18.3.0",
-    "react-hook-form": "^7.51.0",
+    "react-hook-form": "^7.47.0",
     "zod": "^3.22.0",
-    "clsx": "^2.1.0",
-    "tailwind-merge": "^2.3.0",
-    "lucide-react": "^0.394.0",
-    "date-fns": "^3.6.0"
+    "@hookform/resolvers": "^3.3.0",
+    "clsx": "^2.0.0",
+    "lucide-react": "^0.400.0"
   },
   "devDependencies": {
-    "@testing-library/jest-dom": "^6.4.0",
-    "@testing-library/react": "^15.0.0",
-    "@testing-library/user-event": "^14.5.0",
-    "@types/react": "^18.3.0",
-    "@types/react-dom": "^18.3.0",
-    "jest": "^29.7.0",
-    "jest-environment-jsdom": "^29.7.0",
-    "typescript": "^5.4.0",
-    "tsc-alias": "^1.8.0"
+    "@types/react": "^18.0.0",
+    "typescript": "^5.0.0",
+    "tsup": "^8.0.0"
   },
   "peerDependencies": {
-    "react": ">=18.0.0",
-    "react-dom": ">=18.0.0"
-  },
-  "files": [
-    "dist",
-    "README.md"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/dotmac-framework/dotmac-framework.git",
-    "directory": "frontend/packages/forms"
-  },
-  "keywords": [
-    "forms",
-    "react",
-    "typescript",
-    "validation",
-    "universal",
-    "dry"
-  ],
-  "author": "DotMac Framework Team",
-  "license": "MIT"
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  }
 }

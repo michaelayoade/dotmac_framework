@@ -23,6 +23,7 @@
     }
   },
   "scripts": {
+    "prebuild": "tsc -p tsconfig.json --emitDeclarationOnly",
     "build": "tsup",
     "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
     "lint": "eslint src/",
@@ -38,6 +39,7 @@
     "@dotmac/registry": "workspace:*",
     "@tanstack/react-table": "^8.11.8",
     "@tanstack/react-virtual": "^3.0.1",
+    "@hello-pangea/dnd": "^16.5.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "react-window": "^1.8.8",
@@ -49,6 +51,7 @@
     "@types/react-dom": "^18.2.23",
     "@types/react-window": "^1.8.8",
     "@types/react-window-infinite-loader": "^1.0.6",
+    "@types/hello-pangea__dnd": "^16.5.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "tsup": "^8.0.2",

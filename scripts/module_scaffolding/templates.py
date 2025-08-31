@@ -708,7 +708,7 @@ ${module_name} Pydantic schemas for request/response validation.
 
 from typing import Optional, List, Any, Dict
 from datetime import datetime
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 from ${relative_import_base}.shared.schemas.base_schemas import (
     BaseSchema,
@@ -730,7 +730,8 @@ class ${schema_class}Base(BaseSchema):
     # priority: int = Field(0, ge=0, le=10)
     # tags: Optional[List[str]] = Field(None)
 
-    @validator('name')
+    @field_validator('name')
+    @classmethod
     def validate_name(cls, v):
         """Validate name field."""
         if not v or not v.strip():
@@ -743,7 +744,8 @@ class ${schema_class}Create(${schema_class}Base):
     pass
 
     # Add create-specific validations
-    # @validator('email')
+    # @field_validator('email')
+    # @classmethod
     # def validate_email(cls, v):
     #     if v and '@' not in v:
     #         raise ValueError('Invalid email format')
@@ -792,7 +794,8 @@ class ${schema_class}Query(PaginationSchema):
     created_after: Optional[datetime] = Field(None, description="Filter items created after this date")
     created_before: Optional[datetime] = Field(None, description="Filter items created before this date")
 
-    @validator('search')
+    @field_validator('search')
+    @classmethod
     def validate_search(cls, v):
         """Validate search term."""
         if v and len(v.strip()) < 2:

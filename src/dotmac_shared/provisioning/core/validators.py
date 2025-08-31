@@ -325,7 +325,7 @@ class HealthValidator:
         try:
             async with self.session.get(f"{base_url}/metrics") as response:
                 if response.status == 200:
-                    return await response.json()
+                    return await response.model_dump_json()
                 else:
                     logger.warning(
                         "Failed to get container metrics", status=response.status

@@ -369,7 +369,7 @@ export function UniversalDataTable<TData = any>({
 
   const handleExport = useCallback(async (format: 'csv' | 'xlsx' | 'json' | 'pdf') => {
     // Implementation would go here - this is a placeholder
-    console.log(`Exporting ${selectedRows.length || totalRows} rows as ${format}`);
+    // TODO: Implement export functionality for ${format} format
 
     // In real implementation, would use libraries like:
     // - csv: Papa Parse or custom CSV generator
@@ -381,7 +381,7 @@ export function UniversalDataTable<TData = any>({
   const handleRefresh = useCallback(() => {
     // Emit refresh event - parent component should handle data refetch
     // This is just a placeholder implementation
-    console.log('Refresh requested');
+    // Refresh requested - handled by parent component
   }, []);
 
   // ===========================

@@ -1,5 +1,5 @@
 import { ResellerPortalAudit } from "@dotmac/headless";
-import { ManagementProvider } from '@dotmac/headless/management';
+import { UniversalProviders } from '@dotmac/providers';
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import type React from "react";
@@ -31,26 +31,24 @@ export default function RootLayout({
 	return (
 		<html lang="en">
 			<body className={inter.className}>
-				<ManagementProvider
-					portalType="reseller"
-					apiBaseUrl={apiBaseUrl}
-					enablePerformanceMonitoring={true}
-					enableErrorBoundary={true}
-					initialConfig={{
-						enableOptimisticUpdates: true,
-						enableRealTimeSync: true,
-						autoRefreshInterval: 60000,
-						retryFailedOperations: true
-					}}
+				<UniversalProviders 
+					portal="reseller"
 					features={{
-						enableBatchOperations: false, // Simpler operations for resellers
-						enableRealTimeSync: true,
-						enableAdvancedAnalytics: false, // Limited analytics for resellers
-						enableAuditLogging: true
+						notifications: true,
+						analytics: true,
+						realtime: true,
+						errorHandling: true
+					}}
+					config={{
+						apiConfig: {
+							baseUrl: apiBaseUrl
+						}
 					}}
 				>
-					{children}
-				</ManagementProvider>
+					<ResellerPortalAudit>
+						{children}
+					</ResellerPortalAudit>
+				</UniversalProviders>
 			</body>
 		</html>
 	);

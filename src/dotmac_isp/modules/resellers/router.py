@@ -59,7 +59,7 @@ async def create_reseller(
 ):
     """Create a new reseller."""
     try:
-        result = await reseller_service.create_reseller(reseller_data.dict())
+        result = await reseller_service.create_reseller(reseller_data.model_dump())
 
         if not result:
             raise HTTPException(status_code=500, detail="Failed to create reseller")
@@ -157,7 +157,7 @@ async def create_reseller_opportunity(
                 status_code=404, detail=f"Reseller {reseller_id} not found"
             )
         result = await reseller_service.create_reseller_opportunity(
-            reseller_id=reseller_id, opportunity_data=opportunity_data.dict()
+            reseller_id=reseller_id, opportunity_data=opportunity_data.model_dump()
         )
 
         if not result:
@@ -218,7 +218,7 @@ async def record_commission(
     try:
         result = await reseller_service.record_commission(
             reseller_id=commission_data.reseller_id,
-            commission_data=commission_data.dict(),
+            commission_data=commission_data.model_dump(),
         )
 
         if not result:

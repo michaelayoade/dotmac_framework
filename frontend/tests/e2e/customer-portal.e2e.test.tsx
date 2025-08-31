@@ -4,13 +4,19 @@
  */
 
 import { test, expect } from '@playwright/test';
+import { setupAuth } from '../auth/auth-helpers';
+import { APIBehaviorTester } from '../fixtures/api-behaviors';
 
 test.describe('Customer Portal E2E Tests', () => {
   test.beforeEach(async ({ page }) => {
+    // Ensure authenticated session
+    await setupAuth(page, 'customer');
+    const api = new APIBehaviorTester(page, { enableMocking: true });
+    await api.setupCustomerAPIMocks();
+
     // Navigate to customer portal
     await page.goto('/customer');
 
-    // Mock customer authentication
     await page.waitForSelector('[data-testid="customer-dashboard"]', { timeout: 10000 });
   });
 

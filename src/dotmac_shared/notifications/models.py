@@ -46,7 +46,7 @@ class NotificationRequest(BaseModel):
 
     tenant_id: Optional[str] = None
     notification_type: NotificationType
-    recipients: List[str] = Field(..., min_items=1)
+    recipients: List[str] = Field(..., min_length=1)
     channels: List[str] = Field(default=["email"])  # Will map to ChannelType
     subject: Optional[str] = None
     body: str = Field(..., min_length=1)

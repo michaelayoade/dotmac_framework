@@ -4,17 +4,34 @@
  */
 
 import { test, expect, devices } from '@playwright/test';
+import { setupAuth } from '../auth/auth-helpers';
+import { APIBehaviorTester } from '../fixtures/api-behaviors';
 
 // Configure for mobile testing
 test.use(devices['iPhone 13']);
 
 test.describe('Technician Portal E2E Tests', () => {
   test.beforeEach(async ({ page }) => {
+    // Ensure authenticated technician session and basic API mocks
+    await setupAuth(page, 'technician');
+    const api = new APIBehaviorTester(page, { enableMocking: true, simulateLatency: false });
+    await api.setupTechnicianMocks();
+
     // Navigate to technician portal
     await page.goto('/technician');
 
-    // Mock technician authentication
+    // Wait for dashboard content
     await page.waitForSelector('[data-testid="technician-dashboard"]', { timeout: 10000 });
+  });
+
+  test('should call work order API on dashboard load', async ({ page }) => {
+    const api = new APIBehaviorTester(page, { enableMocking: true, validateRequests: true });
+    await api.setupTechnicianMocks();
+    await page.goto('/technician');
+    await page.waitForSelector('[data-testid="technician-dashboard"]');
+    await api.validateDataFlows([
+      { endpoint: '/api/v1/technician/work-orders', method: 'GET' },
+    ]);
   });
 
   test.describe('Mobile PWA Functionality', () => {

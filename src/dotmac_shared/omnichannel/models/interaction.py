@@ -7,7 +7,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class InteractionPriority(str, Enum):
@@ -47,9 +47,7 @@ class InteractionMessage(BaseModel):
     message_type: str = "text"  # text, attachment, system_note
     extra_data: Dict[str, Any] = Field(default_factory=dict, alias="metadata")
 
-    class Config:
-        """Config implementation."""
-
+    model_config = ConfigDict()
         populate_by_name = True
 
 
@@ -108,9 +106,7 @@ class InteractionModel(BaseModel):
     # Additional data - using alias to avoid SQLAlchemy conflict
     extra_data: Dict[str, Any] = Field(default_factory=dict, alias="metadata")
 
-    class Config:
-        """Config implementation."""
-
+    model_config = ConfigDict()
         populate_by_name = True
 
 
@@ -128,9 +124,7 @@ class CreateInteractionRequest(BaseModel):
     due_date: Optional[datetime] = None
     extra_data: Dict[str, Any] = Field(default_factory=dict, alias="metadata")
 
-    class Config:
-        """Config implementation."""
-
+    model_config = ConfigDict()
         populate_by_name = True
 
 
@@ -151,7 +145,5 @@ class UpdateInteractionRequest(BaseModel):
     satisfaction_score: Optional[int] = Field(None, ge=1, le=5)
     extra_data: Optional[Dict[str, Any]] = Field(None, alias="metadata")
 
-    class Config:
-        """Config implementation."""
-
+    model_config = ConfigDict()
         populate_by_name = True

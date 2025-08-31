@@ -1,113 +1,61 @@
 /**
- * Universal Dashboard Types
- * Portal-agnostic type definitions for DRY dashboard architecture
+ * Dashboard Types
  */
 
-export type PortalVariant = 'admin' | 'customer' | 'reseller' | 'technician' | 'management';
+import { LucideIcon } from 'lucide-react';
 
-export interface Activity {
-  id: string;
-  type: 'info' | 'warning' | 'error' | 'success';
-  title: string;
-  description: string;
-  timestamp: Date;
-  userId?: string;
-  userName?: string | undefined;
-  metadata?: Record<string, any>;
+export type PortalType = 'admin' | 'customer' | 'reseller' | 'technician' | 'management';
+
+export interface MetricData {
+  name: string;
+  value: string | number;
+  total?: string | number;
+  icon: LucideIcon;
+  trend?: {
+    value: string;
+    positive: boolean;
+  };
+  description?: string;
+  color?: 'primary' | 'secondary' | 'success' | 'warning' | 'danger';
+  link?: string;
 }
 
-export interface ResourceMetrics {
-  cpu: {
-    current: number;
-    history: Array<{ timestamp: Date; value: number }>;
-  };
-  memory: {
-    current: number;
-    history: Array<{ timestamp: Date; value: number }>;
-  };
-  storage: {
-    current: number;
-    history: Array<{ timestamp: Date; value: number }>;
-  };
-  bandwidth: {
-    current: number;
-    history: Array<{ timestamp: Date; value: number }>;
-  };
+export interface ChartData {
+  name: string;
+  value: number;
+  [key: string]: any;
 }
 
 export interface TableColumn {
   key: string;
-  title: string;
-  width?: string;
-  sortable?: boolean | undefined;
-  filterable?: boolean | undefined;
-  render?: ((value: any, record: any) => React.ReactNode) | undefined;
-}
-
-export interface EntityAction {
-  key: string;
   label: string;
-  icon?: React.ComponentType;
-  variant?: 'primary' | 'secondary' | 'danger' | undefined;
-  onClick: (entity: any) => void;
-  isVisible?: (entity: any) => boolean;
-  isDisabled?: (entity: any) => boolean;
+  sortable?: boolean;
+  render?: (value: any, row: any) => React.ReactNode;
+  width?: string;
 }
 
-export interface MetricsCardData {
-  title: string;
-  value: string | number;
-  change?: string | undefined;
-  trend?: 'up' | 'down' | 'stable' | undefined;
-  icon?: React.ComponentType;
-  description?: string | undefined;
-  actionLabel?: string;
-  onAction?: () => void;
+export interface DashboardConfig {
+  portal: PortalType;
+  title?: string;
+  showHeader?: boolean;
+  showSidebar?: boolean;
+  gridColumns?: 2 | 3 | 4 | 6;
+  theme?: 'light' | 'dark';
+  customColors?: Record<string, string>;
 }
 
-export interface ActivityFeedConfig {
-  showFilters: boolean;
-  showUserAvatars: boolean;
-  maxItems: number;
-  refreshInterval?: number;
-}
-
-export interface ChartTimeframe {
+export interface FilterOption {
   label: string;
   value: string;
-  hours: number;
+  type: 'select' | 'date' | 'text' | 'number';
+  options?: { label: string; value: string }[];
 }
 
-export interface DashboardTheme {
-  colors: {
-    primary: string;
-    secondary: string;
-    success: string;
-    warning: string;
-    error: string;
-    background: string;
-    surface: string;
-    text: {
-      primary: string;
-      secondary: string;
-      muted: string;
-    };
-  };
-  spacing: {
-    xs: string;
-    sm: string;
-    md: string;
-    lg: string;
-    xl: string;
-  };
-  borderRadius: {
-    sm: string;
-    md: string;
-    lg: string;
-  };
-  shadows: {
-    sm: string;
-    md: string;
-    lg: string;
-  };
+export interface SearchAndFilterProps {
+  searchPlaceholder?: string;
+  filters?: FilterOption[];
+  onSearch?: (query: string) => void;
+  onFilter?: (filters: Record<string, any>) => void;
+  showExport?: boolean;
+  onExport?: () => void;
 }

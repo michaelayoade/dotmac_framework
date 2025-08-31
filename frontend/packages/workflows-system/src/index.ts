@@ -2,6 +2,12 @@
 export { default as WorkflowEngine } from './engines/WorkflowEngine';
 export { default as useWorkflow } from './workflows/hooks/useWorkflow';
 
+// Phase 2: Unified DRY Components
+export { default as VisualWorkflowDesigner } from './designer/VisualWorkflowDesigner';
+export { default as AutomationCenter } from './automation/AutomationCenter';
+export { default as ServiceIntegrationDashboard } from './integration/ServiceIntegrationDashboard';
+export { default as useUnifiedWorkflow } from './hooks/useUnifiedWorkflow';
+
 // Workflow components
 export { WorkflowRunner } from './workflows/WorkflowRunner';
 

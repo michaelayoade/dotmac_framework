@@ -14,7 +14,7 @@ from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Set, Union
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 logger = logging.getLogger(__name__)
 
@@ -149,13 +149,15 @@ class WebSocketEvent(BaseModel):
         None, description="Correlation ID for event chains"
     )
 
-    @validator("event_type")
+    @field_validator("event_type")
+    @classmethod
     def validate_event_type(cls, v):
         if not v or not isinstance(v, str):
             raise ValueError("event_type must be a non-empty string")
         return v
 
-    @validator("data")
+    @field_validator("data")
+    @classmethod
     def validate_data(cls, v):
         if not isinstance(v, dict):
             raise ValueError("data must be a dictionary")
@@ -199,26 +201,21 @@ class EventSubscription(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     last_activity: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        """Config implementation."""
-
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True
+    )
 
 
 class EventManager:
     """
-    Advanced event management system for WebSocket connections.
-
-    Features:
-    - Event filtering and routing
-    - Subscription management
-    - Event persistence and replay
-    - Delivery guarantees
-    - Event transformation
-    - Performance metrics
+    Enhanced event manager for WebSocket event handling with caching and replay.
+    
+    Provides centralized event publishing, subscription management, and event replay
+    capabilities for WebSocket connections.
     """
 
     def __init__(self, websocket_manager, cache_service=None, config=None):
+        """Initialize the event manager."""
         self.websocket_manager = websocket_manager
         self.cache_service = cache_service
         self.config = config or {}
@@ -588,7 +585,7 @@ class EventManager:
                 cache_key = f"websocket:event:{event.event_id}"
                 await self.cache_service.set(
                     cache_key,
-                    event.dict(),
+                    event.model_dump(),
                     ttl=3600,  # 1 hour TTL
                     tenant_id=event.tenant_id,
                 )

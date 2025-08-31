@@ -130,5 +130,5 @@ export function useNotificationActions() {
   };
 }
 
-// Export as useNotifications for backward compatibility
-export { useNotificationActions as useNotifications };
+// Export standardized hook only - NO BACKWARD COMPATIBILITY
+export { useNotificationActions };

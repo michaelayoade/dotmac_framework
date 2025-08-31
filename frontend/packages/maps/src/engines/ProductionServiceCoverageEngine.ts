@@ -65,7 +65,7 @@ export class ProductionServiceCoverageEngine extends ServiceCoverageEngine {
       const areaSize = this.calculateAreaSize(area);
 
       // Transform API response to our format
-      const gaps: Gap[] = coverageData.gaps.map((gap, index) => ({
+      const gapPromises = coverageData.gaps.map(async (gap, index) => ({
         id: `gap_${Date.now()}_${index}`,
         polygon: {
           coordinates: gap.polygon.coordinates
@@ -78,6 +78,8 @@ export class ProductionServiceCoverageEngine extends ServiceCoverageEngine {
         priority: this.calculateGapPriority(gap.severity as any, gap.affectedCustomers),
         recommendations: await this.generateGapRecommendationsFromAPI(gap)
       }));
+
+      const gaps: Gap[] = await Promise.all(gapPromises);
 
       // Generate recommendations using AI/ML service
       const recommendations = await this.generateCoverageRecommendationsFromAPI(gaps);

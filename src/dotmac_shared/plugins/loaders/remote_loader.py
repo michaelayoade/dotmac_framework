@@ -359,7 +359,7 @@ class RemotePluginLoader:
         try:
             async with self._session.get(query_url) as response:
                 response.raise_for_status()
-                plugin_info = await response.json()
+                plugin_info = await response.model_dump_json()
 
                 # Validate required fields
                 required_fields = ["download_url"]

@@ -353,7 +353,7 @@ class ServicePerformanceMetrics(BaseModel):
 class BulkServiceOperation(BaseModel):
     """Schema for bulk service operations."""
 
-    service_instance_ids: List[UUID] = Field(..., min_items=1)
+    service_instance_ids: List[UUID] = Field(..., min_length=1)
     operation: str = Field(..., pattern="^(suspend|reactivate|cancel|maintenance)$")
     reason: str = Field(..., min_length=1, max_length=500)
     effective_date: Optional[datetime] = None

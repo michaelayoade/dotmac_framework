@@ -16,7 +16,7 @@ import email_validator
 from fastapi import HTTPException, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field, ValidationError, field_validator
+from pydantic import BaseModel, Field, ValidationError, field_validator, ConfigDict
 from pydantic._internal._model_construction import complete_model_class
 
 logger = logging.getLogger(__name__)
@@ -238,9 +238,7 @@ class BaseSecureModel(BaseModel):
     Base Pydantic model with security validations
     """
 
-    class Config:
-        """Config implementation."""
-
+    model_config = ConfigDict()
         # Security configurations
         validate_assignment = True
         use_enum_values = True

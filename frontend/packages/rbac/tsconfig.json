@@ -15,10 +15,16 @@
     "jsx": "react-jsx",
     "module": "esnext",
     "declaration": true,
+    "noEmitOnError": false,
     "outDir": "dist",
     "composite": true,
     "noImplicitAny": false
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],
-  "exclude": ["node_modules", "dist", "**/*.test.*"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.test.*",
+    "**/*.stories.*"
+  ]
 }

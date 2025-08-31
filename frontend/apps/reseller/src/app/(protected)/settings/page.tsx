@@ -185,7 +185,7 @@ export default function ResellerSettingsPage() {
     try {
       const success = await settingsContext.saveSettings();
       if (success) {
-        console.log('Reseller settings saved successfully');
+        // Settings saved successfully - success handled by UI feedback
       }
       return success;
     } catch (error) {

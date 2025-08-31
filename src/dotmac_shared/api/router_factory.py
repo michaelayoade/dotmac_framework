@@ -193,7 +193,7 @@ class RouterFactory:
             )  # Very strict for bulk creation
             @standard_exception_handler
             async def bulk_create(
-                data: List[create_schema] = Body(..., max_items=100),
+                data: List[create_schema] = Body(..., max_length=100),
                 deps: deps_type = Depends(),
             ) -> List[response_schema]:
                 """Create multiple entities in a single request."""
@@ -220,7 +220,7 @@ class RouterFactory:
             )  # Extremely strict for bulk deletions
             @standard_exception_handler
             async def bulk_delete(
-                entity_ids: List[UUID] = Body(..., max_items=100),
+                entity_ids: List[UUID] = Body(..., max_length=100),
                 soft_delete: bool = Query(True),
                 deps: deps_type = Depends(),
             ) -> Dict[str, str]:

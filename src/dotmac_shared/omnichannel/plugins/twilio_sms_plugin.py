@@ -114,7 +114,7 @@ class TwilioSMSPlugin(OmnichannelCommunicationPlugin):
                 )
 
                 if response.status_code == 201:
-                    result_data = response.json()
+                    result_data = response.model_dump_json()
 
                     return MessageResult(
                         success=True,
@@ -132,7 +132,7 @@ class TwilioSMSPlugin(OmnichannelCommunicationPlugin):
                         },
                     )
                 else:
-                    error_data = response.json() if response.text else {}
+                    error_data = response.model_dump_json() if response.text else {}
 
                     return MessageResult(
                         success=False,
@@ -228,7 +228,7 @@ class TwilioSMSPlugin(OmnichannelCommunicationPlugin):
                 )
 
                 if response.status_code == 200:
-                    account_data = response.json()
+                    account_data = response.model_dump_json()
 
                     return {
                         "status": "healthy",
@@ -322,7 +322,7 @@ class TwilioSMSPlugin(OmnichannelCommunicationPlugin):
                 )
 
                 if response.status_code == 200:
-                    return response.json()
+                    return response.model_dump_json()
                 else:
                     return None
 

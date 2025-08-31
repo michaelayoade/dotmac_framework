@@ -6,12 +6,14 @@
   "files": [
     "base.json",
     "nextjs.json",
-    "react-library.json"
+    "react-library.json",
+    "tsup.base.js"
   ],
   "exports": {
     "./base.json": "./base.json",
     "./nextjs.json": "./nextjs.json",
-    "./react-library.json": "./react-library.json"
+    "./react-library.json": "./react-library.json",
+    "./tsup.base": "./tsup.base.js"
   },
   "scripts": {
     "lint": "echo 'No TypeScript files to lint in typescript-config package'"

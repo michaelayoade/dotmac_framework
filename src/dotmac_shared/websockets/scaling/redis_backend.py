@@ -248,7 +248,7 @@ class RedisWebSocketBackend:
 
         message = {
             "type": "websocket_event",
-            "event": event.dict(),
+            "event": event.model_dump(),
         }
 
         return await self.publish_message(

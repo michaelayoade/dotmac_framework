@@ -11,6 +11,11 @@
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
     },
+    "./observability": {
+      "types": "./dist/observability/index.d.ts",
+      "import": "./dist/observability/index.mjs",
+      "require": "./dist/observability/index.js"
+    },
     "./performance": {
       "types": "./dist/performance/index.d.ts",
       "import": "./dist/performance/index.mjs",
@@ -23,6 +28,7 @@
     }
   },
   "scripts": {
+    "prebuild": "tsc -p tsconfig.json --emitDeclarationOnly",
     "build": "tsup",
     "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
     "lint": "eslint src/",

@@ -49,9 +49,9 @@ export function Providers({ children }: ProvidersProps) {
   return (
     <PortalProviderFactory
       config={{
-        portal: 'management',
+        portal: 'admin',
         authVariant: 'enterprise',
-        apiBaseUrl,
+        apiBaseUrl, 
         queryClient,
         features: {
           notifications: true,

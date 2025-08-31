@@ -13,7 +13,7 @@ from uuid import UUID, uuid4
 import jwt
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 from .permissions import Permission, Role, UserPermissions
 
@@ -41,14 +41,16 @@ class TokenPayload(BaseModel):
         None, description="Portal type (admin, customer, technician)"
     )
 
-    @validator("permissions", pre=True)
+    @field_validator("permissions", mode="before")
+    @classmethod
     def validate_permissions(cls, v):
         """Validate permission strings."""
         if isinstance(v, list):
             return [str(p) for p in v]
         return v
 
-    @validator("roles", pre=True)
+    @field_validator("roles", mode="before")
+    @classmethod
     def validate_roles(cls, v):
         """Validate role strings."""
         if isinstance(v, list):
@@ -197,7 +199,7 @@ class JWTService:
         )
 
         # Add custom claims
-        payload_dict = payload.dict()
+        payload_dict = payload.model_dump()
         if custom_claims:
             payload_dict.update(custom_claims)
 

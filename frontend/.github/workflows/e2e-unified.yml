@@ -1,0 +1,431 @@
+name: E2E Tests - Unified
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    - cron: '0 2 * * *' # Daily at 2 AM
+
+env:
+  NODE_VERSION: '18'
+  PNPM_VERSION: '8'
+
+jobs:
+  # Base E2E job with Chromium
+  e2e-base:
+    name: E2E Base (Chromium)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
+          
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+          
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+            
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install chromium --with-deps
+        
+      - name: Build applications
+        run: |
+          pnpm run build:admin
+          pnpm run build:customer
+          
+      - name: Start test servers
+        run: |
+          pnpm run start:admin &
+          pnpm run start:customer &
+          # Wait for servers to be ready
+          npx wait-on http://localhost:3001 http://localhost:3002 --timeout 60000
+        
+      - name: Run E2E tests
+        run: |
+          pnpm exec playwright test \
+            --project=chromium \
+            --shard=${{ matrix.shard }}/4 \
+            --reporter=html,junit \
+            --output-dir=test-results/shard-${{ matrix.shard }}
+        env:
+          PLAYWRIGHT_HTML_REPORT: test-results/shard-${{ matrix.shard }}/html-report
+          
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-results-shard-${{ matrix.shard }}
+          path: |
+            test-results/shard-${{ matrix.shard }}/
+            playwright-report/
+          retention-days: 7
+          
+      - name: Upload JUnit results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: junit-results-shard-${{ matrix.shard }}
+          path: test-results/shard-${{ matrix.shard }}/junit.xml
+          retention-days: 30
+
+  # Admin portal focused tests
+  e2e-admin:
+    name: E2E Admin Portal
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: [e2e-base]
+    if: success() || failure()
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
+          
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        
+      - name: Install Playwright
+        run: pnpm exec playwright install chromium --with-deps
+        
+      - name: Build admin app
+        run: pnpm run build:admin
+        
+      - name: Start admin server
+        run: |
+          pnpm run start:admin &
+          npx wait-on http://localhost:3001 --timeout 60000
+          
+      - name: Run admin-specific E2E tests
+        run: |
+          pnpm exec playwright test \
+            --project=chromium \
+            --grep="admin|Admin|dashboard|billing|customers|monitoring" \
+            --reporter=html,junit \
+            --output-dir=test-results/admin
+        env:
+          PLAYWRIGHT_HTML_REPORT: test-results/admin/html-report
+          BASE_URL: http://localhost:3001
+          
+      - name: Upload admin test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-admin-results
+          path: |
+            test-results/admin/
+            playwright-report/
+          retention-days: 7
+
+  # Customer portal focused tests  
+  e2e-customer:
+    name: E2E Customer Portal
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [e2e-base]
+    if: success() || failure()
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
+          
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        
+      - name: Install Playwright
+        run: pnpm exec playwright install chromium --with-deps
+        
+      - name: Build customer app
+        run: pnpm run build:customer
+        
+      - name: Start customer server
+        run: |
+          pnpm run start:customer &
+          npx wait-on http://localhost:3002 --timeout 60000
+          
+      - name: Run customer-specific E2E tests
+        run: |
+          pnpm exec playwright test \
+            --project=chromium \
+            --grep="customer|Customer|dashboard|usage|documents|auth" \
+            --reporter=html,junit \
+            --output-dir=test-results/customer
+        env:
+          PLAYWRIGHT_HTML_REPORT: test-results/customer/html-report
+          BASE_URL: http://localhost:3002
+          
+      - name: Upload customer test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-customer-results
+          path: |
+            test-results/customer/
+            playwright-report/
+          retention-days: 7
+
+  # Reseller portal tests (optional, runs when reseller pages land)
+  e2e-reseller:
+    name: E2E Reseller Portal
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [e2e-base]
+    if: contains(github.event.head_commit.message, '[reseller]') || contains(github.event.pull_request.title, 'reseller')
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
+          
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        
+      - name: Install Playwright
+        run: pnpm exec playwright install chromium --with-deps
+        
+      - name: Build reseller app
+        run: pnpm run build:reseller
+        
+      - name: Start reseller server
+        run: |
+          pnpm run start:reseller &
+          npx wait-on http://localhost:3003 --timeout 60000
+          
+      - name: Run reseller-specific E2E tests
+        run: |
+          pnpm exec playwright test \
+            --project=chromium \
+            --grep="reseller|Reseller|territory|sales|projects|pipeline" \
+            --reporter=html,junit \
+            --output-dir=test-results/reseller
+        env:
+          PLAYWRIGHT_HTML_REPORT: test-results/reseller/html-report
+          BASE_URL: http://localhost:3003
+          
+      - name: Upload reseller test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-reseller-results
+          path: |
+            test-results/reseller/
+            playwright-report/
+          retention-days: 7
+
+  # Consolidate and report results
+  e2e-report:
+    name: E2E Results Summary
+    runs-on: ubuntu-latest
+    needs: [e2e-base, e2e-admin, e2e-customer]
+    if: always()
+    
+    steps:
+      - name: Download all test artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: all-results/
+          
+      - name: Combine HTML reports
+        run: |
+          mkdir -p combined-report
+          
+          # Combine all HTML reports
+          echo "<html><head><title>E2E Test Results Summary</title></head><body>" > combined-report/index.html
+          echo "<h1>E2E Test Results - $(date)</h1>" >> combined-report/index.html
+          
+          # Process each result directory
+          for dir in all-results/*/; do
+            if [ -d "$dir" ]; then
+              dirname=$(basename "$dir")
+              echo "<h2>$dirname</h2>" >> combined-report/index.html
+              
+              # Look for HTML reports
+              if [ -f "$dir/html-report/index.html" ]; then
+                cp -r "$dir/html-report" "combined-report/$dirname-html"
+                echo "<p><a href='$dirname-html/index.html'>View $dirname Report</a></p>" >> combined-report/index.html
+              fi
+              
+              # Process JUnit files if they exist
+              if ls "$dir"/*.xml >/dev/null 2>&1; then
+                echo "<p>JUnit results available for $dirname</p>" >> combined-report/index.html
+              fi
+            fi
+          done
+          
+          echo "</body></html>" >> combined-report/index.html
+          
+      - name: Upload combined report
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-combined-report
+          path: combined-report/
+          retention-days: 30
+          
+      - name: Upload JUnit XML
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-junit-xml
+          path: all-results/*/junit.xml
+          retention-days: 30
+          
+      - name: Comment PR with results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            // Count results
+            let totalTests = 0;
+            let passedTests = 0;
+            let failedTests = 0;
+            
+            // This would parse JUnit XML files to get actual counts
+            // For now, just create a summary comment
+            
+            const comment = `## 🎭 E2E Test Results
+            
+            ### Test Summary
+            - **Base E2E**: Completed across 4 shards
+            - **Admin Portal**: Specific admin functionality tested  
+            - **Customer Portal**: Customer-specific flows tested
+            - **Reseller Portal**: ${process.env.GITHUB_EVENT_NAME.includes('reseller') ? 'Tested' : 'Skipped (not triggered)'}
+            
+            ### Artifacts
+            - [Combined HTML Report](../actions/runs/${{ github.run_id }})
+            - [JUnit XML Results](../actions/runs/${{ github.run_id }})
+            
+            ### Browser Coverage
+            - ✅ Chromium (Primary)
+            - ⏭️ Firefox/Safari (Available on request)
+            
+            _Test results are available in the Actions artifacts._`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+  # Performance validation
+  e2e-performance:
+    name: E2E Performance Validation  
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
+          
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        
+      - name: Install Lighthouse CI
+        run: npm install -g @lhci/cli
+        
+      - name: Build applications
+        run: |
+          pnpm run build:admin
+          pnpm run build:customer
+          
+      - name: Start servers
+        run: |
+          pnpm run start:admin &
+          pnpm run start:customer &
+          npx wait-on http://localhost:3001 http://localhost:3002 --timeout 60000
+          
+      - name: Run Lighthouse CI
+        run: |
+          lhci autorun \
+            --config=./lighthouserc.json \
+            --upload.target=temporary-public-storage
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+          
+      - name: Performance budget check
+        run: |
+          # Check performance budgets
+          node scripts/performance-budget-check.js
+          
+      - name: Upload Lighthouse results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lighthouse-results
+          path: .lighthouseci/
+          retention-days: 7

@@ -236,28 +236,24 @@ class CompanyEntity(TenantEntity):
 class BaseCreateSchema(BaseSchema):
     """Base schema for create operations."""
 
-    class Config:
-        # Exclude None values to use database defaults
-        exclude_none = True
-
+    model_config = ConfigDict(
+        exclude_none=True
+    )
 
 class BaseUpdateSchema(BaseSchema):
     """Base schema for update operations - all fields optional."""
 
-    class Config:
-        # Exclude None values for partial updates
-        exclude_none = True
-
+    model_config = ConfigDict(
+        exclude_none=True
+    )
 
 class BaseResponseSchema(BaseEntity):
     """Base schema for API responses."""
 
-    class Config:
-        # Include all fields in response
-        exclude_none = False
-        # Enable ORM mode for database models
-        from_attributes = True
-
+    model_config = ConfigDict(
+        exclude_none=False,
+        from_attributes=True
+    )
 
 # === Pagination and Search Schemas ===
 

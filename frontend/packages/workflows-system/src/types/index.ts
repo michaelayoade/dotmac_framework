@@ -362,3 +362,185 @@ export interface WorkflowEngineConfig {
   stepHandlers?: Record<string, (step: WorkflowStep, context: unknown) => Promise<unknown>>;
   eventHandlers?: Record<string, (event: WorkflowEvent) => void>;
 }
+
+// Phase 2: Additional types for new components
+
+// Workflow step configuration for designer
+export interface WorkflowStepConfig {
+  id: string;
+  name: string;
+  title: string;
+  type: 'form' | 'approval' | 'action' | 'conditional' | 'review' | 'parallel';
+  description?: string;
+  required: boolean;
+  skippable?: boolean;
+  
+  // Fields for form steps
+  fields: Array<{
+    id: string;
+    key: string;
+    label: string;
+    type: 'text' | 'number' | 'email' | 'textarea' | 'select' | 'multiselect' | 'boolean' | 'date' | 'file';
+    required: boolean;
+    defaultValue?: unknown;
+    helpText?: string;
+    validation?: {
+      min?: number;
+      max?: number;
+      pattern?: string;
+    };
+    options?: Array<{
+      value: string;
+      label: string;
+    }>;
+  }>;
+  
+  // Actions for the step
+  actions: Array<{
+    key: string;
+    label: string;
+    variant?: 'primary' | 'secondary' | 'outline' | 'destructive';
+    icon?: string;
+    disabled?: boolean;
+    onClick?: () => void;
+  }>;
+  
+  // Conditions for conditional steps
+  condition?: {
+    field: string;
+    operator: 'equals' | 'notEquals' | 'contains' | 'greaterThan' | 'lessThan';
+    value: unknown;
+    nextStep?: string;
+  };
+  
+  // Validation rules
+  validation?: {
+    rules?: Array<{
+      field: string;
+      operator: string;
+      value: unknown;
+      message: string;
+    }>;
+    onValidate?: (data: Record<string, unknown>) => Promise<{
+      isValid: boolean;
+      errors: string[];
+    }>;
+  };
+  
+  // Dependencies
+  dependencies?: string[];
+  metadata?: Record<string, unknown>;
+}
+
+// Workflow configuration for templates
+export interface WorkflowConfig {
+  title: string;
+  description?: string;
+  steps: WorkflowStepConfig[];
+  showProgress?: boolean;
+  allowStepNavigation?: boolean;
+  persistData?: boolean;
+  autoSave?: boolean;
+  autoSaveInterval?: number;
+}
+
+// Business rule types (from business-rules-engine)
+export interface BusinessRule {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  status: 'draft' | 'active' | 'inactive';
+  priority: number;
+  portalScope: string[];
+  conditionLogic: 'all' | 'any' | 'custom';
+  conditions: RuleCondition[];
+  actions: RuleAction[];
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  tenantId: string;
+}
+
+export interface RuleCondition {
+  id: string;
+  field: string;
+  operator: 'equals' | 'not_equals' | 'greater_than' | 'less_than' | 'greater_equal' | 'less_equal' | 'contains' | 'not_contains' | 'in' | 'not_in' | 'matches' | 'exists' | 'not_exists';
+  value: unknown;
+  description?: string;
+}
+
+export interface RuleAction {
+  id: string;
+  type: 'set_value' | 'send_notification' | 'create_task' | 'update_status' | 'apply_discount' | 'suspend_service' | 'approve_request' | 'reject_request' | 'escalate' | 'log_event' | 'trigger_workflow' | 'execute_webhook';
+  name: string;
+  target?: string;
+  value?: unknown;
+  parameters?: Record<string, unknown>;
+}
+
+export interface RuleContext {
+  portal?: string;
+  userId: string;
+  tenantId: string;
+  metadata?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+export interface RuleExecutionResult {
+  ruleId: string;
+  ruleName: string;
+  matched: boolean;
+  conditionsEvaluated: ConditionResult[];
+  actionsExecuted: ActionResult[];
+  executionTime: number;
+  error?: string;
+}
+
+export interface ConditionResult {
+  conditionId: string;
+  field: string;
+  operator: string;
+  expectedValue: unknown;
+  actualValue: unknown;
+  result: boolean;
+}
+
+export interface ActionResult {
+  actionId: string;
+  type: string;
+  executed: boolean;
+  result?: unknown;
+  error?: string;
+}
+
+// Service Integration types
+export interface ServiceIntegration {
+  id: string;
+  name: string;
+  type: 'api' | 'webhook' | 'database' | 'queue' | 'external';
+  status: 'active' | 'inactive' | 'error' | 'pending';
+  endpoint?: string;
+  lastSync?: string;
+  syncCount: number;
+  errorCount: number;
+  responseTime: number;
+  uptime: number;
+  settings: Record<string, unknown>;
+  workflows: string[];
+  metadata: {
+    description?: string;
+    version?: string;
+    maintainer?: string;
+    documentation?: string;
+  };
+}
+
+export interface IntegrationMetrics {
+  totalRequests: number;
+  successfulRequests: number;
+  failedRequests: number;
+  averageResponseTime: number;
+  uptime: number;
+  throughput: number;
+}

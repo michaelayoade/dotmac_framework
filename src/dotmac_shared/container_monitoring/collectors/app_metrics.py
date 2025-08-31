@@ -325,7 +325,7 @@ class AppMetricsCollector:
 
                             # Parse health response
                             try:
-                                health_data = response.json()
+                                health_data = response.model_dump_json()
                                 if isinstance(health_data, dict):
                                     # Extract health checks
                                     for key, value in health_data.items():
@@ -378,7 +378,7 @@ class AppMetricsCollector:
                     response = await client.get(openapi_url)
 
                     if response.status_code == 200:
-                        api_spec = response.json()
+                        api_spec = response.model_dump_json()
                         await self._extract_endpoints_from_openapi(api_spec, snapshot)
 
                 except httpx.RequestError:
@@ -418,7 +418,7 @@ class AppMetricsCollector:
                         response = await client.get(url)
 
                         if response.status_code == 200:
-                            business_data = response.json()
+                            business_data = response.model_dump_json()
 
                             # Extract business metrics
                             if isinstance(business_data, dict):
@@ -485,7 +485,7 @@ class AppMetricsCollector:
                         response = await client.get(url)
 
                         if response.status_code == 200:
-                            custom_data = response.json()
+                            custom_data = response.model_dump_json()
 
                             if isinstance(custom_data, dict):
                                 # Store all numeric values as custom metrics
@@ -553,7 +553,7 @@ class AppMetricsCollector:
         """Parse API metrics response"""
         try:
             if "application/json" in response.headers.get("content-type", ""):
-                data = response.json()
+                data = response.model_dump_json()
 
                 if isinstance(data, dict):
                     # Look for common metrics patterns

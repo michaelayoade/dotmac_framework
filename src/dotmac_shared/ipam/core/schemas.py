@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 try:
-    from pydantic import BaseModel, ConfigDict, Field, validator
+    from pydantic import BaseModel, ConfigDict, Field, field_validator
 
     PYDANTIC_AVAILABLE = True
 except ImportError:
@@ -67,8 +67,9 @@ if PYDANTIC_AVAILABLE:
         location: Optional[str] = Field(None, max_length=200)
         tags: Optional[Dict[str, Any]] = Field(default={})
 
-        @validator("cidr")
-        def validate_cidr(cls, v):
+        @field_validator("cidr")
+    @classmethod
+    def validate_cidr(cls, v):
             """Validate CIDR format."""
             try:
                 ipaddress.ip_network(v, strict=False)
@@ -76,8 +77,9 @@ if PYDANTIC_AVAILABLE:
             except ValueError as e:
                 raise ValueError(f"Invalid CIDR format: {e}")
 
-        @validator("gateway")
-        def validate_gateway(cls, v):
+        @field_validator("gateway")
+    @classmethod
+    def validate_gateway(cls, v):
             """Validate gateway IP address."""
             if v:
                 try:
@@ -87,8 +89,9 @@ if PYDANTIC_AVAILABLE:
                     raise ValueError(f"Invalid gateway IP address: {e}")
             return v
 
-        @validator("dns_servers")
-        def validate_dns_servers(cls, v):
+        @field_validator("dns_servers")
+    @classmethod
+    def validate_dns_servers(cls, v):
             """Validate DNS server IP addresses."""
             if v:
                 for dns_ip in v:
@@ -149,8 +152,9 @@ if PYDANTIC_AVAILABLE:
         description: Optional[str] = None
         tags: Optional[Dict[str, Any]] = Field(default={})
 
-        @validator("ip_address")
-        def validate_ip_address(cls, v):
+        @field_validator("ip_address")
+    @classmethod
+    def validate_ip_address(cls, v):
             """Validate IP address format."""
             if v:
                 try:
@@ -210,8 +214,9 @@ if PYDANTIC_AVAILABLE:
         description: Optional[str] = None
         tags: Optional[Dict[str, Any]] = Field(default={})
 
-        @validator("ip_address")
-        def validate_ip_address(cls, v):
+        @field_validator("ip_address")
+    @classmethod
+    def validate_ip_address(cls, v):
             """Validate IP address format."""
             try:
                 ipaddress.ip_address(v)
@@ -267,7 +272,7 @@ if PYDANTIC_AVAILABLE:
         reason: str
         conflicting_allocation_id: Optional[str] = None
         conflicting_reservation_id: Optional[str] = None
-        suggested_alternatives: Optional[List[str]] = Field(default=[], max_items=5)
+        suggested_alternatives: Optional[List[str]] = Field(default=[], max_length=5)
 
     class AllocationSummary(BaseModel):
         """Allocation summary statistics."""

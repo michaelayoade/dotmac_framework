@@ -131,7 +131,7 @@ class ISPAnalyticsAdapter:
                     else "counter"
                 ),
                 tenant_id=self.tenant_id,
-                metadata=metric_data.dict() if hasattr(metric_data, "dict") else {},
+                metadata=metric_data.model_dump() if hasattr(metric_data, "dict") else {},
             )
             # Return response in expected format
             return schemas.MetricResponse(
@@ -158,7 +158,7 @@ class ISPAnalyticsAdapter:
                     else "summary"
                 ),
                 tenant_id=self.tenant_id,
-                parameters=report_data.dict() if hasattr(report_data, "dict") else {},
+                parameters=report_data.model_dump() if hasattr(report_data, "dict") else {},
             )
             # Cache the report if cache service available
             if self.cache_service and report_data_result:

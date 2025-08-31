@@ -6,8 +6,7 @@ import { useId, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '../../stores/authStore';
-import { useValidatedForm } from '../../hooks/useValidatedForm';
-import { LoginSchema } from '../../lib/schemas';
+import { useUniversalForm, loginSchema } from '@dotmac/forms';
 import { useAuthErrorTracking } from '../../hooks/useErrorTracking';
 
 export function LoginForm() {

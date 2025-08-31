@@ -1,0 +1,42 @@
+# Shared Database Configuration for CI/CD
+# This file contains standardized database settings for all workflows
+
+# PostgreSQL Configuration
+POSTGRES_VERSION: "15"
+POSTGRES_USER: "dotmac_test"
+POSTGRES_PASSWORD: "dotmac_test_secure_2024"
+POSTGRES_DB: "dotmac_test"
+
+# Redis Configuration  
+REDIS_VERSION: "7"
+
+# Connection URLs
+DATABASE_URL: "postgresql://dotmac_test:dotmac_test_secure_2024@localhost:5432/dotmac_test"
+REDIS_URL: "redis://localhost:6379/0"
+
+# Service Definitions (for copy-paste into workflows)
+postgres_service: |
+postgres:
+    image: postgres:15
+    env:
+      POSTGRES_PASSWORD: dotmac_test_secure_2024
+      POSTGRES_USER: dotmac_test
+      POSTGRES_DB: dotmac_test
+    ports:
+      - 5432:5432
+    options: >-
+      --health-cmd pg_isready
+      --health-interval 10s
+      --health-timeout 5s
+      --health-retries 5
+
+redis_service: |
+redis:
+    image: redis:7
+    ports:
+      - 6379:6379
+    options: >-
+      --health-cmd "redis-cli ping"
+      --health-interval 10s
+      --health-timeout 5s
+      --health-retries 5

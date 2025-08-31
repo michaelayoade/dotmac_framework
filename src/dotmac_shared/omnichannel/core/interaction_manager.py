@@ -11,7 +11,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 from ..models.enums import ChannelType
 
@@ -122,18 +122,19 @@ class InteractionModel(BaseModel):
     conversation_id: Optional[str] = None
     parent_interaction_id: Optional[str] = None
 
-    class Config:
-        """Config implementation."""
+    model_config = ConfigDict(
+        use_enum_values=True
+    )
 
-        use_enum_values = True
-
-    @validator("priority")
+    @field_validator("priority")
+    @classmethod
     def validate_priority(cls, v):
         if isinstance(v, str):
             return InteractionPriority(v)
         return v
 
-    @validator("status")
+    @field_validator("status")
+    @classmethod
     def validate_status(cls, v):
         if isinstance(v, str):
             return InteractionStatus(v)

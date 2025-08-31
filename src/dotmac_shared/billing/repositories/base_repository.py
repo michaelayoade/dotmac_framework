@@ -53,7 +53,7 @@ class BaseBillingRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaTyp
         if hasattr(obj_in, "model_dump"):
             obj_data = obj_in.model_dump(exclude_unset=True)
         else:
-            obj_data = obj_in.dict(exclude_unset=True)
+            obj_data = obj_in.model_dump(exclude_unset=True)
 
         # Add tenant_id if provided
         if tenant_id is not None:
@@ -207,7 +207,7 @@ class BaseBillingRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaTyp
         if hasattr(obj_in, "model_dump"):
             update_data = obj_in.model_dump(exclude_unset=True)
         elif hasattr(obj_in, "dict"):
-            update_data = obj_in.dict(exclude_unset=True)
+            update_data = obj_in.model_dump(exclude_unset=True)
         else:
             update_data = obj_in
 
@@ -348,7 +348,7 @@ class BaseBillingRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaTyp
             if hasattr(obj_in, "model_dump"):
                 obj_data = obj_in.model_dump(exclude_unset=True)
             else:
-                obj_data = obj_in.dict(exclude_unset=True)
+                obj_data = obj_in.model_dump(exclude_unset=True)
 
             # Add tenant_id if provided
             if tenant_id is not None:

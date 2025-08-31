@@ -83,6 +83,57 @@ global.ResizeObserver = jest.fn(() => ({
   disconnect: jest.fn()
 }));
 
+// Fix JSDOM Storage issues
+const mockStorage = () => {
+  const storage = {};
+  return {
+    getItem: jest.fn((key) => storage[key] || null),
+    setItem: jest.fn((key, value) => {
+      storage[key] = value;
+    }),
+    removeItem: jest.fn((key) => {
+      delete storage[key];
+    }),
+    clear: jest.fn(() => {
+      Object.keys(storage).forEach(key => delete storage[key]);
+    }),
+    get length() {
+      return Object.keys(storage).length;
+    },
+    key: jest.fn((index) => Object.keys(storage)[index] || null)
+  };
+};
+
+Object.defineProperty(window, 'localStorage', {
+  value: mockStorage(),
+  writable: true
+});
+
+Object.defineProperty(window, 'sessionStorage', {
+  value: mockStorage(),
+  writable: true
+});
+
+// Mock crypto for secure random values
+Object.defineProperty(window, 'crypto', {
+  value: {
+    getRandomValues: jest.fn((arr) => {
+      for (let i = 0; i < arr.length; i++) {
+        arr[i] = Math.floor(Math.random() * 256);
+      }
+      return arr;
+    }),
+    randomUUID: jest.fn(() => 
+      'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0;
+        const v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      })
+    )
+  },
+  writable: true
+});
+
 // Mock matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
@@ -103,3 +154,15 @@ Object.defineProperty(window, 'scrollTo', {
   value: jest.fn(),
   writable: true
 });
+
+// Mock fetch for API requests
+global.fetch = jest.fn(() =>
+  Promise.resolve({
+    ok: true,
+    status: 200,
+    json: () => Promise.resolve({}),
+    text: () => Promise.resolve(''),
+    headers: new Headers(),
+    clone: () => ({ json: () => Promise.resolve({}) })
+  })
+);

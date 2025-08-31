@@ -7,7 +7,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class RoutingStrategy(str, Enum):
@@ -52,9 +52,7 @@ class RoutingResult(BaseModel):
     # Additional data
     extra_data: Dict[str, Any] = Field(default_factory=dict, alias="metadata")
 
-    class Config:
-        """Config implementation."""
-
+    model_config = ConfigDict()
         populate_by_name = True
 
 
@@ -90,9 +88,7 @@ class RoutingRule(BaseModel):
     # Additional data
     extra_data: Dict[str, Any] = Field(default_factory=dict, alias="metadata")
 
-    class Config:
-        """Config implementation."""
-
+    model_config = ConfigDict()
         populate_by_name = True
 
 
@@ -140,9 +136,7 @@ class RoutingConfiguration(BaseModel):
     # Updated timestamp
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        """Config implementation."""
-
+    model_config = ConfigDict()
         populate_by_name = True
 
 
@@ -190,9 +184,7 @@ class RoutingContext(BaseModel):
     # Additional context
     extra_data: Dict[str, Any] = Field(default_factory=dict, alias="metadata")
 
-    class Config:
-        """Config implementation."""
-
+    model_config = ConfigDict()
         populate_by_name = True
 
 

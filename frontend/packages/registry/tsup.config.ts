@@ -1,11 +1,8 @@
-import { defineConfig } from 'tsup';
+import { createTsupConfig } from '@dotmac/typescript-config/tsup.base';
 
-export default defineConfig({
+export default createTsupConfig({
   entry: ['src/index.ts'],
   format: ['cjs', 'esm'],
-  dts: true,
-  splitting: false,
-  sourcemap: true,
-  clean: true,
+  dts: false,
   external: ['react', 'react-dom'],
 });

@@ -23,7 +23,7 @@ export function ResellerAnalyticsDashboard() {
           seasonalityDetection={true}
           confidenceInterval={0.95}
           onForecastUpdate={(forecast) => {
-            console.log('Sales forecast updated:', forecast);
+            // Forecast updated - handled by internal state management
           }}
         />
       </Card>

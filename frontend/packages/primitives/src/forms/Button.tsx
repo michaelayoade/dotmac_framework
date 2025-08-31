@@ -55,8 +55,6 @@ export interface ButtonProps
   asChild?: boolean;
   /** Whether the button is in a loading state */
   isLoading?: boolean;
-  /** Backward compatibility alias for isLoading */
-  loading?: boolean;
   /** Text to display during loading state */
   loadingText?: string;
   /** Custom loading component */
@@ -106,8 +104,8 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const [isAsyncLoading, setIsAsyncLoading] = React.useState(false);
     const Comp = asChild ? Slot : 'button';
 
-    // Support both isLoading and loading props for backward compatibility
-    const actuallyLoading = isLoading || loading;
+    // Use only isLoading - no backward compatibility
+    const actuallyLoading = isLoading;
 
     // Handle icon props (icon prop can override leftIcon/rightIcon based on position)
     const resolvedLeftIcon = icon && iconPosition === 'left' ? icon : leftIcon;

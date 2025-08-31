@@ -20,12 +20,12 @@ class CustomerService:
     def create(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Create a new customer."""
         response = self.client.request("POST", "/api/v1/customers", json_data=data)
-        return response.json()
+        return response.model_dump_json()
 
     def get(self, customer_id: str) -> Dict[str, Any]:
         """Get customer by ID."""
         response = self.client.request("GET", f"/api/v1/customers/{customer_id}")
-        return response.json()
+        return response.model_dump_json()
 
     def list(
         self,
@@ -42,7 +42,7 @@ class CustomerService:
             params["customer_type"] = customer_type
 
         response = self.client.request("GET", "/api/v1/customers", params=params)
-        return response.json()
+        return response.model_dump_json()
 
 
 class InvoiceService:
@@ -63,12 +63,12 @@ class InvoiceService:
             params["status"] = status
 
         response = self.client.request("GET", "/api/v1/invoices", params=params)
-        return response.json()
+        return response.model_dump_json()
 
     def get(self, invoice_id: str) -> Dict[str, Any]:
         """Get invoice by ID."""
         response = self.client.request("GET", f"/api/v1/invoices/{invoice_id}")
-        return response.json()
+        return response.model_dump_json()
 
 
 class ServiceManagement:
@@ -82,7 +82,7 @@ class ServiceManagement:
         """List services."""
         params = {"customer_id": customer_id} if customer_id else {}
         response = self.client.request("GET", "/api/v1/services", params=params)
-        return response.json()
+        return response.model_dump_json()
 
 
 # TicketService removed - use dotmac_shared.ticketing package instead
@@ -98,9 +98,9 @@ class NetworkService:
     def get_status(self) -> Dict[str, Any]:
         """Get network status."""
         response = self.client.request("GET", "/api/v1/network/status")
-        return response.json()
+        return response.model_dump_json()
 
     def list_devices(self) -> Dict[str, Any]:
         """List network devices."""
         response = self.client.request("GET", "/api/v1/network/devices")
-        return response.json()
+        return response.model_dump_json()

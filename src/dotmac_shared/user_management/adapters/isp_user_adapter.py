@@ -332,14 +332,14 @@ class ISPUserAdapter(BaseUserAdapter):
             enhanced_users = []
             for user in search_result.users:
                 services = await self.get_user_services(user.id)
-                enhanced_user = user.dict()
+                enhanced_user = user.model_dump()
                 enhanced_user["services"] = services
                 enhanced_user["service_count"] = len(services)
                 enhanced_users.append(enhanced_user)
 
             search_result.users = enhanced_users
 
-        return search_result.dict()
+        return search_result.model_dump()
 
     # Helper Methods for ISP Integration
     async def _create_isp_customer_record(

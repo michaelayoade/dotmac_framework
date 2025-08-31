@@ -9,7 +9,7 @@ import React, { createContext, useContext, useState, useCallback } from 'react';
 import { clsx } from 'clsx';
 import { Menu, X, ChevronLeft } from 'lucide-react';
 import { Button } from '@dotmac/primitives';
-import { registerComponent } from '@dotmac/registry';
+import { withComponentRegistration } from '@dotmac/registry';
 
 // Layout context for shared state
 interface LayoutContextValue {
@@ -37,14 +37,7 @@ interface LayoutProviderProps {
   initialSidebarCollapsed?: boolean;
 }
 
-@registerComponent({
-  name: 'LayoutProvider',
-  category: 'layout',
-  portal: 'shared',
-  version: '1.0.0',
-  description: 'Provides layout context and state management',
-})
-export function LayoutProvider({ 
+function LayoutProviderImpl({ 
   children, 
   initialSidebarOpen = false,
   initialSidebarCollapsed = false 
@@ -79,6 +72,14 @@ export function LayoutProvider({
   );
 }
 
+export const LayoutProvider = withComponentRegistration(LayoutProviderImpl, {
+  name: 'LayoutProvider',
+  category: 'layout',
+  portal: 'shared',
+  version: '1.0.0',
+  description: 'Provides layout context and state management',
+});
+
 // Root Layout Container
 interface LayoutRootProps {
   children: React.ReactNode;
@@ -86,14 +87,7 @@ interface LayoutRootProps {
   direction?: 'horizontal' | 'vertical';
 }
 
-@registerComponent({
-  name: 'LayoutRoot',
-  category: 'layout',
-  portal: 'shared',
-  version: '1.0.0',
-  description: 'Root layout container with flexible direction',
-})
-export function LayoutRoot({ 
+function LayoutRootImpl({ 
   children, 
   className,
   direction = 'horizontal' 
@@ -111,6 +105,14 @@ export function LayoutRoot({
   );
 }
 
+export const LayoutRoot = withComponentRegistration(LayoutRootImpl, {
+  name: 'LayoutRoot',
+  category: 'layout',
+  portal: 'shared',
+  version: '1.0.0',
+  description: 'Root layout container with flexible direction',
+});
+
 // Header Component
 interface LayoutHeaderProps {
   children: React.ReactNode;
@@ -120,14 +122,7 @@ interface LayoutHeaderProps {
   height?: string;
 }
 
-@registerComponent({
-  name: 'LayoutHeader',
-  category: 'layout',
-  portal: 'shared',
-  version: '1.0.0',
-  description: 'Application header with optional sidebar toggle',
-})
-export function LayoutHeader({ 
+function LayoutHeaderImpl({ 
   children, 
   className,
   sticky = true,
@@ -173,6 +168,14 @@ export function LayoutHeader({
   );
 }
 
+export const LayoutHeader = withComponentRegistration(LayoutHeaderImpl, {
+  name: 'LayoutHeader',
+  category: 'layout',
+  portal: 'shared',
+  version: '1.0.0',
+  description: 'Application header with optional sidebar toggle',
+});
+
 // Sidebar Component
 interface LayoutSidebarProps {
   children: React.ReactNode;
@@ -183,14 +186,7 @@ interface LayoutSidebarProps {
   overlay?: boolean;
 }
 
-@registerComponent({
-  name: 'LayoutSidebar',
-  category: 'layout',
-  portal: 'shared',
-  version: '1.0.0',
-  description: 'Collapsible sidebar with responsive behavior',
-})
-export function LayoutSidebar({ 
+function LayoutSidebarImpl({ 
   children, 
   className,
   width = 'w-64',
@@ -272,6 +268,14 @@ export function LayoutSidebar({
   );
 }
 
+export const LayoutSidebar = withComponentRegistration(LayoutSidebarImpl, {
+  name: 'LayoutSidebar',
+  category: 'layout',
+  portal: 'shared',
+  version: '1.0.0',
+  description: 'Collapsible sidebar with responsive behavior',
+});
+
 // Main Content Area
 interface LayoutMainProps {
   children: React.ReactNode;
@@ -279,14 +283,7 @@ interface LayoutMainProps {
   padding?: boolean;
 }
 
-@registerComponent({
-  name: 'LayoutMain',
-  category: 'layout',
-  portal: 'shared',
-  version: '1.0.0',
-  description: 'Main content area with optional padding',
-})
-export function LayoutMain({ 
+function LayoutMainImpl({ 
   children, 
   className,
   padding = true 
@@ -304,6 +301,14 @@ export function LayoutMain({
   );
 }
 
+export const LayoutMain = withComponentRegistration(LayoutMainImpl, {
+  name: 'LayoutMain',
+  category: 'layout',
+  portal: 'shared',
+  version: '1.0.0',
+  description: 'Main content area with optional padding',
+});
+
 // Footer Component
 interface LayoutFooterProps {
   children: React.ReactNode;
@@ -311,14 +316,7 @@ interface LayoutFooterProps {
   sticky?: boolean;
 }
 
-@registerComponent({
-  name: 'LayoutFooter',
-  category: 'layout',
-  portal: 'shared',
-  version: '1.0.0',
-  description: 'Application footer with optional sticky positioning',
-})
-export function LayoutFooter({ 
+function LayoutFooterImpl({ 
   children, 
   className,
   sticky = false 
@@ -338,6 +336,14 @@ export function LayoutFooter({
   );
 }
 
+export const LayoutFooter = withComponentRegistration(LayoutFooterImpl, {
+  name: 'LayoutFooter',
+  category: 'layout',
+  portal: 'shared',
+  version: '1.0.0',
+  description: 'Application footer with optional sticky positioning',
+});
+
 // Content Container
 interface LayoutContainerProps {
   children: React.ReactNode;
@@ -346,14 +352,7 @@ interface LayoutContainerProps {
   centered?: boolean;
 }
 
-@registerComponent({
-  name: 'LayoutContainer',
-  category: 'layout',
-  portal: 'shared',
-  version: '1.0.0',
-  description: 'Content container with responsive max-width',
-})
-export function LayoutContainer({ 
+function LayoutContainerImpl({ 
   children, 
   className,
   maxWidth = 'none',
@@ -383,6 +382,14 @@ export function LayoutContainer({
   );
 }
 
+export const LayoutContainer = withComponentRegistration(LayoutContainerImpl, {
+  name: 'LayoutContainer',
+  category: 'layout',
+  portal: 'shared',
+  version: '1.0.0',
+  description: 'Content container with responsive max-width',
+});
+
 // Grid Layout
 interface LayoutGridProps {
   children: React.ReactNode;
@@ -397,14 +404,7 @@ interface LayoutGridProps {
   };
 }
 
-@registerComponent({
-  name: 'LayoutGrid',
-  category: 'layout',
-  portal: 'shared',
-  version: '1.0.0',
-  description: 'Responsive grid layout component',
-})
-export function LayoutGrid({ 
+function LayoutGridImpl({ 
   children, 
   className,
   cols = 1,
@@ -473,6 +473,14 @@ export function LayoutGrid({
   );
 }
 
+export const LayoutGrid = withComponentRegistration(LayoutGridImpl, {
+  name: 'LayoutGrid',
+  category: 'layout',
+  portal: 'shared',
+  version: '1.0.0',
+  description: 'Responsive grid layout component',
+});
+
 // Complete Application Layout
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -486,14 +494,7 @@ interface AppLayoutProps {
   footerProps?: Partial<LayoutFooterProps>;
 }
 
-@registerComponent({
-  name: 'AppLayout',
-  category: 'template',
-  portal: 'shared',
-  version: '1.0.0',
-  description: 'Complete application layout with header, sidebar, main, and footer',
-})
-export function AppLayout({ 
+function AppLayoutImpl({ 
   children,
   header,
   sidebar,
@@ -535,5 +536,12 @@ export function AppLayout({
   );
 }
 
-// Export layout hook for external use
-export { useLayout };
+export const AppLayout = withComponentRegistration(AppLayoutImpl, {
+  name: 'AppLayout',
+  category: 'template',
+  portal: 'shared',
+  version: '1.0.0',
+  description: 'Complete application layout with header, sidebar, main, and footer',
+});
+
+// Layout hook is already exported above

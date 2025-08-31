@@ -7,7 +7,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator, ConfigDict
 from pydantic_settings import BaseSettings
 
 
@@ -283,10 +283,9 @@ class ProvisioningRequest(BaseModel):
         default_factory=dict, description="Custom tags for resource management"
     )
 
-    class Config:
-        """Config implementation."""
-
-        json_encoders = {UUID: str, datetime: lambda v: v.isoformat()}
+    model_config = ConfigDict(
+        json_encoders={UUID: str, datetime: lambda v: v.isoformat()}
+    )
 
 
 class ContainerHealth(BaseModel):
@@ -365,10 +364,9 @@ class ProvisioningResult(BaseModel):
     admin_dashboard_url: Optional[str] = None
     api_documentation_url: Optional[str] = None
 
-    class Config:
-        """Config implementation."""
-
-        json_encoders = {UUID: str, datetime: lambda v: v.isoformat()}
+    model_config = ConfigDict(
+        json_encoders={UUID: str, datetime: lambda v: v.isoformat()}
+    )
 
     def add_log(self, message: str, level: str = "INFO") -> None:
         """Add a log entry with timestamp."""
@@ -412,8 +410,7 @@ class ProvisioningSettings(BaseSettings):
     base_domain: str = "dotmac.app"
     ssl_issuer: str = "letsencrypt-prod"
 
-    class Config:
-        """Config implementation."""
-
-        env_prefix = "DOTMAC_PROVISIONING_"
-        case_sensitive = False
+    model_config = ConfigDict(
+        env_prefix="DOTMAC_PROVISIONING_",
+        case_sensitive=False
+    )

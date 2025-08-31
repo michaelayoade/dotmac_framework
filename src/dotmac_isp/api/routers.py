@@ -121,6 +121,27 @@ def _register_module_routers(app: FastAPI) -> None:
 
 def _register_portal_routers(app: FastAPI) -> None:
     """Register portal routers if they exist."""
+    # First register the comprehensive portal integration APIs
+    try:
+        from dotmac_isp.api.portal_integrations import (
+            customer_router,
+            admin_router,
+            technician_router,
+            reseller_router
+        )
+        
+        app.include_router(customer_router, tags=["customer-portal"])
+        app.include_router(admin_router, tags=["admin-portal"])
+        app.include_router(technician_router, tags=["technician-portal"])
+        app.include_router(reseller_router, tags=["reseller-portal"])
+        logger.info("Registered portal integration APIs")
+        
+    except ImportError as e:
+        logger.warning(f"Portal integration APIs not available: {e}")
+    except Exception as e:
+        logger.error(f"Error registering portal integration APIs: {e}")
+    
+    # Legacy portal routers (if they exist)
     portal_routers = [
         ("dotmac_isp.portals.admin.router", "admin_router", "/api/v1/admin"),
         ("dotmac_isp.portals.customer.router", "customer_router", "/api/v1/customer"),
