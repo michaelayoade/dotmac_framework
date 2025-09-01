@@ -13,7 +13,6 @@ from sqlalchemy.orm import selectinload
 
 from dotmac_shared.api.dependencies import StandardDeps
 from dotmac_shared.api.exception_handlers import standard_exception_handler
-from dotmac_shared.core.pagination import PaginationParams, paginate
 
 from ...models.commission_config import (
     CommissionConfig,
@@ -36,7 +35,7 @@ router = APIRouter(prefix="/commission-config", tags=["Commission Configuration"
 @standard_exception_handler
 async def create_commission_config(
     config_data: CommissionConfigCreate,
-    deps: StandardDeps
+    deps: StandardDeps,
 ) -> CommissionConfigResponse:
     """Create new commission configuration."""
     

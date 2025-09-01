@@ -23,6 +23,8 @@ from .monitoring import Alert, HealthCheck, Metric, SLARecord
 from .plugin import Plugin, PluginCategory, PluginLicense, PluginUsage
 from .tenant import CustomerTenant
 from .user import User
+from .commission_config import CommissionConfig, RevenueModel
+from .partner_branding import PartnerBrandConfig
 
 __all__ = [
     "Base",
@@ -47,4 +49,7 @@ __all__ = [
     "Metric",
     "Alert",
     "SLARecord",
+    "CommissionConfig",
+    "RevenueModel",
+    "PartnerBrandConfig",
 ]

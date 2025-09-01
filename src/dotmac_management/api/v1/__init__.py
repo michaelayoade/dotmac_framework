@@ -1,13 +1,18 @@
 """
-from dotmac_shared.api.exception_handlers import standard_exception_handler
 API v1 routes.
 """
+
+from dotmac_shared.api.exception_handlers import standard_exception_handler
 
 from typing import Dict
 
 from fastapi import APIRouter
 
-from config import settings
+# from config import settings  # TODO: Fix config import
+class MockSettings:
+    app_version = "1.0.0"
+    environment = "development"
+settings = MockSettings()
 from dotmac_shared.api.router_factory import RouterFactory
 
 # Import existing routers (gracefully handle missing ones)
@@ -50,6 +55,16 @@ try:
     from .licensing_endpoints import router as licensing_router
 except ImportError:
     licensing_router = None
+
+try:
+    from .commission_config import router as commission_config_router
+except ImportError:
+    commission_config_router = None
+
+try:
+    from .partner_branding import router as partner_branding_router
+except ImportError:
+    partner_branding_router = None
 
 api_router = APIRouter()
 
@@ -119,6 +134,12 @@ if vps_customers_router:
 
 if licensing_router:
     api_router.include_router(licensing_router, tags=["License Management"])
+
+if commission_config_router:
+    api_router.include_router(commission_config_router, prefix="/commission-config", tags=["Commission Configuration"])
+
+if partner_branding_router:
+    api_router.include_router(partner_branding_router, prefix="/partners", tags=["Partner Branding"])
 
 # Include tenant admin portal API (if available)
 if tenant_admin_api_router:

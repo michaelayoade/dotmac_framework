@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
-from app.database import Base
+from .base import BaseModel
 from sqlalchemy import (
     JSON,
     Boolean,
@@ -23,7 +23,7 @@ from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import relationship
 
 
-class Partner(Base):
+class Partner(BaseModel):
     """Partner/Reseller model"""
 
     __tablename__ = "partners"
@@ -77,7 +77,7 @@ class Partner(Base):
     user = relationship("User", back_populates="partner")
 
 
-class PartnerCustomer(Base):
+class PartnerCustomer(BaseModel):
     """Customer managed by a partner"""
 
     __tablename__ = "partner_customers"
@@ -126,10 +126,10 @@ class PartnerCustomer(Base):
     commissions = relationship("Commission", back_populates="customer")
 
 
-class Commission(Base):
+class Commission(BaseModel):
     """Commission records for partners"""
 
-    __tablename__ = "commissions"
+    __tablename__ = "legacy_commissions"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()), index=True)
     partner_id = Column(String, ForeignKey("partners.id"), nullable=False, index=True)
@@ -180,7 +180,7 @@ class Commission(Base):
     customer = relationship("PartnerCustomer", back_populates="commissions")
 
 
-class Territory(Base):
+class Territory(BaseModel):
     """Partner territory definitions"""
 
     __tablename__ = "territories"
@@ -214,7 +214,7 @@ class Territory(Base):
     partner = relationship("Partner")
 
 
-class PartnerPerformanceMetrics(Base):
+class PartnerPerformanceMetrics(BaseModel):
     """Historical partner performance metrics"""
 
     __tablename__ = "partner_performance_metrics"
