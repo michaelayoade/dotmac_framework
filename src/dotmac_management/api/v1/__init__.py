@@ -56,15 +56,18 @@ try:
 except ImportError:
     licensing_router = None
 
-try:
-    from .commission_config import router as commission_config_router
-except ImportError:
-    commission_config_router = None
+# Temporarily commented out due to runtime dependency resolution issues
+# try:
+#     from .commission_config import router as commission_config_router
+# except ImportError:
+#     commission_config_router = None
 
-try:
-    from .partner_branding import router as partner_branding_router
-except ImportError:
-    partner_branding_router = None
+# try:
+#     from .partner_branding import router as partner_branding_router
+# except ImportError:
+#     partner_branding_router = None
+commission_config_router = None
+partner_branding_router = None
 
 api_router = APIRouter()
 

@@ -111,7 +111,7 @@ async def update_step(step_id: str, data: Dict[str, Any], deps: StandardDeps) ->
     reason = data.get("rejection_reason")
     updated = 0
     if status in ("PENDING", "RUNNING", "COMPLETED", "FAILED"):
-        from ..models.onboarding import StepStatus
+        from ...models.onboarding import StepStatus
         updated = await step_repo.set_status_by_key(step_id, StepStatus(status), reason=reason)
     else:
         updated = 0
@@ -136,7 +136,7 @@ async def reject_step(step_id: str, reason: str, deps: StandardDeps) -> Dict[str
 @standard_exception_handler
 async def complete_onboarding(partner_id: str, deps: StandardDeps) -> Dict[str, Any]:
     from ..repositories.onboarding import OnboardingRequestRepository
-    from ..models.onboarding import OnboardingStatus
+    from ...models.onboarding import OnboardingStatus
     repo = OnboardingRequestRepository(deps.db)
     try:
         partner_uuid = UUID(partner_id)
@@ -161,7 +161,7 @@ async def get_onboarding_request(request_id: UUID, deps: StandardDeps) -> Dict[s
     if not req:
         raise HTTPException(status_code=404, detail="Onboarding request not found")
     from sqlalchemy import select
-    from ..models.onboarding import OnboardingStep
+    from ...models.onboarding import OnboardingStep
     result = await deps.db.execute(select(OnboardingStep).where(OnboardingStep.request_id == request_id))
     steps = result.scalars().all()
     return {
@@ -193,7 +193,7 @@ async def get_onboarding_request(request_id: UUID, deps: StandardDeps) -> Dict[s
 async def get_onboarding_artifacts(request_id: UUID, deps: StandardDeps) -> Dict[str, Any]:
     art_repo = OnboardingArtifactRepository(deps.db)
     from sqlalchemy import select
-    from ..models.onboarding import OnboardingArtifact
+    from ...models.onboarding import OnboardingArtifact
     result = await deps.db.execute(select(OnboardingArtifact).where(OnboardingArtifact.request_id == request_id))
     artifacts = result.scalars().all()
     return {
@@ -213,7 +213,7 @@ async def get_onboarding_artifacts(request_id: UUID, deps: StandardDeps) -> Dict
 @standard_exception_handler
 async def get_onboarding_logs(request_id: UUID, deps: StandardDeps) -> Dict[str, Any]:
     from sqlalchemy import select
-    from ..models.onboarding import OnboardingArtifact
+    from ...models.onboarding import OnboardingArtifact
     result = await deps.db.execute(
         select(OnboardingArtifact).where(
             OnboardingArtifact.request_id == request_id,

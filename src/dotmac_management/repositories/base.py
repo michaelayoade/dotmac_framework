@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from ..database import Base
-from ..utils.pagination import DatabasePaginator, PaginationHelper
+from dotmac_shared.core.pagination import PaginationParams
 
 ModelType = TypeVar("ModelType", bound=Base)
 
@@ -156,8 +156,10 @@ class BaseRepository(Generic[ModelType]):
             for rel in relationships:
                 query = query.options(selectinload(getattr(self.model, rel)))
 
-        # Use DatabasePaginator for efficient pagination
-        return await DatabasePaginator.paginate_query(self.db, query, page, per_page)
+        # Simple pagination implementation
+        offset = (page - 1) * per_page
+        items = await self.db.execute(query.offset(offset).limit(per_page))
+        return items.scalars().all()
 
     async def cursor_paginate(
         self,
@@ -191,7 +193,7 @@ class BaseRepository(Generic[ModelType]):
 
         # Apply cursor pagination
         if cursor:
-            cursor_value = PaginationHelper.decode_cursor(cursor)
+            cursor_value = cursor  # Simplified - use cursor as direct value
             field = getattr(self.model, cursor_field)
 
             if ascending:
@@ -221,9 +223,7 @@ class BaseRepository(Generic[ModelType]):
         next_cursor = None
         if has_next and items:
             last_item = items[-1]
-            next_cursor = PaginationHelper.create_cursor_from_item(
-                last_item, cursor_field
-            )
+            next_cursor = str(getattr(last_item, cursor_field))  # Simplified cursor
 
         return items, next_cursor, has_next
 

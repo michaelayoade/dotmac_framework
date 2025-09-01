@@ -13,8 +13,8 @@ from fastapi.responses import StreamingResponse
 from dotmac_shared.api.dependencies import PaginatedDeps, StandardDeps
 from dotmac_shared.api.exception_handlers import standard_exception_handler
 
-from ..models.billing import CommissionStatus
-from ..repositories.billing import CommissionRepository
+from ...models.billing import CommissionStatus
+from ...repositories.billing import CommissionRepository
 
 
 router = APIRouter(prefix="/commissions", tags=["Commissions"])

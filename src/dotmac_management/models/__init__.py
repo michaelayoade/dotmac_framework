@@ -50,6 +50,6 @@ __all__ = [
     "Alert",
     "SLARecord",
     "CommissionConfig",
-    "RevenueModel",
+    "RevenueModel", 
     "PartnerBrandConfig",
 ]

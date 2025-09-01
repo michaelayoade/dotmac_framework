@@ -6,12 +6,13 @@ Allows admins to configure all reseller commission structures.
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, status, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 
-from dotmac_shared.api.dependencies import StandardDeps
+from dotmac_shared.database import get_db_session
+from dotmac_shared.auth.current_user import get_current_user
 from dotmac_shared.api.exception_handlers import standard_exception_handler
 
 from ...models.commission_config import (
@@ -35,18 +36,19 @@ router = APIRouter(prefix="/commission-config", tags=["Commission Configuration"
 @standard_exception_handler
 async def create_commission_config(
     config_data: CommissionConfigCreate,
-    deps: StandardDeps,
+    db: AsyncSession = Depends(get_db_session),
+    current_user: dict = Depends(get_current_user),
 ) -> CommissionConfigResponse:
     """Create new commission configuration."""
     
     # If setting as default, unset other defaults
     if config_data.is_default:
-        await _unset_default_configs(deps.db)
+        await _unset_default_configs(db)
     
     config = CommissionConfig(**config_data.model_dump())
-    deps.db.add(config)
-    await deps.db.commit()
-    await deps.db.refresh(config)
+    db.add(config)
+    await db.commit()
+    await db.refresh(config)
     
     return CommissionConfigResponse.model_validate(config)
 

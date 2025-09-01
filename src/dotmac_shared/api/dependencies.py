@@ -8,7 +8,7 @@ from typing import Annotated, Any, Dict, Optional, Union
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, Query, status
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, validator, ConfigDict
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from dotmac_shared.auth.current_user import get_current_tenant, get_current_user
@@ -23,7 +23,13 @@ logger = logging.getLogger(__name__)
 
 
 class StandardDependencies:
-    """Production-ready standard dependencies with validation."""
+    """
+    Production-ready standard dependencies with validation.
+    
+    Note: This is NOT a Pydantic model to avoid AsyncSession serialization issues.
+    """
+    # Explicitly prevent this from being treated as a Pydantic model
+    __slots__ = ('current_user', 'db', 'tenant_id', 'user_id')
 
     def __init__(
         self,
