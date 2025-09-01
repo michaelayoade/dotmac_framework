@@ -26,8 +26,8 @@ else:
     ASYNC_DATABASE_URL = f"postgresql+asyncpg://{DATABASE_URL}"
 
 
-# Import the shared Base class instead of defining a new one
-from .models.base import Base
+# Use DRY shared base from dotmac_shared
+from dotmac_shared.database.base import Base
 
 
 # Create async engine

@@ -9,7 +9,7 @@ from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, T
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
-from dotmac_isp.shared.database.base import TenantModel, TimestampMixin
+from dotmac_isp.shared.database.base import BaseModel
 
 
 class PortalAccountStatus(enum.Enum):
@@ -33,7 +33,7 @@ class PortalAccountType(enum.Enum):
     RESELLER = "reseller"
 
 
-class PortalAccount(TenantModel):
+class PortalAccount(BaseModel):
     """
     Portal Account model for customer portal authentication.
 
@@ -204,7 +204,7 @@ class PortalAccount(TenantModel):
         self.locked_until = None
 
 
-class PortalSession(TenantModel):
+class PortalSession(BaseModel):
     """Portal session model for tracking active customer sessions."""
 
     __tablename__ = "portal_sessions"
@@ -280,7 +280,7 @@ class PortalSession(TenantModel):
         self.logout_reason = reason
 
 
-class PortalLoginAttempt(TenantModel):
+class PortalLoginAttempt(BaseModel):
     """Portal login attempt tracking for security monitoring."""
 
     __tablename__ = "portal_login_attempts"
@@ -363,7 +363,7 @@ class SessionStatus(enum.Enum):
     TERMINATED = "terminated"
 
 
-class PortalPreferences(TenantModel):
+class PortalPreferences(BaseModel):
     """Portal user preferences model."""
 
     __tablename__ = "portal_preferences"

@@ -12,7 +12,8 @@ from sqlalchemy import ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import relationship
 
-from .base import UUID, BaseModel
+from .base import BaseModel
+from sqlalchemy.dialects.postgresql import UUID
 
 
 class DeploymentStatus(str, Enum):
@@ -114,7 +115,7 @@ class Deployment(BaseModel):
     __tablename__ = "deployments"
 
     tenant_id = Column(
-        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False, index=True
+        UUID(as_uuid=True), ForeignKey("customer_tenants.id"), nullable=False, index=True
     )
     infrastructure_template_id = Column(
         UUID(as_uuid=True), ForeignKey("infrastructure_templates.id"), nullable=True

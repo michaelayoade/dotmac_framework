@@ -127,17 +127,19 @@ logs:
 .PHONY: up-infrastructure
 up-infrastructure:
 	@echo "$(YELLOW)Starting shared infrastructure...$(NC)"
-	docker-compose -f docker-compose.unified.yml up -d postgres-shared redis-shared openbao-shared clickhouse signoz-collector signoz-query signoz-frontend
+	docker-compose -f docker-compose.unified.yml up -d postgres-shared redis-shared
 
 .PHONY: up-isp
 up-isp: up-infrastructure
 	@echo "$(YELLOW)Starting ISP Framework services...$(NC)"
+	docker-compose -f docker-compose.unified.yml up -d db-migrate
 	docker-compose -f docker-compose.unified.yml up -d isp-framework
 
 .PHONY: up-mgmt
 up-mgmt: up-infrastructure
 	@echo "$(YELLOW)Starting Management Platform services...$(NC)"
-	docker-compose -f docker-compose.unified.yml up -d management-platform mgmt-celery-worker mgmt-celery-beat
+	docker-compose -f docker-compose.unified.yml up -d db-migrate
+	docker-compose -f docker-compose.unified.yml up -d management-platform
 
 .PHONY: up-frontend
 up-frontend:
@@ -304,14 +306,11 @@ deploy-prod:
 health-check:
 	@echo "$(BLUE)Checking health of all services...$(NC)"
 	@echo ""
-	@echo "$(YELLOW)ISP Framework Health:$(NC)"
+	@echo "$(YELLOW)ISP Framework Health (http://localhost:8001/health):$(NC)"
 	@curl -sf http://localhost:8001/health || echo "$(RED)❌ ISP Framework not responding$(NC)"
 	@echo ""
-	@echo "$(YELLOW)Management Platform Health:$(NC)"
+	@echo "$(YELLOW)Management Platform Health (http://localhost:8000/health):$(NC)"
 	@curl -sf http://localhost:8000/health || echo "$(RED)❌ Management Platform not responding$(NC)"
-	@echo ""
-	@echo "$(YELLOW)SignOz Health:$(NC)"
-	@curl -sf http://localhost:3301/health || echo "$(RED)❌ SignOz not responding$(NC)"
 	@echo ""
 
 .PHONY: show-endpoints

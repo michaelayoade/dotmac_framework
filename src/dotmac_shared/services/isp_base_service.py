@@ -6,7 +6,7 @@ from uuid import UUID
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from dotmac_shared.core.exceptions import standard_exception_handler
+from dotmac_shared.api.exception_handlers import standard_exception_handler
 from dotmac_isp.shared.base_service import BaseService
 
 

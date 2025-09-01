@@ -1,0 +1,55 @@
+name: Deploy (K8s Basic)
+
+on:
+  workflow_dispatch:
+    inputs:
+      image:
+        description: 'Container image (e.g., ghcr.io/owner/dotmac-framework)'
+        required: true
+      tag:
+        description: 'Image tag to deploy'
+        required: true
+      namespace:
+        description: 'K8s namespace'
+        required: true
+        default: 'dotmac-production'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: v1.28.0
+
+      - name: Configure kubeconfig
+        env:
+          KUBECONFIG_B64: ${{ secrets.KUBECONFIG_B64 }}
+        run: |
+          mkdir -p $HOME/.kube
+          echo "$KUBECONFIG_B64" | base64 -d > $HOME/.kube/config
+          kubectl config current-context
+
+      - name: Set namespace
+        run: |
+          kubectl get ns "${{ inputs.namespace }}" >/dev/null 2>&1 || \
+          kubectl create ns "${{ inputs.namespace }}"
+
+      - name: Apply kustomize overlay (production)
+        run: |
+          kubectl apply -k k8s/overlays/production -n "${{ inputs.namespace }}"
+
+      - name: Patch image (dotmac-platform)
+        run: |
+          kubectl set image deployment/dotmac-platform \
+            dotmac-platform=${{ inputs.image }}:${{ inputs.tag }} \
+            -n "${{ inputs.namespace }}"
+
+      - name: Wait for rollout
+        run: |
+          kubectl rollout status deployment/dotmac-platform -n "${{ inputs.namespace }}" --timeout=600s
+

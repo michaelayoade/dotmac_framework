@@ -14,7 +14,7 @@ from sqlalchemy import Float, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
 
-from dotmac_isp.shared.database.base import TenantModel
+from dotmac_isp.shared.database.base import BaseModel
 
 
 class ServiceTypeEnum(str, enum.Enum):
@@ -48,7 +48,7 @@ class CoverageStatusEnum(str, enum.Enum):
     NO_COVERAGE = "no_coverage"
 
 
-class ServiceArea(TenantModel):
+class ServiceArea(BaseModel):
     """
     Service area model leveraging DotMac base classes.
     Inherits: ID, timestamps, tenant isolation, geo coordinates
@@ -75,7 +75,7 @@ class ServiceArea(TenantModel):
     network_nodes = relationship("NetworkNode", back_populates="service_area")
 
 
-class NetworkNode(TenantModel):
+class NetworkNode(BaseModel):
     """Network infrastructure node with GIS coordinates."""
 
     __tablename__ = "gis_network_nodes"
@@ -106,7 +106,7 @@ class NetworkNode(TenantModel):
     service_area = relationship("ServiceArea", back_populates="network_nodes")
 
 
-class CoverageGap(TenantModel):
+class CoverageGap(BaseModel):
     """Coverage gap identified through analysis."""
 
     __tablename__ = "gis_coverage_gaps"
@@ -133,7 +133,7 @@ class CoverageGap(TenantModel):
     service_area = relationship("ServiceArea", back_populates="coverage_gaps")
 
 
-class CoverageRecommendation(TenantModel):
+class CoverageRecommendation(BaseModel):
     """Coverage improvement recommendations."""
 
     __tablename__ = "gis_coverage_recommendations"
@@ -164,7 +164,7 @@ class CoverageRecommendation(TenantModel):
     implemented_at = Column(DateTime, nullable=True)
 
 
-class Territory(TenantModel):
+class Territory(BaseModel):
     """Sales/service territory management."""
 
     __tablename__ = "gis_territories"
@@ -192,7 +192,7 @@ class Territory(TenantModel):
     demographics = Column(JSONB, default={}, comment="Demographic information")
 
 
-class RouteOptimization(TenantModel):
+class RouteOptimization(BaseModel):
     """Route optimization results for field operations."""
 
     __tablename__ = "gis_route_optimizations"

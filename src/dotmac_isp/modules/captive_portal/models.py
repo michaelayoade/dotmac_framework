@@ -10,7 +10,7 @@ from sqlalchemy import Float, ForeignKey, Index, Integer, String, Text, UniqueCo
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from dotmac_isp.shared.database.base import TenantModel
+from dotmac_isp.shared.database.base import BaseModel
 
 
 class SessionStatus(Enum):
@@ -52,7 +52,7 @@ class VoucherStatus(Enum):
     CANCELLED = "cancelled"
 
 
-class CaptivePortalConfig(TenantModel):
+class CaptivePortalConfig(BaseModel):
     """Captive portal configuration linked to customers/locations."""
 
     __tablename__ = "captive_portal_configs"
@@ -148,7 +148,7 @@ class CaptivePortalConfig(TenantModel):
     )
 
 
-class CaptivePortalSession(TenantModel):
+class CaptivePortalSession(BaseModel):
     """User session for captive portal access - integrates with existing User model."""
 
     __tablename__ = "captive_portal_sessions"
@@ -268,7 +268,7 @@ class CaptivePortalSession(TenantModel):
         )
 
 
-class AuthMethod(TenantModel):
+class AuthMethod(BaseModel):
     """Authentication method configuration for captive portals."""
 
     __tablename__ = "captive_portal_auth_methods"
@@ -305,7 +305,7 @@ class AuthMethod(TenantModel):
     portal = relationship("CaptivePortalConfig", back_populates="auth_methods_config")
 
 
-class Voucher(TenantModel):
+class Voucher(BaseModel):
     """Access vouchers for pre-paid captive portal access."""
 
     __tablename__ = "captive_portal_vouchers"
@@ -399,7 +399,7 @@ class Voucher(TenantModel):
         )
 
 
-class VoucherBatch(TenantModel):
+class VoucherBatch(BaseModel):
     """Batch management for bulk voucher generation."""
 
     __tablename__ = "captive_portal_voucher_batches"
@@ -433,7 +433,7 @@ class VoucherBatch(TenantModel):
         return self.generated_count >= self.voucher_count
 
 
-class PortalCustomization(TenantModel):
+class PortalCustomization(BaseModel):
     """Portal customization and branding settings."""
 
     __tablename__ = "captive_portal_customizations"
@@ -491,7 +491,7 @@ class PortalCustomization(TenantModel):
     portal = relationship("CaptivePortalConfig", back_populates="customization")
 
 
-class PortalUsageStats(TenantModel):
+class PortalUsageStats(BaseModel):
     """Usage statistics and analytics for captive portals."""
 
     __tablename__ = "captive_portal_usage_stats"

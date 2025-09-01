@@ -71,7 +71,7 @@ router.include_router(payment_router)
 @standard_exception_handler
 async def get_billing_dashboard(deps: StandardDeps) -> Dict[str, Any]:
     """Get billing dashboard with summary statistics."""
-    service = BillingService(deps.db, tenant_id)
+    service = BillingService(deps.db, deps.tenant_id)
     return await service.get_dashboard_data(deps.user_id)
 
 
@@ -79,19 +79,19 @@ async def get_billing_dashboard(deps: StandardDeps) -> Dict[str, Any]:
 @standard_exception_handler
 async def get_revenue_report(deps: PaginatedDeps, search: SearchDeps) -> BillingReport:
     """Generate revenue report with filters."""
-    service = BillingService(deps.db, tenant_id)
+    service = BillingService(deps.db, deps.tenant_id)
     return await service.generate_revenue_report(
         filters=search.filters or {}, pagination=deps.pagination, user_id=deps.user_id
     )
 
 
 @router.post("/invoices/{invoice_id}/pdf")
-@billing_exception_handler
+@standard_exception_handler
 async def generate_invoice_pdf(
     invoice_id: UUID, deps: StandardDeps
 ) -> StreamingResponse:
     """Generate and download invoice PDF."""
-    service = BillingService(deps.db, tenant_id)
+    service = BillingService(deps.db, deps.tenant_id)
     pdf_content = await service.generate_invoice_pdf(invoice_id, deps.user_id)
     return StreamingResponse(
         io.BytesIO(pdf_content),
@@ -103,7 +103,7 @@ async def generate_invoice_pdf(
 
 
 @router.post("/invoices/{invoice_id}/attachments")
-@billing_exception_handler
+@standard_exception_handler
 async def upload_invoice_attachment(
     invoice_id: UUID,
     file: UploadFile = File(...),
@@ -111,7 +111,7 @@ async def upload_invoice_attachment(
     upload_params: FileUploadDeps = None,
 ):
     """Upload attachment to invoice."""
-    service = BillingService(deps.db, tenant_id)
+    service = BillingService(deps.db, deps.tenant_id)
     return await service.upload_invoice_attachment(
         invoice_id=invoice_id,
         file=file,

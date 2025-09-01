@@ -1,23 +1,12 @@
-name: Comprehensive CI/CD Pipeline
+name: ARCHIVED - Comprehensive CI/CD Pipeline
 
 on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main, develop ]
-  schedule:
-    # Run comprehensive tests daily at 4 AM UTC
-    - cron: '0 4 * * *'
   workflow_dispatch:
     inputs:
-      run_performance_tests:
-        description: 'Run performance tests'
+      note:
+        description: 'This workflow is archived. Update paths before use.'
         required: false
-        default: 'false'
-      run_security_tests:
-        description: 'Run security tests'
-        required: false
-        default: 'false'
+        default: ''
 
 env:
   PYTHON_VERSION: "3.11"

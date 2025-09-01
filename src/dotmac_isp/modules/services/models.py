@@ -11,7 +11,7 @@ from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
-from dotmac_isp.shared.database.base import TenantModel
+from dotmac_isp.shared.database.base import BaseModel
 
 
 class ServiceType(str, Enum):
@@ -51,7 +51,7 @@ class BandwidthUnit(str, Enum):
     GBPS = "gbps"
 
 
-class ServicePlan(TenantModel):
+class ServicePlan(BaseModel):
     """Service plan model for ISP service offerings."""
     __tablename__ = "service_plans"
 
@@ -92,7 +92,7 @@ class ServicePlan(TenantModel):
         return f"<ServicePlan(code={self.plan_code}, name={self.name})>"
 
 
-class ServiceInstance(TenantModel):
+class ServiceInstance(BaseModel):
     """Service instance model for customer services."""
     __tablename__ = "service_instances"
 
@@ -130,7 +130,7 @@ class ServiceInstance(TenantModel):
         return f"<ServiceInstance(number={self.service_number}, status={self.status})>"
 
 
-class ServiceProvisioning(TenantModel):
+class ServiceProvisioning(BaseModel):
     """Service provisioning tracking model."""
     __tablename__ = "service_provisioning"
 
@@ -167,7 +167,7 @@ class ServiceProvisioning(TenantModel):
         return f"<ServiceProvisioning(service_id={self.service_instance_id}, status={self.provisioning_status})>"
 
 
-class ServiceStatusHistory(TenantModel):
+class ServiceStatusHistory(BaseModel):
     """Service status change history."""
     __tablename__ = "service_status_history"
 
@@ -192,7 +192,7 @@ class ServiceStatusHistory(TenantModel):
         return f"<ServiceStatusHistory(service_id={self.service_instance_id}, {self.old_status} -> {self.new_status})>"
 
 
-class ServiceUsageMetric(TenantModel):
+class ServiceUsageMetric(BaseModel):
     """Service usage tracking for billing and analytics."""
     __tablename__ = "service_usage_metrics"
 

@@ -13,7 +13,8 @@ from sqlalchemy import ForeignKey, Integer, Numeric, String, Text
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import relationship
 
-from .base import UUID, BaseModel
+from .base import BaseModel
+from sqlalchemy.dialects.postgresql import UUID
 
 
 class HealthStatus(str, Enum):
@@ -58,7 +59,7 @@ class HealthCheck(BaseModel):
     __tablename__ = "health_checks"
 
     tenant_id = Column(
-        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False, index=True
+        UUID(as_uuid=True), ForeignKey("customer_tenants.id"), nullable=False, index=True
     )
     deployment_id = Column(
         UUID(as_uuid=True), ForeignKey("deployments.id"), nullable=True, index=True
@@ -126,7 +127,7 @@ class Metric(BaseModel):
     __tablename__ = "metrics"
 
     tenant_id = Column(
-        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False, index=True
+        UUID(as_uuid=True), ForeignKey("customer_tenants.id"), nullable=False, index=True
     )
     deployment_id = Column(
         UUID(as_uuid=True), ForeignKey("deployments.id"), nullable=True, index=True
@@ -174,7 +175,7 @@ class Alert(BaseModel):
     __tablename__ = "alerts"
 
     tenant_id = Column(
-        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False, index=True
+        UUID(as_uuid=True), ForeignKey("customer_tenants.id"), nullable=False, index=True
     )
     deployment_id = Column(
         UUID(as_uuid=True), ForeignKey("deployments.id"), nullable=True, index=True
@@ -281,7 +282,7 @@ class SLARecord(BaseModel):
     __tablename__ = "sla_records"
 
     tenant_id = Column(
-        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False, index=True
+        UUID(as_uuid=True), ForeignKey("customer_tenants.id"), nullable=False, index=True
     )
     deployment_id = Column(
         UUID(as_uuid=True), ForeignKey("deployments.id"), nullable=True, index=True

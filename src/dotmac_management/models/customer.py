@@ -13,7 +13,8 @@ from sqlalchemy import ForeignKey, Integer, Numeric, String, Text
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import relationship
 
-from .base import UUID, BaseModel
+from .base import BaseModel
+from sqlalchemy.dialects.postgresql import UUID
 
 
 class CustomerStatus(str, Enum):
@@ -43,7 +44,7 @@ class Customer(BaseModel):
 
     # Tenant relationship
     tenant_id = Column(
-        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False, index=True
+        UUID(as_uuid=True), ForeignKey("customer_tenants.id"), nullable=False, index=True
     )
 
     # Customer information
@@ -126,7 +127,7 @@ class CustomerService(BaseModel):
 
     # Relationships
     tenant_id = Column(
-        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False, index=True
+        UUID(as_uuid=True), ForeignKey("customer_tenants.id"), nullable=False, index=True
     )
     customer_id = Column(
         UUID(as_uuid=True), ForeignKey("customers.id"), nullable=False, index=True
@@ -183,7 +184,7 @@ class CustomerUsageRecord(BaseModel):
 
     # Relationships
     tenant_id = Column(
-        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False, index=True
+        UUID(as_uuid=True), ForeignKey("customer_tenants.id"), nullable=False, index=True
     )
     customer_id = Column(
         UUID(as_uuid=True), ForeignKey("customers.id"), nullable=False, index=True
@@ -229,7 +230,7 @@ class ServiceUsageRecord(BaseModel):
 
     # Relationships
     tenant_id = Column(
-        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False, index=True
+        UUID(as_uuid=True), ForeignKey("customer_tenants.id"), nullable=False, index=True
     )
     service_id = Column(
         UUID(as_uuid=True),

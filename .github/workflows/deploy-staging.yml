@@ -1,10 +1,12 @@
-name: Deploy to Staging
+name: ARCHIVED - Deploy to Staging
 
 on:
-  workflow_run:
-    workflows: ["Unified CI Pipeline"]
-    types: [completed]
-    branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      note:
+        description: "This workflow is archived. Update paths before use."
+        required: false
+        type: string
 
 env:
   REGISTRY: ghcr.io

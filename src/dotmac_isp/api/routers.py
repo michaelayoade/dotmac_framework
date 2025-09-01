@@ -242,6 +242,17 @@ def _register_integration_routers(app: FastAPI) -> None:
     except Exception as e:
         logger.error(f"Error registering unified authentication endpoints: {e}")
 
+    # Register tenant provisioning auth endpoints
+    try:
+        from dotmac_isp.api.auth_router import router as tenant_auth_router
+
+        app.include_router(tenant_auth_router, prefix="/api/v1", tags=["tenant-auth", "provisioning"])
+        logger.info("Registered tenant authentication endpoints at /api/v1/auth")
+    except ImportError as e:
+        logger.warning(f"Tenant auth endpoints not available: {e}")
+    except Exception as e:
+        logger.error(f"Error registering tenant auth endpoints: {e}")
+
     # Register domain management endpoints
     try:
         from dotmac_isp.api.domain_router import router as domain_router

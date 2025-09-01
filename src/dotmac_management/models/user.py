@@ -8,7 +8,8 @@ from typing import Optional
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 
-from .base import UUID, BaseModel
+from .base import BaseModel
+from sqlalchemy.dialects.postgresql import UUID
 
 
 class UserRole:
@@ -43,7 +44,7 @@ class User(BaseModel):
 
     # Tenant association (None for master admins)
     tenant_id = Column(
-        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=True, index=True
+        UUID(as_uuid=True), ForeignKey("customer_tenants.id"), nullable=True, index=True
     )
 
     # Additional fields from migration
@@ -170,7 +171,7 @@ class UserInvitation(BaseModel):
     email = Column(String(255), nullable=False, index=True)
     role = Column(String(50), nullable=False)
     tenant_id = Column(
-        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=True, index=True
+        UUID(as_uuid=True), ForeignKey("customer_tenants.id"), nullable=True, index=True
     )
 
     # Invitation metadata

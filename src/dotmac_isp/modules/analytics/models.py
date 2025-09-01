@@ -21,13 +21,15 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
-from dotmac_shared.db.mixins import AuditMixin, TenantMixin
-from dotmac_shared.db.models import Base
+from dotmac_shared.database.mixins import ISPModelMixin
+# ISPModelMixin includes everything needed (TenantMixin, TimestampMixin, UUIDMixin, audit)
+# Use it as the single comprehensive mixin
+from dotmac_shared.database.base import Base
 
 from .schemas import AlertSeverity, MetricType, ReportType
 
 
-class Metric(Base, TenantMixin, AuditMixin):
+class Metric(Base, ISPModelMixin):
     """Model for storing metric definitions and metadata."""
 
     __tablename__ = "metrics"
@@ -59,7 +61,7 @@ class Metric(Base, TenantMixin, AuditMixin):
         return f"<Metric(id={self.id}, name={self.name}, type={self.metric_type})>"
 
 
-class MetricValue(Base, TenantMixin, AuditMixin):
+class MetricValue(Base, ISPModelMixin):
     """Model for storing individual metric data points."""
 
     __tablename__ = "metric_values"
@@ -82,7 +84,7 @@ class MetricValue(Base, TenantMixin, AuditMixin):
         return f"<MetricValue(id={self.id}, metric_id={self.metric_id}, value={self.value}, timestamp={self.timestamp})>"
 
 
-class Report(Base, TenantMixin, AuditMixin):
+class Report(Base, ISPModelMixin):
     """Model for storing report definitions and metadata."""
 
     __tablename__ = "reports"
@@ -113,7 +115,7 @@ class Report(Base, TenantMixin, AuditMixin):
         return f"<Report(id={self.id}, title={self.title}, type={self.report_type})>"
 
 
-class Dashboard(Base, TenantMixin, AuditMixin):
+class Dashboard(Base, ISPModelMixin):
     """Model for storing dashboard definitions and configurations."""
 
     __tablename__ = "dashboards"
@@ -139,7 +141,7 @@ class Dashboard(Base, TenantMixin, AuditMixin):
         return f"<Dashboard(id={self.id}, name={self.name}, widget_count={self.widget_count})>"
 
 
-class Widget(Base, TenantMixin, AuditMixin):
+class Widget(Base, ISPModelMixin):
     """Model for storing individual dashboard widgets."""
 
     __tablename__ = "widgets"
@@ -167,7 +169,7 @@ class Widget(Base, TenantMixin, AuditMixin):
         return f"<Widget(id={self.id}, title={self.title}, type={self.widget_type})>"
 
 
-class Alert(Base, TenantMixin, AuditMixin):
+class Alert(Base, ISPModelMixin):
     """Model for storing metric-based alert definitions."""
 
     __tablename__ = "alerts"
@@ -198,7 +200,7 @@ class Alert(Base, TenantMixin, AuditMixin):
         return f"<Alert(id={self.id}, name={self.name}, severity={self.severity})>"
 
 
-class AlertEvent(Base, TenantMixin, AuditMixin):
+class AlertEvent(Base, ISPModelMixin):
     """Model for storing alert trigger events and history."""
 
     __tablename__ = "alert_events"
@@ -225,7 +227,7 @@ class AlertEvent(Base, TenantMixin, AuditMixin):
         return f"<AlertEvent(id={self.id}, alert_id={self.alert_id}, triggered_at={self.triggered_at})>"
 
 
-class DataSource(Base, TenantMixin, AuditMixin):
+class DataSource(Base, ISPModelMixin):
     """Model for storing data source configurations for metrics and widgets."""
 
     __tablename__ = "data_sources"
@@ -252,7 +254,7 @@ class DataSource(Base, TenantMixin, AuditMixin):
         return f"<DataSource(id={self.id}, name={self.name}, type={self.source_type})>"
 
 
-class AnalyticsSession(Base, TenantMixin, AuditMixin):
+class AnalyticsSession(Base, ISPModelMixin):
     """Model for tracking analytics dashboard usage and sessions."""
 
     __tablename__ = "analytics_sessions"
@@ -278,7 +280,7 @@ class AnalyticsSession(Base, TenantMixin, AuditMixin):
         return f"<AnalyticsSession(id={self.id}, user_id={self.user_id}, start={self.session_start})>"
 
 
-class MetricAggregation(Base, TenantMixin, AuditMixin):
+class MetricAggregation(Base, ISPModelMixin):
     """Model for storing pre-computed metric aggregations for performance."""
 
     __tablename__ = "metric_aggregations"

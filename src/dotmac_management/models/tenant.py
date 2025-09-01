@@ -1,140 +1,107 @@
 """
-Tenant management models - strategically aligned with migration schema.
-
-This represents the true architectural vision: a container-per-tenant SaaS platform
-where each tenant (ISP customer) gets their own isolated container deployment.
+Tenant management models for the Management platform
 """
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
-from uuid import UUID
-
-from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, String, Text
-from sqlalchemy.dialects.postgresql import UUID as PGUUID
+from typing import Dict, Any, Optional
+from sqlalchemy import Column, Integer, String, DateTime, Text, JSON, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 
-from .base import BaseModel
+from dotmac_shared.database.base import Base
+from dotmac_shared.database.mixins import TimestampMixin, UUIDMixin
 
 
 class TenantStatus(str, Enum):
-    """Tenant lifecycle status - matching migration schema."""
-
-    PENDING = "pending"  # Just created, not yet deployed
-    ACTIVE = "active"  # Container deployed and operational
-    SUSPENDED = "suspended"  # Temporarily disabled
-    CANCELLED = "cancelled"  # Permanently disabled
-    MAINTENANCE = "maintenance"  # Under maintenance
-    FAILED = "failed"  # Deployment failed
-
-
-class Tenant(BaseModel):
-    """
-    Core tenant model - each tenant represents an ISP customer
-    who will get their own containerized ISP framework deployment.
-
-    Matches the migration schema exactly.
-    """
-
-    __tablename__ = "tenants"
-
-    # Basic tenant information (from migration schema lines 48-63)
-    name = Column(String(255), nullable=False)
-    slug = Column(String(100), nullable=False, unique=True)
-    description = Column(Text, nullable=True)
-
-    # Contact information (from migration schema)
-    contact_email = Column(String(255), nullable=False)
-    contact_name = Column(String(255), nullable=True)
-    contact_phone = Column(String(50), nullable=True)
-
-    # Status (from migration schema)
-    status = Column(String(50), nullable=False, default="pending")
-
-    # Settings as JSON (from migration schema)
-    settings = Column(JSON, nullable=True)
-
-    def __repr__(self) -> str:
-        return (
-            f"<Tenant(name='{self.name}', slug='{self.slug}', status='{self.status}')>"
-        )
-
-    @property
-    def is_active(self) -> bool:
-        """Check if tenant container is active and operational."""
-        return self.status == TenantStatus.ACTIVE.value
-
-    @property
-    def can_deploy(self) -> bool:
-        """Check if tenant can deploy new container instances."""
-        return self.status in [
-            TenantStatus.ACTIVE.value,
-            TenantStatus.MAINTENANCE.value,
-        ]
-
-    def get_container_name(self) -> str:
-        """Get the Docker container name for this tenant."""
-        return f"dotmac-isp-{self.slug}"
-
-    def get_container_url(self) -> str:
-        """Get the URL where this tenant's ISP framework will be accessible."""
-        return f"https://{self.slug}.dotmac-isp.com"
+    """Tenant provisioning and operational status"""
+    REQUESTED = "requested"          # Initial signup submitted
+    VALIDATING = "validating"        # Validating signup details
+    QUEUED = "queued"               # Queued for provisioning
+    PROVISIONING = "provisioning"    # Infrastructure being created
+    MIGRATING = "migrating"         # Database migrations running
+    SEEDING = "seeding"             # Initial data being seeded
+    TESTING = "testing"             # Running health checks
+    READY = "ready"                 # Fully operational
+    ACTIVE = "active"               # Active and serving traffic
+    SUSPENDED = "suspended"         # Temporarily disabled
+    FAILED = "failed"               # Provisioning failed
+    DEPROVISIONING = "deprovisioning"  # Being torn down
+    ARCHIVED = "archived"           # Permanently disabled
 
 
-class TenantConfiguration(BaseModel):
-    """
-    Tenant configuration model - matches migration schema.
-    Stores configuration for tenant's ISP framework container.
-    """
-
-    __tablename__ = "tenant_configurations"
-
-    tenant_id = Column(
-        PGUUID(as_uuid=True),
-        ForeignKey("tenants.id", ondelete="CASCADE"),
-        nullable=False,
-    )
-    category = Column(
-        String(100), nullable=False
-    )  # e.g., 'isp_settings', 'billing', 'networking'
-    key = Column(String(255), nullable=False)  # e.g., 'company_name', 'default_plan'
-    value = Column(JSON, nullable=True)  # The actual configuration value
-    is_encrypted = Column(Boolean, nullable=False, default=False)
-
-    # Relationship back to tenant
-    tenant = relationship("Tenant", back_populates="configurations")
-
-    def __repr__(self) -> str:
-        return f"<TenantConfiguration(category='{self.category}', key='{self.key}')>"
+class TenantPlan(str, Enum):
+    """Tenant subscription plans"""
+    STARTER = "starter"
+    PROFESSIONAL = "professional"
+    ENTERPRISE = "enterprise"
+    CUSTOM = "custom"
 
 
-class TenantInvitation(BaseModel):
-    """
-    Tenant invitation model - for inviting users to join a tenant's ISP management.
-    This is a logical model that may not have a direct table yet.
-    """
-
-    __tablename__ = "tenant_invitations"
-
-    tenant_id = Column(
-        PGUUID(as_uuid=True),
-        ForeignKey("tenants.id", ondelete="CASCADE"),
-        nullable=False,
-    )
-    email = Column(String(255), nullable=False)
-    role = Column(String(50), nullable=False, default="user")
-    invited_by = Column(String(255), nullable=True)
-    expires_at = Column(DateTime, nullable=True)
-    accepted_at = Column(DateTime, nullable=True)
-
-    def __repr__(self) -> str:
-        return f"<TenantInvitation(email='{self.email}', role='{self.role}')>"
+class DeploymentType(str, Enum):
+    """How the tenant infrastructure is deployed"""
+    MANAGED = "managed"        # We provision and manage infrastructure
+    CUSTOMER_VPS = "customer_vps"  # Customer provides VPS, we manage software
 
 
-# Add the relationships to Tenant
-Tenant.configurations = relationship(
-    "TenantConfiguration", back_populates="tenant", cascade="all, delete-orphan"
-)
-Tenant.deployments = relationship(
-    "Deployment", back_populates="tenant", cascade="all, delete-orphan"
-)
+class CustomerTenant(Base, TimestampMixin, UUIDMixin):
+    """Customer tenant - represents a provisioned ISP customer environment"""
+    
+    __tablename__ = "customer_tenants"
+    
+    # Identity
+    tenant_id = Column(String(100), unique=True, nullable=False, index=True)
+    subdomain = Column(String(100), unique=True, nullable=False, index=True) 
+    name = Column(String(200), nullable=False)
+    company_name = Column(String(200), nullable=False)
+    description = Column(Text)
+    
+    # Status and lifecycle
+    status = Column(String(50), default=TenantStatus.REQUESTED, nullable=False, index=True)
+    plan = Column(String(50), default=TenantPlan.STARTER, nullable=False)
+    deployment_type = Column(String(50), default=DeploymentType.MANAGED, nullable=False, index=True)
+    region = Column(String(50), nullable=False)
+    
+    # Ownership
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    admin_email = Column(String(255), nullable=False)
+    admin_name = Column(String(200), nullable=False)
+    
+    # Infrastructure
+    domain = Column(String(255))  # Full domain: subdomain.example.com
+    container_id = Column(String(100))  # Coolify container/service ID
+    database_url = Column(String(500))  # Encrypted tenant database URL
+    redis_url = Column(String(500))     # Encrypted tenant Redis URL
+    
+    # Configuration
+    settings = Column(JSON, default=dict)
+    environment_vars = Column(JSON, default=dict)  # Encrypted tenant-specific env vars
+    
+    # Provisioning metadata
+    provisioning_logs = Column(JSON, default=list)
+    provisioning_started_at = Column(DateTime)
+    provisioning_completed_at = Column(DateTime)
+    last_health_check = Column(DateTime)
+    health_status = Column(String(50), default="unknown")
+    
+    # Billing
+    billing_email = Column(String(255))
+    payment_method_id = Column(String(100))  # Stripe/payment provider ID
+    subscription_id = Column(String(100))
+    next_billing_date = Column(DateTime)
+    
+    # Features
+    enabled_features = Column(JSON, default=list)
+    feature_limits = Column(JSON, default=dict)
+    
+    # VPS-specific fields (only used when deployment_type = CUSTOMER_VPS)
+    vps_ip = Column(String(45))  # IPv4 or IPv6
+    ssh_port = Column(Integer, default=22)
+    ssh_username = Column(String(100))
+    ssh_key = Column(Text)  # SSH public key
+    ssh_password_hash = Column(String(255))  # Encrypted password (alternative)
+    custom_domain = Column(String(255))  # Customer's custom domain
+    expected_customers = Column(Integer, default=100)
+    estimated_traffic = Column(String(20), default="low")  # low, medium, high
+    timezone = Column(String(50), default="UTC")
+    preferred_backup_time = Column(String(10), default="02:00")
+    support_tier = Column(String(50), default="basic")  # basic, premium, enterprise

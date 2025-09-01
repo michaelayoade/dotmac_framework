@@ -10,21 +10,47 @@ from fastapi import APIRouter
 from config import settings
 from dotmac_shared.api.router_factory import RouterFactory
 
-from .analytics import router as analytics_router
-from .auth import router as auth_router
-from .billing import router as billing_router
-from .commissions import router as commissions_router
-from .deployment import router as deployment_router
-from .monitoring import router as monitoring_router
-from .onboarding import router as onboarding_router
-from .partners.customers import router as partner_customers_router
-from .partners.dashboard import router as partner_dashboard_router
-from .partners.router import router as partners_router
-from .plugin import router as plugin_router
-from .tenant import router as tenant_router
-from .user_management import router as user_management_router
+# Import existing routers (gracefully handle missing ones)
+try:
+    from .admin import router as admin_router
+except ImportError:
+    admin_router = None
 
-api_router = APIRouter()
+try:
+    from .tenants import router as tenant_router
+except ImportError:
+    tenant_router = None
+
+try:
+    from .public_signup import router as public_signup_router
+except ImportError:
+    public_signup_router = None
+
+try:
+    from .onboarding import router as onboarding_router
+except ImportError:
+    onboarding_router = None
+
+try:
+    from .monitoring_simple import router as monitoring_router
+except ImportError:
+    monitoring_router = None
+
+try:
+    from .partners.router import router as partners_router
+except ImportError:
+    partners_router = None
+
+try:
+    from .vps_customers import router as vps_customers_router
+except ImportError:
+    vps_customers_router = None
+
+try:
+    from .licensing_endpoints import router as licensing_router
+except ImportError:
+    licensing_router = None
+
 api_router = APIRouter()
 
 
@@ -63,37 +89,41 @@ async def database_health_check() -> Dict[str, str]:
     }
 
 
-# Import tenant admin router
-from ...portals.tenant_admin.router import tenant_admin_api_router
+# Import tenant admin router (gracefully handle missing)
+try:
+    from ...portals.tenant_admin.router import tenant_admin_api_router
+except ImportError:
+    tenant_admin_api_router = None
 
-# Include all API routes
-api_router.include_router(analytics_router, prefix="/analytics", tags=["Analytics"])
-api_router.include_router(auth_router, prefix="/auth", tags=["Authentication"])
-api_router.include_router(tenant_router, prefix="/tenants", tags=["Tenants"])
-api_router.include_router(billing_router, prefix="/billing", tags=["Billing"])
-api_router.include_router(
-    commissions_router, prefix="/commissions", tags=["Commissions"]
-)
-api_router.include_router(deployment_router, prefix="/deployment", tags=["Deployment"])
-api_router.include_router(onboarding_router, prefix="/onboarding", tags=["Onboarding"])
-api_router.include_router(plugin_router, prefix="/plugins", tags=["Plugins"])
-api_router.include_router(monitoring_router, prefix="/monitoring", tags=["Monitoring"])
-api_router.include_router(
-    user_management_router, prefix="/user-management", tags=["User Management"]
-)
-api_router.include_router(
-    partners_router, prefix="/partners", tags=["Partner Management"]
-)
-api_router.include_router(
-    partner_dashboard_router, prefix="/partners", tags=["Partner Management"]
-)
-api_router.include_router(
-    partner_customers_router, prefix="/partners", tags=["Partner Management"]
-)
+# Include existing API routes (only if they exist)
+if admin_router:
+    api_router.include_router(admin_router, prefix="/admin", tags=["Admin"])
 
-# Include tenant admin portal API
-api_router.include_router(
-    tenant_admin_api_router, prefix="/tenant-admin", tags=["Tenant Admin Portal"]
-)
+if tenant_router:
+    api_router.include_router(tenant_router, prefix="/tenants", tags=["Tenants"])
+
+if public_signup_router:
+    api_router.include_router(public_signup_router, tags=["Public Signup"])
+
+if onboarding_router:
+    api_router.include_router(onboarding_router, prefix="/onboarding", tags=["Onboarding"])
+
+if monitoring_router:
+    api_router.include_router(monitoring_router, prefix="/monitoring", tags=["Monitoring"])
+
+if partners_router:
+    api_router.include_router(partners_router, prefix="/partners", tags=["Partners"])
+
+if vps_customers_router:
+    api_router.include_router(vps_customers_router, prefix="/vps-customers", tags=["VPS Customers"])
+
+if licensing_router:
+    api_router.include_router(licensing_router, tags=["License Management"])
+
+# Include tenant admin portal API (if available)
+if tenant_admin_api_router:
+    api_router.include_router(
+        tenant_admin_api_router, prefix="/tenant-admin", tags=["Tenant Admin Portal"]
+    )
 
 __all__ = ["api_router"]

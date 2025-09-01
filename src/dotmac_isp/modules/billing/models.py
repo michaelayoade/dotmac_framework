@@ -23,7 +23,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB, UUID as SQLAuuid
 from sqlalchemy.orm import relationship
 
-from dotmac_isp.shared.database.base import Base, TenantModel
+from dotmac_isp.shared.database.base import Base, BaseModel
 from dotmac_shared.billing.core.models import (
     Customer as SharedCustomer,
     BillingPlan as SharedBillingPlan,
@@ -35,7 +35,7 @@ from dotmac_shared.billing.core.models import (
 )
 
 
-class BillingCustomer(SharedCustomer, TenantModel):
+class BillingCustomer(SharedCustomer, BaseModel):
     """
     ISP-specific billing customer model.
     
@@ -58,7 +58,7 @@ class BillingCustomer(SharedCustomer, TenantModel):
     payments = relationship("Payment", back_populates="customer", cascade="all, delete-orphan")
 
 
-class BillingPlan(SharedBillingPlan, TenantModel):
+class BillingPlan(SharedBillingPlan, BaseModel):
     """
     ISP-specific billing plan model.
     
@@ -86,7 +86,7 @@ class BillingPlan(SharedBillingPlan, TenantModel):
     subscriptions = relationship("Subscription", back_populates="billing_plan")
 
 
-class Subscription(SharedSubscription, TenantModel):
+class Subscription(SharedSubscription, BaseModel):
     """
     ISP customer subscription model.
     
@@ -120,7 +120,7 @@ class Subscription(SharedSubscription, TenantModel):
     invoices = relationship("Invoice", back_populates="subscription")
 
 
-class Invoice(SharedInvoice, TenantModel):
+class Invoice(SharedInvoice, BaseModel):
     """
     ISP invoice model with service billing details.
     
@@ -158,7 +158,7 @@ class Invoice(SharedInvoice, TenantModel):
     payments = relationship("Payment", back_populates="invoice")
 
 
-class InvoiceLineItem(SharedInvoiceLineItem, TenantModel):
+class InvoiceLineItem(SharedInvoiceLineItem, BaseModel):
     """
     ISP invoice line item with service-specific details.
     
@@ -186,7 +186,7 @@ class InvoiceLineItem(SharedInvoiceLineItem, TenantModel):
     invoice = relationship("Invoice", back_populates="line_items")
 
 
-class Payment(SharedPayment, TenantModel):
+class Payment(SharedPayment, BaseModel):
     """
     ISP payment model with processing details.
     
@@ -222,7 +222,7 @@ class Payment(SharedPayment, TenantModel):
     invoice = relationship("Invoice", back_populates="payments")
 
 
-class UsageRecord(SharedUsageRecord, TenantModel):
+class UsageRecord(SharedUsageRecord, BaseModel):
     """
     ISP usage tracking model.
     
@@ -254,7 +254,7 @@ class UsageRecord(SharedUsageRecord, TenantModel):
     subscription = relationship("Subscription", back_populates="usage_records")
 
 
-class CreditNote(Base, TenantModel):
+class CreditNote(BaseModel):
     """
     ISP credit note model for service adjustments and refunds.
     """
@@ -291,7 +291,7 @@ class CreditNote(Base, TenantModel):
     custom_metadata = Column(JSONB, default=dict)
 
 
-class TaxRate(Base, TenantModel):
+class TaxRate(BaseModel):
     """
     ISP tax rate configuration for different jurisdictions.
     """

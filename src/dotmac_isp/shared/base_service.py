@@ -23,7 +23,7 @@ from .exceptions import (
     ServiceError,
     ValidationError,
 )
-from .models import Base, TenantMixin
+from .database.base import Base, BaseModel as ISPBaseModel
 
 logger = logging.getLogger(__name__)
 

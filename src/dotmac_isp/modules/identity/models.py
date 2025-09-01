@@ -13,7 +13,7 @@ from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
-from dotmac_isp.shared.database.base import TenantModel, Base
+from dotmac_isp.shared.database.base import BaseModel, Base
 from dotmac_shared.database import ISPModelMixin
 
 
@@ -41,7 +41,7 @@ class Role(str, Enum):
     TECHNICIAN = "technician"
 
 
-class User(TenantModel):
+class User(BaseModel):
     """User model for all platform users."""
     __tablename__ = "identity_users"
 
@@ -82,7 +82,7 @@ class User(TenantModel):
     )
 
 
-class Customer(TenantModel):
+class Customer(BaseModel):
     """Customer model extending user for ISP customers."""
     __tablename__ = "customers"
 
@@ -129,7 +129,7 @@ class Customer(TenantModel):
     user = relationship("User", backref="customer_profile")
 
 
-class PortalAccess(TenantModel):
+class PortalAccess(BaseModel):
     """Portal access permissions and settings."""
     __tablename__ = "portal_access"
 
@@ -279,7 +279,7 @@ class LoginAttempt(Base):
     attempted_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
-class UserRole(TenantModel):
+class UserRole(BaseModel):
     """User role assignment (tenant-specific)."""
     __tablename__ = "user_roles"
 

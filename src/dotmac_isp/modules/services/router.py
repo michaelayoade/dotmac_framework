@@ -5,13 +5,13 @@ from datetime import date, datetime
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from fastapi import Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from dotmac_isp.shared.database import get_db
 from dotmac_shared.api.dependencies import get_current_tenant, get_current_user, StandardDeps
 from dotmac_shared.api.exception_handlers import standard_exception_handler
-from dotmac_shared.api.pagination import PaginationParams
+from dotmac_shared.core.pagination import PaginationParams
 from dotmac_shared.api.router_factory import RouterFactory
 
 from . import schemas
@@ -19,8 +19,8 @@ from .service import ServicesService
 
 logger = logging.getLogger(__name__)
 
-# Use RouterFactory for standardized router creation
-services_router = RouterFactory.create_standard_router(
+# Create APIRouter directly due to factory limitations
+services_router = APIRouter(
     prefix="/services", 
     tags=["services", "service-plans", "subscriptions"]
 )

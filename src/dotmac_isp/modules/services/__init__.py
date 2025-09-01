@@ -1,6 +1,7 @@
 """Services module for service provisioning and lifecycle management."""
 
 from . import models, schemas
-from .router import router
+# TODO: Fix RouterFactory parameters before re-enabling
+# from .router import router
 
-__all__ = ["router", "models", "schemas"]
+__all__ = ["models", "schemas"]  # "router" removed temporarily

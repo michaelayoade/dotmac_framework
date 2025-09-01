@@ -2,7 +2,8 @@
 SQLAlchemy models for the DotMac Management Platform.
 """
 
-# Import all models to ensure they are registered with SQLAlchemy
+# Import database Base first to ensure proper inheritance 
+from ..database import Base
 from .base import BaseModel
 from .billing import (
     Commission,
@@ -20,15 +21,14 @@ from .deployment import (
 )
 from .monitoring import Alert, HealthCheck, Metric, SLARecord
 from .plugin import Plugin, PluginCategory, PluginLicense, PluginUsage
-from .tenant import Tenant, TenantConfiguration, TenantInvitation
+from .tenant import CustomerTenant
 from .user import User
 
 __all__ = [
+    "Base",
     "BaseModel",
     "User",
-    "Tenant",
-    "TenantConfiguration",
-    "TenantInvitation",
+    "CustomerTenant",
     "Subscription",
     "Invoice",
     "Payment",

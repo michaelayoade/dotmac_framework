@@ -1,0 +1,147 @@
+# Production Docker Compose for Coolify Deployment
+# This file demonstrates the SERVICE_TYPE pattern for single image, multiple services
+
+version: '3.8'
+
+services:
+  # Database Migration Job (runs once per deployment)
+  db-migrate:
+    image: ${DOCKER_REGISTRY:-ghcr.io/dotmac}/dotmac-framework:${IMAGE_TAG:-latest}
+    container_name: dotmac-migration
+    restart: "no"
+    environment:
+      - SERVICE_TYPE=migration
+      - DATABASE_URL=${DATABASE_URL}
+    volumes:
+      - migration_logs:/app/logs
+    networks:
+      - dotmac-network
+    healthcheck:
+      test: ["CMD", "test", "-f", "/app/migration_complete"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+    command: ["/migrate.sh"]
+  # ISP Service Instance
+  dotmac-isp:
+    image: ${DOCKER_REGISTRY:-ghcr.io/dotmac}/dotmac-framework:${IMAGE_TAG:-latest}
+    container_name: dotmac-isp
+    restart: unless-stopped
+    environment:
+      - SERVICE_TYPE=isp
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - SECRET_KEY=${SECRET_KEY}
+      - DEBUG=${DEBUG:-false}
+      - ENVIRONMENT=${ENVIRONMENT:-production}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    ports:
+      - "${ISP_PORT:-8000}:8000"
+    volumes:
+      - isp_logs:/app/logs
+      - isp_uploads:/app/uploads
+    networks:
+      - dotmac-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    depends_on:
+      db-migrate:
+        condition: service_healthy
+      postgres:
+        condition: service_started
+      redis:
+        condition: service_started
+
+  # Management Service Instance  
+  dotmac-management:
+    image: ${DOCKER_REGISTRY:-ghcr.io/dotmac}/dotmac-framework:${IMAGE_TAG:-latest}
+    container_name: dotmac-management
+    restart: unless-stopped
+    environment:
+      - SERVICE_TYPE=management
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - SECRET_KEY=${SECRET_KEY}
+      - DEBUG=${DEBUG:-false}
+      - ENVIRONMENT=${ENVIRONMENT:-production}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    ports:
+      - "${MANAGEMENT_PORT:-8001}:8001"
+    volumes:
+      - management_logs:/app/logs
+      - management_uploads:/app/uploads
+    networks:
+      - dotmac-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    depends_on:
+      db-migrate:
+        condition: service_healthy
+      postgres:
+        condition: service_started
+      redis:
+        condition: service_started
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: dotmac-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-dotmac}
+      - POSTGRES_USER=${POSTGRES_USER:-dotmac}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    networks:
+      - dotmac-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-dotmac}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: dotmac-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    networks:
+      - dotmac-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  isp_logs:
+    driver: local
+  isp_uploads:
+    driver: local
+  management_logs:
+    driver: local
+  management_uploads:
+    driver: local
+  migration_logs:
+    driver: local
+
+networks:
+  dotmac-network:
+    driver: bridge

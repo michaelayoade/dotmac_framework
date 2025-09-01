@@ -13,7 +13,8 @@ from sqlalchemy import ForeignKey, Integer, Numeric, String, Text
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import relationship
 
-from .base import UUID, BaseModel
+from .base import BaseModel
+from sqlalchemy.dialects.postgresql import UUID
 
 
 class SubscriptionStatus(str, Enum):
@@ -136,7 +137,7 @@ class Subscription(BaseModel):
     __tablename__ = "subscriptions"
 
     tenant_id = Column(
-        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False, index=True
+        UUID(as_uuid=True), ForeignKey("customer_tenants.id"), nullable=False, index=True
     )
     pricing_plan_id = Column(
         UUID(as_uuid=True), ForeignKey("pricing_plans.id"), nullable=False
@@ -407,7 +408,7 @@ class Commission(BaseModel):
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True
     )
     tenant_id = Column(
-        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False, index=True
+        UUID(as_uuid=True), ForeignKey("customer_tenants.id"), nullable=False, index=True
     )
     subscription_id = Column(
         UUID(as_uuid=True), ForeignKey("subscriptions.id"), nullable=True

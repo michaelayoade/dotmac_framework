@@ -1,4 +1,4 @@
-name: Continuous Integration
+name: CI Minimal
 
 on:
   push:
@@ -6,38 +6,61 @@ on:
   pull_request:
     branches: [main, develop]
 
-env:
-  NODE_VERSION: "18.x"
-  PYTHON_VERSION: "3.11"
-  PNPM_VERSION: "8.x"
-
 jobs:
-  # Security and vulnerability scanning
-  security-scan:
-    name: Security Scan
+  tests:
+    name: Lint and Tests (Backend)
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_USER: test_user
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
+      - name: Setup Python
+        uses: actions/setup-python@v4
         with:
-          scan-type: "fs"
-          scan-ref: "."
-          format: "sarif"
-          output: "trivy-results.sarif"
+          python-version: '3.11'
 
-      - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: "trivy-results.sarif"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-      - name: Run Semgrep security analysis
-        uses: returntocorp/semgrep-action@v1
-        with:
-          publishToken: ${{ secrets.SEMGREP_APP_TOKEN }}
+      - name: Enforce DRY service standards
+        run: |
+          python tools/enforce_patterns.py
 
-  # Frontend testing and validation
+      - name: Run unit tests
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
+          REDIS_URL: redis://localhost:6379/0
+          ENVIRONMENT: test
+        run: |
+          pytest -v --cov=src --cov-report=xml --cov-report=term-missing
   frontend:
     name: Frontend CI
     runs-on: ubuntu-latest

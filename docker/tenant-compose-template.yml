@@ -1,0 +1,240 @@
+# Tenant Docker Compose Template
+# Used by provisioning service to create per-tenant infrastructure
+# Variables are replaced by Jinja2 templating
+
+version: '3.8'
+
+services:
+  # Database Migration Job (runs once per deployment)
+  db-migrate:
+    image: ghcr.io/dotmac/dotmac-framework:{{ image_tag }}
+    restart: "no"  # Run once and exit
+    environment:
+      - SERVICE_TYPE=migration
+      - DATABASE_URL={{ database_url }}
+      - TENANT_ID={{ tenant_id }}
+      - PYTHONPATH=/app/src
+    volumes:
+      - migration_logs:/app/logs
+    healthcheck:
+      test: ["CMD", "test", "-f", "/app/migration_complete"]
+      interval: 5s
+      timeout: 3s
+      retries: 20  # 2 minutes max for tenant migrations
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    command: ["/migrate.sh"]
+    networks:
+      - tenant-network
+
+  # Main ISP Application
+  dotmac-isp:
+    image: ghcr.io/dotmac/dotmac-framework:{{ image_tag }}
+    restart: unless-stopped
+    environment:
+      # Service Configuration
+      - SERVICE_TYPE=isp
+      - TENANT_ID={{ tenant_id }}
+      - ENVIRONMENT=production
+      - DEBUG=false
+      - LOG_LEVEL=info
+      
+      # Database & Cache
+      - DATABASE_URL={{ database_url }}
+      - REDIS_URL={{ redis_url }}
+      
+      # Tenant-specific secrets (injected by provisioning)
+      - SECRET_KEY=${SECRET_KEY}
+      - JWT_SECRET=${JWT_SECRET}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - COOKIE_SECRET=${COOKIE_SECRET}
+      - WEBHOOK_SECRET=${WEBHOOK_SECRET}
+      
+      # Domain & CORS
+      - BASE_DOMAIN={{ domain }}
+      - CORS_ORIGINS=https://{{ domain }},https://www.{{ domain }}
+      - ALLOWED_HOSTS={{ domain }},www.{{ domain }}
+      
+      # Plan-specific limits
+      - MAX_CUSTOMERS={{ plan_limits.max_customers | default(1000) }}
+      - MAX_UPLOAD_SIZE={{ plan_limits.max_upload_size | default('100MB') }}
+      - RATE_LIMIT_PER_MINUTE={{ plan_limits.rate_limit | default(1000) }}
+      
+      # Features (based on plan)
+      - FEATURES_BILLING={{ 'true' if 'billing' in enabled_features else 'false' }}
+      - FEATURES_ANALYTICS={{ 'true' if 'analytics' in enabled_features else 'false' }}
+      - FEATURES_INTEGRATIONS={{ 'true' if 'integrations' in enabled_features else 'false' }}
+      
+      # Regional settings
+      - REGION={{ region }}
+      - TIMEZONE={{ regional_settings.timezone | default('UTC') }}
+      - LOCALE={{ regional_settings.locale | default('en-US') }}
+      
+      # Admin user (for initial seeding)
+      - ADMIN_EMAIL={{ admin_email }}
+      - ADMIN_NAME={{ admin_name }}
+      - COMPANY_NAME={{ company_name }}
+      
+    ports:
+      - "8000:8000"
+    
+    volumes:
+      - app_logs:/app/logs
+      - app_uploads:/app/uploads
+      - app_temp:/app/temp
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    
+    depends_on:
+      db-migrate:
+        condition: service_completed_successfully
+    
+    deploy:
+      resources:
+        limits:
+          cpus: {{ resource_limits.cpu | default('1.0') }}
+          memory: {{ resource_limits.memory | default('1G') }}
+        reservations:
+          cpus: {{ resource_limits.cpu_reserved | default('0.25') }}
+          memory: {{ resource_limits.memory_reserved | default('256M') }}
+    
+    networks:
+      - tenant-network
+    
+    # Security
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    read_only: false  # App needs to write logs/uploads
+    
+  # Background Worker (for async tasks)
+  dotmac-worker:
+    image: ghcr.io/dotmac/dotmac-framework:{{ image_tag }}
+    restart: unless-stopped
+    environment:
+      # Inherit most config from main app
+      - SERVICE_TYPE=worker
+      - TENANT_ID={{ tenant_id }}
+      - DATABASE_URL={{ database_url }}
+      - REDIS_URL={{ redis_url }}
+      - SECRET_KEY=${SECRET_KEY}
+      - LOG_LEVEL=info
+      
+    volumes:
+      - worker_logs:/app/logs
+    
+    healthcheck:
+      test: ["CMD", "python", "-c", "import redis; r=redis.from_url('{{ redis_url }}'); r.ping()"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+    
+    depends_on:
+      - dotmac-isp
+    
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+    
+    networks:
+      - tenant-network
+    
+    # Worker-specific command
+    command: ["python", "-m", "dotmac_isp.worker", "--tenant", "{{ tenant_id }}"]
+
+  # Backup Service (plan-dependent)
+  {% if plan in ['professional', 'enterprise'] %}
+  backup-service:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      - PGPASSWORD={{ database_password }}
+    volumes:
+      - backup_data:/backups
+      - backup_logs:/var/log
+    command: |
+      sh -c '
+        while true; do
+          echo "Starting backup at $(date)"
+          pg_dump {{ database_url }} > /backups/backup-$(date +%Y%m%d-%H%M%S).sql
+          find /backups -name "backup-*.sql" -mtime +7 -delete
+          sleep 86400  # 24 hours
+        done
+      '
+    networks:
+      - tenant-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 256M
+  {% endif %}
+
+volumes:
+  migration_logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /data/tenants/{{ tenant_id }}/logs/migration
+  
+  app_logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /data/tenants/{{ tenant_id }}/logs/app
+  
+  app_uploads:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /data/tenants/{{ tenant_id }}/uploads
+  
+  app_temp:
+    driver: local
+  
+  worker_logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /data/tenants/{{ tenant_id }}/logs/worker
+  
+  {% if plan in ['professional', 'enterprise'] %}
+  backup_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /data/tenants/{{ tenant_id }}/backups
+  
+  backup_logs:
+    driver: local
+  {% endif %}
+
+networks:
+  tenant-network:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: br-{{ tenant_id[:12] }}
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.{{ (tenant_id | hash | abs) % 200 + 20 }}.0.0/16

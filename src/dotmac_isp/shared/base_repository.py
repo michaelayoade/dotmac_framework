@@ -22,7 +22,7 @@ from .exceptions import (
     EntityNotFoundError,
     ValidationError,
 )
-from .models import Base, TenantMixin
+from .database.base import Base, BaseModel
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +83,7 @@ class BaseRepository(Generic[ModelType], ABC):
         """
         try:
             # Add tenant_id if model supports multi-tenancy
-            if self.tenant_id and issubclass(self.model_class, TenantMixin):
+            if self.tenant_id and issubclass(self.model_class, BaseModel):
                 data["tenant_id"] = self.tenant_id
 
             # Create entity
@@ -330,7 +330,7 @@ class BaseRepository(Generic[ModelType], ABC):
             entities = []
             for data in data_list:
                 # Add tenant_id if model supports multi-tenancy
-                if self.tenant_id and issubclass(self.model_class, TenantMixin):
+                if self.tenant_id and issubclass(self.model_class, BaseModel):
                     data["tenant_id"] = self.tenant_id
 
                 entity = self.model_class(**data)
@@ -424,7 +424,7 @@ class BaseRepository(Generic[ModelType], ABC):
         query = self.db.query(self.model_class)
 
         # Apply tenant filtering if supported
-        if self.tenant_id and issubclass(self.model_class, TenantMixin):
+        if self.tenant_id and issubclass(self.model_class, BaseModel):
             query = query.filter(self.model_class.tenant_id == self.tenant_id)
 
         # Filter out soft-deleted entities if supported
@@ -504,9 +504,9 @@ class BaseTenantRepository(BaseRepository[ModelType]):
         if not tenant_id:
             raise ValidationError("tenant_id is required for tenant repositories")
 
-        if not issubclass(model_class, TenantMixin):
+        if not issubclass(model_class, BaseModel):
             raise ValidationError(
-                f"Model {model_class.__name__} must inherit from TenantMixin"
+                f"Model {model_class.__name__} must inherit from BaseModel"
             )
 
         super().__init__(db, model_class, tenant_id)
@@ -570,7 +570,7 @@ def create_repository(
     Returns:
         Repository instance
     """
-    if issubclass(model_class, TenantMixin) and tenant_id:
+    if issubclass(model_class, BaseModel) and tenant_id:
         return BaseTenantRepository(db, model_class, tenant_id)
     else:
         return BaseRepository(db, model_class, tenant_id)

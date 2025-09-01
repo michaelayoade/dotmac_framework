@@ -1,427 +1,441 @@
-"""Reseller database models for partner and channel management."""
+"""
+Reseller models for ISP Framework
 
-from datetime import datetime
+Leverages shared reseller enums while maintaining separate table structures.
+Follows DRY principles through shared enums and patterns.
+"""
+
+from datetime import date, datetime
 from decimal import Decimal
-from typing import Any, Dict, List, Optional
+from typing import Optional, Dict, Any
+from uuid import uuid4
 
-from sqlalchemy import (
-    JSON,
-    Boolean,
-    Column,
-    DateTime,
-    Enum,
-    ForeignKey,
-    Index,
-    Integer,
-    Numeric,
-    String,
-    Text,
-    UniqueConstraint,
-)
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Boolean, Column, Date, DateTime, ForeignKey, Integer, Numeric, String, Text
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
-from sqlalchemy.sql import func
+from sqlalchemy import Enum as SQLEnum
 
-from dotmac_shared.db.mixins import AuditMixin, TenantMixin
-from dotmac_shared.db.models import Base
+from dotmac_isp.shared.database.base import BaseModel
 
-
-class ResellerStatus(str, Enum):
-    """Reseller status enumeration."""
-    ACTIVE = "active"
-    INACTIVE = "inactive"
-    SUSPENDED = "suspended"
-    PENDING_APPROVAL = "pending_approval"
-    TERMINATED = "terminated"
-
-
-class ResellerType(str, Enum):
-    """Reseller type enumeration."""
-    PARTNER = "partner"
-    DISTRIBUTOR = "distributor"
-    AGENT = "agent"
-    AFFILIATE = "affiliate"
-    VAR = "var"  # Value Added Reseller
-    MSP = "msp"  # Managed Service Provider
+# Import shared enums - reuse completely for DRY compliance
+from dotmac_shared.sales.core.reseller_models import (
+    ResellerType,
+    ResellerStatus, 
+    ResellerTier,
+    CommissionStructure,
+    ResellerCertificationStatus
+)
 
 
-class ResellerTier(str, Enum):
-    """Reseller tier enumeration for performance-based classification."""
-    BRONZE = "bronze"
-    SILVER = "silver"
-    GOLD = "gold"
-    PLATINUM = "platinum"
-    DIAMOND = "diamond"
-
-
-class CommissionStatus(str, Enum):
-    """Commission payment status."""
-    PENDING = "pending"
-    CALCULATED = "calculated"
-    APPROVED = "approved"
-    PAID = "paid"
-    DISPUTED = "disputed"
-    CANCELLED = "cancelled"
-
-
-class Reseller(Base, TenantMixin, AuditMixin):
-    """Model for reseller/partner management."""
-
-    __tablename__ = "resellers"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
+class ISPReseller(BaseModel):
+    """
+    ISP reseller model with comprehensive partner management.
+    Uses shared enums but independent table structure for tenant isolation.
+    """
     
-    # Company Information
-    company_name = Column(String(200), nullable=False)
-    business_registration_number = Column(String(100))
-    tax_identification_number = Column(String(100))
-    website = Column(String(200))
+    __tablename__ = "isp_resellers"
     
-    # Reseller Classification
-    reseller_type = Column(Enum(ResellerType), nullable=False, default=ResellerType.PARTNER)
-    reseller_tier = Column(Enum(ResellerTier), nullable=False, default=ResellerTier.BRONZE)
-    status = Column(Enum(ResellerStatus), nullable=False, default=ResellerStatus.PENDING_APPROVAL)
+    # Basic reseller information
+    reseller_id = Column(String(100), nullable=False, unique=True, index=True)
+    company_name = Column(String(300), nullable=False, index=True)
+    legal_name = Column(String(300), nullable=True)
+    doing_business_as = Column(String(300), nullable=True)
     
-    # Contact Information
-    contact_email = Column(String(255), nullable=False)
-    contact_phone = Column(String(20))
-    contact_person = Column(String(100))
-    contact_person_title = Column(String(100))
+    # Classification using shared enums
+    reseller_type = Column(SQLEnum(ResellerType), nullable=False, index=True)
+    reseller_status = Column(
+        SQLEnum(ResellerStatus), 
+        default=ResellerStatus.PROSPECT, 
+        nullable=False, 
+        index=True
+    )
+    reseller_tier = Column(
+        SQLEnum(ResellerTier), 
+        default=ResellerTier.BRONZE, 
+        nullable=False, 
+        index=True
+    )
     
-    # Address Information
-    billing_address = Column(Text)
-    shipping_address = Column(Text)
-    billing_country = Column(String(2))  # ISO country code
-    billing_currency = Column(String(3))  # ISO currency code
+    # Contact information
+    primary_contact_name = Column(String(200), nullable=False)
+    primary_contact_email = Column(String(255), nullable=False, index=True)
+    primary_contact_phone = Column(String(20), nullable=True)
     
-    # Commission and Financial
-    commission_rate = Column(Numeric(5, 4), nullable=False, default=Decimal('0.10'))  # 10%
-    payment_terms_days = Column(Integer, default=30)
-    minimum_payout_amount = Column(Numeric(10, 2), default=Decimal('100.00'))
+    # Business details
+    tax_id = Column(String(50), nullable=True)
+    business_license = Column(String(100), nullable=True)
+    website_url = Column(String(500), nullable=True)
+    business_address = Column(JSONB, nullable=True)
     
-    # Geographic Coverage
-    territories = Column(JSON, default=list)  # List of territories/regions
-    allowed_countries = Column(JSON, default=list)
-    restricted_countries = Column(JSON, default=list)
+    # Service territories and capabilities
+    service_territories = Column(JSONB, nullable=True)
+    service_types_offered = Column(JSONB, nullable=True)  # internet, phone, tv, bundle
+    installation_capabilities = Column(JSONB, nullable=True)  # fiber, wireless, etc
     
-    # Contract Information
-    contract_start_date = Column(DateTime, nullable=False)
-    contract_end_date = Column(DateTime)
-    contract_number = Column(String(100))
-    auto_renew = Column(Boolean, default=False)
+    # Partnership agreement
+    agreement_start_date = Column(Date, nullable=True)
+    agreement_end_date = Column(Date, nullable=True)
+    agreement_type = Column(String(50), nullable=True)
     
-    # Performance and Targets
-    sales_target_annual = Column(Numeric(12, 2))
-    sales_target_quarterly = Column(Numeric(12, 2))
-    performance_targets = Column(JSON, default=dict)
-    current_tier_requirements = Column(JSON, default=dict)
+    # Commission structure using shared enum
+    commission_structure = Column(SQLEnum(CommissionStructure), nullable=True)
+    base_commission_rate = Column(Numeric(5, 2), nullable=True)
     
-    # Settings and Configuration
-    allow_self_provisioning = Column(Boolean, default=False)
-    require_approval_for_orders = Column(Boolean, default=True)
-    api_access_enabled = Column(Boolean, default=False)
-    portal_access_enabled = Column(Boolean, default=True)
+    # Performance metrics
+    total_customers = Column(Integer, default=0, nullable=False)
+    active_customers = Column(Integer, default=0, nullable=False)
+    lifetime_sales = Column(Numeric(15, 2), default=0, nullable=False)
+    ytd_sales = Column(Numeric(15, 2), default=0, nullable=False)
+    monthly_sales = Column(Numeric(12, 2), default=0, nullable=False)
+    annual_quota = Column(Numeric(12, 2), nullable=True)
     
-    # Marketing and Branding
-    marketing_materials_approved = Column(Boolean, default=False)
-    use_co_branding = Column(Boolean, default=False)
-    logo_url = Column(String(500))
-    brand_guidelines = Column(JSON, default=dict)
+    # ISP-specific performance metrics
+    customer_churn_rate = Column(Numeric(5, 2), nullable=True)
+    average_install_time_days = Column(Integer, nullable=True)
+    customer_satisfaction_score = Column(Numeric(3, 2), nullable=True)
     
-    # Internal Notes and Metadata
-    internal_notes = Column(Text)
-    tags = Column(JSON, default=list)
-    metadata = Column(JSON, default=dict)
+    # Portal access
+    portal_enabled = Column(Boolean, default=True, nullable=False)
+    portal_user_id = Column(UUID(as_uuid=True), nullable=True, index=True)
+    portal_last_login = Column(DateTime, nullable=True)
+    
+    # Support and certification
+    assigned_support_rep = Column(String(200), nullable=True)
+    certification_status = Column(
+        SQLEnum(ResellerCertificationStatus),
+        default=ResellerCertificationStatus.NOT_REQUIRED,
+        nullable=False
+    )
+    certification_date = Column(Date, nullable=True)
+    
+    # Custom fields
+    custom_fields = Column(JSONB, default=dict, nullable=False)
+    internal_notes = Column(Text, nullable=True)
+    tags = Column(JSONB, default=list, nullable=False)
     
     # Relationships
-    reseller_contacts = relationship("ResellerContact", back_populates="reseller", cascade="all, delete-orphan")
-    reseller_opportunities = relationship("ResellerOpportunity", back_populates="reseller", cascade="all, delete-orphan")
-    commissions = relationship("Commission", back_populates="reseller", cascade="all, delete-orphan")
-    performance_records = relationship("ResellerPerformance", back_populates="reseller", cascade="all, delete-orphan")
-    territory_assignments = relationship("ResellerTerritory", back_populates="reseller", cascade="all, delete-orphan")
-
-    __table_args__ = (
-        UniqueConstraint("tenant_id", "company_name", name="uq_reseller_tenant_company"),
-        UniqueConstraint("tenant_id", "contact_email", name="uq_reseller_tenant_email"),
-        Index("idx_reseller_type", "reseller_type"),
-        Index("idx_reseller_tier", "reseller_tier"),
-        Index("idx_reseller_status", "status"),
-        Index("idx_reseller_territories", "territories"),
-    )
-
+    customers = relationship("ResellerCustomer", back_populates="reseller", cascade="all, delete-orphan")
+    commissions = relationship("ResellerCommission", back_populates="reseller", cascade="all, delete-orphan")
+    opportunities = relationship("ResellerOpportunity", back_populates="reseller", cascade="all, delete-orphan")
+    applications = relationship("ResellerApplication", back_populates="approved_reseller")
+    
+    @property
+    def is_active(self) -> bool:
+        """Check if reseller is active and can operate."""
+        return self.reseller_status == ResellerStatus.ACTIVE
+    
+    @property
+    def commission_rate_display(self) -> str:
+        """Get formatted commission rate for display."""
+        if self.base_commission_rate:
+            return f"{self.base_commission_rate}%"
+        return "Not Set"
+    
     def __repr__(self):
-        return f"<Reseller(id={self.id}, company_name={self.company_name}, type={self.reseller_type})>"
+        return f"<ISPReseller(id='{self.reseller_id}', company='{self.company_name}', status='{self.reseller_status}')>"
 
 
-class ResellerContact(Base, TenantMixin, AuditMixin):
-    """Model for additional reseller contact persons."""
-
-    __tablename__ = "reseller_contacts"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
-    reseller_id = Column(UUID(as_uuid=True), ForeignKey("resellers.id"), nullable=False)
+class ResellerCustomer(BaseModel):
+    """
+    ISP customer-reseller relationship model.
+    Tracks customers assigned to resellers for management.
+    """
     
-    contact_type = Column(String(50), nullable=False)  # primary, technical, billing, sales
-    first_name = Column(String(100), nullable=False)
-    last_name = Column(String(100), nullable=False)
-    title = Column(String(100))
-    email = Column(String(255), nullable=False)
-    phone = Column(String(20))
-    mobile = Column(String(20))
-    department = Column(String(100))
-    is_primary = Column(Boolean, default=False)
-    is_active = Column(Boolean, default=True)
-    preferred_language = Column(String(5))  # ISO language code
+    __tablename__ = "isp_reseller_customers"
     
-    reseller = relationship("Reseller", back_populates="reseller_contacts")
-
-    __table_args__ = (
-        Index("idx_reseller_contact_reseller", "reseller_id"),
-        Index("idx_reseller_contact_type", "contact_type"),
-        Index("idx_reseller_contact_primary", "is_primary"),
+    # References
+    reseller_id = Column(
+        UUID(as_uuid=True), 
+        ForeignKey("isp_resellers.id"), 
+        nullable=False, 
+        index=True
     )
-
+    customer_id = Column(UUID(as_uuid=True), nullable=False, index=True)
+    
+    # Relationship details
+    relationship_start_date = Column(Date, nullable=False, default=date.today)
+    relationship_status = Column(String(50), default="active", nullable=False, index=True)
+    assignment_type = Column(String(50), nullable=True)  # direct, referral, inherited
+    
+    # ISP-specific service tracking
+    primary_service_type = Column(String(50), nullable=True)  # internet, phone, tv
+    connection_type = Column(String(50), nullable=True)  # fiber, cable, dsl, wireless
+    service_speed_mbps = Column(Integer, nullable=True)
+    installation_date = Column(Date, nullable=True)
+    last_service_call = Column(Date, nullable=True)
+    
+    # Financial tracking
+    monthly_recurring_revenue = Column(Numeric(10, 2), default=0, nullable=False)
+    lifetime_value = Column(Numeric(12, 2), default=0, nullable=False)
+    total_commission_paid = Column(Numeric(10, 2), default=0, nullable=False)
+    
+    # Customer acquisition
+    acquisition_date = Column(Date, nullable=True)
+    acquisition_channel = Column(String(100), nullable=True)
+    
+    # Additional information
+    notes = Column(Text, nullable=True)
+    custom_fields = Column(JSONB, default=dict, nullable=False)
+    
+    # Relationship
+    reseller = relationship("ISPReseller", back_populates="customers")
+    
     def __repr__(self):
-        return f"<ResellerContact(id={self.id}, name={self.first_name} {self.last_name}, type={self.contact_type})>"
+        return f"<ResellerCustomer(reseller_id='{self.reseller_id}', customer_id='{self.customer_id}')>"
 
 
-class ResellerOpportunity(Base, TenantMixin, AuditMixin):
-    """Model for tracking opportunities assigned to resellers."""
-
-    __tablename__ = "reseller_opportunities"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
-    reseller_id = Column(UUID(as_uuid=True), ForeignKey("resellers.id"), nullable=False)
-    opportunity_id = Column(UUID(as_uuid=True), nullable=False)  # Reference to CRM opportunity
+class ResellerOpportunity(BaseModel):
+    """
+    ISP sales opportunity managed by resellers.
+    Tracks potential customers through the sales pipeline.
+    """
     
-    assigned_date = Column(DateTime, nullable=False, default=func.now())
-    expected_close_date = Column(DateTime)
-    actual_close_date = Column(DateTime)
+    __tablename__ = "isp_reseller_opportunities"
     
-    opportunity_value = Column(Numeric(12, 2))
-    commission_override = Column(Numeric(5, 4))  # Override default commission rate
-    status = Column(String(50), nullable=False, default="assigned")
-    stage = Column(String(50))
-    probability = Column(Integer)  # 0-100
-    
-    notes = Column(Text)
-    internal_notes = Column(Text)
-    
-    reseller = relationship("Reseller", back_populates="reseller_opportunities")
-
-    __table_args__ = (
-        UniqueConstraint("reseller_id", "opportunity_id", name="uq_reseller_opportunity"),
-        Index("idx_reseller_opportunity_reseller", "reseller_id"),
-        Index("idx_reseller_opportunity_status", "status"),
-        Index("idx_reseller_opportunity_assigned", "assigned_date"),
+    # References
+    reseller_id = Column(
+        UUID(as_uuid=True), 
+        ForeignKey("isp_resellers.id"), 
+        nullable=False, 
+        index=True
     )
-
+    
+    # Opportunity identification
+    opportunity_id = Column(String(100), nullable=False, unique=True, index=True)
+    opportunity_name = Column(String(300), nullable=False)
+    
+    # Prospect information
+    prospect_name = Column(String(200), nullable=False)
+    prospect_email = Column(String(255), nullable=True)
+    prospect_phone = Column(String(20), nullable=True)
+    prospect_address = Column(JSONB, nullable=True)
+    
+    # Opportunity details
+    opportunity_type = Column(String(50), nullable=False)  # new_customer, upsell, renewal
+    estimated_value = Column(Numeric(10, 2), nullable=True)
+    probability = Column(Integer, default=50, nullable=False)
+    
+    # ISP-specific opportunity details
+    desired_service_type = Column(String(50), nullable=True)
+    desired_speed_mbps = Column(Integer, nullable=True)
+    installation_address = Column(JSONB, nullable=True)
+    service_availability_confirmed = Column(Boolean, default=False, nullable=False)
+    technical_survey_completed = Column(Boolean, default=False, nullable=False)
+    
+    # Sales pipeline
+    stage = Column(String(50), nullable=False, default="prospect", index=True)
+    expected_close_date = Column(Date, nullable=True)
+    actual_close_date = Column(Date, nullable=True)
+    
+    # Source and tracking
+    lead_source = Column(String(100), nullable=True)
+    first_contact_date = Column(Date, nullable=True)
+    last_contact_date = Column(Date, nullable=True)
+    
+    # Commission planning
+    estimated_commission = Column(Numeric(8, 2), nullable=True)
+    
+    # Additional information
+    description = Column(Text, nullable=True)
+    notes = Column(Text, nullable=True)
+    next_action = Column(String(500), nullable=True)
+    custom_fields = Column(JSONB, default=dict, nullable=False)
+    
+    # Relationship
+    reseller = relationship("ISPReseller", back_populates="opportunities")
+    
+    @property
+    def is_active(self) -> bool:
+        """Check if opportunity is still active (not closed)."""
+        return self.stage not in ["closed_won", "closed_lost"]
+    
+    @property
+    def is_overdue(self) -> bool:
+        """Check if opportunity is past expected close date."""
+        return (
+            self.expected_close_date 
+            and date.today() > self.expected_close_date 
+            and self.is_active
+        )
+    
     def __repr__(self):
-        return f"<ResellerOpportunity(id={self.id}, reseller_id={self.reseller_id}, opportunity_id={self.opportunity_id})>"
+        return f"<ResellerOpportunity(id='{self.opportunity_id}', name='{self.opportunity_name}', stage='{self.stage}')>"
 
 
-class Commission(Base, TenantMixin, AuditMixin):
-    """Model for tracking reseller commissions."""
-
-    __tablename__ = "commissions"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
-    reseller_id = Column(UUID(as_uuid=True), ForeignKey("resellers.id"), nullable=False)
+class ResellerCommission(BaseModel):
+    """
+    ISP commission tracking for reseller payments.
+    Tracks all commission calculations and payment status.
+    """
     
-    # Transaction References
-    opportunity_id = Column(UUID(as_uuid=True))  # Reference to opportunity
-    customer_id = Column(UUID(as_uuid=True))  # Reference to customer
-    order_id = Column(UUID(as_uuid=True))  # Reference to order/invoice
+    __tablename__ = "isp_reseller_commissions"
     
-    # Commission Calculation
-    sale_amount = Column(Numeric(12, 2), nullable=False)
-    commission_rate = Column(Numeric(5, 4), nullable=False)
+    # References
+    reseller_id = Column(
+        UUID(as_uuid=True), 
+        ForeignKey("isp_resellers.id"), 
+        nullable=False, 
+        index=True
+    )
+    customer_id = Column(UUID(as_uuid=True), nullable=True, index=True)
+    service_id = Column(UUID(as_uuid=True), nullable=True, index=True)
+    
+    # Commission identification
+    commission_id = Column(String(100), nullable=False, unique=True, index=True)
+    commission_type = Column(String(50), nullable=False, index=True)
+    
+    # Financial details
+    base_amount = Column(Numeric(12, 2), nullable=False)
+    commission_rate = Column(Numeric(5, 2), nullable=False)
     commission_amount = Column(Numeric(10, 2), nullable=False)
-    currency = Column(String(3), nullable=False, default='USD')
     
-    # Commission Details
-    commission_type = Column(String(50), default="standard")  # standard, bonus, override
-    commission_period = Column(String(20))  # monthly, quarterly, annual
-    earned_date = Column(DateTime, nullable=False, default=func.now())
-    due_date = Column(DateTime)
+    # ISP-specific commission details
+    service_type = Column(String(50), nullable=True)  # internet, phone, tv
+    service_tier = Column(String(50), nullable=True)  # basic, premium, enterprise
+    installation_commission = Column(Numeric(8, 2), default=0, nullable=False)
+    monthly_recurring_commission = Column(Numeric(8, 2), default=0, nullable=False)
     
-    # Payment Information
-    payment_status = Column(Enum(CommissionStatus), nullable=False, default=CommissionStatus.PENDING)
-    payment_date = Column(DateTime)
-    payment_reference = Column(String(100))
-    payment_method = Column(String(50))
+    # Period information
+    commission_period = Column(String(50), nullable=False, index=True)
+    service_period_start = Column(Date, nullable=True)
+    service_period_end = Column(Date, nullable=True)
+    earned_date = Column(Date, nullable=False, index=True)
     
-    # Adjustments and Notes
-    adjustment_amount = Column(Numeric(10, 2), default=Decimal('0.00'))
-    adjustment_reason = Column(String(500))
-    notes = Column(Text)
+    # Payment tracking
+    payment_status = Column(String(50), default="pending", nullable=False, index=True)
+    payment_due_date = Column(Date, nullable=True)
+    payment_date = Column(Date, nullable=True)
+    payment_method = Column(String(50), nullable=True)
+    payment_reference = Column(String(200), nullable=True)
     
-    reseller = relationship("Reseller", back_populates="commissions")
-
-    __table_args__ = (
-        Index("idx_commission_reseller", "reseller_id"),
-        Index("idx_commission_status", "payment_status"),
-        Index("idx_commission_earned", "earned_date"),
-        Index("idx_commission_due", "due_date"),
-        Index("idx_commission_opportunity", "opportunity_id"),
-    )
-
+    # Additional details
+    description = Column(String(500), nullable=True)
+    calculation_notes = Column(Text, nullable=True)
+    custom_fields = Column(JSONB, default=dict, nullable=False)
+    
+    # Relationship
+    reseller = relationship("ISPReseller", back_populates="commissions")
+    
+    @property
+    def is_overdue(self) -> bool:
+        """Check if commission payment is overdue."""
+        return (
+            self.payment_status == "pending" 
+            and self.payment_due_date 
+            and date.today() > self.payment_due_date
+        )
+    
+    @property
+    def days_until_due(self) -> Optional[int]:
+        """Calculate days until payment is due."""
+        if self.payment_due_date and self.payment_status == "pending":
+            return (self.payment_due_date - date.today()).days
+        return None
+    
     def __repr__(self):
-        return f"<Commission(id={self.id}, reseller_id={self.reseller_id}, amount={self.commission_amount})>"
+        return f"<ResellerCommission(id='{self.commission_id}', amount={self.commission_amount}, status='{self.payment_status}')>"
 
 
-class ResellerPerformance(Base, TenantMixin, AuditMixin):
-    """Model for tracking reseller performance metrics."""
-
-    __tablename__ = "reseller_performance"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
-    reseller_id = Column(UUID(as_uuid=True), ForeignKey("resellers.id"), nullable=False)
+class ResellerApplication(BaseModel):
+    """
+    Reseller application model for website signup flow.
+    Manages the application and approval process for new resellers.
+    """
     
-    # Performance Period
-    period_type = Column(String(20), nullable=False)  # monthly, quarterly, annual
-    period_start = Column(DateTime, nullable=False)
-    period_end = Column(DateTime, nullable=False)
+    __tablename__ = "isp_reseller_applications"
     
-    # Sales Metrics
-    total_sales = Column(Numeric(12, 2), default=Decimal('0.00'))
-    total_orders = Column(Integer, default=0)
-    new_customers_acquired = Column(Integer, default=0)
-    customers_retained = Column(Integer, default=0)
-    average_deal_size = Column(Numeric(10, 2), default=Decimal('0.00'))
+    # Application identification
+    application_id = Column(String(100), nullable=False, unique=True, index=True)
+    application_status = Column(
+        String(50), 
+        default="submitted", 
+        nullable=False, 
+        index=True
+    )  # submitted, under_review, approved, rejected, withdrawn
     
-    # Commission Metrics
-    total_commissions_earned = Column(Numeric(10, 2), default=Decimal('0.00'))
-    commissions_paid = Column(Numeric(10, 2), default=Decimal('0.00'))
-    commissions_pending = Column(Numeric(10, 2), default=Decimal('0.00'))
+    # Company information (required for application)
+    company_name = Column(String(300), nullable=False)
+    legal_company_name = Column(String(300), nullable=True)
+    website_url = Column(String(500), nullable=True)
+    business_type = Column(String(100), nullable=True)
+    years_in_business = Column(Integer, nullable=True)
     
-    # Performance Indicators
-    quota_achievement = Column(Numeric(5, 2))  # Percentage of quota achieved
-    customer_satisfaction_score = Column(Numeric(3, 2))  # 1-5 scale
-    lead_conversion_rate = Column(Numeric(5, 2))  # Percentage
+    # Primary contact
+    contact_name = Column(String(200), nullable=False)
+    contact_title = Column(String(100), nullable=True)
+    contact_email = Column(String(255), nullable=False, index=True)
+    contact_phone = Column(String(20), nullable=True)
     
-    # Activity Metrics
-    opportunities_created = Column(Integer, default=0)
-    opportunities_won = Column(Integer, default=0)
-    opportunities_lost = Column(Integer, default=0)
-    meetings_held = Column(Integer, default=0)
-    proposals_submitted = Column(Integer, default=0)
+    # Business details
+    employee_count = Column(Integer, nullable=True)
+    annual_revenue_range = Column(String(50), nullable=True)
+    telecom_experience_years = Column(Integer, nullable=True)
+    business_description = Column(Text, nullable=True)
     
-    # Rankings and Comparisons
-    rank_in_tier = Column(Integer)
-    rank_overall = Column(Integer)
-    performance_score = Column(Numeric(5, 2))
+    # Desired partnership details
+    desired_territories = Column(JSONB, nullable=True)
+    target_customer_segments = Column(JSONB, nullable=True)  # residential, business
+    estimated_monthly_customers = Column(Integer, nullable=True)
+    preferred_commission_structure = Column(String(50), nullable=True)
     
-    # Additional Metrics
-    metrics = Column(JSON, default=dict)  # Flexible storage for additional KPIs
-    notes = Column(Text)
+    # Application processing
+    submitted_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    reviewed_by = Column(String(200), nullable=True)
+    reviewed_at = Column(DateTime, nullable=True)
+    review_notes = Column(Text, nullable=True)
     
-    reseller = relationship("Reseller", back_populates="performance_records")
-
-    __table_args__ = (
-        UniqueConstraint("reseller_id", "period_type", "period_start", name="uq_reseller_performance_period"),
-        Index("idx_reseller_performance_reseller", "reseller_id"),
-        Index("idx_reseller_performance_period", "period_start", "period_end"),
-        Index("idx_reseller_performance_type", "period_type"),
+    # Approval/rejection details
+    decision_date = Column(Date, nullable=True)
+    decision_reason = Column(Text, nullable=True)
+    approved_reseller_id = Column(
+        UUID(as_uuid=True), 
+        ForeignKey("isp_resellers.id"), 
+        nullable=True, 
+        index=True
     )
-
+    
+    # Documents and attachments
+    uploaded_documents = Column(JSONB, nullable=True)
+    
+    # Follow-up tracking
+    follow_up_required = Column(Boolean, default=False, nullable=False)
+    follow_up_notes = Column(Text, nullable=True)
+    next_contact_date = Column(Date, nullable=True)
+    
+    # Relationships
+    approved_reseller = relationship("ISPReseller", back_populates="applications")
+    
     def __repr__(self):
-        return f"<ResellerPerformance(id={self.id}, reseller_id={self.reseller_id}, period={self.period_type})>"
+        return f"<ResellerApplication(id='{self.application_id}', company='{self.company_name}', status='{self.application_status}')>"
+    
+    @property
+    def can_be_approved(self) -> bool:
+        """Check if application can be approved."""
+        return self.application_status in ["submitted", "under_review"]
+    
+    @property
+    def is_pending_review(self) -> bool:
+        """Check if application is awaiting review."""
+        return self.application_status == "submitted"
+    
+    @property
+    def days_since_submission(self) -> int:
+        """Calculate days since application was submitted."""
+        return (datetime.utcnow() - self.submitted_at).days
 
 
-class ResellerTerritory(Base, TenantMixin, AuditMixin):
-    """Model for managing reseller territory assignments."""
-
-    __tablename__ = "reseller_territories"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
-    reseller_id = Column(UUID(as_uuid=True), ForeignKey("resellers.id"), nullable=False)
-    
-    territory_name = Column(String(100), nullable=False)
-    territory_type = Column(String(50), nullable=False)  # country, state, region, city, postal_code
-    territory_value = Column(String(100), nullable=False)  # The actual territory identifier
-    
-    # Territory Details
-    is_exclusive = Column(Boolean, default=False)
-    priority_level = Column(Integer, default=1)  # 1=highest, 5=lowest
-    assigned_date = Column(DateTime, nullable=False, default=func.now())
-    effective_date = Column(DateTime)
-    expiry_date = Column(DateTime)
-    
-    # Performance in Territory
-    target_revenue = Column(Numeric(12, 2))
-    actual_revenue = Column(Numeric(12, 2), default=Decimal('0.00'))
-    customer_count = Column(Integer, default=0)
-    
-    is_active = Column(Boolean, default=True)
-    notes = Column(Text)
-    
-    reseller = relationship("Reseller", back_populates="territory_assignments")
-
-    __table_args__ = (
-        Index("idx_reseller_territory_reseller", "reseller_id"),
-        Index("idx_reseller_territory_type", "territory_type"),
-        Index("idx_reseller_territory_value", "territory_value"),
-        Index("idx_reseller_territory_active", "is_active"),
-        Index("idx_reseller_territory_exclusive", "is_exclusive"),
-    )
-
-    def __repr__(self):
-        return f"<ResellerTerritory(id={self.id}, reseller_id={self.reseller_id}, territory={self.territory_name})>"
-
-
-class ResellerAgreement(Base, TenantMixin, AuditMixin):
-    """Model for tracking reseller agreements and contracts."""
-
-    __tablename__ = "reseller_agreements"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
-    reseller_id = Column(UUID(as_uuid=True), ForeignKey("resellers.id"), nullable=False)
-    
-    # Agreement Details
-    agreement_number = Column(String(100), nullable=False)
-    agreement_type = Column(String(50), nullable=False)  # partner, distributor, msp
-    agreement_title = Column(String(200))
-    
-    # Dates and Terms
-    effective_date = Column(DateTime, nullable=False)
-    expiry_date = Column(DateTime)
-    signature_date = Column(DateTime)
-    renewal_date = Column(DateTime)
-    
-    # Terms and Conditions
-    terms_version = Column(String(20))
-    auto_renewal = Column(Boolean, default=False)
-    renewal_notice_days = Column(Integer, default=90)
-    termination_notice_days = Column(Integer, default=30)
-    
-    # Financial Terms
-    minimum_commitment = Column(Numeric(12, 2))
-    commitment_period_months = Column(Integer, default=12)
-    volume_discounts = Column(JSON, default=dict)
-    payment_terms = Column(JSON, default=dict)
-    
-    # Document Management
-    document_url = Column(String(500))
-    signed_document_url = Column(String(500))
-    status = Column(String(50), nullable=False, default="draft")
-    
-    # Approval Workflow
-    approved_by = Column(UUID(as_uuid=True))  # User ID
-    approved_date = Column(DateTime)
-    legal_review_completed = Column(Boolean, default=False)
-    compliance_approved = Column(Boolean, default=False)
-    
-    notes = Column(Text)
-    metadata = Column(JSON, default=dict)
-
-    __table_args__ = (
-        UniqueConstraint("tenant_id", "agreement_number", name="uq_reseller_agreement_number"),
-        Index("idx_reseller_agreement_reseller", "reseller_id"),
-        Index("idx_reseller_agreement_status", "status"),
-        Index("idx_reseller_agreement_effective", "effective_date"),
-        Index("idx_reseller_agreement_expiry", "expiry_date"),
-    )
-
-    def __repr__(self):
-        return f"<ResellerAgreement(id={self.id}, reseller_id={self.reseller_id}, number={self.agreement_number})>"
+# Export models for easy importing
+__all__ = [
+    # ISP-specific models
+    "ISPReseller",
+    "ResellerCustomer", 
+    "ResellerOpportunity",
+    "ResellerCommission",
+    "ResellerApplication",
+    # Re-export shared enums for convenience
+    "ResellerType",
+    "ResellerStatus", 
+    "ResellerTier",
+    "CommissionStructure",
+    "ResellerCertificationStatus"
+]

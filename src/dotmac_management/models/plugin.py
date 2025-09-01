@@ -13,7 +13,8 @@ from sqlalchemy import ForeignKey, Integer, Numeric, String, Text
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import relationship
 
-from .base import UUID, BaseModel
+from .base import BaseModel
+from sqlalchemy.dialects.postgresql import UUID
 
 
 class PluginStatus(str, Enum):
@@ -176,7 +177,7 @@ class PluginLicense(BaseModel):
     __tablename__ = "plugin_licenses"
 
     tenant_id = Column(
-        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False, index=True
+        UUID(as_uuid=True), ForeignKey("customer_tenants.id"), nullable=False, index=True
     )
     plugin_id = Column(
         UUID(as_uuid=True), ForeignKey("plugins.id"), nullable=False, index=True

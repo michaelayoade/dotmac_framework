@@ -1,12 +1,7 @@
-name: Frontend CI/CD Pipeline
+name: ARCHIVED - Frontend CI/CD Pipeline
 
 on:
-  push:
-    branches: [main, develop]
-    paths: ['frontend/**']
-  pull_request:
-    branches: [main, develop]
-    paths: ['frontend/**']
+  workflow_dispatch:
 
 env:
   NODE_VERSION: "18"

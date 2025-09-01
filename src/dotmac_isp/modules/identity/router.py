@@ -7,7 +7,7 @@ import logging
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from fastapi import Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
 from dotmac_shared.api.dependencies import StandardDeps
@@ -21,12 +21,10 @@ from dotmac_shared.auth.dependencies import (
 from dotmac_shared.core.pagination import PaginationParams, paginate
 from dotmac_isp.shared.schemas import (
     CustomerCreateSchema,
-    CustomerSchema,
+    CustomerResponse as CustomerSchema,
     UserCreateSchema,
-    UserSchema,
-    AuthLoginSchema,
-    AuthResponseSchema,
-    PortalAccessSchema,
+    PortalUserResponse as UserSchema,
+    BaseSchema,
 )
 
 from .services import (
@@ -38,8 +36,8 @@ from .services import (
 
 logger = logging.getLogger(__name__)
 
-# Use RouterFactory for standardized router creation
-identity_router = RouterFactory.create_standard_router(
+# Create APIRouter directly due to factory limitations  
+identity_router = APIRouter(
     prefix="/identity", 
     tags=["identity", "authentication", "user-management"]
 )
