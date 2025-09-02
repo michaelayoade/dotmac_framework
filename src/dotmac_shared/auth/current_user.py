@@ -23,7 +23,6 @@ jwt_service = JWTService()
 async def get_current_user(
     request: Request,
     credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: Optional[AsyncSession] = None,
 ) -> Dict[str, Any]:
     """
     Get current authenticated user from JWT token.
@@ -31,7 +30,6 @@ async def get_current_user(
     Args:
         request: FastAPI request object
         credentials: HTTP Bearer credentials
-        db: Database session (optional)
 
     Returns:
         Dict containing user information

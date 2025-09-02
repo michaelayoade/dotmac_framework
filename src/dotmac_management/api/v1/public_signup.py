@@ -7,14 +7,24 @@ import asyncio
 import secrets
 from datetime import datetime, timedelta
 from typing import Dict, Any, Optional, List
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
 
 from dotmac_shared.database.base import get_db_session
-from dotmac_shared.core.logging import get_logger
+from dotmac_shared.observability.logging import get_logger
 from dotmac_shared.api.response import APIResponse
 from dotmac_shared.api.exceptions import StandardExceptions, subdomain_taken
+from dotmac_shared.api.rate_limiting_decorators import (
+    rate_limit,
+    rate_limit_auth,
+    rate_limit_strict,
+    RateLimitType
+)
+from dotmac_shared.api.dependencies import (
+    StandardDependencies,
+    get_standard_deps
+)
 from dotmac_shared.validation.common_validators import ValidatorMixins
 from dotmac_shared.notifications.service import NotificationService
 from dotmac_management.models.tenant import CustomerTenant, TenantStatus, TenantPlan
@@ -25,37 +35,103 @@ router = APIRouter(prefix="/public", tags=["public-signup"])
 
 
 class PublicSignupRequest(BaseModel, ValidatorMixins):
-    """Public tenant signup request with DRY validation"""
+    """Public tenant signup request with comprehensive DRY validation"""
     
     # Company information
-    company_name: str
-    subdomain: str
+    company_name: str = Field(..., min_length=2, max_length=100)
+    subdomain: str = Field(..., min_length=3, max_length=30)
     
     # Admin user information
-    admin_name: str
-    admin_email: EmailStr
+    admin_name: str = Field(..., min_length=2, max_length=80)
+    admin_email: EmailStr = Field(..., description="Administrator email address")
     
     # Service configuration
-    plan: TenantPlan = TenantPlan.STARTER
-    region: str = "us-east-1"
+    plan: TenantPlan = Field(default=TenantPlan.STARTER, description="Service plan")
+    region: str = Field(default="us-east-1", description="Deployment region")
     
     # Optional information
-    description: Optional[str] = None
-    phone: Optional[str] = None
-    billing_email: Optional[EmailStr] = None
+    description: Optional[str] = Field(None, max_length=500, description="Company description")
+    phone: Optional[str] = Field(None, max_length=50, description="Contact phone number")
+    billing_email: Optional[EmailStr] = Field(None, description="Billing email if different from admin")
     
     # Marketing/source tracking
-    source: Optional[str] = None
-    utm_campaign: Optional[str] = None
-    utm_source: Optional[str] = None
-    utm_medium: Optional[str] = None
+    source: Optional[str] = Field(None, max_length=100, description="Signup source")
+    utm_campaign: Optional[str] = Field(None, max_length=100, description="UTM campaign")
+    utm_source: Optional[str] = Field(None, max_length=100, description="UTM source")
+    utm_medium: Optional[str] = Field(None, max_length=100, description="UTM medium")
     
     # Terms acceptance
-    accept_terms: bool = True
-    accept_privacy: bool = True
+    accept_terms: bool = Field(default=True, description="Accept terms of service")
+    accept_privacy: bool = Field(default=True, description="Accept privacy policy")
     
     # Anti-spam verification
-    captcha_token: Optional[str] = None
+    captcha_token: Optional[str] = Field(None, max_length=1000, description="Captcha verification token")
+    
+    @field_validator('description')
+    @classmethod
+    def validate_description_field(cls, v: Optional[str]) -> Optional[str]:
+        """Enhanced description validation"""
+        from dotmac_shared.validation.common_validators import CommonValidators
+        return CommonValidators.validate_description(v, 500)
+    
+    @field_validator('source', 'utm_campaign', 'utm_source', 'utm_medium')
+    @classmethod
+    def validate_tracking_fields(cls, v: Optional[str], info) -> Optional[str]:
+        """Validate marketing tracking fields"""
+        if v is None:
+            return None
+        
+        clean_value = v.strip()
+        if len(clean_value) == 0:
+            return None
+        
+        # Length validation
+        if len(clean_value) > 100:
+            raise ValueError(f'{info.field_name} must be less than 100 characters')
+        
+        # Basic content validation - alphanumeric, spaces, hyphens, underscores
+        import re
+        if not re.match(r'^[a-zA-Z0-9\s\-_]+$', clean_value):
+            raise ValueError(f'{info.field_name} contains invalid characters')
+        
+        return clean_value
+    
+    @field_validator('captcha_token')
+    @classmethod
+    def validate_captcha_token(cls, v: Optional[str]) -> Optional[str]:
+        """Validate captcha token"""
+        if v is None:
+            return None
+        
+        clean_token = v.strip()
+        if len(clean_token) == 0:
+            return None
+        
+        # Length validation
+        if len(clean_token) > 1000:
+            raise ValueError('Captcha token is too long')
+        
+        # Basic format validation - should be base64-like
+        import re
+        if not re.match(r'^[a-zA-Z0-9+/=\-_]+$', clean_token):
+            raise ValueError('Invalid captcha token format')
+        
+        return clean_token
+    
+    @field_validator('billing_email')
+    @classmethod
+    def validate_billing_email(cls, v: Optional[EmailStr], info) -> Optional[EmailStr]:
+        """Validate billing email and check if different from admin email"""
+        if v is None:
+            return None
+        
+        # Check if same as admin email (discouraged but not blocked)
+        admin_email = info.data.get('admin_email')
+        if admin_email and v.lower() == admin_email.lower():
+            # Could log a warning but allow it
+            pass
+        
+        return v
 
 
 class PublicSignupResponse(BaseModel):
@@ -71,15 +147,51 @@ class PublicSignupResponse(BaseModel):
 
 
 class EmailVerificationRequest(BaseModel):
-    """Email verification request"""
-    tenant_id: str
-    verification_code: str
+    """Email verification request with validation"""
+    tenant_id: str = Field(..., min_length=10, max_length=100, description="Tenant identifier")
+    verification_code: str = Field(..., min_length=20, max_length=100, description="Email verification code")
+    
+    @field_validator('tenant_id')
+    @classmethod
+    def validate_tenant_id(cls, v: str) -> str:
+        """Validate tenant ID format"""
+        clean_id = v.strip()
+        
+        # Basic format validation
+        import re
+        if not re.match(r'^[a-zA-Z0-9\-]+$', clean_id):
+            raise ValueError('Tenant ID contains invalid characters')
+        
+        # Should start with tenant- prefix for public signups
+        if not clean_id.startswith('tenant-'):
+            raise ValueError('Invalid tenant ID format')
+        
+        return clean_id
+    
+    @field_validator('verification_code')
+    @classmethod
+    def validate_verification_code(cls, v: str) -> str:
+        """Validate verification code format"""
+        clean_code = v.strip()
+        
+        # Length validation
+        if len(clean_code) < 20 or len(clean_code) > 100:
+            raise ValueError('Invalid verification code length')
+        
+        # Format validation - should be URL-safe base64
+        import re
+        if not re.match(r'^[a-zA-Z0-9\-_]+$', clean_code):
+            raise ValueError('Invalid verification code format')
+        
+        return clean_code
 
 
 @router.post("/signup", response_model=APIResponse[PublicSignupResponse])
+@rate_limit(max_requests=3, time_window_seconds=60, rule_type=RateLimitType.IP_BASED, custom_message="Too many signup attempts. Please wait before trying again.")  # Anti-spam for public signups
 async def public_tenant_signup(
     signup_request: PublicSignupRequest,
     background_tasks: BackgroundTasks,
+    deps: StandardDependencies = Depends(get_standard_deps),
     db: Session = Depends(get_db_session)
 ) -> APIResponse[PublicSignupResponse]:
     """
@@ -198,9 +310,11 @@ async def public_tenant_signup(
 
 
 @router.post("/verify-email")
+@rate_limit(max_requests=10, time_window_seconds=60, rule_type=RateLimitType.IP_BASED, custom_message="Too many verification attempts. Please wait before trying again.")  # Moderate limits for email verification
 async def verify_email_and_provision(
     verification_request: EmailVerificationRequest,
     background_tasks: BackgroundTasks,
+    deps: StandardDependencies = Depends(get_standard_deps),
     db: Session = Depends(get_db_session)
 ) -> APIResponse:
     """
@@ -283,8 +397,10 @@ async def verify_email_and_provision(
 
 
 @router.get("/signup/{tenant_id}/status")
+@rate_limit(max_requests=20, time_window_seconds=60, rule_type=RateLimitType.IP_BASED, custom_message="Too many status check requests. Please wait before trying again.")  # Public status endpoint - moderate limits
 async def get_signup_status(
     tenant_id: str,
+    deps: StandardDependencies = Depends(get_standard_deps),
     db: Session = Depends(get_db_session)
 ) -> APIResponse:
     """

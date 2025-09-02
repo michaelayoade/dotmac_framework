@@ -10,7 +10,14 @@ from uuid import UUID
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from dotmac_shared.api.dependencies import StandardDeps
+from dotmac_shared.api.dependencies import (
+    StandardDependencies,
+    PaginatedDependencies,
+    SearchParams,
+    get_standard_deps,
+    get_paginated_deps,
+    get_admin_deps
+
 from dotmac_shared.api.exception_handlers import standard_exception_handler
 from dotmac_shared.api.router_factory import RouterFactory
 from dotmac_shared.schemas.base_schemas import (
@@ -322,7 +329,7 @@ class IntegrationHubRouter:
         # Add custom integration-specific endpoints
         @router.get("/status", response_model=Dict[str, Any])
         @standard_exception_handler
-        async def get_hub_status(deps: StandardDeps = Depends()):
+        async def get_hub_status(deps: StandardDependencies = Depends(get_standard_deps) = Depends()):
             """Get integration hub status."""
             service = IntegrationHubService(deps.db, deps.tenant_id)
             return await service.get_hub_status()
@@ -331,7 +338,7 @@ class IntegrationHubRouter:
         @standard_exception_handler
         async def test_integration_connection(
             integration_name: str,
-            deps: StandardDeps = Depends()
+            deps: StandardDependencies = Depends(get_standard_deps) = Depends()
         ):
             """Test connection for specific integration."""
             service = IntegrationHubService(deps.db, deps.tenant_id)
@@ -341,7 +348,7 @@ class IntegrationHubRouter:
         @standard_exception_handler
         async def sync_integration(
             integration_name: str,
-            deps: StandardDeps = Depends()
+            deps: StandardDependencies = Depends(get_standard_deps) = Depends()
         ):
             """Trigger data sync for specific integration."""
             service = IntegrationHubService(deps.db, deps.tenant_id)

@@ -3,10 +3,16 @@
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from fastapi import Query
-from fastapi.responses import StreamingResponse
+from fastapi import \1, Dependsndsses import StreamingResponse
 
-from dotmac_shared.api.dependencies import PaginatedDeps, SearchDeps, StandardDeps
+from dotmac_shared.api.dependencies import (
+    StandardDependencies,
+    PaginatedDependencies,
+    SearchParams,
+    get_standard_deps,
+    get_paginated_deps,
+    get_admin_deps
+
 from dotmac_shared.api.exception_handlers import standard_exception_handler
 from dotmac_shared.api.router_factory import RouterFactory
 
@@ -135,21 +141,21 @@ router.include_router(alerts_router)
 
 @router.get("/overview", response_model=AnalyticsOverviewResponse)
 @standard_exception_handler
-async def get_analytics_overview(deps: StandardDeps) -> AnalyticsOverviewResponse:
+async def get_analytics_overview(deps: StandardDependencies = Depends(get_standard_deps)) -> AnalyticsOverviewResponse:
     """Get comprehensive analytics overview with key metrics and activity."""
     service = AnalyticsService(deps.db, deps.tenant_id)
     return await service.get_analytics_overview(deps.user_id)
 
 @router.get("/dashboard", response_model=DashboardOverviewResponse)
 @standard_exception_handler
-async def get_dashboard_overview(deps: StandardDeps) -> DashboardOverviewResponse:
+async def get_dashboard_overview(deps: StandardDependencies = Depends(get_standard_deps)) -> DashboardOverviewResponse:
     """Get main dashboard overview with key business metrics."""
     service = DashboardService(deps.db, deps.tenant_id)
     return await service.get_dashboard_overview(deps.user_id)
 
 @router.get("/realtime", response_model=RealTimeMetricsResponse)
 @standard_exception_handler
-async def get_real_time_metrics(deps: StandardDeps) -> RealTimeMetricsResponse:
+async def get_real_time_metrics(deps: StandardDependencies = Depends(get_standard_deps)) -> RealTimeMetricsResponse:
     """Get real-time system metrics and performance data."""
     service = AnalyticsService(deps.db, deps.tenant_id)
     return await service.get_real_time_metrics(deps.user_id)
@@ -161,7 +167,7 @@ async def get_real_time_metrics(deps: StandardDeps) -> RealTimeMetricsResponse:
 async def record_metric_value(
     metric_id: UUID, 
     data: MetricValueCreate, 
-    deps: StandardDeps
+    deps: StandardDependencies = Depends(get_standard_deps)
 ) -> MetricValueResponse:
     """Record a new value for a specific metric."""
     service = MetricService(deps.db, deps.tenant_id)
@@ -171,7 +177,7 @@ async def record_metric_value(
 @standard_exception_handler
 async def get_metric_values(
     metric_id: UUID,
-    deps: StandardDeps,
+    deps: StandardDependencies = Depends(get_standard_deps),
     start_date: Optional[str] = Query(None, description="Start date (ISO format)"),
     end_date: Optional[str] = Query(None, description="End date (ISO format)"),
     limit: int = Query(1000, ge=1, le=10000, description="Maximum values to return")
@@ -189,7 +195,7 @@ async def get_metric_values(
 @standard_exception_handler
 async def get_metric_statistics(
     metric_id: UUID,
-    deps: StandardDeps,
+    deps: StandardDependencies = Depends(get_standard_deps),
     start_date: Optional[str] = Query(None, description="Start date (ISO format)"),
     end_date: Optional[str] = Query(None, description="End date (ISO format)")
 ) -> Dict[str, Any]:
@@ -206,7 +212,7 @@ async def get_metric_statistics(
 @standard_exception_handler
 async def aggregate_metrics(
     request: MetricAggregationRequest,
-    deps: StandardDeps
+    deps: StandardDependencies = Depends(get_standard_deps)
 ) -> MetricAggregationResponse:
     """Aggregate metric data for analysis and reporting."""
     service = MetricService(deps.db, deps.tenant_id)
@@ -218,7 +224,7 @@ async def aggregate_metrics(
 @standard_exception_handler
 async def generate_report(
     report_id: UUID,
-    deps: StandardDeps
+    deps: StandardDependencies = Depends(get_standard_deps)
 ) -> ReportResponse:
     """Generate data for an existing report definition."""
     service = ReportService(deps.db, deps.tenant_id)
@@ -228,7 +234,7 @@ async def generate_report(
 @standard_exception_handler
 async def export_report(
     request: ReportExportRequest,
-    deps: StandardDeps
+    deps: StandardDependencies = Depends(get_standard_deps)
 ) -> ReportExportResponse:
     """Export a report in the specified format (JSON, CSV, PDF, Excel)."""
     service = ReportService(deps.db, deps.tenant_id)
@@ -236,7 +242,7 @@ async def export_report(
 
 @router.get("/reports/executive", response_model=ExecutiveReportResponse)
 @standard_exception_handler
-async def generate_executive_report(deps: StandardDeps) -> ExecutiveReportResponse:
+async def generate_executive_report(deps: StandardDependencies = Depends(get_standard_deps)) -> ExecutiveReportResponse:
     """Generate comprehensive executive report with strategic insights."""
     service = AnalyticsService(deps.db, deps.tenant_id)
     return await service.generate_executive_report(deps.user_id)
@@ -247,7 +253,7 @@ async def generate_executive_report(deps: StandardDeps) -> ExecutiveReportRespon
 @standard_exception_handler
 async def get_dashboard_with_widgets(
     dashboard_id: UUID,
-    deps: StandardDeps
+    deps: StandardDependencies = Depends(get_standard_deps)
 ) -> Dict[str, Any]:
     """Get complete dashboard with all widgets and data."""
     service = DashboardService(deps.db, deps.tenant_id)
@@ -257,7 +263,7 @@ async def get_dashboard_with_widgets(
 @standard_exception_handler
 async def get_dashboard_metrics(
     dashboard_id: UUID,
-    deps: StandardDeps
+    deps: StandardDependencies = Depends(get_standard_deps)
 ) -> DashboardMetricsResponse:
     """Get usage metrics and analytics for a specific dashboard."""
     service = DashboardService(deps.db, deps.tenant_id)
@@ -269,7 +275,7 @@ async def get_dashboard_metrics(
 @standard_exception_handler
 async def get_dashboard_widgets(
     dashboard_id: UUID,
-    deps: StandardDeps
+    deps: StandardDependencies = Depends(get_standard_deps)
 ) -> List[WidgetResponse]:
     """Get all widgets for a specific dashboard."""
     service = WidgetService(deps.db, deps.tenant_id)
@@ -280,7 +286,7 @@ async def get_dashboard_widgets(
 async def reorder_dashboard_widgets(
     dashboard_id: UUID,
     widget_positions: Dict[str, int],
-    deps: StandardDeps
+    deps: StandardDependencies = Depends(get_standard_deps)
 ) -> Dict[str, bool]:
     """Reorder widgets within a dashboard."""
     service = WidgetService(deps.db, deps.tenant_id)
@@ -294,7 +300,7 @@ async def reorder_dashboard_widgets(
 async def test_alert_condition(
     alert_id: UUID,
     request: AlertTestRequest,
-    deps: StandardDeps
+    deps: StandardDependencies = Depends(get_standard_deps)
 ) -> AlertTestResponse:
     """Test an alert condition with a specific value."""
     service = AlertService(deps.db, deps.tenant_id)
@@ -302,7 +308,7 @@ async def test_alert_condition(
 
 @router.post("/alerts/check")
 @standard_exception_handler
-async def check_all_alert_conditions(deps: StandardDeps) -> Dict[str, Any]:
+async def check_all_alert_conditions(deps: StandardDependencies = Depends(get_standard_deps)) -> Dict[str, Any]:
     """Check all active alerts against current metric values."""
     service = AlertService(deps.db, deps.tenant_id)
     triggered_alerts = await service.check_alert_conditions(deps.user_id)
@@ -319,7 +325,7 @@ async def check_all_alert_conditions(deps: StandardDeps) -> Dict[str, Any]:
 @standard_exception_handler
 async def get_customer_analytics(
     customer_id: UUID,
-    deps: StandardDeps,
+    deps: StandardDependencies = Depends(get_standard_deps),
     months: int = Query(12, ge=1, le=36, description="Number of months to analyze")
 ) -> CustomerAnalyticsResponse:
     """Get comprehensive analytics for a specific customer."""
@@ -352,7 +358,7 @@ async def get_customer_analytics(
 @router.get("/analytics/revenue", response_model=RevenueAnalyticsResponse)
 @standard_exception_handler
 async def get_revenue_analytics(
-    deps: StandardDeps,
+    deps: StandardDependencies = Depends(get_standard_deps),
     months: int = Query(12, ge=1, le=36, description="Number of months to analyze")
 ) -> RevenueAnalyticsResponse:
     """Get comprehensive revenue analytics and forecasting."""
@@ -397,7 +403,7 @@ async def get_revenue_analytics(
 @standard_exception_handler
 async def get_service_analytics(
     service_id: str,
-    deps: StandardDeps,
+    deps: StandardDependencies = Depends(get_standard_deps),
     period: str = Query("monthly", pattern=r"^(daily|weekly|monthly|quarterly)$"),
     months: int = Query(3, ge=1, le=12, description="Number of months to analyze")
 ) -> ServiceAnalyticsResponse:
@@ -451,7 +457,7 @@ router.include_router(data_sources_router)
 @standard_exception_handler
 async def sync_data_source(
     source_id: UUID,
-    deps: StandardDeps
+    deps: StandardDependencies = Depends(get_standard_deps)
 ) -> Dict[str, Any]:
     """Trigger manual sync for a data source."""
     from datetime import datetime
@@ -468,7 +474,7 @@ async def sync_data_source(
 @standard_exception_handler
 async def get_data_source_status(
     source_id: UUID,
-    deps: StandardDeps
+    deps: StandardDependencies = Depends(get_standard_deps)
 ) -> Dict[str, Any]:
     """Get current status and health of a data source."""
     from datetime import datetime

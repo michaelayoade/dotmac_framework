@@ -28,7 +28,16 @@ dependencies = [
     "geoalchemy2>=0.14.0",
     "shapely>=2.0.0",
     "geopy>=2.3.0",
-    "networkx>=3.1.0"
+    "networkx>=3.1.0",
+    # OpenTelemetry Dependencies for SigNoz Integration
+    "opentelemetry-sdk>=1.20.0",
+    "opentelemetry-exporter-otlp>=1.20.0",
+    "opentelemetry-instrumentation-fastapi>=0.41b0",
+    "opentelemetry-instrumentation-asgi>=0.41b0",
+    "opentelemetry-instrumentation-logging>=0.41b0", 
+    "opentelemetry-instrumentation-requests>=0.41b0",
+    "opentelemetry-instrumentation-httpx>=0.41b0",
+    "opentelemetry-instrumentation-sqlalchemy>=0.41b0"
 ]
 
 # Package discovery is handled by setuptools automatically from src/

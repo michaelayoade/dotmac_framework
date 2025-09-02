@@ -11,7 +11,14 @@ from uuid import UUID
 
 from fastapi import APIRouter, Body, Depends, Path, Query
 
-from dotmac_shared.api.dependencies import StandardDeps
+from dotmac_shared.api.dependencies import (
+    StandardDependencies,
+    PaginatedDependencies,
+    SearchParams,
+    get_standard_deps,
+    get_paginated_deps,
+    get_admin_deps
+
 from dotmac_shared.api.exception_handlers import standard_exception_handler
 from dotmac_shared.api.router_factory import RouterFactory
 
@@ -62,7 +69,7 @@ class OperationsRouterFactory(RouterFactory):
         @standard_exception_handler
         async def register_endpoint(
             data: NetworkEndpointCreate = Body(...),
-            deps: StandardDeps = Depends(),
+            deps: StandardDependencies = Depends(get_standard_deps) = Depends(),
         ) -> NetworkEndpointResponse:
             """Register network endpoint for monitoring."""
             service = service_class(deps.db, deps.tenant_id)
@@ -71,7 +78,7 @@ class OperationsRouterFactory(RouterFactory):
         @router.get("/health", response_model=NetworkHealthSummary)
         @standard_exception_handler
         async def get_network_health(
-            deps: StandardDeps = Depends(),
+            deps: StandardDependencies = Depends(get_standard_deps) = Depends(),
         ) -> NetworkHealthSummary:
             """Get comprehensive network health summary."""
             service = service_class(deps.db, deps.tenant_id)
@@ -82,7 +89,7 @@ class OperationsRouterFactory(RouterFactory):
         async def get_endpoint_trends(
             endpoint_id: UUID = Path(..., description="Endpoint ID"),
             hours: int = Query(24, ge=1, le=168, description="Time period in hours"),
-            deps: StandardDeps = Depends(),
+            deps: StandardDependencies = Depends(get_standard_deps) = Depends(),
         ) -> EndpointTrendsResponse:
             """Get endpoint health trends."""
             service = service_class(deps.db, deps.tenant_id)
@@ -92,7 +99,7 @@ class OperationsRouterFactory(RouterFactory):
         @standard_exception_handler
         async def check_service_health(
             request: ServiceHealthCheckRequest = Body(...),
-            deps: StandardDeps = Depends(),
+            deps: StandardDependencies = Depends(get_standard_deps) = Depends(),
         ) -> ServiceHealthCheckResponse:
             """Perform health check on specific service."""
             service = service_class(deps.db, deps.tenant_id)
@@ -113,7 +120,7 @@ class OperationsRouterFactory(RouterFactory):
         @standard_exception_handler
         async def unregister_endpoint(
             endpoint_id: UUID = Path(..., description="Endpoint ID"),
-            deps: StandardDeps = Depends(),
+            deps: StandardDependencies = Depends(get_standard_deps) = Depends(),
         ) -> Dict[str, str]:
             """Unregister endpoint from monitoring."""
             service = service_class(deps.db, deps.tenant_id)
@@ -144,7 +151,7 @@ class OperationsRouterFactory(RouterFactory):
         @standard_exception_handler
         async def register_customer(
             data: CustomerRegistrationRequest = Body(...),
-            deps: StandardDeps = Depends(),
+            deps: StandardDependencies = Depends(get_standard_deps) = Depends(),
         ) -> CustomerLifecycleResponse:
             """Register new customer with automated lifecycle management."""
             service = service_class(deps.db, deps.tenant_id)
@@ -155,7 +162,7 @@ class OperationsRouterFactory(RouterFactory):
         async def verify_customer(
             customer_id: UUID = Path(..., description="Customer ID"),
             verification_data: Dict[str, Any] = Body(...),
-            deps: StandardDeps = Depends(),
+            deps: StandardDependencies = Depends(get_standard_deps) = Depends(),
         ) -> CustomerLifecycleResponse:
             """Verify customer account."""
             service = service_class(deps.db, deps.tenant_id)
@@ -168,7 +175,7 @@ class OperationsRouterFactory(RouterFactory):
         async def suspend_customer(
             customer_id: UUID = Path(..., description="Customer ID"),
             action: CustomerLifecycleAction = Body(...),
-            deps: StandardDeps = Depends(),
+            deps: StandardDependencies = Depends(get_standard_deps) = Depends(),
         ) -> CustomerLifecycleResponse:
             """Suspend customer account."""
             service = service_class(deps.db, deps.tenant_id)
@@ -184,7 +191,7 @@ class OperationsRouterFactory(RouterFactory):
         async def provision_service(
             customer_id: UUID = Path(..., description="Customer ID"),
             request: ServiceProvisioningRequest = Body(...),
-            deps: StandardDeps = Depends(),
+            deps: StandardDependencies = Depends(get_standard_deps) = Depends(),
         ) -> ServiceProvisioningResponse:
             """Provision service for customer."""
             service = service_class(deps.db, deps.tenant_id)
@@ -199,7 +206,7 @@ class OperationsRouterFactory(RouterFactory):
         @standard_exception_handler
         async def get_provisioning_status(
             request_id: UUID = Path(..., description="Provisioning request ID"),
-            deps: StandardDeps = Depends(),
+            deps: StandardDependencies = Depends(get_standard_deps) = Depends(),
         ) -> ServiceProvisioningResponse:
             """Get service provisioning status."""
             service = service_class(deps.db, deps.tenant_id)
@@ -209,7 +216,7 @@ class OperationsRouterFactory(RouterFactory):
         @standard_exception_handler
         async def get_customer_summary(
             customer_id: UUID = Path(..., description="Customer ID"),
-            deps: StandardDeps = Depends(),
+            deps: StandardDependencies = Depends(get_standard_deps) = Depends(),
         ) -> Dict[str, Any]:
             """Get customer lifecycle summary."""
             service = service_class(deps.db, deps.tenant_id)
@@ -241,7 +248,7 @@ class OperationsRouterFactory(RouterFactory):
         @standard_exception_handler
         async def execute_maintenance(
             request: MaintenanceExecutionRequest = Body(...),
-            deps: StandardDeps = Depends(),
+            deps: StandardDependencies = Depends(get_standard_deps) = Depends(),
         ) -> MaintenanceResult:
             """Execute maintenance operation manually."""
             service = service_class(deps.db, deps.tenant_id)
@@ -254,7 +261,7 @@ class OperationsRouterFactory(RouterFactory):
         @router.get("/status", response_model=OperationsStatus)
         @standard_exception_handler
         async def get_operations_status(
-            deps: StandardDeps = Depends(),
+            deps: StandardDependencies = Depends(get_standard_deps) = Depends(),
         ) -> OperationsStatus:
             """Get comprehensive operations automation status."""
             service = service_class(deps.db, deps.tenant_id)
@@ -263,7 +270,7 @@ class OperationsRouterFactory(RouterFactory):
         @router.post("/start")
         @standard_exception_handler
         async def start_operations(
-            deps: StandardDeps = Depends(),
+            deps: StandardDependencies = Depends(get_standard_deps) = Depends(),
         ) -> Dict[str, str]:
             """Start operations automation."""
             service = service_class(deps.db, deps.tenant_id)
@@ -272,7 +279,7 @@ class OperationsRouterFactory(RouterFactory):
         @router.post("/stop")
         @standard_exception_handler
         async def stop_operations(
-            deps: StandardDeps = Depends(),
+            deps: StandardDependencies = Depends(get_standard_deps) = Depends(),
         ) -> Dict[str, str]:
             """Stop operations automation."""
             service = service_class(deps.db, deps.tenant_id)
@@ -283,7 +290,7 @@ class OperationsRouterFactory(RouterFactory):
         @standard_exception_handler
         async def database_cleanup(
             parameters: Dict[str, Any] = Body(default_factory=dict),
-            deps: StandardDeps = Depends(),
+            deps: StandardDependencies = Depends(get_standard_deps) = Depends(),
         ) -> MaintenanceResult:
             """Execute database cleanup maintenance."""
             service = service_class(deps.db, deps.tenant_id)
@@ -293,7 +300,7 @@ class OperationsRouterFactory(RouterFactory):
         @standard_exception_handler
         async def log_rotation(
             parameters: Dict[str, Any] = Body(default_factory=dict),
-            deps: StandardDeps = Depends(),
+            deps: StandardDependencies = Depends(get_standard_deps) = Depends(),
         ) -> MaintenanceResult:
             """Execute log rotation maintenance."""
             service = service_class(deps.db, deps.tenant_id)
@@ -303,7 +310,7 @@ class OperationsRouterFactory(RouterFactory):
         @standard_exception_handler
         async def cache_cleanup(
             parameters: Dict[str, Any] = Body(default_factory=dict),
-            deps: StandardDeps = Depends(),
+            deps: StandardDependencies = Depends(get_standard_deps) = Depends(),
         ) -> MaintenanceResult:
             """Execute cache cleanup maintenance."""
             service = service_class(deps.db, deps.tenant_id)
@@ -313,7 +320,7 @@ class OperationsRouterFactory(RouterFactory):
         @standard_exception_handler
         async def performance_optimization(
             parameters: Dict[str, Any] = Body(default_factory=dict),
-            deps: StandardDeps = Depends(),
+            deps: StandardDependencies = Depends(get_standard_deps) = Depends(),
         ) -> MaintenanceResult:
             """Execute performance optimization maintenance."""
             service = service_class(deps.db, deps.tenant_id)
@@ -362,7 +369,7 @@ def create_operations_routers() -> List[APIRouter]:
     @status_router.get("/status", response_model=Dict[str, Any])
     @standard_exception_handler
     async def get_comprehensive_operations_status(
-        deps: StandardDeps = Depends(),
+        deps: StandardDependencies = Depends(get_standard_deps) = Depends(),
     ) -> Dict[str, Any]:
         """Get comprehensive status of all operations systems."""
         service = OperationsService(deps.db, deps.tenant_id)

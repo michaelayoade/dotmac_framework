@@ -6,10 +6,16 @@ Enforces DRY principles with zero manual router creation.
 from typing import Any, Dict, List
 from uuid import UUID
 
-from fastapi import APIRouter, Body, Path, Query
-from fastapi.responses import JSONResponse
+from fastapi import \1, Dependsndsses import JSONResponse
 
-from dotmac_shared.api.dependencies import PaginatedDeps, SearchDeps, StandardDeps
+from dotmac_shared.api.dependencies import (
+    StandardDependencies,
+    PaginatedDependencies,
+    SearchParams,
+    get_standard_deps,
+    get_paginated_deps,
+    get_admin_deps
+
 from dotmac_shared.api.exception_handlers import standard_exception_handler
 from dotmac_shared.api.rate_limiting_decorators import rate_limit
 from dotmac_shared.api.router_factory import RouterFactory
@@ -70,7 +76,7 @@ service_areas_router = RouterFactory.create_crud_router(
 async def analyze_service_area_coverage(
     area_id: UUID = Path(..., description="Service area ID"),
     analysis_request: CoverageAnalysisRequest = Body(...),
-    deps: StandardDeps = None,
+    deps: StandardDependencies = Depends(get_standard_deps) = None,
 ) -> CoverageAnalysisResponse:
     """Analyze coverage for a specific service area."""
     service = ServiceCoverageService(deps.db, deps.tenant_id)
@@ -86,7 +92,7 @@ async def analyze_service_area_coverage(
 @rate_limit(max_requests=50, time_window_seconds=60)
 @standard_exception_handler
 async def get_service_area_nodes(
-    area_id: UUID = Path(..., description="Service area ID"), deps: PaginatedDeps = None
+    area_id: UUID = Path(..., description="Service area ID"), deps: PaginatedDependencies = Depends(get_paginated_deps) = None
 ) -> List[NetworkNodeResponse]:
     """Get all network nodes in a service area."""
     from sqlalchemy import select
@@ -133,7 +139,7 @@ async def find_nodes_by_location(
     latitude: float = Query(..., ge=-90, le=90, description="Latitude"),
     longitude: float = Query(..., ge=-180, le=180, description="Longitude"),
     radius_km: float = Query(1.0, ge=0.1, le=50, description="Search radius in km"),
-    deps: StandardDeps = None,
+    deps: StandardDependencies = Depends(get_standard_deps) = None,
 ) -> List[NetworkNodeResponse]:
     """Find network nodes within radius of coordinates."""
     from sqlalchemy import func, select
@@ -199,7 +205,7 @@ territories_router = RouterFactory.create_crud_router(
 async def find_territories_containing_point(
     latitude: float = Query(..., ge=-90, le=90),
     longitude: float = Query(..., ge=-180, le=180),
-    deps: StandardDeps = None,
+    deps: StandardDependencies = Depends(get_standard_deps) = None,
 ) -> List[TerritoryResponse]:
     """Find territories containing a geographic point."""
     service = TerritoryManagementService(deps.db, deps.tenant_id)
@@ -214,7 +220,7 @@ async def find_territories_containing_point(
 @standard_exception_handler
 async def get_territory_metrics(
     territory_id: UUID = Path(..., description="Territory ID"),
-    deps: StandardDeps = None,
+    deps: StandardDependencies = Depends(get_standard_deps) = None,
 ) -> Dict[str, Any]:
     """Get territory performance metrics."""
     service = TerritoryManagementService(deps.db, deps.tenant_id)
@@ -230,7 +236,7 @@ async def get_territory_metrics(
 @rate_limit(max_requests=20, time_window_seconds=60)
 @standard_exception_handler
 async def optimize_route(
-    request: RouteOptimizationRequest = Body(...), deps: StandardDeps = None
+    request: RouteOptimizationRequest = Body(...), deps: StandardDependencies = Depends(get_standard_deps) = None
 ) -> RouteOptimizationResponse:
     """Optimize route for field operations."""
     service = RouteOptimizationService(deps.db, deps.tenant_id)
@@ -242,7 +248,7 @@ async def optimize_route(
 @rate_limit(max_requests=50, time_window_seconds=60)
 @standard_exception_handler
 async def list_route_optimizations(
-    deps: PaginatedDeps = None,
+    deps: PaginatedDependencies = Depends(get_paginated_deps) = None,
 ) -> List[RouteOptimizationResponse]:
     """List previous route optimizations."""
     from sqlalchemy import desc, select
@@ -270,7 +276,7 @@ async def list_route_optimizations(
 @rate_limit(max_requests=100, time_window_seconds=60)
 @standard_exception_handler
 async def geocode_address(
-    request: GeocodingRequest = Body(...), deps: StandardDeps = None
+    request: GeocodingRequest = Body(...), deps: StandardDependencies = Depends(get_standard_deps) = None
 ) -> GeocodingResponse:
     """Convert address to coordinates."""
     service = GeocodingService(deps.tenant_id)
@@ -282,7 +288,7 @@ async def geocode_address(
 @rate_limit(max_requests=100, time_window_seconds=60)
 @standard_exception_handler
 async def reverse_geocode(
-    request: ReverseGeocodingRequest = Body(...), deps: StandardDeps = None
+    request: ReverseGeocodingRequest = Body(...), deps: StandardDependencies = Depends(get_standard_deps) = None
 ) -> GeocodingResponse:
     """Convert coordinates to address."""
     service = GeocodingService(deps.tenant_id)
@@ -301,7 +307,7 @@ async def reverse_geocode(
 )  # Strict limit for intensive analysis
 @standard_exception_handler
 async def comprehensive_coverage_analysis(
-    request: CoverageAnalysisRequest = Body(...), deps: StandardDeps = None
+    request: CoverageAnalysisRequest = Body(...), deps: StandardDependencies = Depends(get_standard_deps) = None
 ) -> CoverageAnalysisResponse:
     """Perform comprehensive coverage analysis."""
     service = ServiceCoverageService(deps.db, deps.tenant_id)

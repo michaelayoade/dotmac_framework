@@ -6,7 +6,7 @@ API endpoints for monitoring and health checks.
 from typing import Any, Dict, Optional
 
 from core.cache import get_cache_manager
-from core.logging import get_logger
+from dotmac_shared.observability.logging import get_logger
 from core.monitoring import (
     HealthStatus,
     get_comprehensive_status,

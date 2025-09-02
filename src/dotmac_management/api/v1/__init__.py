@@ -5,8 +5,10 @@ API v1 routes.
 from dotmac_shared.api.exception_handlers import standard_exception_handler
 
 from typing import Dict
+import os
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request, Response
+from starlette.middleware.base import BaseHTTPMiddleware
 
 # from config import settings  # TODO: Fix config import
 class MockSettings:
@@ -56,20 +58,52 @@ try:
 except ImportError:
     licensing_router = None
 
-# Temporarily commented out due to runtime dependency resolution issues
-# try:
-#     from .commission_config import router as commission_config_router
-# except ImportError:
-#     commission_config_router = None
+# Import commission and branding routers with security enhancements
+try:
+    from .commission_config import router as commission_config_router
+except ImportError:
+    commission_config_router = None
 
-# try:
-#     from .partner_branding import router as partner_branding_router
-# except ImportError:
-#     partner_branding_router = None
-commission_config_router = None
-partner_branding_router = None
+try:
+    from .partner_branding import router as partner_branding_router
+except ImportError:
+    partner_branding_router = None
 
 api_router = APIRouter()
+
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    """Add security headers to all API responses"""
+    
+    def __init__(self, app):
+        super().__init__(app)
+        self.environment = os.getenv("ENVIRONMENT", "development")
+    
+    async def dispatch(self, request: Request, call_next) -> Response:
+        response = await call_next(request)
+        
+        # Add security headers based on environment
+        security_headers = {
+            "X-Content-Type-Options": "nosniff",
+            "X-Frame-Options": "DENY", 
+            "X-XSS-Protection": "1; mode=block",
+            "Referrer-Policy": "strict-origin-when-cross-origin",
+            "X-API-Version": "v1",
+            "X-Service": "dotmac-management-api"
+        }
+        
+        # Add HSTS in production
+        if self.environment == "production":
+            security_headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        
+        # Apply headers
+        for header, value in security_headers.items():
+            response.headers[header] = value
+        
+        return response
+
+
+# Note: Security headers middleware should be added at the FastAPI app level, not router level
 
 
 # Standardized health endpoints for API v1

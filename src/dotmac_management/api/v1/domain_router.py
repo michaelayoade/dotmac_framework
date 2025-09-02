@@ -1,4 +1,4 @@
-"""Domain Management API Router for the Management Platform."""
+from dotmac_shared.api.dependencies import (\n    PaginatedDependencies,\n    get_paginated_deps\n)\nfrom dotmac_shared.schemas.base_schemas import PaginatedResponseSchema\n"""Domain Management API Router for the Management Platform."""
 
 import logging
 from typing import List, Optional
@@ -260,7 +260,7 @@ async def create_dns_record(
     )
 
 
-@router.get("/{domain_id}/dns", response_model=List[DNSRecordResponse])
+@router.get("/{domain_id}/dns", response_model=PaginatedResponseSchema[DNSRecordResponse])
 @rate_limit(max_requests=100, time_window_seconds=60)
 @standard_exception_handler
 async def list_dns_records(
@@ -269,7 +269,7 @@ async def list_dns_records(
     current_user: dict = Depends(get_current_user),
     domain_service: DomainService = Depends(get_domain_service)
 ):
-    """List DNS records for domain."""
+    """List DNS records for domain.\n\nReturns paginated results."""
     result = await domain_service.get_domain(
         domain_id=domain_id,
         tenant_id=current_user["tenant_id"],
@@ -446,7 +446,7 @@ async def request_ssl_certificate(
     )
 
 
-@router.get("/{domain_id}/ssl", response_model=List[SSLCertificateResponse])
+@router.get("/{domain_id}/ssl", response_model=PaginatedResponseSchema[SSLCertificateResponse])
 @rate_limit(max_requests=100, time_window_seconds=60)
 @standard_exception_handler
 async def list_ssl_certificates(
@@ -454,7 +454,7 @@ async def list_ssl_certificates(
     current_user: dict = Depends(get_current_user),
     domain_service: DomainService = Depends(get_domain_service)
 ):
-    """List SSL certificates for domain."""
+    """List SSL certificates for domain.\n\nReturns paginated results."""
     result = await domain_service.get_domain(
         domain_id=domain_id,
         tenant_id=current_user["tenant_id"],

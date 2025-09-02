@@ -3,8 +3,7 @@
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter
-from sqlalchemy.orm import Session
+from fastapi import \1, Dependsnds
 
 from dotmac_isp.core.database import get_db
 from dotmac_isp.core.middleware import get_tenant_id_dependency
@@ -15,7 +14,14 @@ from dotmac_isp.shared.exceptions import (
     ServiceError,
     ValidationError,
 )
-from dotmac_shared.api.dependencies import PaginatedDeps, StandardDeps
+from dotmac_shared.api.dependencies import (
+    StandardDependencies,
+    PaginatedDependencies,
+    SearchParams,
+    get_standard_deps,
+    get_paginated_deps,
+    get_admin_deps
+
 from dotmac_shared.api.exception_handlers import (
     Body,
     Depends,
@@ -68,7 +74,7 @@ router = RouterFactory.create_crud_router(
 
 @router.post("/portals", response_model=CaptivePortalConfigResponse)
 async def create_portal(
-    deps: StandardDeps,
+    deps: StandardDependencies = Depends(get_standard_deps),
     portal_data: CaptivePortalConfigCreate,
 ):
     """Create a new captive portal configuration."""
@@ -85,7 +91,7 @@ async def create_portal(
 
 @router.get("/portals", response_model=List[CaptivePortalConfigResponse])
 async def list_portals(
-    deps: PaginatedDeps,
+    deps: PaginatedDependencies = Depends(get_paginated_deps),
     customer_id: Optional[str] = Query(None, description="Filter by customer ID"),
     status: Optional[str] = Query(None, description="Filter by portal status"),
 ):
@@ -108,7 +114,7 @@ async def list_portals(
 
 @router.get("/portals/{portal_id}", response_model=CaptivePortalConfigResponse)
 async def get_portal(
-    deps: StandardDeps,
+    deps: StandardDependencies = Depends(get_standard_deps),
     portal_id: str,
 ):
     """Get captive portal configuration by ID."""
@@ -126,7 +132,7 @@ async def get_portal(
 
 @router.put("/portals/{portal_id}", response_model=CaptivePortalConfigResponse)
 async def update_portal(
-    deps: StandardDeps,
+    deps: StandardDependencies = Depends(get_standard_deps),
     portal_id: str,
     portal_updates: CaptivePortalConfigUpdate,
 ):
@@ -147,7 +153,7 @@ async def update_portal(
 
 @router.delete("/portals/{portal_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_portal(
-    deps: StandardDeps,
+    deps: StandardDependencies = Depends(get_standard_deps),
     portal_id: str,
 ):
     """Delete a captive portal configuration."""
@@ -167,7 +173,7 @@ async def delete_portal(
 
 @router.post("/auth/email", response_model=AuthenticationResponse)
 async def authenticate_email(
-    deps: StandardDeps,
+    deps: StandardDependencies = Depends(get_standard_deps),
     auth_request: EmailAuthRequest,
 ):
     """Authenticate user via email verification."""
@@ -186,7 +192,7 @@ async def authenticate_email(
 
 @router.post("/auth/social", response_model=AuthenticationResponse)
 async def authenticate_social(
-    deps: StandardDeps,
+    deps: StandardDependencies = Depends(get_standard_deps),
     auth_request: SocialAuthRequest,
 ):
     """Authenticate user via social media provider."""
@@ -205,7 +211,7 @@ async def authenticate_social(
 
 @router.post("/auth/voucher", response_model=AuthenticationResponse)
 async def authenticate_voucher(
-    deps: StandardDeps,
+    deps: StandardDependencies = Depends(get_standard_deps),
     auth_request: VoucherAuthRequest,
 ):
     """Authenticate user via access voucher."""
@@ -224,7 +230,7 @@ async def authenticate_voucher(
 
 @router.post("/auth/radius", response_model=AuthenticationResponse)
 async def authenticate_radius(
-    deps: StandardDeps,
+    deps: StandardDependencies = Depends(get_standard_deps),
     auth_request: RadiusAuthRequest,
 ):
     """Authenticate user via RADIUS server."""
@@ -246,7 +252,7 @@ async def authenticate_radius(
 
 @router.get("/sessions", response_model=SessionListResponse)
 async def list_sessions(
-    deps: PaginatedDeps,
+    deps: PaginatedDependencies = Depends(get_paginated_deps),
     portal_id: Optional[str] = Query(None, description="Filter by portal ID"),
     user_id: Optional[str] = Query(None, description="Filter by user ID"),
     active_only: bool = Query(True, description="Show only active sessions"),
@@ -275,7 +281,7 @@ async def list_sessions(
 
 @router.get("/sessions/{session_id}", response_model=SessionResponse)
 async def get_session(
-    deps: StandardDeps,
+    deps: StandardDependencies = Depends(get_standard_deps),
     session_id: str,
 ):
     """Get session information by ID."""
@@ -293,7 +299,7 @@ async def get_session(
 
 @router.post("/sessions/validate", response_model=Optional[SessionResponse])
 async def validate_session(
-    deps: StandardDeps,
+    deps: StandardDependencies = Depends(get_standard_deps),
     session_token: str = Body(..., embed=True),
 ):
     """Validate a session token and return session info if valid."""
@@ -307,7 +313,7 @@ async def validate_session(
 
 @router.post("/sessions/{session_id}/terminate", status_code=status.HTTP_204_NO_CONTENT)
 async def terminate_session(
-    deps: StandardDeps,
+    deps: StandardDependencies = Depends(get_standard_deps),
     session_id: str,
     request: SessionTerminateRequest,
 ):
@@ -325,7 +331,7 @@ async def terminate_session(
 
 @router.post("/sessions/{session_id}/usage")
 async def update_session_usage(
-    deps: StandardDeps,
+    deps: StandardDependencies = Depends(get_standard_deps),
     session_id: str,
     bytes_downloaded: int = Body(..., description="Bytes downloaded"),
     bytes_uploaded: int = Body(..., description="Bytes uploaded"),
@@ -352,7 +358,7 @@ async def update_session_usage(
 
 @router.post("/vouchers", response_model=List[VoucherResponse])
 async def create_vouchers(
-    deps: StandardDeps,
+    deps: StandardDependencies = Depends(get_standard_deps),
     voucher_request: VoucherCreateRequest,
 ):
     """Create vouchers for portal access."""
@@ -369,7 +375,7 @@ async def create_vouchers(
 
 @router.post("/vouchers/{voucher_code}/redeem")
 async def redeem_voucher(
-    deps: StandardDeps,
+    deps: StandardDependencies = Depends(get_standard_deps),
     voucher_code: str,
     portal_id: str = Body(..., description="Portal ID"),
     user_id: str = Body(..., description="User ID"),
@@ -396,7 +402,7 @@ async def redeem_voucher(
 
 @router.get("/portals/{portal_id}/stats", response_model=Dict[str, Any])
 async def get_portal_stats(
-    deps: PaginatedDeps,
+    deps: PaginatedDependencies = Depends(get_paginated_deps),
     portal_id: str,
     start_date: Optional[str] = Query(None, description="Start date (ISO format)"),
     end_date: Optional[str] = Query(None, description="End date (ISO format)"),
@@ -433,7 +439,7 @@ async def get_portal_stats(
 
 @router.post("/maintenance/cleanup-sessions")
 async def cleanup_expired_sessions(
-    deps: StandardDeps,
+    deps: StandardDependencies = Depends(get_standard_deps),
 ):
     """Clean up expired sessions."""
     try:

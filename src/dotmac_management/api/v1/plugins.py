@@ -1,4 +1,4 @@
-"""
+from dotmac_shared.api.dependencies import (\n    PaginatedDependencies,\n    get_paginated_deps\n)\nfrom dotmac_shared.schemas.base_schemas import PaginatedResponseSchema\n"""
 Plugin Management API endpoints.
 
 Provides comprehensive plugin lifecycle management following DRY patterns.
@@ -36,7 +36,7 @@ from ...services.plugin_service import PluginService
 router = APIRouter(prefix="/plugins", tags=["Plugin Management"])
 
 # Use established logging pattern
-from ...core.logging import get_logger
+from dotmac_shared.observability.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -48,7 +48,7 @@ logger = get_logger(__name__)
 
 @router.get(
     "/catalog",
-    response_model=List[PluginCatalogResponse],
+    response_model=PaginatedResponseSchema[PluginCatalogResponse],
     summary="Get plugin catalog",
     description="Retrieve available plugins with filtering and search capabilities",
 )
@@ -317,7 +317,7 @@ async def uninstall_plugin(
 
 @router.get(
     "/installations",
-    response_model=List[PluginInstallationResponse],
+    response_model=PaginatedResponseSchema[PluginInstallationResponse],
     summary="Get installed plugins",
     description="List all plugins installed for current tenant",
 )

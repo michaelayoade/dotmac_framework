@@ -13,6 +13,9 @@ from core.sanitization import (
     validate_safe_string,
 )
 from pydantic import BaseModel, EmailStr, Field, field_validator
+from dotmac_shared.validation.common_validators import (
+    CommonValidators, ValidationPatterns
+)
 from schemas.common import BaseResponse
 
 from ..models.tenant import TenantStatus
@@ -30,6 +33,32 @@ class TenantBase(BaseModel):
     contact_phone: Optional[str] = Field(
         None, max_length=50, description="Contact phone"
     )
+    
+    @field_validator('name')
+    @classmethod
+    def validate_name(cls, v: str) -> str:
+        """Enhanced tenant name validation"""
+        return CommonValidators.validate_required_string(v, "Tenant name", 2, 255)
+    
+    @field_validator('description')
+    @classmethod
+    def validate_description(cls, v: Optional[str]) -> Optional[str]:
+        """Enhanced description validation"""
+        return CommonValidators.validate_description(v, 1000)
+    
+    @field_validator('contact_name')
+    @classmethod
+    def validate_contact_name(cls, v: Optional[str]) -> Optional[str]:
+        """Enhanced contact name validation"""
+        if v is None:
+            return None
+        return CommonValidators.validate_user_name(v)
+    
+    @field_validator('contact_phone')
+    @classmethod
+    def validate_contact_phone(cls, v: Optional[str]) -> Optional[str]:
+        """Enhanced phone validation"""
+        return CommonValidators.validate_phone(v)
 
 
 class TenantCreate(TenantBase):
@@ -63,16 +92,9 @@ class TenantCreate(TenantBase):
     @field_validator("slug")
     @classmethod
     def validate_slug(cls, v: str) -> str:
-        """Validate slug - alphanumeric and hyphens only."""
-        import re
-
-        if not re.match(r"^[a-z0-9-]+$", v):
-            raise ValueError(
-                "Slug must contain only lowercase letters, numbers, and hyphens"
-            )
-        if v.startswith("-") or v.endswith("-"):
-            raise ValueError("Slug cannot start or end with hyphen")
-        return v
+        """Enhanced slug validation using common validators"""
+        # Use the common slug validator
+        return CommonValidators.validate_slug(v, "Tenant slug")
 
 
 class TenantUpdate(BaseModel):
@@ -151,6 +173,53 @@ class TenantConfigurationBase(BaseModel):
     key: str = Field(..., max_length=255, description="Configuration key")
     value: Any = Field(..., description="Configuration value")
     is_encrypted: bool = Field(False, description="Whether value is encrypted")
+    
+    @field_validator('category')
+    @classmethod
+    def validate_category(cls, v: str) -> str:
+        """Validate configuration category"""
+        clean_category = CommonValidators.validate_required_string(v, "Configuration category", 2, 100)
+        
+        # Allow only alphanumeric and underscore for config categories
+        if not ValidationPatterns.SLUG.match(clean_category.replace('_', '-')):
+            raise ValueError('Configuration category can only contain lowercase letters, numbers, and underscores')
+        
+        return clean_category
+    
+    @field_validator('key')
+    @classmethod
+    def validate_key(cls, v: str) -> str:
+        """Validate configuration key"""
+        clean_key = CommonValidators.validate_required_string(v, "Configuration key", 1, 255)
+        
+        # Allow alphanumeric, underscore, dot, and hyphen for config keys
+        import re
+        if not re.match(r'^[a-zA-Z0-9._-]+$', clean_key):
+            raise ValueError('Configuration key can only contain letters, numbers, dots, underscores, and hyphens')
+        
+        return clean_key
+    
+    @field_validator('value')
+    @classmethod
+    def validate_value(cls, v: Any) -> Any:
+        """Validate configuration value with security checks"""
+        if isinstance(v, str):
+            # String length limit
+            if len(v) > 10000:  # 10KB limit for string values
+                raise ValueError('Configuration value must be less than 10KB')
+            
+            # Basic security check - prevent script injection
+            if '<script' in v.lower() or 'javascript:' in v.lower():
+                raise ValueError('Configuration value contains potentially dangerous content')
+        
+        elif isinstance(v, dict):
+            # JSON object size limit
+            import json
+            json_str = json.dumps(v)
+            if len(json_str) > 50000:  # 50KB limit for JSON values
+                raise ValueError('Configuration value JSON must be less than 50KB')
+        
+        return v
 
 
 class TenantConfigurationCreate(TenantConfigurationBase):
@@ -204,6 +273,55 @@ class TenantOnboardingRequest(BaseModel):
     enabled_features: List[str] = Field(
         default_factory=list, description="Enabled features"
     )
+    
+    @field_validator('deployment_region')
+    @classmethod
+    def validate_deployment_region(cls, v: str) -> str:
+        """Validate deployment region"""
+        return CommonValidators.validate_region(v)
+    
+    @field_validator('instance_size')
+    @classmethod
+    def validate_instance_size(cls, v: str) -> str:
+        """Validate instance size"""
+        clean_size = v.strip().lower()
+        allowed_sizes = ['small', 'medium', 'large', 'xlarge', 'xxlarge']
+        
+        if clean_size not in allowed_sizes:
+            raise ValueError(f'Instance size must be one of: {allowed_sizes}')
+        
+        return clean_size
+    
+    @field_validator('enabled_features')
+    @classmethod
+    def validate_enabled_features(cls, v: List[str]) -> List[str]:
+        """Validate enabled features list"""
+        if not isinstance(v, list):
+            raise ValueError('Enabled features must be a list')
+        
+        # Limit number of features
+        if len(v) > 50:
+            raise ValueError('Cannot enable more than 50 features')
+        
+        # Validate each feature name
+        clean_features = []
+        for feature in v:
+            if not isinstance(feature, str):
+                raise ValueError('Feature names must be strings')
+            
+            clean_feature = feature.strip().lower()
+            
+            # Feature name format validation
+            if not ValidationPatterns.SLUG.match(clean_feature):
+                raise ValueError(f'Feature name "{feature}" contains invalid characters')
+            
+            if len(clean_feature) < 2 or len(clean_feature) > 50:
+                raise ValueError(f'Feature name "{feature}" must be between 2 and 50 characters')
+            
+            clean_features.append(clean_feature)
+        
+        # Remove duplicates while preserving order
+        return list(dict.fromkeys(clean_features))
 
 
 class TenantOnboardingResponse(BaseModel):

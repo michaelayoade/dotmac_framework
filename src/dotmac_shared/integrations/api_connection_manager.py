@@ -14,7 +14,14 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from dotmac_shared.api.dependencies import StandardDeps
+from dotmac_shared.api.dependencies import (
+    StandardDependencies,
+    PaginatedDependencies,
+    SearchParams,
+    get_standard_deps,
+    get_paginated_deps,
+    get_admin_deps
+
 from dotmac_shared.api.exception_handlers import standard_exception_handler
 from dotmac_shared.api.router_factory import RouterFactory
 from dotmac_shared.schemas.base_schemas import (
@@ -592,7 +599,7 @@ class ApiConnectionManagerRouter:
         @standard_exception_handler
         async def test_api_connection(
             connection_id: str,
-            deps: StandardDeps = Depends()
+            deps: StandardDependencies = Depends(get_standard_deps) = Depends()
         ):
             """Test API connection health."""
             manager = ApiConnectionManager(deps.db, deps.tenant_id)
@@ -607,7 +614,7 @@ class ApiConnectionManagerRouter:
             data: Optional[Dict[str, Any]] = None,
             params: Optional[Dict[str, str]] = None,
             headers: Optional[Dict[str, str]] = None,
-            deps: StandardDeps = Depends()
+            deps: StandardDependencies = Depends(get_standard_deps) = Depends()
         ):
             """Make API request through managed connection."""
             manager = ApiConnectionManager(deps.db, deps.tenant_id)
@@ -622,7 +629,7 @@ class ApiConnectionManagerRouter:
 
         @router.get("/pool/stats", response_model=Dict[str, Any])
         @standard_exception_handler
-        async def get_pool_stats(deps: StandardDeps = Depends()):
+        async def get_pool_stats(deps: StandardDependencies = Depends(get_standard_deps) = Depends()):
             """Get connection pool statistics."""
             manager = ApiConnectionManager(deps.db, deps.tenant_id)
             

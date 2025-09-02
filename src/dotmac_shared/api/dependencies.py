@@ -4,7 +4,7 @@ Enforces DRY principles with strict type safety and validation.
 """
 
 import logging
-from typing import Annotated, Any, Dict, Optional, Union
+from typing import Any, Dict, Optional
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, Query, status
@@ -26,10 +26,8 @@ class StandardDependencies:
     """
     Production-ready standard dependencies with validation.
     
-    Note: This is NOT a Pydantic model to avoid AsyncSession serialization issues.
+    Plain Python class (NOT a Pydantic model) to avoid FastAPI type introspection issues.
     """
-    # Explicitly prevent this from being treated as a Pydantic model
-    __slots__ = ('current_user', 'db', 'tenant_id', 'user_id')
 
     def __init__(
         self,
@@ -84,28 +82,28 @@ class PaginatedDependencies(StandardDependencies):
 
 
 async def get_standard_deps(
-    current_user: Annotated[Dict[str, Any], Depends(get_current_user)],
-    db: Annotated[AsyncSession, Depends(get_async_db)],
-    tenant_id: Annotated[Optional[str], Depends(get_current_tenant)] = None,
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_db),
+    tenant_id: Optional[str] = Depends(get_current_tenant),
 ) -> StandardDependencies:
     """Get standard dependencies used by 90% of endpoints."""
     return StandardDependencies(current_user, db, tenant_id)
 
 
 async def get_paginated_deps(
-    current_user: Annotated[Dict[str, Any], Depends(get_current_user)],
-    db: Annotated[AsyncSession, Depends(get_async_db)],
-    pagination: Annotated[PaginationParams, Depends(get_pagination_params)],
-    tenant_id: Annotated[Optional[str], Depends(get_current_tenant)] = None,
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_db),
+    pagination: PaginationParams = Depends(get_pagination_params),
+    tenant_id: Optional[str] = Depends(get_current_tenant),
 ) -> PaginatedDependencies:
     """Get standard dependencies with pagination for list endpoints."""
     return PaginatedDependencies(current_user, db, pagination, tenant_id)
 
 
 async def get_admin_deps(
-    current_user: Annotated[Dict[str, Any], Depends(get_current_user)],
-    db: Annotated[AsyncSession, Depends(get_async_db)],
-    tenant_id: Annotated[Optional[str], Depends(get_current_tenant)] = None,
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_db),
+    tenant_id: Optional[str] = Depends(get_current_tenant),
 ) -> StandardDependencies:
     """Get dependencies with admin permission validation."""
     if not current_user.get("is_admin", False):
@@ -115,19 +113,27 @@ async def get_admin_deps(
     return StandardDependencies(current_user, db, tenant_id)
 
 
-# === Typed Annotations for Clean Router Code ===
+# === Usage Patterns for Clean Router Code ===
 
-# Replace: current_user = Depends(get_current_user), db = Depends(get_db)
-# With:    deps: StandardDeps
-StandardDeps = Annotated[StandardDependencies, Depends(get_standard_deps)]
-
-# Replace: pagination params + standard deps
-# With:    deps: PaginatedDeps
-PaginatedDeps = Annotated[PaginatedDependencies, Depends(get_paginated_deps)]
-
-# Replace: admin check + standard deps
-# With:    deps: AdminDeps
-AdminDeps = Annotated[StandardDependencies, Depends(get_admin_deps)]
+# RECOMMENDED PATTERN - Use direct Depends():
+# 
+# @router.get("/items", response_model=ItemListResponse)
+# async def list_items(
+#     deps: StandardDependencies = Depends(get_standard_deps)
+# ) -> ItemListResponse:
+#     service = ItemService(deps.db, deps.tenant_id)
+#     return await service.list(user_id=deps.user_id)
+#
+# @router.get("/items", response_model=ItemListResponse) 
+# async def list_items_paginated(
+#     deps: PaginatedDependencies = Depends(get_paginated_deps)
+# ) -> ItemListResponse:
+#     service = ItemService(deps.db, deps.tenant_id)
+#     return await service.list_paginated(
+#         skip=deps.pagination.offset,
+#         limit=deps.pagination.size,
+#         user_id=deps.user_id
+#     )
 
 
 # === Search and Filter Dependencies ===
@@ -157,7 +163,7 @@ class SearchParams:
         self.sort_order = sort_order
 
 
-SearchDeps = Annotated[SearchParams, Depends(SearchParams)]
+# Use: search: SearchParams = Depends(SearchParams)
 
 
 # === File Upload Dependencies ===
@@ -177,7 +183,7 @@ class FileUploadParams:
         self.allowed_extensions = allowed_types.split(",")
 
 
-FileUploadDeps = Annotated[FileUploadParams, Depends(FileUploadParams)]
+# Use: upload: FileUploadParams = Depends(FileUploadParams)
 
 
 # === Entity ID Dependencies ===
@@ -216,7 +222,7 @@ class BulkOperationParams:
         self.force = force
 
 
-BulkDeps = Annotated[BulkOperationParams, Depends(BulkOperationParams)]
+# Use: bulk: BulkOperationParams = Depends(BulkOperationParams)
 
 
 # === Validation and Type Safety ===
@@ -235,21 +241,30 @@ def validate_deps_usage():
 # === Mandatory Usage Pattern ===
 
 """
-MANDATORY PATTERN - No legacy support:
+MANDATORY PATTERN - Direct Depends() usage:
 
-@router.get("/customers")
-async def list_customers(deps: PaginatedDeps, search: SearchDeps):
+@router.get("/customers", response_model=CustomerListResponse)
+async def list_customers(
+    deps: PaginatedDependencies = Depends(get_paginated_deps),
+    search: SearchParams = Depends(SearchParams)
+) -> CustomerListResponse:
     service = CustomerService(deps.db, deps.tenant_id)
     return await service.list(
         skip=deps.pagination.offset,
         limit=deps.pagination.size,
-        filters=search.filters,
+        filters=search,
         user_id=deps.user_id
     )
 
+CRITICAL REQUIREMENTS:
+✅ Always set explicit response_model=YourSchema (avoid None)
+✅ Use plain Python classes for dependencies (NOT Pydantic models)
+✅ Use = Depends(...) syntax (no Annotated chains)
+✅ AsyncSession should be yielded from async generator
+
 FORBIDDEN PATTERNS:
-- current_user = Depends(get_current_user)  # ❌ Use StandardDeps
-- db = Depends(get_db)                      # ❌ Use StandardDeps
-- Manual pagination parameters              # ❌ Use PaginatedDeps
-- Individual Query parameters               # ❌ Use SearchDeps
+❌ response_model=None (unless truly no response body)
+❌ Annotated[Type, Depends(...)] for nested dependencies
+❌ Making dependency classes inherit from BaseModel
+❌ Missing explicit response schema types
 """

@@ -10,7 +10,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
-from dotmac_shared.api.dependencies import StandardDeps
+from dotmac_shared.api.dependencies import StandardDependencies, get_standard_deps
 from dotmac_shared.api.exception_handlers import standard_exception_handler
 from dotmac_shared.api.router_factory import RouterFactory
 from dotmac_shared.auth.dependencies import (

@@ -1,4 +1,7 @@
-"""
+from dotmac_shared.schemas.base_schemas import PaginatedResponseSchema\nfrom dotmac_shared.api.dependencies import (
+    StandardDependencies,
+    get_standard_deps
+)\n"""
 Management Portal Licensing API - Contract Provisioning and Management.
 """
 
@@ -7,7 +10,7 @@ from datetime import datetime, timedelta
 from typing import List, Optional
 from uuid import uuid4
 
-from fastapi import APIRouter, HTTPException
+from fastapi import \1, Dependsn
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -83,8 +86,7 @@ class LicenseContractResponse(BaseModel):
 @router.post("/contracts", response_model=LicenseContractResponse)
 @standard_exception_handler
 async def create_license_contract(
-    contract_data: LicenseContractCreate,
-    db: Session = Depends(get_db),
+    contract_data: LicenseContractCreate,\1deps: StandardDependencies = Depends(get_standard_deps),
     current_user = Depends(get_current_user)
 ):
     """
@@ -154,18 +156,17 @@ async def create_license_contract(
         raise HTTPException(status_code=500, detail="Failed to create license contract")
 
 
-@router.get("/contracts", response_model=List[LicenseContractResponse])
+@router.get("/contracts", response_model=PaginatedResponseSchema[LicenseContractResponse])
 @standard_exception_handler
 async def list_license_contracts(
     status: Optional[str] = Query(None, description="Filter by contract status"),
     contract_type: Optional[str] = Query(None, description="Filter by contract type"),
     expiring_in_days: Optional[int] = Query(None, description="Filter contracts expiring within N days"),
     limit: int = Query(50, ge=1, le=100),
-    offset: int = Query(0, ge=0),
-    db: Session = Depends(get_db),
+    offset: int = Query(0, ge=0),\1deps: PaginatedDependencies = Depends(get_paginated_deps),
     current_user = Depends(get_current_user)
 ):
-    """List license contracts for current management tenant."""
+    """List license contracts for current management tenant.\n\nReturns paginated results."""
     query = db.query(LicenseContract).filter(
         LicenseContract.tenant_id == current_user.tenant_id
     )
@@ -208,8 +209,7 @@ async def list_license_contracts(
 @router.get("/contracts/{contract_id}", response_model=LicenseContractResponse)
 @standard_exception_handler
 async def get_license_contract(
-    contract_id: str,
-    db: Session = Depends(get_db),
+    contract_id: str,\1deps: StandardDependencies = Depends(get_standard_deps),
     current_user = Depends(get_current_user)
 ):
     """Get specific license contract details."""
@@ -243,8 +243,7 @@ async def get_license_contract(
 @standard_exception_handler
 async def update_license_contract(
     contract_id: str,
-    update_data: LicenseContractUpdate,
-    db: Session = Depends(get_db),
+    update_data: LicenseContractUpdate,\1deps: StandardDependencies = Depends(get_standard_deps),
     current_user = Depends(get_current_user)
 ):
     """Update license contract parameters."""
@@ -294,8 +293,7 @@ async def update_license_contract(
 @standard_exception_handler
 async def suspend_license_contract(
     contract_id: str,
-    reason: str = Query(..., description="Reason for suspension"),
-    db: Session = Depends(get_db),
+    reason: str = Query(..., description="Reason for suspension"),\1deps: StandardDependencies = Depends(get_standard_deps),
     current_user = Depends(get_current_user)
 ):
     """Suspend a license contract."""
@@ -324,8 +322,7 @@ async def suspend_license_contract(
 @router.post("/contracts/{contract_id}/reactivate")
 @standard_exception_handler
 async def reactivate_license_contract(
-    contract_id: str,
-    db: Session = Depends(get_db),
+    contract_id: str,\1deps: StandardDependencies = Depends(get_standard_deps),
     current_user = Depends(get_current_user)
 ):
     """Reactivate a suspended license contract."""
@@ -358,8 +355,7 @@ async def reactivate_license_contract(
 @router.get("/contracts/{contract_id}/status")
 @standard_exception_handler
 async def get_contract_status(
-    contract_id: str,
-    db: Session = Depends(get_db),
+    contract_id: str,\1deps: StandardDependencies = Depends(get_standard_deps),
     current_user = Depends(get_current_user)
 ):
     """Get comprehensive contract status including validation results."""

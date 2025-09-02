@@ -1,3 +1,7 @@
+from dotmac_shared.api.dependencies import (
+    StandardDependencies,
+    get_standard_deps
+)
 """
 Customer VPS Management API
 Handles customer-managed VPS deployments and support
@@ -14,7 +18,7 @@ from datetime import datetime
 from dotmac_shared.auth.dependencies import get_current_active_user, get_current_active_superuser
 from dotmac_shared.auth.models import User
 from dotmac_shared.database.base import get_db_session
-from dotmac_shared.core.logging import get_logger
+from dotmac_shared.observability.logging import get_logger
 from dotmac_shared.api.response import APIResponse
 from dotmac_shared.api.exceptions import StandardExceptions, standard_exception_handler
 from dotmac_shared.validation.common_validators import CommonValidators
@@ -191,8 +195,7 @@ async def get_vps_requirements(
 async def setup_vps_customer(
     setup_request: VPSSetupRequest,
     background_tasks: BackgroundTasks,
-    current_user: User = Depends(get_current_active_superuser),
-    db: Session = Depends(get_db_session)
+    deps: StandardDependencies = Depends(get_standard_deps)
 ) -> APIResponse[VPSCustomerResponse]:
     """
     Set up a new VPS customer and start deployment process
@@ -316,8 +319,7 @@ async def list_vps_customers(
     plan_filter: Optional[TenantPlan] = None,
     limit: int = 50,
     offset: int = 0,
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db_session)
+    deps: StandardDependencies = Depends(get_standard_deps)
 ) -> APIResponse[List[VPSCustomerResponse]]:
     """List VPS customers with optional filtering"""
     
@@ -375,8 +377,7 @@ async def list_vps_customers(
 @standard_exception_handler
 async def get_deployment_status(
     customer_id: str,
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db_session)
+    deps: StandardDependencies = Depends(get_standard_deps)
 ) -> APIResponse[DeploymentStatus]:
     """Get detailed deployment status for VPS customer"""
     
@@ -436,8 +437,7 @@ async def get_deployment_status(
 async def retry_deployment(
     customer_id: str,
     background_tasks: BackgroundTasks,
-    current_user: User = Depends(get_current_active_superuser),
-    db: Session = Depends(get_db_session)
+    deps: StandardDependencies = Depends(get_standard_deps)
 ) -> APIResponse:
     """Retry failed VPS deployment"""
     
@@ -480,8 +480,7 @@ async def retry_deployment(
 @standard_exception_handler
 async def get_setup_instructions(
     customer_id: str,
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db_session)
+    deps: StandardDependencies = Depends(get_standard_deps)
 ) -> APIResponse[Dict[str, Any]]:
     """Get setup instructions for VPS customer"""
     

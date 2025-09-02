@@ -2,7 +2,9 @@
 
 ## 🎯 Overview
 
-Your Coolify instance is now installed and ready at: **http://149.102.135.97:8000**
+Your Coolify instance is now installed and ready at: **https://coolify.dotmac.com**
+
+> **⚠️ SECURITY NOTE**: Replace example IP with your actual production domain. Never use HTTP in production.
 
 This guide walks you through setting up the DotMac Framework production deployment using the recommended single-image, multi-service approach.
 
@@ -17,9 +19,10 @@ This guide walks you through setting up the DotMac Framework production deployme
 
 ### 1. Access Coolify Dashboard
 
-1. Navigate to: http://149.102.135.97:8000
+1. Navigate to: https://coolify.dotmac.com
 2. Complete initial setup (create admin account)
 3. Verify all services are healthy
+4. **Configure SSL**: Ensure Coolify dashboard uses HTTPS with valid certificates
 
 ### 2. Create Project
 

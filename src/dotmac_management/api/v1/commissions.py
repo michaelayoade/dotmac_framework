@@ -7,10 +7,17 @@ from io import StringIO
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import HTTPException, Depends, Query
 from fastapi.responses import StreamingResponse
 
-from dotmac_shared.api.dependencies import PaginatedDeps, StandardDeps
+from dotmac_shared.api.dependencies import (
+    StandardDependencies,
+    PaginatedDependencies,
+    SearchParams,
+    get_standard_deps,
+    get_paginated_deps,
+    get_admin_deps
+
 from dotmac_shared.api.exception_handlers import standard_exception_handler
 
 from ...models.billing import CommissionStatus
@@ -42,7 +49,7 @@ def _serialize_commission(c) -> Dict[str, Any]:
 @router.get("/", response_model=Dict[str, Any])
 @standard_exception_handler
 async def list_commissions(
-    deps: PaginatedDeps,
+    deps: PaginatedDependencies = Depends(get_paginated_deps),
     reseller_id: Optional[UUID] = Query(None),
     status: Optional[CommissionStatus] = Query(None),
 ) -> Dict[str, Any]:
@@ -77,7 +84,7 @@ async def list_commissions(
 
 @router.get("/{commission_id}", response_model=Dict[str, Any])
 @standard_exception_handler
-async def get_commission(commission_id: UUID, deps: StandardDeps) -> Dict[str, Any]:
+async def get_commission(commission_id: UUID, deps: StandardDependencies = Depends(get_standard_deps)) -> Dict[str, Any]:
     repo = CommissionRepository(deps.db)
     c = await repo.get_by_id(commission_id)
     if not c:
@@ -87,7 +94,7 @@ async def get_commission(commission_id: UUID, deps: StandardDeps) -> Dict[str, A
 
 @router.post("/{commission_id}/approve", response_model=Dict[str, Any])
 @standard_exception_handler
-async def approve_single(commission_id: UUID, deps: StandardDeps) -> Dict[str, Any]:
+async def approve_single(commission_id: UUID, deps: StandardDependencies = Depends(get_standard_deps)) -> Dict[str, Any]:
     repo = CommissionRepository(deps.db)
     updated = await repo.approve_commissions([commission_id], user_id=deps.user_id)
     if updated == 0:
@@ -98,7 +105,7 @@ async def approve_single(commission_id: UUID, deps: StandardDeps) -> Dict[str, A
 
 @router.post("/bulk-approve", response_model=Dict[str, Any])
 @standard_exception_handler
-async def bulk_approve(request: Dict[str, List[UUID]], deps: StandardDeps) -> Dict[str, Any]:
+async def bulk_approve(request: Dict[str, List[UUID]], deps: StandardDependencies = Depends(get_standard_deps)) -> Dict[str, Any]:
     ids = request.get("ids", [])
     if not ids:
         raise HTTPException(status_code=400, detail="No commission IDs provided")
@@ -110,7 +117,7 @@ async def bulk_approve(request: Dict[str, List[UUID]], deps: StandardDeps) -> Di
 @router.post("/{commission_id}/process", response_model=Dict[str, Any])
 @standard_exception_handler
 async def process_single(
-    commission_id: UUID, deps: StandardDeps, payment_reference: Optional[str] = None
+    commission_id: UUID, deps: StandardDependencies = Depends(get_standard_deps), payment_reference: Optional[str] = None
 ) -> Dict[str, Any]:
     repo = CommissionRepository(deps.db)
     ref = payment_reference or f"single-{commission_id}-{int(datetime.now(timezone.utc).timestamp())}"
@@ -123,7 +130,7 @@ async def process_single(
 
 @router.post("/bulk-process", response_model=Dict[str, Any])
 @standard_exception_handler
-async def bulk_process(request: Dict[str, List[UUID]], deps: StandardDeps) -> Dict[str, Any]:
+async def bulk_process(request: Dict[str, List[UUID]], deps: StandardDependencies = Depends(get_standard_deps)) -> Dict[str, Any]:
     ids = request.get("ids", [])
     if not ids:
         raise HTTPException(status_code=400, detail="No commission IDs provided")
@@ -136,7 +143,7 @@ async def bulk_process(request: Dict[str, List[UUID]], deps: StandardDeps) -> Di
 @router.post("/{commission_id}/dispute", response_model=Dict[str, Any])
 @standard_exception_handler
 async def dispute_single(
-    commission_id: UUID, deps: StandardDeps, reason: Optional[str] = None
+    commission_id: UUID, deps: StandardDependencies = Depends(get_standard_deps), reason: Optional[str] = None
 ) -> Dict[str, Any]:
     repo = CommissionRepository(deps.db)
     c = await repo.get_by_id(commission_id)
@@ -156,7 +163,7 @@ async def dispute_single(
 @router.get("/summary", response_model=Dict[str, Any])
 @standard_exception_handler
 async def commissions_summary(
-    deps: StandardDeps, reseller_id: Optional[UUID] = Query(None)
+    deps: StandardDependencies = Depends(get_standard_deps), reseller_id: Optional[UUID] = Query(None)
 ) -> Dict[str, Any]:
     repo = CommissionRepository(deps.db)
     summary: Dict[str, Any] = {"counts": {}, "totals": {}}
@@ -175,19 +182,19 @@ async def commissions_summary(
 
 @router.post("/approve", response_model=Dict[str, Any])
 @standard_exception_handler
-async def approve_generic(request: Dict[str, List[UUID]], deps: StandardDeps) -> Dict[str, Any]:
+async def approve_generic(request: Dict[str, List[UUID]], deps: StandardDependencies = Depends(get_standard_deps)) -> Dict[str, Any]:
     return await bulk_approve(request, deps)
 
 
 @router.post("/process", response_model=Dict[str, Any])
 @standard_exception_handler
-async def process_generic(request: Dict[str, List[UUID]], deps: StandardDeps) -> Dict[str, Any]:
+async def process_generic(request: Dict[str, List[UUID]], deps: StandardDependencies = Depends(get_standard_deps)) -> Dict[str, Any]:
     return await bulk_process(request, deps)
 
 
 @router.post("/validate-bulk-action", response_model=Dict[str, Any])
 @standard_exception_handler
-async def validate_bulk_action(request: Dict[str, List[UUID]], deps: StandardDeps) -> Dict[str, Any]:
+async def validate_bulk_action(request: Dict[str, List[UUID]], deps: StandardDependencies = Depends(get_standard_deps)) -> Dict[str, Any]:
     ids = request.get("ids", [])
     if not ids:
         raise HTTPException(status_code=400, detail="No IDs provided")
@@ -210,7 +217,7 @@ async def validate_bulk_action(request: Dict[str, List[UUID]], deps: StandardDep
 @router.get("/export")
 @standard_exception_handler
 async def export_commissions(
-    deps: StandardDeps,
+    deps: StandardDependencies = Depends(get_standard_deps),
     reseller_id: Optional[UUID] = Query(None),
     status: Optional[CommissionStatus] = Query(None),
 ) -> StreamingResponse:

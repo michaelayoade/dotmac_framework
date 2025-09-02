@@ -5,15 +5,21 @@ Provides license contract lookup and management for ISP instances
 
 from typing import Dict, Any, Optional
 from datetime import datetime, timedelta
+import time
 from pydantic import BaseModel, ConfigDict
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
+from sqlalchemy.future import select
 
 from dotmac_shared.database.base import get_db_session
-from dotmac_shared.core.logging import get_logger
+from dotmac_shared.observability.logging import get_logger
 from dotmac_shared.api.response import APIResponse
-from dotmac_shared.api.exceptions import standard_exception_handler
+from dotmac_shared.api.exception_handlers import standard_exception_handler
 from dotmac_shared.auth.dependencies import get_current_user
+from dotmac_shared.api.dependencies import (
+    StandardDependencies,
+    get_standard_deps
+)
 from dotmac_management.models.tenant import CustomerTenant
 
 logger = get_logger(__name__)
@@ -48,32 +54,77 @@ class LicenseContractResponse(BaseModel):
 @standard_exception_handler
 async def get_license_by_tenant_id(
     tenant_id: str,
-    db: Session = Depends(get_db_session),
-    current_user = Depends(get_current_user)  # Service token auth
+    deps: StandardDependencies = Depends(get_standard_deps)
 ) -> APIResponse[LicenseContractResponse]:
     """
     Get active license contract for a tenant ID
     Used by ISP instances to fetch their license details
     """
+    start_time = time.time()
+    
+    # Input validation logging for security auditing
+    logger.info("License contract lookup requested", extra={
+        "requesting_user_id": getattr(deps.current_user, 'id', None),
+        "tenant_id": tenant_id,
+        "operation": "get_license_by_tenant_id",
+        "license_lookup": True
+    })
     
     try:
         # Find tenant by tenant_id
-        tenant = db.query(CustomerTenant).filter_by(tenant_id=tenant_id).first()
+        result = await deps.db.execute(
+            select(CustomerTenant).where(CustomerTenant.tenant_id == tenant_id)
+        )
+        tenant = result.scalar_one_or_none()
         
         if not tenant:
+            logger.warning("Tenant not found for license lookup", extra={
+                "requesting_user_id": getattr(deps.current_user, 'id', None),
+                "tenant_id": tenant_id,
+                "operation": "get_license_by_tenant_id"
+            })
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Tenant {tenant_id} not found"
             )
         
         # Get license contract from tenant settings or license table
-        license_info = await _get_tenant_license_info(db, tenant)
+        license_info = await _get_tenant_license_info(deps.db, tenant)
         
         if not license_info:
+            logger.warning("No license found for tenant", extra={
+                "requesting_user_id": getattr(deps.current_user, 'id', None),
+                "tenant_id": tenant_id,
+                "tenant_company": getattr(tenant, 'company_name', None),
+                "tenant_plan": getattr(tenant, 'plan', None),
+                "operation": "get_license_by_tenant_id"
+            })
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"No license found for tenant {tenant_id}"
             )
+        
+        # Log successful lookup with performance metrics
+        execution_time = time.time() - start_time
+        logger.info("License contract retrieved successfully", extra={
+            "requesting_user_id": getattr(deps.current_user, 'id', None),
+            "tenant_id": tenant_id,
+            "tenant_company": getattr(tenant, 'company_name', None),
+            "contract_id": getattr(license_info, 'contract_id', None),
+            "contract_type": getattr(license_info, 'contract_type', None),
+            "execution_time_ms": round(execution_time * 1000, 2),
+            "operation": "get_license_by_tenant_id",
+            "status": "success"
+        })
+        
+        # Performance logging for slow operations
+        if execution_time > 1.0:
+            logger.warning("Slow license lookup detected", extra={
+                "tenant_id": tenant_id,
+                "execution_time_ms": round(execution_time * 1000, 2),
+                "performance_threshold_exceeded": True,
+                "operation": "get_license_by_tenant_id"
+            })
         
         return APIResponse(
             success=True,
@@ -82,9 +133,18 @@ async def get_license_by_tenant_id(
         )
         
     except HTTPException:
+        # Re-raise HTTP exceptions as-is
         raise
     except Exception as e:
-        logger.error(f"Error retrieving license for tenant {tenant_id}: {e}")
+        # Log unexpected errors with full context
+        logger.error("Unexpected error retrieving license contract", extra={
+            "requesting_user_id": getattr(deps.current_user, 'id', None),
+            "tenant_id": tenant_id,
+            "error": str(e),
+            "error_type": type(e).__name__,
+            "operation": "get_license_by_tenant_id"
+        })
+        
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve license contract"
@@ -96,24 +156,44 @@ async def get_license_by_tenant_id(
 async def update_license_usage(
     contract_id: str,
     usage_data: Dict[str, Any],
-    db: Session = Depends(get_db_session),
-    current_user = Depends(get_current_user)
+    deps: StandardDependencies = Depends(get_standard_deps)
 ) -> APIResponse:
     """
     Update license usage data from ISP instance
     """
+    start_time = time.time()
+    
+    # Input validation logging for security auditing
+    logger.info("License usage update requested", extra={
+        "requesting_user_id": getattr(deps.current_user, 'id', None),
+        "contract_id": contract_id,
+        "usage_metrics": list(usage_data.keys()) if usage_data else [],
+        "operation": "update_license_usage",
+        "license_usage": True
+    })
     
     try:
         from dotmac_shared.licensing.models import LicenseContract
         
         # Find license contract
-        contract = db.query(LicenseContract).filter_by(contract_id=contract_id).first()
+        result = await deps.db.execute(
+            select(LicenseContract).where(LicenseContract.contract_id == contract_id)
+        )
+        contract = result.scalar_one_or_none()
         
         if not contract:
+            logger.warning("License contract not found for usage update", extra={
+                "requesting_user_id": getattr(deps.current_user, 'id', None),
+                "contract_id": contract_id,
+                "operation": "update_license_usage"
+            })
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="License contract not found"
             )
+        
+        # Store previous usage for comparison
+        previous_usage = contract.current_usage.copy() if contract.current_usage else {}
         
         # Update usage data
         contract.current_usage = usage_data
@@ -121,11 +201,33 @@ async def update_license_usage(
         
         # Check for violations
         violations = await _check_usage_violations(contract, usage_data)
+        violation_count_before = contract.violation_count
+        
         if violations:
             contract.violation_count += len(violations)
-            logger.warning(f"License violations detected for {contract_id}: {violations}")
+            logger.warning("License violations detected", extra={
+                "requesting_user_id": getattr(deps.current_user, 'id', None),
+                "contract_id": contract_id,
+                "violations": violations,
+                "violation_count": len(violations),
+                "total_violations": contract.violation_count,
+                "license_enforcement": True,
+                "operation": "update_license_usage"
+            })
         
-        db.commit()
+        await deps.db.commit()
+        
+        # Log successful update with performance metrics
+        execution_time = time.time() - start_time
+        logger.info("License usage updated successfully", extra={
+            "requesting_user_id": getattr(deps.current_user, 'id', None),
+            "contract_id": contract_id,
+            "usage_metrics_updated": list(usage_data.keys()) if usage_data else [],
+            "violations_detected": len(violations),
+            "execution_time_ms": round(execution_time * 1000, 2),
+            "operation": "update_license_usage",
+            "status": "success"
+        })
         
         return APIResponse(
             success=True,
@@ -138,9 +240,22 @@ async def update_license_usage(
         )
         
     except HTTPException:
+        # Re-raise HTTP exceptions as-is
         raise
     except Exception as e:
-        logger.error(f"Error updating license usage: {e}")
+        # Database rollback
+        await deps.db.rollback()
+        
+        # Log unexpected errors with full context
+        logger.error("Unexpected error updating license usage", extra={
+            "requesting_user_id": getattr(deps.current_user, 'id', None),
+            "contract_id": contract_id,
+            "usage_data_keys": list(usage_data.keys()) if usage_data else [],
+            "error": str(e),
+            "error_type": type(e).__name__,
+            "operation": "update_license_usage"
+        })
+        
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to update license usage"
@@ -151,12 +266,21 @@ async def update_license_usage(
 @standard_exception_handler
 async def get_plan_license_preview(
     plan_type: str,
-    db: Session = Depends(get_db_session)
+    deps: StandardDependencies = Depends(get_standard_deps)
 ) -> APIResponse[Dict[str, Any]]:
     """
     Get preview of license limits for a plan type
     Used during signup to show what limits customer will have
     """
+    start_time = time.time()
+    
+    # Input validation logging for security auditing
+    logger.info("Plan preview requested", extra={
+        "requesting_user_id": getattr(deps.current_user, 'id', None),
+        "plan_type": plan_type,
+        "operation": "get_plan_license_preview",
+        "plan_preview": True
+    })
     
     try:
         from dotmac_management.services.auto_license_provisioning import AutoLicenseProvisioningService
@@ -166,6 +290,11 @@ async def get_plan_license_preview(
         try:
             plan_enum = TenantPlan(plan_type)
         except ValueError:
+            logger.warning("Invalid plan type requested", extra={
+                "requesting_user_id": getattr(deps.current_user, 'id', None),
+                "invalid_plan_type": plan_type,
+                "operation": "get_plan_license_preview"
+            })
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Invalid plan type: {plan_type}"
@@ -175,6 +304,17 @@ async def get_plan_license_preview(
         license_service = AutoLicenseProvisioningService()
         plan_preview = await license_service.get_plan_preview(plan_enum)
         
+        # Log successful preview retrieval with performance metrics
+        execution_time = time.time() - start_time
+        logger.info("Plan preview retrieved successfully", extra={
+            "requesting_user_id": getattr(deps.current_user, 'id', None),
+            "plan_type": plan_type,
+            "preview_data_keys": list(plan_preview.keys()) if plan_preview else [],
+            "execution_time_ms": round(execution_time * 1000, 2),
+            "operation": "get_plan_license_preview",
+            "status": "success"
+        })
+        
         return APIResponse(
             success=True,
             message="Plan preview retrieved",
@@ -182,9 +322,18 @@ async def get_plan_license_preview(
         )
         
     except HTTPException:
+        # Re-raise HTTP exceptions as-is
         raise
     except Exception as e:
-        logger.error(f"Error getting plan preview: {e}")
+        # Log unexpected errors with full context
+        logger.error("Unexpected error getting plan preview", extra={
+            "requesting_user_id": getattr(deps.current_user, 'id', None),
+            "plan_type": plan_type,
+            "error": str(e),
+            "error_type": type(e).__name__,
+            "operation": "get_plan_license_preview"
+        })
+        
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve plan preview"

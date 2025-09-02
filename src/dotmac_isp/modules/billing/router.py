@@ -7,14 +7,16 @@ import io
 from typing import Any, Dict
 from uuid import UUID
 
-from fastapi import File, UploadFile
+from fastapi import File, UploadFile, Depends
 from fastapi.responses import StreamingResponse
 
 from dotmac_shared.api.dependencies import (
-    FileUploadDeps,
-    PaginatedDeps,
-    SearchDeps,
-    StandardDeps,
+    StandardDependencies,
+    PaginatedDependencies,
+    SearchParams,
+    get_standard_deps,
+    get_paginated_deps,
+    get_admin_deps
 )
 from dotmac_shared.api.exception_handlers import standard_exception_handler
 from dotmac_shared.api.router_factory import BillingRouterFactory, RouterFactory
@@ -69,7 +71,7 @@ router.include_router(payment_router)
 
 @router.get("/dashboard")
 @standard_exception_handler
-async def get_billing_dashboard(deps: StandardDeps) -> Dict[str, Any]:
+async def get_billing_dashboard(deps: StandardDependencies = Depends(get_standard_deps)) -> Dict[str, Any]:
     """Get billing dashboard with summary statistics."""
     service = BillingService(deps.db, deps.tenant_id)
     return await service.get_dashboard_data(deps.user_id)
@@ -77,7 +79,7 @@ async def get_billing_dashboard(deps: StandardDeps) -> Dict[str, Any]:
 
 @router.get("/reports/revenue")
 @standard_exception_handler
-async def get_revenue_report(deps: PaginatedDeps, search: SearchDeps) -> BillingReport:
+async def get_revenue_report(deps: PaginatedDependencies = Depends(get_paginated_deps), search: SearchParams = Depends(SearchParams)) -> BillingReport:
     """Generate revenue report with filters."""
     service = BillingService(deps.db, deps.tenant_id)
     return await service.generate_revenue_report(
@@ -88,7 +90,7 @@ async def get_revenue_report(deps: PaginatedDeps, search: SearchDeps) -> Billing
 @router.post("/invoices/{invoice_id}/pdf")
 @standard_exception_handler
 async def generate_invoice_pdf(
-    invoice_id: UUID, deps: StandardDeps
+    invoice_id: UUID, deps: StandardDependencies = Depends(get_standard_deps)
 ) -> StreamingResponse:
     """Generate and download invoice PDF."""
     service = BillingService(deps.db, deps.tenant_id)
@@ -107,7 +109,7 @@ async def generate_invoice_pdf(
 async def upload_invoice_attachment(
     invoice_id: UUID,
     file: UploadFile = File(...),
-    deps: StandardDeps = None,
+    deps: StandardDependencies = Depends(get_standard_deps) = None,
     upload_params: FileUploadDeps = None,
 ):
     """Upload attachment to invoice."""

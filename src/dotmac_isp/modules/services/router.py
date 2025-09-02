@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from dotmac_isp.shared.database import get_db
-from dotmac_shared.api.dependencies import get_current_tenant, get_current_user, StandardDeps
+from dotmac_shared.api.dependencies import StandardDependencies, get_standard_deps
 from dotmac_shared.api.exception_handlers import standard_exception_handler
 from dotmac_shared.core.pagination import PaginationParams
 from dotmac_shared.api.router_factory import RouterFactory

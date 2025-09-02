@@ -1,0 +1,297 @@
+{
+  "dashboards": [
+    {
+      "name": "DotMac Service Overview",
+      "description": "Main service overview dashboard for DotMac Framework",
+      "panels": [
+        {
+          "title": "Request Rate",
+          "type": "graph",
+          "query": "sum(rate(http_requests_total{service_name=\"dotmac-framework\"}[5m])) by (method, path)",
+          "unit": "reqps"
+        },
+        {
+          "title": "P95 Latency by Route",
+          "type": "graph", 
+          "query": "histogram_quantile(0.95, sum(rate(http_request_duration_ms_bucket{service_name=\"dotmac-framework\"}[5m])) by (method, path, le))",
+          "unit": "ms"
+        },
+        {
+          "title": "Error Rate",
+          "type": "graph",
+          "query": "sum(rate(http_requests_total{service_name=\"dotmac-framework\",status=~\"5..\"}[5m])) by (method, path) / sum(rate(http_requests_total{service_name=\"dotmac-framework\"}[5m])) by (method, path) * 100",
+          "unit": "percent"
+        },
+        {
+          "title": "Database Query Duration P95",
+          "type": "graph",
+          "query": "histogram_quantile(0.95, sum(rate(db_operation_duration_ms_bucket{service_name=\"dotmac-framework\"}[5m])) by (operation, le))",
+          "unit": "ms"
+        },
+        {
+          "title": "Top Slow Queries",
+          "type": "table",
+          "query": "topk(10, avg_over_time(db_operation_duration_ms{service_name=\"dotmac-framework\"}[5m]))",
+          "unit": "ms"
+        }
+      ]
+    },
+    {
+      "name": "DotMac Business Metrics",
+      "description": "Business KPI dashboard for partners, customers, and revenue",
+      "panels": [
+        {
+          "title": "Partner Signups (24h)",
+          "type": "stat",
+          "query": "sum(increase(dotmac_partners_signups_total[24h]))",
+          "unit": "short"
+        },
+        {
+          "title": "Customer Acquisitions (24h)", 
+          "type": "stat",
+          "query": "sum(increase(dotmac_customers_acquisitions_total[24h]))",
+          "unit": "short"
+        },
+        {
+          "title": "Commission Calculations (24h)",
+          "type": "stat", 
+          "query": "sum(increase(dotmac_commissions_calculations_total[24h]))",
+          "unit": "short"
+        },
+        {
+          "title": "Partner Revenue Distribution",
+          "type": "histogram",
+          "query": "histogram_quantile(0.5, sum(rate(dotmac_partners_revenue_monthly_bucket[24h])) by (le)), histogram_quantile(0.90, sum(rate(dotmac_partners_revenue_monthly_bucket[24h])) by (le)), histogram_quantile(0.95, sum(rate(dotmac_partners_revenue_monthly_bucket[24h])) by (le))",
+          "unit": "currency"
+        },
+        {
+          "title": "Customer Churn Rate",
+          "type": "graph",
+          "query": "sum(rate(dotmac_customers_churn_total[1h])) by (churn_reason)",
+          "unit": "short"
+        },
+        {
+          "title": "Partner Tiers Performance", 
+          "type": "table",
+          "query": "sum(rate(dotmac_partners_signups_total[24h])) by (tier)",
+          "unit": "short"
+        }
+      ]
+    },
+    {
+      "name": "DotMac Tenant Analytics", 
+      "description": "Per-tenant performance and usage analytics",
+      "panels": [
+        {
+          "title": "Requests by Tenant",
+          "type": "graph",
+          "query": "sum(rate(dotmac_tenant_operations_total[5m])) by (tenant_id)",
+          "unit": "reqps"
+        },
+        {
+          "title": "Tenant Operation Duration",
+          "type": "heatmap",
+          "query": "sum(rate(dotmac_tenant_operation_duration_ms_bucket[5m])) by (tenant_id, le)",
+          "unit": "ms"
+        },
+        {
+          "title": "Top Tenants by Volume",
+          "type": "table", 
+          "query": "topk(10, sum(rate(dotmac_tenant_operations_total[1h])) by (tenant_id))",
+          "unit": "reqps"
+        },
+        {
+          "title": "Tenant Error Rate",
+          "type": "graph",
+          "query": "sum(rate(dotmac_tenant_operations_total{status=\"error\"}[5m])) by (tenant_id) / sum(rate(dotmac_tenant_operations_total[5m])) by (tenant_id) * 100",
+          "unit": "percent"
+        }
+      ]
+    },
+    {
+      "name": "DotMac Database Performance",
+      "description": "Comprehensive database monitoring and N+1 detection", 
+      "panels": [
+        {
+          "title": "Database Connections",
+          "type": "graph",
+          "query": "db_connection_pool_usage{service_name=\"dotmac-framework\"}",
+          "unit": "percent"
+        },
+        {
+          "title": "Query Types Distribution",
+          "type": "pie",
+          "query": "sum(rate(db_queries_total[5m])) by (operation)",
+          "unit": "short"
+        },
+        {
+          "title": "Slow Queries (>200ms)",
+          "type": "stat",
+          "query": "sum(rate(db_slow_queries_total[5m]))",
+          "unit": "short"
+        },
+        {
+          "title": "N+1 Query Detection",
+          "type": "stat", 
+          "query": "sum(rate(db_n_plus_one_detected[5m]))",
+          "unit": "short"
+        },
+        {
+          "title": "Database Query Heatmap",
+          "type": "heatmap",
+          "query": "sum(rate(db_operation_duration_ms_bucket[5m])) by (operation, table, le)",
+          "unit": "ms"
+        },
+        {
+          "title": "Database Errors by Table",
+          "type": "table",
+          "query": "sum(rate(db_queries_total{status=\"error\"}[5m])) by (table, operation)",
+          "unit": "short"
+        }
+      ]
+    }
+  ],
+  "alerts": [
+    {
+      "name": "DotMac API High Latency",
+      "condition": "histogram_quantile(0.95, sum(rate(http_request_duration_ms_bucket{service_name=\"dotmac-framework\",path=~\"/customers.*|/partners.*\"}[5m])) by (le)) > 800",
+      "for": "5m",
+      "severity": "warning",
+      "description": "P95 latency is above 800ms for critical customer/partner endpoints"
+    },
+    {
+      "name": "DotMac Error Rate High", 
+      "condition": "sum(rate(http_requests_total{service_name=\"dotmac-framework\",status=~\"5..\"}[5m])) / sum(rate(http_requests_total{service_name=\"dotmac-framework\"}[5m])) * 100 > 2",
+      "for": "5m",
+      "severity": "critical",
+      "description": "Error rate is above 2% service-wide"
+    },
+    {
+      "name": "DotMac Database Slow Queries",
+      "condition": "histogram_quantile(0.95, sum(rate(db_operation_duration_ms_bucket{service_name=\"dotmac-framework\"}[5m])) by (le)) > 200",
+      "for": "10m", 
+      "severity": "warning",
+      "description": "P95 database query duration is above 200ms"
+    },
+    {
+      "name": "DotMac N+1 Query Detected",
+      "condition": "rate(db_n_plus_one_detected[5m]) > 0",
+      "for": "1m",
+      "severity": "warning", 
+      "description": "N+1 query pattern detected - potential performance issue"
+    },
+    {
+      "name": "DotMac SLA Violation",
+      "condition": "rate(dotmac_sla_violations_total[5m]) > 0",
+      "for": "1m",
+      "severity": "critical",
+      "description": "SLA violation detected with business impact"
+    },
+    {
+      "name": "DotMac Customer Churn Spike",
+      "condition": "sum(rate(dotmac_customers_churn_total[1h])) > 10",
+      "for": "5m",
+      "severity": "warning",
+      "description": "Customer churn rate is unusually high"
+    },
+    {
+      "name": "DotMac Database Connection Pool Full",
+      "condition": "db_connection_pool_usage > 90",
+      "for": "2m",
+      "severity": "critical",
+      "description": "Database connection pool is nearly exhausted"
+    },
+    {
+      "name": "DotMac Commission Processing Failure",
+      "condition": "rate(dotmac_commissions_calculations_total{status=\"error\"}[5m]) > 0",
+      "for": "1m", 
+      "severity": "critical",
+      "description": "Commission processing is failing - revenue impact"
+    },
+    {
+      "name": "DotMac Partner Onboarding Success Rate Low",
+      "condition": "sum(rate(dotmac_partners_onboarding_success_total[1h])) / sum(rate(dotmac_partners_onboarding_attempts_total[1h])) * 100 < 85",
+      "for": "10m",
+      "severity": "warning",
+      "description": "Partner onboarding success rate below 85% - may indicate UX or technical issues"
+    },
+    {
+      "name": "DotMac Database Connection Pool Near Exhaustion",
+      "condition": "db_connection_pool_usage{service_name=\"dotmac-framework\"} > 85",
+      "for": "5m",
+      "severity": "warning", 
+      "description": "Database connection pool above 85% - performance degradation likely"
+    },
+    {
+      "name": "DotMac Revenue Processing Anomaly",
+      "condition": "abs(sum(increase(dotmac_revenue_processed_total[1h])) - sum(increase(dotmac_revenue_processed_total[1h] offset 24h))) / sum(increase(dotmac_revenue_processed_total[1h] offset 24h)) * 100 > 30",
+      "for": "5m",
+      "severity": "warning",
+      "description": "Revenue processing volume deviates >30% from same time yesterday"
+    },
+    {
+      "name": "DotMac Customer Support Ticket Overflow",
+      "condition": "sum(dotmac_support_tickets_open_total{priority=~\"high|critical\"}) > 10",
+      "for": "1m",
+      "severity": "warning",
+      "description": "More than 10 high/critical priority tickets open - customer satisfaction risk"
+    },
+    {
+      "name": "DotMac System Resource Exhaustion",
+      "condition": "avg(cpu_usage_percent{service=\"dotmac-framework\"}) > 80 or avg(memory_usage_percent{service=\"dotmac-framework\"}) > 85",
+      "for": "10m", 
+      "severity": "critical",
+      "description": "System resources critically low - service degradation imminent"
+    },
+    {
+      "name": "DotMac API Response Time Degradation",
+      "condition": "histogram_quantile(0.95, sum(rate(http_request_duration_ms_bucket{service_name=\"dotmac-framework\",path=~\"/api/v1/(customers|partners|billing).*\"}[5m])) by (le)) > 2000",
+      "for": "5m",
+      "severity": "warning",
+      "description": "Core API endpoints P95 latency above 2 seconds - user experience degradation"
+    },
+    {
+      "name": "DotMac Business Critical Service Unavailable",
+      "condition": "up{job=\"dotmac-management\"} == 0 or up{job=\"dotmac-isp\"} == 0",
+      "for": "1m",
+      "severity": "critical", 
+      "description": "Critical business service is down - immediate attention required"
+    },
+    {
+      "name": "DotMac Tenant Isolation Breach",
+      "condition": "rate(dotmac_tenant_isolation_violations_total[5m]) > 0",
+      "for": "1m",
+      "severity": "critical",
+      "description": "Tenant data isolation violation detected - security incident"
+    },
+    {
+      "name": "DotMac Payment Processing Failure Rate High", 
+      "condition": "sum(rate(dotmac_payments_failed_total[5m])) / sum(rate(dotmac_payments_total[5m])) * 100 > 5",
+      "for": "3m",
+      "severity": "critical",
+      "description": "Payment failure rate above 5% - revenue and customer impact"
+    }
+  ],
+  "notification_channels": [
+    {
+      "name": "dotmac-critical-alerts",
+      "type": "slack",
+      "settings": {
+        "webhook_url": "${SLACK_WEBHOOK_URL}",
+        "channel": "#dotmac-alerts",
+        "username": "SigNoz"
+      }
+    },
+    {
+      "name": "dotmac-business-alerts", 
+      "type": "email",
+      "settings": {
+        "recipients": ["ops@dotmac.com", "business@dotmac.com"]
+      }
+    }
+  ],
+  "alert_routing": {
+    "critical": ["dotmac-critical-alerts", "dotmac-business-alerts"],
+    "warning": ["dotmac-critical-alerts"]
+  }
+}

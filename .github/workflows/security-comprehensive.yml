@@ -33,6 +33,80 @@ env:
   NODE_VERSION: '18.x'
 
 jobs:
+  # Run comprehensive security audit
+  comprehensive-security-audit:
+    name: Comprehensive Security Audit
+    runs-on: ubuntu-latest
+    if: github.event.inputs.scan_type == 'full' || github.event_name == 'schedule' || github.event_name == 'push'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # Need full history for better analysis
+          fetch-depth: 0
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install security tools
+        run: |
+          # Python security tools
+          pip install --upgrade pip
+          pip install safety bandit
+          
+          # Install additional tools
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin
+          
+          # Install kubesec
+          curl -sSX GET "https://api.github.com/repos/controlplaneio/kubesec/releases/latest" \
+            | grep -o '"browser_download_url": "[^"]*linux-amd64[^"]*"' \
+            | grep -o 'https://[^"]*' \
+            | xargs curl -sSL -o kubesec
+          sudo chmod +x kubesec && sudo mv kubesec /usr/local/bin/
+          
+          # Install ripgrep for pattern scanning
+          sudo apt-get update && sudo apt-get install -y ripgrep
+      
+      - name: Run comprehensive security audit
+        env:
+          SEVERITY_THRESHOLD: medium
+          ENVIRONMENT: ci
+        run: |
+          ./scripts/security-audit.sh ./security-audit-results
+      
+      - name: Upload security audit results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-audit-results
+          path: ./security-audit-results/
+          retention-days: 30
+      
+      - name: Parse audit results for PR comment
+        if: github.event_name == 'pull_request'
+        id: audit-summary
+        run: |
+          if [ -f "./security-audit-results/audit-summary.json" ]; then
+            echo "AUDIT_RESULTS<<EOF" >> $GITHUB_ENV
+            jq -r '"**Security Audit Results**\n\n- ✅ Passed: " + (.results.passed | tostring) + "\n- ⚠️ Medium: " + (.results.medium | tostring) + "\n- 🚨 High: " + (.results.high | tostring) + "\n- ❌ Critical: " + (.results.critical | tostring) + "\n\nSee [audit details](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for more information."' ./security-audit-results/audit-summary.json >> $GITHUB_ENV
+            echo "EOF" >> $GITHUB_ENV
+          fi
+      
+      - name: Comment PR with audit results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: process.env.AUDIT_RESULTS || 'Security audit completed. Check the workflow logs for details.'
+            })
+
   # Dependency vulnerability scanning
   dependency-scan:
     name: Dependency Vulnerability Scan
@@ -42,12 +116,12 @@ jobs:
     strategy:
       matrix:
         scan-target:
+          - name: python-backend
+            path: ./
+            type: python
           - name: frontend
             path: ./frontend
             type: npm
-          - name: isp-framework
-            path: ./isp-framework
-            type: python
           - name: management-platform
             path: ./management-platform
             type: python

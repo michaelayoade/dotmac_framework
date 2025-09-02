@@ -14,10 +14,12 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from dotmac_shared.api.dependencies import (
-    AdminDeps,
-    PaginatedDeps,
-    SearchDeps,
-    StandardDeps,
+    StandardDependencies,
+    PaginatedDependencies,
+    SearchParams,
+    get_standard_deps,
+    get_paginated_deps,
+    get_admin_deps,
 )
 from dotmac_shared.api.exception_handlers import standard_exception_handler
 from dotmac_shared.api.rate_limiting_decorators import rate_limit
@@ -88,7 +90,7 @@ class RouterFactory:
         logger.info(f"Created CRUD router: {prefix} with tags {tags}")
 
         # Choose dependency type based on admin requirement
-        deps_type = AdminDeps if require_admin else StandardDeps
+        deps_type = get_admin_deps if require_admin else get_standard_deps
 
         # === CREATE ENDPOINT ===
         @router.post("/", response_model=response_schema, status_code=201)
@@ -110,8 +112,8 @@ class RouterFactory:
         )  # Higher limit for read operations
         @standard_exception_handler
         async def list_entities(
-            deps: PaginatedDeps,
-            search: SearchDeps = Depends() if enable_search else None,
+            deps: PaginatedDependencies = Depends(get_paginated_deps),
+            search: SearchParams = Depends(SearchParams) if enable_search else None,
         ) -> PaginatedResponseSchema[response_schema]:
             """List entities with pagination and optional search."""
             service = service_class(deps.db, deps.tenant_id)
@@ -255,8 +257,8 @@ class RouterFactory:
         @router.get("/", response_model=PaginatedResponseSchema[response_schema])
         @standard_exception_handler
         async def list_entities(
-            deps: PaginatedDeps,
-            search: SearchDeps = Depends() if enable_search else None,
+            deps: PaginatedDependencies = Depends(get_paginated_deps),
+            search: SearchParams = Depends(SearchParams) if enable_search else None,
         ):
             """List entities with pagination."""
             service = service_class(deps.db, deps.tenant_id)
@@ -283,7 +285,7 @@ class RouterFactory:
         @router.get("/{entity_id}", response_model=response_schema)
         @standard_exception_handler
         async def get_entity(
-            entity_id: UUID = Path(...), deps: StandardDeps = Depends()
+            entity_id: UUID = Path(...), deps: StandardDependencies = Depends(get_standard_deps)
         ):
             """Get entity by ID."""
             service = service_class(deps.db, deps.tenant_id)
@@ -320,7 +322,7 @@ class BillingRouterFactory(RouterFactory):
         async def record_payment(
             invoice_id: UUID = Path(...),
             payment_data: Dict[str, Any] = Body(...),
-            deps: StandardDeps = Depends(),
+            deps: StandardDependencies = Depends(get_standard_deps),
         ):
             """Record payment for an invoice."""
             service = service_class(deps.db, deps.tenant_id)
@@ -329,7 +331,7 @@ class BillingRouterFactory(RouterFactory):
         @router.get("/{invoice_id}/pdf")
         @standard_exception_handler
         async def generate_pdf(
-            invoice_id: UUID = Path(...), deps: StandardDeps = Depends()
+            invoice_id: UUID = Path(...), deps: StandardDependencies = Depends(get_standard_deps)
         ):
             """Generate PDF for invoice."""
             service = service_class(deps.db, deps.tenant_id)
@@ -361,7 +363,7 @@ class CustomerRouterFactory(RouterFactory):
         @router.get("/{customer_id}/services")
         @standard_exception_handler
         async def get_customer_services(
-            customer_id: UUID = Path(...), deps: StandardDeps = Depends()
+            customer_id: UUID = Path(...), deps: StandardDependencies = Depends(get_standard_deps)
         ):
             """Get all services for a customer."""
             service = service_class(deps.db, deps.tenant_id)
@@ -372,7 +374,7 @@ class CustomerRouterFactory(RouterFactory):
         async def suspend_customer(
             customer_id: UUID = Path(...),
             reason: str = Body(..., embed=True),
-            deps: StandardDeps = Depends(),
+            deps: StandardDependencies = Depends(get_standard_deps),
         ):
             """Suspend a customer account."""
             service = service_class(deps.db, deps.tenant_id)

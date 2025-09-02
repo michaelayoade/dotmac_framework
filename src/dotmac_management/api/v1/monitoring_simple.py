@@ -8,9 +8,15 @@ module-specific models that duplicate core tables.
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List
 
-from fastapi import APIRouter, Query
-
-from dotmac_shared.api.dependencies import StandardDeps
+from fastapi import APIRouter, HTTPException, Depends, Query, status
+from dotmac_shared.api.dependencies import (
+    StandardDependencies,
+    PaginatedDependencies,
+    SearchParams,
+    get_standard_deps,
+    get_paginated_deps,
+    get_admin_deps
+)
 from dotmac_shared.api.exception_handlers import standard_exception_handler
 
 from ...repositories.monitoring import MonitoringRepository
@@ -22,7 +28,7 @@ router = APIRouter(prefix="/monitoring", tags=["Monitoring"])
 @router.get("/health/recent")
 @standard_exception_handler
 async def recent_health_checks(
-    deps: StandardDeps,
+    deps: StandardDependencies = Depends(get_standard_deps),
     limit: int = Query(10, ge=1, le=200),
     check_type: str | None = Query(None),
 ) -> Dict[str, Any]:
@@ -48,7 +54,7 @@ async def recent_health_checks(
 
 @router.get("/alerts/active")
 @standard_exception_handler
-async def active_alerts(deps: StandardDeps) -> Dict[str, Any]:
+async def active_alerts(deps: StandardDependencies = Depends(get_standard_deps)) -> Dict[str, Any]:
     repo = MonitoringRepository(deps.db)
     alerts = await repo.get_active_alerts(deps.tenant_id)
     return {
@@ -74,7 +80,7 @@ async def active_alerts(deps: StandardDeps) -> Dict[str, Any]:
 @standard_exception_handler
 async def metrics_by_name(
     metric_name: str,
-    deps: StandardDeps,
+    deps: StandardDependencies = Depends(get_standard_deps),
     hours: int = Query(24, ge=1, le=168),
     limit: int = Query(500, ge=1, le=5000),
 ) -> Dict[str, Any]:

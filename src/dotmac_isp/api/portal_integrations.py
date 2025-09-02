@@ -12,7 +12,14 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 
-from dotmac_shared.api.dependencies import StandardDeps
+from dotmac_shared.api.dependencies import (
+    StandardDependencies,
+    PaginatedDependencies,
+    SearchParams,
+    get_standard_deps,
+    get_paginated_deps,
+    get_admin_deps
+
 from dotmac_shared.api.exception_handlers import standard_exception_handler
 from dotmac_shared.api.router_factory import RouterFactory
 from dotmac_shared.schemas.base_schemas import BaseResponseSchema
@@ -184,14 +191,14 @@ class PortalIntegrationRouterFactory:
 
         @router.get("/dashboard", response_model=PortalDashboardSchema)
         @standard_exception_handler
-        async def get_customer_dashboard(deps: StandardDeps = Depends()):
+        async def get_customer_dashboard(deps: StandardDependencies = Depends(get_standard_deps) = Depends()):
             """Get customer dashboard data."""
             service = CustomerPortalService(deps.db, deps.tenant_id)
             return await service.get_dashboard(deps.user_id)
 
         @router.get("/billing", response_model=PortalDataSchema)
         @standard_exception_handler
-        async def get_customer_billing(deps: StandardDeps = Depends()):
+        async def get_customer_billing(deps: StandardDependencies = Depends(get_standard_deps) = Depends()):
             """Get customer billing information."""
             service = CustomerPortalService(deps.db, deps.tenant_id)
             return await service.get_billing(deps.user_id)
@@ -210,7 +217,7 @@ class PortalIntegrationRouterFactory:
             limit: int = Query(20, description="Items per page"),
             search: Optional[str] = Query(None, description="Search term"),
             status: Optional[str] = Query(None, description="Filter by status"),
-            deps: StandardDeps = Depends()
+            deps: StandardDependencies = Depends(get_standard_deps) = Depends()
         ):
             """Get customers with filtering and pagination using DRY service pattern."""
             service = AdminPortalService(deps.db, deps.tenant_id)
@@ -250,7 +257,7 @@ class PortalIntegrationRouterFactory:
         async def get_work_orders(
             status: Optional[str] = Query(None, description="Filter by status"),
             assigned_to: Optional[str] = Query(None, description="Filter by technician"),
-            deps: StandardDeps = Depends()
+            deps: StandardDependencies = Depends(get_standard_deps) = Depends()
         ):
             """Get work orders for technicians using DRY service pattern."""
             # Mock data - would use proper service in production
@@ -276,7 +283,7 @@ class PortalIntegrationRouterFactory:
 
         @router.get("/dashboard")
         @standard_exception_handler
-        async def get_reseller_dashboard(deps: StandardDeps = Depends()):
+        async def get_reseller_dashboard(deps: StandardDependencies = Depends(get_standard_deps) = Depends()):
             """Get reseller dashboard data using DRY service pattern."""
             # Mock data - would use proper service in production
             return {

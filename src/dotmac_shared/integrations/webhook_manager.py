@@ -16,7 +16,14 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from dotmac_shared.api.dependencies import StandardDeps
+from dotmac_shared.api.dependencies import (
+    StandardDependencies,
+    PaginatedDependencies,
+    SearchParams,
+    get_standard_deps,
+    get_paginated_deps,
+    get_admin_deps
+
 from dotmac_shared.api.exception_handlers import standard_exception_handler
 from dotmac_shared.api.router_factory import RouterFactory
 from dotmac_shared.schemas.base_schemas import (
@@ -461,7 +468,7 @@ class WebhookManagerRouter:
             event_type: str = Body(...),
             data: Dict[str, Any] = Body(...),
             source: str = Body("system"),
-            deps: StandardDeps = Depends()
+            deps: StandardDependencies = Depends(get_standard_deps) = Depends()
         ):
             """Trigger webhook event to subscribed endpoints."""
             manager = WebhookManager(deps.db, deps.tenant_id)
@@ -472,7 +479,7 @@ class WebhookManagerRouter:
         async def receive_webhook(
             endpoint_id: str,
             request: Request,
-            deps: StandardDeps = Depends()
+            deps: StandardDependencies = Depends(get_standard_deps) = Depends()
         ):
             """Receive incoming webhook (for testing)."""
             manager = WebhookManager(deps.db, deps.tenant_id)
@@ -529,7 +536,7 @@ class WebhookManagerRouter:
         async def list_webhook_deliveries(
             endpoint_id: Optional[str] = None,
             limit: int = 100,
-            deps: StandardDeps = Depends()
+            deps: StandardDependencies = Depends(get_standard_deps) = Depends()
         ):
             """List webhook delivery attempts."""
             manager = WebhookManager(deps.db, deps.tenant_id)

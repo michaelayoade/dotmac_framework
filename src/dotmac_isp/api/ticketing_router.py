@@ -5,13 +5,19 @@ Uses the shared dotmac_shared.ticketing package.
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import \1, Dependsndscio import AsyncSession
 
 from dotmac_isp.core.database import get_db
 from dotmac_isp.modules.identity.models import Customer, User
 from dotmac_isp.shared.auth import get_current_customer, get_current_user
-from dotmac_shared.api.dependencies import PaginatedDeps, StandardDeps
+from dotmac_shared.api.dependencies import (
+    StandardDependencies,
+    PaginatedDependencies,
+    SearchParams,
+    get_standard_deps,
+    get_paginated_deps,
+    get_admin_deps
+
 from dotmac_shared.api.exception_handlers import standard_exception_handler
 from dotmac_shared.api.rate_limiting_decorators import rate_limit, rate_limit_strict
 from dotmac_shared.api.router_factory import (
@@ -60,7 +66,7 @@ isp_adapter = ISPPlatformAdapter(ticket_service)
 )  # Reasonable limit for ticket creation
 @standard_exception_handler
 async def create_customer_ticket(
-    deps: StandardDeps,
+    deps: StandardDependencies = Depends(get_standard_deps),
     ticket_data: TicketCreate,
 ) -> TicketResponse:
     """Create a support ticket for a customer."""
@@ -81,7 +87,7 @@ async def create_customer_ticket(
 @router.get("/", response_model=List[TicketResponse])
 @standard_exception_handler
 async def list_customer_tickets(
-    deps: PaginatedDeps,
+    deps: PaginatedDependencies = Depends(get_paginated_deps),
     status_filter: Optional[List[str]] = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
@@ -101,7 +107,7 @@ async def list_customer_tickets(
 @router.get("/{ticket_id}", response_model=TicketResponse)
 @standard_exception_handler
 async def get_ticket(
-    deps: StandardDeps,
+    deps: StandardDependencies = Depends(get_standard_deps),
     ticket_id: str,
 ) -> TicketResponse:
     """Get a specific ticket by ID."""
@@ -122,7 +128,7 @@ async def get_ticket(
 )
 @standard_exception_handler
 async def add_ticket_comment(
-    deps: StandardDeps,
+    deps: StandardDependencies = Depends(get_standard_deps),
     ticket_id: str,
     comment_data: CommentCreate,
 ) -> CommentResponse:
@@ -164,7 +170,7 @@ router = RouterFactory.create_crud_router(
 
 @router.get("/", response_model=List[TicketResponse])
 async def list_all_tickets(
-    deps: PaginatedDeps,
+    deps: PaginatedDependencies = Depends(get_paginated_deps),
     status_filter: Optional[List[str]] = Query(None),
     priority_filter: Optional[List[str]] = Query(None),
     assigned_team: Optional[str] = Query(None),
@@ -192,7 +198,7 @@ async def list_all_tickets(
 
 @router.put("/{ticket_id}/assign")
 async def assign_ticket(
-    deps: StandardDeps,
+    deps: StandardDependencies = Depends(get_standard_deps),
     ticket_id: str,
     assignment_data: Dict[str, Any],
 ) -> TicketResponse:
@@ -216,7 +222,7 @@ async def assign_ticket(
     "/network-issue", response_model=TicketResponse, status_code=status.HTTP_201_CREATED
 )
 async def create_network_issue_ticket(
-    deps: StandardDeps,
+    deps: StandardDependencies = Depends(get_standard_deps),
     ticket_data: Dict[str, Any],
 ) -> TicketResponse:
     """Create a network issue ticket (ISP-specific)."""

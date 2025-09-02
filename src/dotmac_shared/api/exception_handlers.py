@@ -10,7 +10,7 @@ import traceback
 from datetime import datetime
 from typing import Any, Callable, Dict, Optional
 
-from fastapi import HTTPException, Request, status
+from fastapi import HTTPException, Depends, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
@@ -377,7 +377,7 @@ async def create_customer(data: CustomerCreate, db = Depends(get_db)):
 AFTER (DRY approach):
 @router.post("/customers")
 @standard_exception_handler
-async def create_customer(data: CustomerCreate, deps: StandardDeps):
+async def create_customer(data: CustomerCreate, deps: StandardDependencies = Depends(get_standard_deps)):
     service = CustomerService(deps.db)
     return await service.create_customer(data)
 

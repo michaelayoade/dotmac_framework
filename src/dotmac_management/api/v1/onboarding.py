@@ -7,9 +7,16 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import HTTPException, Depends, Query
 
-from dotmac_shared.api.dependencies import PaginatedDeps, StandardDeps
+from dotmac_shared.api.dependencies import (
+    StandardDependencies,
+    PaginatedDependencies,
+    SearchParams,
+    get_standard_deps,
+    get_paginated_deps,
+    get_admin_deps
+)
 from dotmac_shared.api.exception_handlers import standard_exception_handler
 
 from ..schemas.tenant import (
@@ -36,7 +43,7 @@ def _now_iso() -> str:
 
 @router.get("/", response_model=Dict[str, Any])
 @standard_exception_handler
-async def list_onboarding_requests(deps: PaginatedDeps) -> Dict[str, Any]:
+async def list_onboarding_requests(deps: PaginatedDependencies = Depends(get_paginated_deps)) -> Dict[str, Any]:
     repo = OnboardingRequestRepository(deps.db)
     items, total = await repo.list_paginated(deps.pagination.page, deps.pagination.size)
     return {
@@ -61,7 +68,7 @@ async def list_onboarding_requests(deps: PaginatedDeps) -> Dict[str, Any]:
 @router.post("/", response_model=TenantOnboardingResponse, status_code=201)
 @standard_exception_handler
 async def create_onboarding_request(
-    request: TenantOnboardingRequest, deps: StandardDeps
+    request: TenantOnboardingRequest, deps: StandardDependencies = Depends(get_standard_deps)
 ) -> TenantOnboardingResponse:
     service = OnboardingService(deps.db)
     req = await service.create_request(request)
@@ -92,7 +99,7 @@ async def create_onboarding_request(
 
 @router.get("/steps/{partner_id}", response_model=List[Dict[str, Any]])
 @standard_exception_handler
-async def get_steps(partner_id: str, deps: StandardDeps) -> List[Dict[str, Any]]:
+async def get_steps(partner_id: str, deps: StandardDependencies = Depends(get_standard_deps)) -> List[Dict[str, Any]]:
     # Provide canonical onboarding steps available for partners
     return [
         {"id": "provision_container", "name": "Provision Container"},
@@ -104,7 +111,7 @@ async def get_steps(partner_id: str, deps: StandardDeps) -> List[Dict[str, Any]]
 
 @router.put("/steps/{step_id}", response_model=Dict[str, Any])
 @standard_exception_handler
-async def update_step(step_id: str, data: Dict[str, Any], deps: StandardDeps) -> Dict[str, Any]:
+async def update_step(step_id: str, data: Dict[str, Any], deps: StandardDependencies = Depends(get_standard_deps)) -> Dict[str, Any]:
     # Update all DB steps with this key
     step_repo = OnboardingStepRepository(deps.db)
     status = data.get("status")
@@ -122,19 +129,19 @@ async def update_step(step_id: str, data: Dict[str, Any], deps: StandardDeps) ->
 
 @router.post("/steps/{step_id}/approve", response_model=Dict[str, Any])
 @standard_exception_handler
-async def approve_step(step_id: str, deps: StandardDeps) -> Dict[str, Any]:
+async def approve_step(step_id: str, deps: StandardDependencies = Depends(get_standard_deps)) -> Dict[str, Any]:
     return await update_step(step_id, {"status": "COMPLETED", "approved_at": _now_iso()}, deps)
 
 
 @router.post("/steps/{step_id}/reject", response_model=Dict[str, Any])
 @standard_exception_handler
-async def reject_step(step_id: str, reason: str, deps: StandardDeps) -> Dict[str, Any]:
+async def reject_step(step_id: str, reason: str, deps: StandardDependencies = Depends(get_standard_deps)) -> Dict[str, Any]:
     return await update_step(step_id, {"status": "FAILED", "rejection_reason": reason, "rejected_at": _now_iso()}, deps)
 
 
 @router.post("/{partner_id}/complete", response_model=Dict[str, Any])
 @standard_exception_handler
-async def complete_onboarding(partner_id: str, deps: StandardDeps) -> Dict[str, Any]:
+async def complete_onboarding(partner_id: str, deps: StandardDependencies = Depends(get_standard_deps)) -> Dict[str, Any]:
     from ..repositories.onboarding import OnboardingRequestRepository
     from ...models.onboarding import OnboardingStatus
     repo = OnboardingRequestRepository(deps.db)
@@ -155,7 +162,7 @@ async def complete_onboarding(partner_id: str, deps: StandardDeps) -> Dict[str, 
 
 @router.get("/{request_id}", response_model=Dict[str, Any])
 @standard_exception_handler
-async def get_onboarding_request(request_id: UUID, deps: StandardDeps) -> Dict[str, Any]:
+async def get_onboarding_request(request_id: UUID, deps: StandardDependencies = Depends(get_standard_deps)) -> Dict[str, Any]:
     req_repo = OnboardingRequestRepository(deps.db)
     req = await req_repo.get_by_id(request_id)
     if not req:
@@ -190,7 +197,7 @@ async def get_onboarding_request(request_id: UUID, deps: StandardDeps) -> Dict[s
 
 @router.get("/{request_id}/artifacts", response_model=Dict[str, Any])
 @standard_exception_handler
-async def get_onboarding_artifacts(request_id: UUID, deps: StandardDeps) -> Dict[str, Any]:
+async def get_onboarding_artifacts(request_id: UUID, deps: StandardDependencies = Depends(get_standard_deps)) -> Dict[str, Any]:
     art_repo = OnboardingArtifactRepository(deps.db)
     from sqlalchemy import select
     from ...models.onboarding import OnboardingArtifact
@@ -211,7 +218,7 @@ async def get_onboarding_artifacts(request_id: UUID, deps: StandardDeps) -> Dict
 
 @router.get("/{request_id}/logs", response_model=Dict[str, Any])
 @standard_exception_handler
-async def get_onboarding_logs(request_id: UUID, deps: StandardDeps) -> Dict[str, Any]:
+async def get_onboarding_logs(request_id: UUID, deps: StandardDependencies = Depends(get_standard_deps)) -> Dict[str, Any]:
     from sqlalchemy import select
     from ...models.onboarding import OnboardingArtifact
     result = await deps.db.execute(
