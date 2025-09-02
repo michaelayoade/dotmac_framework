@@ -12,113 +12,100 @@ from collections import defaultdict, deque
 from functools import wraps
 import json
 
-from prometheus_client import Counter, Histogram, Gauge, Info
-from opentelemetry import trace
+from opentelemetry import trace, metrics
 
 from .logging import get_logger, performance_logger
 from .otel import get_meter, get_tracer
 
 logger = get_logger("dotmac.cache_task_monitoring")
 
-# Cache Prometheus metrics
-CACHE_HITS = Counter(
+# Get OpenTelemetry meter for SigNoz metrics
+meter = get_meter(__name__)
+
+# Cache SigNoz metrics using OpenTelemetry
+cache_hits_counter = meter.create_counter(
     'dotmac_cache_hits_total',
-    'Total cache hits',
-    ['cache_backend', 'cache_key_type', 'tenant_id']
+    description='Total cache hits'
 )
 
-CACHE_MISSES = Counter(
+cache_misses_counter = meter.create_counter(
     'dotmac_cache_misses_total',
-    'Total cache misses',
-    ['cache_backend', 'cache_key_type', 'tenant_id']
+    description='Total cache misses'
 )
 
-CACHE_OPERATIONS = Counter(
+cache_operations_counter = meter.create_counter(
     'dotmac_cache_operations_total',
-    'Total cache operations',
-    ['cache_backend', 'operation', 'status']
+    description='Total cache operations'
 )
 
-CACHE_OPERATION_DURATION = Histogram(
+cache_operation_duration_histogram = meter.create_histogram(
     'dotmac_cache_operation_duration_seconds',
-    'Cache operation duration',
-    ['cache_backend', 'operation'],
-    buckets=(0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0)
+    description='Cache operation duration',
+    unit='s'
 )
 
-CACHE_HIT_RATIO = Gauge(
+cache_hit_ratio_gauge = meter.create_gauge(
     'dotmac_cache_hit_ratio',
-    'Cache hit ratio',
-    ['cache_backend', 'cache_key_type']
+    description='Cache hit ratio'
 )
 
-CACHE_SIZE = Gauge(
+cache_size_gauge = meter.create_gauge(
     'dotmac_cache_size_bytes',
-    'Current cache size in bytes',
-    ['cache_backend']
+    description='Current cache size in bytes',
+    unit='By'
 )
 
-CACHE_EVICTIONS = Counter(
+cache_evictions_counter = meter.create_counter(
     'dotmac_cache_evictions_total',
-    'Total cache evictions',
-    ['cache_backend', 'eviction_reason']
+    description='Total cache evictions'
 )
 
-CACHE_MEMORY_USAGE = Gauge(
+cache_memory_usage_gauge = meter.create_gauge(
     'dotmac_cache_memory_usage_percent',
-    'Cache memory usage percentage',
-    ['cache_backend']
+    description='Cache memory usage percentage'
 )
 
-# Task Processing Prometheus metrics
-TASK_QUEUE_SIZE = Gauge(
+# Task Processing SigNoz metrics using OpenTelemetry
+task_queue_size_gauge = meter.create_gauge(
     'dotmac_task_queue_size',
-    'Current task queue size',
-    ['queue_name', 'priority']
+    description='Current task queue size'
 )
 
-TASK_PROCESSING_DURATION = Histogram(
+task_processing_duration_histogram = meter.create_histogram(
     'dotmac_task_processing_duration_seconds',
-    'Task processing duration',
-    ['task_type', 'queue_name', 'status'],
-    buckets=(0.1, 0.5, 1.0, 5.0, 10.0, 30.0, 60.0, 300.0, 900.0)
+    description='Task processing duration',
+    unit='s'
 )
 
-TASK_EXECUTION_COUNT = Counter(
+task_execution_count_counter = meter.create_counter(
     'dotmac_task_executions_total',
-    'Total task executions',
-    ['task_type', 'queue_name', 'status']
+    description='Total task executions'
 )
 
-TASK_FAILURES = Counter(
+task_failures_counter = meter.create_counter(
     'dotmac_task_failures_total',
-    'Total task failures',
-    ['task_type', 'queue_name', 'error_type']
+    description='Total task failures'
 )
 
-TASK_RETRIES = Counter(
+task_retries_counter = meter.create_counter(
     'dotmac_task_retries_total',
-    'Total task retries',
-    ['task_type', 'queue_name', 'retry_count']
+    description='Total task retries'
 )
 
-TASK_WORKER_UTILIZATION = Gauge(
+task_worker_utilization_gauge = meter.create_gauge(
     'dotmac_task_worker_utilization_percent',
-    'Task worker utilization percentage',
-    ['queue_name', 'worker_id']
+    description='Task worker utilization percentage'
 )
 
-TASK_QUEUE_WAIT_TIME = Histogram(
+task_queue_wait_time_histogram = meter.create_histogram(
     'dotmac_task_queue_wait_time_seconds',
-    'Time tasks spend waiting in queue',
-    ['queue_name', 'priority'],
-    buckets=(1.0, 5.0, 10.0, 30.0, 60.0, 300.0, 900.0, 1800.0)
+    description='Time tasks spend waiting in queue',
+    unit='s'
 )
 
-TASK_PROCESSING_RATE = Gauge(
+task_processing_rate_gauge = meter.create_gauge(
     'dotmac_task_processing_rate_per_second',
-    'Task processing rate per second',
-    ['queue_name', 'task_type']
+    description='Task processing rate per second'
 )
 
 @dataclass

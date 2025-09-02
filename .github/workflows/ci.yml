@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [main, develop]
 
+env:
+  PYTHON_VERSION: '3.12'
+  NODE_VERSION: '18'
+  PNPM_VERSION: '8'
+
 jobs:
   tests:
     name: Lint and Tests (Backend)
@@ -43,12 +48,12 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -e .
 
       - name: Enforce DRY service standards
         run: |
@@ -60,6 +65,7 @@ jobs:
           REDIS_URL: redis://localhost:6379/0
           ENVIRONMENT: test
         run: |
+          pip install -e .[dev]
           pytest -v --cov=src --cov-report=xml --cov-report=term-missing
   frontend:
     name: Frontend CI
@@ -192,27 +198,22 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install -r requirements-dev.txt
-        working-directory: ./src
+          pip install -e .[dev]
 
       - name: Run security checks
         run: |
-          bandit -r dotmac_isp/
+          bandit -r src/dotmac_isp/
           safety check
-        working-directory: ./src
 
       - name: Run linting
         run: |
-          ruff check dotmac_isp/
-          black --check dotmac_isp/
-          mypy dotmac_isp/
-        working-directory: ./src
+          ruff check src/dotmac_isp/
+          black --check src/dotmac_isp/
+          mypy src/dotmac_isp/
 
       - name: Run unit tests
         run: |
-          PYTHONPATH=. pytest tests/ -v --cov=dotmac_isp --cov-report=xml --cov-report=term
-        working-directory: ./src
+          pytest tests/ -v --cov=src/dotmac_isp --cov-report=xml --cov-report=term
         env:
           DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
           REDIS_URL: redis://localhost:6379/0
@@ -220,8 +221,7 @@ jobs:
 
       - name: Run integration tests
         run: |
-          PYTHONPATH=. pytest tests/ -m integration -v
-        working-directory: ./src
+          pytest tests/ -m integration -v
         env:
           DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
           REDIS_URL: redis://localhost:6379/0
@@ -283,22 +283,18 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install -r requirements-dev.txt
-        working-directory: ./src
+          pip install -e .[dev]
 
       - name: Run security checks
         run: |
-          bandit -r dotmac_management/
+          bandit -r src/dotmac_management/
           safety check
-        working-directory: ./src
 
       - name: Run linting
         run: |
-          ruff check dotmac_management/
-          black --check dotmac_management/
-          mypy dotmac_management/
-        working-directory: ./src
+          ruff check src/dotmac_management/
+          black --check src/dotmac_management/
+          mypy src/dotmac_management/
 
       - name: Run database migrations
         run: |
@@ -310,8 +306,7 @@ jobs:
 
       - name: Run unit tests
         run: |
-          PYTHONPATH=. pytest tests/ -v --cov=dotmac_management --cov-report=xml --cov-report=term
-        working-directory: ./src
+          pytest tests/ -v --cov=src/dotmac_management --cov-report=xml --cov-report=term
         env:
           DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
           REDIS_URL: redis://localhost:6379/0
@@ -319,8 +314,7 @@ jobs:
 
       - name: Run integration tests
         run: |
-          PYTHONPATH=. pytest tests/ -m integration -v
-        working-directory: ./src
+          pytest tests/ -m integration -v
         env:
           DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
           REDIS_URL: redis://localhost:6379/0
@@ -390,14 +384,7 @@ jobs:
       - name: Install backend dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-        working-directory: ./isp-framework
-
-      - name: Install backend dependencies (Management)
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-        working-directory: ./management-platform
+          pip install -e .[dev]
 
       - name: Start backend services
         run: |

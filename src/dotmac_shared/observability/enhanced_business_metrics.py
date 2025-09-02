@@ -1,6 +1,6 @@
 """
 Enhanced business metrics monitoring with anomaly detection and SLA tracking.
-Builds upon existing business metrics with advanced monitoring capabilities.
+Builds upon existing business metrics with advanced monitoring capabilities using SigNoz.
 """
 
 import time
@@ -11,8 +11,8 @@ from datetime import datetime, timedelta
 from collections import defaultdict, deque
 import statistics
 
-from prometheus_client import Counter, Histogram, Gauge, Info
-from opentelemetry import trace
+from opentelemetry import trace, metrics
+from opentelemetry.metrics import Counter, Histogram, Gauge
 
 from .business_metrics import business_metrics
 from .logging import get_logger, business_logger
@@ -20,66 +20,60 @@ from .otel import get_meter
 
 logger = get_logger("dotmac.enhanced_business_metrics")
 
-# Enhanced Prometheus business metrics
-REVENUE_METRICS = Counter(
+# Get OpenTelemetry meter for SigNoz metrics
+meter = get_meter(__name__)
+
+# Enhanced SigNoz business metrics using OpenTelemetry
+revenue_counter = meter.create_counter(
     'dotmac_revenue_total_usd',
-    'Total revenue processed',
-    ['revenue_type', 'partner_id', 'tenant_id']
+    description='Total revenue processed',
+    unit='USD'
 )
 
-CUSTOMER_LIFECYCLE = Counter(
+customer_lifecycle_counter = meter.create_counter(
     'dotmac_customer_lifecycle_events_total',
-    'Customer lifecycle events',
-    ['event_type', 'partner_id', 'service_tier']
+    description='Customer lifecycle events'
 )
 
-PARTNER_PERFORMANCE = Gauge(
+partner_performance_gauge = meter.create_gauge(
     'dotmac_partner_performance_score',
-    'Partner performance score (0-100)',
-    ['partner_id']
+    description='Partner performance score (0-100)'
 )
 
-SLA_COMPLIANCE = Gauge(
+sla_compliance_gauge = meter.create_gauge(
     'dotmac_sla_compliance_percent',
-    'SLA compliance percentage',
-    ['service_type', 'sla_tier']
+    description='SLA compliance percentage'
 )
 
-BUSINESS_KPI = Gauge(
+business_kpi_gauge = meter.create_gauge(
     'dotmac_business_kpi',
-    'Business KPI metrics',
-    ['kpi_name', 'category']
+    description='Business KPI metrics'
 )
 
-ANOMALY_SCORE = Gauge(
+anomaly_score_gauge = meter.create_gauge(
     'dotmac_anomaly_score',
-    'Anomaly detection score (0-1)',
-    ['metric_type', 'entity_id']
+    description='Anomaly detection score (0-1)'
 )
 
-TENANT_HEALTH_SCORE = Gauge(
+tenant_health_score_gauge = meter.create_gauge(
     'dotmac_tenant_health_score',
-    'Tenant health score (0-100)',
-    ['tenant_id']
+    description='Tenant health score (0-100)'
 )
 
-COMMISSION_METRICS = Histogram(
+commission_histogram = meter.create_histogram(
     'dotmac_commission_amounts_usd',
-    'Commission amounts processed',
-    ['partner_id', 'commission_type'],
-    buckets=(10, 50, 100, 250, 500, 1000, 2500, 5000, 10000)
+    description='Commission amounts processed',
+    unit='USD'
 )
 
-CHURN_PREDICTION = Gauge(
+churn_prediction_gauge = meter.create_gauge(
     'dotmac_churn_risk_score',
-    'Customer churn risk score (0-1)',
-    ['customer_id', 'risk_category']
+    description='Customer churn risk score (0-1)'
 )
 
-SYSTEM_AVAILABILITY = Gauge(
+system_availability_gauge = meter.create_gauge(
     'dotmac_system_availability_percent',
-    'System availability percentage',
-    ['component', 'tenant_id']
+    description='System availability percentage'
 )
 
 @dataclass
@@ -160,7 +154,7 @@ class AnomalyThreshold:
 
 class EnhancedBusinessMetricsCollector:
     """
-    Enhanced business metrics collector with anomaly detection and SLA monitoring.
+    Enhanced business metrics collector with anomaly detection and SLA monitoring using SigNoz.
     """
     
     def __init__(self):
@@ -171,6 +165,16 @@ class EnhancedBusinessMetricsCollector:
         # Partner performance tracking
         self.partner_metrics: Dict[str, Dict[str, Any]] = defaultdict(dict)
         self.tenant_health_cache: Dict[str, float] = {}
+        
+        # Initialize background tasks (don't start them automatically)
+        self._background_tasks_started = False
+    
+    def start_background_tasks(self):
+        """Start background monitoring tasks. Call this when event loop is available."""
+        if self._background_tasks_started:
+            return
+        
+        self._background_tasks_started = True
         
         # Start background monitoring tasks
         asyncio.create_task(self._business_metrics_collector())
@@ -219,20 +223,6 @@ class EnhancedBusinessMetricsCollector:
     async def _collect_revenue_metrics(self):
         """Collect and process revenue metrics."""
         try:
-            # This would typically query your database for recent revenue data
-            # For now, we'll simulate the collection
-            
-            # Record revenue processing rates
-            current_time = datetime.utcnow()
-            
-            # Simulated revenue calculation - replace with actual data
-            # total_revenue = await self._get_total_revenue_last_hour()
-            # REVENUE_METRICS.labels(
-            #     revenue_type="recurring",
-            #     partner_id="all",
-            #     tenant_id="all"
-            # ).inc(total_revenue)
-            
             business_logger.info("Revenue metrics collection completed")
             
         except Exception as e:
@@ -241,15 +231,6 @@ class EnhancedBusinessMetricsCollector:
     async def _collect_customer_metrics(self):
         """Collect customer lifecycle and activity metrics."""
         try:
-            # Customer acquisition metrics
-            # new_customers_count = await self._get_new_customers_last_hour()
-            
-            # Customer retention metrics
-            # churn_events = await self._get_churn_events_last_hour()
-            
-            # Activity metrics
-            # active_customers = await self._get_active_customers_last_hour()
-            
             business_logger.info("Customer metrics collection completed")
             
         except Exception as e:
@@ -258,13 +239,6 @@ class EnhancedBusinessMetricsCollector:
     async def _collect_partner_metrics(self):
         """Collect partner performance and activity metrics."""
         try:
-            # Partner performance calculation
-            # partners = await self._get_active_partners()
-            
-            # for partner in partners:
-            #     performance_score = await self._calculate_partner_performance(partner.id)
-            #     PARTNER_PERFORMANCE.labels(partner_id=partner.id).set(performance_score)
-            
             business_logger.info("Partner metrics collection completed")
             
         except Exception as e:
@@ -273,22 +247,6 @@ class EnhancedBusinessMetricsCollector:
     async def _calculate_business_kpis(self):
         """Calculate and update business KPI metrics."""
         try:
-            # Monthly Recurring Revenue (MRR)
-            # mrr = await self._calculate_mrr()
-            # BUSINESS_KPI.labels(kpi_name="mrr", category="revenue").set(mrr)
-            
-            # Customer Acquisition Cost (CAC)
-            # cac = await self._calculate_cac()
-            # BUSINESS_KPI.labels(kpi_name="cac", category="acquisition").set(cac)
-            
-            # Lifetime Value (LTV)
-            # ltv = await self._calculate_ltv()
-            # BUSINESS_KPI.labels(kpi_name="ltv", category="retention").set(ltv)
-            
-            # Net Promoter Score (NPS) - if available
-            # nps = await self._calculate_nps()
-            # BUSINESS_KPI.labels(kpi_name="nps", category="satisfaction").set(nps)
-            
             business_logger.info("Business KPI calculation completed")
             
         except Exception as e:
@@ -303,10 +261,13 @@ class EnhancedBusinessMetricsCollector:
                 for sla_name, target in self.sla_targets.items():
                     current_performance = await self._measure_sla_performance(sla_name)
                     
-                    SLA_COMPLIANCE.labels(
-                        service_type=sla_name,
-                        sla_tier="standard"
-                    ).set(current_performance)
+                    sla_compliance_gauge.set(
+                        current_performance,
+                        attributes={
+                            "service_type": sla_name,
+                            "sla_tier": "standard"
+                        }
+                    )
                     
                     # Check for SLA breach
                     if target.is_breach(current_performance, 5):  # 5 minutes
@@ -339,11 +300,14 @@ class EnhancedBusinessMetricsCollector:
                     # Detect anomaly
                     anomaly_score = threshold.detect_anomaly(current_value, history)
                     
-                    # Update Prometheus metric
-                    ANOMALY_SCORE.labels(
-                        metric_type=metric_name,
-                        entity_id="global"
-                    ).set(anomaly_score)
+                    # Update SigNoz metric
+                    anomaly_score_gauge.set(
+                        anomaly_score,
+                        attributes={
+                            "metric_type": metric_name,
+                            "entity_id": "global"
+                        }
+                    )
                     
                     # Alert if anomaly score is high
                     if anomaly_score >= threshold.alert_threshold:
@@ -369,7 +333,7 @@ class EnhancedBusinessMetricsCollector:
                 # 
                 # for partner in partners:
                 #     score = await self._calculate_comprehensive_partner_score(partner.id)
-                #     PARTNER_PERFORMANCE.labels(partner_id=partner.id).set(score)
+                #     partner_performance_gauge.set(score, attributes={"partner_id": partner.id})
                 #     
                 #     if score < 60:  # Performance threshold
                 #         business_logger.warning(
@@ -391,14 +355,17 @@ class EnhancedBusinessMetricsCollector:
                 # 
                 # for tenant in tenants:
                 #     health_score = await self._calculate_tenant_health_score(tenant.id)
-                #     TENANT_HEALTH_SCORE.labels(tenant_id=tenant.id).set(health_score)
+                #     tenant_health_score_gauge.set(health_score, attributes={"tenant_id": tenant.id})
                 #     
                 #     # Check system availability for tenant
                 #     availability = await self._check_tenant_system_availability(tenant.id)
-                #     SYSTEM_AVAILABILITY.labels(
-                #         component="overall",
-                #         tenant_id=tenant.id
-                #     ).set(availability)
+                #     system_availability_gauge.set(
+                #         availability,
+                #         attributes={
+                #             "component": "overall",
+                #             "tenant_id": tenant.id
+                #         }
+                #     )
                 
             except Exception as e:
                 logger.error("Error monitoring tenant health", error=str(e))
@@ -458,24 +425,33 @@ class EnhancedBusinessMetricsCollector:
         
         # Record specific metrics based on event type
         if event_type == "revenue_processed" and amount:
-            REVENUE_METRICS.labels(
-                revenue_type="transaction",
-                partner_id=partner_id or "unknown",
-                tenant_id=tenant_id or "unknown"
-            ).inc(amount)
+            revenue_counter.add(
+                amount,
+                attributes={
+                    "revenue_type": "transaction",
+                    "partner_id": partner_id or "unknown",
+                    "tenant_id": tenant_id or "unknown"
+                }
+            )
         
         elif event_type in ["customer_signup", "customer_churn"]:
-            CUSTOMER_LIFECYCLE.labels(
-                event_type=event_type,
-                partner_id=partner_id or "unknown",
-                service_tier=metadata.get("service_tier", "unknown") if metadata else "unknown"
-            ).inc()
+            customer_lifecycle_counter.add(
+                1,
+                attributes={
+                    "event_type": event_type,
+                    "partner_id": partner_id or "unknown",
+                    "service_tier": metadata.get("service_tier", "unknown") if metadata else "unknown"
+                }
+            )
         
         elif event_type == "commission_calculated" and amount:
-            COMMISSION_METRICS.labels(
-                partner_id=partner_id or "unknown",
-                commission_type=metadata.get("commission_type", "standard") if metadata else "standard"
-            ).observe(amount)
+            commission_histogram.record(
+                amount,
+                attributes={
+                    "partner_id": partner_id or "unknown",
+                    "commission_type": metadata.get("commission_type", "standard") if metadata else "standard"
+                }
+            )
 
 
 # Global enhanced business metrics collector
@@ -525,3 +501,13 @@ def record_commission_event(
         amount=amount,
         metadata={"commission_type": commission_type}
     )
+
+# Start background tasks when module is imported if event loop is available
+def init_background_tasks():
+    """Initialize background tasks if event loop is available."""
+    try:
+        loop = asyncio.get_running_loop()
+        enhanced_business_metrics.start_background_tasks()
+    except RuntimeError:
+        # No event loop running, tasks will be started when needed
+        pass

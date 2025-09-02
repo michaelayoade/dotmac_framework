@@ -12,50 +12,46 @@ from collections import defaultdict, deque
 import statistics
 import json
 
-from prometheus_client import Counter, Histogram, Gauge
-from opentelemetry import trace
+from opentelemetry import trace, metrics
 
 from .logging import get_logger, business_logger
 from .otel import get_meter
 
 logger = get_logger("dotmac.sla_monitoring")
 
-# SLA Prometheus metrics
-SLA_UPTIME = Gauge(
+# Get OpenTelemetry meter for SigNoz metrics
+meter = get_meter(__name__)
+
+# SLA SigNoz metrics using OpenTelemetry
+sla_uptime_gauge = meter.create_gauge(
     'dotmac_sla_uptime_percent',
-    'Service uptime percentage for SLA tracking',
-    ['service', 'tier', 'period']
+    description='Service uptime percentage for SLA tracking'
 )
 
-SLA_RESPONSE_TIME = Histogram(
+sla_response_time_histogram = meter.create_histogram(
     'dotmac_sla_response_time_seconds',
-    'Response time for SLA tracking',
-    ['service', 'tier'],
-    buckets=(0.01, 0.05, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0, 10.0)
+    description='Response time for SLA tracking',
+    unit='s'
 )
 
-SLA_BREACH_COUNT = Counter(
+sla_breach_counter = meter.create_counter(
     'dotmac_sla_breach_total',
-    'Total SLA breaches',
-    ['service', 'tier', 'breach_type']
+    description='Total SLA breaches'
 )
 
-SLA_ERROR_BUDGET_REMAINING = Gauge(
+sla_error_budget_remaining_gauge = meter.create_gauge(
     'dotmac_sla_error_budget_remaining_percent',
-    'Remaining error budget percentage',
-    ['service', 'tier', 'period']
+    description='Remaining error budget percentage'
 )
 
-PERFORMANCE_BASELINE_SCORE = Gauge(
+performance_baseline_score_gauge = meter.create_gauge(
     'dotmac_performance_baseline_score',
-    'Performance baseline score (0-100)',
-    ['metric_type', 'component']
+    description='Performance baseline score (0-100)'
 )
 
-PERFORMANCE_DEVIATION = Gauge(
+performance_deviation_gauge = meter.create_gauge(
     'dotmac_performance_deviation_percent',
-    'Performance deviation from baseline',
-    ['metric_type', 'component']
+    description='Performance deviation from baseline'
 )
 
 @dataclass
@@ -145,6 +141,16 @@ class SLAMonitor:
         self._initialize_default_sla_targets()
         self._initialize_default_baselines()
         
+        # Initialize background tasks flag (don't start them automatically)
+        self._background_tasks_started = False
+    
+    def start_background_tasks(self):
+        """Start background monitoring tasks. Call this when event loop is available."""
+        if self._background_tasks_started:
+            return
+        
+        self._background_tasks_started = True
+        
         # Start monitoring tasks
         asyncio.create_task(self._sla_measurement_task())
         asyncio.create_task(self._baseline_monitoring_task())
@@ -229,24 +235,33 @@ class SLAMonitor:
                             "last_updated": measurement.timestamp
                         }
                         
-                        # Update Prometheus metrics
-                        SLA_UPTIME.labels(
-                            service=service_name,
-                            tier=tier,
-                            period="1h"
-                        ).set(measurement.uptime_percent)
+                        # Update SigNoz metrics
+                        sla_uptime_gauge.set(
+                            measurement.uptime_percent,
+                            attributes={
+                                "service": service_name,
+                                "tier": tier,
+                                "period": "1h"
+                            }
+                        )
                         
-                        SLA_RESPONSE_TIME.labels(
-                            service=service_name,
-                            tier=tier
-                        ).observe(measurement.avg_response_time_ms / 1000)  # Convert to seconds
+                        sla_response_time_histogram.record(
+                            measurement.avg_response_time_ms / 1000,  # Convert to seconds
+                            attributes={
+                                "service": service_name,
+                                "tier": tier
+                            }
+                        )
                         
                         if measurement.is_breach:
-                            SLA_BREACH_COUNT.labels(
-                                service=service_name,
-                                tier=tier,
-                                breach_type=self._determine_breach_type(measurement, target)
-                            ).inc()
+                            sla_breach_counter.add(
+                                1,
+                                attributes={
+                                    "service": service_name,
+                                    "tier": tier,
+                                    "breach_type": self._determine_breach_type(measurement, target)
+                                }
+                            )
                             
                             business_logger.warning(
                                 f"SLA breach detected: {service_name} ({tier})",
@@ -332,17 +347,23 @@ class SLAMonitor:
                         key = f"{metric_name}:{component}"
                         self.performance_measurements[key].append(measurement)
                         
-                        # Update Prometheus metrics
+                        # Update SigNoz metrics
                         baseline_score = max(0, 100 - abs(deviation_percent))
-                        PERFORMANCE_BASELINE_SCORE.labels(
-                            metric_type=metric_name,
-                            component=component
-                        ).set(baseline_score)
+                        performance_baseline_score_gauge.set(
+                            baseline_score,
+                            attributes={
+                                "metric_type": metric_name,
+                                "component": component
+                            }
+                        )
                         
-                        PERFORMANCE_DEVIATION.labels(
-                            metric_type=metric_name,
-                            component=component
-                        ).set(deviation_percent)
+                        performance_deviation_gauge.set(
+                            deviation_percent,
+                            attributes={
+                                "metric_type": metric_name,
+                                "component": component
+                            }
+                        )
                         
                         # Alert on anomalies
                         if is_anomaly:
