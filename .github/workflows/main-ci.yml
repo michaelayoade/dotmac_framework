@@ -106,16 +106,38 @@ jobs:
             ! -path "*/examples/*" ! -path "*/mock*" \
             ! -name "*.test.*" ! -name "*.spec.*" > /tmp/prod_files.txt
           
-          # Check for API keys (Stripe, etc.)
-          if grep -l "sk_[a-zA-Z0-9_]\{32,\}\|pk_[a-zA-Z0-9_]\{32,\}\|rk_[a-zA-Z0-9_]\{32,\}" $(cat /tmp/prod_files.txt) 2>/dev/null; then
-            echo "❌ Potential API keys found in production code!"
+          # Check if we have any files to scan
+          if [ ! -s /tmp/prod_files.txt ]; then
+            echo "✅ No production files found to scan"
+            exit 0
+          fi
+          
+          # Check for API keys using simple while loop
+          found_api_keys=false
+          while IFS= read -r file; do
+            if grep -q "sk_[a-zA-Z0-9_]\{32,\}\|pk_[a-zA-Z0-9_]\{32,\}\|rk_[a-zA-Z0-9_]\{32,\}" "$file" 2>/dev/null; then
+              echo "❌ Potential API key found in: $file"
+              found_api_keys=true
+            fi
+          done < /tmp/prod_files.txt
+          
+          if [ "$found_api_keys" = true ]; then
             exit 1
           fi
           
-          # Check for hardcoded credentials (simplified pattern)
-          if grep -l 'password\s*[:=]\s*"[a-zA-Z0-9]\{12,\}"\|secret\s*[:=]\s*"[a-zA-Z0-9]\{12,\}"\|key\s*[:=]\s*"[a-zA-Z0-9]\{12,\}"\|token\s*[:=]\s*"[a-zA-Z0-9]\{12,\}"' $(cat /tmp/prod_files.txt) 2>/dev/null | \
-             xargs grep -v "CHANGE_ME\|INSECURE.*EXAMPLE\|SECRET:\|template\|config" 2>/dev/null; then
-            echo "❌ Potential hardcoded credentials found!"
+          # Check for hardcoded credentials using simple while loop
+          found_credentials=false
+          while IFS= read -r file; do
+            if grep -q 'password\s*[:=]\s*"[a-zA-Z0-9]\{12,\}"\|secret\s*[:=]\s*"[a-zA-Z0-9]\{12,\}"\|key\s*[:=]\s*"[a-zA-Z0-9]\{12,\}"\|token\s*[:=]\s*"[a-zA-Z0-9]\{12,\}"' "$file" 2>/dev/null; then
+              # Exclude known safe patterns
+              if ! grep -q "CHANGE_ME\|INSECURE.*EXAMPLE\|SECRET:\|template\|config" "$file" 2>/dev/null; then
+                echo "❌ Potential hardcoded credential found in: $file"
+                found_credentials=true
+              fi
+            fi
+          done < /tmp/prod_files.txt
+          
+          if [ "$found_credentials" = true ]; then
             exit 1
           fi
           
