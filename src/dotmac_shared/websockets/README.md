@@ -648,7 +648,7 @@ pytest
 
 ## 📝 License
 
-MIT License - see [LICENSE](LICENSE) file for details.
+MIT License. See repository license for details.
 
 ## 🔗 Links
 

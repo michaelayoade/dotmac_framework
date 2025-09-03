@@ -24,6 +24,7 @@ from ...schemas.websocket_schemas import (
     WebSocketSubscriptionCreate,
 )
 from ...services.websocket_service import WebSocketEventService
+from datetime import timezone
 
 logger = logging.getLogger(__name__)
 
@@ -97,7 +98,7 @@ async def websocket_endpoint(
                 error_message = {
                     "type": "error",
                     "message": "Invalid JSON format",
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 }
                 await websocket.send_text(json.dumps(error_message))
             except Exception as e:
@@ -105,7 +106,7 @@ async def websocket_endpoint(
                 error_message = {
                     "type": "error",
                     "message": f"Message handling failed: {str(e)}",
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 }
                 await websocket.send_text(json.dumps(error_message))
     
@@ -152,7 +153,7 @@ async def _handle_websocket_message(
                 "type": "subscription_confirmed",
                 "subscription_name": subscription_name,
                 "event_types": event_types,
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
             await websocket.send_text(json.dumps(response))
     
@@ -172,7 +173,7 @@ async def _handle_websocket_message(
         if websocket:
             response = {
                 "type": "pong",
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
             await websocket.send_text(json.dumps(response))
     
@@ -206,7 +207,7 @@ async def _handle_websocket_message(
                     }
                     for event in events
                 ],
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
             await websocket.send_text(json.dumps(response))
 
@@ -545,5 +546,5 @@ async def websocket_service_health(
         "status": "healthy",
         "service": "websocket_events",
         "active_connections": stats["total_connections"],
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     }

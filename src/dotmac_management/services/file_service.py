@@ -105,12 +105,12 @@ class FileService:
                 'tags': file_data.tags,
                 'related_entity_type': file_data.related_entity_type,
                 'related_entity_id': file_data.related_entity_id,
-                'upload_completed_at': datetime.utcnow() if file_content else None,
+                'upload_completed_at': datetime.now(timezone.utc) if file_content else None,
             }
             
             # Set expiration date if specified
             if file_data.expiration_days:
-                metadata_dict['expiration_date'] = datetime.utcnow() + timedelta(days=file_data.expiration_days)
+                metadata_dict['expiration_date'] = datetime.now(timezone.utc) + timedelta(days=file_data.expiration_days)
             
             file_metadata = await self.file_repository.create_file_metadata(
                 tenant_id=tenant_id,
@@ -125,7 +125,7 @@ class FileService:
                     'file_id': file_id,
                     'user_id': user_id,
                     'action': 'create',
-                    'access_timestamp': datetime.utcnow()
+                    'access_timestamp': datetime.now(timezone.utc)
                 }
             )
             
@@ -160,7 +160,7 @@ class FileService:
                 'file_id': file_id,
                 'user_id': user_id,
                 'action': 'read',
-                'access_timestamp': datetime.utcnow()
+                'access_timestamp': datetime.now(timezone.utc)
             }
         )
         
@@ -168,7 +168,7 @@ class FileService:
         await self.file_repository.update_file_metadata(
             file_id=file_id,
             tenant_id=tenant_id,
-            updates={'last_accessed': datetime.utcnow()},
+            updates={'last_accessed': datetime.now(timezone.utc)},
             user_id=user_id
         )
         
@@ -206,7 +206,7 @@ class FileService:
                     'user_id': user_id,
                     'action': 'download',
                     'bytes_transferred': len(content),
-                    'access_timestamp': datetime.utcnow()
+                    'access_timestamp': datetime.now(timezone.utc)
                 }
             )
             
@@ -216,7 +216,7 @@ class FileService:
                 tenant_id=tenant_id,
                 updates={
                     'download_count': file_metadata.download_count + 1,
-                    'last_accessed': datetime.utcnow()
+                    'last_accessed': datetime.now(timezone.utc)
                 },
                 user_id=user_id
             )
@@ -254,7 +254,7 @@ class FileService:
             update_dict['access_level'] = updates.access_level
             update_dict['is_public'] = updates.access_level == AccessLevel.PUBLIC
         if updates.expiration_days is not None:
-            update_dict['expiration_date'] = datetime.utcnow() + timedelta(days=updates.expiration_days)
+            update_dict['expiration_date'] = datetime.now(timezone.utc) + timedelta(days=updates.expiration_days)
         
         updated_metadata = await self.file_repository.update_file_metadata(
             file_id=file_id,
@@ -270,7 +270,7 @@ class FileService:
                 'file_id': file_id,
                 'user_id': user_id,
                 'action': 'update',
-                'access_timestamp': datetime.utcnow()
+                'access_timestamp': datetime.now(timezone.utc)
             }
         )
         
@@ -311,7 +311,7 @@ class FileService:
                 'file_id': file_id,
                 'user_id': user_id,
                 'action': 'delete',
-                'access_timestamp': datetime.utcnow()
+                'access_timestamp': datetime.now(timezone.utc)
             }
         )
         
@@ -434,7 +434,7 @@ class FileService:
                 'file_id': file_id,
                 'user_id': granter_user_id,
                 'action': 'grant_permission',
-                'access_timestamp': datetime.utcnow()
+                'access_timestamp': datetime.now(timezone.utc)
             }
         )
         
@@ -589,7 +589,7 @@ class FileService:
             raise PermissionError(f"No permission to {action} file: {file_metadata.file_id}")
         
         # Check if permission has expired
-        if permission.expires_at and datetime.utcnow() > permission.expires_at:
+        if permission.expires_at and datetime.now(timezone.utc) > permission.expires_at:
             raise PermissionError(f"Permission expired for file: {file_metadata.file_id}")
         
         # Check specific action permissions

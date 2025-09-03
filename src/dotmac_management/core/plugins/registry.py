@@ -8,8 +8,8 @@ from collections import defaultdict
 from typing import Any, Dict, List, Optional, Type
 from uuid import UUID
 
-from base import BasePlugin, PluginError, PluginStatus, PluginType
-from loader import PluginLoader
+from .base import BasePlugin, PluginError, PluginStatus, PluginType
+from .loader import PluginLoader
 
 logger = logging.getLogger(__name__)
 

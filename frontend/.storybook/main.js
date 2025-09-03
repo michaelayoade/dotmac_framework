@@ -2,7 +2,8 @@
 const config = {
   stories: [
     '../packages/*/src/**/*.stories.@(js|jsx|ts|tsx|mdx)',
-    '../apps/*/src/**/*.stories.@(js|jsx|ts|tsx|mdx)',
+    '../isp-framework/*/src/**/*.stories.@(js|jsx|ts|tsx|mdx)',
+    '../management-portal/*/src/**/*.stories.@(js|jsx|ts|tsx|mdx)',
     '../stories/**/*.stories.@(js|jsx|ts|tsx|mdx)',
     '../stories/**/*.mdx',
   ],
@@ -20,13 +21,13 @@ const config = {
     '@storybook/addon-outline',
     'storybook-addon-performance',
     '@chromatic-com/storybook',
-    '@storybook/addon-design-tokens'
+    '@storybook/addon-design-tokens',
   ],
 
   framework: {
     name: '@storybook/nextjs',
     options: {
-      nextConfigPath: '../apps/admin/next.config.js',
+      nextConfigPath: '../isp-framework/admin/next.config.js',
     },
   },
 
@@ -62,7 +63,7 @@ const config = {
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   `,
 
-  staticDirs: ['../public', '../apps/admin/public'],
+  staticDirs: ['../public', '../isp-framework/admin/public'],
 
   webpackFinal: async (config, { configType }) => {
     // Add TypeScript path mapping
@@ -71,7 +72,10 @@ const config = {
       '@dotmac/primitives': require('path').resolve(__dirname, '../packages/primitives/src'),
       '@dotmac/ui': require('path').resolve(__dirname, '../packages/ui/src'),
       '@dotmac/headless': require('path').resolve(__dirname, '../packages/headless/src'),
-      '@dotmac/styled-components': require('path').resolve(__dirname, '../packages/styled-components/src'),
+      '@dotmac/styled-components': require('path').resolve(
+        __dirname,
+        '../packages/styled-components/src'
+      ),
       '@dotmac/security': require('path').resolve(__dirname, '../packages/security/src'),
       '@dotmac/testing': require('path').resolve(__dirname, '../packages/testing/src'),
     };

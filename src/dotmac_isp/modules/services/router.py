@@ -3,13 +3,13 @@
 import logging
 from datetime import date, datetime
 from typing import Any, Dict, List, Optional
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from dotmac_isp.shared.database import get_db
-from dotmac_shared.api.dependencies import StandardDependencies, get_standard_deps
+from dotmac_isp.core.database import get_db
+from dotmac_shared.auth.dependencies import get_current_user, get_current_tenant
 from dotmac_shared.api.exception_handlers import standard_exception_handler
 from dotmac_shared.core.pagination import PaginationParams
 from dotmac_shared.api.router_factory import RouterFactory
@@ -28,9 +28,10 @@ services_router = APIRouter(
 
 def get_services_service(
     db: Session = Depends(get_db),
-    tenant_id: str = Depends(get_current_tenant)
+    current_tenant: dict = Depends(get_current_tenant)
 ) -> ServicesService:
     """Get services service instance."""
+    tenant_id = current_tenant.get("tenant_id") if current_tenant else None
     return ServicesService(db, tenant_id)
 
 

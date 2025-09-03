@@ -81,7 +81,7 @@ class WebSocketEventService:
             welcome_message = {
                 'type': 'connection_established',
                 'connection_id': connection_id,
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
             
             await websocket.send_text(json.dumps(welcome_message))
@@ -197,7 +197,7 @@ class WebSocketEventService:
         }
         
         if expires_in_hours:
-            event_dict['expires_at'] = datetime.utcnow() + timedelta(hours=expires_in_hours)
+            event_dict['expires_at'] = datetime.now(timezone.utc) + timedelta(hours=expires_in_hours)
         
         event = await self.repository.create_event(tenant_id, event_dict, user_id)
         
@@ -302,7 +302,7 @@ class WebSocketEventService:
                             'connection_id': connection_id,
                             'user_id': self._get_connection_user_id(connection_id),
                             'status': DeliveryStatus.DELIVERED,
-                            'delivered_at': datetime.utcnow(),
+                            'delivered_at': datetime.now(timezone.utc),
                             'message_size_bytes': len(json.dumps(message))
                         }
                         

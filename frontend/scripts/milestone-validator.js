@@ -60,7 +60,7 @@ class MilestoneValidator {
       },
       'admin-portal': {
         name: 'Admin Portal Team',
-        path: 'apps/admin',
+        path: 'isp-framework/admin',
         lead: 'Admin Team Lead',
         requirements: [
           'customer-management',
@@ -72,7 +72,7 @@ class MilestoneValidator {
       },
       'customer-portal': {
         name: 'Customer Portal Team',
-        path: 'apps/customer',
+        path: 'isp-framework/customer',
         lead: 'Customer Experience Lead',
         requirements: [
           'account-management',
@@ -84,7 +84,7 @@ class MilestoneValidator {
       },
       'reseller-portal': {
         name: 'Reseller Portal Team',
-        path: 'apps/reseller',
+        path: 'isp-framework/reseller',
         lead: 'Partner Relations Lead',
         requirements: [
           'partner-dashboard',

@@ -1,0 +1,42 @@
+{
+  "name": "@dotmac/middleware",
+  "version": "1.0.0",
+  "description": "Unified middleware system for DotMac ISP platform",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "type-check": "tsc --noEmit"
+  },
+  "keywords": [
+    "middleware",
+    "security",
+    "authentication",
+    "rate-limiting",
+    "audit"
+  ],
+  "author": "DotMac Team",
+  "license": "MIT",
+  "dependencies": {
+    "next": "^14.0.0",
+    "@dotmac/headless": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "tsup": "^8.0.0"
+  },
+  "peerDependencies": {
+    "next": "^13.0.0 || ^14.0.0",
+    "react": "^18.0.0"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  }
+}

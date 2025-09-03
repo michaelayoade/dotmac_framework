@@ -12,32 +12,32 @@ try {
   // Import MSW v2 syntax
   const { setupServer: _setupServer } = require('msw/node');
   const { http: _http, HttpResponse: _HttpResponse } = require('msw');
-  
+
   setupServer = _setupServer;
   http = _http;
   HttpResponse = _HttpResponse;
 } catch (error) {
   // Fallback for test environments that can't load MSW
   console.warn('MSW could not be loaded, using mock fallback:', error.message);
-  
+
   setupServer = () => ({
     listen: () => {},
     close: () => {},
-    resetHandlers: () => {}
+    resetHandlers: () => {},
   });
-  
+
   http = {
     get: () => {},
     post: () => {},
     put: () => {},
     delete: () => {},
-    patch: () => {}
+    patch: () => {},
   };
-  
+
   HttpResponse = {
     json: (data: any) => ({ json: () => Promise.resolve(data) }),
     text: (text: string) => ({ text: () => Promise.resolve(text) }),
-    error: () => ({ error: true })
+    error: () => ({ error: true }),
   };
 }
 
@@ -54,11 +54,7 @@ interface CrudOptions {
  * DRY handler generator for CRUD operations
  */
 const createCrudHandlers = (resource: string, factory: any, options: CrudOptions = {}): any[] => {
-  const {
-    basePath = `${API_BASE_URL}/${resource}`,
-    requireAuth = true,
-    delay = 0
-  } = options;
+  const { basePath = `${API_BASE_URL}/${resource}`, requireAuth = true, delay = 0 } = options;
 
   // In-memory data store for testing
   let dataStore: any[] = [];
@@ -67,7 +63,7 @@ const createCrudHandlers = (resource: string, factory: any, options: CrudOptions
   return [
     // GET /resource - List items
     http.get(basePath, async ({ request }) => {
-      if (delay) await new Promise(resolve => setTimeout(resolve, delay));
+      if (delay) await new Promise((resolve) => setTimeout(resolve, delay));
 
       const url = new URL(request.url);
       const page = parseInt(url.searchParams.get('page') || '1');
@@ -78,7 +74,7 @@ const createCrudHandlers = (resource: string, factory: any, options: CrudOptions
 
       // Simple search filtering
       if (search) {
-        filteredData = dataStore.filter(item =>
+        filteredData = dataStore.filter((item) =>
           JSON.stringify(item).toLowerCase().includes(search.toLowerCase())
         );
       }
@@ -94,17 +90,17 @@ const createCrudHandlers = (resource: string, factory: any, options: CrudOptions
           page,
           limit,
           total: filteredData.length,
-          totalPages: Math.ceil(filteredData.length / limit)
-        }
+          totalPages: Math.ceil(filteredData.length / limit),
+        },
       });
     }),
 
     // GET /resource/:id - Get single item
     http.get(`${basePath}/:id`, async ({ params }) => {
-      if (delay) await new Promise(resolve => setTimeout(resolve, delay));
+      if (delay) await new Promise((resolve) => setTimeout(resolve, delay));
 
       const id = params.id;
-      const item = dataStore.find(item => item.id == id);
+      const item = dataStore.find((item) => item.id == id);
 
       if (!item) {
         return HttpResponse.json(
@@ -118,9 +114,9 @@ const createCrudHandlers = (resource: string, factory: any, options: CrudOptions
 
     // POST /resource - Create item
     http.post(basePath, async ({ request }) => {
-      if (delay) await new Promise(resolve => setTimeout(resolve, delay));
+      if (delay) await new Promise((resolve) => setTimeout(resolve, delay));
 
-      const body = await request.json() as any;
+      const body = (await request.json()) as any;
       const newItem = factory({ ...body, id: nextId++ });
       dataStore.push(newItem);
 
@@ -129,11 +125,11 @@ const createCrudHandlers = (resource: string, factory: any, options: CrudOptions
 
     // PUT /resource/:id - Update item
     http.put(`${basePath}/:id`, async ({ params, request }) => {
-      if (delay) await new Promise(resolve => setTimeout(resolve, delay));
+      if (delay) await new Promise((resolve) => setTimeout(resolve, delay));
 
       const id = params.id;
-      const body = await request.json() as any;
-      const index = dataStore.findIndex(item => item.id == id);
+      const body = (await request.json()) as any;
+      const index = dataStore.findIndex((item) => item.id == id);
 
       if (index === -1) {
         return HttpResponse.json(
@@ -149,10 +145,10 @@ const createCrudHandlers = (resource: string, factory: any, options: CrudOptions
 
     // DELETE /resource/:id - Delete item
     http.delete(`${basePath}/:id`, async ({ params }) => {
-      if (delay) await new Promise(resolve => setTimeout(resolve, delay));
+      if (delay) await new Promise((resolve) => setTimeout(resolve, delay));
 
       const id = params.id;
-      const index = dataStore.findIndex(item => item.id == id);
+      const index = dataStore.findIndex((item) => item.id == id);
 
       if (index === -1) {
         return HttpResponse.json(
@@ -164,7 +160,7 @@ const createCrudHandlers = (resource: string, factory: any, options: CrudOptions
       dataStore.splice(index, 1);
 
       return HttpResponse.json({ success: true }, { status: 204 });
-    })
+    }),
   ];
 };
 
@@ -176,7 +172,7 @@ const mockCustomer = (overrides = {}) => ({
   status: 'active',
   plan: 'Fiber 100Mbps',
   monthly_cost: 79.99,
-  ...overrides
+  ...overrides,
 });
 
 const mockWorkOrder = (overrides = {}) => ({
@@ -186,7 +182,7 @@ const mockWorkOrder = (overrides = {}) => ({
   status: 'pending',
   priority: 'medium',
   scheduled_date: new Date().toISOString(),
-  ...overrides
+  ...overrides,
 });
 
 // Core API handlers
@@ -199,32 +195,32 @@ const coreHandlers = [
         name: 'Test Customer',
         status: 'active',
         plan: 'Fiber 1000Mbps',
-        monthly_cost: 89.99
+        monthly_cost: 89.99,
       },
       service: {
         status: 'online',
         connection_speed: '1000 Mbps',
-        uptime: 99.8
-      }
+        uptime: 99.8,
+      },
     });
   }),
 
   http.get('/api/v1/customer/billing', () => {
     return HttpResponse.json({
-      current_balance: 0.00,
+      current_balance: 0.0,
       next_amount: 89.99,
       payment_method: {
         type: 'card',
-        last_four: '4321'
-      }
+        last_four: '4321',
+      },
     });
   }),
 
-  // Admin portal APIs  
+  // Admin portal APIs
   http.get('/api/v1/admin/customers', () => {
     return HttpResponse.json({
       customers: [mockCustomer()],
-      total: 1
+      total: 1,
     });
   }),
 
@@ -232,7 +228,7 @@ const coreHandlers = [
   http.get('/api/v1/technician/work-orders', () => {
     return HttpResponse.json({
       work_orders: [mockWorkOrder()],
-      total: 1
+      total: 1,
     });
   }),
 
@@ -240,16 +236,16 @@ const coreHandlers = [
   http.post('/api/auth/validate', () => {
     return HttpResponse.json({
       valid: true,
-      user: { id: 'test-user', name: 'Test User' }
+      user: { id: 'test-user', name: 'Test User' },
     });
   }),
 
   http.post('/api/auth/refresh', () => {
     return HttpResponse.json({
       token: 'new-test-token',
-      expires_at: Date.now() + 24 * 60 * 60 * 1000
+      expires_at: Date.now() + 24 * 60 * 60 * 1000,
     });
-  })
+  }),
 ];
 
 // Create and configure the mock server

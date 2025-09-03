@@ -71,7 +71,7 @@ class IPAMService:
 
     def _utc_now(self) -> datetime:
         """Get current UTC datetime."""
-        return datetime.utcnow()
+        return datetime.now(timezone.utc)
 
     async def create_network(self, tenant_id: str, **kwargs) -> Dict[str, Any]:
         """Create IP network/subnet."""

@@ -1,6 +1,6 @@
 import React from 'react';
 import { themes } from '@storybook/theming';
-import '../apps/admin/src/app/globals.css';
+import '../isp-framework/admin/src/app/globals.css';
 
 // Import security provider for all stories
 import { SecurityProvider } from '@dotmac/security';

@@ -134,7 +134,7 @@ class TenantAdminProvisioningService:
                 "created_by": "management_platform",
                 "tenant_provisioning": True,
                 "initial_admin": True,
-                "created_at": datetime.utcnow().isoformat()
+                "created_at": datetime.now(timezone.utc).isoformat()
             }
         }
         

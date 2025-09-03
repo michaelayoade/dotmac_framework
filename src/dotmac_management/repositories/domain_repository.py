@@ -113,13 +113,13 @@ class DomainRepository(BaseRepository):
         days_ahead: int = 30
     ) -> List[Domain]:
         """Get domains expiring within specified days."""
-        cutoff_date = datetime.utcnow() + timedelta(days=days_ahead)
+        cutoff_date = datetime.now(timezone.utc) + timedelta(days=days_ahead)
         
         query = self.session.query(Domain).filter(
             and_(
                 Domain.expiration_date.isnot(None),
                 Domain.expiration_date <= cutoff_date,
-                Domain.expiration_date > datetime.utcnow(),
+                Domain.expiration_date > datetime.now(timezone.utc),
                 Domain.domain_status == DomainStatus.ACTIVE
             )
         )
@@ -155,7 +155,7 @@ class DomainRepository(BaseRepository):
                     setattr(domain, key, value)
             
             domain.updated_by = user_id
-            domain.updated_at = datetime.utcnow()
+            domain.updated_at = datetime.now(timezone.utc)
             
             await self.session.commit()
             await self.session.refresh(domain)
@@ -195,7 +195,7 @@ class DomainRepository(BaseRepository):
             # Soft delete by updating status
             domain.domain_status = DomainStatus.SUSPENDED
             domain.updated_by = user_id
-            domain.updated_at = datetime.utcnow()
+            domain.updated_at = datetime.now(timezone.utc)
             
             await self.session.commit()
             
@@ -298,7 +298,7 @@ class DomainRepository(BaseRepository):
                     setattr(dns_record, key, value)
             
             dns_record.updated_by = user_id
-            dns_record.updated_at = datetime.utcnow()
+            dns_record.updated_at = datetime.now(timezone.utc)
             dns_record.sync_status = "pending"  # Mark for re-sync
             
             await self.session.commit()
@@ -385,12 +385,12 @@ class DomainRepository(BaseRepository):
         days_ahead: int = 30
     ) -> List[SSLCertificate]:
         """Get SSL certificates expiring within specified days."""
-        cutoff_date = datetime.utcnow() + timedelta(days=days_ahead)
+        cutoff_date = datetime.now(timezone.utc) + timedelta(days=days_ahead)
         
         query = self.session.query(SSLCertificate).filter(
             and_(
                 SSLCertificate.expires_at <= cutoff_date,
-                SSLCertificate.expires_at > datetime.utcnow(),
+                SSLCertificate.expires_at > datetime.now(timezone.utc),
                 SSLCertificate.ssl_status == SSLStatus.ISSUED
             )
         )
@@ -441,7 +441,7 @@ class DomainRepository(BaseRepository):
                 DomainVerification.status == VerificationStatus.PENDING,
                 or_(
                     DomainVerification.next_check.is_(None),
-                    DomainVerification.next_check <= datetime.utcnow()
+                    DomainVerification.next_check <= datetime.now(timezone.utc)
                 )
             )
         )
@@ -473,15 +473,15 @@ class DomainRepository(BaseRepository):
         try:
             verification.status = status
             verification.attempts += 1
-            verification.last_check = datetime.utcnow()
+            verification.last_check = datetime.now(timezone.utc)
             
             if status == VerificationStatus.VERIFIED:
-                verification.verified_at = datetime.utcnow()
+                verification.verified_at = datetime.now(timezone.utc)
             elif status == VerificationStatus.FAILED:
                 verification.error_details = error_details
                 # Schedule next attempt (exponential backoff)
                 delay_minutes = min(5 * (2 ** verification.attempts), 60)  # Max 1 hour
-                verification.next_check = datetime.utcnow() + timedelta(minutes=delay_minutes)
+                verification.next_check = datetime.now(timezone.utc) + timedelta(minutes=delay_minutes)
             
             if verification_response:
                 verification.verification_response = verification_response
@@ -625,13 +625,13 @@ class DomainRepository(BaseRepository):
             ).group_by(SSLCertificate.ssl_status).all()
             
             # Expiring domains (next 30 days)
-            month_from_now = datetime.utcnow() + timedelta(days=30)
+            month_from_now = datetime.now(timezone.utc) + timedelta(days=30)
             expiring_domains = await self.session.query(Domain).filter(
                 and_(
                     Domain.tenant_id == tenant_id,
                     Domain.expiration_date.isnot(None),
                     Domain.expiration_date <= month_from_now,
-                    Domain.expiration_date > datetime.utcnow()
+                    Domain.expiration_date > datetime.now(timezone.utc)
                 )
             ).order_by(Domain.expiration_date.asc()).limit(10).all()
             
@@ -640,7 +640,7 @@ class DomainRepository(BaseRepository):
                 and_(
                     Domain.tenant_id == tenant_id,
                     SSLCertificate.expires_at <= month_from_now,
-                    SSLCertificate.expires_at > datetime.utcnow(),
+                    SSLCertificate.expires_at > datetime.now(timezone.utc),
                     SSLCertificate.ssl_status == SSLStatus.ISSUED
                 )
             ).order_by(SSLCertificate.expires_at.asc()).limit(10).all()
@@ -674,7 +674,7 @@ class DomainRepository(BaseRepository):
             expired_verifications = await self.session.query(DomainVerification).filter(
                 and_(
                     DomainVerification.expires_at.isnot(None),
-                    DomainVerification.expires_at < datetime.utcnow(),
+                    DomainVerification.expires_at < datetime.now(timezone.utc),
                     DomainVerification.status == VerificationStatus.PENDING
                 )
             ).all()

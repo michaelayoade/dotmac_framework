@@ -309,7 +309,7 @@ class LifecycleManager:
         # Emit before initialize event
         await self._emit_event(LifecycleEvent.BEFORE_INITIALIZE, plugin)
 
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         success = False
 
         try:
@@ -322,7 +322,7 @@ class LifecycleManager:
             await asyncio.wait_for(plugin.initialize(), timeout=timeout)
 
             success = True
-            duration = (datetime.utcnow() - start_time).total_seconds()
+            duration = (datetime.now(timezone.utc) - start_time).total_seconds()
 
             self._plugin_metrics[plugin_key].record_initialization(True, duration)
             self._logger.info(
@@ -335,7 +335,7 @@ class LifecycleManager:
             return True
 
         except asyncio.TimeoutError:
-            duration = (datetime.utcnow() - start_time).total_seconds()
+            duration = (datetime.now(timezone.utc) - start_time).total_seconds()
             self._plugin_metrics[plugin_key].record_initialization(False, duration)
             self._plugin_metrics[plugin_key].record_error("timeout")
 
@@ -345,7 +345,7 @@ class LifecycleManager:
             raise error
 
         except Exception as e:
-            duration = (datetime.utcnow() - start_time).total_seconds()
+            duration = (datetime.now(timezone.utc) - start_time).total_seconds()
             self._plugin_metrics[plugin_key].record_initialization(False, duration)
             self._plugin_metrics[plugin_key].record_error(type(e).__name__)
 
@@ -460,7 +460,7 @@ class LifecycleManager:
         # Emit before shutdown event
         await self._emit_event(LifecycleEvent.BEFORE_SHUTDOWN, plugin)
 
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
 
         try:
             # Check if already shut down
@@ -471,7 +471,7 @@ class LifecycleManager:
             # Shutdown with timeout
             await asyncio.wait_for(plugin.shutdown(), timeout=timeout)
 
-            duration = (datetime.utcnow() - start_time).total_seconds()
+            duration = (datetime.now(timezone.utc) - start_time).total_seconds()
             self._plugin_metrics[plugin_key].record_shutdown(True, duration)
             self._logger.info(
                 f"Plugin {plugin_key} shut down successfully in {duration:.2f}s"
@@ -483,7 +483,7 @@ class LifecycleManager:
             return True
 
         except asyncio.TimeoutError:
-            duration = (datetime.utcnow() - start_time).total_seconds()
+            duration = (datetime.now(timezone.utc) - start_time).total_seconds()
             self._plugin_metrics[plugin_key].record_shutdown(False, duration)
             self._plugin_metrics[plugin_key].record_error("shutdown_timeout")
 
@@ -493,7 +493,7 @@ class LifecycleManager:
             return False
 
         except Exception as e:
-            duration = (datetime.utcnow() - start_time).total_seconds()
+            duration = (datetime.now(timezone.utc) - start_time).total_seconds()
             self._plugin_metrics[plugin_key].record_shutdown(False, duration)
             self._plugin_metrics[plugin_key].record_error(type(e).__name__)
 
@@ -592,18 +592,18 @@ class LifecycleManager:
     async def _perform_plugin_health_check(self, plugin: BasePlugin) -> Dict[str, Any]:
         """Perform health check on a single plugin."""
         plugin_key = f"{plugin.domain}.{plugin.name}"
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
 
         try:
             health_data = await plugin.health_check()
 
-            duration = (datetime.utcnow() - start_time).total_seconds()
+            duration = (datetime.now(timezone.utc) - start_time).total_seconds()
             self._plugin_metrics[plugin_key].record_health_check(True, duration)
 
             return health_data
 
         except Exception as e:
-            duration = (datetime.utcnow() - start_time).total_seconds()
+            duration = (datetime.now(timezone.utc) - start_time).total_seconds()
             self._plugin_metrics[plugin_key].record_health_check(False, duration)
             self._plugin_metrics[plugin_key].record_error("health_check_failure")
 

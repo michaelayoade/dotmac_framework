@@ -1,3 +1,44 @@
 {
-  "packageManager": "pnpm@10.14.0+sha512.ad27a79641b49c3e481a16a805baa71817a04bbe06a38d17e60e2eaee83f6a146c6a688125f5792e48dd5ba30e7da52a5cda4c3992b9ccf333f9ce223af84748"
+  "name": "dotmac-framework",
+  "version": "1.0.0",
+  "description": "DotMac Multi-App SaaS Platform",
+  "main": "index.js",
+  "packageManager": "pnpm@10.14.0+sha512.ad27a79641b49c3e481a16a805baa71817a04bbe06a38d17e60e2eaee83f6a146c6a688125f5792e48dd5ba30e7da52a5cda4c3992b9ccf333f9ce223af84748",
+  "scripts": {
+    "test": "playwright test",
+    "test:dev4": "playwright test -c playwright-dev4.config.ts",
+    "test:dev4:smoke": "playwright test -c playwright-dev4.config.ts --grep '@smoke'",
+    "test:integration": "npm run test:dev4",
+    "test:communication": "playwright test tests/e2e/management-tenant-communication.spec.ts -c playwright-dev4.config.ts",
+    "test:plugins": "playwright test tests/e2e/plugin-based-integrations.spec.ts -c playwright-dev4.config.ts", 
+    "test:realtime": "playwright test tests/e2e/realtime-systems.spec.ts -c playwright-dev4.config.ts",
+    "test:ci": "playwright test -c playwright-dev4.config.ts --reporter=html,junit",
+    "mock:tenant": "node tests/mock-servers/tenant-mock.js",
+    "setup:test-env": "node -e \"require('./tests/config/global-setup.ts').default()\"",
+    "cleanup:test-env": "node -e \"require('./tests/config/global-teardown.ts').default()\"",
+    "validate:e2e": "npm run test:dev4:smoke && npm run test:integration"
+  },
+  "keywords": [
+    "saas",
+    "multi-app",
+    "isp",
+    "management",
+    "e2e-testing"
+  ],
+  "author": "DotMac Development Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "express": "^4.18.0",
+    "ws": "^8.14.0"
+  },
+  "dependencies": {
+    "dotenv": "^16.0.0"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  }
 }

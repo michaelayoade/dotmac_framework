@@ -258,14 +258,14 @@ class ISPComplianceAdapter:
         # For demo, return simulated data
         
         if not period_start:
-            period_start = datetime.utcnow() - timedelta(days=30)
+            period_start = datetime.now(timezone.utc) - timedelta(days=30)
         if not period_end:
-            period_end = datetime.utcnow()
+            period_end = datetime.now(timezone.utc)
         
         # Simulate access log
         access_log = [
             {
-                "timestamp": (datetime.utcnow() - timedelta(hours=i)).isoformat(),
+                "timestamp": (datetime.now(timezone.utc) - timedelta(hours=i)).isoformat(),
                 "event_type": "data_access",
                 "resource": f"customer_{customer_id}",
                 "user": f"user_{i % 3 + 1}",
@@ -299,7 +299,7 @@ class ISPComplianceAdapter:
             "framework": "PCI_DSS",
             "checks": results,
             "overall_status": "compliant" if all(r["status"] == "compliant" for r in results) else "non_compliant",
-            "checked_at": datetime.utcnow().isoformat(),
+            "checked_at": datetime.now(timezone.utc).isoformat(),
         }
     
     @standard_exception_handler
@@ -352,14 +352,14 @@ class ISPComplianceAdapter:
                 "compliance_service": compliance_health.status.value,
                 "cache_service": "available" if self.cache_service else "unavailable",
                 "event_bus": "available" if self.event_bus else "unavailable",
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
             
         except Exception as e:
             return {
                 "adapter": "unhealthy",
                 "error": str(e),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
 

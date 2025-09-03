@@ -30,7 +30,7 @@ def test_event_data() -> Dict[str, Any]:
         "email": "test@example.com",
         "name": "Test User",
         "action": "create",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 
 

@@ -10,11 +10,7 @@ This guide will get you up to speed with our advanced error handling system that
 
 ```typescript
 // Essential imports for error handling
-import { 
-  EnhancedISPError, 
-  EnhancedErrorFactory, 
-  ErrorCode 
-} from '../utils/enhancedErrorHandling';
+import { EnhancedISPError, EnhancedErrorFactory, ErrorCode } from '../utils/enhancedErrorHandling';
 
 import { useEnhancedErrorHandler } from '../hooks/useEnhancedErrorHandler';
 import { EnhancedErrorDisplay } from '../components/ErrorDisplaySystem';
@@ -30,7 +26,7 @@ throw new Error('Something went wrong');
 throw EnhancedErrorFactory.customerNotFound('cust_12345', {
   operation: 'fetch_customer_profile',
   businessProcess: 'customer_management',
-  customerImpact: 'medium'
+  customerImpact: 'medium',
 });
 ```
 
@@ -82,7 +78,7 @@ catch (error) {
   throw new Error('Failed'); // No business context
 }
 
-// 2. Poor User Experience  
+// 2. Poor User Experience
 <div className="error">Something went wrong</div> // Not helpful!
 
 // 3. Hard to Debug
@@ -116,7 +112,7 @@ throw new EnhancedISPError({
 });
 
 // 2. Superior User Experience
-<EnhancedErrorDisplay 
+<EnhancedErrorDisplay
   error={error}
   onRetry={handleRetry}
   onContactSupport={() => openSupportTicket(error)}
@@ -126,7 +122,7 @@ throw new EnhancedISPError({
 // 3. Comprehensive Debugging
 {
   errorId: "err_1234567890",
-  code: "CUST_004", 
+  code: "CUST_004",
   operation: "activate_internet_service",
   correlationId: "req_abc123",
   customerImpact: "high",
@@ -136,7 +132,7 @@ throw new EnhancedISPError({
 // 4. Clear Recovery Path
 userActions: [
   "Pay outstanding balance of $299.99",
-  "Set up automatic payments to avoid future issues", 
+  "Set up automatic payments to avoid future issues",
   "Contact billing at 1-800-ISP-BILL for payment arrangements"
 ]
 ```
@@ -147,13 +143,13 @@ userActions: [
 
 ```typescript
 // ❌ Generic HTTP Status
-response.status === 404 // Which resource? Why not found?
-response.status === 422 // Which validation failed?
+response.status === 404; // Which resource? Why not found?
+response.status === 422; // Which validation failed?
 
-// ✅ Specific Error Codes  
-ErrorCode.CUSTOMER_NOT_FOUND        // Clear: customer doesn't exist
-ErrorCode.BILLING_PAYMENT_FAILED    // Clear: payment processing issue
-ErrorCode.NETWORK_DEVICE_UNREACHABLE // Clear: network device problem
+// ✅ Specific Error Codes
+ErrorCode.CUSTOMER_NOT_FOUND; // Clear: customer doesn't exist
+ErrorCode.BILLING_PAYMENT_FAILED; // Clear: payment processing issue
+ErrorCode.NETWORK_DEVICE_UNREACHABLE; // Clear: network device problem
 ```
 
 ### 2. Business Context in Every Error
@@ -161,7 +157,7 @@ ErrorCode.NETWORK_DEVICE_UNREACHABLE // Clear: network device problem
 ```typescript
 interface ErrorContext {
   operation: string;          // What were we trying to do?
-  resource?: string;          // What were we working with?  
+  resource?: string;          // What were we working with?
   resourceId?: string;        // Which specific item?
   businessProcess?: string;   // What business function?
   customerImpact?: string;    // How does this affect customers?
@@ -171,7 +167,7 @@ interface ErrorContext {
 // Example: Rich context for customer service suspension
 {
   operation: 'activate_premium_features',
-  resource: 'customer_service', 
+  resource: 'customer_service',
   resourceId: 'svc_premium_123',
   businessProcess: 'service_upgrade',
   customerImpact: 'high',
@@ -213,15 +209,15 @@ interface ErrorContext {
 // Standard API error handling pattern
 async function fetchCustomerData(customerId: string) {
   const { handleApiError } = useEnhancedErrorHandler();
-  
+
   try {
     const response = await fetch(`/api/customers/${customerId}`);
-    
+
     if (!response.ok) {
       // Let enhanced error handler parse the API error
       throw await response.json();
     }
-    
+
     return await response.json();
   } catch (error) {
     // Enhanced error handler adds business context
@@ -242,20 +238,20 @@ function validateCustomerForm(formData: CustomerForm) {
       context: {
         operation: 'validate_customer_form',
         resource: 'customer_form',
-        businessProcess: 'customer_registration', 
+        businessProcess: 'customer_registration',
         customerImpact: 'low',
         metadata: {
           field: 'email',
-          formStep: 'contact_information'
-        }
+          formStep: 'contact_information',
+        },
       },
       userActions: [
         'Please enter your email address',
-        'Email is required for service notifications and billing updates'
-      ]
+        'Email is required for service notifications and billing updates',
+      ],
     });
   }
-  
+
   if (!isValidEmail(formData.email)) {
     throw new EnhancedISPError({
       code: ErrorCode.VALIDATION_INVALID_FORMAT,
@@ -267,13 +263,13 @@ function validateCustomerForm(formData: CustomerForm) {
         customerImpact: 'low',
         metadata: {
           field: 'email',
-          providedValue: formData.email
-        }
+          providedValue: formData.email,
+        },
       },
       userActions: [
         'Please enter a valid email address (example@domain.com)',
-        'Check for typos in your email address'
-      ]
+        'Check for typos in your email address',
+      ],
     });
   }
 }
@@ -285,7 +281,7 @@ function validateCustomerForm(formData: CustomerForm) {
 // Business logic errors with domain context
 function processServiceUpgrade(customerId: string, newPlan: ServicePlan) {
   const customer = getCustomer(customerId);
-  
+
   // Check payment status
   if (customer.paymentStatus === 'overdue') {
     throw new EnhancedISPError({
@@ -301,18 +297,18 @@ function processServiceUpgrade(customerId: string, newPlan: ServicePlan) {
           currentPlan: customer.currentPlan,
           requestedPlan: newPlan.name,
           outstandingBalance: customer.outstandingBalance,
-          daysPastDue: customer.daysPastDue
-        }
+          daysPastDue: customer.daysPastDue,
+        },
       },
       userActions: [
         `Pay outstanding balance of $${customer.outstandingBalance}`,
         'Set up automatic payments to avoid future issues',
-        'Contact billing for payment arrangement options'
+        'Contact billing for payment arrangement options',
       ],
-      escalationRequired: customer.outstandingBalance > 500 // Escalate high balances
+      escalationRequired: customer.outstandingBalance > 500, // Escalate high balances
     });
   }
-  
+
   // Check service availability
   if (!newPlan.availableInLocation(customer.serviceAddress)) {
     throw new EnhancedISPError({
@@ -327,15 +323,15 @@ function processServiceUpgrade(customerId: string, newPlan: ServicePlan) {
         metadata: {
           customerLocation: customer.serviceAddress,
           requestedPlan: newPlan.name,
-          availablePlans: getAvailablePlans(customer.serviceAddress)
-        }
+          availablePlans: getAvailablePlans(customer.serviceAddress),
+        },
       },
       userActions: [
         'Choose from available service plans for your location',
         'Contact sales to discuss expansion plans for your area',
-        'Consider alternative service options'
+        'Consider alternative service options',
       ],
-      workaround: 'Fiber service may become available in your area within 6 months'
+      workaround: 'Fiber service may become available in your area within 6 months',
     });
   }
 }
@@ -349,13 +345,13 @@ function processServiceUpgrade(customerId: string, newPlan: ServicePlan) {
 // Bad: Generic error code
 throw new EnhancedISPError({
   code: ErrorCode.UNKNOWN_ERROR, // Not helpful!
-  message: 'Customer operation failed'
+  message: 'Customer operation failed',
 });
 
 // Good: Specific error code
 throw new EnhancedISPError({
   code: ErrorCode.CUSTOMER_NOT_FOUND, // Clear and specific
-  message: 'Customer with ID cust_12345 not found'
+  message: 'Customer with ID cust_12345 not found',
 });
 ```
 
@@ -367,11 +363,11 @@ throw new EnhancedISPError({
   code: ErrorCode.VALIDATION_REQUIRED_FIELD,
   message: 'Field is required',
   context: {
-    operation: 'unknown' // Not helpful for debugging
-  }
+    operation: 'unknown', // Not helpful for debugging
+  },
 });
 
-// Good: Rich business context  
+// Good: Rich business context
 throw new EnhancedISPError({
   code: ErrorCode.VALIDATION_REQUIRED_FIELD,
   message: 'Customer phone number is required',
@@ -384,9 +380,9 @@ throw new EnhancedISPError({
     metadata: {
       field: 'phoneNumber',
       formSection: 'contact_info',
-      completionPercentage: 75
-    }
-  }
+      completionPercentage: 75,
+    },
+  },
 });
 ```
 
@@ -397,7 +393,7 @@ throw new EnhancedISPError({
 throw new EnhancedISPError({
   code: ErrorCode.BILLING_PAYMENT_FAILED,
   message: 'Payment failed',
-  userActions: [] // Not helpful!
+  userActions: [], // Not helpful!
 });
 
 // Good: Clear recovery steps
@@ -409,9 +405,9 @@ throw new EnhancedISPError({
     'Check that your card has sufficient available credit',
     'Contact your bank to ensure no restrictions are placed',
     'Try using a different payment method',
-    'Call our billing department at 1-800-ISP-BILL for assistance'
+    'Call our billing department at 1-800-ISP-BILL for assistance',
   ],
-  workaround: 'You can make a payment over the phone to avoid any service interruption'
+  workaround: 'You can make a payment over the phone to avoid any service interruption',
 });
 ```
 
@@ -422,21 +418,21 @@ throw new EnhancedISPError({
 throw new EnhancedISPError({
   code: ErrorCode.BILLING_PAYMENT_FAILED,
   context: {
-    customerImpact: 'low' // Wrong! Payment failures are high impact
-  }
+    customerImpact: 'low', // Wrong! Payment failures are high impact
+  },
 });
 
 // Good: Accurate impact assessment
 throw new EnhancedISPError({
   code: ErrorCode.BILLING_PAYMENT_FAILED,
   context: {
-    customerImpact: 'high' // Correct! Affects customer service
-  }
+    customerImpact: 'high', // Correct! Affects customer service
+  },
 });
 
 // Impact Guidelines:
 // - Critical: System outages, data loss, security breaches
-// - High: Service unavailable, payment failures, account access issues  
+// - High: Service unavailable, payment failures, account access issues
 // - Medium: Feature degradation, slow performance
 // - Low: Minor UI issues, optional feature failures
 // - None: Internal operations, logging
@@ -447,22 +443,24 @@ throw new EnhancedISPError({
 ### Day 1: Understanding the System
 
 #### Task 1: Explore Error Codes (30 minutes)
+
 ```typescript
 // Open: src/utils/enhancedErrorHandling.ts
 // Review all error codes and understand the naming convention
 
 // Exercise: Match these scenarios to error codes
 const scenarios = [
-  'Customer tries to log in with wrong password',        // AUTH_002
-  'Payment processor declines credit card',              // BILL_001  
-  'Network router is not responding to ping',           // NET_DEV_001
-  'User tries to access admin-only feature',            // AUTHZ_001
-  'Required form field is left empty',                  // VAL_001
-  'Customer account has been suspended for non-payment' // CUST_003
+  'Customer tries to log in with wrong password', // AUTH_002
+  'Payment processor declines credit card', // BILL_001
+  'Network router is not responding to ping', // NET_DEV_001
+  'User tries to access admin-only feature', // AUTHZ_001
+  'Required form field is left empty', // VAL_001
+  'Customer account has been suspended for non-payment', // CUST_003
 ];
 ```
 
-#### Task 2: Understand Error Context (30 minutes)  
+#### Task 2: Understand Error Context (30 minutes)
+
 ```typescript
 // Exercise: Add appropriate context to this basic error
 throw new Error('Database connection failed');
@@ -476,6 +474,7 @@ throw new Error('Database connection failed');
 ```
 
 #### Task 3: Review Error Display Components (30 minutes)
+
 ```typescript
 // Open: src/components/ErrorDisplaySystem.tsx
 // Understand how errors are presented to users
@@ -490,9 +489,10 @@ const mockError = EnhancedErrorFactory.customerNotFound('cust_123', {
 <EnhancedErrorDisplay error={mockError} />
 ```
 
-### Day 2: Hands-On Practice  
+### Day 2: Hands-On Practice
 
 #### Task 4: Convert Basic Error Handling (60 minutes)
+
 ```typescript
 // Find a component with basic error handling and enhance it
 
@@ -528,7 +528,7 @@ try {
 return (
   <div>
     {errorState.error && (
-      <EnhancedErrorDisplay 
+      <EnhancedErrorDisplay
         error={errorState.error}
         onRetry={() => refetchCustomer()}
       />
@@ -539,15 +539,15 @@ return (
 ```
 
 #### Task 5: Add Business Logic Error Handling (60 minutes)
+
 ```typescript
 // Create a business logic function with proper error handling
 function validateServiceEligibility(customer: Customer, service: Service) {
   // Add error handling for these scenarios:
   // 1. Customer account is suspended
-  // 2. Service not available in customer location  
+  // 2. Service not available in customer location
   // 3. Customer doesn't meet service requirements
   // 4. Service dependencies missing
-  
   // Use appropriate error codes and rich business context
 }
 ```
@@ -555,6 +555,7 @@ function validateServiceEligibility(customer: Customer, service: Service) {
 ### Day 3: Advanced Features
 
 #### Task 6: Error Logging and Metrics (45 minutes)
+
 ```typescript
 // Configure error logging for your component
 import { configureErrorLogging } from '../services/ErrorLoggingService';
@@ -565,14 +566,15 @@ configureErrorLogging({
   enableMetrics: true,
   endpoints: {
     logs: '/api/errors',
-    metrics: '/api/metrics'
-  }
+    metrics: '/api/metrics',
+  },
 });
 
 // Errors are now automatically logged with full context
 ```
 
 #### Task 7: Custom Error Factory (45 minutes)
+
 ```typescript
 // Create domain-specific error factories
 const OrderManagementErrors = {
@@ -585,58 +587,59 @@ const OrderManagementErrors = {
         resource: 'order',
         resourceId: orderId,
         businessProcess: 'order_management',
-        customerImpact: 'medium'
-      }
+        customerImpact: 'medium',
+      },
     }),
-    
+
   orderAlreadyProcessed: (orderId: string) =>
     new EnhancedISPError({
       code: ErrorCode.VALIDATION_BUSINESS_RULE,
       message: `Order ${orderId} has already been processed`,
       context: {
         operation: 'process_order',
-        resource: 'order', 
+        resource: 'order',
         resourceId: orderId,
         businessProcess: 'order_processing',
-        customerImpact: 'low'
+        customerImpact: 'low',
       },
       userActions: [
         'Check the order status in your account',
-        'Contact customer service if you believe this is an error'
-      ]
-    })
+        'Contact customer service if you believe this is an error',
+      ],
+    }),
 };
 ```
 
 ### Day 4: Testing and Debugging
 
 #### Task 8: Error Testing (60 minutes)
+
 ```typescript
 // Write tests for your enhanced error handling
 describe('Enhanced Error Handling', () => {
   it('should create customer not found error with context', () => {
     const error = EnhancedErrorFactory.customerNotFound('cust_123', {
       operation: 'fetch_customer_profile',
-      businessProcess: 'customer_management'
+      businessProcess: 'customer_management',
     });
-    
+
     expect(error.errorCode).toBe(ErrorCode.CUSTOMER_NOT_FOUND);
     expect(error.enhancedContext.operation).toBe('fetch_customer_profile');
     expect(error.enhancedContext.businessProcess).toBe('customer_management');
     expect(error.userActions).toContain('Verify the customer ID is correct');
   });
-  
+
   it('should handle API errors with business context', () => {
     const { handleApiError } = useEnhancedErrorHandler();
-    
-    const apiError = { 
-      status: 404, 
+
+    const apiError = {
+      status: 404,
       message: 'Not Found',
-      config: { url: '/api/customers/123' }
+      config: { url: '/api/customers/123' },
     };
-    
+
     const enhanced = handleApiError(apiError, 'fetch_customer', 'customer');
-    
+
     expect(enhanced.errorCode).toBe(ErrorCode.CUSTOMER_NOT_FOUND);
     expect(enhanced.enhancedContext.operation).toBe('api_fetch_customer');
   });
@@ -644,23 +647,24 @@ describe('Enhanced Error Handling', () => {
 ```
 
 #### Task 9: Error Monitoring Dashboard (30 minutes)
+
 ```typescript
 // Create a simple error monitoring view
 function ErrorDashboard() {
   const [metrics, setMetrics] = useState(null);
-  
+
   useEffect(() => {
     const errorMetrics = errorLogger.getMetrics();
     setMetrics(errorMetrics);
   }, []);
-  
+
   return (
     <div>
       <h2>Error Metrics</h2>
       <p>Total Errors: {metrics?.errorCount}</p>
       <p>Error Rate: {metrics?.errorRate}/min</p>
       <p>Critical Errors: {metrics?.criticalErrorCount}</p>
-      
+
       <h3>Top Error Codes</h3>
       {metrics?.topErrorCodes?.map(({ code, count }) => (
         <div key={code}>{code}: {count}</div>
@@ -673,6 +677,7 @@ function ErrorDashboard() {
 ### Day 5: Production Readiness
 
 #### Task 10: Error Recovery Strategies (45 minutes)
+
 ```typescript
 // Implement comprehensive error recovery
 function CustomerProfile({ customerId }: { customerId: string }) {
@@ -684,7 +689,7 @@ function CustomerProfile({ customerId }: { customerId: string }) {
       await fetchCustomerProfile(customerId);
     }
   });
-  
+
   const handleContactSupport = () => {
     // Open support ticket with error context
     openSupportTicket({
@@ -693,7 +698,7 @@ function CustomerProfile({ customerId }: { customerId: string }) {
       priority: errorState.error?.customerImpact === 'high' ? 'urgent' : 'normal'
     });
   };
-  
+
   return (
     <div>
       {errorState.error && (
@@ -705,7 +710,7 @@ function CustomerProfile({ customerId }: { customerId: string }) {
           showTechnicalDetails={process.env.NODE_ENV === 'development'}
         />
       )}
-      
+
       {/* Component content */}
     </div>
   );
@@ -713,6 +718,7 @@ function CustomerProfile({ customerId }: { customerId: string }) {
 ```
 
 #### Task 11: Performance Optimization (30 minutes)
+
 ```typescript
 // Optimize error handling performance
 const errorHandlerConfig = {
@@ -721,8 +727,8 @@ const errorHandlerConfig = {
   // Debounce error logging to avoid spam
   context: {
     component: 'CustomerProfile',
-    version: process.env.REACT_APP_VERSION
-  }
+    version: process.env.REACT_APP_VERSION,
+  },
 };
 
 // Use memoized error handler to avoid recreating
@@ -750,18 +756,22 @@ After completing this onboarding, you should be able to:
 ## Getting Help
 
 ### Resources
+
 - **Error Handling Guide**: `/docs/ERROR_HANDLING_GUIDE.md`
 - **Business Rules Catalog**: `/docs/BUSINESS_RULES_CATALOG.md`
 - **Code Examples**: `/src/utils/errorMigrationGuide.ts`
 
 ### Support Channels
+
 - **Slack**: #error-handling-help
-- **Team Lead**: Schedule pairing session for complex scenarios  
+- **Team Lead**: Schedule pairing session for complex scenarios
 - **Documentation**: All error codes documented with examples
 - **Error Dashboard**: Monitor real-time error metrics in production
 
 ### Next Steps
+
 Once you've completed this onboarding:
+
 1. **Shadow experienced developers** on error-related incidents
 2. **Contribute to error code definitions** for new business scenarios
 3. **Improve error messages** based on user feedback

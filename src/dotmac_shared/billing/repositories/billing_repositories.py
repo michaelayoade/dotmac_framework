@@ -478,7 +478,7 @@ class UsageRepository(BaseBillingRepository[UsageRecord, UsageRecordCreate, None
         count = 0
         for usage_record in usage_records:
             usage_record.processed = True
-            usage_record.processed_date = datetime.utcnow()
+            usage_record.processed_date = datetime.now(timezone.utc)
             count += 1
 
         await self.db.commit()

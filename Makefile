@@ -512,3 +512,18 @@ check-setup:
 .PHONY: full-check
 full-check: lint-all test-all security-all health-check
 	@echo "$(GREEN)✅ Full quality check completed$(NC)"
+# --- Tenant Data Isolation (RLS) ---
+.PHONY: setup-rls
+setup-rls:
+	@if [ -z "$(DATABASE_URL)$(ASYNC_DATABASE_URL)" ]; then \
+		echo "ERROR: Set DATABASE_URL or ASYNC_DATABASE_URL before running setup-rls"; \
+		exit 1; \
+	fi
+	@echo "Applying RLS policies to tenant-aware tables..."
+	@python3 scripts/setup_rls.py
+	@echo "RLS setup finished."
+
+# --- Smoke Test ---
+.PHONY: smoke
+smoke:
+	@bash scripts/smoke_test.sh

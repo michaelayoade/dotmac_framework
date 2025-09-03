@@ -179,7 +179,7 @@ async def list_license_contracts(
         query = query.filter(LicenseContract.contract_type == contract_type)
     
     if expiring_in_days:
-        expiry_threshold = datetime.utcnow() + timedelta(days=expiring_in_days)
+        expiry_threshold = datetime.now(timezone.utc) + timedelta(days=expiring_in_days)
         query = query.filter(LicenseContract.valid_until <= expiry_threshold)
     
     # Get paginated results
@@ -260,7 +260,7 @@ async def update_license_contract(
     for field, value in update_fields.items():
         setattr(contract, field, value)
     
-    contract.updated_at = datetime.utcnow()
+    contract.updated_at = datetime.now(timezone.utc)
     
     try:
         db.commit()
@@ -306,7 +306,7 @@ async def suspend_license_contract(
         raise HTTPException(status_code=404, detail="License contract not found")
     
     contract.status = LicenseStatus.SUSPENDED
-    contract.updated_at = datetime.utcnow()
+    contract.updated_at = datetime.now(timezone.utc)
     
     try:
         db.commit()
@@ -339,7 +339,7 @@ async def reactivate_license_contract(
     
     contract.status = LicenseStatus.ACTIVE
     contract.violation_count = 0  # Reset violation count on reactivation
-    contract.updated_at = datetime.utcnow()
+    contract.updated_at = datetime.now(timezone.utc)
     
     try:
         db.commit()

@@ -526,8 +526,8 @@ class SecretsConfigE2E:
                     "user_id": user_id,
                     "tenant_id": self.test_tenant_id,
                     "type": token_type,
-                    "issued_at": datetime.utcnow().isoformat(),
-                    "expires_at": (datetime.utcnow() + timedelta(hours=24)).isoformat()
+                    "issued_at": datetime.now(timezone.utc).isoformat(),
+                    "expires_at": (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat()
                 }
                 
                 # Generate token using JWT service
@@ -602,7 +602,7 @@ class SecretsConfigE2E:
                 "old_secret": old_secret,
                 "new_secret": new_secret,
                 "transition_period": 300,  # 5 minutes
-                "started_at": datetime.utcnow().isoformat()
+                "started_at": datetime.now(timezone.utc).isoformat()
             }
             
             # Mock rotation initiation
@@ -680,7 +680,7 @@ class SecretsConfigE2E:
             return {
                 "success": True,
                 "old_secret_invalidated": True,
-                "completed_at": datetime.utcnow().isoformat(),
+                "completed_at": datetime.now(timezone.utc).isoformat(),
                 "duration": time.time() - start_time
             }
 
@@ -728,8 +728,8 @@ class SecretsConfigE2E:
                     "session_id": str(uuid4()),
                     "user_id": str(uuid4()),
                     "tenant_id": self.test_tenant_id,
-                    "created_at": datetime.utcnow().isoformat(),
-                    "expires_at": (datetime.utcnow() + timedelta(hours=8)).isoformat()
+                    "created_at": datetime.now(timezone.utc).isoformat(),
+                    "expires_at": (datetime.now(timezone.utc) + timedelta(hours=8)).isoformat()
                 }
                 
                 # Sign session data (mock implementation)
@@ -823,7 +823,7 @@ class SecretsConfigE2E:
             return {
                 "success": True,
                 "old_secret_invalidated": True,
-                "completed_at": datetime.utcnow().isoformat(),
+                "completed_at": datetime.now(timezone.utc).isoformat(),
                 "duration": time.time() - start_time
             }
 
@@ -1013,7 +1013,7 @@ class SecretsConfigE2E:
             return {
                 "success": True,
                 "deployment_id": deployment_id,
-                "deployed_at": datetime.utcnow().isoformat(),
+                "deployed_at": datetime.now(timezone.utc).isoformat(),
                 "config_size": len(json.dumps(config)),
                 "duration": time.time() - start_time
             }
@@ -1065,7 +1065,7 @@ class SecretsConfigE2E:
                 "snapshot_id": snapshot_id,
                 "config_items": baseline_config,
                 "checksum": checksum,
-                "created_at": datetime.utcnow().isoformat(),
+                "created_at": datetime.now(timezone.utc).isoformat(),
                 "duration": time.time() - start_time
             }
 
@@ -1241,7 +1241,7 @@ class SecretsConfigE2E:
             
             return {
                 "report_id": str(uuid4()),
-                "generated_at": datetime.utcnow().isoformat(),
+                "generated_at": datetime.now(timezone.utc).isoformat(),
                 "severity": severity,
                 "categories": categories,
                 "recommendations": recommendations,
@@ -1321,7 +1321,7 @@ class SecretsConfigE2E:
                 "auto_fixable_count": auto_fixable_count,
                 "manual_required_count": manual_required_count,
                 "total_steps": len(remediation_steps),
-                "generated_at": datetime.utcnow().isoformat(),
+                "generated_at": datetime.now(timezone.utc).isoformat(),
                 "duration": time.time() - start_time
             }
 

@@ -104,7 +104,7 @@ class NetworkHealthMonitor:
     @standard_exception_handler
     async def check_endpoint_health(self, endpoint: NetworkEndpoint) -> HealthCheckResult:
         """Perform health check on a single endpoint."""
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         
         try:
             # Import here to avoid circular imports
@@ -117,7 +117,7 @@ class NetworkHealthMonitor:
             
             try:
                 result = sock.connect_ex((endpoint.host, endpoint.port))
-                response_time = (datetime.utcnow() - start_time).total_seconds()
+                response_time = (datetime.now(timezone.utc) - start_time).total_seconds()
                 
                 if result == 0:
                     if response_time <= endpoint.expected_response_time:
@@ -139,7 +139,7 @@ class NetworkHealthMonitor:
             message = f"Endpoint {endpoint.name} connection timed out"
             
         except Exception as e:
-            response_time = (datetime.utcnow() - start_time).total_seconds()
+            response_time = (datetime.now(timezone.utc) - start_time).total_seconds()
             status = NetworkHealthStatus.OFFLINE
             message = f"Endpoint {endpoint.name} check failed: {str(e)}"
 
@@ -206,7 +206,7 @@ class NetworkHealthMonitor:
                 "critical_count": 0,
                 "offline_count": 0,
                 "average_response_time": 0.0,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
         # Calculate statistics
@@ -240,7 +240,7 @@ class NetworkHealthMonitor:
             "critical_count": status_counts[NetworkHealthStatus.CRITICAL],
             "offline_count": status_counts[NetworkHealthStatus.OFFLINE],
             "average_response_time": total_response_time / len(results) if results else 0.0,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "details": [
                 {
                     "endpoint_id": str(result.endpoint_id),
@@ -262,7 +262,7 @@ class NetworkHealthMonitor:
             raise ServiceError(f"No health history found for endpoint {endpoint_id}")
 
         # Filter results from last N hours
-        cutoff_time = datetime.utcnow() - timedelta(hours=hours)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
         recent_results = [
             result for result in self.health_history[endpoint_id]
             if result.timestamp >= cutoff_time
@@ -360,7 +360,7 @@ class ServiceHealthChecker:
         self, connection_string: str, timeout: int = 5
     ) -> Dict[str, Any]:
         """Check database connectivity and performance."""
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         
         try:
             # Import database client
@@ -377,7 +377,7 @@ class ServiceHealthChecker:
             # Test connection and basic query
             with engine.connect() as conn:
                 result = conn.execute(text("SELECT 1"))
-                response_time = (datetime.utcnow() - start_time).total_seconds()
+                response_time = (datetime.now(timezone.utc) - start_time).total_seconds()
                 
                 return {
                     "status": NetworkHealthStatus.HEALTHY,
@@ -391,7 +391,7 @@ class ServiceHealthChecker:
                 }
                 
         except SQLAlchemyError as e:
-            response_time = (datetime.utcnow() - start_time).total_seconds()
+            response_time = (datetime.now(timezone.utc) - start_time).total_seconds()
             return {
                 "status": NetworkHealthStatus.CRITICAL,
                 "response_time": response_time,
@@ -403,7 +403,7 @@ class ServiceHealthChecker:
                 }
             }
         except Exception as e:
-            response_time = (datetime.utcnow() - start_time).total_seconds()
+            response_time = (datetime.now(timezone.utc) - start_time).total_seconds()
             return {
                 "status": NetworkHealthStatus.OFFLINE,
                 "response_time": response_time,
@@ -419,7 +419,7 @@ class ServiceHealthChecker:
         self, redis_url: str, timeout: int = 5
     ) -> Dict[str, Any]:
         """Check Redis connectivity and performance."""
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         
         try:
             import redis.asyncio as redis
@@ -429,7 +429,7 @@ class ServiceHealthChecker:
             
             # Test ping
             await client.ping()
-            response_time = (datetime.utcnow() - start_time).total_seconds()
+            response_time = (datetime.now(timezone.utc) - start_time).total_seconds()
             
             # Get basic info
             info = await client.info()
@@ -449,7 +449,7 @@ class ServiceHealthChecker:
             }
             
         except Exception as e:
-            response_time = (datetime.utcnow() - start_time).total_seconds()
+            response_time = (datetime.now(timezone.utc) - start_time).total_seconds()
             return {
                 "status": NetworkHealthStatus.CRITICAL,
                 "response_time": response_time,
@@ -501,6 +501,6 @@ class ServiceHealthChecker:
                 "details": {
                     "container_id": container_id,
                     "error": str(e),
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                 }
             }

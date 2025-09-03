@@ -74,7 +74,7 @@ class SNMPClient:
         "hrStorageSize": "1.3.6.1.2.1.25.2.3.1.5",
     }
 
-    def __init__(self, config: SNMPConfig):
+    def __init__(self, config: SNMPConfig, timezone):
         """Initialize SNMP client with configuration."""
         self.config = config
         self._validate_config()
@@ -363,7 +363,7 @@ class SNMPCollector:
             ) * 1000  # Convert to milliseconds
 
             metrics = {
-                "collection_timestamp": datetime.utcnow(),
+                "collection_timestamp": datetime.now(timezone.utc),
                 "collection_duration_ms": collection_duration,
                 "collection_status": "success",
                 "device_host": self.client.config.host,
@@ -389,7 +389,7 @@ class SNMPCollector:
 
         except Exception as e:
             return {
-                "collection_timestamp": datetime.utcnow(),
+                "collection_timestamp": datetime.now(timezone.utc),
                 "collection_duration_ms": (time.time() - start_time) * 1000,
                 "collection_status": "error",
                 "error_message": str(e),
@@ -403,7 +403,7 @@ class SNMPCollector:
             "port": self.client.config.port,
             "community": self.client.config.community,
             "version": self.client.config.version,
-            "test_timestamp": datetime.utcnow(),
+            "test_timestamp": datetime.now(timezone.utc),
             "tests": {},
         }
 

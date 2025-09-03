@@ -56,7 +56,7 @@ class ResellerApplicationService:
         application_data.update({
             'application_id': application_id,
             'status': ApplicationStatus.SUBMITTED,
-            'submitted_at': datetime.utcnow(),
+            'submitted_at': datetime.now(timezone.utc),
             'communication_log': []
         })
         

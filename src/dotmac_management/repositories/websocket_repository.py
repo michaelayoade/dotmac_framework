@@ -84,11 +84,11 @@ class WebSocketEventRepository(BaseRepository):
                 WebSocketEvent.delivery_status == DeliveryStatus.PENDING,
                 or_(
                     WebSocketEvent.scheduled_for.is_(None),
-                    WebSocketEvent.scheduled_for <= datetime.utcnow()
+                    WebSocketEvent.scheduled_for <= datetime.now(timezone.utc)
                 ),
                 or_(
                     WebSocketEvent.expires_at.is_(None),
-                    WebSocketEvent.expires_at > datetime.utcnow()
+                    WebSocketEvent.expires_at > datetime.now(timezone.utc)
                 )
             )
         )
@@ -143,10 +143,10 @@ class WebSocketEventRepository(BaseRepository):
         try:
             event.delivery_status = status
             event.delivery_attempts += 1
-            event.last_delivery_attempt = datetime.utcnow()
+            event.last_delivery_attempt = datetime.now(timezone.utc)
             
             if status == DeliveryStatus.DELIVERED:
-                event.delivered_at = datetime.utcnow()
+                event.delivered_at = datetime.now(timezone.utc)
             elif status == DeliveryStatus.FAILED:
                 event.error_message = error_message
                 event.retry_count += 1
@@ -181,7 +181,7 @@ class WebSocketEventRepository(BaseRepository):
                 
                 # Set first acknowledgment timestamp
                 if not event.acknowledged_at:
-                    event.acknowledged_at = datetime.utcnow()
+                    event.acknowledged_at = datetime.now(timezone.utc)
             
             await self.session.commit()
             await self.session.refresh(event)
@@ -254,7 +254,7 @@ class WebSocketEventRepository(BaseRepository):
             raise NotFoundError(f"Connection not found: {connection_id}")
         
         try:
-            connection.last_activity = datetime.utcnow()
+            connection.last_activity = datetime.now(timezone.utc)
             
             for key, value in activity_data.items():
                 if hasattr(connection, key):
@@ -281,7 +281,7 @@ class WebSocketEventRepository(BaseRepository):
         
         try:
             connection.is_active = False
-            connection.disconnected_at = datetime.utcnow()
+            connection.disconnected_at = datetime.now(timezone.utc)
             
             await self.session.commit()
             logger.info(f"Disconnected WebSocket connection: {connection_id}")
@@ -410,9 +410,9 @@ class WebSocketEventRepository(BaseRepository):
             delivery.status = status
             
             if status == DeliveryStatus.DELIVERED:
-                delivery.delivered_at = datetime.utcnow()
+                delivery.delivered_at = datetime.now(timezone.utc)
             elif status == DeliveryStatus.FAILED:
-                delivery.retry_after = datetime.utcnow() + timedelta(minutes=5)  # 5 minute retry
+                delivery.retry_after = datetime.now(timezone.utc) + timedelta(minutes=5)  # 5 minute retry
             
             if delivery_data:
                 for key, value in delivery_data.items():
@@ -439,7 +439,7 @@ class WebSocketEventRepository(BaseRepository):
         """Record WebSocket metrics."""
         try:
             # Get current hour metrics or create new
-            current_hour = datetime.utcnow().replace(minute=0, second=0, microsecond=0)
+            current_hour = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
             
             metrics = await self.session.query(WebSocketMetrics).filter(
                 and_(
@@ -484,7 +484,7 @@ class WebSocketEventRepository(BaseRepository):
     ) -> Dict:
         """Get event statistics for a tenant."""
         try:
-            since_date = datetime.utcnow() - timedelta(days=days)
+            since_date = datetime.now(timezone.utc) - timedelta(days=days)
             
             # Total events
             total_events = await self.session.query(func.count(WebSocketEvent.id)).filter(
@@ -569,7 +569,7 @@ class WebSocketEventRepository(BaseRepository):
             expired_events = await self.session.query(WebSocketEvent).filter(
                 and_(
                     WebSocketEvent.expires_at.isnot(None),
-                    WebSocketEvent.expires_at < datetime.utcnow()
+                    WebSocketEvent.expires_at < datetime.now(timezone.utc)
                 )
             ).all()
             
@@ -591,7 +591,7 @@ class WebSocketEventRepository(BaseRepository):
     async def cleanup_old_connections(self, hours: int = 24) -> int:
         """Clean up old inactive connections."""
         try:
-            cutoff_time = datetime.utcnow() - timedelta(hours=hours)
+            cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
             
             old_connections = await self.session.query(WebSocketConnection).filter(
                 or_(
@@ -624,7 +624,7 @@ class WebSocketEventRepository(BaseRepository):
     async def cleanup_old_deliveries(self, days: int = 30) -> int:
         """Clean up old delivery records."""
         try:
-            cutoff_time = datetime.utcnow() - timedelta(days=days)
+            cutoff_time = datetime.now(timezone.utc) - timedelta(days=days)
             
             old_deliveries = await self.session.query(WebSocketDelivery).filter(
                 WebSocketDelivery.attempted_at < cutoff_time

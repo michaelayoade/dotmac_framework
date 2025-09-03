@@ -331,13 +331,13 @@ class ChannelOrchestrator:
             # Check rate limits
             if not await self._check_rate_limit(channel, recipient):
                 message.status = MessageStatus.QUEUED
-                message.next_retry_at = datetime.utcnow() + timedelta(minutes=5)
+                message.next_retry_at = datetime.now(timezone.utc) + timedelta(minutes=5)
                 self.retry_queue.append(message)
                 logger.warning(f"Message queued due to rate limit: {message.id}")
                 return message
 
             # Queue for immediate delivery or schedule
-            if scheduled_at and scheduled_at > datetime.utcnow():
+            if scheduled_at and scheduled_at > datetime.now(timezone.utc):
                 message.status = MessageStatus.QUEUED
                 self.outbound_queue.append(message)
             else:
@@ -430,19 +430,19 @@ class ChannelOrchestrator:
                 return False
 
             message.status = status
-            message.updated_at = datetime.utcnow()
+            message.updated_at = datetime.now(timezone.utc)
 
             if external_id:
                 message.external_id = external_id
 
             if status == MessageStatus.SENT:
-                message.sent_at = datetime.utcnow()
+                message.sent_at = datetime.now(timezone.utc)
             elif status == MessageStatus.DELIVERED:
-                message.delivered_at = datetime.utcnow()
+                message.delivered_at = datetime.now(timezone.utc)
             elif status == MessageStatus.READ:
-                message.read_at = datetime.utcnow()
+                message.read_at = datetime.now(timezone.utc)
             elif status in [MessageStatus.FAILED, MessageStatus.BOUNCED]:
-                message.failed_at = datetime.utcnow()
+                message.failed_at = datetime.now(timezone.utc)
                 message.failure_reason = failure_reason
 
             # Trigger callbacks
@@ -458,7 +458,7 @@ class ChannelOrchestrator:
     async def retry_failed_messages(self):
         """Retry failed messages that are eligible for retry"""
         try:
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             retry_messages = []
 
             # Find messages ready for retry
@@ -597,7 +597,7 @@ class ChannelOrchestrator:
             if not config or not config.rate_limit:
                 return True
 
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             window_start = now - timedelta(minutes=1)
 
             # Clean old entries
@@ -629,7 +629,7 @@ class ChannelOrchestrator:
         try:
             # Update status
             message.status = MessageStatus.QUEUED
-            message.updated_at = datetime.utcnow()
+            message.updated_at = datetime.now(timezone.utc)
 
             # Send via plugin system
             plugin_priority = self._convert_to_plugin_priority(message.priority)
@@ -651,23 +651,23 @@ class ChannelOrchestrator:
                     delivery_result.status
                 )
                 if message.status == MessageStatus.SENT:
-                    message.sent_at = datetime.utcnow()
+                    message.sent_at = datetime.now(timezone.utc)
                 elif message.status == MessageStatus.DELIVERED:
-                    message.sent_at = datetime.utcnow()
-                    message.delivered_at = datetime.utcnow()
+                    message.sent_at = datetime.now(timezone.utc)
+                    message.delivered_at = datetime.now(timezone.utc)
                 message.external_id = delivery_result.message_id
             else:
                 message.status = MessageStatus.FAILED
-                message.failed_at = datetime.utcnow()
+                message.failed_at = datetime.now(timezone.utc)
                 message.failure_reason = delivery_result.error_message
 
-            message.updated_at = datetime.utcnow()
+            message.updated_at = datetime.now(timezone.utc)
 
         except Exception as e:
             message.status = MessageStatus.FAILED
-            message.failed_at = datetime.utcnow()
+            message.failed_at = datetime.now(timezone.utc)
             message.failure_reason = str(e)
-            message.updated_at = datetime.utcnow()
+            message.updated_at = datetime.now(timezone.utc)
             logger.error(f"Failed to deliver message {message.id}: {e}")
 
     async def _render_template(
@@ -721,7 +721,7 @@ class ChannelOrchestrator:
             # This would trigger the interaction manager and routing engine
             # Simplified implementation for now
             message.processed = True
-            message.processed_at = datetime.utcnow()
+            message.processed_at = datetime.now(timezone.utc)
 
             logger.info(f"Processed incoming message {message.id}")
 

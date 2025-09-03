@@ -240,7 +240,7 @@ class ReportService(BaseService[Report]):
         
         update_data = {
             'data': data,
-            'generated_at': datetime.utcnow()
+            'generated_at': datetime.now(timezone.utc)
         }
         
         updated_report = await self.repository.update(report_id, update_data)
@@ -266,7 +266,7 @@ class ReportService(BaseService[Report]):
             format_type=request.format_type,
             status="processing",
             download_url=download_url,
-            expires_at=datetime.utcnow() + timedelta(hours=24),
+            expires_at=datetime.now(timezone.utc) + timedelta(hours=24),
             file_size_bytes=None
         )
 
@@ -384,7 +384,7 @@ class DashboardService(BaseService[Dashboard]):
 
     async def get_dashboard_overview(self, user_id: UUID) -> DashboardOverviewResponse:
         """Get dashboard overview with key metrics."""
-        current_time = datetime.utcnow()
+        current_time = datetime.now(timezone.utc)
         start_of_month = current_time.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
         return DashboardOverviewResponse(
@@ -618,12 +618,12 @@ class AnalyticsService(BaseService):
                 {
                     'type': 'metric_recorded',
                     'description': 'New bandwidth metric recorded',
-                    'timestamp': datetime.utcnow().isoformat()
+                    'timestamp': datetime.now(timezone.utc).isoformat()
                 },
                 {
                     'type': 'alert_triggered',
                     'description': 'High CPU usage alert triggered',
-                    'timestamp': (datetime.utcnow() - timedelta(minutes=15)).isoformat()
+                    'timestamp': (datetime.now(timezone.utc) - timedelta(minutes=15)).isoformat()
                 }
             ]
         )
@@ -631,7 +631,7 @@ class AnalyticsService(BaseService):
     async def get_real_time_metrics(self, user_id: UUID) -> RealTimeMetricsResponse:
         """Get real-time system metrics."""
         return RealTimeMetricsResponse(
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             metrics={
                 'active_connections': 1247,
                 'requests_per_second': 34.5,
@@ -650,7 +650,7 @@ class AnalyticsService(BaseService):
 
     async def generate_executive_report(self, user_id: UUID) -> ExecutiveReportResponse:
         """Generate executive-level analytics report."""
-        current_time = datetime.utcnow()
+        current_time = datetime.now(timezone.utc)
         start_of_month = current_time.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
         return ExecutiveReportResponse(

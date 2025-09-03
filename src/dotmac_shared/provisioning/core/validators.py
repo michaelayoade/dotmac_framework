@@ -51,7 +51,7 @@ class HealthValidator:
         )
 
         health_result = ContainerHealth(
-            overall_status=HealthStatus.STARTING, last_check=datetime.utcnow()
+            overall_status=HealthStatus.STARTING, last_check=datetime.now(timezone.utc)
         )
 
         try:

@@ -7,7 +7,7 @@ import logging
 from collections import defaultdict
 from typing import Any, Callable, Dict, List, Optional
 
-from base import BasePlugin, PluginError
+from .base import BasePlugin, PluginError
 
 logger = logging.getLogger(__name__)
 

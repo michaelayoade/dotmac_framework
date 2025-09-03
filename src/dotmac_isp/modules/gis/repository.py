@@ -91,7 +91,7 @@ class ServiceAreaRepository:
         """Find service areas that need coverage analysis."""
         from datetime import datetime, timedelta
         
-        cutoff_date = datetime.utcnow() - timedelta(days=days_since_analysis)
+        cutoff_date = datetime.utcnow(, timezone) - timedelta(days=days_since_analysis)
         
         query = select(ServiceArea).where(
             ServiceArea.tenant_id == self.tenant_id,
@@ -254,7 +254,7 @@ class NetworkNodeRepository:
         """Find nodes that haven't been seen recently."""
         from datetime import datetime, timedelta
         
-        cutoff_time = datetime.utcnow() - timedelta(hours=hours_offline)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours_offline)
         
         query = select(NetworkNode).where(
             NetworkNode.tenant_id == self.tenant_id,
@@ -514,7 +514,7 @@ class RouteOptimizationRepository:
         """Find recent route optimizations."""
         from datetime import datetime, timedelta
         
-        cutoff_date = datetime.utcnow() - timedelta(days=days)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
         
         query = select(RouteOptimization).where(
             RouteOptimization.tenant_id == self.tenant_id,

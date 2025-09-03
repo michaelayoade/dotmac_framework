@@ -3,12 +3,12 @@ name: Performance Budget & Security CI
 on:
   pull_request:
     paths:
-      - 'apps/customer/**'
+      - 'isp-framework/customer/**'
       - 'packages/**'
   push:
     branches: [main]
     paths:
-      - 'apps/customer/**'
+      - 'isp-framework/customer/**'
       - 'packages/**'
 
 jobs:
@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./apps/customer
+        working-directory: ./isp-framework/customer
 
     steps:
       - name: Checkout code
@@ -62,8 +62,8 @@ jobs:
         with:
           name: bundle-analyzer-report-${{ github.sha }}
           path: |
-            apps/customer/.next/analyze/
-            apps/customer/bundle-report.html
+            isp-framework/customer/.next/analyze/
+            isp-framework/customer/bundle-report.html
           retention-days: 7
 
       - name: Comment PR with bundle size
@@ -78,7 +78,7 @@ jobs:
             let bundleReport = '';
             try {
               const sizeLimitOutput = await exec.exec('pnpm', ['size'], {
-                cwd: './apps/customer',
+                cwd: './isp-framework/customer',
                 silent: true,
                 listeners: {
                   stdout: (data) => {
@@ -118,7 +118,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./apps/customer
+        working-directory: ./isp-framework/customer
 
     steps:
       - name: Checkout code
@@ -161,8 +161,8 @@ jobs:
         with:
           name: lighthouse-reports-${{ github.sha }}
           path: |
-            apps/customer/.lighthouseci/
-            apps/customer/lighthouse-reports/
+            isp-framework/customer/.lighthouseci/
+            isp-framework/customer/lighthouse-reports/
           retention-days: 7
 
   security-audit:
@@ -170,7 +170,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./apps/customer
+        working-directory: ./isp-framework/customer
 
     steps:
       - name: Checkout code
@@ -231,5 +231,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: security-audit-${{ github.sha }}
-          path: apps/customer/audit-results.json
+          path: isp-framework/customer/audit-results.json
           retention-days: 30

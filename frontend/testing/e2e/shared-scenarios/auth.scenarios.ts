@@ -19,12 +19,12 @@ interface LoginOptions {
   portal?: string;
 }
 
-export async function performLogin(page: Page, credentials: Credentials, options: LoginOptions = {}): Promise<void> {
-  const {
-    loginUrl = '/login',
-    expectedRedirect = '/dashboard',
-    portal = 'admin'
-  } = options;
+export async function performLogin(
+  page: Page,
+  credentials: Credentials,
+  options: LoginOptions = {}
+): Promise<void> {
+  const { loginUrl = '/login', expectedRedirect = '/dashboard', portal = 'admin' } = options;
 
   // Navigate to login page
   await page.goto(loginUrl);
@@ -85,7 +85,11 @@ interface ResetOptions {
   resetUrl?: string;
 }
 
-export async function performPasswordReset(page: Page, email: string, options: ResetOptions = {}): Promise<void> {
+export async function performPasswordReset(
+  page: Page,
+  email: string,
+  options: ResetOptions = {}
+): Promise<void> {
   const { resetUrl = '/forgot-password' } = options;
 
   // Navigate to reset page
@@ -147,7 +151,11 @@ export async function performMFASetup(page: Page, options: MFAOptions = {}): Pro
 /**
  * DRY role-based access scenario
  */
-export async function verifyRoleAccess(page: Page, userRole: string, restrictedPaths: string[] = []): Promise<void> {
+export async function verifyRoleAccess(
+  page: Page,
+  userRole: string,
+  restrictedPaths: string[] = []
+): Promise<void> {
   for (const path of restrictedPaths) {
     // Try to access restricted path
     await page.goto(path);
@@ -194,20 +202,20 @@ export async function verifyTenantIsolation(page: Page, tenantId: string): Promi
 export const testCredentials = {
   admin: {
     email: 'admin@dotmac.io',
-    password: 'admin123'
+    password: 'admin123',
   },
   customer: {
     email: 'customer@example.com',
-    password: 'customer123'
+    password: 'customer123',
   },
   technician: {
     email: 'tech@dotmac.io',
-    password: 'tech123'
+    password: 'tech123',
   },
   reseller: {
     email: 'reseller@partner.com',
-    password: 'reseller123'
-  }
+    password: 'reseller123',
+  },
 };
 
 /**
@@ -218,24 +226,24 @@ export const portalConfig = {
     loginUrl: '/login',
     dashboardUrl: '/dashboard',
     restrictedPaths: ['/system/config', '/users/admin'],
-    navigation: 'admin-navigation'
+    navigation: 'admin-navigation',
   },
   customer: {
     loginUrl: '/login',
     dashboardUrl: '/dashboard',
     restrictedPaths: ['/admin', '/system'],
-    navigation: 'customer-navigation'
+    navigation: 'customer-navigation',
   },
   technician: {
     loginUrl: '/login',
     dashboardUrl: '/mobile-dashboard',
     restrictedPaths: ['/admin', '/billing'],
-    navigation: 'mobile-navigation'
+    navigation: 'mobile-navigation',
   },
   reseller: {
     loginUrl: '/login',
     dashboardUrl: '/partner-dashboard',
     restrictedPaths: ['/admin', '/system'],
-    navigation: 'partner-navigation'
-  }
+    navigation: 'partner-navigation',
+  },
 };

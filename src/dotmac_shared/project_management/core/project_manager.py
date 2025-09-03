@@ -81,7 +81,7 @@ class ProjectManager:
         self, tenant_id: str, project_type: ProjectType = None
     ) -> str:
         """Generate unique project number."""
-        timestamp = int(datetime.utcnow().timestamp())
+        timestamp = int(datetime.now(timezone.utc).timestamp())
 
         # Use project type prefix if available
         if project_type:
@@ -236,7 +236,7 @@ class ProjectManager:
             for field, value in update_dict.items():
                 setattr(project, field, value)
 
-            project.updated_at = datetime.utcnow()
+            project.updated_at = datetime.now(timezone.utc)
             project.updated_by = updated_by
 
             # Handle status changes
@@ -455,7 +455,7 @@ class ProjectManager:
             for field, value in update_dict.items():
                 setattr(phase, field, value)
 
-            phase.updated_at = datetime.utcnow()
+            phase.updated_at = datetime.now(timezone.utc)
 
             # Handle completion
             if (

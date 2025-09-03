@@ -1,0 +1,247 @@
+{
+  "title": "DotMac Management Platform - SLO Dashboard",
+  "description": "Business SLOs and key performance metrics for the Management Platform",
+  "tags": ["dotmac", "management", "platform", "slo"],
+  "layout": [
+    {
+      "x": 0,
+      "y": 0,
+      "w": 24,
+      "h": 3,
+      "i": "service-overview"
+    },
+    {
+      "x": 0,
+      "y": 3,
+      "w": 12,
+      "h": 9,
+      "i": "auth-slos"
+    },
+    {
+      "x": 12,
+      "y": 3,
+      "w": 12,
+      "h": 9,
+      "i": "provisioning-slos"
+    },
+    {
+      "x": 0,
+      "y": 12,
+      "w": 24,
+      "h": 9,
+      "i": "request-metrics"
+    },
+    {
+      "x": 0,
+      "y": 21,
+      "w": 12,
+      "h": 9,
+      "i": "business-metrics"
+    },
+    {
+      "x": 12,
+      "y": 21,
+      "w": 12,
+      "h": 9,
+      "i": "customer-satisfaction"
+    }
+  ],
+  "widgets": [
+    {
+      "id": "service-overview",
+      "title": "Service Health Overview",
+      "description": "Overall service status and key metrics",
+      "widgetType": "value",
+      "query": {
+        "queryType": "builder",
+        "promql": "up{service=\"dotmac-management\"}",
+        "builder": {
+          "queryName": "A",
+          "metricName": "up",
+          "tagFilters": {
+            "items": [
+              {
+                "key": "service",
+                "op": "=",
+                "value": "dotmac-management"
+              }
+            ]
+          }
+        }
+      },
+      "clickHouseQuery": {
+        "query": ""
+      },
+      "panelTypes": "graph",
+      "yAxisUnit": "short"
+    },
+    {
+      "id": "auth-slos",
+      "title": "Authentication SLOs",
+      "description": "Login success rate and latency metrics",
+      "widgetType": "graph",
+      "query": {
+        "queryType": "builder",
+        "promql": "rate(dotmac_management_login_attempts_total{result=\"success\"}[5m]) / rate(dotmac_management_login_attempts_total[5m])",
+        "builder": {
+          "queryName": "A",
+          "metricName": "dotmac_management_login_attempts_total",
+          "tagFilters": {
+            "items": [
+              {
+                "key": "result",
+                "op": "=",
+                "value": "success"
+              }
+            ]
+          },
+          "aggregateOperator": "rate",
+          "aggregateAttribute": {
+            "key": "5m"
+          }
+        }
+      },
+      "panelTypes": "graph",
+      "yAxisUnit": "percentunit",
+      "thresholds": [
+        {
+          "thresholdValue": 0.98,
+          "thresholdColor": "Green",
+          "thresholdFormat": "Above"
+        },
+        {
+          "thresholdValue": 0.95,
+          "thresholdColor": "Yellow",
+          "thresholdFormat": "Above"
+        }
+      ]
+    },
+    {
+      "id": "provisioning-slos", 
+      "title": "Container Provisioning SLOs",
+      "description": "Container provisioning success rate and latency",
+      "widgetType": "graph",
+      "query": {
+        "queryType": "builder",
+        "promql": "histogram_quantile(0.95, rate(dotmac_management_provisioning_duration_seconds_bucket[5m]))",
+        "builder": {
+          "queryName": "A",
+          "metricName": "dotmac_management_provisioning_duration_seconds_bucket",
+          "aggregateOperator": "hist_quantile_95",
+          "aggregateAttribute": {
+            "key": "5m"
+          }
+        }
+      },
+      "panelTypes": "graph",
+      "yAxisUnit": "s",
+      "thresholds": [
+        {
+          "thresholdValue": 60,
+          "thresholdColor": "Green",
+          "thresholdFormat": "Below"
+        },
+        {
+          "thresholdValue": 120,
+          "thresholdColor": "Yellow",
+          "thresholdFormat": "Below"
+        }
+      ]
+    },
+    {
+      "id": "request-metrics",
+      "title": "HTTP Request Performance",
+      "description": "Request rate, latency, and error metrics",
+      "widgetType": "graph",
+      "query": {
+        "queryType": "builder",
+        "promql": "rate(dotmac_management_http_requests_total[5m])",
+        "builder": {
+          "queryName": "A",
+          "metricName": "dotmac_management_http_requests_total",
+          "aggregateOperator": "rate",
+          "aggregateAttribute": {
+            "key": "5m"
+          },
+          "groupBy": ["method", "endpoint"]
+        }
+      },
+      "panelTypes": "graph",
+      "yAxisUnit": "reqps"
+    },
+    {
+      "id": "business-metrics",
+      "title": "Business Revenue Metrics",
+      "description": "Revenue, transactions, and customer metrics",
+      "widgetType": "graph",
+      "query": {
+        "queryType": "builder", 
+        "promql": "dotmac_management_revenue_amount{revenue_type=\"monthly_recurring\"}",
+        "builder": {
+          "queryName": "A",
+          "metricName": "dotmac_management_revenue_amount",
+          "tagFilters": {
+            "items": [
+              {
+                "key": "revenue_type",
+                "op": "=",
+                "value": "monthly_recurring"
+              }
+            ]
+          }
+        }
+      },
+      "panelTypes": "graph",
+      "yAxisUnit": "currency"
+    },
+    {
+      "id": "customer-satisfaction",
+      "title": "Customer Satisfaction SLO", 
+      "description": "NPS and CSAT scores",
+      "widgetType": "value",
+      "query": {
+        "queryType": "builder",
+        "promql": "dotmac_management_customer_satisfaction_score{score_type=\"nps\"}",
+        "builder": {
+          "queryName": "A", 
+          "metricName": "dotmac_management_customer_satisfaction_score",
+          "tagFilters": {
+            "items": [
+              {
+                "key": "score_type",
+                "op": "=",
+                "value": "nps"
+              }
+            ]
+          }
+        }
+      },
+      "panelTypes": "graph",
+      "yAxisUnit": "short",
+      "thresholds": [
+        {
+          "thresholdValue": 80,
+          "thresholdColor": "Green",
+          "thresholdFormat": "Above"
+        },
+        {
+          "thresholdValue": 60,
+          "thresholdColor": "Yellow", 
+          "thresholdFormat": "Above"
+        }
+      ]
+    }
+  ],
+  "variables": [
+    {
+      "name": "tenant_id",
+      "type": "QUERY",
+      "query": "label_values(dotmac_management_http_requests_total, tenant_id)",
+      "sort": "disabled",
+      "multiSelect": true,
+      "includeAllOption": true,
+      "defaultValue": []
+    }
+  ],
+  "version": "v0.21.0"
+}

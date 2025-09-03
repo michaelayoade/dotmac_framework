@@ -3,13 +3,16 @@ Standard middleware stack for all DotMac applications.
 """
 
 import logging
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
 from .config import DeploymentMode, PlatformConfig
+from ..security.tenant_security_enforcer import TenantSecurityEnforcer, add_tenant_security_enforcer_middleware
+from ..middleware.api_versioning import APIVersioningMiddleware, add_api_versioning_middleware
+from ..middleware.background_operations import BackgroundOperationsMiddleware, add_background_operations_middleware
 
 logger = logging.getLogger(__name__)
 
@@ -17,8 +20,14 @@ logger = logging.getLogger(__name__)
 class StandardMiddlewareStack:
     """Standard middleware stack applied to all DotMac applications."""
 
-    def __init__(self, platform_config: PlatformConfig):
+    def __init__(self, platform_config: PlatformConfig, 
+                 tenant_security_enforcer: Optional[TenantSecurityEnforcer] = None,
+                 api_versioning: Optional[APIVersioningMiddleware] = None,
+                 background_operations: Optional[BackgroundOperationsMiddleware] = None):
         self.platform_config = platform_config
+        self.tenant_security_enforcer = tenant_security_enforcer or TenantSecurityEnforcer()
+        self.api_versioning = api_versioning or APIVersioningMiddleware()
+        self.background_operations = background_operations or BackgroundOperationsMiddleware()
         self.applied_middleware: List[str] = []
 
     def apply_to_app(self, app: FastAPI) -> List[str]:
@@ -28,7 +37,10 @@ class StandardMiddlewareStack:
         )
 
         # Apply middleware in reverse order (FastAPI applies them in reverse)
+        self._apply_background_operations_middleware(app)
+        self._apply_api_versioning_middleware(app)
         self._apply_security_middleware(app)
+        self._apply_tenant_boundary_enforcement(app)
         self._apply_tenant_isolation_middleware(app)
         self._apply_cors_middleware(app)
         self._apply_trusted_host_middleware(app)
@@ -116,6 +128,9 @@ class StandardMiddlewareStack:
             return
 
         try:
+            # JWT Authentication (User Management v2)
+            self._apply_jwt_authentication(app)
+            
             # CSRF Protection
             if self.platform_config.security_config.csrf_enabled:
                 self._apply_csrf_protection(app)
@@ -126,6 +141,37 @@ class StandardMiddlewareStack:
 
         except Exception as e:
             logger.error(f"Failed to apply security middleware: {e}")
+
+    def _apply_jwt_authentication(self, app: FastAPI):
+        """Apply JWT authentication middleware."""
+        try:
+            from dotmac_management.user_management.middleware import add_jwt_authentication_middleware
+            
+            # Get JWT secret from secure configuration manager
+            try:
+                from dotmac_shared.config.secure_config import get_jwt_secret_sync
+                jwt_secret = get_jwt_secret_sync()
+            except Exception as e:
+                import os
+                jwt_secret = os.getenv("JWT_SECRET_KEY")
+                if not jwt_secret:
+                    raise ValueError(
+                        "JWT secret not available. Please set JWT_SECRET_KEY environment variable "
+                        "or configure OpenBao with auth/jwt_secret_key"
+                    ) from e
+            
+            jwt_algorithm = self.platform_config.custom_settings.get("jwt_algorithm", "HS256")
+            
+            add_jwt_authentication_middleware(app, jwt_secret, jwt_algorithm)
+            
+            self.applied_middleware.append("JWTAuthenticationMiddleware")
+            self.applied_middleware.append("APIKeyAuthenticationMiddleware")
+            logger.info("Applied JWT authentication middleware")
+            
+        except ImportError:
+            logger.warning("JWT authentication middleware not available")
+        except Exception as e:
+            logger.error(f"Failed to apply JWT authentication middleware: {e}")
 
     def _apply_csrf_protection(self, app: FastAPI):
         """Apply CSRF protection."""
@@ -264,3 +310,51 @@ class StandardMiddlewareStack:
             cors_config["allow_origins"] = custom_settings["networking"]["cors_origins"]
 
         return cors_config
+
+    def _apply_tenant_boundary_enforcement(self, app: FastAPI):
+        """Apply tenant boundary enforcement middleware."""
+        try:
+            add_tenant_security_enforcer_middleware(app, self.tenant_security_enforcer)
+            self.applied_middleware.append("TenantSecurityEnforcerMiddleware")
+            logger.debug("Applied tenant boundary enforcement middleware")
+
+        except Exception as e:
+            logger.error(f"Failed to apply tenant boundary enforcement: {e}")
+
+    def _apply_api_versioning_middleware(self, app: FastAPI):
+        """Apply API versioning middleware."""
+        try:
+            add_api_versioning_middleware(app, self.api_versioning)
+            self.applied_middleware.append("APIVersioningMiddleware")
+            logger.debug("Applied API versioning middleware")
+
+        except Exception as e:
+            logger.error(f"Failed to apply API versioning middleware: {e}")
+
+    def _apply_background_operations_middleware(self, app: FastAPI):
+        """Apply background operations middleware."""
+        try:
+            add_background_operations_middleware(app, self.background_operations)
+            self.applied_middleware.append("BackgroundOperationsMiddleware")
+            logger.debug("Applied background operations middleware")
+
+            # Expose background operations manager on app state for admin/inspection APIs
+            try:
+                app.state.background_operations_manager = self.background_operations.operations_manager
+            except Exception:
+                pass
+
+        except Exception as e:
+            logger.error(f"Failed to apply background operations middleware: {e}")
+
+    def get_tenant_security_enforcer(self) -> TenantSecurityEnforcer:
+        """Get tenant security enforcer instance."""
+        return self.tenant_security_enforcer
+
+    def get_api_versioning(self) -> APIVersioningMiddleware:
+        """Get API versioning middleware instance."""
+        return self.api_versioning
+
+    def get_background_operations(self) -> BackgroundOperationsMiddleware:
+        """Get background operations middleware instance."""
+        return self.background_operations

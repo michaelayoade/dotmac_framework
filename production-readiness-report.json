@@ -1,0 +1,82 @@
+{
+  "overall_status": "NOT_READY",
+  "critical_failures": 2,
+  "warnings": 1,
+  "successes": 14,
+  "details": {
+    "critical": [
+      {
+        "check": "Database Connectivity",
+        "message": "Failed to connect: [Errno -3] Temporary failure in name resolution"
+      },
+      {
+        "check": "Redis Connectivity",
+        "message": "Failed to connect: Error -3 connecting to redis:6379. -3."
+      }
+    ],
+    "warnings": [
+      {
+        "check": "Secrets Provider",
+        "message": "Failed to connect to OpenBao: Cannot connect to host vault.example.com:443 ssl:default [Name or service not known]"
+      }
+    ],
+    "successes": [
+      {
+        "check": "Environment Variables",
+        "message": "ENVIRONMENT properly configured"
+      },
+      {
+        "check": "Environment Variables",
+        "message": "STRICT_PROD_BASELINE properly configured"
+      },
+      {
+        "check": "Environment Variables",
+        "message": "DATABASE_URL properly configured"
+      },
+      {
+        "check": "Environment Variables",
+        "message": "REDIS_URL properly configured"
+      },
+      {
+        "check": "Environment Variables",
+        "message": "OPENBAO_URL properly configured"
+      },
+      {
+        "check": "Environment Variables",
+        "message": "OPENBAO_TOKEN properly configured"
+      },
+      {
+        "check": "Environment Variables",
+        "message": "APPLY_RLS_AFTER_MIGRATION properly configured"
+      },
+      {
+        "check": "Environment Variables",
+        "message": "SECRET_KEY properly configured"
+      },
+      {
+        "check": "Environment Variables",
+        "message": "JWT_SECRET properly configured"
+      },
+      {
+        "check": "Environment Variables",
+        "message": "ENCRYPTION_KEY properly configured"
+      },
+      {
+        "check": "Package Constraints",
+        "message": "All 10 dotmac packages properly pinned"
+      },
+      {
+        "check": "Monitoring",
+        "message": "Required scrape jobs configured"
+      },
+      {
+        "check": "Alerting",
+        "message": "Critical alerts configured"
+      },
+      {
+        "check": "Strict Baseline",
+        "message": "All baseline requirements met"
+      }
+    ]
+  }
+}

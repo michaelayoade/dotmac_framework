@@ -7,16 +7,19 @@ This document outlines the disaster recovery and business continuity procedures 
 ## Emergency Contacts
 
 ### 🚨 Critical Issues (P0/P1)
+
 - **On-Call Engineer**: +1-555-0199 (24/7)
 - **Engineering Manager**: +1-555-0188 (24/7)
 - **CTO**: +1-555-0177 (Critical escalation only)
 
 ### 🔐 Security Incidents
+
 - **Security Team**: security@dotmac.com
 - **CISO**: ciso@dotmac.com
 - **Legal**: legal@dotmac.com
 
 ### 📞 Business Contacts
+
 - **Operations Manager**: ops@dotmac.com
 - **Customer Success**: support@dotmac.com
 - **Communications**: pr@dotmac.com
@@ -24,6 +27,7 @@ This document outlines the disaster recovery and business continuity procedures 
 ## Incident Classification
 
 ### P0 - Critical
+
 - Complete service outage affecting all customers
 - Data breach or security compromise
 - Payment system failure
@@ -31,6 +35,7 @@ This document outlines the disaster recovery and business continuity procedures 
 - **Recovery Target**: 1 hour
 
 ### P1 - High
+
 - Partial service degradation affecting >50% customers
 - Authentication system issues
 - Critical functionality unavailable
@@ -38,6 +43,7 @@ This document outlines the disaster recovery and business continuity procedures 
 - **Recovery Target**: 4 hours
 
 ### P2 - Medium
+
 - Minor functionality issues affecting <25% customers
 - Performance degradation
 - Non-critical features unavailable
@@ -45,6 +51,7 @@ This document outlines the disaster recovery and business continuity procedures 
 - **Recovery Target**: 24 hours
 
 ### P3 - Low
+
 - Cosmetic issues
 - Minor bugs not affecting core functionality
 - **Response Time**: 1 business day
@@ -53,6 +60,7 @@ This document outlines the disaster recovery and business continuity procedures 
 ## 📋 Incident Response Procedures
 
 ### 1. Detection & Initial Response
+
 ```bash
 # Step 1: Assess the situation
 1. Check monitoring dashboards
@@ -62,6 +70,7 @@ This document outlines the disaster recovery and business continuity procedures 
 ```
 
 ### 2. Escalation Matrix
+
 ```
 P0/P1 Incidents:
 ├── Detected by: Monitoring/Customer/Team
@@ -78,6 +87,7 @@ P2/P3 Incidents:
 ```
 
 ### 3. Communication Plan
+
 ```yaml
 Internal Communication:
   - Slack: #incidents channel
@@ -91,14 +101,15 @@ External Communication:
   - Press: Security breaches or major incidents
 
 Communication Templates:
-  Initial: "We are investigating reports of [issue] affecting [scope]"
-  Updates: "Update: [progress made]. ETA: [estimated resolution time]"
-  Resolution: "The issue has been resolved. Root cause: [brief explanation]"
+  Initial: 'We are investigating reports of [issue] affecting [scope]'
+  Updates: 'Update: [progress made]. ETA: [estimated resolution time]'
+  Resolution: 'The issue has been resolved. Root cause: [brief explanation]'
 ```
 
 ## 🔄 Backup & Recovery Procedures
 
 ### Data Backup Strategy
+
 ```yaml
 Customer Portal Data:
   Database Backups:
@@ -123,6 +134,7 @@ Customer Portal Data:
 ### Recovery Procedures
 
 #### Database Recovery
+
 ```bash
 # Step 1: Assess database state
 kubectl exec -it postgres-primary-0 -- pg_dumpall --verbose
@@ -143,6 +155,7 @@ kubectl scale deployment customer-portal --replicas=3
 ```
 
 #### Application Recovery
+
 ```bash
 # Step 1: Switch to maintenance mode
 kubectl apply -f k8s/maintenance-mode.yaml
@@ -158,6 +171,7 @@ kubectl delete -f k8s/maintenance-mode.yaml
 ```
 
 #### Infrastructure Recovery
+
 ```bash
 # Step 1: Assess infrastructure state
 kubectl get nodes
@@ -180,23 +194,21 @@ curl -f https://portal.dotmac.com/health
 ## 🔐 Security Incident Response
 
 ### Data Breach Response
+
 ```yaml
-Immediate Actions (0-1 hour):
-  1. Isolate affected systems
+Immediate Actions (0-1 hour): 1. Isolate affected systems
   2. Preserve evidence
   3. Assess breach scope
   4. Notify security team
   5. Engage legal counsel
 
-Short-term Actions (1-24 hours):
-  1. Contain the breach
+Short-term Actions (1-24 hours): 1. Contain the breach
   2. Assess data exposure
   3. Begin forensic investigation
   4. Prepare customer communications
   5. Notify relevant authorities (if required)
 
-Long-term Actions (1-30 days):
-  1. Complete forensic analysis
+Long-term Actions (1-30 days): 1. Complete forensic analysis
   2. Implement remediation measures
   3. Customer notification and support
   4. Regulatory compliance
@@ -204,6 +216,7 @@ Long-term Actions (1-30 days):
 ```
 
 ### Security Containment Procedures
+
 ```bash
 # Step 1: Network isolation
 kubectl network-policy deny-all-ingress customer-portal
@@ -225,11 +238,11 @@ kubectl logs -l app=customer-portal --since=24h > incident-logs.txt
 ## 💾 Data Recovery Scenarios
 
 ### Scenario 1: Accidental Data Deletion
+
 ```yaml
 Impact: Customer accidentally deletes account data
 Recovery Time: 2 hours
-Procedure:
-  1. Verify deletion timestamp
+Procedure: 1. Verify deletion timestamp
   2. Check soft-delete status
   3. Restore from backup if hard-deleted
   4. Verify data integrity
@@ -237,11 +250,11 @@ Procedure:
 ```
 
 ### Scenario 2: Database Corruption
+
 ```yaml
 Impact: Database corruption detected
 Recovery Time: 4-6 hours
-Procedure:
-  1. Switch to read-only mode
+Procedure: 1. Switch to read-only mode
   2. Assess corruption extent
   3. Restore from last known good backup
   4. Replay transaction logs
@@ -250,11 +263,11 @@ Procedure:
 ```
 
 ### Scenario 3: Complete Infrastructure Loss
+
 ```yaml
 Impact: Entire cloud region unavailable
 Recovery Time: 8-12 hours
-Procedure:
-  1. Activate DR region
+Procedure: 1. Activate DR region
   2. Update DNS routing
   3. Restore data from backups
   4. Verify application functionality
@@ -265,6 +278,7 @@ Procedure:
 ## 📞 Runbook Procedures
 
 ### Health Check Runbook
+
 ```bash
 #!/bin/bash
 # health-check.sh - Comprehensive health verification
@@ -287,6 +301,7 @@ echo "✅ Health check completed"
 ```
 
 ### Performance Monitoring Runbook
+
 ```bash
 #!/bin/bash
 # performance-check.sh - Performance diagnostics
@@ -304,15 +319,16 @@ kubectl top nodes
 
 # Database performance
 kubectl exec postgres-primary-0 -- psql -c "
-SELECT query, mean_time, calls 
-FROM pg_stat_statements 
-ORDER BY mean_time DESC 
+SELECT query, mean_time, calls
+FROM pg_stat_statements
+ORDER BY mean_time DESC
 LIMIT 10;"
 
 echo "📈 Performance check completed"
 ```
 
 ### Rollback Runbook
+
 ```bash
 #!/bin/bash
 # rollback.sh - Emergency rollback procedure
@@ -338,6 +354,7 @@ echo "✅ Rollback completed successfully"
 ## 🧪 Testing & Validation
 
 ### Disaster Recovery Testing Schedule
+
 ```yaml
 Monthly Tests:
   - Backup restoration (sample data)
@@ -356,6 +373,7 @@ Annual Tests:
 ```
 
 ### Test Scenarios
+
 ```yaml
 Test 1: Database Failover
   Frequency: Monthly
@@ -364,7 +382,7 @@ Test 1: Database Failover
 
 Test 2: Application Rollback
   Frequency: Weekly
-  Duration: 30 minutes  
+  Duration: 30 minutes
   Success Criteria: Clean rollback to previous version
 
 Test 3: Security Breach Simulation
@@ -376,6 +394,7 @@ Test 3: Security Breach Simulation
 ## 📊 Monitoring & Alerting
 
 ### Critical Alerts
+
 ```yaml
 Application Down:
   Threshold: All instances unhealthy for >2 minutes
@@ -399,6 +418,7 @@ Security Breach:
 ```
 
 ### Dashboard URLs
+
 - **Main Monitoring**: https://monitoring.dotmac.com/dashboard/overview
 - **Application Metrics**: https://monitoring.dotmac.com/dashboard/app
 - **Infrastructure**: https://monitoring.dotmac.com/dashboard/infra
@@ -407,6 +427,7 @@ Security Breach:
 ## 📚 Post-Incident Procedures
 
 ### Post-Incident Review (PIR)
+
 ```yaml
 Timeline: Within 48 hours of resolution
 
@@ -416,8 +437,7 @@ Required Attendees:
   - Engineering Manager
   - Product Manager (if customer-facing)
 
-PIR Agenda:
-  1. Incident timeline
+PIR Agenda: 1. Incident timeline
   2. Root cause analysis
   3. Response effectiveness
   4. Customer impact assessment
@@ -431,9 +451,9 @@ Deliverables:
 ```
 
 ### Documentation Updates
+
 ```yaml
-After each incident:
-  1. Update runbooks with lessons learned
+After each incident: 1. Update runbooks with lessons learned
   2. Improve monitoring/alerting
   3. Enhance automation
   4. Train team on new procedures
@@ -443,6 +463,7 @@ After each incident:
 ## 🔧 Tools & Resources
 
 ### Essential Tools
+
 - **Monitoring**: Grafana, Prometheus
 - **Logging**: ELK Stack
 - **Communication**: Slack, PagerDuty
@@ -450,6 +471,7 @@ After each incident:
 - **Infrastructure**: Terraform, Kubernetes
 
 ### Quick Reference Links
+
 - [Monitoring Dashboard](https://monitoring.dotmac.com)
 - [Status Page](https://status.dotmac.com)
 - [Runbook Repository](https://github.com/dotmac/runbooks)

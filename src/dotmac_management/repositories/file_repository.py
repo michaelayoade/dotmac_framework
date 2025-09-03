@@ -173,7 +173,7 @@ class FileRepository(BaseRepository):
                     setattr(file_metadata, key, value)
             
             file_metadata.updated_by = user_id
-            file_metadata.updated_at = datetime.utcnow()
+            file_metadata.updated_at = datetime.now(timezone.utc)
             
             await self.session.commit()
             await self.session.refresh(file_metadata)
@@ -201,7 +201,7 @@ class FileRepository(BaseRepository):
             # Soft delete by updating status
             file_metadata.file_status = "deleted"
             file_metadata.updated_by = user_id
-            file_metadata.updated_at = datetime.utcnow()
+            file_metadata.updated_at = datetime.now(timezone.utc)
             
             await self.session.commit()
             logger.info(f"Deleted file metadata: {file_id}")
@@ -318,7 +318,7 @@ class FileRepository(BaseRepository):
         """Create file upload session."""
         try:
             session_id = str(uuid4())
-            expires_at = datetime.utcnow() + timedelta(hours=24)  # 24 hour expiry
+            expires_at = datetime.now(timezone.utc) + timedelta(hours=24)  # 24 hour expiry
             
             upload_session = FileUploadSession(
                 upload_session_id=session_id,
@@ -375,7 +375,7 @@ class FileRepository(BaseRepository):
                 session.uploaded_size += chunk_size
                 session.chunk_count = len(completed_chunks)
             
-            session.last_activity = datetime.utcnow()
+            session.last_activity = datetime.now(timezone.utc)
             
             # Check if upload is complete
             if session.uploaded_size >= session.total_size:
@@ -422,7 +422,7 @@ class FileRepository(BaseRepository):
             ).group_by(FileMetadata.file_status).all()
             
             # Recent uploads (last 7 days)
-            week_ago = datetime.utcnow() - timedelta(days=7)
+            week_ago = datetime.now(timezone.utc) - timedelta(days=7)
             recent_uploads = await self.session.query(FileMetadata).filter(
                 and_(
                     FileMetadata.tenant_id == tenant_id,
@@ -431,13 +431,13 @@ class FileRepository(BaseRepository):
             ).order_by(FileMetadata.created_at.desc()).limit(10).all()
             
             # Files expiring soon (next 30 days)
-            month_from_now = datetime.utcnow() + timedelta(days=30)
+            month_from_now = datetime.now(timezone.utc) + timedelta(days=30)
             expiring_soon = await self.session.query(FileMetadata).filter(
                 and_(
                     FileMetadata.tenant_id == tenant_id,
                     FileMetadata.expiration_date.isnot(None),
                     FileMetadata.expiration_date <= month_from_now,
-                    FileMetadata.expiration_date > datetime.utcnow()
+                    FileMetadata.expiration_date > datetime.now(timezone.utc)
                 )
             ).order_by(FileMetadata.expiration_date.asc()).limit(10).all()
             
@@ -458,7 +458,7 @@ class FileRepository(BaseRepository):
         """Clean up expired upload sessions."""
         try:
             expired_sessions = await self.session.query(FileUploadSession).filter(
-                FileUploadSession.expires_at < datetime.utcnow()
+                FileUploadSession.expires_at < datetime.now(timezone.utc)
             ).all()
             
             count = len(expired_sessions)

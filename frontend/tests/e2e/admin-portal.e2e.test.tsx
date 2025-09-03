@@ -13,7 +13,9 @@ test.describe('Admin Portal E2E Tests', () => {
     await setupAuth(page, 'admin');
     const api = new APIBehaviorTester(page, { enableMocking: true });
     // Minimal admin mocks for stability
-    await api.mockAndLog(/\/api\/v1\/admin\/customers.*/, async () => ({ body: { customers: [], total: 0 } }));
+    await api.mockAndLog(/\/api\/v1\/admin\/customers.*/, async () => ({
+      body: { customers: [], total: 0 },
+    }));
     await api.mockAndLog(/\/api\/v1\/admin\/dashboard.*/, async () => ({ body: { ok: true } }));
 
     // Navigate to admin portal

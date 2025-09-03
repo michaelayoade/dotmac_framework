@@ -42,15 +42,24 @@ scrape_configs:
     params:
       format: ['prometheus']
 
-  # Management Platform Application  
+  # Management Platform Application (Primary API)
   - job_name: 'management-platform'
     static_configs:
-      - targets: ['management-platform:8000']
+      - targets: ['management-platform:8000', 'management-platform:8001']
     scrape_interval: 10s
     metrics_path: /metrics
     honor_labels: true
     params:
       format: ['prometheus']
+
+  # Management API (External endpoint)
+  - job_name: 'mgmt-api'
+    static_configs:
+      - targets: ['api.example.com:443']
+    scrape_interval: 15s
+    metrics_path: /metrics
+    scheme: https
+    honor_labels: true
 
   # PostgreSQL Database
   - job_name: 'postgresql'
@@ -94,8 +103,30 @@ scrape_configs:
     scrape_interval: 15s
     metrics_path: /metrics
 
-  # Frontend Applications (if metrics enabled)
-  - job_name: 'frontend-apps'
+  # Frontend Applications (Production portals)
+  - job_name: 'admin-portal'
+    static_configs:
+      - targets: ['admin.example.com:443']
+    scrape_interval: 30s
+    metrics_path: /api/metrics
+    scheme: https
+
+  - job_name: 'reseller-portal'
+    static_configs:
+      - targets: ['reseller.example.com:443']
+    scrape_interval: 30s
+    metrics_path: /api/metrics
+    scheme: https
+
+  - job_name: 'tenant-portal'
+    static_configs:
+      - targets: ['acme.isp.example.com:443']
+    scrape_interval: 30s
+    metrics_path: /api/metrics
+    scheme: https
+
+  # Development Frontend Applications
+  - job_name: 'frontend-dev'
     static_configs:
       - targets: 
           - 'master-admin-portal:3000'

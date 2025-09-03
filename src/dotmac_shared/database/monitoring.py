@@ -124,7 +124,7 @@ class DatabaseMonitor:
                     idle_connections=pool_stats["write"].get("checked_in", 0),
                     pool_size=pool_stats["write"].get("size", 0),
                     overflow_connections=pool_stats["write"].get("overflow", 0),
-                    timestamp=datetime.utcnow()
+                    timestamp=datetime.now(timezone.utc)
                 )
                 self.connection_metrics.append(connection_metric)
             
@@ -155,7 +155,7 @@ class DatabaseMonitor:
             return
         
         # Get recent query metrics (last 5 minutes)
-        cutoff_time = datetime.utcnow() - timedelta(minutes=5)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(minutes=5)
         recent_metrics = [m for m in self.query_metrics if m.timestamp >= cutoff_time]
         
         if not recent_metrics:
@@ -252,7 +252,7 @@ class DatabaseMonitor:
         cooldown_key = f"{alert_type}_{severity}"
         last_alert_time = self.alert_cooldown.get(cooldown_key)
         
-        if last_alert_time and (datetime.utcnow() - last_alert_time).total_seconds() < 300:  # 5 minute cooldown
+        if last_alert_time and (datetime.now(timezone.utc) - last_alert_time).total_seconds() < 300:  # 5 minute cooldown
             return
         
         alert = PerformanceAlert(
@@ -262,11 +262,11 @@ class DatabaseMonitor:
             message=message,
             threshold_value=threshold,
             actual_value=actual,
-            timestamp=datetime.utcnow()
+            timestamp=datetime.now(timezone.utc)
         )
         
         self.performance_alerts.append(alert)
-        self.alert_cooldown[cooldown_key] = datetime.utcnow()
+        self.alert_cooldown[cooldown_key] = datetime.now(timezone.utc)
         
         # Log the alert
         logger.warning(
@@ -287,7 +287,7 @@ class DatabaseMonitor:
         metric = QueryMetrics(
             query_name=query_name,
             execution_time=execution_time,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             success=success,
             error_message=error_message,
             row_count=row_count,
@@ -300,13 +300,13 @@ class DatabaseMonitor:
         # Track query patterns
         self.query_patterns[query_name].append({
             "execution_time": execution_time,
-            "timestamp": datetime.utcnow(),
+            "timestamp": datetime.now(timezone.utc),
             "success": success
         })
     
     def get_performance_summary(self, hours_back: int = 24) -> Dict[str, Any]:
         """Get comprehensive performance summary."""
-        cutoff_time = datetime.utcnow() - timedelta(hours=hours_back)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours_back)
         
         # Filter metrics by time
         recent_queries = [m for m in self.query_metrics if m.timestamp >= cutoff_time]
@@ -372,12 +372,12 @@ class DatabaseMonitor:
             "cache_hit_ratio": query_stats["cache_hits"] / max(query_stats["total_queries"], 1),
             "query_success_rate": query_stats["successful_queries"] / max(query_stats["total_queries"], 1),
             "read_write_ratio": query_stats["read_queries"] / max(query_stats["write_queries"], 1) if query_stats["write_queries"] > 0 else float('inf'),
-            "generated_at": datetime.utcnow().isoformat()
+            "generated_at": datetime.now(timezone.utc).isoformat()
         }
     
     def get_query_pattern_analysis(self, query_name: str = None, hours_back: int = 24) -> Dict[str, Any]:
         """Analyze query patterns for optimization opportunities."""
-        cutoff_time = datetime.utcnow() - timedelta(hours=hours_back)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours_back)
         
         if query_name:
             patterns = {query_name: self.query_patterns.get(query_name, [])}
@@ -465,7 +465,7 @@ class DatabaseMonitor:
     
     def clear_old_metrics(self, days_back: int = 7):
         """Clear metrics older than specified days."""
-        cutoff_time = datetime.utcnow() - timedelta(days=days_back)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(days=days_back)
         
         # Clear old query metrics
         self.query_metrics = deque(
@@ -574,7 +574,7 @@ async def get_database_performance_dashboard() -> Dict[str, Any]:
         pool_stats = get_connection_pool_stats()
         
         dashboard = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "database_health": db_health,
             "cache_health": cache_health,
             "performance_summary": performance_summary,
@@ -593,7 +593,7 @@ async def get_database_performance_dashboard() -> Dict[str, Any]:
         logger.error(f"Failed to generate performance dashboard: {e}")
         return {
             "error": str(e),
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
 

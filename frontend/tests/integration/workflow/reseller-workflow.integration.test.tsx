@@ -5,7 +5,7 @@
 
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 
-import { CustomerManagement } from '../../../apps/reseller/src/components/customers/CustomerManagement';
+import { CustomerManagement } from '../../../isp-framework/reseller/src/components/customers/CustomerManagement';
 
 // Mock external dependencies
 jest.mock('@dotmac/headless', () => ({

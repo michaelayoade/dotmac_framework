@@ -390,7 +390,7 @@ class ServicesService(BaseTenantService):
         stats = self.service_instance_repo.get_service_statistics()
         
         # Calculate churn rate (cancelled services in last 30 days / total active at start of period)
-        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+        thirty_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
         recent_cancellations = await self.service_instance_repo.count_cancelled_since(thirty_days_ago)
         churn_rate = Decimal("0")
         if stats["status_breakdown"].get("active", 0) > 0:

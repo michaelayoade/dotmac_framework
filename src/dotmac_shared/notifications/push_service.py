@@ -257,7 +257,7 @@ class PushNotificationService:
                     "icon": "/icons/notification-icon.png",
                     "badge": "/icons/badge-icon.png",
                     "tag": notification_id,
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                 },
                 "data": data or {},
             }
@@ -424,7 +424,7 @@ class PushNotificationService:
 
     async def cleanup_expired_subscriptions(self, days_inactive: int = 30):
         """Clean up inactive subscriptions."""
-        cutoff_date = datetime.utcnow() - timedelta(days=days_inactive)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=days_inactive)
         expired_ids = []
         
         for sub_id, subscription in self.subscriptions.items():

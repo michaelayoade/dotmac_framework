@@ -1,0 +1,110 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: plugin-registry-pv
+  labels:
+    app.kubernetes.io/name: dotmac-platform
+    app.kubernetes.io/component: plugin-storage
+spec:
+  capacity:
+    storage: 50Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: fast-ssd
+  hostPath:
+    path: /mnt/dotmac/plugins/registry
+    type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: plugin-data-pv
+  labels:
+    app.kubernetes.io/name: dotmac-platform
+    app.kubernetes.io/component: plugin-storage
+spec:
+  capacity:
+    storage: 100Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: fast-ssd
+  hostPath:
+    path: /mnt/dotmac/plugins/data
+    type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: plugin-logs-pv
+  labels:
+    app.kubernetes.io/name: dotmac-platform
+    app.kubernetes.io/component: plugin-storage
+spec:
+  capacity:
+    storage: 20Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: standard
+  hostPath:
+    path: /mnt/dotmac/plugins/logs
+    type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: plugin-registry-pvc
+  namespace: dotmac-system
+  labels:
+    app.kubernetes.io/name: dotmac-platform
+    app.kubernetes.io/component: plugin-storage
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: fast-ssd
+  resources:
+    requests:
+      storage: 50Gi
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: plugin-storage
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: plugin-data-pvc
+  namespace: dotmac-system
+  labels:
+    app.kubernetes.io/name: dotmac-platform
+    app.kubernetes.io/component: plugin-storage
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: fast-ssd
+  resources:
+    requests:
+      storage: 100Gi
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: plugin-storage
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: plugin-logs-pvc
+  namespace: dotmac-system
+  labels:
+    app.kubernetes.io/name: dotmac-platform
+    app.kubernetes.io/component: plugin-storage
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: standard
+  resources:
+    requests:
+      storage: 20Gi
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: plugin-storage

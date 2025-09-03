@@ -138,7 +138,7 @@ class HealthCheckRepository(BaseRepository[HealthCheck]):
 
     async def get_failed_checks(self, hours: int = 24) -> List[HealthCheck]:
         """Get failed health checks within specified hours."""
-        cutoff_time = datetime.utcnow() - timedelta(hours=hours)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
         return self.db.query(HealthCheck).filter(
             and_(
                 HealthCheck.tenant_id == self.tenant_id,
@@ -149,7 +149,7 @@ class HealthCheckRepository(BaseRepository[HealthCheck]):
 
     async def get_component_uptime(self, component_id: UUID, hours: int = 24) -> Dict[str, Any]:
         """Calculate uptime percentage for a component."""
-        cutoff_time = datetime.utcnow() - timedelta(hours=hours)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
         
         total_checks = self.db.query(HealthCheck).filter(
             and_(
@@ -182,7 +182,7 @@ class HealthCheckRepository(BaseRepository[HealthCheck]):
         self, component_id: UUID, hours: int = 24
     ) -> Dict[str, float]:
         """Get response time statistics for a component."""
-        cutoff_time = datetime.utcnow() - timedelta(hours=hours)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
         
         result = self.db.query(
             func.avg(HealthCheck.response_time_ms).label('avg'),
@@ -228,7 +228,7 @@ class SystemMetricRepository(BaseRepository[SystemMetric]):
             tags=tags or {},
             dimensions=dimensions or {},
             context=context or {},
-            timestamp=timestamp or datetime.utcnow()
+            timestamp=timestamp or datetime.now(timezone.utc)
         )
         self.db.add(metric)
         self.db.commit()
@@ -239,7 +239,7 @@ class SystemMetricRepository(BaseRepository[SystemMetric]):
         self, metric_name: str, hours: int = 24, limit: int = 1000
     ) -> List[SystemMetric]:
         """Get metrics by name within time range."""
-        cutoff_time = datetime.utcnow() - timedelta(hours=hours)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
         return self.db.query(SystemMetric).filter(
             and_(
                 SystemMetric.tenant_id == self.tenant_id,
@@ -250,7 +250,7 @@ class SystemMetricRepository(BaseRepository[SystemMetric]):
 
     async def get_metrics_by_source(self, source: str, hours: int = 24) -> List[SystemMetric]:
         """Get metrics by source within time range."""
-        cutoff_time = datetime.utcnow() - timedelta(hours=hours)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
         return self.db.query(SystemMetric).filter(
             and_(
                 SystemMetric.tenant_id == self.tenant_id,
@@ -263,7 +263,7 @@ class SystemMetricRepository(BaseRepository[SystemMetric]):
         self, metric_name: str, hours: int = 24
     ) -> Dict[str, float]:
         """Get statistical summary for a metric."""
-        cutoff_time = datetime.utcnow() - timedelta(hours=hours)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
         
         result = self.db.query(
             func.avg(SystemMetric.metric_value).label('avg'),
@@ -326,7 +326,7 @@ class PerformanceMetricRepository(BaseRepository[PerformanceMetric]):
             cache_misses=cache_misses,
             errors=errors or [],
             metadata=metadata or {},
-            timestamp=timestamp or datetime.utcnow()
+            timestamp=timestamp or datetime.now(timezone.utc)
         )
         self.db.add(metric)
         self.db.commit()
@@ -337,7 +337,7 @@ class PerformanceMetricRepository(BaseRepository[PerformanceMetric]):
         self, endpoint: str, hours: int = 24, limit: int = 1000
     ) -> List[PerformanceMetric]:
         """Get performance metrics for a specific endpoint."""
-        cutoff_time = datetime.utcnow() - timedelta(hours=hours)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
         return self.db.query(PerformanceMetric).filter(
             and_(
                 PerformanceMetric.tenant_id == self.tenant_id,
@@ -350,7 +350,7 @@ class PerformanceMetricRepository(BaseRepository[PerformanceMetric]):
         self, endpoint: str, hours: int = 24
     ) -> Dict[str, Any]:
         """Get performance statistics for an endpoint."""
-        cutoff_time = datetime.utcnow() - timedelta(hours=hours)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
         
         result = self.db.query(
             func.avg(PerformanceMetric.response_time_ms).label('avg_response_time'),
@@ -387,7 +387,7 @@ class PerformanceMetricRepository(BaseRepository[PerformanceMetric]):
 
     async def get_slow_requests(self, threshold_ms: float = 1000, hours: int = 24) -> List[PerformanceMetric]:
         """Get slow requests exceeding threshold."""
-        cutoff_time = datetime.utcnow() - timedelta(hours=hours)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
         return self.db.query(PerformanceMetric).filter(
             and_(
                 PerformanceMetric.tenant_id == self.tenant_id,
@@ -398,7 +398,7 @@ class PerformanceMetricRepository(BaseRepository[PerformanceMetric]):
 
     async def get_error_requests(self, hours: int = 24) -> List[PerformanceMetric]:
         """Get requests with error status codes."""
-        cutoff_time = datetime.utcnow() - timedelta(hours=hours)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
         return self.db.query(PerformanceMetric).filter(
             and_(
                 PerformanceMetric.tenant_id == self.tenant_id,
@@ -449,7 +449,7 @@ class MonitoringAlertRepository(BaseRepository[MonitoringAlert]):
             and_(MonitoringAlert.tenant_id == self.tenant_id, MonitoringAlert.id == alert_id)
         ).update({
             MonitoringAlert.is_resolved: True,
-            MonitoringAlert.resolved_at: datetime.utcnow(),
+            MonitoringAlert.resolved_at: datetime.now(timezone.utc),
             MonitoringAlert.resolution_notes: resolution_notes,
             MonitoringAlert.is_active: False
         })
@@ -459,7 +459,7 @@ class MonitoringAlertRepository(BaseRepository[MonitoringAlert]):
 
     async def get_alert_statistics(self, days: int = 7) -> Dict[str, Any]:
         """Get alert statistics for the specified period."""
-        cutoff_time = datetime.utcnow() - timedelta(days=days)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(days=days)
         
         total_alerts = self.db.query(MonitoringAlert).filter(
             and_(
@@ -544,7 +544,7 @@ class AlertEventRepository(BaseRepository[AlertEvent]):
 
     async def get_recent_events(self, hours: int = 24, limit: int = 100) -> List[AlertEvent]:
         """Get recent alert events."""
-        cutoff_time = datetime.utcnow() - timedelta(hours=hours)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
         return self.db.query(AlertEvent).filter(
             and_(
                 AlertEvent.tenant_id == self.tenant_id,

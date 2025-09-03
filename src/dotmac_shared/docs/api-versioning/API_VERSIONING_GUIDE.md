@@ -482,11 +482,11 @@ A: New features are only added to the latest API version. We recommend upgrading
 
 ## Resources
 
-- [API Changelog](/docs/changelog)
-- [Migration Guides](/docs/migrations)
-- [Deprecation Schedule](/docs/deprecations)
-- [Version Comparison](/docs/versions/compare)
-- [SDK Compatibility](/docs/sdks/compatibility)
+- `docs/changelog` (internal)
+- `docs/migrations` (internal)
+- `docs/deprecations` (internal)
+- `docs/versions/compare` (internal)
+- `docs/sdks/compatibility` (internal)
 
 ## Contact
 

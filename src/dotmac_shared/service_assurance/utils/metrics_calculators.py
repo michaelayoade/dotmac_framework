@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 class PerformanceMetrics:
     """Calculate performance metrics from time series data."""
 
-    def __init__(self, max_data_points: int = 10000):
+    def __init__(self, max_data_points: int = 10000, timezone):
         """Initialize performance metrics calculator."""
         self.max_data_points = max_data_points
 
@@ -243,7 +243,7 @@ class SLACalculator:
             }
 
         # Filter measurements to window
-        cutoff_time = datetime.utcnow() - timedelta(hours=measurement_window_hours)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=measurement_window_hours)
         windowed_measurements = [
             m
             for m in measurements
@@ -292,7 +292,7 @@ class SLACalculator:
             },
             "measurements_count": len(windowed_measurements),
             "measurement_window_hours": measurement_window_hours,
-            "evaluation_time": datetime.utcnow().isoformat(),
+            "evaluation_time": datetime.now(timezone.utc).isoformat(),
         }
 
     def calculate_sla_credits(
@@ -358,7 +358,7 @@ class TrafficAnalyzer:
             }
 
         # Filter to analysis window
-        cutoff_time = datetime.utcnow() - timedelta(hours=analysis_window_hours)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=analysis_window_hours)
         windowed_flows = [
             flow
             for flow in flow_records
@@ -456,7 +456,7 @@ class TrafficAnalyzer:
             }
 
         # Calculate baseline statistics
-        baseline_cutoff = datetime.utcnow() - timedelta(hours=baseline_window_hours)
+        baseline_cutoff = datetime.now(timezone.utc) - timedelta(hours=baseline_window_hours)
         baseline_flows = [
             flow
             for flow in flow_records
@@ -496,7 +496,7 @@ class TrafficAnalyzer:
         )
 
         # Check recent windows for anomalies
-        recent_cutoff = datetime.utcnow() - timedelta(
+        recent_cutoff = datetime.now(timezone.utc) - timedelta(
             minutes=detection_window_minutes * 3
         )
         recent_windows = [w for w in window_stats if w["window_start"] >= recent_cutoff]

@@ -408,7 +408,7 @@ class EnhancedTenantProvisioningService(TenantProvisioningService):
         """Deploy single application using existing ContainerProvisioner."""
 
         deployment_name = app_deployment.get_deployment_name(config.tenant_id)
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
 
         logger.info(
             f"Deploying {app_deployment.app_type}:{app_deployment.instance_name} using existing provisioner"

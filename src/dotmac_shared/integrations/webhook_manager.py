@@ -149,7 +149,7 @@ class WebhookProcessor:
         return {
             "event_id": event.id,
             "event_type": event.event_type,
-            "processed_at": datetime.utcnow().isoformat(),
+            "processed_at": datetime.now(timezone.utc).isoformat(),
             "handlers_executed": len(results),
             "results": results
         }
@@ -190,7 +190,7 @@ class WebhookManager:
             "failure_count": 0,
             "last_triggered": None,
             "created_by": str(user_id),
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.now(timezone.utc).isoformat()
         }
         
         self.endpoints[endpoint_id] = endpoint_config
@@ -244,7 +244,7 @@ class WebhookManager:
         if data.retry_config is not None:
             endpoint_config["retry_config"] = data.retry_config
             
-        endpoint_config["updated_at"] = datetime.utcnow().isoformat()
+        endpoint_config["updated_at"] = datetime.now(timezone.utc).isoformat()
         
         logger.info(f"Updated webhook endpoint: {endpoint_str}")
         return self._endpoint_to_response(endpoint_config)
@@ -264,7 +264,7 @@ class WebhookManager:
             
         if soft_delete:
             self.endpoints[endpoint_str]["active"] = False
-            self.endpoints[endpoint_str]["disabled_at"] = datetime.utcnow().isoformat()
+            self.endpoints[endpoint_str]["disabled_at"] = datetime.now(timezone.utc).isoformat()
         else:
             del self.endpoints[endpoint_str]
             
@@ -344,7 +344,7 @@ class WebhookManager:
         event = WebhookEvent(
             id=str(uuid4()),
             event_type=event_type,
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(timezone.utc).isoformat(),
             data=data,
             source=source,
             tenant_id=str(self.tenant_id)
@@ -372,13 +372,13 @@ class WebhookManager:
                     event_id=event.id,
                     url=endpoint_config["url"],
                     status_code=200,  # Would be actual HTTP status
-                    delivered_at=datetime.utcnow().isoformat(),
+                    delivered_at=datetime.now(timezone.utc).isoformat(),
                     attempt=1
                 )
                 
                 self.deliveries[delivery.id] = delivery
                 endpoint_config["success_count"] += 1
-                endpoint_config["last_triggered"] = datetime.utcnow().isoformat()
+                endpoint_config["last_triggered"] = datetime.now(timezone.utc).isoformat()
                 
                 delivery_results.append({
                     "endpoint": endpoint_config["name"],

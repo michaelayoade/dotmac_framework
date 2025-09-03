@@ -280,7 +280,7 @@ class EnhancedTenantService(TenantService):
             "tenant_id": str(tenant_id),
             "instance_name": instance_name,
             "success": True,
-            "removed_at": datetime.utcnow().isoformat(),
+            "removed_at": datetime.now(timezone.utc).isoformat(),
         }
 
     async def get_service_registry_status(self) -> Dict[str, Any]:
@@ -328,7 +328,7 @@ class EnhancedTenantService(TenantService):
                     for app in config.applications
                 ],
                 "shared_services": config.shared_services,
-                "created_at": datetime.utcnow().isoformat(),
+                "created_at": datetime.now(timezone.utc).isoformat(),
                 "created_by": created_by,
             },
             created_by=created_by,

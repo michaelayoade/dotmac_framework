@@ -345,7 +345,7 @@ async def convert_currency(
             converted_amount=converted_amount,
             converted_currency=conversion_request.to_currency,
             exchange_rate=exchange_rate.exchange_rate if exchange_rate else conversion_request.exchange_rate,
-            conversion_date=datetime.utcnow()
+            conversion_date=datetime.now(timezone.utc)
         )
     except ValueError as e:
         raise HTTPException(

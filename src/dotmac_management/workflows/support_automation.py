@@ -106,7 +106,7 @@ def categorize_ticket(self, ticket_data: Dict[str, Any]) -> Dict[str, Any]:
 
         estimated_hours = resolution_times.get(detected_priority, 72)
         estimated_resolution = (
-            datetime.utcnow() + timedelta(hours=estimated_hours)
+            datetime.now(timezone.utc) + timedelta(hours=estimated_hours)
         ).isoformat()
 
         categorization_result = {
@@ -117,7 +117,7 @@ def categorize_ticket(self, ticket_data: Dict[str, Any]) -> Dict[str, Any]:
             "confidence_score": max(category_score, priority_score),
             "estimated_resolution": estimated_resolution,
             "auto_responses": get_auto_responses(detected_category, detected_priority),
-            "categorized_at": datetime.utcnow().isoformat(),
+            "categorized_at": datetime.now(timezone.utc).isoformat(),
         }
 
         return categorization_result
@@ -208,7 +208,7 @@ def auto_respond_to_ticket(
         "ticket_id": ticket_id,
         "auto_response_sent": True,
         "response_message": response_message,
-        "sent_at": datetime.utcnow().isoformat(),
+        "sent_at": datetime.now(timezone.utc).isoformat(),
     }
 
 
@@ -235,7 +235,7 @@ def assign_to_team(self, categorization_result: Dict[str, Any]) -> Dict[str, Any
         "assigned_team": assigned_team,
         "assigned_agent": assigned_agent["agent_id"],
         "agent_name": assigned_agent["name"],
-        "assigned_at": datetime.utcnow().isoformat(),
+        "assigned_at": datetime.now(timezone.utc).isoformat(),
         "sla_deadline": calculate_sla_deadline(priority),
     }
 
@@ -306,7 +306,7 @@ def calculate_sla_deadline(priority: str) -> str:
     sla_hours = {"critical": 4, "high": 24, "normal": 72, "low": 168}
 
     hours = sla_hours.get(priority, 72)
-    deadline = datetime.utcnow() + timedelta(hours=hours)
+    deadline = datetime.now(timezone.utc) + timedelta(hours=hours)
     return deadline.isoformat()
 
 
@@ -343,7 +343,7 @@ def check_escalation() -> Dict[str, Any]:
         )
 
     return {
-        "check_time": datetime.utcnow().isoformat(),
+        "check_time": datetime.now(timezone.utc).isoformat(),
         "tickets_checked": len(tickets_near_deadline) + len(overdue_tickets),
         "escalated_count": len(escalated_tickets),
         "escalated_tickets": escalated_tickets,
@@ -357,7 +357,7 @@ def get_tickets_near_sla_deadline() -> List[Dict[str, Any]]:
         {
             "ticket_id": "TKT_001",
             "priority": "high",
-            "sla_deadline": (datetime.utcnow() + timedelta(hours=1)).isoformat(),
+            "sla_deadline": (datetime.now(timezone.utc) + timedelta(hours=1)).isoformat(),
             "assigned_agent": "AGT_TECH_001",
         }
     ]
@@ -370,7 +370,7 @@ def get_overdue_tickets() -> List[Dict[str, Any]]:
         {
             "ticket_id": "TKT_002",
             "priority": "critical",
-            "sla_deadline": (datetime.utcnow() - timedelta(hours=2)).isoformat(),
+            "sla_deadline": (datetime.now(timezone.utc) - timedelta(hours=2)).isoformat(),
             "assigned_agent": "AGT_TECH_002",
         }
     ]
@@ -407,7 +407,7 @@ def escalate_ticket(self, ticket_data: Dict[str, Any]) -> Dict[str, Any]:
         "escalated_from": current_priority,
         "escalated_to": new_priority,
         "escalated_team": escalated_team,
-        "escalated_at": datetime.utcnow().isoformat(),
+        "escalated_at": datetime.now(timezone.utc).isoformat(),
         "escalation_reason": ticket_data.get("reason", "sla_approach"),
     }
 
@@ -442,7 +442,7 @@ def notify_escalation(escalation_data: Dict[str, Any]):
         "ticket_id": ticket_id,
         "notifications_sent": len(recipients),
         "recipients": recipients,
-        "sent_at": datetime.utcnow().isoformat(),
+        "sent_at": datetime.now(timezone.utc).isoformat(),
     }
 
 
@@ -451,11 +451,11 @@ def analyze_support_metrics() -> Dict[str, Any]:
     """Analyze support team performance metrics"""
 
     # Calculate metrics for the last 24 hours
-    metrics_period_start = datetime.utcnow() - timedelta(days=1)
+    metrics_period_start = datetime.now(timezone.utc) - timedelta(days=1)
 
     metrics = {
         "period_start": metrics_period_start.isoformat(),
-        "period_end": datetime.utcnow().isoformat(),
+        "period_end": datetime.now(timezone.utc).isoformat(),
         "total_tickets": get_ticket_count(metrics_period_start),
         "resolved_tickets": get_resolved_ticket_count(metrics_period_start),
         "average_resolution_time": calculate_avg_resolution_time(metrics_period_start),
@@ -488,7 +488,7 @@ def analyze_support_metrics() -> Dict[str, Any]:
     metrics["alerts"] = alerts
 
     # Send metrics report to management
-    if alerts or datetime.utcnow().hour == 9:  # Daily report at 9 AM or when alerts
+    if alerts or datetime.now(timezone.utc).hour == 9:  # Daily report at 9 AM or when alerts
         send_support_metrics_report.delay(metrics)
 
     return metrics
@@ -548,7 +548,7 @@ def send_support_metrics_report(metrics: Dict[str, Any]):
     # report_html = generate_metrics_report_html(metrics)
     # email_service.send_html_email(
     #     to=['support_manager@example.com', 'operations@example.com'],
-    #     subject=f"Support Metrics Report - {datetime.utcnow().strftime('%Y-%m-%d')}",
+    #     subject=f"Support Metrics Report - {datetime.now(timezone.utc).strftime('%Y-%m-%d')}",
     #     html_body=report_html
     # )
 
@@ -556,7 +556,7 @@ def send_support_metrics_report(metrics: Dict[str, Any]):
         "report_sent": True,
         "metrics_included": list(metrics.keys()),
         "alerts_count": len(metrics.get("alerts", [])),
-        "sent_at": datetime.utcnow().isoformat(),
+        "sent_at": datetime.now(timezone.utc).isoformat(),
     }
 
 
@@ -587,7 +587,7 @@ def knowledge_base_update_suggestion(ticket_data: Dict[str, Any]) -> Dict[str, A
     return {
         "suggestions_count": len(suggestions),
         "suggestions": suggestions,
-        "analyzed_at": datetime.utcnow().isoformat(),
+        "analyzed_at": datetime.now(timezone.utc).isoformat(),
     }
 
 
@@ -619,5 +619,5 @@ def notify_kb_team(suggestions: List[Dict[str, Any]]):
     return {
         "notifications_sent": True,
         "suggestions_count": len(suggestions),
-        "sent_at": datetime.utcnow().isoformat(),
+        "sent_at": datetime.now(timezone.utc).isoformat(),
     }

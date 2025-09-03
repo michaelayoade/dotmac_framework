@@ -8,7 +8,7 @@ import { server } from '../mocks/server';
 
 // Configure React Testing Library
 configure({
-  testIdAttribute: 'data-testid'
+  testIdAttribute: 'data-testid',
 });
 
 // Global test utilities
@@ -21,11 +21,11 @@ global.testUtils = {
   isCI: () => process.env.CI === 'true',
 
   // Async utilities
-  waitFor: (ms: number) => new Promise(resolve => setTimeout(resolve, ms)),
+  waitFor: (ms: number) => new Promise((resolve) => setTimeout(resolve, ms)),
 
   // Mock data generators
   generateId: () => `test-${Math.random().toString(36).substr(2, 9)}`,
-  generateEmail: () => `test-${Date.now()}@example.com`
+  generateEmail: () => `test-${Date.now()}@example.com`,
 };
 
 // MSW Setup (Mock Service Worker)
@@ -73,14 +73,14 @@ afterAll(() => {
 global.IntersectionObserver = jest.fn(() => ({
   observe: jest.fn(),
   unobserve: jest.fn(),
-  disconnect: jest.fn()
+  disconnect: jest.fn(),
 }));
 
 // Mock ResizeObserver
 global.ResizeObserver = jest.fn(() => ({
   observe: jest.fn(),
   unobserve: jest.fn(),
-  disconnect: jest.fn()
+  disconnect: jest.fn(),
 }));
 
 // Fix JSDOM Storage issues
@@ -95,23 +95,23 @@ const mockStorage = () => {
       delete storage[key];
     }),
     clear: jest.fn(() => {
-      Object.keys(storage).forEach(key => delete storage[key]);
+      Object.keys(storage).forEach((key) => delete storage[key]);
     }),
     get length() {
       return Object.keys(storage).length;
     },
-    key: jest.fn((index) => Object.keys(storage)[index] || null)
+    key: jest.fn((index) => Object.keys(storage)[index] || null),
   };
 };
 
 Object.defineProperty(window, 'localStorage', {
   value: mockStorage(),
-  writable: true
+  writable: true,
 });
 
 Object.defineProperty(window, 'sessionStorage', {
   value: mockStorage(),
-  writable: true
+  writable: true,
 });
 
 // Mock crypto for secure random values
@@ -123,21 +123,21 @@ Object.defineProperty(window, 'crypto', {
       }
       return arr;
     }),
-    randomUUID: jest.fn(() => 
-      'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        const r = Math.random() * 16 | 0;
-        const v = c == 'x' ? r : (r & 0x3 | 0x8);
+    randomUUID: jest.fn(() =>
+      'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        const r = (Math.random() * 16) | 0;
+        const v = c == 'x' ? r : (r & 0x3) | 0x8;
         return v.toString(16);
       })
-    )
+    ),
   },
-  writable: true
+  writable: true,
 });
 
 // Mock matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
-  value: jest.fn().mockImplementation(query => ({
+  value: jest.fn().mockImplementation((query) => ({
     matches: false,
     media: query,
     onchange: null,
@@ -145,14 +145,14 @@ Object.defineProperty(window, 'matchMedia', {
     removeListener: jest.fn(), // deprecated
     addEventListener: jest.fn(),
     removeEventListener: jest.fn(),
-    dispatchEvent: jest.fn()
-  }))
+    dispatchEvent: jest.fn(),
+  })),
 });
 
 // Mock scrollTo
 Object.defineProperty(window, 'scrollTo', {
   value: jest.fn(),
-  writable: true
+  writable: true,
 });
 
 // Mock fetch for API requests
@@ -163,6 +163,6 @@ global.fetch = jest.fn(() =>
     json: () => Promise.resolve({}),
     text: () => Promise.resolve(''),
     headers: new Headers(),
-    clone: () => ({ json: () => Promise.resolve({}) })
+    clone: () => ({ json: () => Promise.resolve({}) }),
   })
 );

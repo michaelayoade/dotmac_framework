@@ -121,7 +121,7 @@ class TwilioSMSPlugin(OmnichannelCommunicationPlugin):
                         message_id=result_data.get("sid"),
                         status=MessageStatus.SENT,
                         provider_response=result_data,
-                        sent_at=datetime.utcnow().isoformat(),
+                        sent_at=datetime.now(timezone.utc).isoformat(),
                         metadata={
                             "provider": "twilio",
                             "channel_type": self.channel_type.value,
@@ -239,14 +239,14 @@ class TwilioSMSPlugin(OmnichannelCommunicationPlugin):
                         "webhook_configured": bool(self.webhook_url),
                         "current_messages": self.current_messages,
                         "max_concurrent": self.max_concurrent_messages,
-                        "timestamp": datetime.utcnow().isoformat(),
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
                     }
                 else:
                     return {
                         "status": "unhealthy",
                         "provider": "twilio",
                         "error": f"API returned {response.status_code}",
-                        "timestamp": datetime.utcnow().isoformat(),
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
                     }
 
         except Exception as e:
@@ -255,7 +255,7 @@ class TwilioSMSPlugin(OmnichannelCommunicationPlugin):
                 "status": "unhealthy",
                 "provider": "twilio",
                 "error": str(e),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
     async def handle_webhook(self, payload: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -272,7 +272,7 @@ class TwilioSMSPlugin(OmnichannelCommunicationPlugin):
                         "status": payload.get("MessageStatus"),
                         "error_code": payload.get("ErrorCode"),
                         "error_message": payload.get("ErrorMessage"),
-                        "timestamp": datetime.utcnow().isoformat(),
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
                         "provider": "twilio",
                         "raw_payload": payload,
                     }
@@ -287,7 +287,7 @@ class TwilioSMSPlugin(OmnichannelCommunicationPlugin):
                         "to": payload.get("To"),
                         "content": payload.get("Body"),
                         "message_id": payload.get("MessageSid"),
-                        "timestamp": datetime.utcnow().isoformat(),
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
                         "provider": "twilio",
                         "channel_type": (
                             "whatsapp"

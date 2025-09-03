@@ -1,0 +1,48 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🔍 Running pre-commit checks..."
+
+# Navigate to admin app directory
+cd frontend/isp-framework/admin
+
+# Check if there are staged files
+staged_files=$(git diff --cached --name-only --diff-filter=AM | grep -E '\.(ts|tsx|js|jsx)$' | head -20)
+
+if [ -z "$staged_files" ]; then
+  echo "ℹ️  No relevant staged files to check"
+  exit 0
+fi
+
+echo "📝 Staged files to check:"
+echo "$staged_files"
+
+# Run linting on staged files only
+echo "🧹 Linting staged files..."
+echo "$staged_files" | xargs pnpm eslint --fix
+
+# Run type checking
+echo "🔧 Running type check..."
+pnpm type-check
+
+# Run tests for changed files
+echo "🧪 Running tests..."
+npm test -- --passWithNoTests --findRelatedTests $staged_files
+
+# Check for secrets/sensitive data
+echo "🔐 Scanning for secrets..."
+secret_patterns="password|secret|key|token|api_key|private_key"
+secrets_found=$(echo "$staged_files" | xargs grep -i "$secret_patterns" | grep -v "// NOSONAR\|// nosec" || true)
+
+if [ ! -z "$secrets_found" ]; then
+  echo "❌ Potential secrets found in staged files:"
+  echo "$secrets_found"
+  echo ""
+  echo "If these are false positives, add '// NOSONAR' or '// nosec' comment"
+  exit 1
+fi
+
+# Stage any fixes made by linting
+git add $(echo "$staged_files" | tr '\n' ' ')
+
+echo "✅ Pre-commit checks passed!"

@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from ..models.partner import Commission, Partner, PartnerCustomer
 
 
-class CommissionTier(BaseModel):
+class CommissionTier(BaseModel, timezone):
     """Commission tier configuration"""
 
     id: str
@@ -102,7 +102,7 @@ class CommissionCalculator:
 
     def _add_audit(self, message: str) -> None:
         """Add message to audit trail"""
-        timestamp = datetime.utcnow().isoformat()
+        timestamp = datetime.now(timezone.utc).isoformat()
         self.audit_log.append(f"{timestamp}: {message}")
 
     def _get_tier(self, tier_id: str) -> CommissionTier:
@@ -238,7 +238,7 @@ class CommissionCalculator:
                 "contract_length_bonus": contract_length_bonus,
                 "promotional_adjustment": promotional_adjustment,
             },
-            calculated_at=datetime.utcnow(),
+            calculated_at=datetime.now(timezone.utc),
             audit_trail=list(self.audit_log),
         )
 
@@ -251,7 +251,7 @@ class CommissionCalculator:
     ) -> Commission:
         """Create commission record in database"""
 
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
 
         commission = Commission(
             partner_id=partner_id,
@@ -341,7 +341,7 @@ class CommissionCalculator:
             "calculated_at": commission_result.calculated_at.isoformat(),
         }
 
-        commission.updated_at = datetime.utcnow()
+        commission.updated_at = datetime.now(timezone.utc)
 
         db.commit()
         db.refresh(commission)
@@ -416,7 +416,7 @@ class CommissionCalculator:
                 # Determine if this is a new customer (activated in last 30 days)
                 is_new = (
                     customer.activated_at
-                    and customer.activated_at >= datetime.utcnow() - timedelta(days=30)
+                    and customer.activated_at >= datetime.now(timezone.utc) - timedelta(days=30)
                 )
                 result = self.calculate_customer_commission(
                     customer, partner, is_new_customer=is_new

@@ -20,7 +20,7 @@ from dotmac_isp.shared.exceptions import EntityNotFoundError as NotFoundError
 from dotmac_isp.shared.exceptions import ValidationError
 import math
 
-def haversine_distance(lat1, lon1, lat2, lon2):
+def haversine_distance(lat1, lon1, lat2, lon2, timezone):
     """Calculate distance between two points using haversine formula."""
     R = 6371  # Earth's radius in kilometers
     lat1_rad, lon1_rad = math.radians(lat1), math.radians(lon1)
@@ -99,10 +99,10 @@ class ServiceCoverageService(
         recommendations = await self._generate_recommendations(gaps, service_area)
 
         # Update service area with analysis results
-        service_area.last_analyzed_at = datetime.utcnow()
+        service_area.last_analyzed_at = datetime.now(timezone.utc)
         service_area.coverage_percentage = coverage_data.get("coverage_percentage", 0.0)
         service_area.analysis_metadata = {
-            "analysis_date": datetime.utcnow().isoformat(),
+            "analysis_date": datetime.now(timezone.utc).isoformat(),
             "parameters": request.analysis_parameters,
             "network_health_score": network_health.get("health_score", 0),
         }
@@ -174,7 +174,7 @@ class ServiceCoverageService(
         # sophisticated spatial analysis algorithms
         if coverage_data["coverage_percentage"] < 95.0:
             gap = {
-                "id": f"gap_{service_area.id}_{datetime.utcnow().timestamp()}",
+                "id": f"gap_{service_area.id}_{datetime.now(timezone.utc).timestamp()}",
                 "gap_type": "coverage_deficiency",
                 "severity": self._calculate_gap_severity(
                     coverage_data["coverage_percentage"]
@@ -204,7 +204,7 @@ class ServiceCoverageService(
         for gap in gaps:
             if gap["severity"] in ["high", "critical"]:
                 rec = {
-                    "id": f"rec_{service_area.id}_{datetime.utcnow().timestamp()}",
+                    "id": f"rec_{service_area.id}_{datetime.now(timezone.utc).timestamp()}",
                     "recommendation_type": "infrastructure_deployment",
                     "priority": gap["severity"],
                     "description": f"Deploy additional network infrastructure to address {gap['gap_type']}",
@@ -431,7 +431,7 @@ class RouteOptimizationService(
             optimization_type=request.optimization_type,
             vehicle_type=request.vehicle_type,
             constraints=request.constraints,
-            calculated_at=datetime.utcnow(),
+            calculated_at=datetime.now(timezone.utc),
         )
 
         # Perform route optimization

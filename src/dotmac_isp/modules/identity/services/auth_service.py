@@ -61,7 +61,7 @@ class AuthService(BaseService):
                 )
                 return None
 
-            if user.locked_until and user.locked_until > datetime.utcnow():
+            if user.locked_until and user.locked_until > datetime.now(timezone.utc):
                 await self._log_failed_attempt(
                     email=email,
                     reason="Account locked",
@@ -116,7 +116,7 @@ class AuthService(BaseService):
                 return None
             
             # Update last activity
-            session.last_activity = datetime.utcnow()
+            session.last_activity = datetime.now(timezone.utc)
             await self.db.commit()
             
             # Return updated session data
@@ -157,7 +157,7 @@ class AuthService(BaseService):
     ) -> Dict[str, Any]:
         """Create new user session."""
         session_id = self.session_manager.generate_session_id()
-        expires_at = datetime.utcnow() + timedelta(hours=8)
+        expires_at = datetime.now(timezone.utc) + timedelta(hours=8)
         
         session = await self.auth_repo.create_session(
             session_id=session_id,

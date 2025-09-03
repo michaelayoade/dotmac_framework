@@ -108,7 +108,7 @@ class DeviceInventoryManager:
             ]:
                 setattr(device, key, value)
 
-        device.updated_at = datetime.utcnow()
+        device.updated_at = datetime.now(timezone.utc)
         self.session.commit()
         return device
 
@@ -304,12 +304,12 @@ class DeviceInventoryManager:
             interface.oper_status = oper_status
         if input_rate is not None:
             interface.input_rate = input_rate
-            interface.last_input = datetime.utcnow()
+            interface.last_input = datetime.now(timezone.utc)
         if output_rate is not None:
             interface.output_rate = output_rate
-            interface.last_output = datetime.utcnow()
+            interface.last_output = datetime.now(timezone.utc)
 
-        interface.updated_at = datetime.utcnow()
+        interface.updated_at = datetime.now(timezone.utc)
         self.session.commit()
         return interface
 
@@ -422,7 +422,7 @@ class DeviceInventoryService:
         return {
             "device_id": device_id,
             "status": "decommissioned",
-            "decommissioned_at": datetime.utcnow().isoformat(),
+            "decommissioned_at": datetime.now(timezone.utc).isoformat(),
         }
 
     async def get_device_health_summary(self, device_id: str) -> Dict[str, Any]:
@@ -463,7 +463,7 @@ class DeviceInventoryService:
             "modules": module_summary,
             "last_updated": device.updated_at.isoformat(),
             "uptime_days": (
-                (datetime.utcnow() - device.created_at).days
+                (datetime.now(timezone.utc) - device.created_at).days
                 if device.install_date
                 else None
             ),

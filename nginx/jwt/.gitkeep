@@ -1,0 +1,2 @@
+# This directory contains JWT configuration files for Nginx
+# The actual JWT key should be generated during deployment

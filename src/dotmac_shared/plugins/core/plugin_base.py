@@ -164,7 +164,7 @@ class BasePlugin(ABC):
     def uptime(self) -> Optional[float]:
         """Get plugin uptime in seconds."""
         if self._initialized_at:
-            return (datetime.utcnow() - self._initialized_at).total_seconds()
+            return (datetime.now(timezone.utc) - self._initialized_at).total_seconds()
         return None
 
     # Lifecycle methods
@@ -190,7 +190,7 @@ class BasePlugin(ABC):
                 await self._initialize_plugin()
 
                 self.status = PluginStatus.ACTIVE
-                self._initialized_at = datetime.utcnow()
+                self._initialized_at = datetime.now(timezone.utc)
                 self.logger.info(f"Plugin {self.name} initialized successfully")
 
             except Exception as e:
@@ -313,12 +313,12 @@ class BasePlugin(ABC):
     def _record_success(self) -> None:
         """Record successful operation."""
         self._success_count += 1
-        self._last_activity = datetime.utcnow()
+        self._last_activity = datetime.now(timezone.utc)
 
     def _record_error(self) -> None:
         """Record failed operation."""
         self._error_count += 1
-        self._last_activity = datetime.utcnow()
+        self._last_activity = datetime.now(timezone.utc)
 
     # Abstract methods that plugins must implement
 

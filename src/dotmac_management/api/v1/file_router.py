@@ -25,6 +25,7 @@ from dotmac_shared.file_management.schemas import (
 
 from ...dependencies import get_current_user, get_file_service
 from ...services.file_service import FileService
+from datetime import timezone
 
 logger = logging.getLogger(__name__)
 
@@ -312,5 +313,5 @@ async def file_service_health():
     return {
         "status": "healthy",
         "service": "file_management",
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     }

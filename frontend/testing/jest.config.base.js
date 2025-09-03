@@ -26,14 +26,14 @@ module.exports = {
 
     // CSS/Asset mocks
     '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
-    '\\.(jpg|jpeg|png|gif|webp|svg)$': '<rootDir>/testing/mocks/fileMock.js'
+    '\\.(jpg|jpeg|png|gif|webp|svg)$': '<rootDir>/testing/mocks/fileMock.js',
   },
 
   // Test patterns (consistent across all apps)
   testMatch: [
     '<rootDir>/src/**/__tests__/**/*.{js,jsx,ts,tsx}',
     '<rootDir>/src/**/*.{test,spec}.{js,jsx,ts,tsx}',
-    '<rootDir>/tests/**/*.{test,spec}.{js,jsx,ts,tsx}'
+    '<rootDir>/tests/**/*.{test,spec}.{js,jsx,ts,tsx}',
   ],
 
   // Coverage configuration (DRY coverage standards)
@@ -42,7 +42,7 @@ module.exports = {
     '!src/**/*.d.ts',
     '!src/**/*.stories.{js,jsx,ts,tsx}',
     '!src/**/__tests__/**',
-    '!src/**/index.{js,jsx,ts,tsx}'
+    '!src/**/index.{js,jsx,ts,tsx}',
   ],
 
   coverageThreshold: {
@@ -50,21 +50,24 @@ module.exports = {
       branches: 70,
       functions: 70,
       lines: 70,
-      statements: 70
-    }
+      statements: 70,
+    },
   },
 
   // Transform configuration
   transform: {
-    '^.+\\.(js|jsx|ts|tsx)$': ['@swc/jest', {
-      jsc: {
-        transform: {
-          react: {
-            runtime: 'automatic'
-          }
-        }
-      }
-    }]
+    '^.+\\.(js|jsx|ts|tsx)$': [
+      '@swc/jest',
+      {
+        jsc: {
+          transform: {
+            react: {
+              runtime: 'automatic',
+            },
+          },
+        },
+      },
+    ],
   },
 
   // Module file extensions
@@ -74,18 +77,13 @@ module.exports = {
   testTimeout: 10000,
 
   // Watch mode configuration
-  watchPlugins: [
-    'jest-watch-typeahead/filename',
-    'jest-watch-typeahead/testname'
-  ],
+  watchPlugins: ['jest-watch-typeahead/filename', 'jest-watch-typeahead/testname'],
 
   // Transform ignore patterns - allow transforming faker
-  transformIgnorePatterns: [
-    'node_modules/(?!(@faker-js/faker)/)'
-  ],
+  transformIgnorePatterns: ['node_modules/(?!(@faker-js/faker)/)'],
 
   // Performance optimization
   maxWorkers: '50%',
   cache: true,
-  cacheDirectory: '<rootDir>/node_modules/.cache/jest'
+  cacheDirectory: '<rootDir>/node_modules/.cache/jest',
 };

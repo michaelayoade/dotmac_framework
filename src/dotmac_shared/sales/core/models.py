@@ -11,21 +11,7 @@ try:
     from sqlalchemy import Float, ForeignKey, Index, Integer, Numeric, String, Text
     from sqlalchemy.dialects.postgresql import UUID
     from sqlalchemy.ext.hybrid import hybrid_property
-    from sqlalchemy.orm import relationship
-
-    # Create independent base classes for sales package
-    try:
-        # Try to import shared base classes if available
-        from dotmac_shared.database.base import AuditMixin, StatusMixin, TenantModel
-        from dotmac_shared.database.mixins import AddressMixin, ContactMixin
-
-        SHARED_BASE_AVAILABLE = True
-    except ImportError:
-        SHARED_BASE_AVAILABLE = False
-
-    if not SHARED_BASE_AVAILABLE:
-        # Fallback for when shared database components aren't available
-        from sqlalchemy.ext.declarative import declarative_base
+    from sqlalchemy.orm import declarative_base, relationship
 
         Base = declarative_base()
 

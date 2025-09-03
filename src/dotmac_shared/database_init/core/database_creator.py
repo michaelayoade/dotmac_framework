@@ -154,7 +154,7 @@ class DatabaseCreator:
                     host=config.host,
                     port=config.port,
                     connection_string=connection_string,
-                    created_at=datetime.utcnow(),
+                    created_at=datetime.now(timezone.utc),
                     status="created",
                 )
 

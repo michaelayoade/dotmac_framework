@@ -1,0 +1,35 @@
+{
+  "name": "@dotmac/bundle-optimizer",
+  "version": "1.0.0",
+  "description": "Bundle optimization utilities for DotMac Frontend",
+  "main": "dist/index.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "clean": "rm -rf dist",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "webpack": "^5.95.0",
+    "webpack-bundle-analyzer": "^4.10.1",
+    "next": "^14.2.31",
+    "chalk": "^4.1.2",
+    "filesize": "^10.1.6",
+    "gzip-size": "^7.0.0",
+    "brotli-size": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.3",
+    "tsup": "^8.0.0"
+  },
+  "peerDependencies": {
+    "next": ">=14.0.0"
+  }
+}

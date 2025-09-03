@@ -79,7 +79,7 @@ class SmartCache:
             # Track access for prefetching intelligence
             self.access_patterns[namespace].append({
                 "key": key,
-                "timestamp": datetime.utcnow(),
+                "timestamp": datetime.now(timezone.utc),
                 "operation": "get"
             })
             
@@ -528,7 +528,7 @@ async def get_cache_health() -> Dict[str, Any]:
                 "partner_branding": branding_stats
             },
             "prefetch_queue_size": prefetch_strategy.prefetch_queue.qsize(),
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
         
         return health
@@ -538,7 +538,7 @@ async def get_cache_health() -> Dict[str, Any]:
         return {
             "healthy": False,
             "error": str(e),
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
 

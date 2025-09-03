@@ -8,7 +8,9 @@ import { test, expect, Page } from '@playwright/test';
 
 // Simple in-memory token forge for tests (simulated)
 function forgeToken(payload: Record<string, any>): string {
-  const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT', kid: 'test' })).toString('base64url');
+  const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT', kid: 'test' })).toString(
+    'base64url'
+  );
   const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
   // Signature is not verified in this mocked flow; append '-sig'
   const sig = 'signature';
@@ -16,7 +18,7 @@ function forgeToken(payload: Record<string, any>): string {
 }
 
 const portals = ['admin', 'customer', 'technician', 'reseller'] as const;
-type Portal = typeof portals[number];
+type Portal = (typeof portals)[number];
 
 // Generates a synthetic login page for a given portal and protocol
 function syntheticLoginHTML(portal: Portal) {
@@ -105,7 +107,11 @@ function syntheticLoginHTML(portal: Portal) {
 async function serveSynthetic(page: Page, portal: Portal) {
   await page.route('**/*', async (route) => {
     // Always fulfill with our synthetic login page
-    await route.fulfill({ status: 200, contentType: 'text/html', body: syntheticLoginHTML(portal) });
+    await route.fulfill({
+      status: 200,
+      contentType: 'text/html',
+      body: syntheticLoginHTML(portal),
+    });
   });
 }
 
@@ -116,10 +122,20 @@ test.describe('Multi-Portal SSO (mocked IdP)', () => {
     await page.getByRole('button', { name: /oidc/i }).focus();
     await page.keyboard.press('Enter');
     // Simulate IdP issuing token into storage
-    const now = Math.floor(Date.now()/1000);
-    const token = forgeToken({ iss: 'https://idp.test', aud: ['admin'], iat: now, exp: now + 3600, sub: 'user-1', roles: ['admin'] });
+    const now = Math.floor(Date.now() / 1000);
+    const token = forgeToken({
+      iss: 'https://idp.test',
+      aud: ['admin'],
+      iat: now,
+      exp: now + 3600,
+      sub: 'user-1',
+      roles: ['admin'],
+    });
     await page.evaluate((t) => {
-      localStorage.setItem('tenant:test', JSON.stringify({ token: t, roles: ['admin'], issuedAt: Date.now() }));
+      localStorage.setItem(
+        'tenant:test',
+        JSON.stringify({ token: t, roles: ['admin'], issuedAt: Date.now() })
+      );
     }, token);
     await expect(page.locator('#dashboard')).toBeVisible();
     await expect(page.locator('#role-info')).toContainText('admin');
@@ -129,10 +145,20 @@ test.describe('Multi-Portal SSO (mocked IdP)', () => {
     await serveSynthetic(page, 'customer');
     await page.goto('http://localhost:3001/customer/login');
     await page.getByRole('button', { name: /saml/i }).click();
-    const now = Math.floor(Date.now()/1000);
-    const token = forgeToken({ iss: 'https://idp.test', aud: ['customer'], iat: now, exp: now + 3600, sub: 'user-2', roles: ['customer'] });
+    const now = Math.floor(Date.now() / 1000);
+    const token = forgeToken({
+      iss: 'https://idp.test',
+      aud: ['customer'],
+      iat: now,
+      exp: now + 3600,
+      sub: 'user-2',
+      roles: ['customer'],
+    });
     await page.evaluate((t) => {
-      localStorage.setItem('tenant:test', JSON.stringify({ token: t, roles: ['customer'], issuedAt: Date.now() }));
+      localStorage.setItem(
+        'tenant:test',
+        JSON.stringify({ token: t, roles: ['customer'], issuedAt: Date.now() })
+      );
     }, token);
     await expect(page.locator('#dashboard')).toBeVisible();
     await expect(page.locator('#role-info')).toContainText('customer');
@@ -141,10 +167,20 @@ test.describe('Multi-Portal SSO (mocked IdP)', () => {
   test('RBAC: allow technician role, deny reseller content', async ({ page }) => {
     await serveSynthetic(page, 'technician');
     await page.goto('http://localhost:3002/technician/login');
-    const now = Math.floor(Date.now()/1000);
-    const token = forgeToken({ iss: 'https://idp.test', aud: ['technician'], iat: now, exp: now + 3600, sub: 'user-3', roles: ['technician'] });
+    const now = Math.floor(Date.now() / 1000);
+    const token = forgeToken({
+      iss: 'https://idp.test',
+      aud: ['technician'],
+      iat: now,
+      exp: now + 3600,
+      sub: 'user-3',
+      roles: ['technician'],
+    });
     await page.evaluate((t) => {
-      localStorage.setItem('tenant:test', JSON.stringify({ token: t, roles: ['technician'], issuedAt: Date.now() }));
+      localStorage.setItem(
+        'tenant:test',
+        JSON.stringify({ token: t, roles: ['technician'], issuedAt: Date.now() })
+      );
     }, token);
     await expect(page.locator('#dashboard')).toBeVisible();
     await expect(page.locator('#role-info')).toContainText('technician');
@@ -158,10 +194,20 @@ test.describe('Multi-Portal SSO (mocked IdP)', () => {
   test('Security: expired token forces re-auth', async ({ page }) => {
     await serveSynthetic(page, 'admin');
     await page.goto('http://localhost:3000/admin/login');
-    const past = Math.floor(Date.now()/1000) - 10;
-    const token = forgeToken({ iss: 'https://idp.test', aud: ['admin'], iat: past - 60, exp: past, sub: 'user-4', roles: ['admin'] });
+    const past = Math.floor(Date.now() / 1000) - 10;
+    const token = forgeToken({
+      iss: 'https://idp.test',
+      aud: ['admin'],
+      iat: past - 60,
+      exp: past,
+      sub: 'user-4',
+      roles: ['admin'],
+    });
     await page.evaluate((t) => {
-      localStorage.setItem('tenant:test', JSON.stringify({ token: t, roles: ['admin'], issuedAt: Date.now() }));
+      localStorage.setItem(
+        'tenant:test',
+        JSON.stringify({ token: t, roles: ['admin'], issuedAt: Date.now() })
+      );
     }, token);
     // The synthetic app validates on load and will not show dashboard if expired
     await expect(page.locator('#dashboard')).toBeHidden();
@@ -170,21 +216,43 @@ test.describe('Multi-Portal SSO (mocked IdP)', () => {
   test('Security: invalid audience rejected', async ({ page }) => {
     await serveSynthetic(page, 'customer');
     await page.goto('http://localhost:3001/customer/login');
-    const now = Math.floor(Date.now()/1000);
-    const token = forgeToken({ iss: 'https://idp.test', aud: ['wrong-aud'], iat: now, exp: now + 3600, sub: 'user-5', roles: ['customer'] });
+    const now = Math.floor(Date.now() / 1000);
+    const token = forgeToken({
+      iss: 'https://idp.test',
+      aud: ['wrong-aud'],
+      iat: now,
+      exp: now + 3600,
+      sub: 'user-5',
+      roles: ['customer'],
+    });
     await page.evaluate((t) => {
-      localStorage.setItem('tenant:test', JSON.stringify({ token: t, roles: ['customer'], issuedAt: Date.now() }));
+      localStorage.setItem(
+        'tenant:test',
+        JSON.stringify({ token: t, roles: ['customer'], issuedAt: Date.now() })
+      );
     }, token);
     await expect(page.locator('#dashboard')).toBeHidden();
   });
 
-  test('Cross-portal session: login once and access another authorized portal', async ({ page }) => {
+  test('Cross-portal session: login once and access another authorized portal', async ({
+    page,
+  }) => {
     await serveSynthetic(page, 'admin');
     await page.goto('http://localhost:3000/admin/login');
-    const now = Math.floor(Date.now()/1000);
-    const token = forgeToken({ iss: 'https://idp.test', aud: ['admin','customer'], iat: now, exp: now + 3600, sub: 'user-6', roles: ['admin','customer'] });
+    const now = Math.floor(Date.now() / 1000);
+    const token = forgeToken({
+      iss: 'https://idp.test',
+      aud: ['admin', 'customer'],
+      iat: now,
+      exp: now + 3600,
+      sub: 'user-6',
+      roles: ['admin', 'customer'],
+    });
     await page.evaluate((t) => {
-      localStorage.setItem('tenant:test', JSON.stringify({ token: t, roles: ['admin','customer'], issuedAt: Date.now() }));
+      localStorage.setItem(
+        'tenant:test',
+        JSON.stringify({ token: t, roles: ['admin', 'customer'], issuedAt: Date.now() })
+      );
     }, token);
     await expect(page.locator('#dashboard')).toBeVisible();
     // Switch to customer
@@ -199,10 +267,20 @@ test.describe('Multi-Portal SSO (mocked IdP)', () => {
     await page.goto('http://localhost:3003/reseller/login');
     await page.click('#oidc');
     // Issue a valid token quickly
-    const now = Math.floor(Date.now()/1000);
-    const token = forgeToken({ iss: 'https://idp.test', aud: ['reseller'], iat: now, exp: now + 3600, sub: 'user-7', roles: ['reseller'] });
+    const now = Math.floor(Date.now() / 1000);
+    const token = forgeToken({
+      iss: 'https://idp.test',
+      aud: ['reseller'],
+      iat: now,
+      exp: now + 3600,
+      sub: 'user-7',
+      roles: ['reseller'],
+    });
     await page.evaluate((t) => {
-      localStorage.setItem('tenant:test', JSON.stringify({ token: t, roles: ['reseller'], issuedAt: Date.now() }));
+      localStorage.setItem(
+        'tenant:test',
+        JSON.stringify({ token: t, roles: ['reseller'], issuedAt: Date.now() })
+      );
     }, token);
     // Wait for dashboard visible and read perf marker
     await expect(page.locator('#dashboard')).toBeVisible();
@@ -232,4 +310,3 @@ test.describe('Multi-Portal SSO (mocked IdP)', () => {
     await expect(page.getByRole('alert')).toContainText('access_denied');
   });
 });
-

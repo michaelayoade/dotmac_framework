@@ -428,9 +428,9 @@ class ProjectService:
         if start_date and end_date:
             date_range = (start_date, end_date)
         elif start_date:
-            date_range = (start_date, datetime.utcnow())
+            date_range = (start_date, datetime.now(timezone.utc))
         elif end_date:
-            date_range = (datetime.utcnow() - timedelta(days=30), end_date)
+            date_range = (datetime.now(timezone.utc) - timedelta(days=30), end_date)
 
         filters = {}
         if date_range:

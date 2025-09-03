@@ -64,7 +64,7 @@ class AuthenticationMiddleware:
             )
 
             # Check expiration
-            if payload.get("exp", 0) < datetime.utcnow().timestamp():
+            if payload.get("exp", 0) < datetime.now(timezone.utc).timestamp():
                 return None
 
             return payload
@@ -92,7 +92,7 @@ class AuthenticationMiddleware:
             content={
                 "error": "authentication_failed",
                 "message": reason,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             },
             headers={"WWW-Authenticate": "Bearer"},
         )

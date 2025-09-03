@@ -224,7 +224,7 @@ class WorkflowAnalyticsRouter:
         
         timeline = [
             {
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "event_type": "workflow_started",
                 "status": "running",
                 "step_name": "initialization",
@@ -232,7 +232,7 @@ class WorkflowAnalyticsRouter:
                 "details": "Workflow execution started",
             },
             {
-                "timestamp": (datetime.utcnow() + timedelta(seconds=30)).isoformat(),
+                "timestamp": (datetime.now(timezone.utc) + timedelta(seconds=30)).isoformat(),
                 "event_type": "step_completed",
                 "status": "completed",
                 "step_name": "validation",
@@ -240,7 +240,7 @@ class WorkflowAnalyticsRouter:
                 "details": "Input validation completed successfully",
             },
             {
-                "timestamp": (datetime.utcnow() + timedelta(minutes=2)).isoformat(),
+                "timestamp": (datetime.now(timezone.utc) + timedelta(minutes=2)).isoformat(),
                 "event_type": "step_completed", 
                 "status": "completed",
                 "step_name": "processing",
@@ -248,7 +248,7 @@ class WorkflowAnalyticsRouter:
                 "details": "Main processing logic completed",
             },
             {
-                "timestamp": (datetime.utcnow() + timedelta(minutes=2, seconds=15)).isoformat(),
+                "timestamp": (datetime.now(timezone.utc) + timedelta(minutes=2, seconds=15)).isoformat(),
                 "event_type": "workflow_completed",
                 "status": "completed",
                 "step_name": "finalization",
@@ -280,8 +280,8 @@ class WorkflowAnalyticsRouter:
             # Get metrics for specific workflow type
             metrics = await self.analytics_service.get_workflow_metrics(
                 workflow_type,
-                datetime.utcnow() - timedelta(days=period_days),
-                datetime.utcnow(),
+                datetime.now(timezone.utc) - timedelta(days=period_days),
+                datetime.now(timezone.utc),
                 tenant_context.get("tenant_id")
             )
             
@@ -380,8 +380,8 @@ class WorkflowAnalyticsRouter:
         failure_analysis = {
             "period": {
                 "days": period_days,
-                "start": (datetime.utcnow() - timedelta(days=period_days)).isoformat(),
-                "end": datetime.utcnow().isoformat(),
+                "start": (datetime.now(timezone.utc) - timedelta(days=period_days)).isoformat(),
+                "end": datetime.now(timezone.utc).isoformat(),
             },
             "overview": {
                 "total_failures": 45,

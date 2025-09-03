@@ -665,7 +665,7 @@ class ScalingAdvisor:
         self._historical_recommendations[container_id].append(recommendation)
 
         # Keep only recent recommendations (last 30 days)
-        cutoff_time = datetime.utcnow() - timedelta(days=30)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(days=30)
         self._historical_recommendations[container_id] = [
             rec
             for rec in self._historical_recommendations[container_id]
@@ -679,7 +679,7 @@ class ScalingAdvisor:
         if container_id not in self._historical_recommendations:
             return []
 
-        cutoff_time = datetime.utcnow() - timedelta(days=days)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(days=days)
         return [
             rec
             for rec in self._historical_recommendations[container_id]

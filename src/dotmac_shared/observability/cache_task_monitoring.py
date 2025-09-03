@@ -627,14 +627,29 @@ def monitored_task_processing(
     return decorator
 
 
-# Global monitoring instances
-cache_monitor = CacheMonitor()
-task_monitor = TaskMonitor()
+# Global monitoring instances - lazy initialization to avoid event loop issues
+cache_monitor = None
+task_monitor = None
+
+def get_cache_monitor():
+    """Get or create cache monitor instance."""
+    global cache_monitor
+    if cache_monitor is None:
+        cache_monitor = CacheMonitor()
+    return cache_monitor
+
+def get_task_monitor():
+    """Get or create task monitor instance."""
+    global task_monitor
+    if task_monitor is None:
+        task_monitor = TaskMonitor()
+    return task_monitor
 
 # Convenience functions
 def record_cache_hit(backend: str, cache_key: str, tenant_id: Optional[str] = None):
     """Record cache hit."""
-    pattern = cache_monitor.get_key_pattern(cache_key)
+    monitor = get_cache_monitor()
+    pattern = monitor.get_key_pattern(cache_key)
     cache_key_type = pattern.key_type if pattern else "unknown"
     
     CACHE_HITS.labels(
@@ -645,7 +660,8 @@ def record_cache_hit(backend: str, cache_key: str, tenant_id: Optional[str] = No
 
 def record_cache_miss(backend: str, cache_key: str, tenant_id: Optional[str] = None):
     """Record cache miss."""
-    pattern = cache_monitor.get_key_pattern(cache_key)
+    monitor = get_cache_monitor()
+    pattern = monitor.get_key_pattern(cache_key)
     cache_key_type = pattern.key_type if pattern else "unknown"
     
     CACHE_MISSES.labels(

@@ -85,13 +85,13 @@ class MetricHistory:
     def add_value(self, value: float, timestamp: Optional[datetime] = None):
         """Add a metric value with timestamp."""
         if timestamp is None:
-            timestamp = datetime.utcnow()
+            timestamp = datetime.now(timezone.utc)
         self.values.append(value)
         self.timestamps.append(timestamp)
     
     def get_recent_values(self, minutes: int = 60) -> List[float]:
         """Get values from the last N minutes."""
-        cutoff = datetime.utcnow() - timedelta(minutes=minutes)
+        cutoff = datetime.now(timezone.utc) - timedelta(minutes=minutes)
         recent_values = []
         for i, timestamp in enumerate(self.timestamps):
             if timestamp >= cutoff:

@@ -370,13 +370,13 @@ class ProvisioningResult(BaseModel):
 
     def add_log(self, message: str, level: str = "INFO") -> None:
         """Add a log entry with timestamp."""
-        timestamp = datetime.utcnow().isoformat()
+        timestamp = datetime.now(timezone.utc).isoformat()
         log_entry = f"[{timestamp}] {level}: {message}"
         self.provisioning_logs.append(log_entry)
 
     def mark_completed(self, success: bool = True) -> None:
         """Mark provisioning as completed."""
-        self.end_time = datetime.utcnow()
+        self.end_time = datetime.now(timezone.utc)
         self.success = success
         self.status = DeploymentStatus.READY if success else DeploymentStatus.FAILED
 

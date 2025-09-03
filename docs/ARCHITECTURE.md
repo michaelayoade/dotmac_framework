@@ -13,12 +13,69 @@
 
 ## System Overview
 
-DotMac is a enterprise-grade SaaS platform designed for Internet Service Providers (ISPs) to manage their operations, customers, and infrastructure. The platform employs a **container-per-tenant** architecture ensuring complete data isolation and security.
+DotMac is a comprehensive **Multi-App SaaS Platform** that enables organizations to deploy and manage multiple business applications from a single unified platform. Each tenant can subscribe to various applications (ISP management, CRM, E-commerce, Project Management, etc.) with unified user management and cross-app permissions.
+
+### Multi-App Platform Architecture
+
+#### 1. Management Platform (`dotmac_management`)
+The **global orchestration layer** that manages the entire multi-app ecosystem:
+- **Multi-app orchestration**: Provisions and manages tenant containers with multiple applications
+- **Application catalog**: Manages available apps (ISP Framework, CRM, E-commerce, etc.)
+- **Cross-app licensing**: Controls app subscriptions and feature access per tenant
+- **Unified billing**: Handles subscriptions across all applications
+- **Resource management**: Allocates compute, storage, and network resources per tenant
+- **Platform monitoring**: Aggregates metrics across all tenants and applications
+- **Partner ecosystem**: Manages resellers, integrations, and commission structures
+
+#### 2. Tenant Container (`tenant-{org}`)
+Each **tenant organization** receives a containerized environment with:
+- **Multiple applications**: Subscribed apps deployed in the same tenant container
+- **Unified user management**: Single sign-on and cross-app permissions
+- **Tenant super admin**: Can manage users and permissions across all subscribed apps
+- **Complete isolation**: Each tenant's data and users are completely isolated
+- **App-level RBAC**: Granular permissions within and across applications
+
+## Multi-App Tenant Example
+
+### ABC Corporation Tenant
+```
+ABC Corp (tenant-abc-corp.dotmac.app)
+├── 👥 UNIFIED USER MANAGEMENT
+│   ├── Super Admin (John Smith) → Access to ALL subscribed apps
+│   ├── IT Manager (Sarah) → ISP + CRM access
+│   ├── Sales Rep (Mike) → CRM + E-commerce access
+│   ├── Customer (Jane) → ISP customer portal + E-commerce shopping
+│   └── Field Tech (Tom) → ISP mobile app only
+│
+├── 🌐 ISP FRAMEWORK APP (subscribed)
+│   ├── Network Management
+│   ├── Customer Portal
+│   ├── Technician Mobile App
+│   └── ISP Admin Dashboard
+│
+├── 📞 CRM APP (subscribed)
+│   ├── Sales Pipeline
+│   ├── Lead Management
+│   ├── Customer Relations
+│   └── Reporting Dashboard
+│
+├── 🛒 E-COMMERCE APP (subscribed)
+│   ├── Online Store
+│   ├── Inventory Management
+│   ├── Order Processing
+│   └── Vendor Portal
+│
+└── 📋 PROJECT MANAGEMENT (not subscribed)
+    └── [Upgrade to access]
+```
 
 ### Key Characteristics
 
-- **Multi-tenant SaaS**: Isolated tenant environments with shared infrastructure
-- **Modular Monolith**: Service-oriented design within a monolithic deployment
+- **Multi-app SaaS**: Organizations subscribe to multiple applications from our catalog
+- **Unified tenant management**: Single container hosts multiple apps with shared user management
+- **Cross-app permissions**: Users can have roles across multiple applications
+- **Tenant super admin**: Full RBAC control within their organization's subscriptions
+- **Complete isolation**: Tenant data never crosses organizational boundaries
 - **Cloud-Native**: Kubernetes-ready with horizontal scaling capabilities
 - **Enterprise Security**: SSL/TLS encryption, rate limiting, and automated failover
 
@@ -38,6 +95,17 @@ DotMac is a enterprise-grade SaaS platform designed for Internet Service Provide
 - **Interface Segregation**: Focused interfaces for specific operations
 - **Dependency Inversion**: Core business logic independent of infrastructure
 
+### 2.2 Core Design Patterns
+
+- **Repository Pattern**: Data access abstraction
+- **Service Layer**: Business logic encapsulation
+- **Factory Pattern**: Object creation management
+- **Observer Pattern**: Event-driven communication
+- **Strategy Pattern**: Pluggable implementations
+- **Circuit Breaker**: Fault tolerance
+- **Feature Toggle Pattern**: License-based feature activation
+- **Decorator Pattern**: Feature access control via decorators
+
 ### 3. Security by Design
 
 - **Zero Trust**: All communications encrypted and authenticated
@@ -46,6 +114,45 @@ DotMac is a enterprise-grade SaaS platform designed for Internet Service Provide
 - **Audit Trail**: Comprehensive logging and monitoring
 
 ## Component Architecture
+
+### 3.1 Multi-App Platform Architecture
+
+The Management Platform orchestrates multiple applications across tenant containers:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                Management Platform                       │
+│         (Global Multi-App Orchestration)                │
+├─────────────────────────────────────────────────────────┤
+│  App Catalog  │  License Manager  │  Tenant Provisioning │
+│  - ISP Framework                   │  - Container Mgmt    │
+│  - CRM System     │  - App Access  │  - Resource Allocation│
+│  - E-commerce     │  - Feature Flags│  - User Management  │
+│  - Project Mgmt   │  - Usage Limits│  - Billing Integration│
+└─────────────────────────────────────────────────────────┘
+                    │ Provisions & Manages │
+     ┌──────────────┼─────────────┼──────────────┐
+     ▼              ▼             ▼              ▼
+┌────────────┐ ┌────────────┐ ┌────────────┐ ┌────────────┐
+│ ABC Corp   │ │ XYZ ISP    │ │ DEF Corp   │ │ GHI Ltd    │
+│ Tenant     │ │ Tenant     │ │ Tenant     │ │ Tenant     │
+├────────────┤ ├────────────┤ ├────────────┤ ├────────────┤
+│🌐 ISP App  │ │🌐 ISP App  │ │📞 CRM App  │ │🌐 ISP App  │
+│📞 CRM App  │ │📋 Projects │ │🛒 E-comm   │ │🛒 E-comm   │
+│🛒 E-comm   │ │            │ │📋 Projects │ │📞 CRM App  │
+│👥 Users    │ │👥 Users    │ │👥 Users    │ │👥 Users    │
+│🛡️ RBAC     │ │🛡️ RBAC     │ │🛡️ RBAC     │ │🛡️ RBAC     │
+└────────────┘ └────────────┘ └────────────┘ └────────────┘
+```
+
+**Key Components:**
+- **App Catalog**: Available applications (ISP, CRM, E-commerce, etc.)
+- **Cross-app licensing**: Tenants subscribe to specific apps
+- **Unified user management**: Single sign-on across subscribed apps
+- **Tenant super admin**: Full RBAC control within organization
+- **Dynamic provisioning**: Apps activated based on subscriptions
+
+### 3.2 High-Level Architecture
 
 ```mermaid
 graph TB

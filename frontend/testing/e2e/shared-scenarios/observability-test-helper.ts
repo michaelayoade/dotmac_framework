@@ -58,7 +58,7 @@ export interface ObservabilityTestScenario {
 
 export class ObservabilityTestHelper {
   private mockTelemetryEndpoint = 'http://localhost:8060';
-  
+
   constructor(private page: any) {}
 
   async setup() {
@@ -66,37 +66,37 @@ export class ObservabilityTestHelper {
     await this.page.route('**/api/telemetry/logs', async (route: any) => {
       const request = route.request();
       const logData = request.postDataJSON();
-      
+
       // Validate log structure
       const response = await this.validateLogEntry(logData);
       await route.fulfill({
         status: response.status,
         contentType: 'application/json',
-        body: JSON.stringify(response.body)
+        body: JSON.stringify(response.body),
       });
     });
 
     await this.page.route('**/api/telemetry/metrics', async (route: any) => {
       const request = route.request();
       const metricData = request.postDataJSON();
-      
+
       const response = await this.validateMetricEntry(metricData);
       await route.fulfill({
         status: response.status,
         contentType: 'application/json',
-        body: JSON.stringify(response.body)
+        body: JSON.stringify(response.body),
       });
     });
 
     await this.page.route('**/api/telemetry/traces', async (route: any) => {
       const request = route.request();
       const traceData = request.postDataJSON();
-      
+
       const response = await this.validateTraceEntry(traceData);
       await route.fulfill({
         status: response.status,
         contentType: 'application/json',
-        body: JSON.stringify(response.body)
+        body: JSON.stringify(response.body),
       });
     });
 
@@ -105,7 +105,7 @@ export class ObservabilityTestHelper {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ status: 'success' })
+        body: JSON.stringify({ status: 'success' }),
       });
     });
 
@@ -113,7 +113,7 @@ export class ObservabilityTestHelper {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ status: 'success' })
+        body: JSON.stringify({ status: 'success' }),
       });
     });
 
@@ -136,7 +136,7 @@ export class ObservabilityTestHelper {
     const testActions = [
       { action: 'login', element: '[data-testid="login-button"]' },
       { action: 'navigate', element: '[data-testid="dashboard-link"]' },
-      { action: 'view_data', element: '[data-testid="data-table"]' }
+      { action: 'view_data', element: '[data-testid="data-table"]' },
     ];
 
     const capturedLogs: LogEntry[] = [];
@@ -144,17 +144,17 @@ export class ObservabilityTestHelper {
     // Monitor log calls
     await this.page.route('**/api/telemetry/logs', async (route: any) => {
       const logEntry = route.request().postDataJSON();
-      
+
       // Validate tenant scoping
       if (logEntry.tenantId === tenantId) {
         capturedLogs.push(logEntry);
         console.log(`✓ Captured tenant-scoped log: ${logEntry.message}`);
       }
-      
+
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ status: 'logged' })
+        body: JSON.stringify({ status: 'logged' }),
       });
     });
 
@@ -163,15 +163,14 @@ export class ObservabilityTestHelper {
       try {
         if (await this.page.locator(testAction.element).isVisible()) {
           await this.page.click(testAction.element);
-          
+
           // Verify log was generated with correct tenant context
           await this.page.waitForTimeout(1000);
-          
-          const relevantLogs = capturedLogs.filter(log => 
-            log.tenantId === tenantId && 
-            log.metadata?.action === testAction.action
+
+          const relevantLogs = capturedLogs.filter(
+            (log) => log.tenantId === tenantId && log.metadata?.action === testAction.action
           );
-          
+
           expect(relevantLogs.length).toBeGreaterThan(0);
         }
       } catch (error) {
@@ -210,24 +209,27 @@ export class ObservabilityTestHelper {
     await this.page.route('**/api/telemetry/**', async (route: any) => {
       const telemetryData = route.request().postDataJSON();
       const telemetryType = route.request().url().split('/').pop();
-      
+
       capturedTelemetry.push({
         type: telemetryType,
-        data: telemetryData
+        data: telemetryData,
       });
-      
+
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ status: 'received' })
+        body: JSON.stringify({ status: 'received' }),
       });
     });
 
     // Perform user journey that spans multiple operations
     const userJourney = [
       { action: 'page_load', trigger: () => this.page.reload() },
-      { action: 'form_interaction', trigger: () => this.page.click('[data-testid="search-input"]') },
-      { action: 'api_call', trigger: () => this.page.click('[data-testid="refresh-button"]') }
+      {
+        action: 'form_interaction',
+        trigger: () => this.page.click('[data-testid="search-input"]'),
+      },
+      { action: 'api_call', trigger: () => this.page.click('[data-testid="refresh-button"]') },
     ];
 
     for (const step of userJourney) {
@@ -241,16 +243,16 @@ export class ObservabilityTestHelper {
 
     // Verify correlation ID propagation
     const logsWithCorrelation = capturedTelemetry
-      .filter(item => item.type === 'logs')
-      .filter(item => item.data.correlationId === correlationId);
+      .filter((item) => item.type === 'logs')
+      .filter((item) => item.data.correlationId === correlationId);
 
     const metricsWithCorrelation = capturedTelemetry
-      .filter(item => item.type === 'metrics')
-      .filter(item => item.data.tags?.correlationId === correlationId);
+      .filter((item) => item.type === 'metrics')
+      .filter((item) => item.data.tags?.correlationId === correlationId);
 
     const tracesWithCorrelation = capturedTelemetry
-      .filter(item => item.type === 'traces')
-      .filter(item => item.data.tags?.correlationId === correlationId);
+      .filter((item) => item.type === 'traces')
+      .filter((item) => item.data.tags?.correlationId === correlationId);
 
     expect(logsWithCorrelation.length).toBeGreaterThan(0);
     console.log(`✓ Correlation ID found in ${logsWithCorrelation.length} log entries`);
@@ -268,24 +270,32 @@ export class ObservabilityTestHelper {
 
     await this.page.route('**/api/telemetry/metrics', async (route: any) => {
       const metricData = route.request().postDataJSON();
-      
+
       if (metricData.tags?.tenantId === tenantId) {
         capturedMetrics.push(metricData);
         console.log(`✓ Captured tenant metric: ${metricData.name} = ${metricData.value}`);
       }
-      
+
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ status: 'recorded' })
+        body: JSON.stringify({ status: 'recorded' }),
       });
     });
 
     // Trigger actions that should generate metrics
     const metricGeneratingActions = [
       { action: 'page_view', element: 'body', expectedMetric: 'page.view' },
-      { action: 'button_click', element: '[data-testid="action-button"]', expectedMetric: 'user.interaction' },
-      { action: 'form_submit', element: '[data-testid="test-form"]', expectedMetric: 'form.submission' }
+      {
+        action: 'button_click',
+        element: '[data-testid="action-button"]',
+        expectedMetric: 'user.interaction',
+      },
+      {
+        action: 'form_submit',
+        element: '[data-testid="test-form"]',
+        expectedMetric: 'form.submission',
+      },
     ];
 
     for (const action of metricGeneratingActions) {
@@ -296,15 +306,15 @@ export class ObservabilityTestHelper {
         } else if (await this.page.locator(action.element).isVisible()) {
           await this.page.click(action.element);
         }
-        
+
         await this.page.waitForTimeout(1000);
-        
+
         // Verify metric was captured with tenant tag
-        const relevantMetrics = capturedMetrics.filter(metric => 
-          metric.name.includes(action.expectedMetric) && 
-          metric.tags.tenantId === tenantId
+        const relevantMetrics = capturedMetrics.filter(
+          (metric) =>
+            metric.name.includes(action.expectedMetric) && metric.tags.tenantId === tenantId
         );
-        
+
         if (relevantMetrics.length > 0) {
           console.log(`✓ Metric ${action.expectedMetric} properly tagged for tenant ${tenantId}`);
         }
@@ -342,16 +352,16 @@ export class ObservabilityTestHelper {
 
     await this.page.route('**/api/telemetry/traces', async (route: any) => {
       const traceData = route.request().postDataJSON();
-      
+
       if (traceData.tags?.tenantId === tenantId) {
         capturedTraces.push(traceData);
         console.log(`✓ Captured trace span: ${traceData.operationName}`);
       }
-      
+
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ status: 'traced' })
+        body: JSON.stringify({ status: 'traced' }),
       });
     });
 
@@ -359,7 +369,7 @@ export class ObservabilityTestHelper {
     const traceableOperations = [
       { name: 'page_load', action: () => this.page.reload() },
       { name: 'user_action', action: () => this.page.click('[data-testid="trace-button"]') },
-      { name: 'api_request', action: () => this.page.click('[data-testid="api-trigger"]') }
+      { name: 'api_request', action: () => this.page.click('[data-testid="api-trigger"]') },
     ];
 
     for (const operation of traceableOperations) {
@@ -383,17 +393,22 @@ export class ObservabilityTestHelper {
 
     // Verify trace hierarchy if multiple spans exist
     if (capturedTraces.length > 1) {
-      const parentSpans = capturedTraces.filter(span => !span.parentSpanId);
-      const childSpans = capturedTraces.filter(span => span.parentSpanId);
-      
+      const parentSpans = capturedTraces.filter((span) => !span.parentSpanId);
+      const childSpans = capturedTraces.filter((span) => span.parentSpanId);
+
       expect(parentSpans.length).toBeGreaterThan(0);
-      console.log(`✓ Trace hierarchy: ${parentSpans.length} parent spans, ${childSpans.length} child spans`);
+      console.log(
+        `✓ Trace hierarchy: ${parentSpans.length} parent spans, ${childSpans.length} child spans`
+      );
     }
 
     return capturedTraces.length > 0;
   }
 
-  async testCrossPortalObservability(portals: Array<{ name: string; url: string }>, tenantId: string) {
+  async testCrossPortalObservability(
+    portals: Array<{ name: string; url: string }>,
+    tenantId: string
+  ) {
     console.log(`Testing cross-portal observability for tenant: ${tenantId}`);
 
     const allTelemetry: Array<{ portal: string; type: string; data: any }> = [];
@@ -406,63 +421,66 @@ export class ObservabilityTestHelper {
       const telemetryData = route.request().postDataJSON();
       const telemetryType = route.request().url().split('/').pop();
       const currentUrl = await this.page.url();
-      const portal = portals.find(p => currentUrl.includes(p.url.split('//')[1]));
-      
+      const portal = portals.find((p) => currentUrl.includes(p.url.split('//')[1]));
+
       allTelemetry.push({
         portal: portal?.name || 'unknown',
         type: telemetryType,
-        data: telemetryData
+        data: telemetryData,
       });
-      
+
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ status: 'received' })
+        body: JSON.stringify({ status: 'received' }),
       });
     });
 
     // Visit each portal and perform actions
-    for (const portal of portals.slice(0, 2)) { // Test first 2 portals
+    for (const portal of portals.slice(0, 2)) {
+      // Test first 2 portals
       try {
         console.log(`Testing observability on ${portal.name} portal`);
-        
+
         await this.page.goto(portal.url);
-        
+
         // Set consistent session context
         await this.page.evaluate((sId) => {
           sessionStorage.setItem('sessionId', sId);
         }, sessionId);
-        
+
         // Perform portal-specific actions
         await this.page.click('body'); // Trigger page interaction
         await this.page.waitForTimeout(1000);
-        
+
         if (await this.page.locator('[data-testid="dashboard-link"]').isVisible()) {
           await this.page.click('[data-testid="dashboard-link"]');
           await this.page.waitForTimeout(1000);
         }
-        
       } catch (error) {
         console.log(`Portal ${portal.name} testing skipped: ${error}`);
       }
     }
 
     // Analyze cross-portal telemetry consistency
-    const telemetryByPortal = allTelemetry.reduce((acc, item) => {
-      if (!acc[item.portal]) acc[item.portal] = [];
-      acc[item.portal].push(item);
-      return acc;
-    }, {} as Record<string, any[]>);
+    const telemetryByPortal = allTelemetry.reduce(
+      (acc, item) => {
+        if (!acc[item.portal]) acc[item.portal] = [];
+        acc[item.portal].push(item);
+        return acc;
+      },
+      {} as Record<string, any[]>
+    );
 
     // Verify tenant consistency across portals
     for (const [portalName, telemetryItems] of Object.entries(telemetryByPortal)) {
       const tenantIds = telemetryItems
-        .map(item => item.data.tenantId || item.data.tags?.tenantId)
+        .map((item) => item.data.tenantId || item.data.tags?.tenantId)
         .filter(Boolean);
-      
+
       const uniqueTenantIds = [...new Set(tenantIds)];
       expect(uniqueTenantIds.length).toBeLessThanOrEqual(1);
-      
+
       if (uniqueTenantIds.length === 1) {
         expect(uniqueTenantIds[0]).toBe(tenantId);
         console.log(`✓ Portal ${portalName}: Consistent tenant ID ${tenantId}`);
@@ -489,11 +507,11 @@ export class ObservabilityTestHelper {
     // Measure page load time with observability
     await this.page.route('**/api/telemetry/**', async (route: any) => {
       // Small delay to simulate telemetry overhead
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ status: 'received' })
+        body: JSON.stringify({ status: 'received' }),
       });
     });
 
@@ -502,9 +520,11 @@ export class ObservabilityTestHelper {
     const loadTimeWithObs = Date.now() - startTimeWithObs;
 
     const performanceImpact = ((loadTimeWithObs - loadTimeWithoutObs) / loadTimeWithoutObs) * 100;
-    
-    console.log(`Performance impact: ${performanceImpact.toFixed(2)}% (${loadTimeWithObs - loadTimeWithoutObs}ms difference)`);
-    
+
+    console.log(
+      `Performance impact: ${performanceImpact.toFixed(2)}% (${loadTimeWithObs - loadTimeWithoutObs}ms difference)`
+    );
+
     // Observability should have minimal performance impact (< 20%)
     expect(performanceImpact).toBeLessThan(20);
 
@@ -521,16 +541,16 @@ export class ObservabilityTestHelper {
 
     await this.page.route('**/api/telemetry/logs', async (route: any) => {
       const logData = route.request().postDataJSON();
-      
+
       if (logData.level === 'ERROR' && logData.tenantId === tenantId) {
         errorLogs.push(logData);
         console.log(`✓ Captured error log: ${logData.message}`);
       }
-      
+
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ status: 'logged' })
+        body: JSON.stringify({ status: 'logged' }),
       });
     });
 
@@ -549,7 +569,7 @@ export class ObservabilityTestHelper {
       await route.fulfill({
         status: 500,
         contentType: 'application/json',
-        body: JSON.stringify({ error: 'Test server error' })
+        body: JSON.stringify({ error: 'Test server error' }),
       });
     });
 
@@ -587,66 +607,66 @@ export class ObservabilityTestHelper {
 
   private async validateLogEntry(logData: any) {
     const requiredFields = ['timestamp', 'level', 'message', 'tenantId', 'traceId'];
-    const missingFields = requiredFields.filter(field => !logData[field]);
-    
+    const missingFields = requiredFields.filter((field) => !logData[field]);
+
     if (missingFields.length > 0) {
       return {
         status: 400,
-        body: { error: `Missing required fields: ${missingFields.join(', ')}` }
+        body: { error: `Missing required fields: ${missingFields.join(', ')}` },
       };
     }
-    
+
     return {
       status: 200,
-      body: { status: 'log validated and stored' }
+      body: { status: 'log validated and stored' },
     };
   }
 
   private async validateMetricEntry(metricData: any) {
     const requiredFields = ['name', 'value', 'timestamp', 'tenantId', 'tags'];
-    const missingFields = requiredFields.filter(field => !metricData[field]);
-    
+    const missingFields = requiredFields.filter((field) => !metricData[field]);
+
     if (missingFields.length > 0) {
       return {
         status: 400,
-        body: { error: `Missing required fields: ${missingFields.join(', ')}` }
+        body: { error: `Missing required fields: ${missingFields.join(', ')}` },
       };
     }
-    
+
     if (typeof metricData.value !== 'number') {
       return {
         status: 400,
-        body: { error: 'Metric value must be a number' }
+        body: { error: 'Metric value must be a number' },
       };
     }
-    
+
     return {
       status: 200,
-      body: { status: 'metric validated and stored' }
+      body: { status: 'metric validated and stored' },
     };
   }
 
   private async validateTraceEntry(traceData: any) {
     const requiredFields = ['traceId', 'spanId', 'operationName', 'startTime', 'tags'];
-    const missingFields = requiredFields.filter(field => !traceData[field]);
-    
+    const missingFields = requiredFields.filter((field) => !traceData[field]);
+
     if (missingFields.length > 0) {
       return {
         status: 400,
-        body: { error: `Missing required fields: ${missingFields.join(', ')}` }
+        body: { error: `Missing required fields: ${missingFields.join(', ')}` },
       };
     }
-    
+
     if (!traceData.tags.tenantId) {
       return {
         status: 400,
-        body: { error: 'Trace must include tenantId in tags' }
+        body: { error: 'Trace must include tenantId in tags' },
       };
     }
-    
+
     return {
       status: 200,
-      body: { status: 'trace validated and stored' }
+      body: { status: 'trace validated and stored' },
     };
   }
 
@@ -675,7 +695,7 @@ export class ObservabilityTestHelper {
       userId: `user-${Date.now()}`,
       sessionId: `session-${Date.now()}`,
       traceId: `trace-${Date.now()}`,
-      spanId: `span-${Date.now()}`
+      spanId: `span-${Date.now()}`,
     };
   }
 
@@ -691,8 +711,8 @@ export class ObservabilityTestHelper {
       metadata: {
         sessionId: config.sessionId,
         userAgent: 'test-browser',
-        url: window.location?.href || 'test-url'
-      }
+        url: window.location?.href || 'test-url',
+      },
     };
   }
 
@@ -703,10 +723,10 @@ export class ObservabilityTestHelper {
       tags: {
         tenantId: config.tenantId,
         userId: config.userId,
-        environment: 'test'
+        environment: 'test',
       },
       timestamp: new Date().toISOString(),
-      tenantId: config.tenantId
+      tenantId: config.tenantId,
     };
   }
 }

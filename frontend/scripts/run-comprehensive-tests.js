@@ -45,19 +45,19 @@ const tests = [
   },
   {
     name: 'Build Test (Admin App)',
-    command: 'cd apps/admin && pnpm build',
+    command: 'cd isp-framework/admin && pnpm build',
     required: true,
     description: 'Ensure admin app builds successfully',
   },
   {
     name: 'Build Test (Customer App)',
-    command: 'cd apps/customer && pnpm build',
+    command: 'cd isp-framework/customer && pnpm build',
     required: true,
     description: 'Ensure customer app builds successfully',
   },
   {
     name: 'Build Test (Reseller App)',
-    command: 'cd apps/reseller && pnpm build',
+    command: 'cd isp-framework/reseller && pnpm build',
     required: true,
     description: 'Ensure reseller app builds successfully',
   },

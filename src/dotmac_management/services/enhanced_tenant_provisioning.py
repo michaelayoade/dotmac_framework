@@ -25,7 +25,7 @@ from dotmac_shared.tasks.notifications import TaskNotificationService, Notificat
 from dotmac_shared.tasks.monitor import TaskMonitor
 
 from dotmac_management.models.tenant import CustomerTenant, TenantStatus, TenantProvisioningEvent
-from dotmac_management.services.coolify_client import CoolifyClient
+from dotmac_management.infrastructure import get_adapter_factory
 from dotmac_management.services.tenant_admin_provisioning import TenantAdminProvisioningService
 from dotmac_management.services.auto_license_provisioning import AutoLicenseProvisioningService
 from dotmac_shared.auth.core.jwt_service import JWTService
@@ -56,7 +56,7 @@ class EnhancedTenantProvisioningService:
         self.webhook_base_url = webhook_base_url
         
         # Core services
-        self.coolify_client = CoolifyClient()
+        self.adapter_factory = None  # Will be initialized async
         self.secrets_manager = SecretsManager()
         self.jwt_service = JWTService()
         self.admin_provisioning = TenantAdminProvisioningService()
@@ -99,6 +99,9 @@ class EnhancedTenantProvisioningService:
             # Initialize task monitor
             self.task_monitor = TaskMonitor(redis_url=self.redis_url)
             await self.task_monitor.initialize()
+            
+            # Initialize infrastructure adapter factory
+            self.adapter_factory = await get_adapter_factory()
             
             # Register task functions
             self._register_provisioning_tasks()

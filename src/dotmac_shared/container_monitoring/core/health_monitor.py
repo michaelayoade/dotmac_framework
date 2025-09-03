@@ -278,11 +278,11 @@ class ContainerHealthMonitor:
                     for endpoint in endpoints:
                         url = f"http://{container_ip}:{port}{endpoint}"
 
-                        start_time = datetime.utcnow()
+                        start_time = datetime.now(timezone.utc)
                         try:
                             response = await client.get(url)
                             response_time = (
-                                datetime.utcnow() - start_time
+                                datetime.now(timezone.utc) - start_time
                             ).total_seconds()
 
                             if response.status_code == 200:
@@ -399,7 +399,7 @@ class ContainerHealthMonitor:
         try:
             started_at = container.attrs["State"]["StartedAt"]
             start_time = datetime.fromisoformat(started_at.replace("Z", "+00:00"))
-            return datetime.utcnow().replace(tzinfo=start_time.tzinfo) - start_time
+            return datetime.now(timezone.utc).replace(tzinfo=start_time.tzinfo) - start_time
         except (KeyError, ValueError):
             return timedelta(0)
 

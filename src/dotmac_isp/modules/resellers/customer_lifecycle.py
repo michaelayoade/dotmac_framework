@@ -158,7 +158,7 @@ class CustomerLifecycleManager:
         if current_record:
             # Update existing record
             previous_stage = current_record.current_stage
-            stage_duration = (datetime.utcnow() - current_record.stage_entered_at).days
+            stage_duration = (datetime.now(timezone.utc) - current_record.stage_entered_at).days
             
             # Create new record for the stage transition
             new_record = CustomerLifecycleRecord(
@@ -166,7 +166,7 @@ class CustomerLifecycleManager:
                 reseller_id=reseller_id,
                 previous_stage=previous_stage,
                 current_stage=new_stage,
-                stage_entered_at=datetime.utcnow(),
+                stage_entered_at=datetime.now(timezone.utc),
                 health_score=current_record.health_score,
                 health_category=current_record.health_category,
                 monthly_value=current_record.monthly_value,
@@ -238,7 +238,7 @@ class CustomerLifecycleManager:
             current_record.health_score = new_score
             current_record.health_category = health_category.value
             current_record.risk_factors = risk_factors or []
-            current_record.updated_at = datetime.utcnow()
+            current_record.updated_at = datetime.now(timezone.utc)
         else:
             # Create new record
             current_record = CustomerLifecycleRecord(
@@ -368,7 +368,7 @@ class CustomerLifecycleManager:
             'reseller_id': str(reseller_id),
             'current_stage': current_record.current_stage,
             'stage_entered_at': current_record.stage_entered_at.isoformat(),
-            'days_in_current_stage': (datetime.utcnow() - current_record.stage_entered_at).days,
+            'days_in_current_stage': (datetime.now(timezone.utc) - current_record.stage_entered_at).days,
             'health_score': float(current_record.health_score),
             'health_category': current_record.health_category,
             'risk_factors': current_record.risk_factors,

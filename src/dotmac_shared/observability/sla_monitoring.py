@@ -278,7 +278,7 @@ class SLAMonitor:
     
     async def _measure_sla_compliance(self, service_name: str, tier: str, target: SLATarget) -> SLAMeasurement:
         """Measure SLA compliance for a specific service and tier."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         
         # This would implement actual SLA measurement logic
         # For now, we'll simulate the measurements
@@ -337,7 +337,7 @@ class SLAMonitor:
                         measurement = PerformanceMeasurement(
                             metric_name=metric_name,
                             component=component,
-                            timestamp=datetime.utcnow(),
+                            timestamp=datetime.now(timezone.utc),
                             value=current_value,
                             baseline_deviation_percent=deviation_percent,
                             is_anomaly=is_anomaly
@@ -427,7 +427,7 @@ class SLAMonitor:
                 # Generate daily reports at midnight
                 await asyncio.sleep(3600)  # Check every hour
                 
-                now = datetime.utcnow()
+                now = datetime.now(timezone.utc)
                 if now.hour == 0:  # Midnight UTC
                     await self._generate_daily_sla_report()
                 
@@ -508,7 +508,7 @@ class SLAMonitor:
         business_logger.info("Generating daily SLA report")
         
         report_data = {
-            "date": datetime.utcnow().date().isoformat(),
+            "date": datetime.now(timezone.utc).date().isoformat(),
             "services": {}
         }
         

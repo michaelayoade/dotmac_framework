@@ -4,6 +4,26 @@
 
 This runbook provides step-by-step instructions for deploying the DotMac Framework to production environments. It covers both Kubernetes and Docker/Coolify deployment scenarios with comprehensive security, monitoring, and operational procedures.
 
+## Contents
+
+- [Deployment Methods](#deployment-methods)
+  - [Method 0: CI/CD Deployment (GitHub Actions)](#method-0-cicd-deployment-github-actions)
+  - [Method 1: Kubernetes Deployment (Recommended for Scale)](#method-1-kubernetes-deployment-recommended-for-scale)
+  - [Method 2: Docker/Coolify Deployment (Recommended for Simplicity)](#method-2-dockercoolify-deployment-recommended-for-simplicity)
+- [Post-Deployment Verification](#post-deployment-verification)
+  - [Critical User Workflows](#critical-user-workflows)
+  - [Health and Connectivity Checks](#health-and-connectivity-checks)
+  - [Smoke Tests](#smoke-tests)
+  - [Monitoring and Alerting Verification](#monitoring-and-alerting-verification)
+  - [Security Verification](#security-verification)
+- [Security Hardening](#security-hardening)
+- [Troubleshooting](#troubleshooting)
+  - [CI/CD Pipeline Issues](#cicd-pipeline-issues)
+  - [Common Issues](#common-issues)
+  - [Performance Issues](#performance-issues)
+- [Rollback Procedures](#rollback-procedures)
+- [Contacts and Escalation](#contacts-and-escalation)
+
 ## Pre-Deployment Checklist
 
 ### ✅ Infrastructure Requirements
@@ -47,6 +67,29 @@ export ADMIN_EMAIL=admin@dotmac.com
 ```
 
 ## Deployment Methods
+
+### Method 0: CI/CD Deployment (GitHub Actions)
+
+Use the Intelligent CI/CD pipeline when configured. This method triggers deployments automatically on merges to `main` and supports manual triggers.
+
+Quick reference:
+
+```bash
+# Trigger: push to main
+git checkout main && git pull && git merge feature/your-feature && git push origin main
+
+# Watch pipeline and view recent runs
+gh run list --workflow=intelligent-deployment.yml --limit=5
+gh run watch
+
+# Manual trigger or rollback
+gh workflow run intelligent-deployment.yml
+gh workflow run rollback.yml -f rollback_to=previous
+```
+
+After deployment completes, proceed to Post-Deployment Verification below.
+
+[Back to top](#contents)
 
 ### Method 1: Kubernetes Deployment (Recommended for Scale)
 
@@ -199,6 +242,17 @@ curl -k https://admin.dotmac.com/health
 
 ## Post-Deployment Verification
 
+### Critical User Workflows
+
+- [ ] User registration and login
+- [ ] Service provisioning
+- [ ] Billing operations
+- [ ] Support ticket creation
+- [ ] API authentication
+- [ ] Cross-portal navigation
+
+[Back to top](#contents)
+
 ### Health and Connectivity Checks
 
 ```bash
@@ -336,7 +390,49 @@ kubectl get all,configmap,secret -n dotmac-prod -o yaml > \
   dotmac-prod-config-$(date +%Y%m%d).yaml
 ```
 
+### Security Verification
+
+```bash
+# Verify SSL certificates
+echo | openssl s_client -connect api.dotmac.com:443 2>/dev/null | openssl x509 -noout -dates
+
+# Check security headers
+curl -I https://api.dotmac.com | grep -E "(Strict-Transport-Security|Content-Security-Policy|X-Frame-Options)"
+
+# Quick rate-limit probe
+for i in {1..10}; do curl -s -o /dev/null -w "%{http_code}\n" https://api.dotmac.com/health; done
+```
+
+[Back to top](#contents)
+
 ## Troubleshooting
+
+### CI/CD Pipeline Issues
+### CI/CD Pipeline Issues
+
+Code quality issues:
+
+```bash
+gh run view --log | grep -A 5 -B 5 "error:"
+make lint-fix && make format
+```
+
+Test failures:
+
+```bash
+make test
+pnpm test
+```
+
+Security scan issues:
+
+```bash
+gh run view --log | grep -A 10 security
+npm audit fix || true
+pip install --upgrade -r requirements.txt || true
+```
+
+[Back to top](#contents)
 
 ### Common Issues
 
@@ -445,6 +541,7 @@ kubectl scale deployment dotmac-platform --replicas=3 -n dotmac-prod
    - Response: 30 minutes
    - Resolution: 4 hours
    
+### Security Verification
 3. **P3 - Medium**: Feature issues, minor bugs
    - Response: 2 hours
    - Resolution: 1 business day

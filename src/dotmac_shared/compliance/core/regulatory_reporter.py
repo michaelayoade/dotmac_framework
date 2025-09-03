@@ -225,7 +225,7 @@ class RegulatoryReporter:
             "next_run": next_run.isoformat(),
             "is_active": True,
             "created_by": str(user_id) if user_id else None,
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
         }
         
         # Store schedule (in production, this would be in database)
@@ -253,8 +253,8 @@ class RegulatoryReporter:
         if not frameworks:
             frameworks = self.config.enabled_frameworks
         
-        period_start = datetime.utcnow() - timedelta(days=period_days)
-        period_end = datetime.utcnow()
+        period_start = datetime.now(timezone.utc) - timedelta(days=period_days)
+        period_end = datetime.now(timezone.utc)
         
         dashboard_data = {
             "period": {
@@ -740,7 +740,7 @@ compliance with {framework_name} requirements based on the assessment conducted.
     def _calculate_next_run(self, frequency: ReportFrequency) -> datetime:
         """Calculate next run time for scheduled report."""
         
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         
         if frequency == ReportFrequency.DAILY:
             return now + timedelta(days=1)
@@ -765,13 +765,13 @@ compliance with {framework_name} requirements based on the assessment conducted.
                 "active_jobs": len(self._report_jobs),
                 "frameworks": [f.value for f in self.config.enabled_frameworks],
                 "cache_available": self.cache_service is not None,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
         except Exception as e:
             return {
                 "status": "unhealthy",
                 "error": str(e),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
 

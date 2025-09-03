@@ -183,7 +183,7 @@ class ISPMonitoringManager:
                             "check_type": check_type,
                             "metrics": metrics,
                             "tenant_id": self.tenant_id,
-                            "timestamp": datetime.utcnow().isoformat(),
+                            "timestamp": datetime.now(timezone.utc).isoformat(),
                         },
                     )
 
@@ -260,7 +260,7 @@ class ISPMonitoringManager:
                         "customer_id": customer_id,
                         "tenant_id": self.tenant_id,
                         "module": module,
-                        "timestamp": datetime.utcnow().isoformat(),
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
                     },
                 )
 
@@ -272,7 +272,7 @@ class ISPMonitoringManager:
                 "status": "healthy" if self._initialized else "not_initialized",
                 "tenant_id": self.tenant_id,
                 "modules_monitored": len(self._module_monitors),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
         }
 
@@ -308,7 +308,7 @@ class ISPMonitoringManager:
         try:
             metrics = {
                 "tenant_id": self.tenant_id,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "modules": {},
             }
 

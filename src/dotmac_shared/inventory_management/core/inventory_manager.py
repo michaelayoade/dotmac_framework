@@ -216,7 +216,7 @@ class InventoryManager:
                 setattr(item, field, value)
 
         item.updated_by = updated_by
-        item.updated_at = datetime.utcnow()
+        item.updated_at = datetime.now(timezone.utc)
 
         await db.commit()
         await db.refresh(item)
@@ -386,7 +386,7 @@ class InventoryManager:
         )
 
         if not movement.movement_date:
-            movement.movement_date = datetime.utcnow()
+            movement.movement_date = datetime.now(timezone.utc)
 
         # Calculate total cost
         if movement.unit_cost and movement.quantity:

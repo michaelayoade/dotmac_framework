@@ -7,12 +7,12 @@ import { test, expect } from '@playwright/test';
 import { setupAuth } from '../auth/auth-helpers';
 import { APIBehaviorTester } from '../fixtures/api-behaviors';
 import { AdminManagementMocks } from '../fixtures/admin-mocks';
-import { 
-  validateSchema, 
-  DeviceListResponseSchema, 
+import {
+  validateSchema,
+  DeviceListResponseSchema,
   SubnetListResponseSchema,
   ProjectListResponseSchema,
-  ContainerListResponseSchema 
+  ContainerListResponseSchema,
 } from '../fixtures/admin-schemas';
 
 test.describe('Admin Management Pages E2E Tests', () => {
@@ -22,13 +22,13 @@ test.describe('Admin Management Pages E2E Tests', () => {
   test.beforeEach(async ({ page }) => {
     // Setup authentication for admin portal
     await setupAuth(page, 'admin');
-    
+
     // Initialize API behavior tester with deterministic mocking
-    apiTester = new APIBehaviorTester(page, { 
-      enableMocking: true, 
-      validateRequests: true 
+    apiTester = new APIBehaviorTester(page, {
+      enableMocking: true,
+      validateRequests: true,
     });
-    
+
     // Setup admin management mocks
     adminMocks = new AdminManagementMocks(apiTester);
     await adminMocks.setupAll();
@@ -45,7 +45,9 @@ test.describe('Admin Management Pages E2E Tests', () => {
 
       // Verify page title and description
       await expect(page.getByText('Device Management')).toBeVisible();
-      await expect(page.getByText('Monitor and manage network infrastructure devices')).toBeVisible();
+      await expect(
+        page.getByText('Monitor and manage network infrastructure devices')
+      ).toBeVisible();
 
       // Verify metrics are displayed
       await expect(page.getByTestId('metric-total-devices')).toBeVisible();
@@ -55,7 +57,7 @@ test.describe('Admin Management Pages E2E Tests', () => {
 
       // Verify device table is displayed
       await expect(page.getByTestId('management-table')).toBeVisible();
-      
+
       // Check table headers
       await expect(page.getByText('Device')).toBeVisible();
       await expect(page.getByText('Type')).toBeVisible();
@@ -113,7 +115,9 @@ test.describe('Admin Management Pages E2E Tests', () => {
       await page.click('text=Restart');
 
       // Confirm action in modal
-      await expect(page.getByText('Are you sure you want to restart selected devices?')).toBeVisible();
+      await expect(
+        page.getByText('Are you sure you want to restart selected devices?')
+      ).toBeVisible();
       await page.click('[data-testid="confirm-bulk-action"]');
 
       // Verify success message
@@ -143,8 +147,10 @@ test.describe('Admin Management Pages E2E Tests', () => {
 
       // Get API request log
       const requests = apiTester.getRequestLog();
-      const deviceRequest = requests.find(r => r.url.includes('/api/admin/devices') && r.method === 'GET');
-      
+      const deviceRequest = requests.find(
+        (r) => r.url.includes('/api/admin/devices') && r.method === 'GET'
+      );
+
       expect(deviceRequest).toBeDefined();
 
       // Note: In real implementation, you'd capture the response and validate against schema
@@ -161,7 +167,9 @@ test.describe('Admin Management Pages E2E Tests', () => {
 
       // Verify page content
       await expect(page.getByText('IP Address Management')).toBeVisible();
-      await expect(page.getByText('Manage IP address allocation and subnet utilization')).toBeVisible();
+      await expect(
+        page.getByText('Manage IP address allocation and subnet utilization')
+      ).toBeVisible();
 
       // Verify IPAM metrics
       await expect(page.getByTestId('metric-total-subnets')).toBeVisible();
@@ -204,7 +212,7 @@ test.describe('Admin Management Pages E2E Tests', () => {
       // Fill subnet form
       await page.fill('[data-testid="subnet-cidr-input"]', '10.1.0.0/24');
       await page.fill('[data-testid="subnet-description-input"]', 'Test Subnet');
-      
+
       // Submit form
       await page.click('[data-testid="create-subnet-submit"]');
 
@@ -232,7 +240,9 @@ test.describe('Admin Management Pages E2E Tests', () => {
 
       // Verify page content
       await expect(page.getByText('Project Management')).toBeVisible();
-      await expect(page.getByText('Track and manage infrastructure and deployment projects')).toBeVisible();
+      await expect(
+        page.getByText('Track and manage infrastructure and deployment projects')
+      ).toBeVisible();
 
       // Verify project metrics
       await expect(page.getByTestId('metric-active-projects')).toBeVisible();
@@ -288,7 +298,7 @@ test.describe('Admin Management Pages E2E Tests', () => {
       await page.fill('[data-testid="project-name-input"]', 'Test Project');
       await page.selectOption('[data-testid="project-type-select"]', 'network_expansion');
       await page.selectOption('[data-testid="project-priority-select"]', 'high');
-      
+
       // Submit form
       await page.click('[data-testid="create-project-submit"]');
 
@@ -361,7 +371,7 @@ test.describe('Admin Management Pages E2E Tests', () => {
       // Verify resource usage bars are displayed
       const cpuBars = await page.locator('[data-testid="cpu-usage-bar"]').count();
       const memoryBars = await page.locator('[data-testid="memory-usage-bar"]').count();
-      
+
       expect(cpuBars).toBeGreaterThan(0);
       expect(memoryBars).toBeGreaterThan(0);
     });
@@ -445,7 +455,7 @@ test.describe('Admin Management Pages E2E Tests', () => {
     test('should handle browser navigation correctly', async ({ page }) => {
       await page.goto('/admin/devices');
       await page.goto('/admin/projects');
-      
+
       // Use browser back button
       await page.goBack();
       await page.waitForSelector('[data-testid="device-management"]');
@@ -478,7 +488,7 @@ test.describe('Admin Management Pages E2E Tests', () => {
         { endpoint: '/api/admin/devices', method: 'GET' },
         { endpoint: '/api/admin/ipam/subnets', method: 'GET' },
         { endpoint: '/api/admin/projects', method: 'GET' },
-        { endpoint: '/api/admin/containers', method: 'GET' }
+        { endpoint: '/api/admin/containers', method: 'GET' },
       ];
 
       await apiTester.validateDataFlows(expectedFlows);
@@ -488,11 +498,11 @@ test.describe('Admin Management Pages E2E Tests', () => {
       // Mock API error for devices endpoint
       await apiTester.mockAndLog('/api/admin/devices', async () => ({
         status: 500,
-        body: { error: 'Internal server error' }
+        body: { error: 'Internal server error' },
       }));
 
       await page.goto('/admin/devices');
-      
+
       // Verify error is handled gracefully
       await expect(page.getByTestId('error-message')).toBeVisible();
       await expect(page.getByText('Failed to load devices')).toBeVisible();
@@ -500,16 +510,16 @@ test.describe('Admin Management Pages E2E Tests', () => {
 
     test('should handle network timeout gracefully', async ({ page }) => {
       // Simulate slow network
-      apiTester = new APIBehaviorTester(page, { 
-        enableMocking: true, 
-        simulateLatency: true 
+      apiTester = new APIBehaviorTester(page, {
+        enableMocking: true,
+        simulateLatency: true,
       });
 
       await page.goto('/admin/devices');
-      
+
       // Verify loading states are shown
       await expect(page.getByTestId('loading-spinner')).toBeVisible();
-      
+
       // Wait for eventual load
       await page.waitForSelector('[data-testid="device-management"]', { timeout: 10000 });
     });
@@ -517,21 +527,16 @@ test.describe('Admin Management Pages E2E Tests', () => {
 
   test.describe('Performance Tests', () => {
     test('should load management pages within performance budget', async ({ page }) => {
-      const pages = [
-        '/admin/devices',
-        '/admin/ipam', 
-        '/admin/projects',
-        '/admin/containers'
-      ];
+      const pages = ['/admin/devices', '/admin/ipam', '/admin/projects', '/admin/containers'];
 
       for (const pageUrl of pages) {
         const startTime = Date.now();
-        
+
         await page.goto(pageUrl);
         await page.waitForSelector('[data-testid*="management"]');
-        
+
         const loadTime = Date.now() - startTime;
-        
+
         // Should load within 3 seconds
         expect(loadTime).toBeLessThan(3000);
       }

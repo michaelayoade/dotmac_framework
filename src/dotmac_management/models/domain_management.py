@@ -144,27 +144,27 @@ class Domain(TenantModel, AuditableMixin):
     @hybrid_property
     def is_expired(self):
         """Check if domain has expired."""
-        return self.expiration_date and datetime.utcnow() > self.expiration_date
+        return self.expiration_date and datetime.now(timezone.utc) > self.expiration_date
 
     @hybrid_property
     def days_until_expiration(self):
         """Calculate days until domain expiration."""
         if not self.expiration_date:
             return None
-        delta = self.expiration_date - datetime.utcnow()
+        delta = self.expiration_date - datetime.now(timezone.utc)
         return max(0, delta.days)
 
     @hybrid_property
     def ssl_is_expired(self):
         """Check if SSL certificate has expired."""
-        return self.ssl_expires_at and datetime.utcnow() > self.ssl_expires_at
+        return self.ssl_expires_at and datetime.now(timezone.utc) > self.ssl_expires_at
 
     @hybrid_property
     def days_until_ssl_expiration(self):
         """Calculate days until SSL expiration."""
         if not self.ssl_expires_at:
             return None
-        delta = self.ssl_expires_at - datetime.utcnow()
+        delta = self.ssl_expires_at - datetime.now(timezone.utc)
         return max(0, delta.days)
 
     @hybrid_property
@@ -311,12 +311,12 @@ class SSLCertificate(TenantModel, AuditableMixin):
     @hybrid_property
     def is_expired(self):
         """Check if certificate has expired."""
-        return datetime.utcnow() > self.expires_at
+        return datetime.now(timezone.utc) > self.expires_at
 
     @hybrid_property
     def days_until_expiration(self):
         """Calculate days until certificate expiration."""
-        delta = self.expires_at - datetime.utcnow()
+        delta = self.expires_at - datetime.now(timezone.utc)
         return max(0, delta.days)
 
     @hybrid_property
@@ -494,12 +494,12 @@ class DomainVerification(TenantModel, AuditableMixin):
     @hybrid_property
     def is_expired(self):
         """Check if verification has expired."""
-        return self.expires_at and datetime.utcnow() > self.expires_at
+        return self.expires_at and datetime.now(timezone.utc) > self.expires_at
 
     @hybrid_property
     def is_due_for_check(self):
         """Check if verification is due for check."""
-        return self.next_check and datetime.utcnow() >= self.next_check
+        return self.next_check and datetime.now(timezone.utc) >= self.next_check
 
     @hybrid_property
     def has_failed(self):

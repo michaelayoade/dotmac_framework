@@ -14,4 +14,3 @@ test.describe('Customer - Service Quality', () => {
     await expect(page.getByText(/Testing network/)).toBeVisible();
   });
 });
-

@@ -7,14 +7,16 @@ The Enhanced Error Handling System addresses critical concerns about context los
 ## Key Improvements
 
 ### ❌ Before: Generic Error Mapping
+
 ```typescript
 EntityNotFoundError     → HTTP 404
-ValidationError         → HTTP 400  
+ValidationError         → HTTP 400
 BusinessRuleError      → HTTP 422
 ServiceError           → HTTP 500
 ```
 
 **Issues:**
+
 - Context Loss: Generic error mapping lost important business context
 - Client Experience: All validation errors mapped to same HTTP status
 - Debugging: Generic error responses hindered troubleshooting
@@ -30,6 +32,7 @@ ValidationRuleError    → VAL_005 (HTTP 422) + field-specific guidance
 ```
 
 **Improvements:**
+
 - **Rich Context**: Every error includes operation, resource, business process, and customer impact
 - **Specific Error Codes**: 40+ specific error codes instead of generic mappings
 - **User Experience**: Contextual messages with actionable recovery steps
@@ -38,6 +41,7 @@ ValidationRuleError    → VAL_005 (HTTP 422) + field-specific guidance
 ## Error Code System
 
 ### Code Structure
+
 ```
 [DOMAIN]_[SEQUENCE]
 NET_001, CUST_002, BILL_003, etc.
@@ -45,18 +49,18 @@ NET_001, CUST_002, BILL_003, etc.
 
 ### Domain Categories
 
-| Domain | Code Prefix | Description |
-|--------|------------|-------------|
-| Network | NET_* | Connection, timeout, rate limiting |
-| Authentication | AUTH_* | Login, token, MFA issues |
-| Authorization | AUTHZ_* | Permission and access control |
-| Validation | VAL_* | Input validation and format errors |
-| Customer | CUST_* | Customer management operations |
-| Billing | BILL_* | Payment, invoice, subscription issues |
-| Network Devices | NET_DEV_* | Device management and configuration |
-| Network Services | NET_SVC_* | Service provisioning and management |
-| Services | SVC_* | Service lifecycle operations |
-| System | SYS_* | Database, cache, infrastructure issues |
+| Domain           | Code Prefix | Description                            |
+| ---------------- | ----------- | -------------------------------------- |
+| Network          | NET\_\*     | Connection, timeout, rate limiting     |
+| Authentication   | AUTH\_\*    | Login, token, MFA issues               |
+| Authorization    | AUTHZ\_\*   | Permission and access control          |
+| Validation       | VAL\_\*     | Input validation and format errors     |
+| Customer         | CUST\_\*    | Customer management operations         |
+| Billing          | BILL\_\*    | Payment, invoice, subscription issues  |
+| Network Devices  | NET*DEV*\*  | Device management and configuration    |
+| Network Services | NET*SVC*\*  | Service provisioning and management    |
+| Services         | SVC\_\*     | Service lifecycle operations           |
+| System           | SYS\_\*     | Database, cache, infrastructure issues |
 
 ## Error Context Structure
 
@@ -65,21 +69,21 @@ Every error includes comprehensive business context:
 ```typescript
 interface ErrorContext {
   // Request Context
-  operation: string;          // 'fetch_customer_profile'
-  resource?: string;          // 'customer'
-  resourceId?: string;        // 'cust_12345'
-  correlationId?: string;     // Request tracking
-  
+  operation: string; // 'fetch_customer_profile'
+  resource?: string; // 'customer'
+  resourceId?: string; // 'cust_12345'
+  correlationId?: string; // Request tracking
+
   // Business Context
-  businessProcess?: string;   // 'customer_management'
-  workflowStep?: string;      // 'profile_update'
-  customerImpact?: string;    // 'high' | 'medium' | 'low'
-  
+  businessProcess?: string; // 'customer_management'
+  workflowStep?: string; // 'profile_update'
+  customerImpact?: string; // 'high' | 'medium' | 'low'
+
   // Technical Context
-  service?: string;           // 'isp-frontend'
-  component?: string;         // 'customer-service'
-  version?: string;           // '1.2.3'
-  
+  service?: string; // 'isp-frontend'
+  component?: string; // 'customer-service'
+  version?: string; // '1.2.3'
+
   // Additional metadata
   metadata?: Record<string, any>;
   tags?: string[];
@@ -95,7 +99,7 @@ interface ErrorContext {
 throw new ISPError({
   message: 'Customer not found',
   category: 'business',
-  status: 404
+  status: 404,
 });
 
 // ✅ After: Enhanced with business context
@@ -103,7 +107,7 @@ throw EnhancedErrorFactory.customerNotFound('cust_12345', {
   operation: 'fetch_customer_profile',
   businessProcess: 'customer_management',
   workflowStep: 'profile_retrieval',
-  customerImpact: 'medium'
+  customerImpact: 'medium',
 });
 ```
 
@@ -114,24 +118,19 @@ throw EnhancedErrorFactory.customerNotFound('cust_12345', {
 throw new ISPError({
   message: 'Payment failed',
   category: 'business',
-  status: 402
+  status: 402,
 });
 
 // ✅ After: Specific payment context
-throw EnhancedErrorFactory.paymentFailed(
-  299.99, 
-  'visa_1234', 
-  'Insufficient funds', 
-  {
-    operation: 'process_monthly_payment',
-    businessProcess: 'billing',
-    customerImpact: 'high',
-    metadata: {
-      invoiceId: 'inv_789',
-      dueDate: '2024-01-15'
-    }
-  }
-);
+throw EnhancedErrorFactory.paymentFailed(299.99, 'visa_1234', 'Insufficient funds', {
+  operation: 'process_monthly_payment',
+  businessProcess: 'billing',
+  customerImpact: 'high',
+  metadata: {
+    invoiceId: 'inv_789',
+    dueDate: '2024-01-15',
+  },
+});
 ```
 
 ### 3. Network Operations
@@ -141,24 +140,20 @@ throw EnhancedErrorFactory.paymentFailed(
 throw new ISPError({
   message: 'Device unreachable',
   category: 'network',
-  retryable: true
+  retryable: true,
 });
 
 // ✅ After: Specific device context
-throw EnhancedErrorFactory.deviceUnreachable(
-  'router_001', 
-  'Cisco 2960X', 
-  {
-    operation: 'configure_vlan',
-    businessProcess: 'network_management',
-    customerImpact: 'medium',
-    metadata: {
-      location: 'Building A - Floor 2',
-      lastSeen: '2024-01-10T15:30:00Z',
-      affectedCustomers: 23
-    }
-  }
-);
+throw EnhancedErrorFactory.deviceUnreachable('router_001', 'Cisco 2960X', {
+  operation: 'configure_vlan',
+  businessProcess: 'network_management',
+  customerImpact: 'medium',
+  metadata: {
+    location: 'Building A - Floor 2',
+    lastSeen: '2024-01-10T15:30:00Z',
+    affectedCustomers: 23,
+  },
+});
 ```
 
 ## Error Display Components
@@ -166,7 +161,7 @@ throw EnhancedErrorFactory.deviceUnreachable(
 ### 1. Enhanced Error Display
 
 ```tsx
-<EnhancedErrorDisplay 
+<EnhancedErrorDisplay
   error={enhancedError}
   onRetry={handleRetry}
   onContactSupport={handleSupport}
@@ -175,6 +170,7 @@ throw EnhancedErrorFactory.deviceUnreachable(
 ```
 
 **Features:**
+
 - Severity-based styling and icons
 - Business context display
 - User-friendly action suggestions
@@ -184,13 +180,11 @@ throw EnhancedErrorFactory.deviceUnreachable(
 ### 2. Compact Error Display
 
 ```tsx
-<CompactErrorDisplay 
-  error={enhancedError}
-  onRetry={handleRetry}
-/>
+<CompactErrorDisplay error={enhancedError} onRetry={handleRetry} />
 ```
 
 **Features:**
+
 - Inline error display
 - Quick retry option
 - Minimal space usage
@@ -198,15 +192,11 @@ throw EnhancedErrorFactory.deviceUnreachable(
 ### 3. Error Toast Notifications
 
 ```tsx
-<ErrorToast 
-  error={enhancedError}
-  onDismiss={handleDismiss}
-  duration={5000}
-  position="top-right"
-/>
+<ErrorToast error={enhancedError} onDismiss={handleDismiss} duration={5000} position='top-right' />
 ```
 
 **Features:**
+
 - Auto-dismiss (except critical errors)
 - Contextual error information
 - Quick action buttons
@@ -216,17 +206,11 @@ throw EnhancedErrorFactory.deviceUnreachable(
 ### Basic Usage
 
 ```typescript
-const {
-  errorState,
-  handleError,
-  handleApiError,
-  handleBusinessError,
-  retry,
-  clearError
-} = useEnhancedErrorHandler({
-  enableAutoRecovery: true,
-  maxRetryAttempts: 3
-});
+const { errorState, handleError, handleApiError, handleBusinessError, retry, clearError } =
+  useEnhancedErrorHandler({
+    enableAutoRecovery: true,
+    maxRetryAttempts: 3,
+  });
 ```
 
 ### API Error Handling
@@ -237,11 +221,7 @@ try {
   if (!response.ok) throw response;
   return await response.json();
 } catch (error) {
-  const enhancedError = handleApiError(
-    error, 
-    'fetch_customer', 
-    'customer'
-  );
+  const enhancedError = handleApiError(error, 'fetch_customer', 'customer');
   throw enhancedError;
 }
 ```
@@ -264,6 +244,7 @@ if (customer.paymentOverdue) {
 ### Comprehensive Logging
 
 Every error is logged with:
+
 - **Error Context**: Full business and technical context
 - **Request Tracing**: Correlation IDs for request tracking
 - **Performance Metrics**: Duration, memory usage
@@ -286,7 +267,7 @@ Every error is logged with:
 ```typescript
 const report = errorLogger.generateErrorReport({
   start: new Date('2024-01-01'),
-  end: new Date('2024-01-31')
+  end: new Date('2024-01-31'),
 });
 
 console.log(report.insights);
@@ -311,15 +292,15 @@ grep -r "catch.*error" src/
 // Before
 throw new Error('Something went wrong');
 
-// After  
+// After
 throw new EnhancedISPError({
   code: ErrorCode.UNKNOWN_ERROR,
   message: 'Customer profile update failed',
   context: {
     operation: 'update_customer_profile',
     businessProcess: 'customer_management',
-    customerImpact: 'low'
-  }
+    customerImpact: 'low',
+  },
 });
 ```
 
@@ -338,7 +319,7 @@ catch (error) {
     operation: 'save_customer_data',
     resource: 'customer'
   });
-  
+
   return <EnhancedErrorDisplay error={enhancedError} />;
 }
 ```
@@ -352,8 +333,8 @@ configureErrorLogging({
   endpoints: {
     logs: '/api/errors',
     metrics: '/api/metrics',
-    traces: '/api/traces'
-  }
+    traces: '/api/traces',
+  },
 });
 ```
 
@@ -365,7 +346,7 @@ configureErrorLogging({
 // ❌ Bad: No context
 throw new EnhancedISPError({
   code: ErrorCode.UNKNOWN_ERROR,
-  message: 'Failed'
+  message: 'Failed',
 });
 
 // ✅ Good: Rich business context
@@ -382,9 +363,9 @@ throw new EnhancedISPError({
     metadata: {
       customerId: 'cust_67890',
       serviceType: 'fiber_100mbps',
-      requestedDate: '2024-01-15'
-    }
-  }
+      requestedDate: '2024-01-15',
+    },
+  },
 });
 ```
 
@@ -392,28 +373,28 @@ throw new EnhancedISPError({
 
 ```typescript
 // Customer not found
-ErrorCode.CUSTOMER_NOT_FOUND        // Use for missing customers
-ErrorCode.BILLING_INVOICE_NOT_FOUND  // Use for missing invoices
-ErrorCode.NETWORK_DEVICE_UNREACHABLE // Use for network devices
+ErrorCode.CUSTOMER_NOT_FOUND; // Use for missing customers
+ErrorCode.BILLING_INVOICE_NOT_FOUND; // Use for missing invoices
+ErrorCode.NETWORK_DEVICE_UNREACHABLE; // Use for network devices
 
 // Don't use generic codes when specific ones exist
-ErrorCode.UNKNOWN_ERROR  // Only when truly unknown
+ErrorCode.UNKNOWN_ERROR; // Only when truly unknown
 ```
 
 ### 3. Set Appropriate Customer Impact
 
 ```typescript
 // High Impact: Service outages, billing failures, account access
-customerImpact: 'high'
+customerImpact: 'high';
 
 // Medium Impact: Feature unavailability, slow performance
-customerImpact: 'medium'
+customerImpact: 'medium';
 
 // Low Impact: Minor UI glitches, optional feature failures
-customerImpact: 'low'
+customerImpact: 'low';
 
 // Critical Impact: Data loss, security breaches, widespread outages
-customerImpact: 'critical'
+customerImpact: 'critical';
 ```
 
 ### 4. Provide Recovery Actions
@@ -443,7 +424,7 @@ new EnhancedISPError({
 const config = {
   batchSize: 10,
   flushInterval: 30000,
-  maxRetries: 3
+  maxRetries: 3,
 };
 ```
 
@@ -468,8 +449,8 @@ errorLogger.clearOldLogs(3600000); // 1 hour retention
 // Sensitive data is automatically redacted
 const sanitized = sanitizePayload({
   username: 'john_doe',
-  password: 'secret123',  // → '[REDACTED]'
-  credit_card: '4111...'  // → '[REDACTED]'
+  password: 'secret123', // → '[REDACTED]'
+  credit_card: '4111...', // → '[REDACTED]'
 });
 ```
 
@@ -487,7 +468,7 @@ const sanitized = sanitizePayload({
 ```typescript
 // Automatic alerts for:
 - Critical severity errors
-- High customer impact errors  
+- High customer impact errors
 - Error rate spikes (>10/minute)
 - Escalation-required errors
 ```
@@ -512,7 +493,7 @@ const sanitized = sanitizePayload({
    - Verify API endpoints are responding
    - Review recent deployments
 
-2. **Context Loss**  
+2. **Context Loss**
    - Ensure all error creation includes business context
    - Verify correlation IDs are properly propagated
    - Check error migration completeness
@@ -528,7 +509,7 @@ const sanitized = sanitizePayload({
 // Enable detailed console logging
 const config = {
   enableConsoleLogging: true,
-  logLevel: 'debug'
+  logLevel: 'debug',
 };
 
 // Generate error report for analysis

@@ -461,7 +461,7 @@ class PluginManager:
             "manager": {
                 "initialized": self._initialized,
                 "shutdown": self._shutdown,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             },
             "registry": registry_status,
             "lifecycle": lifecycle_metrics,

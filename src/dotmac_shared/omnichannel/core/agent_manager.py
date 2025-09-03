@@ -244,7 +244,7 @@ class AgentManager:
             old_status = agent.status
             agent.status = status
             agent.status_message = status_message
-            agent.last_activity = datetime.utcnow()
+            agent.last_activity = datetime.now(timezone.utc)
 
             if max_concurrent is not None:
                 agent.max_concurrent_interactions = max_concurrent
@@ -718,7 +718,7 @@ class AgentManager:
             metrics = self.metrics_cache.get(agent.id, AgentMetrics())
 
             # Update time tracking based on status
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
 
             # This is a simplified implementation
             # In production, you'd track actual time differences

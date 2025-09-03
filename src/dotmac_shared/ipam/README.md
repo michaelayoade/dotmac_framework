@@ -289,10 +289,10 @@ IPAM_BATCH_SIZE=1000
 
 ## 📚 Documentation
 
-- [Performance Guide](../../IPAM_PERFORMANCE_IMPROVEMENTS.md)
+- Performance Guide (see platform docs)
 - [Configuration Reference](config_example.py)
-- [API Documentation](docs/api.md)
-- [Migration Guide](docs/migration.md)
+- API Documentation (see platform docs)
+- Migration Guide (see platform docs)
 
 ## 🤝 Contributing
 
@@ -303,7 +303,7 @@ IPAM_BATCH_SIZE=1000
 
 ## 📄 License
 
-MIT License - see [LICENSE](LICENSE) file for details.
+MIT License. See repository license for details.
 
 ## 🆘 Support
 

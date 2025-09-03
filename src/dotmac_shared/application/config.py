@@ -427,6 +427,26 @@ def create_isp_platform_config() -> PlatformConfig:
         title="DotMac ISP Framework",
         description="Comprehensive ISP management system",
         routers=[
+            # User Management System - Authentication and RBAC
+            RouterConfig(
+                "dotmac_management.user_management.api.auth_router", 
+                "/api/v1/auth", 
+                required=True,
+                tags=["authentication", "auth"]
+            ),
+            RouterConfig(
+                "dotmac_management.user_management.api.user_router", 
+                "/api/v1/users", 
+                required=True,
+                tags=["users", "user-management"]
+            ),
+            RouterConfig(
+                "dotmac_management.user_management.api.tenant_admin_router", 
+                "/api/v1/tenant-admin", 
+                required=True,
+                tags=["tenant-admin", "multi-app"]
+            ),
+            # Existing ISP-specific routers
             RouterConfig("dotmac_isp.modules", "/api/v1", auto_discover=True),
             RouterConfig("dotmac_isp.portals", "/api/v1", auto_discover=True),
             RouterConfig(
@@ -450,9 +470,29 @@ def create_management_platform_config() -> PlatformConfig:
     """Create default Management Platform configuration."""
     return PlatformConfig(
         platform_name="management_platform",
-        title="DotMac Management Platform",
-        description="Multi-tenant SaaS platform for managing DotMac ISP Framework instances",
+        title="DotMac Multi-App Management Platform",
+        description="Multi-app SaaS platform for managing tenant organizations with multiple applications",
         routers=[
+            # User Management System - Authentication and RBAC
+            RouterConfig(
+                "dotmac_management.user_management.api.auth_router", 
+                "/api/v1/auth", 
+                required=True,
+                tags=["authentication", "auth"]
+            ),
+            RouterConfig(
+                "dotmac_management.user_management.api.user_router", 
+                "/api/v1/users", 
+                required=True,
+                tags=["users", "user-management"]
+            ),
+            RouterConfig(
+                "dotmac_management.user_management.api.tenant_admin_router", 
+                "/api/v1/tenant-admin", 
+                required=True,
+                tags=["tenant-admin", "multi-app", "super-admin"]
+            ),
+            # Existing Management Platform routers
             RouterConfig("dotmac_management.modules", "/api/v1", auto_discover=True),
             RouterConfig(
                 "dotmac_management.api_new.websocket", "/api/ws", required=False
@@ -462,6 +502,9 @@ def create_management_platform_config() -> PlatformConfig:
             ),
             RouterConfig(
                 "dotmac_management.api_new.security", "/api/security", required=False
+            ),
+            RouterConfig(
+                "dotmac_management.api.v1.bgops", "/", required=False
             ),
             RouterConfig(
                 "dotmac_management.modules.partners",

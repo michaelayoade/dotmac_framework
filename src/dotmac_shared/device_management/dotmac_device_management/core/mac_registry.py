@@ -19,7 +19,7 @@ from .models import Device, MacAddress
 class MacRegistryManager:
     """MAC address registry manager for database operations."""
 
-    def __init__(self, session: Session, tenant_id: str):
+    def __init__(self, session: Session, tenant_id: str, timezone):
         self.session = session
         self.tenant_id = tenant_id
         # OUI vendor mappings (sample data - in production this would be from IEEE database)
@@ -89,7 +89,7 @@ class MacRegistryManager:
 
         if existing:
             # Update existing record
-            existing.last_seen = datetime.utcnow()
+            existing.last_seen = datetime.now(timezone.utc)
             existing.seen_count += 1
 
             # Update device association if provided
@@ -104,7 +104,7 @@ class MacRegistryManager:
             if kwargs.get("description"):
                 existing.description = kwargs["description"]
 
-            existing.updated_at = datetime.utcnow()
+            existing.updated_at = datetime.now(timezone.utc)
             self.session.commit()
             return existing
 
@@ -127,8 +127,8 @@ class MacRegistryManager:
             ),
             device_type=device_type,
             description=kwargs.get("description", ""),
-            first_seen=datetime.utcnow(),
-            last_seen=datetime.utcnow(),
+            first_seen=datetime.now(timezone.utc),
+            last_seen=datetime.now(timezone.utc),
             seen_count=1,
             status=kwargs.get("status", "active"),
             device_device_metadata=kwargs.get("metadata", {}),
@@ -174,7 +174,7 @@ class MacRegistryManager:
             ]:
                 setattr(mac_record, key, value)
 
-        mac_record.updated_at = datetime.utcnow()
+        mac_record.updated_at = datetime.now(timezone.utc)
         self.session.commit()
         return mac_record
 
@@ -244,7 +244,7 @@ class MacRegistryManager:
 
     async def get_recent_mac_addresses(self, hours: int = 24) -> List[MacAddress]:
         """Get recently seen MAC addresses."""
-        since = datetime.utcnow() - datetime.timedelta(hours=hours)
+        since = datetime.now(timezone.utc) - datetime.timedelta(hours=hours)
 
         return (
             self.session.query(MacAddress)
@@ -260,7 +260,7 @@ class MacRegistryManager:
 
     async def cleanup_stale_records(self, days_inactive: int = 90) -> int:
         """Clean up stale MAC address records."""
-        cutoff_date = datetime.utcnow() - datetime.timedelta(days=days_inactive)
+        cutoff_date = datetime.now(timezone.utc) - datetime.timedelta(days=days_inactive)
 
         deleted_count = (
             self.session.query(MacAddress)
@@ -364,7 +364,7 @@ class MacRegistryService:
                 "device_id": new_device_id,
                 "interface_name": new_interface,
                 "port_id": f"{new_device_id}:{new_interface}",
-                "last_seen": datetime.utcnow(),
+                "last_seen": datetime.now(timezone.utc),
             },
         )
 
@@ -377,7 +377,7 @@ class MacRegistryService:
                 "interface_name": new_interface,
                 "port_id": f"{new_device_id}:{new_interface}",
             },
-            "moved_at": datetime.utcnow().isoformat(),
+            "moved_at": datetime.now(timezone.utc).isoformat(),
         }
 
     async def get_mac_address_details(self, mac_address: str) -> Dict[str, Any]:
@@ -456,7 +456,7 @@ class MacRegistryService:
                         for mac in recent_macs[:10]  # Top 10 recent
                     ],
                 },
-                "generated_at": datetime.utcnow().isoformat(),
+                "generated_at": datetime.now(timezone.utc).isoformat(),
             }
 
         return {"error": f"Unknown report type: {report_type}"}
@@ -481,7 +481,7 @@ class MacRegistryService:
                             "interface_name": entry.get("interface_name"),
                             "device_type": entry.get("device_type", "unknown"),
                             "description": entry.get("description", ""),
-                            "last_seen": datetime.utcnow(),
+                            "last_seen": datetime.now(timezone.utc),
                         },
                     )
                     results["updated"].append(mac_address)

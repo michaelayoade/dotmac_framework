@@ -7,7 +7,7 @@ from typing import Any, Dict
 from dotmac_isp.core.celery_app import celery_app
 from dotmac_shared.api.exception_handlers import standard_exception_handler
 
-logger = logging.getLogger(__name__, timezone)
+logger = logging.getLogger(__name__)
 
 
 @celery_app.task(bind=True)

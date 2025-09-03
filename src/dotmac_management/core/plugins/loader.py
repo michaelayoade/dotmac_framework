@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Type
 
 import yaml
-from base import BasePlugin, PluginError
+from .base import BasePlugin, PluginError
 
 logger = logging.getLogger(__name__)
 

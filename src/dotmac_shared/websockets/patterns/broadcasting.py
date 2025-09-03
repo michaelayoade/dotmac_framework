@@ -287,10 +287,10 @@ class BroadcastManager:
         Returns:
             Broadcast ID for tracking
         """
-        broadcast_id = f"scheduled_{datetime.utcnow().timestamp()}"
+        broadcast_id = f"scheduled_{datetime.now(timezone.utc).timestamp()}"
 
         # Calculate delay
-        delay = (schedule_time - datetime.utcnow()).total_seconds()
+        delay = (schedule_time - datetime.now(timezone.utc)).total_seconds()
         if delay <= 0:
             # Send immediately if time has passed
             result = await self.broadcast_filtered(
@@ -354,7 +354,7 @@ class BroadcastManager:
         delivery_mode: DeliveryMode,
     ) -> BroadcastResult:
         """Execute a broadcast operation."""
-        broadcast_id = f"broadcast_{datetime.utcnow().timestamp()}"
+        broadcast_id = f"broadcast_{datetime.now(timezone.utc).timestamp()}"
         start_time = asyncio.get_event_loop().time()
 
         try:
@@ -512,7 +512,7 @@ class BroadcastManager:
 
         # Filter by connection age
         if broadcast_filter.min_connection_age:
-            cutoff_time = datetime.utcnow() - broadcast_filter.min_connection_age
+            cutoff_time = datetime.now(timezone.utc) - broadcast_filter.min_connection_age
             aged_connections = set()
 
             for conn_id in filtered_connections:
@@ -672,7 +672,7 @@ class BroadcastManager:
 
     async def _check_rate_limit(self, broadcast_type: BroadcastType) -> bool:
         """Check if broadcast is within rate limits."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         rate_key = f"broadcast_{broadcast_type.value}"
 
         # Clean old entries

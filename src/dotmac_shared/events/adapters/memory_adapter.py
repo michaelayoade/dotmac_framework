@@ -9,6 +9,7 @@ are not available or desired.
 import asyncio
 from collections import defaultdict, deque
 from datetime import datetime
+from dotmac_shared.utils.datetime_utils import utc_now
 from typing import Any, AsyncIterator, Callable, Dict, List, Optional
 
 import structlog
@@ -60,7 +61,7 @@ class MemoryTopic:
             # Set event metadata
             event.partition = partition
             event.offset = str(len(self.partitions[partition]))
-            event.timestamp = datetime.utcnow()
+            event.timestamp = utc_now()
 
             # Add to partition
             self.partitions[partition].append(event)
@@ -241,7 +242,7 @@ class MemoryEventAdapter(EventAdapter):
                                 topic=topic,
                                 partition=event.partition or 0,
                                 offset=event.offset or "0",
-                                timestamp=datetime.utcnow(),
+                                timestamp=utc_now(),
                             )
 
                             yield consumer_record
@@ -341,7 +342,7 @@ class MemoryEventAdapter(EventAdapter):
                         topic=topic,
                         partition=event.partition or 0,
                         offset=event.offset or "0",
-                        timestamp=datetime.utcnow(),
+                        timestamp=datetime.now(timezone.utc),
                     )
 
                     if asyncio.iscoroutinefunction(callback):

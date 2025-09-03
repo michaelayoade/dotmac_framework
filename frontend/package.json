@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "workspaces": [
-    "packages/*",
-    "apps/*"
+    "shared/packages/*",
+    "management-portal/*",
+    "isp-framework/*"
   ],
   "scripts": {
     "dev": "turbo run dev",
@@ -45,9 +46,9 @@
     "version-packages": "changeset version",
     "release": "turbo run build --filter=@dotmac/* && changeset publish",
     "build:packages": "turbo run build --filter=@dotmac/*",
-    "build:apps": "turbo run build --filter=./apps/*",
+    "build:apps": "turbo run build --filter=./management-portal/* --filter=./isp-framework/*",
     "dev:packages": "turbo run dev --filter=@dotmac/*",
-    "dev:apps": "turbo run dev --filter=./apps/*",
+    "dev:apps": "turbo run dev --filter=./management-portal/* --filter=./isp-framework/*",
     "storybook": "storybook dev -p 6006",
     "storybook:build": "storybook build",
     "storybook:test": "test-storybook --coverage",

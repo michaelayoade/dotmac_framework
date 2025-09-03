@@ -317,7 +317,7 @@ class PartnerSuccessEngine:
                     await self._trigger_immediate_intervention(reseller.reseller_id, alert['alert_id'])
         
         monitoring_summary = {
-            'monitoring_date': datetime.utcnow().isoformat(),
+            'monitoring_date': datetime.now(timezone.utc).isoformat(),
             'resellers_monitored': len(resellers),
             'total_alerts_generated': len(alerts_generated),
             'alert_breakdown': self._summarize_alerts(alerts_generated),
@@ -335,7 +335,7 @@ class PartnerSuccessEngine:
     ) -> Dict[str, Any]:
         """Create targeted intervention plan for partner success"""
         
-        intervention_id = f"INT_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8].upper()}"
+        intervention_id = f"INT_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8].upper()}"
         
         # Get current partner state
         health_analysis = await self.calculate_partner_health_score(reseller_id)
@@ -352,7 +352,7 @@ class PartnerSuccessEngine:
             intervention_type=intervention_type,
             intervention_title=intervention_plan['title'],
             intervention_description=intervention_plan['description'],
-            planned_date=datetime.utcnow() + timedelta(days=intervention_plan.get('delay_days', 1)),
+            planned_date=datetime.now(timezone.utc) + timedelta(days=intervention_plan.get('delay_days', 1)),
             assigned_to=intervention_plan['assigned_to'],
             estimated_effort_hours=intervention_plan.get('estimated_hours', 2),
             resources_allocated=intervention_plan.get('resources', []),
@@ -397,10 +397,10 @@ class PartnerSuccessEngine:
         
         # Execute outreach (in production, this would integrate with email/phone systems)
         execution_result = {
-            'outreach_id': f"OUT_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
+            'outreach_id': f"OUT_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}",
             'reseller_id': reseller_id,
             'outreach_type': outreach_type,
-            'executed_at': datetime.utcnow().isoformat(),
+            'executed_at': datetime.now(timezone.utc).isoformat(),
             'channels_used': outreach_content['channels'],
             'content_delivered': {
                 'email_sent': outreach_content.get('email_content') is not None,
@@ -429,7 +429,7 @@ class PartnerSuccessEngine:
             'intervention_id': intervention_id,
             'reseller_id': 'RSL_001',
             'intervention_type': 'success_coaching',
-            'executed_at': datetime.utcnow() - timedelta(days=30),
+            'executed_at': datetime.now(timezone.utc) - timedelta(days=30),
             'baseline_health_score': 45.5
         }
         
@@ -447,7 +447,7 @@ class PartnerSuccessEngine:
             },
             'current_metrics': {
                 'health_score': current_health['health_score'],
-                'measurement_date': datetime.utcnow().isoformat()
+                'measurement_date': datetime.now(timezone.utc).isoformat()
             },
             'improvement_metrics': {
                 'health_score_change': current_health['health_score'] - intervention_data['baseline_health_score'],
@@ -469,7 +469,7 @@ class PartnerSuccessEngine:
                 intervention_data, current_health, outcome_data
             ),
             'follow_up_required': outcome_data.get('follow_up_required', False),
-            'analyzed_at': datetime.utcnow().isoformat()
+            'analyzed_at': datetime.now(timezone.utc).isoformat()
         }
         
         return effectiveness_analysis
@@ -489,7 +489,7 @@ class PartnerSuccessEngine:
         dashboard = {
             'reseller_id': reseller_id,
             'company_name': reseller.company_name,
-            'dashboard_generated_at': datetime.utcnow().isoformat(),
+            'dashboard_generated_at': datetime.now(timezone.utc).isoformat(),
             
             # Health Overview
             'health_overview': {
@@ -578,7 +578,7 @@ class PartnerSuccessEngine:
         # Calculate recent acquisitions
         recent_customers = [
             c for c in customers 
-            if c.created_at >= datetime.utcnow() - timedelta(days=90)
+            if c.created_at >= datetime.now(timezone.utc) - timedelta(days=90)
         ]
         
         acquisition_rate = len(recent_customers) / 3  # per month
@@ -767,7 +767,7 @@ class PartnerSuccessEngine:
     
     async def _create_partner_alert(self, reseller_id: str, alert_data: Dict[str, Any]) -> Dict[str, Any]:
         """Create partner alert record"""
-        alert_id = f"ALERT_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:6].upper()}"
+        alert_id = f"ALERT_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:6].upper()}"
         
         return {
             'alert_id': alert_id,
@@ -777,7 +777,7 @@ class PartnerSuccessEngine:
             'title': alert_data['title'],
             'description': alert_data['description'],
             'recommended_actions': alert_data.get('recommended_actions', []),
-            'created_at': datetime.utcnow().isoformat()
+            'created_at': datetime.now(timezone.utc).isoformat()
         }
     
     async def _trigger_immediate_intervention(self, reseller_id: str, alert_id: str):
@@ -843,7 +843,7 @@ class PartnerSuccessEngine:
     async def _get_last_significant_event(self, reseller_id: str) -> Optional[Dict[str, Any]]:
         return {
             'event_type': 'new_customer_acquisition',
-            'date': (datetime.utcnow() - timedelta(days=5)).isoformat(),
+            'date': (datetime.now(timezone.utc) - timedelta(days=5)).isoformat(),
             'description': 'Added 3 new customers'
         }
     
@@ -851,7 +851,7 @@ class PartnerSuccessEngine:
         return [
             {
                 'milestone': 'Quarterly Business Review',
-                'date': (datetime.utcnow() + timedelta(days=15)).isoformat(),
+                'date': (datetime.now(timezone.utc) + timedelta(days=15)).isoformat(),
                 'type': 'scheduled_review'
             }
         ]

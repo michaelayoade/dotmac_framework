@@ -107,7 +107,7 @@ def sample_notification_response():
         status=NotificationStatus.SENT,
         message="Notification sent successfully",
         channel_results={"email": {"status": "sent", "message_id": "test-123"}},
-        metadata={"delivery_time": datetime.utcnow().isoformat()},
+        metadata={"delivery_time": datetime.now(timezone.utc).isoformat()},
     )
 
 

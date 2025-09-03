@@ -17,12 +17,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from dotmac_shared.api.exception_handlers import standard_exception_handler
 from dotmac_shared.core.exceptions import BusinessRuleError, ServiceError
-from dotmac_shared.user_management.core.user_repository import UserRepository
-from dotmac_shared.user_management.schemas.lifecycle_schemas import (
+from dotmac_management.user_management.core.user_repository import UserRepository
+from dotmac_management.user_management.schemas.lifecycle_schemas import (
     UserLifecycleEvent,
     UserRegistration,
 )
-from dotmac_shared.user_management.schemas.user_schemas import UserStatus, UserType
+from dotmac_management.user_management.schemas.user_schemas import UserStatus, UserType
 
 logger = logging.getLogger(__name__)
 
@@ -142,7 +142,7 @@ class CustomerLifecycleManager:
                 "requires_approval": registration_data.requires_approval,
             },
             source_platform="lifecycle_manager",
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
         )
         
         await self.user_repository.create_lifecycle_event(lifecycle_event)
@@ -198,7 +198,7 @@ class CustomerLifecycleManager:
             event_type="customer_verification",
             event_data=verification_data,
             source_platform="lifecycle_manager",
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
         )
         
         await self.user_repository.create_lifecycle_event(lifecycle_event)
@@ -218,7 +218,7 @@ class CustomerLifecycleManager:
             "status": "verified",
             "lifecycle_stage": CustomerLifecycleStage.VERIFICATION,
             "next_actions": [{"action": "begin_onboarding", "message": "Account verified, starting onboarding"}],
-            "verified_at": datetime.utcnow().isoformat(),
+            "verified_at": datetime.now(timezone.utc).isoformat(),
         }
 
     @standard_exception_handler
@@ -241,7 +241,7 @@ class CustomerLifecycleManager:
             event_type="customer_onboarding",
             event_data=onboarding_data,
             source_platform="lifecycle_manager",
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
         )
         
         await self.user_repository.create_lifecycle_event(lifecycle_event)
@@ -259,7 +259,7 @@ class CustomerLifecycleManager:
             "user_id": user_id,
             "status": "onboarded",
             "lifecycle_stage": CustomerLifecycleStage.ACTIVE,
-            "onboarded_at": datetime.utcnow().isoformat(),
+            "onboarded_at": datetime.now(timezone.utc).isoformat(),
         }
 
     @standard_exception_handler
@@ -284,7 +284,7 @@ class CustomerLifecycleManager:
                 "additional_data": suspension_data or {},
             },
             source_platform="lifecycle_manager",
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
         )
         
         await self.user_repository.create_lifecycle_event(lifecycle_event)
@@ -305,7 +305,7 @@ class CustomerLifecycleManager:
             "status": "suspended",
             "lifecycle_stage": CustomerLifecycleStage.SUSPENDED,
             "suspension_reason": suspension_reason,
-            "suspended_at": datetime.utcnow().isoformat(),
+            "suspended_at": datetime.now(timezone.utc).isoformat(),
         }
 
     @standard_exception_handler
@@ -327,7 +327,7 @@ class CustomerLifecycleManager:
             event_type="customer_reactivation",
             event_data=reactivation_data or {},
             source_platform="lifecycle_manager",
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
         )
         
         await self.user_repository.create_lifecycle_event(lifecycle_event)
@@ -346,7 +346,7 @@ class CustomerLifecycleManager:
             "user_id": user_id,
             "status": "reactivated",
             "lifecycle_stage": CustomerLifecycleStage.ACTIVE,
-            "reactivated_at": datetime.utcnow().isoformat(),
+            "reactivated_at": datetime.now(timezone.utc).isoformat(),
         }
 
     @standard_exception_handler
@@ -365,7 +365,7 @@ class CustomerLifecycleManager:
                 "hard_delete": hard_delete,
             },
             source_platform="lifecycle_manager",
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
         )
         
         await self.user_repository.create_lifecycle_event(lifecycle_event)
@@ -393,7 +393,7 @@ class CustomerLifecycleManager:
             "lifecycle_stage": CustomerLifecycleStage.DELETED,
             "deletion_reason": deletion_reason,
             "hard_delete": hard_delete,
-            "deleted_at": datetime.utcnow().isoformat(),
+            "deleted_at": datetime.now(timezone.utc).isoformat(),
         }
 
     @standard_exception_handler
@@ -506,7 +506,7 @@ class ServiceProvisioningAutomation:
             "service_type": template.service_type,
             "configuration": final_config,
             "status": ServiceStatus.PENDING,
-            "created_at": datetime.utcnow(),
+            "created_at": datetime.now(timezone.utc),
             "requires_approval": template.requires_approval,
         }
         
@@ -534,7 +534,7 @@ class ServiceProvisioningAutomation:
         try:
             # Update status
             provisioning_request["status"] = ServiceStatus.PROVISIONING
-            provisioning_request["provisioning_started_at"] = datetime.utcnow()
+            provisioning_request["provisioning_started_at"] = datetime.now(timezone.utc)
             
             # Simulate provisioning steps
             await self._provision_infrastructure(provisioning_request)
@@ -543,7 +543,7 @@ class ServiceProvisioningAutomation:
             
             # Mark as active
             provisioning_request["status"] = ServiceStatus.ACTIVE
-            provisioning_request["provisioned_at"] = datetime.utcnow()
+            provisioning_request["provisioned_at"] = datetime.now(timezone.utc)
             
             logger.info(f"Successfully provisioned service {provisioning_request['service_name']} for customer {provisioning_request['customer_id']}")
             
@@ -626,7 +626,7 @@ class ServiceProvisioningAutomation:
         
         # Update status
         request["status"] = ServiceStatus.SUSPENDED
-        request["suspended_at"] = datetime.utcnow()
+        request["suspended_at"] = datetime.now(timezone.utc)
         request["suspension_reason"] = reason
         
         logger.info(f"Suspended service {service_name} for customer {customer_id}: {reason}")
@@ -657,14 +657,14 @@ class ServiceProvisioningAutomation:
         
         # Update status
         request["status"] = ServiceStatus.DEPROVISIONING
-        request["termination_started_at"] = datetime.utcnow()
+        request["termination_started_at"] = datetime.now(timezone.utc)
         request["termination_reason"] = reason
         
         # Simulate deprovisioning
         await asyncio.sleep(0.1)
         
         request["status"] = ServiceStatus.TERMINATED
-        request["terminated_at"] = datetime.utcnow()
+        request["terminated_at"] = datetime.now(timezone.utc)
         
         logger.info(f"Terminated service {service_name} for customer {customer_id}: {reason}")
         

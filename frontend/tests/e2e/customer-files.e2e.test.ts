@@ -12,4 +12,3 @@ test.describe('Customer - Files', () => {
     await expect(page.getByTestId('files-table')).toBeVisible();
   });
 });
-

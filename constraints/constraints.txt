@@ -1,0 +1,32 @@
+# Pin internal dotmac packages for production deployments.
+# Use with pip: pip install -c constraints/constraints.txt <your-app>
+
+dotmac-application==1.0.0
+# (dotmac-application) @ file://./packages/dotmac-application  # For monorepo installs; remove for external index
+
+dotmac-observability==1.0.0
+# (dotmac-observability) @ file://./packages/dotmac-observability
+
+dotmac-tenant==1.0.0
+# (dotmac-tenant) @ file://./packages/dotmac-tenant
+
+dotmac-auth==1.0.0
+# (dotmac-auth) @ file://./packages/dotmac-auth
+
+dotmac-tasks==1.0.0
+# (dotmac-tasks) @ file://./packages/dotmac-tasks
+
+dotmac-database==1.0.0
+# (dotmac-database) @ file://./packages/dotmac-database
+
+dotmac-events==1.0.0
+# (dotmac-events) @ file://./packages/dotmac-events
+
+dotmac-secrets==1.0.0
+# (dotmac-secrets) @ file://./packages/dotmac-secrets
+
+dotmac-websockets==1.0.0
+# (dotmac-websockets) @ file://./packages/dotmac-websockets
+
+dotmac-plugins==1.0.0
+# (dotmac-plugins) @ file://./packages/dotmac-plugins

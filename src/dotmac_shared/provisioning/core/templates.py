@@ -175,7 +175,7 @@ class TemplateManager:
             "tenant_name": config.tenant_name,
             "display_name": config.display_name,
             "plan_type": config.plan_type.value,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
         # Resource variables

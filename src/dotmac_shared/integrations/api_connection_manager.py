@@ -110,7 +110,7 @@ class ConnectionPool:
             
             self.sessions[connection_id] = session
             self.connection_stats[connection_id] = {
-                "created_at": datetime.utcnow(),
+                "created_at": datetime.now(timezone.utc),
                 "requests_made": 0,
                 "last_used": None
             }
@@ -118,7 +118,7 @@ class ConnectionPool:
             logger.info(f"Created new HTTP session for connection: {connection_id}")
         
         # Update last used timestamp
-        self.connection_stats[connection_id]["last_used"] = datetime.utcnow()
+        self.connection_stats[connection_id]["last_used"] = datetime.now(timezone.utc)
         self.connection_stats[connection_id]["requests_made"] += 1
         
         return self.sessions[connection_id]
@@ -188,7 +188,7 @@ class RateLimiter:
             return True
         
         limit_config = self.limits[connection_id]
-        current_time = datetime.utcnow()
+        current_time = datetime.now(timezone.utc)
         window_start = current_time - timedelta(seconds=limit_config["window_seconds"])
         
         # Remove old requests outside the window
@@ -246,7 +246,7 @@ class ApiConnectionManager:
             "error_count": 0,
             "avg_response_time": 0.0,
             "created_by": str(user_id),
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.now(timezone.utc).isoformat()
         }
         
         # Setup rate limiting if configured
@@ -322,7 +322,7 @@ class ApiConnectionManager:
         if data.description is not None:
             connection_config["description"] = data.description
             
-        connection_config["updated_at"] = datetime.utcnow().isoformat()
+        connection_config["updated_at"] = datetime.now(timezone.utc).isoformat()
         
         # Close existing session to force recreation with new config
         await self.pool.close_session(connection_str)
@@ -349,7 +349,7 @@ class ApiConnectionManager:
         if soft_delete:
             self.connections[connection_str]["enabled"] = False
             self.connections[connection_str]["status"] = "disabled"
-            self.connections[connection_str]["disabled_at"] = datetime.utcnow().isoformat()
+            self.connections[connection_str]["disabled_at"] = datetime.now(timezone.utc).isoformat()
         else:
             del self.connections[connection_str]
             
@@ -546,7 +546,7 @@ class ApiConnectionManager:
         else:
             connection_config["avg_response_time"] = response_time
         
-        connection_config["last_used"] = datetime.utcnow().isoformat()
+        connection_config["last_used"] = datetime.now(timezone.utc).isoformat()
 
     @standard_exception_handler
     async def test_connection(self, connection_id: str) -> Dict[str, Any]:
@@ -563,7 +563,7 @@ class ApiConnectionManager:
                 "connection_id": connection_id,
                 "status": "healthy" if result["success"] else "unhealthy",
                 "test_result": result,
-                "tested_at": datetime.utcnow().isoformat()
+                "tested_at": datetime.now(timezone.utc).isoformat()
             }
             
         except Exception as e:
@@ -571,7 +571,7 @@ class ApiConnectionManager:
                 "connection_id": connection_id,
                 "status": "error",
                 "error": str(e),
-                "tested_at": datetime.utcnow().isoformat()
+                "tested_at": datetime.now(timezone.utc).isoformat()
             }
 
 

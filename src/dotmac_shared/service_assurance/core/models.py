@@ -18,19 +18,7 @@ try:
     from sqlalchemy import Float, ForeignKey, Index, Integer, String, Text
     from sqlalchemy.dialects.postgresql import INET, UUID
     from sqlalchemy.ext.hybrid import hybrid_property
-    from sqlalchemy.orm import relationship
-
-    # Try to import shared base classes
-    try:
-        from dotmac_shared.database.base import AuditMixin, StatusMixin, TenantModel
-
-        SHARED_BASE_AVAILABLE = True
-    except ImportError:
-        SHARED_BASE_AVAILABLE = False
-
-    if not SHARED_BASE_AVAILABLE:
-        # Fallback for when shared database components aren't available
-        from sqlalchemy.ext.declarative import declarative_base
+    from sqlalchemy.orm import declarative_base, relationship
 
         Base = declarative_base()
 

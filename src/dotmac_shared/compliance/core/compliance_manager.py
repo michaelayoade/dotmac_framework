@@ -160,7 +160,7 @@ class ComplianceManager:
             findings=await self._get_check_findings(rule, status, context),
             recommendations=await self._get_check_recommendations(rule, status),
             evidence=context,
-            next_check_due=datetime.utcnow() + timedelta(days=30),  # Default 30 days
+            next_check_due=datetime.now(timezone.utc) + timedelta(days=30),  # Default 30 days
         )
         
         # Store check result
@@ -192,9 +192,9 @@ class ComplianceManager:
         """Calculate compliance metrics for a framework and period."""
         
         if not period_start:
-            period_start = datetime.utcnow() - timedelta(days=30)
+            period_start = datetime.now(timezone.utc) - timedelta(days=30)
         if not period_end:
-            period_end = datetime.utcnow()
+            period_end = datetime.now(timezone.utc)
         
         # Filter checks for the period
         period_checks = [
@@ -567,13 +567,13 @@ class ComplianceManager:
                 "active_alerts": len([a for a in self._alerts if a.status == "open"]),
                 "cache_available": self.cache_service is not None,
                 "event_bus_available": self.event_bus is not None,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
         except Exception as e:
             return {
                 "status": "unhealthy",
                 "error": str(e),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
 

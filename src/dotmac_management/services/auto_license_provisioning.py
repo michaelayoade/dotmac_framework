@@ -187,7 +187,7 @@ class AutoLicenseProvisioningService:
         contract_id = f"LIC-{datetime.now().strftime('%Y%m%d')}-{secrets.token_hex(4).upper()}"
         
         # Calculate validity period (1 year from now)
-        valid_from = datetime.utcnow()
+        valid_from = datetime.now(timezone.utc)
         valid_until = valid_from + timedelta(days=365)
         
         # Generate contract hash for integrity

@@ -166,7 +166,7 @@ class WebSocketEvent(BaseModel):
     @property
     def is_expired(self) -> bool:
         """Check if event has expired."""
-        return self.expires_at is not None and datetime.utcnow() > self.expires_at
+        return self.expires_at is not None and datetime.now(timezone.utc) > self.expires_at
 
     @property
     def can_retry(self) -> bool:
@@ -440,7 +440,7 @@ class EventManager:
 
         # Default since time
         if since is None:
-            since = datetime.utcnow() - timedelta(hours=1)
+            since = datetime.now(timezone.utc) - timedelta(hours=1)
 
         # Find events to replay
         events_to_replay = []
@@ -615,7 +615,7 @@ class EventManager:
         """Background task to clean up expired events."""
         while self._is_running:
             try:
-                now = datetime.utcnow()
+                now = datetime.now(timezone.utc)
 
                 # Remove expired events
                 before_count = len(self.persistent_events)

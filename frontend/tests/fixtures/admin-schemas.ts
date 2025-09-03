@@ -11,22 +11,23 @@ export const DeviceSchema = {
     hostname: { type: 'string' },
     device_type: {
       type: 'string',
-      enum: ['router', 'switch', 'access_point', 'firewall', 'load_balancer', 'ont', 'server']
+      enum: ['router', 'switch', 'access_point', 'firewall', 'load_balancer', 'ont', 'server'],
     },
     status: {
       type: 'string',
-      enum: ['online', 'offline', 'degraded', 'maintenance', 'error']
+      enum: ['online', 'offline', 'degraded', 'maintenance', 'error'],
     },
-    management_ip: { 
+    management_ip: {
       type: 'string',
-      pattern: '^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$'
+      pattern:
+        '^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$',
     },
     location: {
       type: 'object',
       properties: {
         id: { type: 'string' },
-        name: { type: 'string' }
-      }
+        name: { type: 'string' },
+      },
     },
     uptime: { type: 'number', minimum: 0 },
     cpu_usage: { type: 'number', minimum: 0, maximum: 100 },
@@ -35,8 +36,8 @@ export const DeviceSchema = {
     vendor: { type: 'string' },
     model: { type: 'string' },
     firmware_version: { type: 'string' },
-    serial_number: { type: 'string' }
-  }
+    serial_number: { type: 'string' },
+  },
 };
 
 export const DeviceListResponseSchema = {
@@ -45,7 +46,7 @@ export const DeviceListResponseSchema = {
   properties: {
     devices: {
       type: 'array',
-      items: DeviceSchema
+      items: DeviceSchema,
     },
     total: { type: 'number', minimum: 0 },
     page: { type: 'number', minimum: 1 },
@@ -58,20 +59,29 @@ export const DeviceListResponseSchema = {
         total_devices: { type: 'number', minimum: 0 },
         online: { type: 'number', minimum: 0 },
         alerts: { type: 'number', minimum: 0 },
-        maintenance: { type: 'number', minimum: 0 }
-      }
-    }
-  }
+        maintenance: { type: 'number', minimum: 0 },
+      },
+    },
+  },
 };
 
 export const SubnetSchema = {
   type: 'object',
-  required: ['id', 'subnet', 'description', 'utilization', 'total_ips', 'used_ips', 'available_ips'],
+  required: [
+    'id',
+    'subnet',
+    'description',
+    'utilization',
+    'total_ips',
+    'used_ips',
+    'available_ips',
+  ],
   properties: {
     id: { type: 'string' },
-    subnet: { 
+    subnet: {
       type: 'string',
-      pattern: '^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\/(?:3[0-2]|[12]?[0-9])$'
+      pattern:
+        '^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\/(?:3[0-2]|[12]?[0-9])$',
     },
     description: { type: 'string' },
     vlan_id: { type: ['number', 'null'], minimum: 1, maximum: 4094 },
@@ -80,30 +90,31 @@ export const SubnetSchema = {
     used_ips: { type: 'number', minimum: 0 },
     available_ips: { type: 'number', minimum: 0 },
     dhcp_enabled: { type: 'boolean' },
-    gateway: { 
+    gateway: {
       type: 'string',
-      pattern: '^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$'
+      pattern:
+        '^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$',
     },
     dns_servers: {
       type: 'array',
-      items: { type: 'string' }
+      items: { type: 'string' },
     },
     location: {
       type: 'object',
       properties: {
         id: { type: 'string' },
-        name: { type: 'string' }
-      }
+        name: { type: 'string' },
+      },
     },
     subnet_type: {
       type: 'string',
-      enum: ['management', 'customer', 'infrastructure', 'dmz', 'guest']
+      enum: ['management', 'customer', 'infrastructure', 'dmz', 'guest'],
     },
     ip_version: {
       type: 'string',
-      enum: ['4', '6']
-    }
-  }
+      enum: ['4', '6'],
+    },
+  },
 };
 
 export const SubnetListResponseSchema = {
@@ -112,7 +123,7 @@ export const SubnetListResponseSchema = {
   properties: {
     subnets: {
       type: 'array',
-      items: SubnetSchema
+      items: SubnetSchema,
     },
     total: { type: 'number', minimum: 0 },
     page: { type: 'number', minimum: 1 },
@@ -125,10 +136,10 @@ export const SubnetListResponseSchema = {
         total_subnets: { type: 'number', minimum: 0 },
         ip_utilization: { type: 'number', minimum: 0, maximum: 100 },
         available_ips: { type: 'number', minimum: 0 },
-        reservations: { type: 'number', minimum: 0 }
-      }
-    }
-  }
+        reservations: { type: 'number', minimum: 0 },
+      },
+    },
+  },
 };
 
 export const ProjectSchema = {
@@ -139,23 +150,30 @@ export const ProjectSchema = {
     name: { type: 'string' },
     status: {
       type: 'string',
-      enum: ['planning', 'in_progress', 'on_hold', 'completed', 'cancelled']
+      enum: ['planning', 'in_progress', 'on_hold', 'completed', 'cancelled'],
     },
     progress: { type: 'number', minimum: 0, maximum: 100 },
     project_type: {
       type: 'string',
-      enum: ['network_expansion', 'infrastructure_upgrade', 'customer_deployment', 'maintenance', 'emergency_repair', 'fiber_installation']
+      enum: [
+        'network_expansion',
+        'infrastructure_upgrade',
+        'customer_deployment',
+        'maintenance',
+        'emergency_repair',
+        'fiber_installation',
+      ],
     },
     priority: {
       type: 'string',
-      enum: ['critical', 'high', 'medium', 'low']
+      enum: ['critical', 'high', 'medium', 'low'],
     },
     owner: {
       type: 'object',
       properties: {
         id: { type: 'string' },
-        name: { type: 'string' }
-      }
+        name: { type: 'string' },
+      },
     },
     start_date: { type: 'string', format: 'date-time' },
     due_date: { type: 'string', format: 'date-time' },
@@ -166,10 +184,10 @@ export const ProjectSchema = {
       type: 'object',
       properties: {
         id: { type: 'string' },
-        name: { type: 'string' }
-      }
-    }
-  }
+        name: { type: 'string' },
+      },
+    },
+  },
 };
 
 export const ProjectListResponseSchema = {
@@ -178,7 +196,7 @@ export const ProjectListResponseSchema = {
   properties: {
     projects: {
       type: 'array',
-      items: ProjectSchema
+      items: ProjectSchema,
     },
     total: { type: 'number', minimum: 0 },
     page: { type: 'number', minimum: 1 },
@@ -191,10 +209,10 @@ export const ProjectListResponseSchema = {
         active_projects: { type: 'number', minimum: 0 },
         on_schedule: { type: 'number', minimum: 0, maximum: 100 },
         budget_used: { type: 'number', minimum: 0 },
-        team_members: { type: 'number', minimum: 0 }
-      }
-    }
-  }
+        team_members: { type: 'number', minimum: 0 },
+      },
+    },
+  },
 };
 
 export const ContainerSchema = {
@@ -206,7 +224,7 @@ export const ContainerSchema = {
     image: { type: 'string' },
     status: {
       type: 'string',
-      enum: ['running', 'stopped', 'paused', 'restarting', 'dead']
+      enum: ['running', 'stopped', 'paused', 'restarting', 'dead'],
     },
     uptime: { type: 'number', minimum: 0 },
     cpu_usage: { type: 'number', minimum: 0 },
@@ -216,17 +234,17 @@ export const ContainerSchema = {
       type: 'object',
       properties: {
         rx: { type: 'number', minimum: 0 },
-        tx: { type: 'number', minimum: 0 }
-      }
+        tx: { type: 'number', minimum: 0 },
+      },
     },
     restart_count: { type: 'number', minimum: 0 },
     health_status: {
       type: 'string',
-      enum: ['healthy', 'unhealthy', 'starting', 'unknown']
+      enum: ['healthy', 'unhealthy', 'starting', 'unknown'],
     },
     node: { type: 'string' },
-    service_name: { type: 'string' }
-  }
+    service_name: { type: 'string' },
+  },
 };
 
 export const ContainerListResponseSchema = {
@@ -235,7 +253,7 @@ export const ContainerListResponseSchema = {
   properties: {
     containers: {
       type: 'array',
-      items: ContainerSchema
+      items: ContainerSchema,
     },
     total: { type: 'number', minimum: 0 },
     page: { type: 'number', minimum: 1 },
@@ -248,10 +266,10 @@ export const ContainerListResponseSchema = {
         running_containers: { type: 'number', minimum: 0 },
         cpu_usage: { type: 'number', minimum: 0 },
         memory_usage: { type: 'number', minimum: 0 },
-        restarts_24h: { type: 'number', minimum: 0 }
-      }
-    }
-  }
+        restarts_24h: { type: 'number', minimum: 0 },
+      },
+    },
+  },
 };
 
 export const BulkActionRequestSchema = {
@@ -262,9 +280,9 @@ export const BulkActionRequestSchema = {
     device_ids: {
       type: 'array',
       items: { type: 'string' },
-      minItems: 1
-    }
-  }
+      minItems: 1,
+    },
+  },
 };
 
 export const BulkActionResponseSchema = {
@@ -281,11 +299,11 @@ export const BulkActionResponseSchema = {
         properties: {
           device_id: { type: 'string' },
           status: { type: 'string' },
-          message: { type: 'string' }
-        }
-      }
-    }
-  }
+          message: { type: 'string' },
+        },
+      },
+    },
+  },
 };
 
 // Schema validation utility

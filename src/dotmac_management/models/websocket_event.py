@@ -166,13 +166,13 @@ class WebSocketEvent(TenantModel, AuditableMixin):
     @hybrid_property
     def is_expired(self):
         """Check if event has expired."""
-        return self.expires_at and datetime.utcnow() > self.expires_at
+        return self.expires_at and datetime.now(timezone.utc) > self.expires_at
 
     @hybrid_property
     def is_due_for_delivery(self):
         """Check if event is due for delivery."""
         if self.scheduled_for:
-            return datetime.utcnow() >= self.scheduled_for
+            return datetime.now(timezone.utc) >= self.scheduled_for
         return True
 
     @hybrid_property
@@ -256,7 +256,7 @@ class WebSocketConnection(TenantModel):
     @hybrid_property
     def connection_duration_seconds(self):
         """Get connection duration in seconds."""
-        end_time = self.disconnected_at or datetime.utcnow()
+        end_time = self.disconnected_at or datetime.now(timezone.utc)
         return (end_time - self.connected_at).total_seconds()
 
     @hybrid_property
@@ -264,7 +264,7 @@ class WebSocketConnection(TenantModel):
         """Check if connection appears stale (no activity for 5 minutes)."""
         if not self.last_activity:
             return False
-        return (datetime.utcnow() - self.last_activity).total_seconds() > 300
+        return (datetime.now(timezone.utc) - self.last_activity).total_seconds() > 300
 
     def __repr__(self):
         return f"<WebSocketConnection(id='{self.connection_id}', user='{self.user_id}', active={self.is_active})>"
@@ -397,7 +397,7 @@ class WebSocketDelivery(TenantModel):
         return (
             self.status == DeliveryStatus.FAILED and
             self.retry_after and
-            datetime.utcnow() >= self.retry_after
+            datetime.now(timezone.utc) >= self.retry_after
         )
 
     def __repr__(self):

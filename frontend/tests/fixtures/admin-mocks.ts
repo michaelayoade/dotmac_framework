@@ -41,7 +41,7 @@ export class AdminManagementMocks {
           vendor: 'cisco',
           model: 'ASR-1006-X',
           firmware_version: '17.06.05',
-          serial_number: 'CSR1006X001'
+          serial_number: 'CSR1006X001',
         },
         {
           id: 'dev-dist-002',
@@ -57,7 +57,7 @@ export class AdminManagementMocks {
           vendor: 'cisco',
           model: 'C9300-24UX',
           firmware_version: '16.12.08',
-          serial_number: 'C9300UX002'
+          serial_number: 'C9300UX002',
         },
         {
           id: 'dev-ap-003',
@@ -73,7 +73,7 @@ export class AdminManagementMocks {
           vendor: 'ubiquiti',
           model: 'U6-Enterprise',
           firmware_version: '6.5.55',
-          serial_number: 'U6ENT003'
+          serial_number: 'U6ENT003',
         },
         {
           id: 'dev-fw-004',
@@ -89,37 +89,38 @@ export class AdminManagementMocks {
           vendor: 'juniper',
           model: 'SRX4600',
           firmware_version: '21.4R3',
-          serial_number: 'SRX4600004'
-        }
+          serial_number: 'SRX4600004',
+        },
       ];
 
       // Apply filters
       if (search) {
         const query = search.toLowerCase();
-        devices = devices.filter(d =>
-          d.hostname.toLowerCase().includes(query) ||
-          d.management_ip.includes(query) ||
-          d.model.toLowerCase().includes(query)
+        devices = devices.filter(
+          (d) =>
+            d.hostname.toLowerCase().includes(query) ||
+            d.management_ip.includes(query) ||
+            d.model.toLowerCase().includes(query)
         );
       }
 
       if (deviceType) {
-        devices = devices.filter(d => d.device_type === deviceType);
+        devices = devices.filter((d) => d.device_type === deviceType);
       }
 
       if (status) {
-        devices = devices.filter(d => d.status === status);
+        devices = devices.filter((d) => d.status === status);
       }
 
       if (locationId) {
-        devices = devices.filter(d => d.location.id === locationId);
+        devices = devices.filter((d) => d.location.id === locationId);
       }
 
       // Calculate metrics
       const totalDevices = devices.length;
-      const onlineDevices = devices.filter(d => d.status === 'online').length;
-      const alerts = devices.filter(d => d.status === 'degraded' || d.status === 'error').length;
-      const maintenance = devices.filter(d => d.status === 'maintenance').length;
+      const onlineDevices = devices.filter((d) => d.status === 'online').length;
+      const alerts = devices.filter((d) => d.status === 'degraded' || d.status === 'error').length;
+      const maintenance = devices.filter((d) => d.status === 'maintenance').length;
 
       // Pagination
       const start = (page - 1) * limit;
@@ -137,9 +138,9 @@ export class AdminManagementMocks {
               total_devices: totalDevices,
               online: onlineDevices,
               alerts,
-              maintenance
-            }
-          }
+              maintenance,
+            },
+          },
         };
       }
 
@@ -149,7 +150,7 @@ export class AdminManagementMocks {
     // Device details
     await this.tester.mockAndLog(/\/api\/admin\/devices\/[^\/]+$/, async (req) => {
       const deviceId = req.url.split('/').pop();
-      
+
       return {
         body: {
           id: deviceId,
@@ -171,14 +172,14 @@ export class AdminManagementMocks {
               name: 'GigabitEthernet0/0/0',
               status: 'up',
               speed: '1000Mbps',
-              utilization: 23.4
-            }
+              utilization: 23.4,
+            },
           ],
           monitoring_data: {
             cpu_history: [30, 32, 34, 36, 34, 32, 30],
-            memory_history: [2.1, 2.2, 2.1, 2.3, 2.2, 2.1, 2.0]
-          }
-        }
+            memory_history: [2.1, 2.2, 2.1, 2.3, 2.2, 2.1, 2.0],
+          },
+        },
       };
     });
 
@@ -189,11 +190,11 @@ export class AdminManagementMocks {
       }
 
       const { action, device_ids } = req.body;
-      
+
       if (!action || !device_ids?.length) {
-        return { 
-          status: 400, 
-          body: { error: 'Missing action or device_ids' } 
+        return {
+          status: 400,
+          body: { error: 'Missing action or device_ids' },
         };
       }
 
@@ -206,9 +207,9 @@ export class AdminManagementMocks {
           results: device_ids.map((id: string) => ({
             device_id: id,
             status: 'success',
-            message: `${action} completed successfully`
-          }))
-        }
+            message: `${action} completed successfully`,
+          })),
+        },
       };
     });
   }
@@ -237,7 +238,7 @@ export class AdminManagementMocks {
           dns_servers: ['8.8.8.8', '8.8.4.4'],
           location: { id: 'loc-001', name: 'Seattle Data Center' },
           subnet_type: 'management',
-          ip_version: '4'
+          ip_version: '4',
         },
         {
           id: 'subnet-002',
@@ -253,7 +254,7 @@ export class AdminManagementMocks {
           dns_servers: ['1.1.1.1', '1.0.0.1'],
           location: { id: 'loc-002', name: 'Bellevue Distribution' },
           subnet_type: 'customer',
-          ip_version: '4'
+          ip_version: '4',
         },
         {
           id: 'subnet-003',
@@ -269,8 +270,8 @@ export class AdminManagementMocks {
           dns_servers: ['208.67.222.222', '208.67.220.220'],
           location: { id: 'loc-001', name: 'Seattle Data Center' },
           subnet_type: 'infrastructure',
-          ip_version: '4'
-        }
+          ip_version: '4',
+        },
       ];
 
       // Calculate metrics
@@ -294,16 +295,16 @@ export class AdminManagementMocks {
             total_subnets: totalSubnets,
             ip_utilization: Math.round(avgUtilization * 10) / 10,
             available_ips: totalIPs - usedIPs,
-            reservations
-          }
-        }
+            reservations,
+          },
+        },
       };
     });
 
     // Subnet details
     await this.tester.mockAndLog(/\/api\/admin\/ipam\/subnets\/[^\/]+$/, async (req) => {
       const subnetId = req.url.split('/').pop();
-      
+
       return {
         body: {
           id: subnetId,
@@ -325,16 +326,16 @@ export class AdminManagementMocks {
               ip: '192.168.1.1',
               status: 'reserved',
               description: 'Gateway',
-              device_id: 'dev-core-001'
+              device_id: 'dev-core-001',
             },
             {
               ip: '192.168.1.10',
               status: 'allocated',
               description: 'Switch Management',
-              device_id: 'dev-dist-002'
-            }
-          ]
-        }
+              device_id: 'dev-dist-002',
+            },
+          ],
+        },
       };
     });
   }
@@ -362,7 +363,7 @@ export class AdminManagementMocks {
           budget_allocated: 450000,
           budget_used_percentage: 58.3,
           team_size: 8,
-          location: { id: 'loc-001', name: 'Downtown District' }
+          location: { id: 'loc-001', name: 'Downtown District' },
         },
         {
           id: 'proj-002',
@@ -377,7 +378,7 @@ export class AdminManagementMocks {
           budget_allocated: 125000,
           budget_used_percentage: 12.8,
           team_size: 4,
-          location: { id: 'loc-002', name: 'Seattle Data Center' }
+          location: { id: 'loc-002', name: 'Seattle Data Center' },
         },
         {
           id: 'proj-003',
@@ -392,18 +393,19 @@ export class AdminManagementMocks {
           budget_allocated: 35000,
           budget_used_percentage: 94.2,
           team_size: 3,
-          location: { id: 'loc-003', name: 'Tech Plaza' }
-        }
+          location: { id: 'loc-003', name: 'Tech Plaza' },
+        },
       ];
 
       // Calculate metrics
-      const activeProjects = projects.filter(p => p.status === 'in_progress').length;
-      const onScheduleProjects = projects.filter(p => 
-        p.status === 'in_progress' && p.progress >= 50
+      const activeProjects = projects.filter((p) => p.status === 'in_progress').length;
+      const onScheduleProjects = projects.filter(
+        (p) => p.status === 'in_progress' && p.progress >= 50
       ).length;
       const totalBudget = projects.reduce((sum, p) => sum + p.budget_allocated, 0);
-      const budgetUsed = projects.reduce((sum, p) => 
-        sum + (p.budget_allocated * p.budget_used_percentage / 100), 0
+      const budgetUsed = projects.reduce(
+        (sum, p) => sum + (p.budget_allocated * p.budget_used_percentage) / 100,
+        0
       );
       const totalTeamMembers = projects.reduce((sum, p) => sum + p.team_size, 0);
 
@@ -421,16 +423,16 @@ export class AdminManagementMocks {
             active_projects: activeProjects,
             on_schedule: Math.round((onScheduleProjects / activeProjects) * 100) || 0,
             budget_used: budgetUsed,
-            team_members: totalTeamMembers
-          }
-        }
+            team_members: totalTeamMembers,
+          },
+        },
       };
     });
 
     // Project details
     await this.tester.mockAndLog(/\/api\/admin\/projects\/[^\/]+$/, async (req) => {
       const projectId = req.url.split('/').pop();
-      
+
       return {
         body: {
           id: projectId,
@@ -453,29 +455,29 @@ export class AdminManagementMocks {
               name: 'Site Survey',
               status: 'completed',
               progress: 100,
-              assignee: 'John Doe'
+              assignee: 'John Doe',
             },
             {
               id: 'task-002',
               name: 'Fiber Installation',
               status: 'in_progress',
               progress: 45,
-              assignee: 'Jane Smith'
-            }
+              assignee: 'Jane Smith',
+            },
           ],
           milestones: [
             {
               name: 'Phase 1 Complete',
               date: '2024-08-31T00:00:00Z',
-              status: 'completed'
+              status: 'completed',
             },
             {
               name: 'Phase 2 Complete',
               date: '2024-10-31T00:00:00Z',
-              status: 'pending'
-            }
-          ]
-        }
+              status: 'pending',
+            },
+          ],
+        },
       };
     });
   }
@@ -503,7 +505,7 @@ export class AdminManagementMocks {
           restart_count: 2,
           health_status: 'healthy',
           node: 'worker-01',
-          service_name: 'isp-framework'
+          service_name: 'isp-framework',
         },
         {
           id: 'cont-002',
@@ -518,7 +520,7 @@ export class AdminManagementMocks {
           restart_count: 0,
           health_status: 'healthy',
           node: 'worker-02',
-          service_name: 'management-platform'
+          service_name: 'management-platform',
         },
         {
           id: 'cont-003',
@@ -533,7 +535,7 @@ export class AdminManagementMocks {
           restart_count: 1,
           health_status: 'healthy',
           node: 'master-01',
-          service_name: 'database'
+          service_name: 'database',
         },
         {
           id: 'cont-004',
@@ -548,15 +550,16 @@ export class AdminManagementMocks {
           restart_count: 5,
           health_status: 'starting',
           node: 'worker-01',
-          service_name: 'cache'
-        }
+          service_name: 'cache',
+        },
       ];
 
       // Calculate metrics
-      const runningContainers = containers.filter(c => c.status === 'running').length;
+      const runningContainers = containers.filter((c) => c.status === 'running').length;
       const avgCpuUsage = containers.reduce((sum, c) => sum + c.cpu_usage, 0) / containers.length;
-      const totalMemoryUsed = containers.reduce((sum, c) => 
-        sum + (c.memory_limit * c.memory_usage / 100), 0
+      const totalMemoryUsed = containers.reduce(
+        (sum, c) => sum + (c.memory_limit * c.memory_usage) / 100,
+        0
       );
       const totalRestarts = containers.reduce((sum, c) => sum + c.restart_count, 0);
 
@@ -573,17 +576,17 @@ export class AdminManagementMocks {
           metrics: {
             running_containers: runningContainers,
             cpu_usage: Math.round(avgCpuUsage * 10) / 10,
-            memory_usage: Math.round(totalMemoryUsed / (1024 ** 3) * 10) / 10, // GB
-            restarts_24h: totalRestarts
-          }
-        }
+            memory_usage: Math.round((totalMemoryUsed / 1024 ** 3) * 10) / 10, // GB
+            restarts_24h: totalRestarts,
+          },
+        },
       };
     });
 
     // Container details
     await this.tester.mockAndLog(/\/api\/admin\/containers\/[^\/]+$/, async (req) => {
       const containerId = req.url.split('/').pop();
-      
+
       return {
         body: {
           id: containerId,
@@ -600,37 +603,37 @@ export class AdminManagementMocks {
           node: 'worker-01',
           service_name: 'isp-framework',
           environment: {
-            'POSTGRES_HOST': 'postgres-primary',
-            'REDIS_HOST': 'redis-cache',
-            'LOG_LEVEL': 'info'
+            POSTGRES_HOST: 'postgres-primary',
+            REDIS_HOST: 'redis-cache',
+            LOG_LEVEL: 'info',
           },
           volumes: [
             {
               source: '/data/isp-framework',
               destination: '/app/data',
-              mode: 'rw'
-            }
+              mode: 'rw',
+            },
           ],
           ports: [
             {
               host_port: 8000,
               container_port: 8000,
-              protocol: 'tcp'
-            }
+              protocol: 'tcp',
+            },
           ],
           logs: [
             {
               timestamp: '2024-08-31T08:30:15.123Z',
               level: 'info',
-              message: 'Application started successfully'
+              message: 'Application started successfully',
             },
             {
               timestamp: '2024-08-31T08:30:10.456Z',
               level: 'info',
-              message: 'Database connection established'
-            }
-          ]
-        }
+              message: 'Database connection established',
+            },
+          ],
+        },
       };
     });
 
@@ -641,7 +644,7 @@ export class AdminManagementMocks {
       }
 
       const { action, container_ids } = req.body;
-      
+
       if (action === 'bulk_restart' && container_ids?.length) {
         return {
           body: {
@@ -650,15 +653,15 @@ export class AdminManagementMocks {
             results: container_ids.map((id: string) => ({
               container_id: id,
               status: 'success',
-              message: 'Container restart initiated'
-            }))
-          }
+              message: 'Container restart initiated',
+            })),
+          },
         };
       }
 
-      return { 
-        status: 400, 
-        body: { error: 'Invalid action or missing container_ids' } 
+      return {
+        status: 400,
+        body: { error: 'Invalid action or missing container_ids' },
       };
     });
   }

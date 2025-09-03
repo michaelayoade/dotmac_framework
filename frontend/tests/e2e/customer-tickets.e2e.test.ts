@@ -11,4 +11,3 @@ test.describe('Customer - Support Tickets', () => {
     await expect(page.getByText('Support Tickets')).toBeVisible();
   });
 });
-

@@ -668,7 +668,7 @@ class UpgradeMigrationE2E:
                 await asyncio.sleep(stage["duration"])
                 
                 switch_log.append({
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                     "blue_traffic": blue_percentage,
                     "green_traffic": green_percentage,
                     "status": "completed"
@@ -713,7 +713,7 @@ class UpgradeMigrationE2E:
                 # Mock service check
                 response_time = 0.05 + (i * 0.01)  # Slight increase during switch
                 check = {
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                     "response_time": response_time,
                     "status_code": 200,
                     "availability": True,
@@ -771,7 +771,7 @@ class UpgradeMigrationE2E:
                 await asyncio.sleep(1)
                 rollback_log.append({
                     "step": step,
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                     "status": "completed"
                 })
 
@@ -817,7 +817,7 @@ class UpgradeMigrationE2E:
                     "status": "running",
                     "health": "healthy",
                     "load_balancer_weight": 20,  # Equal distribution
-                    "created_at": datetime.utcnow().isoformat()
+                    "created_at": datetime.now(timezone.utc).isoformat()
                 }
                 instances.append(instance)
 
@@ -869,7 +869,7 @@ class UpgradeMigrationE2E:
                     "instance_id": instance["id"],
                     "old_version": instance["version"],
                     "target_version": target_version,
-                    "started_at": datetime.utcnow().isoformat()
+                    "started_at": datetime.now(timezone.utc).isoformat()
                 }
 
                 # Mock upgrade process for this instance
@@ -891,7 +891,7 @@ class UpgradeMigrationE2E:
                 instance["status"] = "running"
                 instance["health"] = "healthy"
 
-                upgrade_step["completed_at"] = datetime.utcnow().isoformat()
+                upgrade_step["completed_at"] = datetime.now(timezone.utc).isoformat()
                 upgrade_step["status"] = "successful"
                 upgrade_step["substeps"] = upgrade_substeps
 
@@ -931,7 +931,7 @@ class UpgradeMigrationE2E:
                 
                 # Mock load balancer distribution
                 test_result = {
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                     "active_instances": 4,  # One instance upgrading
                     "request_distribution": {
                         "instance_1": 25,
@@ -990,7 +990,7 @@ class UpgradeMigrationE2E:
                 
                 # Mock health check
                 check = {
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                     "available": True,
                     "response_time": 0.05 + (i * 0.001),
                     "status_code": 200
@@ -1092,7 +1092,7 @@ class UpgradeMigrationE2E:
                         "id": str(uuid4()),
                         "username": f"user_{i}",
                         "email": f"user{i}@test.com",
-                        "created_at": datetime.utcnow().isoformat()
+                        "created_at": datetime.now(timezone.utc).isoformat()
                     }
                     for i in range(10)
                 ],
@@ -1102,7 +1102,7 @@ class UpgradeMigrationE2E:
                         "name": f"Customer {i}",
                         "email": f"customer{i}@test.com",
                         "status": "active",
-                        "created_at": datetime.utcnow().isoformat()
+                        "created_at": datetime.now(timezone.utc).isoformat()
                     }
                     for i in range(15)
                 ],
@@ -1112,7 +1112,7 @@ class UpgradeMigrationE2E:
                         "customer_id": None,  # Will be assigned from customers
                         "total": round(100 + (i * 25.50), 2),
                         "status": "completed" if i < 8 else "pending",
-                        "created_at": datetime.utcnow().isoformat()
+                        "created_at": datetime.now(timezone.utc).isoformat()
                     }
                     for i in range(20)
                 ]
@@ -1194,7 +1194,7 @@ class UpgradeMigrationE2E:
                     "operation": migration["operation"],
                     "table": migration["table"],
                     "status": "completed",
-                    "applied_at": datetime.utcnow().isoformat()
+                    "applied_at": datetime.now(timezone.utc).isoformat()
                 }
                 
                 if migration["operation"] == "add_column":
@@ -1209,7 +1209,7 @@ class UpgradeMigrationE2E:
                 "from_version": current_schema_version,
                 "to_version": new_schema_version,
                 "operations": applied_migrations,
-                "applied_at": datetime.utcnow().isoformat()
+                "applied_at": datetime.now(timezone.utc).isoformat()
             }
             self.migration_history.append(migration_record)
 
@@ -1373,8 +1373,8 @@ class UpgradeMigrationE2E:
                         "id": str(uuid4()),
                         "username": f"new_user_{i}",
                         "email": f"newuser{i}@test.com",
-                        "created_at": datetime.utcnow().isoformat(),
-                        "last_login": datetime.utcnow().isoformat()  # New column
+                        "created_at": datetime.now(timezone.utc).isoformat(),
+                        "last_login": datetime.now(timezone.utc).isoformat()  # New column
                     }
                     for i in range(5)
                 ],
@@ -1385,7 +1385,7 @@ class UpgradeMigrationE2E:
                         "email": f"newcustomer{i}@test.com",
                         "status": "active",
                         "phone": f"+1555{i:03d}0000",  # New column
-                        "created_at": datetime.utcnow().isoformat()
+                        "created_at": datetime.now(timezone.utc).isoformat()
                     }
                     for i in range(3)
                 ],
@@ -1395,7 +1395,7 @@ class UpgradeMigrationE2E:
                         "user_id": None,  # Will assign from users
                         "message": f"Welcome notification {i}",
                         "read": False,
-                        "created_at": datetime.utcnow().isoformat()
+                        "created_at": datetime.now(timezone.utc).isoformat()
                     }
                     for i in range(8)
                 ]
@@ -1461,7 +1461,7 @@ class UpgradeMigrationE2E:
                     "operation": operation["operation"],
                     "table": operation["table"],
                     "status": "completed",
-                    "rolled_back_at": datetime.utcnow().isoformat()
+                    "rolled_back_at": datetime.now(timezone.utc).isoformat()
                 }
                 
                 if "column" in operation:
@@ -1478,7 +1478,7 @@ class UpgradeMigrationE2E:
                 "to_version": target_version,
                 "operations": applied_rollbacks,
                 "type": "rollback",
-                "applied_at": datetime.utcnow().isoformat()
+                "applied_at": datetime.now(timezone.utc).isoformat()
             }
             self.migration_history.append(rollback_record)
 
@@ -1741,7 +1741,7 @@ class UpgradeMigrationE2E:
                             if source_field == "user_id" or source_field == "order_id":
                                 migrated_record[target_field] = str(uuid4())  # Generate UUID
                             elif source_field in ["registration_date", "order_date"]:
-                                migrated_record[target_field] = datetime.utcnow().isoformat()  # Convert date
+                                migrated_record[target_field] = datetime.now(timezone.utc).isoformat()  # Convert date
                             elif source_field == "is_active":
                                 migrated_record[target_field] = "active" if source_value == 1 else "inactive"
                             elif source_field == "user_id" and target_field == "customer_id":
@@ -1921,7 +1921,7 @@ class UpgradeMigrationE2E:
                 await asyncio.sleep(1)
                 rollback_log.append({
                     "step": step,
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                     "status": "completed"
                 })
 

@@ -16,8 +16,8 @@ export default defineConfig({
     baseURL: 'http://localhost:3000',
     headless: true,
     launchOptions: {
-      args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage']
-    }
+      args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage'],
+    },
   },
   projects: [
     {

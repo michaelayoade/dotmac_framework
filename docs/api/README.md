@@ -15,10 +15,9 @@ The DotMac Platform consists of two main services:
 - Support ticket management
 - Field operations coordination
 
-**API Documentation:**
-- [ISP Framework README](isp-framework-README.md)
-- [OpenAPI Specification (JSON)](isp-framework-openapi.json)
-- [OpenAPI Specification (YAML)](isp-framework-openapi.yaml)
+- **Platform Overview:** See the main [README](../../README.md) and [Architecture](../ARCHITECTURE.md)
+- [OpenAPI Specification (JSON)](../../src/dotmac_shared/docs/api/openapi.json)
+- [OpenAPI Specification (YAML)](../../src/dotmac_shared/docs/api/openapi.yaml)
 
 ### 🏢 Management Platform  
 **Multi-Tenant SaaS Orchestration Platform**
@@ -29,10 +28,9 @@ The DotMac Platform consists of two main services:
 - Platform monitoring and analytics
 - Reseller network management
 
-**API Documentation:**
-- [Management Platform README](management-platform-README.md)  
-- [OpenAPI Specification (JSON)](management-platform-openapi.json)
-- [OpenAPI Specification (YAML)](management-platform-openapi.yaml)
+**Platform Overview:** See the main [README](../../README.md) and [Architecture](../ARCHITECTURE.md)  
+- [OpenAPI Specification (JSON)](../../src/dotmac_shared/docs/api/openapi.json)
+- [OpenAPI Specification (YAML)](../../src/dotmac_shared/docs/api/openapi.yaml)
 
 ## Quick Start
 

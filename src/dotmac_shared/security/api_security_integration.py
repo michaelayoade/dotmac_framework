@@ -273,7 +273,7 @@ class APISecuritySuite:
             "critical_issues": [],
             "warnings": [],
             "recommendations": [],
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
         total_score = 0
@@ -574,7 +574,7 @@ class APISecuritySuite:
     async def get_security_health_report(self) -> Dict[str, Any]:
         """Get comprehensive security health report"""
         health_report = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "environment": self.environment,
             "components_status": {},
             "threat_summary": {},

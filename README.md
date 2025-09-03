@@ -2,7 +2,7 @@
 
 **Status**: Beta Release - Active Development
 
-> DotMac is a **SaaS platform** where ISPs get dedicated, secure containers with complete operational management. We handle infrastructure, ISPs focus on customers. For deployment status, see the [Production Readiness Checklist](PRODUCTION_READINESS_CHECKLIST.md).
+> DotMac is a **SaaS platform** where ISPs get dedicated, secure containers with complete operational management. We handle infrastructure, ISPs focus on customers. For production hardening and go‑live checks, see the [Security Production Checklist](docs/SECURITY_PRODUCTION_CHECKLIST.md).
 
 ## 🎯 Platform Vision
 
@@ -54,7 +54,7 @@ helm install dotmac-isp-complete \
 - VOLTHA stack (GPON/fiber management)
 - Complete infrastructure (PostgreSQL, Redis, OpenBao, SignOz)
 
-See: **[Complete ISP Deployment Guide](docs/COMPLETE_ISP_DEPLOYMENT_GUIDE.md)** for full deployment instructions.
+See: **[Comprehensive Deployment Guide](docs/COMPREHENSIVE_DEPLOYMENT_GUIDE.md)** for full deployment instructions.
 
 ## 🏗️ SaaS Platform Architecture
 
@@ -276,22 +276,21 @@ python3 scripts/optimize_performance.py             # Performance optimization
 **🚀 Complete Documentation Suite:**
 
 - 🚀 **[Deployment Guide](docs/COMPREHENSIVE_DEPLOYMENT_GUIDE.md)** - Complete production deployment procedures
-- 🛠️ **[Operations Guide](docs/OPERATIONS_GUIDE.md)** - Daily operations, monitoring, and incident response
+- 🛠️ **[Production Deployment Runbook](docs/PRODUCTION_DEPLOYMENT_RUNBOOK.md)** - Daily operations, monitoring, and incident response
 - 🔧 **[Troubleshooting Guide](docs/COMPREHENSIVE_TROUBLESHOOTING_GUIDE.md)** - Problem diagnosis and resolution
 - 🎓 **[Training Guide](docs/COMPREHENSIVE_TRAINING_GUIDE.md)** - Team training and certification programs
-- 📊 **[API Documentation](docs/api/openapi.yaml)** - Complete OpenAPI 3.0 specification
+- 📊 **OpenAPI Spec**: JSON/YAML under `src/dotmac_shared/docs/api/`
 
 **Development & Setup:**
 
-- 📘 [Development Guide](DEVELOPER_GUIDE.md) - Setting up development environment
-- 📋 [Production Checklist](PRODUCTION_READINESS_CHECKLIST.md) - Detailed status tracking
-- 🤖 **[AI-First Testing Strategy](docs/AI_FIRST_TESTING_STRATEGY.md)** - Revolutionary testing approach that guarantees deployments work
-- 🔧 [Testing Guide](TESTING_GUIDE.md) - Traditional testing patterns
+- 📘 [Developer Onboarding](docs/DEVELOPER_ONBOARDING.md) - Setting up development environment
+- 📋 [Security Production Checklist](docs/SECURITY_PRODUCTION_CHECKLIST.md) - Critical pre‑production checks
+- 🤖 **[AI-First Testing Strategy](docs/AI_FIRST_TESTING_STRATEGY.md)** - Deployment readiness and validation
 
 **Platform-Specific:**
 
-- 🏢 [ISP Framework](isp-framework/README.md) - Monolithic ISP operations
-- 🎛️ [Management Platform](management-platform/README.md) - SaaS orchestration
+- 🏢 ISP Framework – see Architecture and modules in `docs/ARCHITECTURE.md`
+- 🎛️ Management Platform – orchestration overview in `docs/ARCHITECTURE.md`
 - 🌐 [Frontend Apps](frontend/README.md) - Portal applications
 
 ## 🛠️ Development Tools
@@ -359,7 +358,7 @@ This is a development project. Key areas needing contribution:
 - ✅ **Safe**: Revenue calculations, billing logic, core APIs
 - ✅ **Safe**: Development environment, testing, code quality tools
 - ⚠️ **Caution**: Database migrations (backup data first)
-- ❌ **Not Ready**: Production deployment, auto-scaling, multi-tenancy
+- ❌ **Not Ready**: Production deployment, auto-scaling,
 
 ### For Business Use
 
@@ -371,7 +370,7 @@ This is a development project. Key areas needing contribution:
 
 ## 📈 Roadmap to Production
 
-See [Production Readiness Checklist](PRODUCTION_READINESS_CHECKLIST.md) for the complete roadmap.
+See the [Security Production Checklist](docs/SECURITY_PRODUCTION_CHECKLIST.md) for go‑live requirements and remaining hardening.
 
 **Next Major Milestones:**
 
@@ -383,6 +382,6 @@ See [Production Readiness Checklist](PRODUCTION_READINESS_CHECKLIST.md) for the 
 
 ---
 
-**📧 Questions?** Check the [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) for detailed setup instructions or refer to the [Production Checklist](PRODUCTION_READINESS_CHECKLIST.md) for current status.
+**📧 Questions?** Check the [Developer Onboarding](docs/DEVELOPER_ONBOARDING.md) for detailed setup instructions or refer to the [Security Production Checklist](docs/SECURITY_PRODUCTION_CHECKLIST.md) for current status.
 
 **Last Updated**: Current as of production readiness assessment

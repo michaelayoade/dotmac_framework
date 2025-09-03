@@ -6,7 +6,8 @@ resource quotas, security policies, and tenant-specific access controls.
 
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
+from dotmac_shared.utils.datetime_utils import utc_now
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set, Union
 from uuid import UUID, uuid4
@@ -236,8 +237,8 @@ class TenantSecurityService:
             status=TenantStatus.ACTIVE,
             security_level=security_level,
             isolation_level=isolation_level,
-            created_at=datetime.now(timezone.utc),
-            updated_at=datetime.now(timezone.utc),
+            created_at=utc_now(),
+            updated_at=utc_now(),
             resource_quota=resource_quota,
             security_policy=security_policy,
             admin_email=admin_email,
@@ -507,7 +508,7 @@ class TenantSecurityService:
                 policy_updates["data_policy"]
             )
 
-        tenant_info.updated_at = datetime.now(timezone.utc)
+        tenant_info.updated_at = utc_now()
 
         # Update RBAC policies
         self._update_tenant_security_policies(tenant_id_str, tenant_info)
@@ -539,7 +540,7 @@ class TenantSecurityService:
             return False
 
         tenant_info.status = TenantStatus.SUSPENDED
-        tenant_info.updated_at = datetime.now(timezone.utc)
+        tenant_info.updated_at = utc_now()
 
         # Add blocking policy
         self.rbac_engine.add_tenant_policy(TenantPolicy(tenant_id_str))
@@ -579,7 +580,7 @@ class TenantSecurityService:
             return False
 
         tenant_info.status = TenantStatus.ACTIVE
-        tenant_info.updated_at = datetime.now(timezone.utc)
+        tenant_info.updated_at = utc_now()
 
         # Remove blocking policy
         tenant_policy = self.rbac_engine.tenant_policies.get(tenant_id_str)
@@ -664,7 +665,7 @@ class TenantSecurityService:
                     event.tenant_id == tenant_id_str
                     and event.user_id == user_id
                     and event.event_type == "login_failed"
-                    and (datetime.now(timezone.utc) - event.timestamp).seconds < 3600
+                    and (utc_now() - event.timestamp).seconds < 3600
                 )
             )
 
@@ -806,7 +807,7 @@ class TenantSecurityService:
             user_id=user_id,
             event_type=event_type,
             event_description=event_description,
-            timestamp=datetime.now(timezone.utc),
+            timestamp=utc_now(),
             ip_address=ip_address,
             user_agent=user_agent,
             risk_level=risk_level,

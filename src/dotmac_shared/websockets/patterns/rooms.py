@@ -442,7 +442,7 @@ class RoomManager:
 
         # Add to room
         room.members[connection_id] = member
-        room.last_activity = datetime.utcnow()
+        room.last_activity = datetime.now(timezone.utc)
 
         # Add to WebSocket room
         await self.websocket_manager.join_room(connection_id, room_id)
@@ -497,7 +497,7 @@ class RoomManager:
 
         # Remove from room
         del room.members[connection_id]
-        room.last_activity = datetime.utcnow()
+        room.last_activity = datetime.now(timezone.utc)
 
         # Remove from WebSocket room
         await self.websocket_manager.leave_room(connection_id, room_id)
@@ -570,8 +570,8 @@ class RoomManager:
             return False
 
         # Update activity
-        member.last_activity = datetime.utcnow()
-        room.last_activity = datetime.utcnow()
+        member.last_activity = datetime.now(timezone.utc)
+        room.last_activity = datetime.now(timezone.utc)
         room.message_count += 1
 
         # Create message event
@@ -581,7 +581,7 @@ class RoomManager:
                 "room_id": room_id,
                 "sender_id": member.user_id,
                 "message": message,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             },
             room=room_id,
             tenant_id=room.tenant_id,
@@ -702,7 +702,7 @@ class RoomManager:
             "message_count": room.message_count,
             "created_at": room.created_at.isoformat(),
             "last_activity": room.last_activity.isoformat(),
-            "is_active": (datetime.utcnow() - room.last_activity).seconds < 3600,
+            "is_active": (datetime.now(timezone.utc) - room.last_activity).seconds < 3600,
         }
 
     def get_metrics(self) -> Dict[str, Any]:
@@ -778,7 +778,7 @@ class RoomManager:
         """Background task to cleanup inactive temporary rooms."""
         while self._is_running:
             try:
-                inactive_threshold = datetime.utcnow() - timedelta(
+                inactive_threshold = datetime.now(timezone.utc) - timedelta(
                     hours=self.config.get("inactive_room_hours", 24)
                 )
 

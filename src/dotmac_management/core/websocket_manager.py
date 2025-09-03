@@ -74,8 +74,8 @@ class ManagementWebSocketManager:
         self.connection_metadata[websocket] = {
             "type": "admin",
             "admin_id": admin_id,
-            "connected_at": datetime.utcnow(),
-            "last_ping": datetime.utcnow(),
+            "connected_at": datetime.now(timezone.utc),
+            "last_ping": datetime.now(timezone.utc),
         }
 
         # Send initial status
@@ -85,7 +85,7 @@ class ManagementWebSocketManager:
                 "type": "connection_established",
                 "role": "admin",
                 "admin_id": admin_id,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             },
         )
 
@@ -103,8 +103,8 @@ class ManagementWebSocketManager:
         self.connection_metadata[websocket] = {
             "type": "tenant",
             "tenant_id": tenant_id,
-            "connected_at": datetime.utcnow(),
-            "last_ping": datetime.utcnow(),
+            "connected_at": datetime.now(timezone.utc),
+            "last_ping": datetime.now(timezone.utc),
         }
 
         # Send initial status
@@ -114,7 +114,7 @@ class ManagementWebSocketManager:
                 "type": "connection_established",
                 "role": "tenant",
                 "tenant_id": tenant_id,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             },
         )
 
@@ -132,8 +132,8 @@ class ManagementWebSocketManager:
         self.connection_metadata[websocket] = {
             "type": "partner",
             "partner_id": partner_id,
-            "connected_at": datetime.utcnow(),
-            "last_ping": datetime.utcnow(),
+            "connected_at": datetime.now(timezone.utc),
+            "last_ping": datetime.now(timezone.utc),
         }
 
         # Send initial status
@@ -143,7 +143,7 @@ class ManagementWebSocketManager:
                 "type": "connection_established",
                 "role": "partner",
                 "partner_id": partner_id,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             },
         )
 
@@ -183,7 +183,7 @@ class ManagementWebSocketManager:
         if not self.admin_connections:
             return
 
-        message["timestamp"] = datetime.utcnow().isoformat()
+        message["timestamp"] = datetime.now(timezone.utc).isoformat()
 
         disconnected = []
         for websocket in self.admin_connections.copy():
@@ -202,7 +202,7 @@ class ManagementWebSocketManager:
         if tenant_id not in self.tenant_connections:
             return
 
-        message["timestamp"] = datetime.utcnow().isoformat()
+        message["timestamp"] = datetime.now(timezone.utc).isoformat()
         message["tenant_id"] = tenant_id
 
         disconnected = []
@@ -224,7 +224,7 @@ class ManagementWebSocketManager:
         if partner_id not in self.partner_connections:
             return
 
-        message["timestamp"] = datetime.utcnow().isoformat()
+        message["timestamp"] = datetime.now(timezone.utc).isoformat()
         message["partner_id"] = partner_id
 
         disconnected = []
@@ -294,7 +294,7 @@ class ManagementWebSocketManager:
                 # Send ping to all connections every 30 seconds
                 ping_message = {
                     "type": "ping",
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                 }
 
                 # Ping admin connections
@@ -306,7 +306,7 @@ class ManagementWebSocketManager:
                         if websocket in self.connection_metadata:
                             self.connection_metadata[websocket][
                                 "last_ping"
-                            ] = datetime.utcnow()
+                            ] = datetime.now(timezone.utc)
                     except Exception:
                         disconnected_admins.append(websocket)
 
@@ -323,7 +323,7 @@ class ManagementWebSocketManager:
                             if websocket in self.connection_metadata:
                                 self.connection_metadata[websocket][
                                     "last_ping"
-                                ] = datetime.utcnow()
+                                ] = datetime.now(timezone.utc)
                         except Exception:
                             disconnected_tenants.append(websocket)
 
@@ -340,7 +340,7 @@ class ManagementWebSocketManager:
                             if websocket in self.connection_metadata:
                                 self.connection_metadata[websocket][
                                     "last_ping"
-                                ] = datetime.utcnow()
+                                ] = datetime.now(timezone.utc)
                         except Exception:
                             disconnected_partners.append(websocket)
 

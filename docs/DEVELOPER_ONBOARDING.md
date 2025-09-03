@@ -594,8 +594,8 @@ export const featureApi = {
 ### Documentation
 - [Architecture Guide](./ARCHITECTURE.md)
 - [API Documentation](./API_DOCUMENTATION.md)
-- [Deployment Guide](./DEPLOYMENT_GUIDE.md)
-- [Security Best Practices](./SECURITY.md)
+- [Comprehensive Deployment Guide](./COMPREHENSIVE_DEPLOYMENT_GUIDE.md)
+- [Security Production Checklist](./SECURITY_PRODUCTION_CHECKLIST.md)
 
 ### External Resources
 - [FastAPI Documentation](https://fastapi.tiangolo.com/)

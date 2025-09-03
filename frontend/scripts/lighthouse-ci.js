@@ -4,7 +4,15 @@ const { spawn } = require('node:child_process');
 const path = require('node:path');
 const fs = require('node:fs').promises;
 
-const APPS = ["admin","customer","reseller","management-admin","management-reseller","technician","tenant-portal"];
+const APPS = [
+  'admin',
+  'customer',
+  'reseller',
+  'management-admin',
+  'management-reseller',
+  'technician',
+  'tenant-portal',
+];
 
 class LighthouseCIRunner {
   constructor() {
@@ -14,7 +22,7 @@ class LighthouseCIRunner {
   }
 
   getTargetApp() {
-    const appArg = this.args.find(arg => arg.startsWith('--app='));
+    const appArg = this.args.find((arg) => arg.startsWith('--app='));
     return appArg ? appArg.split('=')[1] : null;
   }
 
@@ -50,7 +58,7 @@ class LighthouseCIRunner {
     return new Promise((resolve, reject) => {
       const lhci = spawn('npx', ['lhci', 'autorun'], {
         cwd: appPath,
-        stdio: 'inherit'
+        stdio: 'inherit',
       });
 
       lhci.on('close', (code) => {
@@ -77,10 +85,10 @@ class LighthouseCIRunner {
       timestamp,
       summary: {
         total: Object.keys(this.results).length,
-        passed: Object.values(this.results).filter(r => r.success).length,
-        failed: Object.values(this.results).filter(r => !r.success).length
+        passed: Object.values(this.results).filter((r) => r.success).length,
+        failed: Object.values(this.results).filter((r) => !r.success).length,
       },
-      results: this.results
+      results: this.results,
     };
 
     await fs.writeFile(
@@ -95,8 +103,8 @@ class LighthouseCIRunner {
     console.log('\n📊 LIGHTHOUSE CI SUMMARY');
     console.log('='.repeat(50));
 
-    const passed = Object.values(this.results).filter(r => r.success).length;
-    const failed = Object.values(this.results).filter(r => !r.success).length;
+    const passed = Object.values(this.results).filter((r) => r.success).length;
+    const failed = Object.values(this.results).filter((r) => !r.success).length;
 
     console.log(`Total Apps: ${Object.keys(this.results).length}`);
     console.log(`Passed: ${passed}`);

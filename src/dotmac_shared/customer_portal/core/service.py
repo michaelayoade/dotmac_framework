@@ -16,7 +16,7 @@ from dotmac_shared.auth import get_auth_service
 from dotmac_shared.billing import BillingService
 from dotmac_shared.monitoring import get_monitoring
 from dotmac_shared.ticketing import TicketService
-from dotmac_shared.user_management import UserManagementService
+from dotmac_management.user_management.services.user_service import UserManagementService
 
 from ..adapters.base import CustomerPortalAdapter
 from .auth import PortalAuthenticationManager

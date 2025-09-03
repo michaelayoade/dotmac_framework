@@ -5,6 +5,7 @@ Consolidates audit logging and security monitoring across all DotMac platforms.
 
 import logging
 from dataclasses import dataclass, field
+from pydantic import Field
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Union
 from uuid import UUID, uuid4
@@ -15,7 +16,7 @@ from dotmac_shared.cache import create_cache_service
 from dotmac_shared.events import EventBus
 from dotmac_shared.services_framework.core.base import ServiceHealth, ServiceStatus, StatefulService
 from dotmac_shared.application.config import DeploymentContext
-from dotmac_shared.schemas.base_schemas import TenantBaseModel
+from dotmac_shared.schemas.base_schemas import BaseSchema, TenantMixin
 from dotmac_shared.monitoring.audit import (
     AuditLogger,
     AuditEvent,
@@ -80,81 +81,81 @@ class SecurityThreatLevel(str, Enum):
     CRITICAL = "critical"
 
 
-class SecurityEvent(TenantBaseModel):
+class SecurityEvent(BaseSchema, TenantMixin):
     """Unified security event record."""
     
-    event_id: UUID = field(default_factory=uuid4)
-    event_type: SecurityEventType = field(..., description="Type of security event")
-    threat_level: SecurityThreatLevel = field(..., description="Threat level")
+    event_id: UUID = Field(default_factory=uuid4)
+    event_type: SecurityEventType = Field(..., description="Type of security event")
+    threat_level: SecurityThreatLevel = Field(..., description="Threat level")
     
     # Actor information
-    user_id: Optional[UUID] = field(None, description="User identifier")
-    username: Optional[str] = field(None, description="Username")
-    user_role: Optional[str] = field(None, description="User role")
-    session_id: Optional[str] = field(None, description="Session identifier")
+    user_id: Optional[UUID] = Field(None, description="User identifier")
+    username: Optional[str] = Field(None, description="Username")
+    user_role: Optional[str] = Field(None, description="User role")
+    session_id: Optional[str] = Field(None, description="Session identifier")
     
     # Network information
-    source_ip: str = field(..., description="Source IP address")
-    user_agent: Optional[str] = field(None, description="User agent string")
-    geo_location: Optional[Dict[str, str]] = field(None, description="Geographic location")
+    source_ip: str = Field(..., description="Source IP address")
+    user_agent: Optional[str] = Field(None, description="User agent string")
+    geo_location: Optional[Dict[str, str]] = Field(None, description="Geographic location")
     
     # Resource information
-    resource_id: Optional[str] = field(None, description="Affected resource ID")
-    resource_type: Optional[str] = field(None, description="Type of affected resource")
-    resource_owner: Optional[str] = field(None, description="Resource owner")
+    resource_id: Optional[str] = Field(None, description="Affected resource ID")
+    resource_type: Optional[str] = Field(None, description="Type of affected resource")
+    resource_owner: Optional[str] = Field(None, description="Resource owner")
     
     # Event details
-    action: str = field(..., description="Action performed")
-    outcome: str = field(..., description="Action outcome")
-    description: str = field(..., description="Event description")
+    action: str = Field(..., description="Action performed")
+    outcome: str = Field(..., description="Action outcome")
+    description: str = Field(..., description="Event description")
     
     # Security context
-    authentication_method: Optional[str] = field(None, description="Authentication method used")
-    authorization_context: Dict[str, Any] = field(default_factory=dict, description="Authorization context")
-    security_context: Dict[str, Any] = field(default_factory=dict, description="Security context")
+    authentication_method: Optional[str] = Field(None, description="Authentication method used")
+    authorization_context: Dict[str, Any] = Field(default_factory=dict, description="Authorization context")
+    security_context: Dict[str, Any] = Field(default_factory=dict, description="Security context")
     
     # Metadata
-    platform: str = field(..., description="Platform (isp, management, etc.)")
-    service: str = field(..., description="Service generating event")
-    correlation_id: Optional[str] = field(None, description="Correlation ID")
-    metadata: Dict[str, Any] = field(default_factory=dict, description="Additional metadata")
+    platform: str = Field(..., description="Platform (isp, management, etc.)")
+    service: str = Field(..., description="Service generating event")
+    correlation_id: Optional[str] = Field(None, description="Correlation ID")
+    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
     
     # Timestamps
-    timestamp: datetime = field(default_factory=datetime.utcnow, description="Event timestamp")
+    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Event timestamp")
 
 
-class SecurityAlert(TenantBaseModel):
+class SecurityAlert(BaseSchema, TenantMixin):
     """Security alert record."""
     
-    alert_id: UUID = field(default_factory=uuid4)
-    alert_type: str = field(..., description="Alert type")
-    threat_level: SecurityThreatLevel = field(..., description="Threat level")
-    title: str = field(..., description="Alert title")
-    description: str = field(..., description="Alert description")
+    alert_id: UUID = Field(default_factory=uuid4)
+    alert_type: str = Field(..., description="Alert type")
+    threat_level: SecurityThreatLevel = Field(..., description="Threat level")
+    title: str = Field(..., description="Alert title")
+    description: str = Field(..., description="Alert description")
     
     # Related events
-    triggering_events: List[UUID] = field(default_factory=list, description="Event IDs that triggered alert")
-    event_count: int = field(default=1, description="Number of related events")
+    triggering_events: List[UUID] = Field(default_factory=list, description="Event IDs that triggered alert")
+    event_count: int = Field(default=1, description="Number of related events")
     
     # Context
-    affected_resources: List[str] = field(default_factory=list, description="Affected resources")
-    source_ips: List[str] = field(default_factory=list, description="Source IP addresses")
-    users_affected: List[str] = field(default_factory=list, description="Affected users")
+    affected_resources: List[str] = Field(default_factory=list, description="Affected resources")
+    source_ips: List[str] = Field(default_factory=list, description="Source IP addresses")
+    users_affected: List[str] = Field(default_factory=list, description="Affected users")
     
     # Alert lifecycle
-    status: str = field(default="open", description="Alert status")
-    assigned_to: Optional[UUID] = field(None, description="Assigned analyst")
-    acknowledged_by: Optional[UUID] = field(None, description="User who acknowledged")
-    resolved_by: Optional[UUID] = field(None, description="User who resolved")
+    status: str = Field(default="open", description="Alert status")
+    assigned_to: Optional[UUID] = Field(None, description="Assigned analyst")
+    acknowledged_by: Optional[UUID] = Field(None, description="User who acknowledged")
+    resolved_by: Optional[UUID] = Field(None, description="User who resolved")
     
     # Timestamps
-    triggered_at: datetime = field(default_factory=datetime.utcnow, description="Alert trigger time")
-    acknowledged_at: Optional[datetime] = field(None, description="Acknowledgment time")
-    resolved_at: Optional[datetime] = field(None, description="Resolution time")
+    triggered_at: datetime = Field(default_factory=datetime.utcnow, description="Alert trigger time")
+    acknowledged_at: Optional[datetime] = Field(None, description="Acknowledgment time")
+    resolved_at: Optional[datetime] = Field(None, description="Resolution time")
     
     # Response
-    recommended_actions: List[str] = field(default_factory=list, description="Recommended actions")
-    mitigation_steps: List[str] = field(default_factory=list, description="Mitigation steps taken")
+    recommended_actions: List[str] = Field(default_factory=list, description="Recommended actions")
+    mitigation_steps: List[str] = Field(default_factory=list, description="Mitigation steps taken")
 
 
 @dataclass
@@ -249,7 +250,7 @@ class UnifiedAuditMonitor(StatefulService):
             self.set_state("events_processed", 0)
             self.set_state("alerts_generated", 0)
             self.set_state("threats_blocked", 0)
-            self.set_state("last_flush", datetime.utcnow().isoformat())
+            self.set_state("last_flush", datetime.now(timezone.utc).isoformat())
             
             await self._set_status(
                 ServiceStatus.READY,
@@ -429,7 +430,7 @@ class UnifiedAuditMonitor(StatefulService):
         if not self.is_ready():
             raise RuntimeError("Unified audit monitor not ready")
         
-        period_start = datetime.utcnow() - timedelta(hours=period_hours)
+        period_start = datetime.now(timezone.utc) - timedelta(hours=period_hours)
         
         # Filter events for the period
         filtered_events = [
@@ -442,7 +443,7 @@ class UnifiedAuditMonitor(StatefulService):
         dashboard = {
             "period": {
                 "start": period_start.isoformat(),
-                "end": datetime.utcnow().isoformat(),
+                "end": datetime.now(timezone.utc).isoformat(),
                 "hours": period_hours,
             },
             "summary": {
@@ -602,7 +603,7 @@ class UnifiedAuditMonitor(StatefulService):
         """Check for failed login patterns and generate alerts."""
         
         # Count failed logins from this IP in the time window
-        window_start = datetime.utcnow() - timedelta(minutes=self.audit_config.failed_login_window_minutes)
+        window_start = datetime.now(timezone.utc) - timedelta(minutes=self.audit_config.failed_login_window_minutes)
         
         failed_logins = [
             e for e in self._security_events
@@ -739,7 +740,7 @@ class UnifiedAuditMonitor(StatefulService):
     def _track_ip_activity(self, ip_address: str):
         """Track IP address activity for pattern detection."""
         
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         
         if ip_address not in self._ip_tracking:
             self._ip_tracking[ip_address] = []
@@ -756,7 +757,7 @@ class UnifiedAuditMonitor(StatefulService):
     def _track_user_activity(self, user_id: str):
         """Track user activity for pattern detection."""
         
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         
         if user_id not in self._user_tracking:
             self._user_tracking[user_id] = []
@@ -783,7 +784,7 @@ class UnifiedAuditMonitor(StatefulService):
         self._security_events.clear()
         
         # Update flush timestamp
-        self.set_state("last_flush", datetime.utcnow().isoformat())
+        self.set_state("last_flush", datetime.now(timezone.utc).isoformat())
         
         logger.info(f"Flushed {len(events_to_flush)} security events")
 

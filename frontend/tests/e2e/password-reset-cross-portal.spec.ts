@@ -45,7 +45,7 @@ class PasswordResetJourney {
     const resetEmail = await this.mailHogHelper.waitForEmail({
       to: portal.testUser.email,
       subject: /password reset|reset your password/i,
-      timeout: 30000
+      timeout: 30000,
     });
 
     expect(resetEmail).toBeTruthy();
@@ -91,14 +91,16 @@ class PasswordResetJourney {
     console.log('Verifying login with new password');
 
     await this.page.goto(portal.loginUrl);
-    
+
     await this.page.fill('[data-testid="email"]', portal.testUser.email);
     await this.page.fill('[data-testid="password"]', portal.testUser.newPassword);
     await this.page.click('[data-testid="login-button"]');
 
     // Verify successful login
-    await expect(this.page.getByTestId('dashboard') || this.page.getByTestId('user-menu')).toBeVisible();
-    
+    await expect(
+      this.page.getByTestId('dashboard') || this.page.getByTestId('user-menu')
+    ).toBeVisible();
+
     // Logout for cleanup
     await this.page.click('[data-testid="user-menu"]');
     await this.page.click('[data-testid="logout"]');
@@ -108,10 +110,12 @@ class PasswordResetJourney {
     console.log('Verifying reset link is now expired');
 
     await this.page.goto(resetLink);
-    
+
     // Should show token expired message
     await expect(this.page.getByTestId('token-expired-error')).toBeVisible();
-    await expect(this.page.getByText(/link expired|token invalid|link no longer valid/i)).toBeVisible();
+    await expect(
+      this.page.getByText(/link expired|token invalid|link no longer valid/i)
+    ).toBeVisible();
   }
 
   async testInvalidEmailHandling(portal: PortalConfig) {
@@ -125,14 +129,14 @@ class PasswordResetJourney {
 
     // Should still show success message (security - don't reveal if email exists)
     await expect(this.page.getByTestId('reset-link-sent-message')).toBeVisible();
-    
+
     // But no email should be sent to MailHog
     const emailExists = await this.mailHogHelper.checkForEmail({
       to: 'nonexistent@example.com',
       timeout: 5000,
-      shouldExist: false
+      shouldExist: false,
     });
-    
+
     expect(emailExists).toBe(false);
 
     return true;
@@ -188,7 +192,7 @@ class PasswordResetJourney {
     const resetEmail = await this.mailHogHelper.waitForEmail({
       to: portal.testUser.email,
       subject: /password reset/i,
-      timeout: 15000
+      timeout: 15000,
     });
 
     const resetLink = this.mailHogHelper.extractResetLinkFromEmail(resetEmail);
@@ -199,13 +203,13 @@ class PasswordResetJourney {
       '123', // Too short
       'password', // Too common
       'abcdefgh', // No numbers/special chars
-      '12345678' // Only numbers
+      '12345678', // Only numbers
     ];
 
     for (const weakPassword of weakPasswords) {
       await this.page.fill('[data-testid="new-password"]', weakPassword);
       await this.page.fill('[data-testid="confirm-password"]', weakPassword);
-      
+
       await expect(this.page.getByTestId('password-strength-error')).toBeVisible();
       await expect(this.page.getByTestId('update-password')).toBeDisabled();
     }
@@ -213,7 +217,7 @@ class PasswordResetJourney {
     // Test strong password
     await this.page.fill('[data-testid="new-password"]', 'StrongP@ssw0rd123');
     await this.page.fill('[data-testid="confirm-password"]', 'StrongP@ssw0rd123');
-    
+
     await expect(this.page.getByTestId('password-strength-success')).toBeVisible();
     await expect(this.page.getByTestId('update-password')).toBeEnabled();
 
@@ -237,7 +241,7 @@ class PasswordResetJourney {
 
     // Should receive only one email (or latest one should invalidate previous)
     const emails = await this.mailHogHelper.getAllEmailsForRecipient(portal.testUser.email);
-    
+
     // Either 1 email (deduplicated) or 3 emails with only latest being valid
     expect(emails.length).toBeGreaterThanOrEqual(1);
     expect(emails.length).toBeLessThanOrEqual(3);
@@ -245,7 +249,7 @@ class PasswordResetJourney {
     // Verify only the latest token works
     const latestEmail = emails[emails.length - 1];
     const resetLink = this.mailHogHelper.extractResetLinkFromEmail(latestEmail);
-    
+
     await this.page.goto(resetLink);
     await expect(this.page.getByTestId('new-password-form')).toBeVisible();
 
@@ -274,8 +278,8 @@ test.describe('Cross-Portal Password Reset with MailHog', () => {
       testUser: {
         email: 'customer-test@dotmac.local',
         currentPassword: 'oldPassword123',
-        newPassword: 'NewP@ssw0rd456'
-      }
+        newPassword: 'NewP@ssw0rd456',
+      },
     },
     {
       name: 'Admin',
@@ -285,8 +289,8 @@ test.describe('Cross-Portal Password Reset with MailHog', () => {
       testUser: {
         email: 'admin-test@dotmac.local',
         currentPassword: 'adminOld123',
-        newPassword: 'AdminNew@456'
-      }
+        newPassword: 'AdminNew@456',
+      },
     },
     {
       name: 'Technician',
@@ -296,20 +300,20 @@ test.describe('Cross-Portal Password Reset with MailHog', () => {
       testUser: {
         email: 'tech-test@dotmac.local',
         currentPassword: 'techOld123',
-        newPassword: 'TechNew@789'
-      }
+        newPassword: 'TechNew@789',
+      },
     },
     {
       name: 'Reseller',
-      resetUrl: 'http://localhost:3004/auth/forgot-password', 
+      resetUrl: 'http://localhost:3004/auth/forgot-password',
       loginUrl: 'http://localhost:3004/auth/login',
       expectedSuccessUrl: '/reseller/dashboard',
       testUser: {
         email: 'reseller-test@dotmac.local',
         currentPassword: 'resellerOld123',
-        newPassword: 'ResellerNew@321'
-      }
-    }
+        newPassword: 'ResellerNew@321',
+      },
+    },
   ];
 
   test.beforeAll(async () => {
@@ -332,27 +336,33 @@ test.describe('Cross-Portal Password Reset with MailHog', () => {
 
   // Test complete password reset for each portal
   for (const portal of portals) {
-    test(`completes password reset flow for ${portal.name} portal @password-reset @${portal.name.toLowerCase()}`, async ({ page }) => {
+    test(`completes password reset flow for ${portal.name} portal @password-reset @${portal.name.toLowerCase()}`, async ({
+      page,
+    }) => {
       const journey = new PasswordResetJourney(page, mailHogHelper);
-      
+
       await test.step(`complete password reset for ${portal.name}`, async () => {
         const result = await journey.testCompletePasswordReset(portal);
         expect(result).toBe(true);
       });
     });
 
-    test(`handles invalid email for ${portal.name} portal @password-reset @security`, async ({ page }) => {
+    test(`handles invalid email for ${portal.name} portal @password-reset @security`, async ({
+      page,
+    }) => {
       const journey = new PasswordResetJourney(page, mailHogHelper);
-      
+
       await test.step(`test invalid email handling`, async () => {
         const result = await journey.testInvalidEmailHandling(portal);
         expect(result).toBe(true);
       });
     });
 
-    test(`enforces rate limiting for ${portal.name} portal @password-reset @security`, async ({ page }) => {
+    test(`enforces rate limiting for ${portal.name} portal @password-reset @security`, async ({
+      page,
+    }) => {
       const journey = new PasswordResetJourney(page, mailHogHelper);
-      
+
       await test.step(`test rate limiting`, async () => {
         const result = await journey.testRateLimiting(portal);
         expect(result).toBe(true);
@@ -362,7 +372,7 @@ test.describe('Cross-Portal Password Reset with MailHog', () => {
 
   test('handles expired tokens correctly @password-reset @security', async ({ page }) => {
     const journey = new PasswordResetJourney(page, mailHogHelper);
-    
+
     await test.step('test expired token handling', async () => {
       const result = await journey.testExpiredTokenHandling();
       expect(result).toBe(true);
@@ -372,7 +382,7 @@ test.describe('Cross-Portal Password Reset with MailHog', () => {
   test('validates password strength @password-reset @validation', async ({ page }) => {
     const journey = new PasswordResetJourney(page, mailHogHelper);
     const portal = portals[0]; // Use customer portal for this test
-    
+
     await test.step('test password strength validation', async () => {
       const result = await journey.testPasswordStrengthValidation(portal);
       expect(result).toBe(true);
@@ -382,55 +392,61 @@ test.describe('Cross-Portal Password Reset with MailHog', () => {
   test('handles concurrent reset attempts @password-reset @concurrency', async ({ page }) => {
     const journey = new PasswordResetJourney(page, mailHogHelper);
     const portal = portals[0]; // Use customer portal for this test
-    
+
     await test.step('test concurrent reset attempts', async () => {
       const result = await journey.testConcurrentResetAttempts(portal);
       expect(result).toBe(true);
     });
   });
 
-  test('password reset performance across portals @password-reset @performance', async ({ page }) => {
+  test('password reset performance across portals @password-reset @performance', async ({
+    page,
+  }) => {
     const journey = new PasswordResetJourney(page, mailHogHelper);
-    
+
     const startTime = Date.now();
-    
+
     // Test quick reset flow for each portal
-    for (const portal of portals.slice(0, 2)) { // Test first 2 portals for performance
+    for (const portal of portals.slice(0, 2)) {
+      // Test first 2 portals for performance
       await journey.testCompletePasswordReset(portal);
     }
-    
+
     const totalTime = Date.now() - startTime;
     expect(totalTime).toBeLessThan(120000); // 2 minutes max for 2 complete flows
   });
 
   test('password reset accessibility @password-reset @a11y', async ({ page }) => {
     const portal = portals[0]; // Use customer portal
-    
+
     await page.goto(portal.resetUrl);
-    
+
     // Check form accessibility
     await expect(page.getByRole('form')).toBeVisible();
     await expect(page.getByLabelText(/email/i)).toBeVisible();
-    
+
     // Check keyboard navigation
     await page.keyboard.press('Tab');
     await expect(page.getByTestId('email-input')).toBeFocused();
-    
+
     await page.keyboard.press('Tab');
     await expect(page.getByTestId('send-reset-link')).toBeFocused();
-    
+
     // Check ARIA attributes
     const emailInput = page.getByTestId('email-input');
     await expect(emailInput).toHaveAttribute('aria-required', 'true');
     await expect(emailInput).toHaveAttribute('type', 'email');
-    
+
     // Test with screen reader announcements
     await emailInput.fill('test@example.com');
     await page.click('[data-testid="send-reset-link"]');
-    
+
     // Success message should have proper ARIA
     await expect(page.getByTestId('reset-link-sent-message')).toHaveAttribute('role', 'status');
-    await expect(page.getByTestId('reset-link-sent-message')).toHaveAttribute('aria-live', 'polite');
+    await expect(page.getByTestId('reset-link-sent-message')).toHaveAttribute(
+      'aria-live',
+      'polite'
+    );
   });
 });
 

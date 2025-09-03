@@ -321,7 +321,7 @@ class NetworkPlanner:
             "remaining_space": [str(space) for space in remaining_space],
             "requirements_processed": len(sorted_requirements),
             "requirements_satisfied": len(allocated_subnets),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     def create_ip_pools(
@@ -468,7 +468,7 @@ class NetworkPlanner:
             "growth_rate": growth_rate_percent,
             "overall_status": urgency,
             "recommendations": recommendations,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     def detect_subnet_conflicts(

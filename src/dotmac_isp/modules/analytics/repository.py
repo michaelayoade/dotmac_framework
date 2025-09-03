@@ -81,7 +81,7 @@ class MetricValueRepository(BaseRepository[MetricValue]):
             tenant_id=self.tenant_id,
             metric_id=metric_id,
             value=value,
-            timestamp=timestamp or datetime.utcnow(),
+            timestamp=timestamp or datetime.now(timezone.utc),
             dimensions=dimensions or {},
             context=context or {}
         )
@@ -321,7 +321,7 @@ class AlertRepository(BaseRepository[Alert]):
     async def update_trigger_info(self, alert_id: UUID, triggered_at: datetime = None) -> bool:
         """Update alert trigger information."""
         updates = {
-            Alert.last_triggered: triggered_at or datetime.utcnow(),
+            Alert.last_triggered: triggered_at or datetime.now(timezone.utc),
             Alert.trigger_count: Alert.trigger_count + 1
         }
         
@@ -385,7 +385,7 @@ class AlertEventRepository(BaseRepository[AlertEvent]):
     async def resolve_event(self, event_id: UUID, resolution_notes: str = None) -> bool:
         """Mark an alert event as resolved."""
         updates = {
-            AlertEvent.resolution_timestamp: datetime.utcnow(),
+            AlertEvent.resolution_timestamp: datetime.now(timezone.utc),
             AlertEvent.resolution_notes: resolution_notes
         }
         
@@ -428,7 +428,7 @@ class DataSourceRepository(BaseRepository[DataSource]):
         """Update sync status for a data source."""
         updates = {
             DataSource.sync_status: status,
-            DataSource.last_sync: last_sync or datetime.utcnow()
+            DataSource.last_sync: last_sync or datetime.now(timezone.utc)
         }
         
         result = self.db.query(DataSource).filter(
@@ -465,7 +465,7 @@ class AnalyticsSessionRepository(BaseRepository[AnalyticsSession]):
         """End an analytics session."""
         session = await self.get_by_id(session_id)
         if session and not session.session_end:
-            end_time = datetime.utcnow()
+            end_time = datetime.now(timezone.utc)
             duration = int((end_time - session.session_start).total_seconds())
             
             result = self.db.query(AnalyticsSession).filter(
@@ -479,7 +479,7 @@ class AnalyticsSessionRepository(BaseRepository[AnalyticsSession]):
 
     async def get_dashboard_analytics(self, dashboard_id: UUID, days: int = 30) -> Dict[str, Any]:
         """Get analytics data for a specific dashboard."""
-        start_date = datetime.utcnow() - timedelta(days=days)
+        start_date = datetime.now(timezone.utc) - timedelta(days=days)
         
         stats = self.db.query(
             func.count(AnalyticsSession.id).label('total_views'),
@@ -556,7 +556,7 @@ class MetricAggregationRepository(BaseRepository[MetricAggregation]):
             existing.aggregated_value = aggregated_value
             existing.sample_count = sample_count
             existing.dimensions = dimensions or {}
-            existing.computed_at = datetime.utcnow()
+            existing.computed_at = datetime.now(timezone.utc)
             self.db.commit()
             self.db.refresh(existing)
             return existing

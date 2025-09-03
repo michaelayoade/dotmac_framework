@@ -99,9 +99,7 @@ export const renderWithProviders = (
     let content = (
       <QueryClientProvider client={queryClient}>
         <BrowserRouter {...routerProps}>
-          <ThemeProvider theme={theme}>
-            {children}
-          </ThemeProvider>
+          <ThemeProvider theme={theme}>{children}</ThemeProvider>
         </BrowserRouter>
       </QueryClientProvider>
     );
@@ -160,7 +158,7 @@ export const formUtils = {
     if (errorMessage) {
       expect(screen.getByText(errorMessage)).toBeInTheDocument();
     }
-  }
+  },
 };
 
 /**
@@ -186,7 +184,7 @@ export const apiUtils = {
   // Assert error states
   expectErrorMessage(message: string): void {
     expect(screen.getByRole('alert')).toHaveTextContent(message);
-  }
+  },
 };
 
 /**
@@ -208,7 +206,7 @@ export const navigationUtils = {
     await waitFor(() => {
       expect(window.location.pathname).toBe(expectedPath);
     });
-  }
+  },
 };
 
 /**
@@ -231,7 +229,7 @@ export const a11yUtils = {
       expect(element).toHaveFocus();
       await userEvent.keyboard('{Tab}');
     }
-  }
+  },
 };
 
 /**
@@ -260,7 +258,7 @@ export const componentUtils = {
     const breakpoints = [
       { width: 320, name: 'mobile' },
       { width: 768, name: 'tablet' },
-      { width: 1024, name: 'desktop' }
+      { width: 1024, name: 'desktop' },
     ];
 
     breakpoints.forEach(({ width, name }) => {
@@ -277,7 +275,7 @@ export const componentUtils = {
         expect(container).toBeInTheDocument();
       });
     });
-  }
+  },
 };
 
 /**
@@ -291,7 +289,7 @@ export const portalUtils = {
       email: 'test@example.com',
       role: portal === 'admin' ? 'admin' : 'user',
       tenantId: 'test-tenant',
-      ...user
+      ...user,
     };
 
     // Mock auth context
@@ -300,7 +298,7 @@ export const portalUtils = {
       isAuthenticated: true,
       isLoading: false,
       login: jest.fn(),
-      logout: jest.fn()
+      logout: jest.fn(),
     });
 
     return defaultUser;
@@ -314,28 +312,20 @@ export const portalUtils = {
     tenantVariations.forEach((tenant) => {
       test(`renders correctly for tenant: ${tenant.name}`, () => {
         const user = this.mockPortalAuth('admin', { tenantId: tenant.id });
-        const { container } = renderWithProviders(
-          <Component />,
-          { wrapper: ({ children }: { children: ReactNode }) => (
+        const { container } = renderWithProviders(<Component />, {
+          wrapper: ({ children }: { children: ReactNode }) => (
             // @ts-ignore - TenantProvider is a mock component for testing
             <TenantProvider tenant={tenant}>{children}</TenantProvider>
-          )}
-        );
+          ),
+        });
         expect(container).toBeInTheDocument();
       });
     });
-  }
+  },
 };
 
 // Re-export commonly used testing library functions for convenience
-export {
-  render,
-  screen,
-  waitFor,
-  fireEvent,
-  within,
-  userEvent
-};
+export { render, screen, waitFor, fireEvent, within, userEvent };
 
 // Export grouped utilities
 export const testUtils = {
@@ -344,5 +334,5 @@ export const testUtils = {
   navigation: navigationUtils,
   a11y: a11yUtils,
   component: componentUtils,
-  portal: portalUtils
+  portal: portalUtils,
 };

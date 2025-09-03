@@ -197,7 +197,7 @@ async def update_license_usage(
         
         # Update usage data
         contract.current_usage = usage_data
-        contract.updated_at = datetime.utcnow()
+        contract.updated_at = datetime.now(timezone.utc)
         
         # Check for violations
         violations = await _check_usage_violations(contract, usage_data)

@@ -504,10 +504,10 @@ class PaymentsEdgeCasesE2E:
                             "exp_month": 12,
                             "exp_year": 2025,
                             "status": payment_method["status"],
-                            "created_at": datetime.utcnow().isoformat()
+                            "created_at": datetime.now(timezone.utc).isoformat()
                         }
                     ],
-                    "created_at": datetime.utcnow().isoformat()
+                    "created_at": datetime.now(timezone.utc).isoformat()
                 }
                 customers.append(customer)
 
@@ -556,7 +556,7 @@ class PaymentsEdgeCasesE2E:
                 "status": "processing",
                 "decline_code": None,
                 "decline_reason": None,
-                "created_at": datetime.utcnow().isoformat()
+                "created_at": datetime.now(timezone.utc).isoformat()
             }
 
             # Simulate payment processing delay
@@ -577,7 +577,7 @@ class PaymentsEdgeCasesE2E:
                 "status": "failed",
                 "decline_code": code,
                 "decline_reason": reason,
-                "failed_at": datetime.utcnow().isoformat()
+                "failed_at": datetime.now(timezone.utc).isoformat()
             })
 
             # Store payment for later use
@@ -626,7 +626,7 @@ class PaymentsEdgeCasesE2E:
                     "original_payment_id": payment_id,
                     "retry_interval": retry_strategy["backoff_intervals"][attempt],
                     "status": "processing",
-                    "started_at": datetime.utcnow().isoformat()
+                    "started_at": datetime.now(timezone.utc).isoformat()
                 }
 
                 # Simulate retry delay (shortened for testing)
@@ -638,13 +638,13 @@ class PaymentsEdgeCasesE2E:
                         "status": "failed",
                         "decline_code": original_payment["decline_code"],
                         "decline_reason": "Retry failed with same error",
-                        "failed_at": datetime.utcnow().isoformat()
+                        "failed_at": datetime.now(timezone.utc).isoformat()
                     })
                 else:
                     retry_attempt.update({
                         "status": "succeeded",
                         "success_reason": "Payment succeeded on retry",
-                        "succeeded_at": datetime.utcnow().isoformat()
+                        "succeeded_at": datetime.now(timezone.utc).isoformat()
                     })
 
                 retry_attempts.append(retry_attempt)
@@ -685,7 +685,7 @@ class PaymentsEdgeCasesE2E:
                 "status": "active",
                 "current_step": 1,
                 "total_steps": 4,
-                "created_at": datetime.utcnow().isoformat()
+                "created_at": datetime.now(timezone.utc).isoformat()
             }
 
             # Define dunning steps
@@ -703,8 +703,8 @@ class PaymentsEdgeCasesE2E:
                     "step_number": step_config["step"],
                     "type": step_config["type"],
                     "status": "processing",
-                    "scheduled_for": (datetime.utcnow() + timedelta(days=step_config["delay_days"])).isoformat(),
-                    "started_at": datetime.utcnow().isoformat()
+                    "scheduled_for": (datetime.now(timezone.utc) + timedelta(days=step_config["delay_days"])).isoformat(),
+                    "started_at": datetime.now(timezone.utc).isoformat()
                 }
 
                 # Simulate step execution (shortened delay for testing)
@@ -713,7 +713,7 @@ class PaymentsEdgeCasesE2E:
                 # Mock step completion
                 step_execution.update({
                     "status": "completed",
-                    "completed_at": datetime.utcnow().isoformat(),
+                    "completed_at": datetime.now(timezone.utc).isoformat(),
                     "delivery_status": "delivered" if step_config["type"] != "suspension" else "suspended"
                 })
 
@@ -740,7 +740,7 @@ class PaymentsEdgeCasesE2E:
 
             dunning_process.update({
                 "status": "resolved",
-                "resolved_at": datetime.utcnow().isoformat(),
+                "resolved_at": datetime.now(timezone.utc).isoformat(),
                 "resolution_method": "customer_payment_update"
             })
 
@@ -794,7 +794,7 @@ class PaymentsEdgeCasesE2E:
                     "original_payment_id": failed_payment_id,
                     "workflow_type": workflow["type"],
                     "status": "processing",
-                    "started_at": datetime.utcnow().isoformat()
+                    "started_at": datetime.now(timezone.utc).isoformat()
                 }
 
                 await asyncio.sleep(1)
@@ -804,7 +804,7 @@ class PaymentsEdgeCasesE2E:
                 
                 recovery_attempt.update({
                     "status": "succeeded" if success else "failed",
-                    "completed_at": datetime.utcnow().isoformat()
+                    "completed_at": datetime.now(timezone.utc).isoformat()
                 })
 
                 if success:
@@ -908,7 +908,7 @@ class PaymentsEdgeCasesE2E:
                 "currency": "USD",
                 "threeds_required": True,
                 "status": "processing",
-                "created_at": datetime.utcnow().isoformat()
+                "created_at": datetime.now(timezone.utc).isoformat()
             }
 
             # Simulate 3DS authentication process
@@ -917,7 +917,7 @@ class PaymentsEdgeCasesE2E:
                 "payment_id": payment["id"],
                 "flow_type": "frictionless",
                 "status": "processing",
-                "started_at": datetime.utcnow().isoformat()
+                "started_at": datetime.now(timezone.utc).isoformat()
             }
 
             # Mock frictionless authentication (quick approval)
@@ -927,7 +927,7 @@ class PaymentsEdgeCasesE2E:
                 "status": "succeeded",
                 "authentication_result": "authenticated",
                 "liability_shift": True,
-                "completed_at": datetime.utcnow().isoformat(),
+                "completed_at": datetime.now(timezone.utc).isoformat(),
                 "processing_time": 0.8,
                 "issuer_response": "frictionless_success"
             })
@@ -936,7 +936,7 @@ class PaymentsEdgeCasesE2E:
             payment.update({
                 "status": "succeeded",
                 "threeds_authentication_id": threeds_authentication["id"],
-                "succeeded_at": datetime.utcnow().isoformat()
+                "succeeded_at": datetime.now(timezone.utc).isoformat()
             })
 
             return {
@@ -969,7 +969,7 @@ class PaymentsEdgeCasesE2E:
                 "currency": "USD",
                 "threeds_required": True,
                 "status": "processing",
-                "created_at": datetime.utcnow().isoformat()
+                "created_at": datetime.now(timezone.utc).isoformat()
             }
 
             # Simulate challenge authentication process
@@ -979,7 +979,7 @@ class PaymentsEdgeCasesE2E:
                 "flow_type": "challenge",
                 "status": "challenge_required",
                 "challenge_url": "https://3ds-challenge.example.com/auth/12345",
-                "started_at": datetime.utcnow().isoformat()
+                "started_at": datetime.now(timezone.utc).isoformat()
             }
 
             # Mock challenge presentation and customer interaction
@@ -992,7 +992,7 @@ class PaymentsEdgeCasesE2E:
                 "challenge_completed": True,
                 "customer_response": "authenticated",
                 "liability_shift": True,
-                "completed_at": datetime.utcnow().isoformat(),
+                "completed_at": datetime.now(timezone.utc).isoformat(),
                 "processing_time": 5.2
             })
 
@@ -1000,7 +1000,7 @@ class PaymentsEdgeCasesE2E:
             payment.update({
                 "status": "succeeded",
                 "threeds_authentication_id": challenge_authentication["id"],
-                "succeeded_at": datetime.utcnow().isoformat()
+                "succeeded_at": datetime.now(timezone.utc).isoformat()
             })
 
             return {
@@ -1031,7 +1031,7 @@ class PaymentsEdgeCasesE2E:
                 "amount": Decimal("200.00"),
                 "currency": "USD",
                 "status": "processing",
-                "created_at": datetime.utcnow().isoformat()
+                "created_at": datetime.now(timezone.utc).isoformat()
             }
 
             # Simulate 3DS authentication attempt
@@ -1040,7 +1040,7 @@ class PaymentsEdgeCasesE2E:
                 "payment_id": payment["id"],
                 "scenario_type": scenario["type"],
                 "status": "processing",
-                "started_at": datetime.utcnow().isoformat()
+                "started_at": datetime.now(timezone.utc).isoformat()
             }
 
             await asyncio.sleep(1.5)
@@ -1067,7 +1067,7 @@ class PaymentsEdgeCasesE2E:
             failure_response = failure_responses.get(scenario["type"], failure_responses["authentication_failed"])
             
             threeds_attempt.update(failure_response)
-            threeds_attempt["completed_at"] = datetime.utcnow().isoformat()
+            threeds_attempt["completed_at"] = datetime.now(timezone.utc).isoformat()
 
             # Update payment based on 3DS result
             if failure_response["status"] == "not_enrolled":
@@ -1076,7 +1076,7 @@ class PaymentsEdgeCasesE2E:
                     "status": "succeeded",
                     "threeds_authentication_id": threeds_attempt["id"],
                     "liability_shift": False,
-                    "succeeded_at": datetime.utcnow().isoformat()
+                    "succeeded_at": datetime.now(timezone.utc).isoformat()
                 })
             else:
                 # Payment fails
@@ -1084,7 +1084,7 @@ class PaymentsEdgeCasesE2E:
                     "status": "failed",
                     "threeds_authentication_id": threeds_attempt["id"],
                     "failure_reason": failure_response["failure_reason"],
-                    "failed_at": datetime.utcnow().isoformat()
+                    "failed_at": datetime.now(timezone.utc).isoformat()
                 })
 
             expected_result = scenario["expected_result"]
@@ -1120,7 +1120,7 @@ class PaymentsEdgeCasesE2E:
                 "amount": Decimal("75.00"),
                 "currency": "USD",
                 "status": "processing",
-                "created_at": datetime.utcnow().isoformat()
+                "created_at": datetime.now(timezone.utc).isoformat()
             }
 
             # Initial 3DS attempt fails
@@ -1130,12 +1130,12 @@ class PaymentsEdgeCasesE2E:
                 "attempt_number": 1,
                 "status": "failed",
                 "failure_reason": "3ds_service_unavailable",
-                "started_at": datetime.utcnow().isoformat()
+                "started_at": datetime.now(timezone.utc).isoformat()
             }
 
             await asyncio.sleep(1)
 
-            initial_3ds_attempt["completed_at"] = datetime.utcnow().isoformat()
+            initial_3ds_attempt["completed_at"] = datetime.now(timezone.utc).isoformat()
 
             # Fallback to non-3DS processing
             fallback_attempt = {
@@ -1144,7 +1144,7 @@ class PaymentsEdgeCasesE2E:
                 "attempt_number": 2,
                 "type": "fallback_non_3ds",
                 "status": "processing",
-                "started_at": datetime.utcnow().isoformat()
+                "started_at": datetime.now(timezone.utc).isoformat()
             }
 
             await asyncio.sleep(1)
@@ -1153,7 +1153,7 @@ class PaymentsEdgeCasesE2E:
             fallback_attempt.update({
                 "status": "succeeded",
                 "liability_shift": False,  # No liability shift without 3DS
-                "completed_at": datetime.utcnow().isoformat()
+                "completed_at": datetime.now(timezone.utc).isoformat()
             })
 
             # Update payment
@@ -1162,7 +1162,7 @@ class PaymentsEdgeCasesE2E:
                 "primary_authentication_id": initial_3ds_attempt["id"],
                 "fallback_authentication_id": fallback_attempt["id"],
                 "liability_shift": False,
-                "succeeded_at": datetime.utcnow().isoformat()
+                "succeeded_at": datetime.now(timezone.utc).isoformat()
             })
 
             return {
@@ -1208,8 +1208,8 @@ class PaymentsEdgeCasesE2E:
                     "status": "succeeded",
                     "test_scenario": scenario["type"],
                     "gateway_transaction_id": f"txn_{uuid4().hex[:12]}",
-                    "created_at": (datetime.utcnow() - timedelta(days=random.randint(1, 30))).isoformat(),
-                    "succeeded_at": (datetime.utcnow() - timedelta(days=random.randint(1, 30))).isoformat()
+                    "created_at": (datetime.now(timezone.utc) - timedelta(days=random.randint(1, 30))).isoformat(),
+                    "succeeded_at": (datetime.now(timezone.utc) - timedelta(days=random.randint(1, 30))).isoformat()
                 }
                 test_payments.append(payment)
 
@@ -1249,7 +1249,7 @@ class PaymentsEdgeCasesE2E:
                 "reason": "customer_request",
                 "type": "partial",
                 "status": "processing",
-                "created_at": datetime.utcnow().isoformat()
+                "created_at": datetime.now(timezone.utc).isoformat()
             }
 
             # Simulate refund processing
@@ -1259,7 +1259,7 @@ class PaymentsEdgeCasesE2E:
             refund.update({
                 "status": "succeeded",
                 "gateway_refund_id": f"rf_{uuid4().hex[:12]}",
-                "processed_at": datetime.utcnow().isoformat(),
+                "processed_at": datetime.now(timezone.utc).isoformat(),
                 "processing_fee": Decimal("0.30")
             })
 
@@ -1333,7 +1333,7 @@ class PaymentsEdgeCasesE2E:
                     "type": "partial",
                     "sequence_number": i + 1,
                     "status": "processing",
-                    "created_at": datetime.utcnow().isoformat()
+                    "created_at": datetime.now(timezone.utc).isoformat()
                 }
 
                 await asyncio.sleep(1)
@@ -1343,14 +1343,14 @@ class PaymentsEdgeCasesE2E:
                     refund.update({
                         "status": "succeeded",
                         "gateway_refund_id": f"rf_{uuid4().hex[:12]}",
-                        "processed_at": datetime.utcnow().isoformat()
+                        "processed_at": datetime.now(timezone.utc).isoformat()
                     })
                     total_refunded += refund_amount
                 else:
                     refund.update({
                         "status": "failed",
                         "failure_reason": "refund_amount_exceeds_available",
-                        "failed_at": datetime.utcnow().isoformat()
+                        "failed_at": datetime.now(timezone.utc).isoformat()
                     })
 
                 refunds.append(refund)
@@ -1391,7 +1391,7 @@ class PaymentsEdgeCasesE2E:
             limitation_tests = []
 
             # Test 1: Refund deadline (mock old payment)
-            old_payment_date = datetime.utcnow() - timedelta(days=185)  # Older than 180 days
+            old_payment_date = datetime.now(timezone.utc) - timedelta(days=185)  # Older than 180 days
             deadline_test = {
                 "test": "refund_deadline",
                 "payment_age_days": 185,
@@ -1488,7 +1488,7 @@ class PaymentsEdgeCasesE2E:
                 "amount": Decimal("100.00"),
                 "currency": "USD",
                 "status": "succeeded",
-                "created_at": datetime.utcnow().isoformat()
+                "created_at": datetime.now(timezone.utc).isoformat()
             }
 
             # Attempt to refund other tenant's payment from current tenant context
@@ -1499,7 +1499,7 @@ class PaymentsEdgeCasesE2E:
                 "amount": Decimal("50.00"),
                 "type": "partial",
                 "status": "processing",
-                "created_at": datetime.utcnow().isoformat()
+                "created_at": datetime.now(timezone.utc).isoformat()
             }
 
             await asyncio.sleep(1)
@@ -1509,7 +1509,7 @@ class PaymentsEdgeCasesE2E:
                 "status": "failed",
                 "failure_reason": "payment_not_found_for_tenant",
                 "security_violation": True,
-                "failed_at": datetime.utcnow().isoformat()
+                "failed_at": datetime.now(timezone.utc).isoformat()
             })
 
             # Test accessing refunds from another tenant
@@ -1575,8 +1575,8 @@ class PaymentsEdgeCasesE2E:
                 "type": "partial",
                 "status": "succeeded",
                 "gateway_refund_id": f"rf_{uuid4().hex[:12]}",
-                "created_at": datetime.utcnow().isoformat(),
-                "processed_at": datetime.utcnow().isoformat()
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "processed_at": datetime.now(timezone.utc).isoformat()
             }
 
             await asyncio.sleep(1)
@@ -1610,7 +1610,7 @@ class PaymentsEdgeCasesE2E:
                     "reason": scenario["reason"],
                     "amount": initial_refund["amount"],
                     "status": "processing",
-                    "initiated_at": datetime.utcnow().isoformat()
+                    "initiated_at": datetime.now(timezone.utc).isoformat()
                 }
 
                 await asyncio.sleep(1)
@@ -1623,13 +1623,13 @@ class PaymentsEdgeCasesE2E:
                         "status": "succeeded",
                         "reversed_amount": initial_refund["amount"],
                         "gateway_reversal_id": f"rev_{uuid4().hex[:8]}",
-                        "completed_at": datetime.utcnow().isoformat()
+                        "completed_at": datetime.now(timezone.utc).isoformat()
                     })
                 else:
                     reversal_attempt.update({
                         "status": "failed",
                         "failure_reason": f"{scenario['type']}_reversal_denied",
-                        "failed_at": datetime.utcnow().isoformat()
+                        "failed_at": datetime.now(timezone.utc).isoformat()
                     })
 
                 reversal_attempts.append(reversal_attempt)
@@ -1698,11 +1698,11 @@ class PaymentsEdgeCasesE2E:
                     "plan_id": plan["id"],
                     "plan": plan,
                     "status": "active",
-                    "current_period_start": datetime.utcnow().isoformat(),
-                    "current_period_end": (datetime.utcnow() + timedelta(days=30)).isoformat(),
-                    "trial_start": (datetime.utcnow() - timedelta(days=plan["trial_period_days"])).isoformat(),
-                    "trial_end": datetime.utcnow().isoformat(),
-                    "created_at": (datetime.utcnow() - timedelta(days=plan["trial_period_days"] + 5)).isoformat()
+                    "current_period_start": datetime.now(timezone.utc).isoformat(),
+                    "current_period_end": (datetime.now(timezone.utc) + timedelta(days=30)).isoformat(),
+                    "trial_start": (datetime.now(timezone.utc) - timedelta(days=plan["trial_period_days"])).isoformat(),
+                    "trial_end": datetime.now(timezone.utc).isoformat(),
+                    "created_at": (datetime.now(timezone.utc) - timedelta(days=plan["trial_period_days"] + 5)).isoformat()
                 }
                 subscriptions.append(subscription)
 
@@ -1715,11 +1715,11 @@ class PaymentsEdgeCasesE2E:
                         "plan_id": plan["id"], 
                         "plan": plan,
                         "status": "trialing",
-                        "current_period_start": datetime.utcnow().isoformat(),
-                        "current_period_end": (datetime.utcnow() + timedelta(days=plan["trial_period_days"])).isoformat(),
-                        "trial_start": datetime.utcnow().isoformat(),
-                        "trial_end": (datetime.utcnow() + timedelta(days=plan["trial_period_days"])).isoformat(),
-                        "created_at": datetime.utcnow().isoformat()
+                        "current_period_start": datetime.now(timezone.utc).isoformat(),
+                        "current_period_end": (datetime.now(timezone.utc) + timedelta(days=plan["trial_period_days"])).isoformat(),
+                        "trial_start": datetime.now(timezone.utc).isoformat(),
+                        "trial_end": (datetime.now(timezone.utc) + timedelta(days=plan["trial_period_days"])).isoformat(),
+                        "created_at": datetime.now(timezone.utc).isoformat()
                     }
                     subscriptions.append(extra_subscription)
 
@@ -1754,7 +1754,7 @@ class PaymentsEdgeCasesE2E:
             
             # Days remaining in current period
             current_period_end = datetime.fromisoformat(subscription["current_period_end"])
-            days_remaining = (current_period_end - datetime.utcnow()).days
+            days_remaining = (current_period_end - datetime.now(timezone.utc)).days
             days_in_period = 30  # Monthly billing
             
             # Calculate proration for upgrade
@@ -1790,10 +1790,10 @@ class PaymentsEdgeCasesE2E:
                 "subscription_id": subscription["id"],
                 "description": f"Proration for upgrade to {new_plan['name']}",
                 "amount": proration_adjustment,
-                "period_start": datetime.utcnow().isoformat(),
+                "period_start": datetime.now(timezone.utc).isoformat(),
                 "period_end": subscription["current_period_end"],
                 "proration": True,
-                "created_at": datetime.utcnow().isoformat()
+                "created_at": datetime.now(timezone.utc).isoformat()
             }
 
             await asyncio.sleep(1)
@@ -1853,7 +1853,7 @@ class PaymentsEdgeCasesE2E:
             # Calculate mid-cycle change
             current_period_start = datetime.fromisoformat(subscription["current_period_start"])
             current_period_end = datetime.fromisoformat(subscription["current_period_end"])
-            change_date = datetime.utcnow()
+            change_date = datetime.now(timezone.utc)
             
             days_used = (change_date - current_period_start).days
             days_remaining = (current_period_end - change_date).days
@@ -1910,7 +1910,7 @@ class PaymentsEdgeCasesE2E:
                 "status": "completed",
                 "proration_items": proration_items,
                 "net_proration": net_proration.quantize(Decimal("0.01")),
-                "completed_at": datetime.utcnow().isoformat()
+                "completed_at": datetime.now(timezone.utc).isoformat()
             })
 
             return {
@@ -1950,8 +1950,8 @@ class PaymentsEdgeCasesE2E:
                 "currency": subscription["plan"]["currency"],
                 "status": "payment_failed",
                 "attempt_count": 1,
-                "due_date": datetime.utcnow().isoformat(),
-                "created_at": datetime.utcnow().isoformat()
+                "due_date": datetime.now(timezone.utc).isoformat(),
+                "created_at": datetime.now(timezone.utc).isoformat()
             }
 
             # Start dunning process
@@ -1961,7 +1961,7 @@ class PaymentsEdgeCasesE2E:
                 "invoice_id": failed_invoice["id"],
                 "status": "active",
                 "current_step": 0,
-                "created_at": datetime.utcnow().isoformat()
+                "created_at": datetime.now(timezone.utc).isoformat()
             }
 
             # Define subscription-specific dunning steps
@@ -1980,8 +1980,8 @@ class PaymentsEdgeCasesE2E:
                     "step_number": step_config["step"],
                     "action": step_config["action"],
                     "status": "processing",
-                    "scheduled_for": (datetime.utcnow() + timedelta(hours=step_config["delay_hours"])).isoformat(),
-                    "started_at": datetime.utcnow().isoformat()
+                    "scheduled_for": (datetime.now(timezone.utc) + timedelta(hours=step_config["delay_hours"])).isoformat(),
+                    "started_at": datetime.now(timezone.utc).isoformat()
                 }
 
                 await asyncio.sleep(0.5)
@@ -1993,7 +1993,7 @@ class PaymentsEdgeCasesE2E:
                     step_execution.update({
                         "status": "completed",
                         "payment_retry_result": "succeeded" if retry_success else "failed",
-                        "completed_at": datetime.utcnow().isoformat()
+                        "completed_at": datetime.now(timezone.utc).isoformat()
                     })
                     
                     if retry_success:
@@ -2001,7 +2001,7 @@ class PaymentsEdgeCasesE2E:
                         dunning_process.update({
                             "status": "resolved",
                             "resolution_method": "payment_retry_succeeded",
-                            "resolved_at": datetime.utcnow().isoformat()
+                            "resolved_at": datetime.now(timezone.utc).isoformat()
                         })
                         
                         # Update subscription status
@@ -2014,7 +2014,7 @@ class PaymentsEdgeCasesE2E:
                     step_execution.update({
                         "status": "completed",
                         "suspension_applied": True,
-                        "completed_at": datetime.utcnow().isoformat()
+                        "completed_at": datetime.now(timezone.utc).isoformat()
                     })
                     subscription["status"] = "suspended"
                     
@@ -2022,7 +2022,7 @@ class PaymentsEdgeCasesE2E:
                     step_execution.update({
                         "status": "completed", 
                         "notification_sent": True,
-                        "completed_at": datetime.utcnow().isoformat()
+                        "completed_at": datetime.now(timezone.utc).isoformat()
                     })
 
                 executed_steps.append(step_execution)
@@ -2058,8 +2058,8 @@ class PaymentsEdgeCasesE2E:
                 "id": str(uuid4()),
                 "tenant_id": self.test_tenant_id,
                 "status": "trialing",
-                "trial_start": (datetime.utcnow() - timedelta(days=13)).isoformat(),
-                "trial_end": datetime.utcnow().isoformat(),  # Expires today
+                "trial_start": (datetime.now(timezone.utc) - timedelta(days=13)).isoformat(),
+                "trial_end": datetime.now(timezone.utc).isoformat(),  # Expires today
                 "plan": {"amount": Decimal("29.99"), "trial_period_days": 14}
             }
 
@@ -2070,19 +2070,19 @@ class PaymentsEdgeCasesE2E:
                 "subscription_id": trial_ending_today["id"],
                 "conversion_type": "automatic",
                 "status": "processing",
-                "attempted_at": datetime.utcnow().isoformat()
+                "attempted_at": datetime.now(timezone.utc).isoformat()
             }
 
             # Mock successful conversion
             conversion_attempt.update({
                 "status": "succeeded",
                 "first_payment_amount": trial_ending_today["plan"]["amount"],
-                "converted_at": datetime.utcnow().isoformat()
+                "converted_at": datetime.now(timezone.utc).isoformat()
             })
 
             trial_ending_today.update({
                 "status": "active",
-                "trial_converted_at": datetime.utcnow().isoformat()
+                "trial_converted_at": datetime.now(timezone.utc).isoformat()
             })
 
             edge_cases.append({
@@ -2097,8 +2097,8 @@ class PaymentsEdgeCasesE2E:
                 "id": str(uuid4()),
                 "tenant_id": self.test_tenant_id,
                 "status": "trialing",
-                "trial_start": (datetime.utcnow() - timedelta(days=5)).isoformat(),
-                "trial_end": (datetime.utcnow() + timedelta(days=9)).isoformat(),
+                "trial_start": (datetime.now(timezone.utc) - timedelta(days=5)).isoformat(),
+                "trial_end": (datetime.now(timezone.utc) + timedelta(days=9)).isoformat(),
                 "plan": {"amount": Decimal("99.99"), "trial_period_days": 14}
             }
 
@@ -2107,12 +2107,12 @@ class PaymentsEdgeCasesE2E:
                 "cancellation_type": "customer_request",
                 "effective_date": "immediate",
                 "status": "processed",
-                "cancelled_at": datetime.utcnow().isoformat()
+                "cancelled_at": datetime.now(timezone.utc).isoformat()
             }
 
             trial_to_cancel.update({
                 "status": "cancelled",
-                "cancelled_at": datetime.utcnow().isoformat(),
+                "cancelled_at": datetime.now(timezone.utc).isoformat(),
                 "cancel_at_period_end": False
             })
 
@@ -2128,8 +2128,8 @@ class PaymentsEdgeCasesE2E:
                 "id": str(uuid4()),
                 "tenant_id": self.test_tenant_id,
                 "status": "trialing",
-                "trial_start": (datetime.utcnow() - timedelta(days=14)).isoformat(),
-                "trial_end": datetime.utcnow().isoformat(),
+                "trial_start": (datetime.now(timezone.utc) - timedelta(days=14)).isoformat(),
+                "trial_end": datetime.now(timezone.utc).isoformat(),
                 "plan": {"amount": Decimal("49.99"), "trial_period_days": 14}
             }
 
@@ -2138,12 +2138,12 @@ class PaymentsEdgeCasesE2E:
                 "conversion_type": "automatic",
                 "status": "failed",
                 "failure_reason": "payment_method_failed",
-                "attempted_at": datetime.utcnow().isoformat()
+                "attempted_at": datetime.now(timezone.utc).isoformat()
             }
 
             trial_conversion_failure.update({
                 "status": "past_due",
-                "trial_conversion_failed_at": datetime.utcnow().isoformat()
+                "trial_conversion_failed_at": datetime.now(timezone.utc).isoformat()
             })
 
             edge_cases.append({
@@ -2184,13 +2184,13 @@ class PaymentsEdgeCasesE2E:
                 "subscription_id": subscription["id"],
                 "pause_type": "customer_request",
                 "pause_reason": "temporary_financial_hardship",
-                "requested_at": datetime.utcnow().isoformat()
+                "requested_at": datetime.now(timezone.utc).isoformat()
             }
 
             await asyncio.sleep(1)
 
             # Process pause
-            pause_effective_date = datetime.utcnow()
+            pause_effective_date = datetime.now(timezone.utc)
             paused_days_remaining = (datetime.fromisoformat(original_period_end) - pause_effective_date).days
 
             pause_details = {
@@ -2214,11 +2214,11 @@ class PaymentsEdgeCasesE2E:
                 "id": str(uuid4()),
                 "subscription_id": subscription["id"],
                 "resume_type": "customer_request",
-                "requested_at": (datetime.utcnow() + timedelta(days=30)).isoformat()
+                "requested_at": (datetime.now(timezone.utc) + timedelta(days=30)).isoformat()
             }
 
             # Process resume
-            resume_date = datetime.utcnow() + timedelta(days=30)
+            resume_date = datetime.now(timezone.utc) + timedelta(days=30)
             
             # Calculate new period end (extend by paused duration)
             pause_duration_days = 30  # Days subscription was paused

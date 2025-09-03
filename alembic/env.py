@@ -123,6 +123,27 @@ def run_migrations_online() -> None:
         with context.begin_transaction():
             context.run_migrations()
 
+        # Optionally apply RLS after successful migrations
+        try:
+            apply_rls = os.getenv("APPLY_RLS_AFTER_MIGRATION", "false").lower() == "true"
+            if apply_rls:
+                # Try to import and run scripts/setup_rls.apply_rls()
+                from pathlib import Path
+                import asyncio
+                # Ensure project root is on sys.path for 'scripts' import
+                project_root = Path(__file__).resolve().parent.parent
+                if str(project_root) not in sys.path:
+                    sys.path.insert(0, str(project_root))
+                try:
+                    from scripts.setup_rls import apply_rls as _apply_rls
+                    print("[alembic] Applying RLS policies after migration...")
+                    asyncio.run(_apply_rls())
+                    print("[alembic] RLS policies applied.")
+                except Exception as e:
+                    print(f"[alembic] Skipping RLS setup: {e}")
+        except Exception as e:
+            print(f"[alembic] Error in RLS post-migration hook: {e}")
+
 
 if context.is_offline_mode():
     run_migrations_offline()

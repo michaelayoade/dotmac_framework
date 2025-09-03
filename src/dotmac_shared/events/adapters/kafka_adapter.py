@@ -214,7 +214,7 @@ class KafkaEventAdapter(EventAdapter):
                 ("event_id", event.event_id.encode()),
                 ("event_type", event.event_type.encode()),
                 ("tenant_id", (event.tenant_id or "").encode()),
-                ("timestamp", datetime.utcnow().isoformat().encode()),
+                ("timestamp", datetime.now(timezone.utc).isoformat().encode()),
             ]
 
             # Send to Kafka
@@ -272,7 +272,7 @@ class KafkaEventAdapter(EventAdapter):
                     ("event_id", event.event_id.encode()),
                     ("event_type", event.event_type.encode()),
                     ("tenant_id", (event.tenant_id or "").encode()),
-                    ("timestamp", datetime.utcnow().isoformat().encode()),
+                    ("timestamp", datetime.now(timezone.utc).isoformat().encode()),
                 ]
 
                 future = self._producer.send(
@@ -501,7 +501,7 @@ class KafkaEventAdapter(EventAdapter):
                 "metadata": event.metadata.model_dump(),
                 "partition_key": event.partition_key,
                 "tenant_id": event.tenant_id,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
             return json.dumps(event_dict, default=str).encode()

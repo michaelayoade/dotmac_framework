@@ -17,7 +17,7 @@ class LoggingPatterns:
     """
     
     @staticmethod
-    def log_operation_start(logger, operation: str, entity_id: str = None, **kwargs) -> str:
+    def log_operation_start(logger, operation: str, entity_id: str = None, **kwargs, timezone) -> str:
         """
         Standard logging for operation start.
         
@@ -117,7 +117,7 @@ class LoggingPatterns:
         """Standard logging for security events"""
         context = {
             "security_event": event,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
         if user_id:
             context["user_id"] = user_id
@@ -204,12 +204,12 @@ def log_external_api(service_name: str):
         async def async_wrapper(*args, **kwargs) -> Any:
             logger = get_logger(func.__module__)
             
-            start_time = datetime.utcnow()
+            start_time = datetime.now(timezone.utc)
             
             try:
                 result = await func(*args, **kwargs)
                 
-                duration = (datetime.utcnow() - start_time).total_seconds()
+                duration = (datetime.now(timezone.utc) - start_time).total_seconds()
                 
                 # Try to extract status code from result
                 status_code = None
@@ -222,7 +222,7 @@ def log_external_api(service_name: str):
                 
                 return result
             except Exception as e:
-                duration = (datetime.utcnow() - start_time).total_seconds()
+                duration = (datetime.now(timezone.utc) - start_time).total_seconds()
                 LoggingPatterns.log_external_api_call(
                     logger, service_name, func.__name__, 500, duration, error=str(e)
                 )
@@ -232,12 +232,12 @@ def log_external_api(service_name: str):
         def sync_wrapper(*args, **kwargs) -> Any:
             logger = get_logger(func.__module__)
             
-            start_time = datetime.utcnow()
+            start_time = datetime.now(timezone.utc)
             
             try:
                 result = func(*args, **kwargs)
                 
-                duration = (datetime.utcnow() - start_time).total_seconds()
+                duration = (datetime.now(timezone.utc) - start_time).total_seconds()
                 status_code = None
                 if isinstance(result, dict):
                     status_code = result.get('status_code') or result.get('code')
@@ -248,7 +248,7 @@ def log_external_api(service_name: str):
                 
                 return result
             except Exception as e:
-                duration = (datetime.utcnow() - start_time).total_seconds()
+                duration = (datetime.now(timezone.utc) - start_time).total_seconds()
                 LoggingPatterns.log_external_api_call(
                     logger, service_name, func.__name__, 500, duration, error=str(e)
                 )

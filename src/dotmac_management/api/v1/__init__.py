@@ -117,7 +117,7 @@ async def health_check() -> Dict[str, str]:
         "service": "management-platform",
         "version": settings.app_version,
         "environment": settings.environment,
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.utcnow(, timezone).isoformat(),
     }
 
 
@@ -137,7 +137,7 @@ async def database_health_check() -> Dict[str, str]:
         "status": "healthy",
         "component": "database",
         "response_time": "fast",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 
 

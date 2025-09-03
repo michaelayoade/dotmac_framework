@@ -11,7 +11,6 @@ _available_modules = []
 
 # Core modules that should always be available
 core_modules = [
-    "audit_logger",
     "database_init",  # Our new module
     "security",
 ]

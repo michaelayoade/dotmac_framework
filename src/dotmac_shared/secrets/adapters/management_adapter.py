@@ -438,7 +438,7 @@ class ManagementPlatformSecretsAdapter:
                 "organization_id": organization_id,
                 "name": key_name,
                 "permissions": permissions or [],
-                "created_at": datetime.utcnow().isoformat(),
+                "created_at": datetime.now(timezone.utc).isoformat(),
                 "is_active": True,
             }
 
@@ -488,7 +488,7 @@ class ManagementPlatformSecretsAdapter:
 
             # Mark as inactive instead of deleting (for audit purposes)
             api_key_data["is_active"] = False
-            api_key_data["revoked_at"] = datetime.utcnow().isoformat()
+            api_key_data["revoked_at"] = datetime.now(timezone.utc).isoformat()
 
             success = await self._vault_client.put_secret(vault_path, api_key_data)
 

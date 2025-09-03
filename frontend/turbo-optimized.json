@@ -33,7 +33,7 @@
       "cache": true
     },
     "test:integration": {
-      "dependsOn": ["^build"],  
+      "dependsOn": ["^build"],
       "outputs": ["coverage/**"],
       "cache": true
     },
@@ -79,9 +79,5 @@
   "remoteCache": {
     "signature": true
   },
-  "globalEnv": [
-    "NODE_ENV",
-    "ANALYZE",
-    "BUNDLE_ANALYZE"
-  ]
+  "globalEnv": ["NODE_ENV", "ANALYZE", "BUNDLE_ANALYZE"]
 }

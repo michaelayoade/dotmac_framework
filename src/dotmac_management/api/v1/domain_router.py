@@ -28,6 +28,7 @@ from ...schemas.domain_schemas import (
     SSLCertificateResponse,
 )
 from ...services.domain_service import DomainService
+from datetime import timezone
 
 logger = logging.getLogger(__name__)
 
@@ -613,5 +614,5 @@ async def domain_service_health():
     return {
         "status": "healthy",
         "service": "domain_management",
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     }

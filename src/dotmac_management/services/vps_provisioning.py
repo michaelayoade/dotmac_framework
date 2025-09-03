@@ -132,7 +132,7 @@ class VPSProvisioningService:
             # Update customer settings with test result
             customer.settings = customer.settings or {}
             customer.settings["ssh_test_passed"] = True
-            customer.settings["ssh_test_timestamp"] = datetime.utcnow().isoformat()
+            customer.settings["ssh_test_timestamp"] = datetime.now(timezone.utc).isoformat()
             db.commit()
             
             await self._log_deployment_event(
@@ -402,7 +402,7 @@ class VPSProvisioningService:
             
             # Update health status
             customer.health_status = "healthy"
-            customer.last_health_check = datetime.utcnow()
+            customer.last_health_check = datetime.now(timezone.utc)
             db.commit()
             
             await self._log_deployment_event(
@@ -429,10 +429,10 @@ class VPSProvisioningService:
             "VPS setup completed successfully", correlation_id, 7
         )
         
-        customer.deployment_completed_at = datetime.utcnow()
+        customer.deployment_completed_at = datetime.now(timezone.utc)
         customer.settings = customer.settings or {}
         customer.settings["deployment_ready"] = True
-        customer.settings["setup_completed_at"] = datetime.utcnow().isoformat()
+        customer.settings["setup_completed_at"] = datetime.now(timezone.utc).isoformat()
         db.commit()
         
         # Set customer to active
@@ -558,7 +558,7 @@ class VPSProvisioningService:
             step_number=step_number,
             correlation_id=correlation_id,
             operator="system",
-            error_details={"error": error_message, "timestamp": datetime.utcnow().isoformat()}
+            error_details={"error": error_message, "timestamp": datetime.now(timezone.utc).isoformat()}
         )
         
         db.add(event)
@@ -575,7 +575,7 @@ class VPSProvisioningService:
                 customer.status = VPSStatus.FAILED
                 customer.settings = customer.settings or {}
                 customer.settings["last_error"] = error_message
-                customer.settings["failed_at"] = datetime.utcnow().isoformat()
+                customer.settings["failed_at"] = datetime.now(timezone.utc).isoformat()
                 db.commit()
                 
                 logger.error(f"VPS setup failed: {customer.customer_id} - {error_message}")

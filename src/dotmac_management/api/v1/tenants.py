@@ -35,7 +35,8 @@ from dotmac_shared.api.dependencies import (
     get_standard_deps
 )
 from dotmac_management.models.tenant import CustomerTenant, TenantStatus, TenantPlan
-from dotmac_management.services.tenant_provisioning import TenantProvisioningService
+from dotmac_management.use_cases import ProvisionTenantUseCase, ProvisionTenantInput, ManageTenantUseCase, ManageTenantInput
+from dotmac_management.use_cases.base import UseCaseContext
 
 logger = get_logger(__name__)
 router = APIRouter(
@@ -295,11 +296,11 @@ async def create_tenant(
             settings={
                 "source": signup_request.source,
                 "referrer": signup_request.referrer,
-                "signup_timestamp": datetime.utcnow().isoformat(),
+                "signup_timestamp": datetime.now(timezone.utc).isoformat(),
                 "created_by": getattr(deps.current_user, 'email', None)
             },
             status=TenantStatus.REQUESTED,
-            provisioning_started_at=datetime.utcnow()
+            provisioning_started_at=datetime.now(timezone.utc)
         )
         
         # Save tenant to database
@@ -316,13 +317,61 @@ async def create_tenant(
             "operation": "create_tenant"
         })
         
-        # Queue provisioning in background
-        provisioning_service = TenantProvisioningService()
-        background_tasks.add_task(
-            provisioning_service.provision_tenant,
-            tenant.id,
-            deps.db
-        )
+        # Queue provisioning in background using use case
+        async def execute_provisioning():
+            """Execute provisioning using use case orchestration"""
+            try:
+                provision_use_case = ProvisionTenantUseCase()
+                
+                provision_input = ProvisionTenantInput(
+                    tenant_id=tenant_id,
+                    company_name=signup_request.company_name,
+                    admin_email=signup_request.admin_email,
+                    admin_name=signup_request.admin_name,
+                    subdomain=signup_request.subdomain,
+                    plan=signup_request.plan.value if signup_request.plan else "starter",
+                    region=signup_request.region,
+                    billing_info={
+                        "billing_email": signup_request.billing_email,
+                        "payment_method_id": signup_request.payment_method_id,
+                        "source": signup_request.source,
+                        "referrer": signup_request.referrer
+                    },
+                    notification_preferences={
+                        "email_notifications": True,
+                        "webhook_notifications": True
+                    },
+                    custom_configuration={
+                        "enabled_features": signup_request.enabled_features,
+                        "description": signup_request.description
+                    }
+                )
+                
+                context = UseCaseContext(
+                    user_id=getattr(deps.current_user, 'id', None),
+                    correlation_id=f"signup-{tenant_id}",
+                    permissions={"actions": ["tenant.create", "infrastructure.provision"]}
+                )
+                
+                result = await provision_use_case.execute(provision_input, context)
+                
+                if not result.success:
+                    logger.error(f"Tenant provisioning failed: {result.error}", extra={
+                        "tenant_id": tenant_id,
+                        "error_code": result.error_code
+                    })
+                else:
+                    logger.info(f"Tenant provisioning completed successfully", extra={
+                        "tenant_id": tenant_id,
+                        "deployment_id": result.data.tenant_db_id if result.data else None
+                    })
+                    
+            except Exception as e:
+                logger.error(f"Provisioning use case execution failed: {e}", extra={
+                    "tenant_id": tenant_id
+                })
+        
+        background_tasks.add_task(execute_provisioning)
         
         logger.info("Provisioning job queued", extra={
             "user_id": getattr(deps.current_user, 'id', None),
@@ -757,16 +806,52 @@ async def retry_tenant_provisioning(
     
     # Reset status and retry
     tenant.status = TenantStatus.QUEUED
-    tenant.provisioning_started_at = datetime.utcnow()
+    tenant.provisioning_started_at = datetime.now(timezone.utc)
     db.commit()
     
-    # Queue provisioning in background
-    provisioning_service = TenantProvisioningService()
-    background_tasks.add_task(
-        provisioning_service.provision_tenant,
-        tenant.id,
-        db
-    )
+    # Queue provisioning retry using use case
+    async def retry_provisioning():
+        """Retry provisioning using use case orchestration"""
+        try:
+            provision_use_case = ProvisionTenantUseCase()
+            
+            provision_input = ProvisionTenantInput(
+                tenant_id=tenant.tenant_id,
+                company_name=tenant.company_name,
+                admin_email=tenant.admin_email,
+                admin_name=tenant.admin_name,
+                subdomain=tenant.subdomain,
+                plan=tenant.plan,
+                region=tenant.region,
+                billing_info=tenant.settings.get("billing_info", {}) if tenant.settings else {},
+                notification_preferences=tenant.settings.get("notification_preferences", {}) if tenant.settings else {},
+                custom_configuration=tenant.settings.get("custom_configuration", {}) if tenant.settings else {}
+            )
+            
+            context = UseCaseContext(
+                user_id=getattr(deps.current_user, 'id', None),
+                correlation_id=f"retry-{tenant.tenant_id}",
+                permissions={"actions": ["tenant.create", "infrastructure.provision"]}
+            )
+            
+            result = await provision_use_case.execute(provision_input, context)
+            
+            if not result.success:
+                logger.error(f"Tenant provisioning retry failed: {result.error}", extra={
+                    "tenant_id": tenant.tenant_id,
+                    "error_code": result.error_code
+                })
+            else:
+                logger.info(f"Tenant provisioning retry completed successfully", extra={
+                    "tenant_id": tenant.tenant_id,
+                })
+                
+        except Exception as e:
+            logger.error(f"Provisioning retry use case execution failed: {e}", extra={
+                "tenant_id": tenant.tenant_id
+            })
+    
+    background_tasks.add_task(retry_provisioning)
     
     logger.info(f"Retrying provisioning for tenant: {tenant_id}")
     

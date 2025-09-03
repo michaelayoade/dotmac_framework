@@ -5,11 +5,12 @@ Provides unified database foundation for all platforms.
 
 import uuid
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any, Dict, Generator
+import os
 
-from sqlalchemy import Column, DateTime, String
+from sqlalchemy import Column, DateTime, String, create_engine
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import declarative_base, sessionmaker, Session
 from sqlalchemy.orm import declared_attr
 
 # Create the base class for all models
@@ -77,6 +78,68 @@ class VersionedMixin:
                 self.version_number = f"{parts[0]}.{minor}"
 
 
+# Database session management
+def get_database_url() -> str:
+    """Get database URL from environment or default for testing"""
+    return os.getenv(
+        "DATABASE_URL",
+        "postgresql+asyncpg://dotmac_test:test_password_123@localhost:5434/dotmac_test"
+    )
+
+
+def create_db_engine(database_url: str = None):
+    """Create database engine"""
+    if database_url is None:
+        database_url = get_database_url()
+    
+    # Convert asyncpg URL to sync for SQLAlchemy session
+    if "asyncpg" in database_url:
+        database_url = database_url.replace("postgresql+asyncpg://", "postgresql://")
+    
+    return create_engine(database_url, echo=os.getenv("DEBUG", "false").lower() == "true")
+
+
+# Global session factory
+engine = None
+SessionLocal = None
+
+
+def initialize_database(database_url: str = None):
+    """Initialize database connection"""
+    global engine, SessionLocal
+    
+    engine = create_db_engine(database_url)
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+
+def get_db_session() -> Generator[Session, None, None]:
+    """
+    Get database session for dependency injection
+    
+    Usage in FastAPI:
+        @app.get("/items/")
+        def read_items(db: Session = Depends(get_db_session)):
+            return db.query(Item).all()
+    """
+    # Initialize if not already done
+    if SessionLocal is None:
+        initialize_database()
+    
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+def get_db_session_sync() -> Session:
+    """Get synchronous database session for testing"""
+    if SessionLocal is None:
+        initialize_database()
+    
+    return SessionLocal()
+
+
 # Export commonly used classes
 __all__ = [
     "Base",
@@ -84,4 +147,9 @@ __all__ = [
     "TenantModel",
     "AuditableMixin",
     "VersionedMixin",
+    "get_db_session",
+    "get_db_session_sync",
+    "initialize_database",
+    "create_db_engine",
+    "get_database_url",
 ]

@@ -59,7 +59,7 @@ class OmnichannelCommunicationPlugin(CommunicationPlugin):
         # Rate limiting and capacity
         self.current_messages = 0
         self.rate_limit_per_minute = config.get("rate_limit_per_minute", 60)
-        self.last_rate_reset = datetime.utcnow()
+        self.last_rate_reset = datetime.now(timezone.utc)
         self.message_count_this_minute = 0
 
     async def send_message_with_context(
@@ -174,7 +174,7 @@ class OmnichannelCommunicationPlugin(CommunicationPlugin):
 
     async def _check_rate_limit(self) -> bool:
         """Check if message sending is within rate limits"""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
 
         # Reset counter if minute has passed
         if (now - self.last_rate_reset).total_seconds() >= 60:

@@ -488,7 +488,7 @@ class SystemMetricsCollector:
         try:
             started_at = container.attrs["State"]["StartedAt"]
             start_time = datetime.fromisoformat(started_at.replace("Z", "+00:00"))
-            uptime = datetime.utcnow().replace(tzinfo=start_time.tzinfo) - start_time
+            uptime = datetime.now(timezone.utc).replace(tzinfo=start_time.tzinfo) - start_time
             return uptime.total_seconds()
         except (KeyError, ValueError):
             return 0.0

@@ -60,7 +60,7 @@ class CSRFProtection:
         random_bytes = secrets.token_bytes(16)
 
         # Current timestamp
-        timestamp = int(datetime.utcnow().timestamp())
+        timestamp = int(datetime.now(timezone.utc).timestamp())
         timestamp_bytes = timestamp.to_bytes(8, byteorder="big")
 
         # Create message for signing
@@ -268,7 +268,7 @@ async def get_csrf_token_endpoint(csrf: CSRFProtection) -> JSONResponse:
     response = JSONResponse(
         {
             "csrfToken": token,
-            "expires": datetime.utcnow().timestamp() + csrf.token_lifetime,
+            "expires": datetime.now(timezone.utc).timestamp() + csrf.token_lifetime,
         }
     )
 

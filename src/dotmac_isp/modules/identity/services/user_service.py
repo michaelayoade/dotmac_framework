@@ -112,7 +112,7 @@ class UserService(BaseService):
             if "portal_type" in user_data:
                 user.portal_type = user_data["portal_type"]
             
-            user.updated_at = datetime.utcnow()
+            user.updated_at = datetime.now(timezone.utc)
             await self.db.commit()
             await self.db.refresh(user)
             

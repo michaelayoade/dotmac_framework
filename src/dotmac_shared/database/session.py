@@ -273,7 +273,7 @@ async def check_database_health() -> Dict[str, Any]:
         "read_db": {"status": "unknown", "response_time": None},
         "connection_pools": {},
         "active_connections": len(_active_connections),
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     }
     
     try:

@@ -35,7 +35,7 @@ const NextLink = jest.fn(({ href, children, ...props }) => {
 
 // Reset functions for tests
 const resetNextMocks = () => {
-  Object.values(mockRouter).forEach(fn => fn.mockClear());
+  Object.values(mockRouter).forEach((fn) => fn.mockClear());
   useRouter.mockClear();
   useParams.mockClear();
   useSearchParams.mockClear();

@@ -1,0 +1,586 @@
+/* Approval Step Styles */
+.approval-step {
+  background: white;
+  border-radius: 0.5rem;
+  border: 1px solid rgb(229 231 235);
+  padding: 1.5rem;
+  margin: 1rem 0;
+}
+
+.approval-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+}
+
+.step-info {
+  flex: 1;
+}
+
+.step-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: rgb(17 24 39);
+  margin: 0 0 0.5rem 0;
+}
+
+.step-description {
+  color: rgb(107 114 128);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.approval-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  border: 1px solid;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.status-icon {
+  font-size: 1rem;
+}
+
+.status-icon.approved {
+  color: rgb(34 197 94);
+}
+
+.status-icon.rejected {
+  color: rgb(239 68 68);
+}
+
+.status-icon.pending {
+  color: rgb(251 191 36);
+}
+
+.status-icon.waiting {
+  color: rgb(107 114 128);
+}
+
+/* Approval Policy */
+.approval-policy {
+  background: rgb(249 250 251);
+  border-radius: 0.375rem;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.approval-policy h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: rgb(17 24 39);
+  margin: 0 0 0.5rem 0;
+}
+
+.policy-details {
+  color: rgb(75 85 99);
+  font-size: 0.875rem;
+}
+
+.policy-type {
+  font-weight: 500;
+}
+
+.escalation-info {
+  margin-top: 0.5rem;
+}
+
+.escalation-info small {
+  color: rgb(107 114 128);
+}
+
+/* Approvers List */
+.approvers-list h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: rgb(17 24 39);
+  margin: 0 0 1rem 0;
+}
+
+.approvers-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.approver-card {
+  background: rgb(249 250 251);
+  border: 1px solid rgb(229 231 235);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.approver-card.current-user {
+  background: rgb(239 246 255);
+  border-color: rgb(147 197 253);
+}
+
+.approver-card.required {
+  position: relative;
+}
+
+.approver-card.required::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: rgb(59 130 246);
+  border-radius: 0.25rem 0 0 0.25rem;
+}
+
+.approver-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.approver-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.approver-name {
+  font-weight: 500;
+  color: rgb(17 24 39);
+}
+
+.required-badge {
+  background: rgb(239 68 68);
+  color: white;
+  font-size: 0.75rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.25rem;
+  font-weight: 500;
+}
+
+.approval-status {
+  font-size: 1.25rem;
+}
+
+.approval-status.approved {
+  color: rgb(34 197 94);
+}
+
+.approval-status.rejected {
+  color: rgb(239 68 68);
+}
+
+.approval-status.pending {
+  color: rgb(251 191 36);
+}
+
+.approval-comment {
+  background: white;
+  border: 1px solid rgb(229 231 235);
+  border-radius: 0.375rem;
+  padding: 0.75rem;
+  margin-top: 0.75rem;
+  font-style: italic;
+}
+
+.approval-comment p {
+  margin: 0;
+  color: rgb(75 85 99);
+  font-size: 0.875rem;
+}
+
+.approval-timestamp {
+  margin-top: 0.5rem;
+}
+
+.approval-timestamp small {
+  color: rgb(107 114 128);
+  font-size: 0.75rem;
+}
+
+/* Action Section */
+.approval-actions {
+  background: rgb(249 250 251);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  margin-top: 1.5rem;
+  border: 2px dashed rgb(147 197 253);
+}
+
+.comment-section {
+  margin-bottom: 1rem;
+}
+
+.comment-section label {
+  display: block;
+  font-weight: 500;
+  color: rgb(17 24 39);
+  margin-bottom: 0.5rem;
+}
+
+.comment-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid rgb(209 213 219);
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  resize: vertical;
+  min-height: 80px;
+}
+
+.comment-input:focus {
+  outline: none;
+  border-color: rgb(59 130 246);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.approve-button,
+.reject-button,
+.delegate-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  min-width: 120px;
+  justify-content: center;
+}
+
+.approve-button {
+  background: rgb(34 197 94);
+  color: white;
+}
+
+.approve-button:hover:not(:disabled) {
+  background: rgb(21 128 61);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(34, 197, 94, 0.3);
+}
+
+.reject-button {
+  background: rgb(239 68 68);
+  color: white;
+}
+
+.reject-button:hover:not(:disabled) {
+  background: rgb(220 38 38);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+}
+
+.delegate-button {
+  background: rgb(107 114 128);
+  color: white;
+}
+
+.delegate-button:hover:not(:disabled) {
+  background: rgb(75 85 99);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(107, 114, 128, 0.3);
+}
+
+.approve-button:disabled,
+.reject-button:disabled,
+.delegate-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.button-icon {
+  font-size: 1rem;
+}
+
+.loading-spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Status Messages */
+.already-acted,
+.cannot-approve {
+  background: rgb(254 243 199);
+  border: 1px solid rgb(252 211 77);
+  color: rgb(146 64 14);
+  padding: 1rem;
+  border-radius: 0.375rem;
+  text-align: center;
+  margin-top: 1.5rem;
+}
+
+.already-acted p,
+.cannot-approve p {
+  margin: 0;
+  font-weight: 500;
+}
+
+/* Dialog Styles */
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.dialog-content {
+  background: white;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  max-width: 500px;
+  width: 90%;
+  margin: 1rem;
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.dialog-content h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: rgb(17 24 39);
+  margin: 0 0 0.5rem 0;
+}
+
+.dialog-content p {
+  color: rgb(107 114 128);
+  margin: 0 0 1rem 0;
+}
+
+.dialog-input,
+.dialog-textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid rgb(209 213 219);
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+.dialog-textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.dialog-input:focus,
+.dialog-textarea:focus {
+  outline: none;
+  border-color: rgb(59 130 246);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.cancel-button {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background: transparent;
+  border: 1px solid rgb(209 213 219);
+  color: rgb(75 85 99);
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.cancel-button:hover:not(:disabled) {
+  background: rgb(249 250 251);
+}
+
+.confirm-reject-button,
+.confirm-delegate-button {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  color: white;
+}
+
+.confirm-reject-button {
+  background: rgb(239 68 68);
+}
+
+.confirm-reject-button:hover:not(:disabled) {
+  background: rgb(220 38 38);
+}
+
+.confirm-delegate-button {
+  background: rgb(107 114 128);
+}
+
+.confirm-delegate-button:hover:not(:disabled) {
+  background: rgb(75 85 99);
+}
+
+.cancel-button:disabled,
+.confirm-reject-button:disabled,
+.confirm-delegate-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Animations */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+  .approval-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .approvers-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+  }
+
+  .approve-button,
+  .reject-button,
+  .delegate-button {
+    width: 100%;
+  }
+
+  .dialog-content {
+    width: 95%;
+    margin: 0.5rem;
+    padding: 1rem;
+  }
+
+  .dialog-actions {
+    flex-direction: column;
+  }
+
+  .cancel-button,
+  .confirm-reject-button,
+  .confirm-delegate-button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .approval-step {
+    background: rgb(31 41 55);
+    border-color: rgb(75 85 99);
+  }
+
+  .step-title {
+    color: rgb(249 250 251);
+  }
+
+  .step-description {
+    color: rgb(156 163 175);
+  }
+
+  .approval-policy {
+    background: rgb(37 47 63);
+  }
+
+  .policy-details {
+    color: rgb(156 163 175);
+  }
+
+  .approver-card {
+    background: rgb(37 47 63);
+    border-color: rgb(75 85 99);
+  }
+
+  .approver-card.current-user {
+    background: rgb(30 58 138);
+    border-color: rgb(59 130 246);
+  }
+
+  .approver-name {
+    color: rgb(249 250 251);
+  }
+
+  .approval-comment {
+    background: rgb(31 41 55);
+    border-color: rgb(75 85 99);
+  }
+
+  .approval-comment p {
+    color: rgb(156 163 175);
+  }
+
+  .approval-actions {
+    background: rgb(37 47 63);
+    border-color: rgb(59 130 246);
+  }
+
+  .comment-section label {
+    color: rgb(249 250 251);
+  }
+
+  .comment-input,
+  .dialog-input,
+  .dialog-textarea {
+    background: rgb(31 41 55);
+    border-color: rgb(75 85 99);
+    color: rgb(249 250 251);
+  }
+
+  .dialog-content {
+    background: rgb(31 41 55);
+  }
+
+  .dialog-content h3 {
+    color: rgb(249 250 251);
+  }
+
+  .dialog-content p {
+    color: rgb(156 163 175);
+  }
+
+  .cancel-button {
+    border-color: rgb(75 85 99);
+    color: rgb(156 163 175);
+  }
+
+  .cancel-button:hover:not(:disabled) {
+    background: rgb(37 47 63);
+  }
+}

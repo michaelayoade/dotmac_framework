@@ -116,7 +116,7 @@ class DeviceLifecycleManager:
     ) -> Dict[str, Any]:
         """Execute device provisioning workflow."""
         workflow_id = str(uuid.uuid4())
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
 
         try:
             # Create device record
@@ -156,7 +156,7 @@ class DeviceLifecycleManager:
                     snmp_community=parameters.get("snmp_community", "public"),
                 )
 
-            duration = (datetime.utcnow() - start_time).total_seconds()
+            duration = (datetime.now(timezone.utc) - start_time).total_seconds()
 
             return {
                 "workflow_id": workflow_id,
@@ -166,7 +166,7 @@ class DeviceLifecycleManager:
                 "duration_seconds": duration,
                 "result": device_result,
                 "next_recommended_action": "deploy",
-                "completed_at": datetime.utcnow().isoformat(),
+                "completed_at": datetime.now(timezone.utc).isoformat(),
             }
 
         except Exception as e:
@@ -181,8 +181,8 @@ class DeviceLifecycleManager:
                 "device_id": device_id,
                 "status": "failed",
                 "error": str(e),
-                "duration_seconds": (datetime.utcnow() - start_time).total_seconds(),
-                "failed_at": datetime.utcnow().isoformat(),
+                "duration_seconds": (datetime.now(timezone.utc) - start_time).total_seconds(),
+                "failed_at": datetime.now(timezone.utc).isoformat(),
             }
 
     async def _execute_deploy(
@@ -190,7 +190,7 @@ class DeviceLifecycleManager:
     ) -> Dict[str, Any]:
         """Execute device deployment workflow."""
         workflow_id = str(uuid.uuid4())
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
 
         try:
             # Update device status
@@ -236,7 +236,7 @@ class DeviceLifecycleManager:
                 final_status = "validation_failed"
                 next_action = "troubleshoot"
 
-            duration = (datetime.utcnow() - start_time).total_seconds()
+            duration = (datetime.now(timezone.utc) - start_time).total_seconds()
 
             return {
                 "workflow_id": workflow_id,
@@ -247,7 +247,7 @@ class DeviceLifecycleManager:
                 "validation_results": validation_results,
                 "topology_connections": len(topology_results),
                 "next_recommended_action": next_action,
-                "completed_at": datetime.utcnow().isoformat(),
+                "completed_at": datetime.now(timezone.utc).isoformat(),
             }
 
         except Exception as e:
@@ -261,8 +261,8 @@ class DeviceLifecycleManager:
                 "device_id": device_id,
                 "status": "failed",
                 "error": str(e),
-                "duration_seconds": (datetime.utcnow() - start_time).total_seconds(),
-                "failed_at": datetime.utcnow().isoformat(),
+                "duration_seconds": (datetime.now(timezone.utc) - start_time).total_seconds(),
+                "failed_at": datetime.now(timezone.utc).isoformat(),
             }
 
     async def _execute_activate(
@@ -270,7 +270,7 @@ class DeviceLifecycleManager:
     ) -> Dict[str, Any]:
         """Execute device activation workflow."""
         workflow_id = str(uuid.uuid4())
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
 
         try:
             # Verify device is ready for activation
@@ -297,7 +297,7 @@ class DeviceLifecycleManager:
             if connectivity_results["reachable"]:
                 await self.inventory_service.manager.update_device(
                     device_id,
-                    {"status": DeviceStatus.ACTIVE, "install_date": datetime.utcnow()},
+                    {"status": DeviceStatus.ACTIVE, "install_date": datetime.now(timezone.utc)},
                 )
                 final_status = "completed"
                 next_action = "monitor"
@@ -305,7 +305,7 @@ class DeviceLifecycleManager:
                 final_status = "connectivity_failed"
                 next_action = "troubleshoot"
 
-            duration = (datetime.utcnow() - start_time).total_seconds()
+            duration = (datetime.now(timezone.utc) - start_time).total_seconds()
 
             return {
                 "workflow_id": workflow_id,
@@ -315,7 +315,7 @@ class DeviceLifecycleManager:
                 "duration_seconds": duration,
                 "connectivity_results": connectivity_results,
                 "next_recommended_action": next_action,
-                "completed_at": datetime.utcnow().isoformat(),
+                "completed_at": datetime.now(timezone.utc).isoformat(),
             }
 
         except Exception as e:
@@ -325,8 +325,8 @@ class DeviceLifecycleManager:
                 "device_id": device_id,
                 "status": "failed",
                 "error": str(e),
-                "duration_seconds": (datetime.utcnow() - start_time).total_seconds(),
-                "failed_at": datetime.utcnow().isoformat(),
+                "duration_seconds": (datetime.now(timezone.utc) - start_time).total_seconds(),
+                "failed_at": datetime.now(timezone.utc).isoformat(),
             }
 
     async def _execute_maintenance(
@@ -334,7 +334,7 @@ class DeviceLifecycleManager:
     ) -> Dict[str, Any]:
         """Execute device maintenance workflow."""
         workflow_id = str(uuid.uuid4())
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
 
         try:
             # Update status to maintenance
@@ -363,7 +363,7 @@ class DeviceLifecycleManager:
             else:
                 final_status = "validation_failed"
 
-            duration = (datetime.utcnow() - start_time).total_seconds()
+            duration = (datetime.now(timezone.utc) - start_time).total_seconds()
 
             return {
                 "workflow_id": workflow_id,
@@ -379,7 +379,7 @@ class DeviceLifecycleManager:
                 ),
                 "validation_results": validation_results,
                 "duration_seconds": duration,
-                "completed_at": datetime.utcnow().isoformat(),
+                "completed_at": datetime.now(timezone.utc).isoformat(),
             }
 
         except Exception as e:
@@ -394,8 +394,8 @@ class DeviceLifecycleManager:
                 "device_id": device_id,
                 "status": "failed",
                 "error": str(e),
-                "duration_seconds": (datetime.utcnow() - start_time).total_seconds(),
-                "failed_at": datetime.utcnow().isoformat(),
+                "duration_seconds": (datetime.now(timezone.utc) - start_time).total_seconds(),
+                "failed_at": datetime.now(timezone.utc).isoformat(),
             }
 
     async def _execute_decommission(
@@ -403,7 +403,7 @@ class DeviceLifecycleManager:
     ) -> Dict[str, Any]:
         """Execute device decommissioning workflow."""
         workflow_id = str(uuid.uuid4())
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
 
         try:
             # Update status to decommissioning
@@ -447,7 +447,7 @@ class DeviceLifecycleManager:
                 await self.inventory_service.manager.delete_device(device_id)
                 final_status = "deleted"
 
-            duration = (datetime.utcnow() - start_time).total_seconds()
+            duration = (datetime.now(timezone.utc) - start_time).total_seconds()
 
             return {
                 "workflow_id": workflow_id,
@@ -458,7 +458,7 @@ class DeviceLifecycleManager:
                     len(removed_links) if "removed_links" in locals() else 0
                 ),
                 "duration_seconds": duration,
-                "completed_at": datetime.utcnow().isoformat(),
+                "completed_at": datetime.now(timezone.utc).isoformat(),
             }
 
         except Exception as e:
@@ -468,8 +468,8 @@ class DeviceLifecycleManager:
                 "device_id": device_id,
                 "status": "failed",
                 "error": str(e),
-                "duration_seconds": (datetime.utcnow() - start_time).total_seconds(),
-                "failed_at": datetime.utcnow().isoformat(),
+                "duration_seconds": (datetime.now(timezone.utc) - start_time).total_seconds(),
+                "failed_at": datetime.now(timezone.utc).isoformat(),
             }
 
     async def _execute_upgrade(
@@ -622,7 +622,7 @@ class DeviceLifecycleManager:
                 "type": task_type,
                 "status": "success",
                 "duration_seconds": 30,
-                "completed_at": datetime.utcnow().isoformat(),
+                "completed_at": datetime.now(timezone.utc).isoformat(),
             }
         else:
             return {
@@ -630,7 +630,7 @@ class DeviceLifecycleManager:
                 "type": task_type,
                 "status": "failed",
                 "error": f"Unknown task type: {task_type}",
-                "failed_at": datetime.utcnow().isoformat(),
+                "failed_at": datetime.now(timezone.utc).isoformat(),
             }
 
     # Workflow handlers (called by lifecycle stage transitions)

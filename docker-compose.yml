@@ -56,11 +56,12 @@ services:
     volumes:
       - openbao_shared_data:/openbao/file
       - ./shared/deployments/openbao:/openbao/config:ro
+      - ./scripts/openbao-healthcheck.sh:/usr/local/bin/openbao-healthcheck.sh:ro
     command: server -dev -dev-no-store-token
     networks:
       - dotmac-network
     healthcheck:
-      test: ["CMD", "bao", "status", "-format=json"]
+      test: ["CMD", "sh", "/usr/local/bin/openbao-healthcheck.sh", "--quiet"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -313,60 +314,9 @@ services:
       - redis-shared
     command: celery -A app.workers.celery_app beat --loglevel=info
 
-  # ===== FRONTEND PORTALS =====
-
-  # Master Admin Portal
-  master-admin-portal:
-    build:
-      context: ./frontend/apps/admin
-      dockerfile: Dockerfile
-      target: development
-    container_name: dotmac-master-admin
-    environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8000
-      NEXT_PUBLIC_ISP_API_URL: http://localhost:8001
-      NEXT_PUBLIC_SIGNOZ_URL: http://localhost:3301
-      NODE_ENV: development
-    ports:
-      - "3000:3000"
-    networks:
-      - dotmac-network
-    depends_on:
-      - management-platform
-
-  # Customer Portal
-  customer-portal:
-    build:
-      context: ./frontend/apps/customer
-      dockerfile: Dockerfile
-      target: development
-    container_name: dotmac-customer-portal
-    environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8001
-      NODE_ENV: development
-    ports:
-      - "3001:3000"
-    networks:
-      - dotmac-network
-    depends_on:
-      - isp-framework
-
-  # Reseller Portal
-  reseller-portal:
-    build:
-      context: ./frontend/apps/reseller
-      dockerfile: Dockerfile
-      target: development
-    container_name: dotmac-reseller-portal
-    environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8000
-      NODE_ENV: development
-    ports:
-      - "3002:3000"
-    networks:
-      - dotmac-network
-    depends_on:
-      - management-platform
+# ===== FRONTEND PORTALS =====
+# Note: Frontend portals have been temporarily removed due to missing directories
+# Uncomment and update paths when frontend applications are available
 
 volumes:
   postgres_shared_data:

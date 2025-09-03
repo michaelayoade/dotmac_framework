@@ -64,7 +64,7 @@ class DNSValidator:
                 "dns_status": dns_exists,
                 "http_status": http_status,
                 "ssl_status": ssl_status,
-                "checked_at": datetime.utcnow().isoformat(),
+                "checked_at": datetime.now(timezone.utc).isoformat(),
                 "message": "Domain is available" if is_available else "Domain is already in use"
             }
             
@@ -75,7 +75,7 @@ class DNSValidator:
                 "full_domain": full_domain,
                 "available": False,
                 "error": str(e),
-                "checked_at": datetime.utcnow().isoformat(),
+                "checked_at": datetime.now(timezone.utc).isoformat(),
                 "message": "Validation failed - assuming domain unavailable for safety"
             }
     
@@ -177,7 +177,7 @@ class DNSValidator:
                     # Parse certificate info
                     not_after = datetime.strptime(cert['notAfter'], '%b %d %H:%M:%S %Y %Z')
                     not_before = datetime.strptime(cert['notBefore'], '%b %d %H:%M:%S %Y %Z')
-                    now = datetime.utcnow()
+                    now = datetime.now(timezone.utc)
                     
                     days_until_expiry = (not_after - now).days
                     
@@ -212,7 +212,7 @@ class DNSValidator:
             base_dns = await self._check_dns_exists(self.base_domain)
             
             # Check wildcard subdomain support (if possible)
-            test_subdomain = f"test-{int(datetime.utcnow().timestamp())}.{self.base_domain}"
+            test_subdomain = f"test-{int(datetime.now(timezone.utc).timestamp())}.{self.base_domain}"
             wildcard_dns = await self._check_dns_exists(f"*.{self.base_domain}")
             
             return {
@@ -220,7 +220,7 @@ class DNSValidator:
                 "base_domain_dns": base_dns,
                 "wildcard_dns_configured": wildcard_dns.get('exists', False),
                 "ready_for_tenants": base_dns.get('exists', False),
-                "checked_at": datetime.utcnow().isoformat(),
+                "checked_at": datetime.now(timezone.utc).isoformat(),
                 "recommendations": self._get_dns_recommendations(base_dns, wildcard_dns)
             }
             
@@ -230,7 +230,7 @@ class DNSValidator:
                 "base_domain": self.base_domain,
                 "error": str(e),
                 "ready_for_tenants": False,
-                "checked_at": datetime.utcnow().isoformat(),
+                "checked_at": datetime.now(timezone.utc).isoformat(),
                 "message": "Base domain validation failed"
             }
     
@@ -304,7 +304,7 @@ class CoolifyDNSValidator:
                     "dns_automation": dns_automation_available,
                     "ssl_automation": ssl_automation_available,
                     "ready_for_tenants": dns_automation_available and ssl_automation_available,
-                    "checked_at": datetime.utcnow().isoformat(),
+                    "checked_at": datetime.now(timezone.utc).isoformat(),
                     "recommendations": self._get_coolify_recommendations(
                         dns_automation_available, ssl_automation_available
                     )
@@ -316,7 +316,7 @@ class CoolifyDNSValidator:
                 "coolify_accessible": False,
                 "error": str(e),
                 "ready_for_tenants": False,
-                "checked_at": datetime.utcnow().isoformat(),
+                "checked_at": datetime.now(timezone.utc).isoformat(),
                 "message": "Coolify DNS/TLS automation check failed"
             }
     

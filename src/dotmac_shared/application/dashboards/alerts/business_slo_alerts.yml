@@ -1,0 +1,237 @@
+groups:
+  - name: dotmac_business_slos
+    rules:
+      # Authentication SLO Alerts
+      - alert: LoginSuccessRateLow
+        expr: |
+          (
+            rate(dotmac_management_login_attempts_total{result="success"}[5m]) /
+            rate(dotmac_management_login_attempts_total[5m])
+          ) < 0.98
+        for: 2m
+        labels:
+          severity: critical
+          service: management-platform
+          slo_type: authentication
+        annotations:
+          summary: "Login success rate below SLO threshold"
+          description: "Login success rate is {{ $value | humanizePercentage }} which is below the 98% SLO threshold for {{ $labels.tenant_id }}"
+          runbook_url: "https://docs.dotmac.com/runbooks/authentication-issues"
+
+      - alert: LoginLatencyHigh
+        expr: |
+          histogram_quantile(0.95, rate(dotmac_management_login_duration_seconds_bucket[5m])) > 2.0
+        for: 2m
+        labels:
+          severity: warning
+          service: management-platform
+          slo_type: authentication
+        annotations:
+          summary: "Login P95 latency above SLO threshold"
+          description: "Login P95 latency is {{ $value }}s which is above the 2s SLO threshold for {{ $labels.tenant_id }}"
+
+      # ISP Customer Login SLOs
+      - alert: CustomerLoginSuccessRateLow
+        expr: |
+          (
+            rate(isp_framework_login_attempts_total{result="success"}[5m]) /
+            rate(isp_framework_login_attempts_total[5m])
+          ) < 0.98
+        for: 2m
+        labels:
+          severity: critical
+          service: isp-framework
+          slo_type: customer_authentication
+        annotations:
+          summary: "Customer login success rate below SLO threshold"
+          description: "Customer login success rate is {{ $value | humanizePercentage }} which is below the 98% SLO threshold for tenant {{ $labels.tenant_id }}"
+          runbook_url: "https://docs.dotmac.com/runbooks/customer-login-issues"
+
+      # Provisioning SLO Alerts
+      - alert: ProvisioningSuccessRateLow
+        expr: |
+          (
+            rate(dotmac_management_provisioning_requests_total{result="success"}[5m]) /
+            rate(dotmac_management_provisioning_requests_total[5m])
+          ) < 0.95
+        for: 5m
+        labels:
+          severity: critical
+          service: management-platform
+          slo_type: provisioning
+        annotations:
+          summary: "Container provisioning success rate below SLO threshold"
+          description: "Container provisioning success rate is {{ $value | humanizePercentage }} which is below the 95% SLO threshold"
+          runbook_url: "https://docs.dotmac.com/runbooks/provisioning-failures"
+
+      - alert: ProvisioningLatencyHigh
+        expr: |
+          histogram_quantile(0.95, rate(dotmac_management_provisioning_duration_seconds_bucket[5m])) > 60
+        for: 5m
+        labels:
+          severity: warning
+          service: management-platform
+          slo_type: provisioning
+        annotations:
+          summary: "Container provisioning P95 latency above SLO threshold"
+          description: "Container provisioning P95 latency is {{ $value }}s which is above the 60s SLO threshold"
+
+      # ISP Service Provisioning SLOs
+      - alert: ServiceProvisioningLatencyHigh
+        expr: |
+          histogram_quantile(0.95, rate(isp_framework_provisioning_duration_seconds_bucket[5m])) > 60
+        for: 5m
+        labels:
+          severity: warning
+          service: isp-framework
+          slo_type: service_provisioning
+        annotations:
+          summary: "Service provisioning P95 latency above SLO threshold"
+          description: "Service provisioning P95 latency is {{ $value }}s which is above the 60s SLO threshold for {{ $labels.service_type }} on tenant {{ $labels.tenant_id }}"
+
+      # Customer Support SLO Alerts
+      - alert: SupportResolutionTimeHigh
+        expr: |
+          histogram_quantile(0.95, rate(isp_framework_customer_support_resolution_time_bucket[1h])) > 3600
+        for: 10m
+        labels:
+          severity: warning
+          service: isp-framework
+          slo_type: customer_support
+        annotations:
+          summary: "Support ticket resolution time above SLO threshold"
+          description: "Support ticket P95 resolution time is {{ $value | humanizeDuration }} which is above the 1 hour SLO threshold for tenant {{ $labels.tenant_id }}"
+          runbook_url: "https://docs.dotmac.com/runbooks/support-escalation"
+
+      # Billing & Revenue SLO Alerts
+      - alert: BillingSuccessRateLow
+        expr: |
+          (
+            rate(isp_framework_revenue_transactions_total{result="success"}[5m]) /
+            rate(isp_framework_revenue_transactions_total[5m])
+          ) < 0.99
+        for: 1m
+        labels:
+          severity: critical
+          service: isp-framework
+          slo_type: billing
+        annotations:
+          summary: "Billing transaction success rate below SLO threshold"
+          description: "Billing success rate is {{ $value | humanizePercentage }} which is below the 99% SLO threshold for tenant {{ $labels.tenant_id }}"
+          runbook_url: "https://docs.dotmac.com/runbooks/billing-failures"
+
+      # HTTP Error Rate SLO Alerts
+      - alert: HTTPErrorRateHigh
+        expr: |
+          (
+            rate(dotmac_management_http_requests_total{status_code=~"5.."}[5m]) /
+            rate(dotmac_management_http_requests_total[5m])
+          ) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+          service: management-platform
+          slo_type: availability
+        annotations:
+          summary: "HTTP error rate above SLO threshold"
+          description: "HTTP error rate is {{ $value | humanizePercentage }} which is above the 5% threshold for endpoint {{ $labels.endpoint }}"
+
+      - alert: ISPHTTPErrorRateHigh
+        expr: |
+          (
+            rate(isp_framework_http_requests_total{status_code=~"5.."}[5m]) /
+            rate(isp_framework_http_requests_total[5m])
+          ) > 0.02
+        for: 2m
+        labels:
+          severity: critical
+          service: isp-framework
+          slo_type: availability
+        annotations:
+          summary: "ISP HTTP error rate above SLO threshold"
+          description: "ISP HTTP error rate is {{ $value | humanizePercentage }} which is above the 2% threshold for endpoint {{ $labels.endpoint }} on tenant {{ $labels.tenant_id }}"
+
+      # Customer Satisfaction SLO Alerts
+      - alert: CustomerSatisfactionLow
+        expr: |
+          dotmac_management_customer_satisfaction_score{score_type="nps"} < 60
+        for: 60m
+        labels:
+          severity: warning
+          service: management-platform
+          slo_type: customer_experience
+        annotations:
+          summary: "Customer satisfaction score below threshold"
+          description: "NPS score is {{ $value }} which is below the 60 threshold for tenant {{ $labels.tenant_id }}"
+
+      - alert: ISPCustomerSatisfactionLow
+        expr: |
+          isp_framework_customer_satisfaction_score{score_type="nps"} < 60
+        for: 60m
+        labels:
+          severity: warning
+          service: isp-framework
+          slo_type: customer_experience
+        annotations:
+          summary: "ISP customer satisfaction score below threshold"
+          description: "ISP NPS score is {{ $value }} which is below the 60 threshold for tenant {{ $labels.tenant_id }}"
+
+      # Business Operations SLO Alerts
+      - alert: BusinessOperationSuccessRateLow
+        expr: |
+          (
+            rate(dotmac_management_business_operations_total{result="success"}[10m]) /
+            rate(dotmac_management_business_operations_total[10m])
+          ) < 0.95
+        for: 5m
+        labels:
+          severity: warning
+          service: management-platform
+          slo_type: business_operations
+        annotations:
+          summary: "Business operation success rate below SLO threshold"
+          description: "{{ $labels.operation_type }} success rate is {{ $value | humanizePercentage }} which is below the 95% SLO threshold"
+
+      # Service Availability Alerts
+      - alert: ServiceDown
+        expr: up{service=~"dotmac-.*|isp-.*"} == 0
+        for: 30s
+        labels:
+          severity: critical
+          slo_type: availability
+        annotations:
+          summary: "Service is down"
+          description: "Service {{ $labels.service }} is down"
+          runbook_url: "https://docs.dotmac.com/runbooks/service-down"
+
+      # Active Users/Tenants Alerts
+      - alert: ActiveTenantsDropped
+        expr: |
+          (
+            dotmac_management_active_tenants - dotmac_management_active_tenants offset 1h
+          ) / dotmac_management_active_tenants offset 1h < -0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: management-platform
+          slo_type: business_health
+        annotations:
+          summary: "Active tenant count dropped significantly"
+          description: "Active tenant count has dropped by {{ $value | humanizePercentage }} in the last hour"
+
+      # Revenue Alerts
+      - alert: RevenueTransactionFailureHigh
+        expr: |
+          (
+            rate(dotmac_management_revenue_transactions_total{result!="success"}[5m]) /
+            rate(dotmac_management_revenue_transactions_total[5m])
+          ) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+          service: management-platform
+          slo_type: revenue
+        annotations:
+          summary: "Revenue transaction failure rate high"
+          description: "Revenue transaction failure rate is {{ $value | humanizePercentage }} which is above the 5% threshold"
+          runbook_url: "https://docs.dotmac.com/runbooks/revenue-failures"

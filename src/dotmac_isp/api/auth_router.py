@@ -13,7 +13,7 @@ from fastapi import HTTPException, status
 from dotmac_shared.api.router_factory import RouterFactory
 from dotmac_shared.api.exception_handlers import standard_exception_handler
 from dotmac_shared.auth.models import User
-from dotmac_shared.user_management.adapters.isp_user_adapter import ISPUserAdapter
+from dotmac_management.user_management.adapters.isp_user_adapter import ISPUserAdapter
 from dotmac_shared.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -80,11 +80,11 @@ async def create_tenant_admin(request: AdminCreateRequest) -> AdminCreateRespons
             "company": request.company,
             "role": "admin",
             "portal_access": ["admin", "customer", "technician"],  # Full access
-            "created_at": datetime.utcnow(),
+            "created_at": datetime.now(timezone.utc),
             "metadata": {
                 "created_during_provisioning": True,
                 "requires_password_change": True,
-                "provisioning_timestamp": datetime.utcnow().isoformat()
+                "provisioning_timestamp": datetime.now(timezone.utc).isoformat()
             }
         }
         

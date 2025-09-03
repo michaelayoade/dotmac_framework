@@ -22,10 +22,10 @@ module.exports = {
       severity: 'error',
       comment: 'Customer portal cannot import from Admin portal',
       from: {
-        path: '^apps/customer/',
+        path: '^isp-framework/customer/',
       },
       to: {
-        path: '^apps/admin/',
+        path: '^isp-framework/admin/',
       },
     },
     {
@@ -33,10 +33,10 @@ module.exports = {
       severity: 'error',
       comment: 'Admin portal cannot import from Customer portal',
       from: {
-        path: '^apps/admin/',
+        path: '^isp-framework/admin/',
       },
       to: {
-        path: '^apps/customer/',
+        path: '^isp-framework/customer/',
       },
     },
     {
@@ -44,10 +44,10 @@ module.exports = {
       severity: 'error',
       comment: 'Other portals cannot import from Reseller portal',
       from: {
-        pathNot: '^apps/reseller/',
+        pathNot: '^isp-framework/reseller/',
       },
       to: {
-        path: '^apps/reseller/',
+        path: '^isp-framework/reseller/',
       },
     },
 
@@ -70,11 +70,11 @@ module.exports = {
       severity: 'warn',
       comment: 'Components should use API layer instead of direct service calls',
       from: {
-        path: '^apps/.*/src/components/',
+        path: '^(isp-framework|management-portal)/.*/src/components/',
       },
       to: {
-        path: '^apps/.*/src/services/',
-        pathNot: '^apps/.*/src/services/api/',
+        path: '^(isp-framework|management-portal)/.*/src/services/',
+        pathNot: '^(isp-framework|management-portal)/.*/src/services/api/',
       },
     },
 
@@ -100,7 +100,7 @@ module.exports = {
         path: '^packages/',
       },
       to: {
-        path: '^apps/',
+        path: '^(isp-framework|management-portal)/',
       },
     },
 
@@ -110,7 +110,7 @@ module.exports = {
       severity: 'error',
       comment: 'Production code cannot import development dependencies',
       from: {
-        path: '^(apps|packages)/.*/src/',
+        path: '^(isp-framework|management-portal|packages)/.*/src/',
         pathNot: '\\.(test|spec|stories)\\.[jt]sx?$',
       },
       to: {
@@ -196,17 +196,17 @@ module.exports = {
     // Allow imports within the same app
     {
       from: {
-        path: '^apps/([^/]+)/',
+        path: '^(isp-framework|management-portal)/([^/]+)/',
       },
       to: {
-        path: '^apps/$1/',
+        path: '^$1/$2/',
       },
     },
 
     // Allow shared package imports from apps
     {
       from: {
-        path: '^apps/',
+        path: '^(isp-framework|management-portal)/',
       },
       to: {
         path: '^packages/',
@@ -254,7 +254,7 @@ module.exports = {
     },
 
     includeOnly: {
-      path: '^(apps|packages)/',
+      path: '^(isp-framework|management-portal|packages)/',
     },
 
     exclude: {
@@ -281,7 +281,7 @@ module.exports = {
     // Enhanced reporting
     reporterOptions: {
       archi: {
-        collapsePattern: '^(apps|packages)/[^/]+',
+        collapsePattern: '^(isp-framework|management-portal|packages)/[^/]+',
         theme: {
           graph: {
             splines: 'ortho',
@@ -296,16 +296,20 @@ module.exports = {
           },
           modules: [
             {
-              criteria: { source: '^apps/admin' },
+              criteria: { source: '^isp-framework/admin' },
               attributes: { fillcolor: '#ffcccc', style: 'filled' },
             },
             {
-              criteria: { source: '^apps/customer' },
+              criteria: { source: '^isp-framework/customer' },
               attributes: { fillcolor: '#ccffcc', style: 'filled' },
             },
             {
-              criteria: { source: '^apps/reseller' },
+              criteria: { source: '^isp-framework/reseller' },
               attributes: { fillcolor: '#ccccff', style: 'filled' },
+            },
+            {
+              criteria: { source: '^management-portal' },
+              attributes: { fillcolor: '#ffccff', style: 'filled' },
             },
             {
               criteria: { source: '^packages' },

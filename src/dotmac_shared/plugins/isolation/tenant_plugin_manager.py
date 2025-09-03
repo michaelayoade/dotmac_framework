@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Union
 from uuid import UUID
 
-from ...cache import get_cache_manager
+from ...cache import get_cache_service
 from ...monitoring import get_monitoring
 from ..core.exceptions import PluginError, PluginNotFoundError
 from ..core.manager import PluginManager
@@ -83,7 +83,7 @@ class TenantPluginRegistry(PluginRegistry):
 
     async def _update_tenant_cache(self) -> None:
         """Update tenant-specific cache."""
-        cache_manager = get_cache_manager()
+        cache_manager = get_cache_service()
         if cache_manager:
             await cache_manager.set(
                 self._tenant_cache_key, self.get_registry_status(), ttl=300  # 5 minutes
@@ -128,7 +128,7 @@ class TenantPluginManager:
         self.plugin_manager.registry = self.registry  # Use tenant registry
 
         # Monitoring and logging
-        self.monitoring = get_monitoring()
+        self.monitoring = get_monitoring('plugins.tenant')
         self._logger = logging.getLogger(f"plugins.tenant.{tenant_id}")
 
         # Tenant state
@@ -472,7 +472,7 @@ class TenantPluginManager:
 
     async def _clear_tenant_caches(self) -> None:
         """Clear all tenant-specific caches."""
-        cache_manager = get_cache_manager()
+        cache_manager = get_cache_service()
         if cache_manager:
             await cache_manager.delete_pattern(f"tenant:{self.tenant_id}:*")
 
@@ -495,7 +495,7 @@ class TenantPluginOrchestrator:
     def __init__(self):
         self._tenant_managers: Dict[UUID, TenantPluginManager] = {}
         self._logger = logging.getLogger("plugins.orchestrator")
-        self.monitoring = get_monitoring()
+        self.monitoring = get_monitoring('plugins.tenant')
 
     async def get_tenant_manager(
         self,

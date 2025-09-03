@@ -441,7 +441,7 @@ class TenantProvisioningE2E:
                 executed_migrations.append({
                     "name": migration,
                     "status": "completed",
-                    "executed_at": datetime.utcnow().isoformat()
+                    "executed_at": datetime.now(timezone.utc).isoformat()
                 })
             
             return {
@@ -595,7 +595,7 @@ class TenantProvisioningE2E:
             cert_data = {
                 "domain": f"{self.test_tenant_id}.example.com",
                 "cert_authority": "Let's Encrypt",
-                "expiry_date": (datetime.utcnow() + timedelta(days=90)).isoformat(),
+                "expiry_date": (datetime.now(timezone.utc) + timedelta(days=90)).isoformat(),
                 "status": "active"
             }
             

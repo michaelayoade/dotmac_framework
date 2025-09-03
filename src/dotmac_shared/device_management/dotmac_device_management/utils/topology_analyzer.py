@@ -37,7 +37,7 @@ class RedundancyAnalysis:
 class TopologyAnalyzer:
     """Advanced network topology analyzer."""
 
-    def __init__(self):
+    def __init__(self, timezone):
         """Initialize topology analyzer."""
         self.graph = defaultdict(dict)  # node_id -> {neighbor_id: link_data}
         self.nodes = {}  # node_id -> node_data
@@ -418,7 +418,7 @@ class TopologyAnalyzer:
     def generate_topology_report(self) -> Dict[str, Any]:
         """Generate comprehensive topology analysis report."""
         report = {
-            "analysis_timestamp": datetime.utcnow().isoformat(),
+            "analysis_timestamp": datetime.now(timezone.utc).isoformat(),
             "topology_summary": {
                 "total_nodes": len(self.nodes),
                 "total_links": len(self.links),

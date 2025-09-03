@@ -245,10 +245,10 @@ async def setup_vps_customer(
             preferred_backup_time=setup_request.preferred_backup_time,
             owner_id=current_user.id,
             status=VPSStatus.VALIDATING,
-            deployment_started_at=datetime.utcnow(),
+            deployment_started_at=datetime.now(timezone.utc),
             settings={
                 "created_by": current_user.email,
-                "signup_timestamp": datetime.utcnow().isoformat(),
+                "signup_timestamp": datetime.now(timezone.utc).isoformat(),
                 "requirements_checked": False
             }
         )
@@ -457,7 +457,7 @@ async def retry_deployment(
     
     # Reset status and retry
     customer.status = VPSStatus.VALIDATING
-    customer.deployment_started_at = datetime.utcnow()
+    customer.deployment_started_at = datetime.now(timezone.utc)
     db.commit()
     
     # Queue deployment in background

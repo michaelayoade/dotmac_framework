@@ -20,7 +20,7 @@ except ImportError:
 class LeadRepository:
     """Repository for lead database operations."""
 
-    def __init__(self, db_session: Session):
+    def __init__(self, db_session: Session, timezone):
         """Initialize repository with database session."""
         if not SQLALCHEMY_AVAILABLE:
             raise ImportError("SQLAlchemy dependencies not available")
@@ -32,7 +32,7 @@ class LeadRepository:
     ) -> Lead:
         """Create a new lead in the database."""
         # Generate unique lead ID
-        lead_id = f"LEAD-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}-{str(uuid.uuid4())[:8].upper()}"
+        lead_id = f"LEAD-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}-{str(uuid.uuid4())[:8].upper()}"
 
         # Create lead instance
         lead = Lead(
@@ -65,8 +65,8 @@ class LeadRepository:
             last_contact_date=None,
             next_follow_up_date=None,
             is_active=True,
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc),
         )
 
         self.db.add(lead)
@@ -103,7 +103,7 @@ class LeadRepository:
             if hasattr(lead, field):
                 setattr(lead, field, value)
 
-        lead.updated_at = datetime.utcnow()
+        lead.updated_at = datetime.now(timezone.utc)
 
         self.db.commit()
         self.db.refresh(lead)
@@ -119,7 +119,7 @@ class LeadRepository:
             raise ValueError(f"Lead {lead_id} not found")
 
         lead.lead_score = new_score
-        lead.updated_at = datetime.utcnow()
+        lead.updated_at = datetime.now(timezone.utc)
 
         self.db.commit()
         self.db.refresh(lead)
@@ -135,7 +135,7 @@ class LeadRepository:
             raise ValueError(f"Lead {lead_id} not found")
 
         lead.lead_status = new_status
-        lead.updated_at = datetime.utcnow()
+        lead.updated_at = datetime.now(timezone.utc)
 
         # Set special dates based on status
         if new_status == LeadStatus.CONTACTED and not lead.first_contact_date:
@@ -233,7 +233,7 @@ class LeadRepository:
 
         # Update status to qualified
         lead.lead_status = LeadStatus.QUALIFIED
-        lead.updated_at = datetime.utcnow()
+        lead.updated_at = datetime.now(timezone.utc)
 
         self.db.commit()
         self.db.refresh(lead)
@@ -251,7 +251,7 @@ class LeadRepository:
         lead.lead_status = LeadStatus.CONVERTED
         lead.converted_date = date.today()
         lead.opportunity_id = opportunity_id
-        lead.updated_at = datetime.utcnow()
+        lead.updated_at = datetime.now(timezone.utc)
 
         self.db.commit()
         self.db.refresh(lead)
@@ -348,7 +348,7 @@ class LeadRepository:
             return False
 
         lead.is_active = False
-        lead.updated_at = datetime.utcnow()
+        lead.updated_at = datetime.now(timezone.utc)
 
         self.db.commit()
         return True

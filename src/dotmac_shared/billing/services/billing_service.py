@@ -284,7 +284,7 @@ class BillingService:
             currency=invoice.currency,
             payment_method=payment_method_id,
             status=PaymentStatus.PENDING,
-            payment_date=datetime.utcnow(),
+            payment_date=datetime.now(timezone.utc),
             tenant_id=self.default_tenant_id,
         )
 
@@ -308,7 +308,7 @@ class BillingService:
 
             if gateway_result.get("status") == "completed":
                 payment.status = PaymentStatus.COMPLETED
-                payment.processed_date = datetime.utcnow()
+                payment.processed_date = datetime.now(timezone.utc)
 
                 # Update invoice
                 invoice.amount_paid += amount

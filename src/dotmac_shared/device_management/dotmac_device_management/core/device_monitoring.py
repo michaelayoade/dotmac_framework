@@ -19,7 +19,7 @@ from .models import Device, MonitoringRecord, MonitorType
 class DeviceMonitoringManager:
     """Device monitoring manager for database operations."""
 
-    def __init__(self, session: Session, tenant_id: str):
+    def __init__(self, session: Session, tenant_id: str, timezone):
         self.session = session
         self.tenant_id = tenant_id
 
@@ -52,7 +52,7 @@ class DeviceMonitoringManager:
             monitor_id=monitor_id,
             monitor_type=monitor_type,
             metrics=metrics,
-            collection_timestamp=kwargs.get("collection_timestamp", datetime.utcnow()),
+            collection_timestamp=kwargs.get("collection_timestamp", datetime.now(timezone.utc)),
             collection_status=collection_status,
             collection_duration_ms=kwargs.get("collection_duration_ms"),
             error_message=kwargs.get("error_message"),
@@ -90,7 +90,7 @@ class DeviceMonitoringManager:
         limit: int = 100,
     ) -> List[MonitoringRecord]:
         """Get historical monitoring records."""
-        since = datetime.utcnow() - timedelta(hours=hours)
+        since = datetime.now(timezone.utc) - timedelta(hours=hours)
 
         query = self.session.query(MonitoringRecord).filter(
             and_(
@@ -218,7 +218,7 @@ class DeviceMonitoringManager:
 
     async def cleanup_old_records(self, days_to_keep: int = 30) -> int:
         """Clean up old monitoring records."""
-        cutoff_date = datetime.utcnow() - timedelta(days=days_to_keep)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=days_to_keep)
 
         deleted_count = (
             self.session.query(MonitoringRecord)
@@ -285,7 +285,7 @@ class DeviceMonitoringService:
         self, device_id: str, monitor_id: str, metrics_data: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Store collected SNMP metrics."""
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
 
         try:
             record = await self.manager.create_monitoring_record(

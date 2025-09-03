@@ -23,6 +23,8 @@ class PluginType(str, Enum):
     SECURITY_SCANNER = "security_scanner"
     BACKUP_PROVIDER = "backup_provider"
     ANALYTICS_PROVIDER = "analytics_provider"
+    DNS_PROVIDER = "dns_provider"
+    INFRASTRUCTURE_PROVIDER = "infrastructure_provider"
 
 
 class PluginStatus(str, Enum):

@@ -512,7 +512,7 @@ class ServiceAssuranceSDK:
 
         return {
             "tenant_id": self.tenant_id,
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
             "time_period_hours": hours,
             "overall_health": {
                 "score": round(health_score, 1),
@@ -576,7 +576,7 @@ class ServiceAssuranceSDK:
 
         return {
             "tenant_id": self.tenant_id,
-            "report_generated_at": datetime.utcnow().isoformat(),
+            "report_generated_at": datetime.now(timezone.utc).isoformat(),
             "time_period_hours": hours,
             "traffic_analysis": {
                 "summary": traffic_summary,
@@ -610,7 +610,7 @@ class ServiceAssuranceSDK:
         """Check SDK health and connectivity."""
         health = {
             "tenant_id": self.tenant_id,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "services": {
                 "alarm_service": True,
                 "flow_service": True,

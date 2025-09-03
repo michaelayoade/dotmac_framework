@@ -46,21 +46,23 @@ export class MailHogHelper {
 
     while (Date.now() - startTime < timeout) {
       const emails = await this.getAllEmails();
-      
+
       for (const email of emails) {
         if (this.emailMatchesFilter(email, filter)) {
           return email;
         }
       }
-      
+
       // Wait before next check
-      await new Promise(resolve => setTimeout(resolve, checkInterval));
+      await new Promise((resolve) => setTimeout(resolve, checkInterval));
     }
 
     if (filter.shouldExist !== false) {
-      throw new Error(`Email matching filter not found within ${timeout}ms. Filter: ${JSON.stringify(filter)}`);
+      throw new Error(
+        `Email matching filter not found within ${timeout}ms. Filter: ${JSON.stringify(filter)}`
+      );
     }
-    
+
     return null;
   }
 
@@ -69,7 +71,11 @@ export class MailHogHelper {
    */
   async checkForEmail(filter: EmailFilter): Promise<boolean> {
     try {
-      const email = await this.waitForEmail({ ...filter, timeout: filter.timeout || 5000, shouldExist: false });
+      const email = await this.waitForEmail({
+        ...filter,
+        timeout: filter.timeout || 5000,
+        shouldExist: false,
+      });
       return email !== null;
     } catch {
       return false;
@@ -85,7 +91,7 @@ export class MailHogHelper {
       if (!response.ok) {
         throw new Error(`MailHog API error: ${response.status} ${response.statusText}`);
       }
-      
+
       const data = await response.json();
       return data.items?.map(this.transformMailHogMessage) || [];
     } catch (error) {
@@ -99,8 +105,8 @@ export class MailHogHelper {
    */
   async getAllEmailsForRecipient(email: string): Promise<EmailMessage[]> {
     const allEmails = await this.getAllEmails();
-    return allEmails.filter(msg => 
-      msg.to.some(recipient => recipient.email.toLowerCase() === email.toLowerCase())
+    return allEmails.filter((msg) =>
+      msg.to.some((recipient) => recipient.email.toLowerCase() === email.toLowerCase())
     );
   }
 
@@ -110,13 +116,13 @@ export class MailHogHelper {
   async clearAllEmails(): Promise<void> {
     try {
       const response = await fetch(`${this.mailHogUrl}/api/v1/messages`, {
-        method: 'DELETE'
+        method: 'DELETE',
       });
-      
+
       if (!response.ok) {
         throw new Error(`Failed to clear MailHog emails: ${response.status}`);
       }
-      
+
       console.log('Cleared all emails from MailHog');
     } catch (error) {
       console.error('Error clearing MailHog emails:', error);
@@ -132,7 +138,7 @@ export class MailHogHelper {
       if (!response.ok) {
         return null;
       }
-      
+
       const data = await response.json();
       return this.transformMailHogMessage(data);
     } catch (error) {
@@ -146,26 +152,26 @@ export class MailHogHelper {
    */
   extractResetLinkFromEmail(email: EmailMessage): string | null {
     const content = email.body.html || email.body.text;
-    
+
     // Common patterns for reset links
     const patterns = [
       /https?:\/\/[^\s]+\/auth\/reset-password[^\s\)"]*/g,
       /https?:\/\/[^\s]+\/password\/reset[^\s\)"]*/g,
       /https?:\/\/[^\s]+\/reset[^\s\)"]*/g,
       /href="([^"]*reset-password[^"]*)/g,
-      /href='([^']*reset-password[^']*)'/g
+      /href='([^']*reset-password[^']*)'/g,
     ];
 
     for (const pattern of patterns) {
       const matches = content.match(pattern);
       if (matches && matches.length > 0) {
         let link = matches[0];
-        
+
         // Clean up href extraction
         if (link.startsWith('href="') || link.startsWith("href='")) {
           link = link.substring(6);
         }
-        
+
         // Ensure it's a complete URL
         if (link.startsWith('http')) {
           return link;
@@ -188,11 +194,11 @@ export class MailHogHelper {
    */
   extractVerificationLinkFromEmail(email: EmailMessage): string | null {
     const content = email.body.html || email.body.text;
-    
+
     const patterns = [
       /https?:\/\/[^\s]+\/auth\/verify-email[^\s\)"]*/g,
       /https?:\/\/[^\s]+\/verify[^\s\)"]*/g,
-      /href="([^"]*verify[^"]*)/g
+      /href="([^"]*verify[^"]*)/g,
     ];
 
     for (const pattern of patterns) {
@@ -214,14 +220,14 @@ export class MailHogHelper {
    */
   extractOTPFromEmail(email: EmailMessage): string | null {
     const content = email.body.text || email.body.html.replace(/<[^>]*>/g, '');
-    
+
     // Common OTP patterns
     const patterns = [
       /verification code[:\s]*([A-Z0-9]{6,8})/i,
       /your code[:\s]*([A-Z0-9]{6,8})/i,
       /code[:\s]*([A-Z0-9]{6,8})/i,
       /\b([A-Z0-9]{6})\b/, // 6-digit alphanumeric
-      /\b([0-9]{6})\b/     // 6-digit numeric
+      /\b([0-9]{6})\b/, // 6-digit numeric
     ];
 
     for (const pattern of patterns) {
@@ -239,7 +245,7 @@ export class MailHogHelper {
    */
   verifyEmailContent(email: EmailMessage, expectedContent: string | RegExp): boolean {
     const content = `${email.subject} ${email.body.text} ${email.body.html}`;
-    
+
     if (typeof expectedContent === 'string') {
       return content.toLowerCase().includes(expectedContent.toLowerCase());
     } else {
@@ -258,13 +264,13 @@ export class MailHogHelper {
   }> {
     const emails = await this.getAllEmails();
     const now = Date.now();
-    const oneHourAgo = now - (60 * 60 * 1000);
+    const oneHourAgo = now - 60 * 60 * 1000;
 
     const stats = {
       totalEmails: emails.length,
       emailsByDomain: {} as Record<string, number>,
       emailsBySubject: {} as Record<string, number>,
-      recentEmails: 0
+      recentEmails: 0,
     };
 
     for (const email of emails) {
@@ -289,26 +295,29 @@ export class MailHogHelper {
   /**
    * Wait for multiple emails matching criteria
    */
-  async waitForMultipleEmails(filters: EmailFilter[], timeout: number = 30000): Promise<EmailMessage[]> {
+  async waitForMultipleEmails(
+    filters: EmailFilter[],
+    timeout: number = 30000
+  ): Promise<EmailMessage[]> {
     const startTime = Date.now();
     const foundEmails: EmailMessage[] = [];
 
     while (Date.now() - startTime < timeout && foundEmails.length < filters.length) {
       const emails = await this.getAllEmails();
-      
+
       for (const filter of filters) {
-        if (foundEmails.some(found => this.emailMatchesFilter(found, filter))) {
+        if (foundEmails.some((found) => this.emailMatchesFilter(found, filter))) {
           continue; // Already found this one
         }
-        
-        const matchingEmail = emails.find(email => this.emailMatchesFilter(email, filter));
+
+        const matchingEmail = emails.find((email) => this.emailMatchesFilter(email, filter));
         if (matchingEmail) {
           foundEmails.push(matchingEmail);
         }
       }
-      
+
       if (foundEmails.length < filters.length) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       }
     }
 
@@ -323,20 +332,23 @@ export class MailHogHelper {
       id: mailHogMsg.ID,
       from: {
         email: mailHogMsg.From?.Mailbox + '@' + mailHogMsg.From?.Domain || '',
-        name: mailHogMsg.From?.Name || ''
+        name: mailHogMsg.From?.Name || '',
       },
       to: (mailHogMsg.To || []).map((to: any) => ({
         email: to.Mailbox + '@' + to.Domain,
-        name: to.Name || ''
+        name: to.Name || '',
       })),
       subject: mailHogMsg.Content?.Headers?.Subject?.[0] || '',
       body: {
         text: mailHogMsg.Content?.Body || '',
-        html: this.extractHtmlFromMimeBody(mailHogMsg.Content?.Body || '', mailHogMsg.Content?.Headers)
+        html: this.extractHtmlFromMimeBody(
+          mailHogMsg.Content?.Body || '',
+          mailHogMsg.Content?.Headers
+        ),
       },
       headers: mailHogMsg.Content?.Headers || {},
       timestamp: mailHogMsg.Created,
-      raw: JSON.stringify(mailHogMsg)
+      raw: JSON.stringify(mailHogMsg),
     };
   }
 
@@ -345,19 +357,21 @@ export class MailHogHelper {
    */
   private extractHtmlFromMimeBody(body: string, headers: any): string {
     const contentType = headers?.['Content-Type']?.[0] || '';
-    
+
     if (contentType.includes('text/html')) {
       return body;
     }
-    
+
     if (contentType.includes('multipart')) {
       // Look for HTML part in multipart message
-      const htmlMatch = body.match(/Content-Type:\s*text\/html[\s\S]*?\r?\n\r?\n([\s\S]*?)(?=\r?\n--)/);
+      const htmlMatch = body.match(
+        /Content-Type:\s*text\/html[\s\S]*?\r?\n\r?\n([\s\S]*?)(?=\r?\n--)/
+      );
       if (htmlMatch) {
         return htmlMatch[1];
       }
     }
-    
+
     return ''; // No HTML content found
   }
 
@@ -365,7 +379,12 @@ export class MailHogHelper {
    * Check if email matches the given filter
    */
   private emailMatchesFilter(email: EmailMessage, filter: EmailFilter): boolean {
-    if (filter.to && !email.to.some(recipient => recipient.email.toLowerCase().includes(filter.to!.toLowerCase()))) {
+    if (
+      filter.to &&
+      !email.to.some((recipient) =>
+        recipient.email.toLowerCase().includes(filter.to!.toLowerCase())
+      )
+    ) {
       return false;
     }
 

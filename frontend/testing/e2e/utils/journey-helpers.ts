@@ -8,7 +8,10 @@ export class JourneyHelper {
 
   async waitForLoadingComplete() {
     // Wait for loading spinners to disappear
-    await this.page.waitForSelector('[data-testid="loading-spinner"]', { state: 'hidden', timeout: 10000 });
+    await this.page.waitForSelector('[data-testid="loading-spinner"]', {
+      state: 'hidden',
+      timeout: 10000,
+    });
   }
 
   async verifyPageTitle(expectedTitle: string) {
@@ -18,7 +21,7 @@ export class JourneyHelper {
   async takeScreenshotOnFailure(testName: string) {
     await this.page.screenshot({
       path: `test-results/${testName}-failure.png`,
-      fullPage: true
+      fullPage: true,
     });
   }
 
@@ -53,11 +56,11 @@ export class NetworkHelper {
   constructor(public page: any) {}
 
   async mockApiCall(endpoint: string, response: any) {
-    await this.page.route(endpoint, route => {
+    await this.page.route(endpoint, (route) => {
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify(response)
+        body: JSON.stringify(response),
       });
     });
   }
@@ -68,9 +71,9 @@ export class NetworkHelper {
     await client.send('Network.enable');
     await client.send('Network.emulateNetworkConditions', {
       offline: false,
-      downloadThroughput: 1.5 * 1024 * 1024 / 8, // 1.5 Mbps
-      uploadThroughput: 750 * 1024 / 8, // 750 Kbps
-      latency: 300 // 300ms
+      downloadThroughput: (1.5 * 1024 * 1024) / 8, // 1.5 Mbps
+      uploadThroughput: (750 * 1024) / 8, // 750 Kbps
+      latency: 300, // 300ms
     });
   }
 
@@ -92,19 +95,19 @@ export const testData = {
       phone: '555-0123',
       address: '123 Test St',
       city: 'Test City',
-      zipCode: '12345'
+      zipCode: '12345',
     },
     invalidData: {
       email: 'invalid-email',
       phone: '123',
-      zipCode: 'invalid'
-    }
+      zipCode: 'invalid',
+    },
   },
   service: {
     plans: [
       { name: 'Basic', speed: '25 Mbps', price: 39.99 },
       { name: 'Premium', speed: '100 Mbps', price: 59.99 },
-      { name: 'Enterprise', speed: '1 Gbps', price: 99.99 }
-    ]
-  }
+      { name: 'Enterprise', speed: '1 Gbps', price: 99.99 },
+    ],
+  },
 };

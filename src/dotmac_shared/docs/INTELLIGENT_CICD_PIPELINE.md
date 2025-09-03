@@ -909,4 +909,4 @@ The Intelligent CI/CD Pipeline for the DotMac Framework represents a significant
 
 The pipeline serves as a foundation for continuous improvement, learning from failures and refining remediation strategies over time. This creates a self-improving system that becomes more reliable and efficient with each deployment cycle.
 
-For questions, issues, or contributions, please refer to the [Contributing Guide](CONTRIBUTING.md) or contact the DevOps team at <devops@dotmac.framework>.
+For questions, issues, or contributions, please refer to the project contributing guidelines (internal) or contact the DevOps team at <devops@dotmac.framework>.

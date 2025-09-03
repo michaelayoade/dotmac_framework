@@ -1,21 +1,54 @@
 {
   "ci": {
     "collect": {
-      "staticDistDir": ".next", 
-      "url": ["http://localhost:3001/customer/quality", "http://localhost:3001/customer/files"],
-      "numberOfRuns": 1
+      "staticDistDir": ".next",
+      "url": [
+        "http://localhost:3000",
+        "http://localhost:3001", 
+        "http://localhost:3002",
+        "http://localhost:3003",
+        "http://localhost:3004",
+        "http://localhost:3001/customer/quality", 
+        "http://localhost:3001/customer/files"
+      ],
+      "numberOfRuns": 3,
+      "settings": {
+        "preset": "desktop",
+        "chromeFlags": "--no-sandbox --disable-dev-shm-usage"
+      }
     },
     "assert": {
+      "preset": "lighthouse:no-pwa",
       "assertions": {
-        "categories:performance": ["warn", {"minScore": 0.8}],
-        "categories:accessibility": ["warn", {"minScore": 0.9}],
-        "categories:best-practices": ["warn", {"minScore": 0.9}],
-        "categories:seo": ["warn", {"minScore": 0.85}],
-        "uses-optimized-images": "warn",
-        "total-byte-weight": ["warn", {"maxNumericValue": 1000000}],
-        "resource-summary:document": ["warn", {"maxLength": 1}]
+        "first-contentful-paint": ["error", {"maxNumericValue": 1800}],
+        "largest-contentful-paint": ["error", {"maxNumericValue": 2500}],
+        "first-input-delay": ["error", {"maxNumericValue": 100}],
+        "cumulative-layout-shift": ["error", {"maxNumericValue": 0.1}],
+        "total-blocking-time": ["error", {"maxNumericValue": 200}],
+        "speed-index": ["error", {"maxNumericValue": 3400}],
+        "time-to-interactive": ["error", {"maxNumericValue": 3800}],
+        "categories:performance": ["error", {"minScore": 0.9}],
+        "categories:accessibility": ["error", {"minScore": 0.95}],
+        "categories:best-practices": ["error", {"minScore": 0.95}],
+        "categories:seo": ["error", {"minScore": 0.9}],
+        "uses-optimized-images": ["warn"],
+        "total-byte-weight": ["error", {"maxNumericValue": 800000}],
+        "resource-summary:script": ["error", {"maxNumericValue": 250000}],
+        "resource-summary:stylesheet": ["error", {"maxNumericValue": 50000}],
+        "resource-summary:image": ["warn", {"maxNumericValue": 300000}],
+        "unused-javascript": ["warn", {"maxNumericValue": 20000}],
+        "unused-css-rules": ["warn", {"maxNumericValue": 20000}],
+        "dom-size": ["error", {"maxNumericValue": 1500}]
+      }
+    },
+    "upload": {
+      "target": "temporary-public-storage"
+    },
+    "server": {
+      "port": 9001,
+      "storage": {
+        "storageMethod": "filesystem"
       }
     }
   }
 }
-

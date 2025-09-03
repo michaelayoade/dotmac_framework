@@ -212,7 +212,7 @@ class WebSocketManager:
             {
                 "type": "connection_established",
                 "connection_id": connection_id,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             },
         )
 
@@ -302,7 +302,7 @@ class WebSocketManager:
                 envelope = MessageEnvelope(
                     type=message.get("type", "message"),
                     data=message.get("data", message),
-                    timestamp=datetime.utcnow(),
+                    timestamp=datetime.now(timezone.utc),
                     message_id=str(uuid4()),
                 )
             else:
@@ -484,7 +484,7 @@ class WebSocketManager:
         """Update heartbeat timestamp for connection."""
         conn_info = self.active_connections.get(connection_id)
         if conn_info:
-            conn_info.last_heartbeat = datetime.utcnow()
+            conn_info.last_heartbeat = datetime.now(timezone.utc)
 
     def get_connection_info(self, connection_id: str) -> Optional[ConnectionInfo]:
         """Get connection information."""
@@ -515,14 +515,14 @@ class WebSocketManager:
     # Private methods
     async def _send_system_message(self, connection_id: str, data: Dict[str, Any]):
         """Send system message to connection."""
-        message = MessageEnvelope(type="system", data=data, timestamp=datetime.utcnow())
+        message = MessageEnvelope(type="system", data=data, timestamp=datetime.now(timezone.utc))
         await self.send_message(connection_id, message)
 
     async def _heartbeat_monitor(self):
         """Background task to monitor connection heartbeats."""
         while self._is_running:
             try:
-                now = datetime.utcnow()
+                now = datetime.now(timezone.utc)
                 heartbeat_tasks = []
 
                 for connection_id, conn_info in list(self.active_connections.items()):
@@ -551,7 +551,7 @@ class WebSocketManager:
         """Background task to cleanup stale connections."""
         while self._is_running:
             try:
-                now = datetime.utcnow()
+                now = datetime.now(timezone.utc)
                 timeout_threshold = now - timedelta(
                     seconds=self.config.connection_timeout
                 )

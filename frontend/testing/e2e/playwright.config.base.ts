@@ -23,7 +23,7 @@ export default defineConfig({
     ['html', { outputFolder: 'playwright-report' }],
     ['junit', { outputFile: 'test-results/results.xml' }],
     ['json', { outputFile: 'test-results/results.json' }],
-    ...(isDevelopment ? [['list']] : [])
+    ...(isDevelopment ? [['list']] : []),
   ],
 
   // Global setup and teardown
@@ -52,7 +52,7 @@ export default defineConfig({
 
     // Locale and timezone
     locale: 'en-US',
-    timezoneId: 'America/New_York'
+    timezoneId: 'America/New_York',
   },
 
   // DRY project configurations for different browsers and contexts
@@ -70,21 +70,21 @@ export default defineConfig({
       use: {
         ...devices['Desktop Chrome'],
         // Use auth from setup
-        dependencies: ['setup']
+        dependencies: ['setup'],
       },
     },
     {
       name: 'firefox',
       use: {
         ...devices['Desktop Firefox'],
-        dependencies: ['setup']
+        dependencies: ['setup'],
       },
     },
     {
       name: 'webkit',
       use: {
         ...devices['Desktop Safari'],
-        dependencies: ['setup']
+        dependencies: ['setup'],
       },
     },
 
@@ -93,14 +93,14 @@ export default defineConfig({
       name: 'Mobile Chrome',
       use: {
         ...devices['Pixel 5'],
-        dependencies: ['setup']
+        dependencies: ['setup'],
       },
     },
     {
       name: 'Mobile Safari',
       use: {
         ...devices['iPhone 12'],
-        dependencies: ['setup']
+        dependencies: ['setup'],
       },
     },
 
@@ -109,9 +109,9 @@ export default defineConfig({
       name: 'iPad',
       use: {
         ...devices['iPad Pro'],
-        dependencies: ['setup']
+        dependencies: ['setup'],
       },
-    }
+    },
   ],
 
   // Development server configuration (DRY)

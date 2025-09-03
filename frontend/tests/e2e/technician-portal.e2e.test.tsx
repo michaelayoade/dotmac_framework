@@ -29,9 +29,7 @@ test.describe('Technician Portal E2E Tests', () => {
     await api.setupTechnicianMocks();
     await page.goto('/technician');
     await page.waitForSelector('[data-testid="technician-dashboard"]');
-    await api.validateDataFlows([
-      { endpoint: '/api/v1/technician/work-orders', method: 'GET' },
-    ]);
+    await api.validateDataFlows([{ endpoint: '/api/v1/technician/work-orders', method: 'GET' }]);
   });
 
   test.describe('Mobile PWA Functionality', () => {

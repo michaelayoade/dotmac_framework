@@ -82,7 +82,7 @@ class UserRepository(BaseRepository[User]):
         try:
             user = await self.get_by_id(user_id)
             if user:
-                user.last_login = datetime.utcnow()
+                user.last_login = datetime.now(timezone.utc)
                 user.failed_login_attempts = 0
                 await self.db.commit()
                 return True
@@ -98,7 +98,7 @@ class UserRepository(BaseRepository[User]):
             if user:
                 user.failed_login_attempts = (user.failed_login_attempts or 0) + 1
                 if user.failed_login_attempts >= 5:
-                    user.locked_until = datetime.utcnow()
+                    user.locked_until = datetime.now(timezone.utc)
                 await self.db.commit()
                 return True
             return False
@@ -337,7 +337,7 @@ class AuthenticationRepository:
                 and_(
                     UserSession.id == session_id,
                     UserSession.is_active == True,
-                    UserSession.expires_at > datetime.utcnow()
+                    UserSession.expires_at > datetime.now(timezone.utc)
                 )
             )
             

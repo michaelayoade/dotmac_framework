@@ -61,7 +61,7 @@ class BillingCustomerRepository(BaseTenantRepository[BillingCustomer]):
     
     def get_customers_with_overdue_invoices(self, days_overdue: int = 30) -> List[BillingCustomer]:
         """Get customers with overdue invoices."""
-        cutoff_date = datetime.utcnow() - timedelta(days=days_overdue)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=days_overdue)
         
         return (
             self._build_base_query()
@@ -200,7 +200,7 @@ class SubscriptionRepository(BaseTenantRepository[Subscription]):
     
     def get_expiring_subscriptions(self, days_ahead: int = 30) -> List[Subscription]:
         """Get subscriptions expiring within specified days."""
-        expiry_date = datetime.utcnow() + timedelta(days=days_ahead)
+        expiry_date = datetime.now(timezone.utc) + timedelta(days=days_ahead)
         
         return (
             self._build_base_query()
@@ -258,7 +258,7 @@ class InvoiceRepository(BaseTenantRepository[Invoice]):
     
     def get_overdue_invoices(self, days_overdue: int = 0) -> List[Invoice]:
         """Get overdue invoices."""
-        cutoff_date = datetime.utcnow() - timedelta(days=days_overdue)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=days_overdue)
         
         return (
             self._build_base_query()
@@ -318,7 +318,7 @@ class InvoiceRepository(BaseTenantRepository[Invoice]):
     
     def get_monthly_revenue_trend(self, months: int = 12) -> List[Dict[str, Any]]:
         """Get monthly revenue trend."""
-        start_date = datetime.utcnow() - timedelta(days=months * 31)
+        start_date = datetime.now(timezone.utc) - timedelta(days=months * 31)
         
         results = (
             self._build_base_query()
@@ -398,7 +398,7 @@ class PaymentRepository(BaseTenantRepository[Payment]):
     
     def get_failed_payments(self, days_back: int = 30) -> List[Payment]:
         """Get failed payments within specified days."""
-        cutoff_date = datetime.utcnow() - timedelta(days=days_back)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=days_back)
         
         return (
             self._build_base_query()
@@ -535,7 +535,7 @@ class TaxRateRepository(BaseTenantRepository[TaxRate]):
     
     def get_active_tax_rates(self) -> List[TaxRate]:
         """Get all active tax rates."""
-        current_date = datetime.utcnow()
+        current_date = datetime.now(timezone.utc)
         return (
             self._build_base_query()
             .filter(

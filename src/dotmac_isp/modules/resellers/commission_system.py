@@ -280,7 +280,7 @@ class CommissionService:
                 'start': period_start,
                 'end': period_end
             },
-            'generated_at': datetime.utcnow(),
+            'generated_at': datetime.now(timezone.utc),
             'summary': {
                 'total_commissions': Decimal('0.00'),
                 'total_paid': Decimal('0.00'),
@@ -425,7 +425,7 @@ class CommissionReportGenerator:
         report = {
             'report_type': 'monthly_commission_report',
             'report_period': month.strftime('%Y-%m'),
-            'generated_at': datetime.utcnow(),
+            'generated_at': datetime.now(timezone.utc),
             'summary': {
                 'total_resellers': 0,
                 'active_resellers': 0,
@@ -462,7 +462,7 @@ class CommissionReportGenerator:
             'customer_performance': summary['performance_metrics'],
             'payment_performance': summary['payment_status'],
             'recommendations': self._generate_performance_recommendations(summary),
-            'generated_at': datetime.utcnow()
+            'generated_at': datetime.now(timezone.utc)
         }
         
         return performance_report

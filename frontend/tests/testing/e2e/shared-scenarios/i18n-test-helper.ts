@@ -61,7 +61,13 @@ export class I18nTestHelper {
     await this.page.goto(baseUrl);
     for (const t of data) {
       await this.switchToLocale(t.locale);
-      const result = await this.page.evaluate((d) => new Intl.NumberFormat(d.locale, { style: 'currency', currency: d.currency }).format(d.amount), t);
+      const result = await this.page.evaluate(
+        (d) =>
+          new Intl.NumberFormat(d.locale, { style: 'currency', currency: d.currency }).format(
+            d.amount
+          ),
+        t
+      );
       expect(result).toBeTruthy();
     }
   }
@@ -70,7 +76,13 @@ export class I18nTestHelper {
     await this.page.goto(baseUrl);
     for (const t of data) {
       await this.switchToLocale(t.locale);
-      const result = await this.page.evaluate((d) => new Intl.DateTimeFormat(d.locale, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(d.date)), t);
+      const result = await this.page.evaluate(
+        (d) =>
+          new Intl.DateTimeFormat(d.locale, { dateStyle: 'medium', timeStyle: 'short' }).format(
+            new Date(d.date)
+          ),
+        t
+      );
       expect(result).toBeTruthy();
     }
   }
@@ -82,4 +94,3 @@ export class I18nTestHelper {
     }, locale);
   }
 }
-

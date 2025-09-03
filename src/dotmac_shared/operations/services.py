@@ -14,8 +14,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from dotmac_shared.api.exception_handlers import standard_exception_handler
 from dotmac_shared.core.exceptions import BusinessRuleError, EntityNotFoundError
-from dotmac_shared.user_management.schemas.lifecycle_schemas import UserRegistration
-from dotmac_shared.user_management.schemas.user_schemas import UserType
+from dotmac_management.user_management.schemas.lifecycle_schemas import UserRegistration
+from dotmac_management.user_management.schemas.user_schemas import UserType
 
 from .automation import InfrastructureAutomation, OperationsOrchestrator
 from .health_monitoring import NetworkEndpoint, NetworkHealthMonitor, ServiceHealthChecker

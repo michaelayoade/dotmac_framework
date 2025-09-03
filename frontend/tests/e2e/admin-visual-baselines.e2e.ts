@@ -15,13 +15,13 @@ test.describe('Admin Management Visual Baselines', () => {
   test.beforeEach(async ({ page }) => {
     // Setup authentication
     await setupAuth(page, 'admin');
-    
+
     // Initialize deterministic API mocking
-    apiTester = new APIBehaviorTester(page, { 
-      enableMocking: true, 
-      simulateLatency: false // Disable for consistent visual tests
+    apiTester = new APIBehaviorTester(page, {
+      enableMocking: true,
+      simulateLatency: false, // Disable for consistent visual tests
     });
-    
+
     adminMocks = new AdminManagementMocks(apiTester);
     await adminMocks.setupAll();
 
@@ -33,7 +33,7 @@ test.describe('Admin Management Visual Baselines', () => {
     test('should match device management dashboard baseline', async ({ page }) => {
       await page.goto('/admin/devices');
       await page.waitForSelector('[data-testid="device-management"]');
-      
+
       // Wait for data to load completely
       await page.waitForSelector('[data-testid="management-table"]');
       await page.waitForLoadState('networkidle');
@@ -47,7 +47,7 @@ test.describe('Admin Management Visual Baselines', () => {
           .animate-spin {
             visibility: hidden !important;
           }
-        `
+        `,
       });
 
       // Take full page screenshot
@@ -60,11 +60,13 @@ test.describe('Admin Management Visual Baselines', () => {
 
       // Hide dynamic timestamps
       await page.addStyleTag({
-        content: `[data-testid="last-updated"] { visibility: hidden !important; }`
+        content: `[data-testid="last-updated"] { visibility: hidden !important; }`,
       });
 
       // Screenshot just the metrics section
-      await expect(page.locator('[data-testid="metrics-grid"]')).toHaveScreenshot('device-metrics.png');
+      await expect(page.locator('[data-testid="metrics-grid"]')).toHaveScreenshot(
+        'device-metrics.png'
+      );
     });
 
     test('should match device table layout', async ({ page }) => {
@@ -72,7 +74,9 @@ test.describe('Admin Management Visual Baselines', () => {
       await page.waitForSelector('[data-testid="management-table"]');
 
       // Screenshot the table section
-      await expect(page.locator('[data-testid="management-table"]')).toHaveScreenshot('device-table.png');
+      await expect(page.locator('[data-testid="management-table"]')).toHaveScreenshot(
+        'device-table.png'
+      );
     });
 
     test('should match device filters layout', async ({ page }) => {
@@ -85,7 +89,9 @@ test.describe('Admin Management Visual Baselines', () => {
       await page.click('[data-testid="filter-vendor"]');
 
       // Screenshot filters section
-      await expect(page.locator('[data-testid="filters-section"]')).toHaveScreenshot('device-filters.png');
+      await expect(page.locator('[data-testid="filters-section"]')).toHaveScreenshot(
+        'device-filters.png'
+      );
     });
 
     test('should match device detail drawer', async ({ page }) => {
@@ -104,11 +110,13 @@ test.describe('Admin Management Visual Baselines', () => {
           .monitoring-chart {
             visibility: hidden !important;
           }
-        `
+        `,
       });
 
       // Screenshot detail drawer
-      await expect(page.locator('[data-testid="device-detail-drawer"]')).toHaveScreenshot('device-detail-drawer.png');
+      await expect(page.locator('[data-testid="device-detail-drawer"]')).toHaveScreenshot(
+        'device-detail-drawer.png'
+      );
     });
   });
 
@@ -125,7 +133,7 @@ test.describe('Admin Management Visual Baselines', () => {
           .animate-pulse {
             visibility: hidden !important;
           }
-        `
+        `,
       });
 
       await expect(page).toHaveScreenshot('ipam-management-dashboard.png');
@@ -136,7 +144,9 @@ test.describe('Admin Management Visual Baselines', () => {
       await page.waitForSelector('[data-testid="management-table"]');
 
       // Screenshot utilization visualizations
-      await expect(page.locator('[data-testid="utilization-column"]')).toHaveScreenshot('ipam-utilization-bars.png');
+      await expect(page.locator('[data-testid="utilization-column"]')).toHaveScreenshot(
+        'ipam-utilization-bars.png'
+      );
     });
 
     test('should match subnet creation form', async ({ page }) => {
@@ -147,7 +157,9 @@ test.describe('Admin Management Visual Baselines', () => {
       await page.click('[data-testid="create-button"]');
       await page.waitForSelector('[data-testid="create-subnet-drawer"]');
 
-      await expect(page.locator('[data-testid="create-subnet-drawer"]')).toHaveScreenshot('subnet-creation-form.png');
+      await expect(page.locator('[data-testid="create-subnet-drawer"]')).toHaveScreenshot(
+        'subnet-creation-form.png'
+      );
     });
   });
 
@@ -165,7 +177,7 @@ test.describe('Admin Management Visual Baselines', () => {
           .progress-animation {
             visibility: hidden !important;
           }
-        `
+        `,
       });
 
       await expect(page).toHaveScreenshot('project-management-dashboard.png');
@@ -176,7 +188,9 @@ test.describe('Admin Management Visual Baselines', () => {
       await page.waitForSelector('[data-testid="management-table"]');
 
       // Screenshot progress bars column
-      await expect(page.locator('[data-testid="progress-column"]')).toHaveScreenshot('project-progress-bars.png');
+      await expect(page.locator('[data-testid="progress-column"]')).toHaveScreenshot(
+        'project-progress-bars.png'
+      );
     });
 
     test('should match project creation form', async ({ page }) => {
@@ -187,7 +201,9 @@ test.describe('Admin Management Visual Baselines', () => {
       await page.click('[data-testid="create-button"]');
       await page.waitForSelector('[data-testid="create-project-drawer"]');
 
-      await expect(page.locator('[data-testid="create-project-drawer"]')).toHaveScreenshot('project-creation-form.png');
+      await expect(page.locator('[data-testid="create-project-drawer"]')).toHaveScreenshot(
+        'project-creation-form.png'
+      );
     });
 
     test('should match project kanban view', async ({ page }) => {
@@ -200,10 +216,12 @@ test.describe('Admin Management Visual Baselines', () => {
 
       // Hide dynamic dates
       await page.addStyleTag({
-        content: `[data-testid="due-date"] { visibility: hidden !important; }`
+        content: `[data-testid="due-date"] { visibility: hidden !important; }`,
       });
 
-      await expect(page.locator('[data-testid="project-kanban-board"]')).toHaveScreenshot('project-kanban-board.png');
+      await expect(page.locator('[data-testid="project-kanban-board"]')).toHaveScreenshot(
+        'project-kanban-board.png'
+      );
     });
   });
 
@@ -221,7 +239,7 @@ test.describe('Admin Management Visual Baselines', () => {
           [data-testid="uptime"] {
             visibility: hidden !important;
           }
-        `
+        `,
       });
 
       await expect(page).toHaveScreenshot('container-management-dashboard.png');
@@ -232,8 +250,12 @@ test.describe('Admin Management Visual Baselines', () => {
       await page.waitForSelector('[data-testid="management-table"]');
 
       // Screenshot resource usage visualizations
-      await expect(page.locator('[data-testid="cpu-usage-column"]')).toHaveScreenshot('container-cpu-usage.png');
-      await expect(page.locator('[data-testid="memory-usage-column"]')).toHaveScreenshot('container-memory-usage.png');
+      await expect(page.locator('[data-testid="cpu-usage-column"]')).toHaveScreenshot(
+        'container-cpu-usage.png'
+      );
+      await expect(page.locator('[data-testid="memory-usage-column"]')).toHaveScreenshot(
+        'container-memory-usage.png'
+      );
     });
 
     test('should match container health status indicators', async ({ page }) => {
@@ -241,7 +263,9 @@ test.describe('Admin Management Visual Baselines', () => {
       await page.waitForSelector('[data-testid="management-table"]');
 
       // Screenshot health status column
-      await expect(page.locator('[data-testid="health-status-column"]')).toHaveScreenshot('container-health-status.png');
+      await expect(page.locator('[data-testid="health-status-column"]')).toHaveScreenshot(
+        'container-health-status.png'
+      );
     });
 
     test('should match container detail drawer with logs', async ({ page }) => {
@@ -262,17 +286,19 @@ test.describe('Admin Management Visual Baselines', () => {
           .log-timestamp {
             visibility: hidden !important;
           }
-        `
+        `,
       });
 
-      await expect(page.locator('[data-testid="container-detail-drawer"]')).toHaveScreenshot('container-detail-with-logs.png');
+      await expect(page.locator('[data-testid="container-detail-drawer"]')).toHaveScreenshot(
+        'container-detail-with-logs.png'
+      );
     });
   });
 
   test.describe('Responsive Visual Tests', () => {
     test('should match tablet layout for device management', async ({ page }) => {
       await page.setViewportSize({ width: 768, height: 1024 });
-      
+
       await page.goto('/admin/devices');
       await page.waitForSelector('[data-testid="device-management"]');
 
@@ -281,7 +307,7 @@ test.describe('Admin Management Visual Baselines', () => {
 
     test('should match mobile layout for device management', async ({ page }) => {
       await page.setViewportSize({ width: 375, height: 667 });
-      
+
       await page.goto('/admin/devices');
       await page.waitForSelector('[data-testid="device-management"]');
 
@@ -290,7 +316,7 @@ test.describe('Admin Management Visual Baselines', () => {
 
     test('should match tablet layout for project management', async ({ page }) => {
       await page.setViewportSize({ width: 768, height: 1024 });
-      
+
       await page.goto('/admin/projects');
       await page.waitForSelector('[data-testid="project-management"]');
 
@@ -346,15 +372,17 @@ test.describe('Admin Management Visual Baselines', () => {
     test('should match device management loading state', async ({ page }) => {
       // Mock slow API response
       await apiTester.mockAndLog('/api/admin/devices', async () => {
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise((resolve) => setTimeout(resolve, 2000));
         return { body: { devices: [], total: 0, metrics: {} } };
       });
 
       await page.goto('/admin/devices');
-      
+
       // Capture loading state before data loads
       await page.waitForSelector('[data-testid="loading-spinner"]');
-      await expect(page.locator('[data-testid="device-management"]')).toHaveScreenshot('device-management-loading.png');
+      await expect(page.locator('[data-testid="device-management"]')).toHaveScreenshot(
+        'device-management-loading.png'
+      );
     });
   });
 
@@ -363,25 +391,33 @@ test.describe('Admin Management Visual Baselines', () => {
       // Mock API error
       await apiTester.mockAndLog('/api/admin/devices', async () => ({
         status: 500,
-        body: { error: 'Internal server error' }
+        body: { error: 'Internal server error' },
       }));
 
       await page.goto('/admin/devices');
       await page.waitForSelector('[data-testid="error-state"]');
 
-      await expect(page.locator('[data-testid="device-management"]')).toHaveScreenshot('device-management-error.png');
+      await expect(page.locator('[data-testid="device-management"]')).toHaveScreenshot(
+        'device-management-error.png'
+      );
     });
 
     test('should match empty state for projects', async ({ page }) => {
       // Mock empty response
       await apiTester.mockAndLog('/api/admin/projects', async () => ({
-        body: { projects: [], total: 0, metrics: { active_projects: 0, on_schedule: 0, budget_used: 0, team_members: 0 } }
+        body: {
+          projects: [],
+          total: 0,
+          metrics: { active_projects: 0, on_schedule: 0, budget_used: 0, team_members: 0 },
+        },
       }));
 
       await page.goto('/admin/projects');
       await page.waitForSelector('[data-testid="empty-state"]');
 
-      await expect(page.locator('[data-testid="project-management"]')).toHaveScreenshot('project-management-empty.png');
+      await expect(page.locator('[data-testid="project-management"]')).toHaveScreenshot(
+        'project-management-empty.png'
+      );
     });
   });
 
@@ -389,7 +425,7 @@ test.describe('Admin Management Visual Baselines', () => {
     // Clear any custom styles added during tests
     await page.evaluate(() => {
       const customStyles = document.querySelectorAll('style[data-testid="custom-style"]');
-      customStyles.forEach(style => style.remove());
+      customStyles.forEach((style) => style.remove());
     });
   });
 });

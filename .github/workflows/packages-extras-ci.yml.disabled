@@ -1,0 +1,49 @@
+name: Packages Extras CI (Redis)
+
+on:
+  pull_request:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  redis-extras:
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    strategy:
+      fail-fast: false
+      matrix:
+        pkg:
+          - packages/dotmac-tasks
+          - packages/dotmac-events
+          - packages/dotmac-websockets
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install tooling
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest
+      - name: Install package with redis extra
+        working-directory: ${{ matrix.pkg }}
+        run: |
+          pip install -e .[redis]
+      - name: Run tests
+        env:
+          REDIS_URL: redis://localhost:6379
+        working-directory: ${{ matrix.pkg }}
+        run: |
+          pytest -q
+

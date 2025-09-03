@@ -21,7 +21,7 @@ import docker
 PROMETHEUS_AVAILABLE = False
 
 
-def text_string_to_metric_families(metrics_text):
+def text_string_to_metric_families(metrics_text, timezone):
     """Removed Prometheus parsing support - migrate to SignOz native metrics"""
     return []
 
@@ -522,7 +522,7 @@ class MetricsCollector:
         self._metrics_cache[container_id].append(snapshot)
 
         # Implement retention policy
-        cutoff_time = datetime.utcnow() - timedelta(hours=self.metrics_retention_hours)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=self.metrics_retention_hours)
         self._metrics_cache[container_id] = [
             s for s in self._metrics_cache[container_id] if s.timestamp > cutoff_time
         ]
@@ -534,7 +534,7 @@ class MetricsCollector:
         if container_id not in self._metrics_cache:
             return []
 
-        cutoff_time = datetime.utcnow() - timedelta(hours=hours)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
         return [
             snapshot
             for snapshot in self._metrics_cache[container_id]
@@ -563,7 +563,7 @@ class MetricsCollector:
         try:
             started_at = container.attrs["State"]["StartedAt"]
             start_time = datetime.fromisoformat(started_at.replace("Z", "+00:00"))
-            uptime = datetime.utcnow().replace(tzinfo=start_time.tzinfo) - start_time
+            uptime = datetime.now(timezone.utc).replace(tzinfo=start_time.tzinfo) - start_time
             return uptime.total_seconds()
         except (KeyError, ValueError):
             return 0.0

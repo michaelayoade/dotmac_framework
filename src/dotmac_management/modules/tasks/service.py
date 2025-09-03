@@ -130,7 +130,7 @@ class TaskManagementService:
             "tasks": result["tasks"],
             "total_count": result["total_count"],
             "query_metadata": {
-                "executed_at": datetime.utcnow(),
+                "executed_at": datetime.now(timezone.utc),
                 "tenant_id": tenant_id,
                 "filters_applied": filters,
                 "performance": result.get("query_performance", {})
@@ -195,7 +195,7 @@ class TaskManagementService:
         
         return {
             "success": True,
-            "cancelled_at": datetime.utcnow(),
+            "cancelled_at": datetime.now(timezone.utc),
             "dependent_tasks_affected": len(dependents),
             "reason": reason
         }
@@ -270,7 +270,7 @@ class TaskManagementService:
             "new_task_id": new_task_id,
             "retry_strategy": retry_params,
             "failure_analysis": failure_analysis,
-            "retried_at": datetime.utcnow()
+            "retried_at": datetime.now(timezone.utc)
         }
     
     @standard_exception_handler
@@ -299,7 +299,7 @@ class TaskManagementService:
             "extended_checks": extended_checks,
             "trends": health_trends,
             "recommendations": recommendations,
-            "last_analysis": datetime.utcnow()
+            "last_analysis": datetime.now(timezone.utc)
         }
         
         return SystemHealthResponse(**comprehensive_health)
@@ -459,7 +459,7 @@ class TaskManagementService:
     async def _analyze_health_trends(self) -> Dict[str, Any]:
         """Analyze system health trends over time."""
         # Get historical health data
-        end_time = datetime.utcnow()
+        end_time = datetime.now(timezone.utc)
         start_time = end_time - timedelta(hours=24)
         
         trends = await self.task_monitor.get_health_trends(start_time, end_time)
@@ -552,7 +552,7 @@ class TaskManagementService:
             "task_id": task_id,
             "tenant_id": tenant_id,
             "operation": operation,
-            "timestamp": datetime.utcnow(),
+            "timestamp": datetime.now(timezone.utc),
             "metadata": metadata
         }
         

@@ -147,7 +147,7 @@ class CommissionAutomationEngine:
         if not target_date:
             target_date = date.today().replace(day=1) - timedelta(days=1)  # Last month
         
-        execution_id = f"monthly_commissions_{target_date.strftime('%Y_%m')}_{datetime.utcnow().strftime('%H%M%S')}"
+        execution_id = f"monthly_commissions_{target_date.strftime('%Y_%m')}_{datetime.now(timezone.utc).strftime('%H%M%S')}"
         
         # Create workflow execution record
         workflow_execution = CommissionWorkflowExecution(
@@ -156,7 +156,7 @@ class CommissionAutomationEngine:
             period_start=datetime.combine(target_date.replace(day=1), datetime.min.time()),
             period_end=datetime.combine(target_date, datetime.max.time()),
             status=CommissionWorkflowStatus.SCHEDULED.value,
-            scheduled_at=datetime.utcnow() + timedelta(minutes=5),  # Run in 5 minutes
+            scheduled_at=datetime.now(timezone.utc) + timedelta(minutes=5),  # Run in 5 minutes
             workflow_config={
                 'target_month': target_date.strftime('%Y-%m'),
                 'reseller_filter': reseller_ids,
@@ -193,8 +193,8 @@ class CommissionAutomationEngine:
         workflow_execution = {
             'id': workflow_id,
             'execution_id': f"monthly_commissions_{date.today().strftime('%Y_%m')}",
-            'period_start': datetime.utcnow().replace(day=1) - timedelta(days=30),
-            'period_end': datetime.utcnow().replace(day=1) - timedelta(days=1),
+            'period_start': datetime.now(timezone.utc).replace(day=1) - timedelta(days=30),
+            'period_end': datetime.now(timezone.utc).replace(day=1) - timedelta(days=1),
             'workflow_config': {
                 'target_month': (date.today().replace(day=1) - timedelta(days=1)).strftime('%Y-%m'),
                 'reseller_filter': None,
@@ -250,7 +250,7 @@ class CommissionAutomationEngine:
                     error_detail = {
                         'reseller_id': reseller.reseller_id,
                         'error': str(e),
-                        'timestamp': datetime.utcnow().isoformat()
+                        'timestamp': datetime.now(timezone.utc).isoformat()
                     }
                     results['errors'].append(error_detail)
             
@@ -282,7 +282,7 @@ class CommissionAutomationEngine:
             await self._update_workflow_status(
                 workflow_id, 
                 CommissionWorkflowStatus.FAILED, 
-                error_details=[{'error': str(e), 'timestamp': datetime.utcnow().isoformat()}]
+                error_details=[{'error': str(e), 'timestamp': datetime.now(timezone.utc).isoformat()}]
             )
             raise
     
@@ -347,7 +347,7 @@ class CommissionAutomationEngine:
         if not payment_date:
             payment_date = date.today() + timedelta(days=7)  # Default to next week
         
-        batch_id = f"PAY_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8].upper()}"
+        batch_id = f"PAY_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8].upper()}"
         
         # Calculate batch totals (in production, would query actual commissions)
         total_amount = Decimal('15750.50')  # Simulated total
@@ -414,7 +414,7 @@ class CommissionAutomationEngine:
                         'amount': round(1312.54 + (i * 50), 2),
                         'status': 'success',
                         'payment_reference': f"ACH_{uuid.uuid4().hex[:12].upper()}",
-                        'processed_at': datetime.utcnow().isoformat()
+                        'processed_at': datetime.now(timezone.utc).isoformat()
                     })
                     successful_payments += 1
                 else:  # Last one fails
@@ -423,7 +423,7 @@ class CommissionAutomationEngine:
                         'amount': 1312.54,
                         'status': 'failed',
                         'error': 'Invalid bank account information',
-                        'processed_at': datetime.utcnow().isoformat()
+                        'processed_at': datetime.now(timezone.utc).isoformat()
                     })
                     failed_payments += 1
                 
@@ -473,7 +473,7 @@ class CommissionAutomationEngine:
             'notification_recipients': notification_recipients or [],
             'enabled': True,
             'next_execution': self._calculate_next_execution_date(frequency, day_of_month),
-            'created_at': datetime.utcnow().isoformat(),
+            'created_at': datetime.now(timezone.utc).isoformat(),
             'workflow_config': {
                 'include_adjustments': True,
                 'send_notifications': True,
@@ -505,7 +505,7 @@ class CommissionAutomationEngine:
         total_adjustment_amount = Decimal('0.00')
         
         for adjustment in adjustments:
-            adjustment_id = f"ADJ_{datetime.utcnow().strftime('%Y%m%d')}_{uuid.uuid4().hex[:8].upper()}"
+            adjustment_id = f"ADJ_{datetime.now(timezone.utc).strftime('%Y%m%d')}_{uuid.uuid4().hex[:8].upper()}"
             
             # Process the adjustment
             processed_adjustment = {
@@ -515,7 +515,7 @@ class CommissionAutomationEngine:
                 'original_amount': Decimal(str(adjustment.get('original_amount', 0))),
                 'adjusted_amount': Decimal(str(adjustment.get('adjusted_amount', 0))),
                 'adjustment_reason': adjustment.get('reason', ''),
-                'processed_at': datetime.utcnow().isoformat(),
+                'processed_at': datetime.now(timezone.utc).isoformat(),
                 'status': 'applied'
             }
             
@@ -529,7 +529,7 @@ class CommissionAutomationEngine:
             'reseller_id': reseller_id,
             'adjustments_processed': len(processed_adjustments),
             'total_net_adjustment': float(total_adjustment_amount),
-            'processed_at': datetime.utcnow().isoformat(),
+            'processed_at': datetime.now(timezone.utc).isoformat(),
             'adjustments': processed_adjustments
         }
     
@@ -635,7 +635,7 @@ class CommissionReconciliationEngine:
     ) -> Dict[str, Any]:
         """Reconcile commissions against actual customer data"""
         
-        reconciliation_id = f"RECON_{target_month.strftime('%Y%m')}_{datetime.utcnow().strftime('%H%M%S')}"
+        reconciliation_id = f"RECON_{target_month.strftime('%Y%m')}_{datetime.now(timezone.utc).strftime('%H%M%S')}"
         
         # Simulate reconciliation process
         reconciliation_results = {
@@ -674,7 +674,7 @@ class CommissionReconciliationEngine:
                 'Create missing commission record for CUST-789',
                 'Review duplicate commission COM-20240315-B5C6D7E8'
             ],
-            'processed_at': datetime.utcnow().isoformat()
+            'processed_at': datetime.now(timezone.utc).isoformat()
         }
         
         return reconciliation_results
@@ -731,7 +731,7 @@ class CommissionReconciliationEngine:
                 'Add period boundary validation to commission processing',
                 'Review calculation formulas for complex commission structures'
             ],
-            'generated_at': datetime.utcnow().isoformat()
+            'generated_at': datetime.now(timezone.utc).isoformat()
         }
         
         return audit_report

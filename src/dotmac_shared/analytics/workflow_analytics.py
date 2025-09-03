@@ -184,7 +184,7 @@ class WorkflowAnalyticsService(StatefulService):
             self.set_state("events_processed", 0)
             self.set_state("metrics_calculated", 0)
             self.set_state("alerts_generated", 0)
-            self.set_state("last_analytics_run", datetime.utcnow().isoformat())
+            self.set_state("last_analytics_run", datetime.now(timezone.utc).isoformat())
             
             await self._set_status(
                 ServiceStatus.READY,
@@ -294,9 +294,9 @@ class WorkflowAnalyticsService(StatefulService):
         
         # Set timing information
         if status == WorkflowStatus.RUNNING:
-            event.started_at = datetime.utcnow()
+            event.started_at = datetime.now(timezone.utc)
         elif status in [WorkflowStatus.COMPLETED, WorkflowStatus.FAILED, WorkflowStatus.CANCELLED]:
-            event.completed_at = datetime.utcnow()
+            event.completed_at = datetime.now(timezone.utc)
         
         # Store event
         self._workflow_events.append(event)
@@ -354,9 +354,9 @@ class WorkflowAnalyticsService(StatefulService):
             raise RuntimeError("Workflow analytics service not ready")
         
         if not period_start:
-            period_start = datetime.utcnow() - timedelta(days=7)
+            period_start = datetime.now(timezone.utc) - timedelta(days=7)
         if not period_end:
-            period_end = datetime.utcnow()
+            period_end = datetime.now(timezone.utc)
         
         # Filter events for the period and workflow type
         filtered_events = [
@@ -381,8 +381,8 @@ class WorkflowAnalyticsService(StatefulService):
         if not self.is_ready():
             raise RuntimeError("Workflow analytics service not ready")
         
-        period_start = datetime.utcnow() - timedelta(days=period_days)
-        period_end = datetime.utcnow()
+        period_start = datetime.now(timezone.utc) - timedelta(days=period_days)
+        period_end = datetime.now(timezone.utc)
         
         dashboard = {
             "period": {
@@ -488,7 +488,7 @@ class WorkflowAnalyticsService(StatefulService):
         # Update statistics
         metrics_calculated = self.get_state("metrics_calculated", 0)
         self.set_state("metrics_calculated", metrics_calculated + len(events_by_type))
-        self.set_state("last_analytics_run", datetime.utcnow().isoformat())
+        self.set_state("last_analytics_run", datetime.now(timezone.utc).isoformat())
         
         # Clear processed events (in production, these would be archived)
         self._workflow_events.clear()
@@ -754,7 +754,7 @@ class WorkflowAnalyticsService(StatefulService):
             "type": alert_type,
             "message": message,
             "context": context,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "service": "workflow_analytics",
         }
         

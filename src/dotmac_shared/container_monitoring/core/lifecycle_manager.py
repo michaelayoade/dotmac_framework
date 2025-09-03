@@ -107,7 +107,7 @@ class ContainerLifecycleManager:
         Returns:
             LifecycleResult with operation status and events
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         result = LifecycleResult(
             success=False, action=action, container_id=container_id
         )
@@ -129,7 +129,7 @@ class ContainerLifecycleManager:
             success = await self._execute_action(container, action, result, **kwargs)
 
             # Calculate duration
-            result.duration_seconds = (datetime.utcnow() - start_time).total_seconds()
+            result.duration_seconds = (datetime.now(timezone.utc) - start_time).total_seconds()
 
             if success:
                 result.success = True
@@ -448,9 +448,9 @@ class ContainerLifecycleManager:
         if isinstance(target_status, str):
             target_status = [target_status]
 
-        end_time = datetime.utcnow().timestamp() + timeout
+        end_time = datetime.now(timezone.utc).timestamp() + timeout
 
-        while datetime.utcnow().timestamp() < end_time:
+        while datetime.now(timezone.utc).timestamp() < end_time:
             try:
                 container.reload()
                 if container.status in target_status:

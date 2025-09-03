@@ -20,7 +20,7 @@ from .db_models import Reseller, ResellerCustomer
 class ResellerPortalService:
     """Service for reseller portal functionality"""
     
-    def __init__(self, db: AsyncSession, tenant_id: Optional[str] = None):
+    def __init__(self, db: AsyncSession, tenant_id: Optional[str] = None, timezone):
         self.db = db
         self.tenant_id = tenant_id
         self.reseller_service = ResellerService(db, tenant_id)
@@ -245,7 +245,7 @@ class ResellerPortalService:
             return 0.0
         
         # Simple growth calculation based on recent additions
-        recent_customers = [c for c in customers if c.created_at >= datetime.utcnow() - timedelta(days=30)]
+        recent_customers = [c for c in customers if c.created_at >= datetime.now(timezone.utc) - timedelta(days=30)]
         monthly_growth = len(recent_customers)
         
         # Annualized growth rate

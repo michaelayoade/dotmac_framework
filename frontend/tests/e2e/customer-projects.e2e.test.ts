@@ -11,4 +11,3 @@ test.describe('Customer - Projects', () => {
     await expect(page.getByText('Projects')).toBeVisible();
   });
 });
-

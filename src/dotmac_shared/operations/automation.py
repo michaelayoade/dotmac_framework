@@ -109,7 +109,7 @@ class InfrastructureAutomation:
     @standard_exception_handler
     async def database_cleanup(self, parameters: Dict[str, Any] = None) -> MaintenanceResult:
         """Perform database maintenance and cleanup."""
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         task_id = uuid4()
         
         try:
@@ -122,7 +122,7 @@ class InfrastructureAutomation:
             items_cleaned = 0
             
             # Clean old logs and events
-            cutoff_date = datetime.utcnow() - timedelta(days=retention_days)
+            cutoff_date = datetime.now(timezone.utc) - timedelta(days=retention_days)
             
             # Clean user lifecycle events
             if "clean_lifecycle_events" in params and params["clean_lifecycle_events"]:
@@ -147,7 +147,7 @@ class InfrastructureAutomation:
             if vacuum_analyze:
                 await self._vacuum_analyze_database()
             
-            end_time = datetime.utcnow()
+            end_time = datetime.now(timezone.utc)
             duration = (end_time - start_time).total_seconds()
             
             logger.info(f"Database cleanup completed: {items_cleaned} items cleaned in {duration:.2f}s")
@@ -169,7 +169,7 @@ class InfrastructureAutomation:
             )
             
         except Exception as e:
-            end_time = datetime.utcnow()
+            end_time = datetime.now(timezone.utc)
             duration = (end_time - start_time).total_seconds()
             
             logger.error(f"Database cleanup failed: {e}")
@@ -187,7 +187,7 @@ class InfrastructureAutomation:
     @standard_exception_handler
     async def log_rotation_cleanup(self, parameters: Dict[str, Any] = None) -> MaintenanceResult:
         """Perform log rotation and cleanup."""
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         task_id = uuid4()
         
         try:
@@ -201,7 +201,7 @@ class InfrastructureAutomation:
             items_cleaned = 0
             space_freed = 0.0
             
-            cutoff_date = datetime.utcnow() - timedelta(days=max_age_days)
+            cutoff_date = datetime.now(timezone.utc) - timedelta(days=max_age_days)
             
             for log_dir in log_directories:
                 log_path = Path(log_dir)
@@ -230,7 +230,7 @@ class InfrastructureAutomation:
                     except Exception as e:
                         logger.warning(f"Failed to process log file {log_file}: {e}")
             
-            end_time = datetime.utcnow()
+            end_time = datetime.now(timezone.utc)
             duration = (end_time - start_time).total_seconds()
             
             logger.info(f"Log cleanup completed: {items_cleaned} files cleaned, {space_freed:.2f}MB freed")
@@ -253,7 +253,7 @@ class InfrastructureAutomation:
             )
             
         except Exception as e:
-            end_time = datetime.utcnow()
+            end_time = datetime.now(timezone.utc)
             duration = (end_time - start_time).total_seconds()
             
             logger.error(f"Log cleanup failed: {e}")
@@ -271,7 +271,7 @@ class InfrastructureAutomation:
     @standard_exception_handler
     async def cache_cleanup(self, parameters: Dict[str, Any] = None) -> MaintenanceResult:
         """Clean up cache systems and temporary files."""
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         task_id = uuid4()
         
         try:
@@ -318,7 +318,7 @@ class InfrastructureAutomation:
                         items_cleaned += temp_stats["cleaned"]
                         space_freed += temp_stats["space_freed"]
             
-            end_time = datetime.utcnow()
+            end_time = datetime.now(timezone.utc)
             duration = (end_time - start_time).total_seconds()
             
             logger.info(f"Cache cleanup completed: {items_cleaned} items cleaned, {space_freed:.2f}MB freed")
@@ -336,7 +336,7 @@ class InfrastructureAutomation:
             )
             
         except Exception as e:
-            end_time = datetime.utcnow()
+            end_time = datetime.now(timezone.utc)
             duration = (end_time - start_time).total_seconds()
             
             logger.error(f"Cache cleanup failed: {e}")
@@ -354,7 +354,7 @@ class InfrastructureAutomation:
     @standard_exception_handler
     async def performance_optimization(self, parameters: Dict[str, Any] = None) -> MaintenanceResult:
         """Perform system performance optimization."""
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         task_id = uuid4()
         
         try:
@@ -384,7 +384,7 @@ class InfrastructureAutomation:
             system_optimizations = await self._optimize_system_resources()
             optimizations_applied += system_optimizations
             
-            end_time = datetime.utcnow()
+            end_time = datetime.now(timezone.utc)
             duration = (end_time - start_time).total_seconds()
             
             logger.info(f"Performance optimization completed: {optimizations_applied} optimizations applied")
@@ -406,7 +406,7 @@ class InfrastructureAutomation:
             )
             
         except Exception as e:
-            end_time = datetime.utcnow()
+            end_time = datetime.now(timezone.utc)
             duration = (end_time - start_time).total_seconds()
             
             logger.error(f"Performance optimization failed: {e}")
@@ -468,7 +468,7 @@ class InfrastructureAutomation:
         self, directory: Path, max_age_hours: int = 24
     ) -> Dict[str, Any]:
         """Clean up files in directory older than specified age."""
-        cutoff_time = datetime.utcnow() - timedelta(hours=max_age_hours)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=max_age_hours)
         
         processed = 0
         cleaned = 0
@@ -554,7 +554,7 @@ class MaintenanceScheduler:
 
     async def _check_and_execute_tasks(self) -> None:
         """Check for due tasks and execute them."""
-        current_time = datetime.utcnow()
+        current_time = datetime.now(timezone.utc)
         
         for task in self.automation.maintenance_tasks.values():
             if not task.enabled:
@@ -589,7 +589,7 @@ class MaintenanceScheduler:
         """Execute a maintenance task."""
         logger.info(f"Executing maintenance task: {task.task_name}")
         
-        task.last_run = datetime.utcnow()
+        task.last_run = datetime.now(timezone.utc)
         
         try:
             # Route to appropriate maintenance method
@@ -614,8 +614,8 @@ class MaintenanceScheduler:
                 task_id=task.task_id,
                 task_name=task.task_name,
                 status=MaintenanceStatus.FAILED,
-                start_time=datetime.utcnow(),
-                end_time=datetime.utcnow(),
+                start_time=datetime.now(timezone.utc),
+                end_time=datetime.now(timezone.utc),
                 duration_seconds=0,
                 error_message=str(e),
             )
@@ -737,5 +737,5 @@ class OperationsOrchestrator:
                 }
                 for task in self.infrastructure_automation.maintenance_tasks.values()
             ],
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }

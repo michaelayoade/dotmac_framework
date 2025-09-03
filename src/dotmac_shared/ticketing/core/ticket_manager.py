@@ -53,7 +53,7 @@ class TicketManager:
     def generate_ticket_number(self, tenant_id: str) -> str:
         """Generate unique ticket number."""
         # In production, this would use a proper sequence or UUID
-        timestamp = int(datetime.utcnow().timestamp())
+        timestamp = int(datetime.now(timezone.utc).timestamp())
         tenant_prefix = tenant_id[:3].upper() if tenant_id else "TKT"
         return f"{tenant_prefix}-{timestamp}"
 
@@ -73,7 +73,7 @@ class TicketManager:
             sla = self.sla_config.get(
                 ticket_data.priority, self.sla_config[TicketPriority.NORMAL]
             )
-            sla_breach_time = datetime.utcnow() + timedelta(minutes=sla["resolution"])
+            sla_breach_time = datetime.now(timezone.utc) + timedelta(minutes=sla["resolution"])
 
             # Create ticket
             ticket = Ticket(
@@ -170,7 +170,7 @@ class TicketManager:
             for field, value in update_dict.items():
                 setattr(ticket, field, value)
 
-            ticket.updated_at = datetime.utcnow()
+            ticket.updated_at = datetime.now(timezone.utc)
 
             # Handle status changes
             if update_data.status and update_data.status != old_status:
@@ -224,7 +224,7 @@ class TicketManager:
             db.add(comment)
 
             # Update ticket timestamp
-            ticket.updated_at = datetime.utcnow()
+            ticket.updated_at = datetime.now(timezone.utc)
 
             # If this is marked as solution, update ticket status
             if comment_data.is_solution and ticket.status not in [
@@ -232,7 +232,7 @@ class TicketManager:
                 TicketStatus.CLOSED,
             ]:
                 ticket.status = TicketStatus.RESOLVED
-                ticket.resolved_at = datetime.utcnow()
+                ticket.resolved_at = datetime.now(timezone.utc)
 
             await db.commit()
             await db.refresh(comment)
@@ -427,11 +427,11 @@ class TicketManager:
     ):
         """Handle ticket status changes."""
         if new_status == TicketStatus.RESOLVED and old_status != TicketStatus.RESOLVED:
-            ticket.resolved_at = datetime.utcnow()
+            ticket.resolved_at = datetime.now(timezone.utc)
         elif new_status == TicketStatus.CLOSED and old_status != TicketStatus.CLOSED:
-            ticket.closed_at = datetime.utcnow()
+            ticket.closed_at = datetime.now(timezone.utc)
             if not ticket.resolved_at:
-                ticket.resolved_at = datetime.utcnow()
+                ticket.resolved_at = datetime.now(timezone.utc)
 
     async def _trigger_ticket_created_events(self, ticket: Ticket):
         """Trigger events when ticket is created."""

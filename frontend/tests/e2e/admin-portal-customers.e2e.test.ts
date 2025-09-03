@@ -1,7 +1,7 @@
 /**
  * Comprehensive Playwright E2E tests for Admin Portal - Customer Management page
- * Based on actual component structure from /apps/admin/src/app/(protected)/customers/page.tsx
- * and /apps/admin/src/components/customers/CustomersTable.tsx
+ * Based on actual component structure from /isp-framework/admin/src/app/(protected)/customers/page.tsx
+ * and /isp-framework/admin/src/components/customers/CustomersTable.tsx
  */
 
 import { test, expect } from '@playwright/test';

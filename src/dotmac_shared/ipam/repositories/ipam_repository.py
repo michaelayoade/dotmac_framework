@@ -177,7 +177,7 @@ class IPAMRepository:
             if hasattr(network, key):
                 setattr(network, key, value)
 
-        network.updated_at = datetime.utcnow()
+        network.updated_at = datetime.now(timezone.utc)
 
         try:
             self.db.commit()
@@ -203,7 +203,7 @@ class IPAMRepository:
             return False
 
         network.is_active = False
-        network.updated_at = datetime.utcnow()
+        network.updated_at = datetime.now(timezone.utc)
 
         self.db.commit()
         return True
@@ -334,7 +334,7 @@ class IPAMRepository:
             query = query.filter(
                 or_(
                     IPAllocation.expires_at.is_(None),
-                    IPAllocation.expires_at > datetime.utcnow(),
+                    IPAllocation.expires_at > datetime.now(timezone.utc),
                 )
             )
 
@@ -393,7 +393,7 @@ class IPAMRepository:
             if hasattr(allocation, key):
                 setattr(allocation, key, value)
 
-        allocation.updated_at = datetime.utcnow()
+        allocation.updated_at = datetime.now(timezone.utc)
 
         try:
             self.db.commit()
@@ -421,7 +421,7 @@ class IPAMRepository:
             .filter(
                 IPAllocation.tenant_id == tenant_id,
                 IPAllocation.allocation_status == AllocationStatus.ALLOCATED,
-                IPAllocation.expires_at <= datetime.utcnow(),
+                IPAllocation.expires_at <= datetime.now(timezone.utc),
             )
             .order_by(IPAllocation.expires_at.asc())
         )
@@ -521,7 +521,7 @@ class IPAMRepository:
             query = query.filter(IPReservation.reservation_status == reservation_status)
 
         if not include_expired:
-            query = query.filter(IPReservation.expires_at > datetime.utcnow())
+            query = query.filter(IPReservation.expires_at > datetime.now(timezone.utc))
 
         query = query.order_by(IPReservation.reserved_at.desc())
 
@@ -578,7 +578,7 @@ class IPAMRepository:
             if hasattr(reservation, key):
                 setattr(reservation, key, value)
 
-        reservation.updated_at = datetime.utcnow()
+        reservation.updated_at = datetime.now(timezone.utc)
 
         try:
             self.db.commit()
@@ -606,7 +606,7 @@ class IPAMRepository:
             .filter(
                 IPReservation.tenant_id == tenant_id,
                 IPReservation.reservation_status == ReservationStatus.RESERVED,
-                IPReservation.expires_at <= datetime.utcnow(),
+                IPReservation.expires_at <= datetime.now(timezone.utc),
             )
             .order_by(IPReservation.expires_at.asc())
         )
@@ -822,12 +822,12 @@ class IPAMRepository:
             # Update expired allocations
             for allocation in expired_allocations:
                 allocation.allocation_status = AllocationStatus.EXPIRED
-                allocation.updated_at = datetime.utcnow()
+                allocation.updated_at = datetime.now(timezone.utc)
 
             # Update expired reservations
             for reservation in expired_reservations:
                 reservation.reservation_status = ReservationStatus.EXPIRED
-                reservation.updated_at = datetime.utcnow()
+                reservation.updated_at = datetime.now(timezone.utc)
 
             self.db.commit()
 

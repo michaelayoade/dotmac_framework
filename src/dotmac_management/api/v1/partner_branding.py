@@ -677,7 +677,7 @@ def _generate_brand_assets(brand_config: Any) -> Dict[str, Any]:
         'color_palette': color_palette,
         'css_variables': css_variables,
         'theme_preview': f"linear-gradient(135deg, {primary} 0%, {secondary} 50%, {accent} 100%)",
-        'generated_at': datetime.utcnow().isoformat()
+        'generated_at': datetime.now(timezone.utc).isoformat()
     }
 
 
@@ -789,12 +789,12 @@ async def _verify_domain(domain: str) -> Dict[str, Any]:
             'ip_address': ip_address,
             'ssl_valid': ssl_valid,
             'ssl_expires': ssl_expires,
-            'verified_at': datetime.utcnow().isoformat()
+            'verified_at': datetime.now(timezone.utc).isoformat()
         }
         
     except Exception as e:
         return {
             'verified': False,
             'error': str(e),
-            'verified_at': datetime.utcnow().isoformat()
+            'verified_at': datetime.now(timezone.utc).isoformat()
         }

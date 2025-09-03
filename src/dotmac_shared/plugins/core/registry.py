@@ -22,7 +22,7 @@ class PluginRegistry:
     Provides plugin discovery, dependency resolution, and lifecycle management.
     """
 
-    def __init__(self):
+    def __init__(self, timezone):
         # Main plugin storage: domain -> name -> plugin
         self._plugins: Dict[str, Dict[str, BasePlugin]] = defaultdict(dict)
 
@@ -36,7 +36,7 @@ class PluginRegistry:
         # Registry state
         self._lock = asyncio.Lock()  # Use standard asyncio.Lock instead of RWLock
         self._logger = logging.getLogger("plugins.registry")
-        self._created_at = datetime.utcnow()
+        self._created_at = datetime.now(timezone.utc)
 
         # Event callbacks
         self._on_plugin_registered: List[callable] = []
@@ -413,7 +413,7 @@ class PluginRegistry:
                 "status_counts": dict(status_counts),
                 "created_at": self._created_at.isoformat(),
                 "uptime_seconds": (
-                    datetime.utcnow() - self._created_at
+                    datetime.now(timezone.utc) - self._created_at
                 ).total_seconds(),
             }
 

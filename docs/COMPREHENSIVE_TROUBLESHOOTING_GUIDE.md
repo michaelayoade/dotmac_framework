@@ -887,10 +887,9 @@ make -f Makefile.readiness schema-check
 ### Documentation & Resources
 
 **Internal Resources:**
-- [Architecture Documentation](docs/ARCHITECTURE.md)
-- [API Reference](https://docs.dotmac.platform/api/)
-- [Operations Runbooks](docs/operations/)
-- [Security Procedures](docs/security/)
+- [Architecture Documentation](./ARCHITECTURE.md)
+- [Production Deployment Runbook](./PRODUCTION_DEPLOYMENT_RUNBOOK.md)
+- [Security Production Checklist](./SECURITY_PRODUCTION_CHECKLIST.md)
 
 **External Resources:**
 - [Kubernetes Documentation](https://kubernetes.io/docs/)

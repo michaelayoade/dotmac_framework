@@ -15,7 +15,7 @@ except ImportError:
     CELERY_AVAILABLE = False
 
     # Mock decorator for when Celery is not available
-    def shared_task(bind=False, **kwargs):
+    def shared_task(bind=False, **kwargs, timezone):
         def decorator(func):
             return func
 
@@ -80,7 +80,7 @@ def cleanup_expired_allocations(
             # Build query for expired allocations
             query = db.query(IPAllocation).filter(
                 IPAllocation.allocation_status == AllocationStatus.ALLOCATED,
-                IPAllocation.expires_at <= datetime.utcnow(),
+                IPAllocation.expires_at <= datetime.now(timezone.utc),
             )
 
             if tenant_id:
@@ -99,7 +99,7 @@ def cleanup_expired_allocations(
                 for allocation in batch:
                     try:
                         allocation.allocation_status = AllocationStatus.EXPIRED
-                        allocation.updated_at = datetime.utcnow()
+                        allocation.updated_at = datetime.now(timezone.utc)
                         allocation.updated_by = "system:cleanup_task"
                         batch_cleaned += 1
                     except Exception as e:
@@ -129,7 +129,7 @@ def cleanup_expired_allocations(
                 "tenant_id": tenant_id,
                 "total_cleaned": total_cleaned,
                 "batches_processed": batch_num,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
     except Exception as exc:
@@ -142,7 +142,7 @@ def cleanup_expired_allocations(
             "task": "cleanup_expired_allocations",
             "success": False,
             "error": str(exc),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
 
@@ -173,7 +173,7 @@ def cleanup_expired_reservations(
             # Build query for expired reservations
             query = db.query(IPReservation).filter(
                 IPReservation.reservation_status == ReservationStatus.RESERVED,
-                IPReservation.expires_at <= datetime.utcnow(),
+                IPReservation.expires_at <= datetime.now(timezone.utc),
             )
 
             if tenant_id:
@@ -192,7 +192,7 @@ def cleanup_expired_reservations(
                 for reservation in batch:
                     try:
                         reservation.reservation_status = ReservationStatus.EXPIRED
-                        reservation.updated_at = datetime.utcnow()
+                        reservation.updated_at = datetime.now(timezone.utc)
                         reservation.updated_by = "system:cleanup_task"
                         batch_cleaned += 1
                     except Exception as e:
@@ -222,7 +222,7 @@ def cleanup_expired_reservations(
                 "tenant_id": tenant_id,
                 "total_cleaned": total_cleaned,
                 "batches_processed": batch_num,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
     except Exception as exc:
@@ -235,7 +235,7 @@ def cleanup_expired_reservations(
             "task": "cleanup_expired_reservations",
             "success": False,
             "error": str(exc),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
 
@@ -275,7 +275,7 @@ def generate_utilization_report(self, tenant_id: Optional[str] = None):
             report_data = {
                 "task": "generate_utilization_report",
                 "success": True,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "tenant_count": len(tenants),
                 "network_count": len(networks),
                 "tenants": {},
@@ -336,7 +336,7 @@ def generate_utilization_report(self, tenant_id: Optional[str] = None):
             "task": "generate_utilization_report",
             "success": False,
             "error": str(exc),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
 
@@ -415,7 +415,7 @@ def audit_ip_conflicts(self, tenant_id: Optional[str] = None):
             # Find long-running reservations (>24 hours)
             old_reservations = db.query(IPReservation).filter(
                 IPReservation.reservation_status == ReservationStatus.RESERVED,
-                IPReservation.reserved_at < datetime.utcnow() - timedelta(hours=24),
+                IPReservation.reserved_at < datetime.now(timezone.utc) - timedelta(hours=24),
             )
             if tenant_id:
                 old_reservations = old_reservations.filter(
@@ -431,7 +431,7 @@ def audit_ip_conflicts(self, tenant_id: Optional[str] = None):
                         "tenant_id": reservation.tenant_id,
                         "reserved_hours": int(
                             (
-                                datetime.utcnow() - reservation.reserved_at
+                                datetime.now(timezone.utc) - reservation.reserved_at
                             ).total_seconds()
                             / 3600
                         ),
@@ -443,7 +443,7 @@ def audit_ip_conflicts(self, tenant_id: Optional[str] = None):
                 "task": "audit_ip_conflicts",
                 "success": True,
                 "tenant_id": tenant_id,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "conflicts": conflicts,
                 "inconsistencies": inconsistencies,
                 "summary": {
@@ -479,7 +479,7 @@ def audit_ip_conflicts(self, tenant_id: Optional[str] = None):
             "task": "audit_ip_conflicts",
             "success": False,
             "error": str(exc),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
 

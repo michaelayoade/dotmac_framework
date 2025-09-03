@@ -77,7 +77,7 @@ class CustomerPortalService:
                     "id": "notif-001",
                     "type": "info", 
                     "message": "Your service is operating normally",
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 }
             ],
             "quick_actions": [
@@ -89,8 +89,8 @@ class CustomerPortalService:
         
         return PortalDashboardSchema(
             id=user_id,
-            created_at=datetime.utcnow().isoformat(),
-            updated_at=datetime.utcnow().isoformat(),
+            created_at=datetime.now(timezone.utc).isoformat(),
+            updated_at=datetime.now(timezone.utc).isoformat(),
             **dashboard_data
         )
 
@@ -115,8 +115,8 @@ class CustomerPortalService:
         
         return PortalDataSchema(
             id=user_id,
-            created_at=datetime.utcnow().isoformat(), 
-            updated_at=datetime.utcnow().isoformat(),
+            created_at=datetime.now(timezone.utc).isoformat(), 
+            updated_at=datetime.now(timezone.utc).isoformat(),
             **billing_data
         )
 

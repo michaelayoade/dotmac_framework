@@ -94,10 +94,10 @@ class ISPAuthAdapter:
             "permissions": user_data.get("permissions", []),
             "user_type": user_data.get("user_type", "customer"),
             "session_id": hashlib.md5(
-                f"{user_data['user_id']}{datetime.utcnow()}".encode()
+                f"{user_data['user_id']}{datetime.now(timezone.utc)}".encode()
             ).hexdigest(),
-            "iat": datetime.utcnow(),
-            "exp": datetime.utcnow() + timedelta(hours=self.token_expiry_hours),
+            "iat": datetime.now(timezone.utc),
+            "exp": datetime.now(timezone.utc) + timedelta(hours=self.token_expiry_hours),
         }
 
         return jwt.encode(payload, self.jwt_secret, algorithm=self.jwt_algorithm)
@@ -161,7 +161,7 @@ class ISPAuthAdapter:
                 "user": auth_data,
                 "token": token,
                 "expires_at": (
-                    datetime.utcnow() + timedelta(hours=self.token_expiry_hours)
+                    datetime.now(timezone.utc) + timedelta(hours=self.token_expiry_hours)
                 ).isoformat(),
             }
 
@@ -213,7 +213,7 @@ class ISPAuthAdapter:
 
             # Check if token is expired
             exp_timestamp = payload.get("exp")
-            if exp_timestamp and datetime.utcnow().timestamp() > exp_timestamp:
+            if exp_timestamp and datetime.now(timezone.utc).timestamp() > exp_timestamp:
                 return {
                     "success": False,
                     "error": "token_expired",
@@ -288,7 +288,7 @@ class ISPAuthAdapter:
                 "success": True,
                 "token": new_token,
                 "expires_at": (
-                    datetime.utcnow() + timedelta(hours=self.token_expiry_hours)
+                    datetime.now(timezone.utc) + timedelta(hours=self.token_expiry_hours)
                 ).isoformat(),
             }
 

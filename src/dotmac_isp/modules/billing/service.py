@@ -172,7 +172,7 @@ class BillingService(BaseService):
                     for method, data in payment_methods.items()
                 ],
                 "generated_by": user_id,
-                "generated_at": datetime.utcnow().isoformat()
+                "generated_at": datetime.now(timezone.utc).isoformat()
             }
             
             logger.info(f"Generated revenue report for user {user_id}")
@@ -231,7 +231,7 @@ class BillingService(BaseService):
                 "size": getattr(file, 'size', 0),
                 "file_url": file_url,
                 "uploaded_by": user_id,
-                "uploaded_at": datetime.utcnow().isoformat()
+                "uploaded_at": datetime.now(timezone.utc).isoformat()
             }
             
             logger.info(f"Uploaded attachment to invoice {invoice_id}")

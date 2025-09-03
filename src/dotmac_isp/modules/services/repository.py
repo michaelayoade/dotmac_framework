@@ -357,7 +357,7 @@ class ServiceStatusHistoryRepository(BaseTenantRepository[ServiceStatusHistory])
             new_status=new_status,
             change_reason=change_reason,
             changed_by_user_id=changed_by_user_id,
-            effective_date=effective_date or datetime.utcnow()
+            effective_date=effective_date or datetime.now(timezone.utc)
         )
         
         self.db.add(history_record)

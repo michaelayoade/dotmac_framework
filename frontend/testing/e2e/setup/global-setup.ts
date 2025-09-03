@@ -26,7 +26,6 @@ async function globalSetup() {
 
     // DRY environment verification
     await verifyEnvironment(page);
-
   } finally {
     await context.close();
     await browser.close();
@@ -54,7 +53,7 @@ async function setupAuthentication(page: Page, storageDir: string): Promise<void
 
   // Save admin authentication state
   await page.context().storageState({
-    path: path.join(storageDir, 'admin-auth.json')
+    path: path.join(storageDir, 'admin-auth.json'),
   });
 
   // Customer authentication (if needed)
@@ -67,7 +66,7 @@ async function setupAuthentication(page: Page, storageDir: string): Promise<void
 
   // Save customer authentication state
   await page.context().storageState({
-    path: path.join(storageDir, 'customer-auth.json')
+    path: path.join(storageDir, 'customer-auth.json'),
   });
 
   console.log('🔐 Authentication setup completed');

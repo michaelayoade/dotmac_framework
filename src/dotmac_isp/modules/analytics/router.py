@@ -185,7 +185,7 @@ async def get_metric_values(
     """Get values for a specific metric within date range."""
     from datetime import datetime
     
-    start_dt = datetime.fromisoformat(start_date) if start_date else None
+    start_dt = datetime.fromisoformat(start_date, timezone) if start_date else None
     end_dt = datetime.fromisoformat(end_date) if end_date else None
     
     service = MetricService(deps.db, deps.tenant_id)
@@ -351,8 +351,8 @@ async def get_customer_analytics(
         },
         churn_risk_score=15.3,
         satisfaction_score=4.2,
-        acquisition_date=datetime.utcnow() - timedelta(days=365),
-        last_activity=datetime.utcnow() - timedelta(hours=6)
+        acquisition_date=datetime.now(timezone.utc) - timedelta(days=365),
+        last_activity=datetime.now(timezone.utc) - timedelta(hours=6)
     )
 
 @router.get("/analytics/revenue", response_model=RevenueAnalyticsResponse)
@@ -364,7 +364,7 @@ async def get_revenue_analytics(
     """Get comprehensive revenue analytics and forecasting."""
     from datetime import datetime, timedelta
     
-    current_time = datetime.utcnow()
+    current_time = datetime.now(timezone.utc)
     start_time = current_time - timedelta(days=30 * months)
     
     # Mock implementation - replace with actual service call
@@ -410,7 +410,7 @@ async def get_service_analytics(
     """Get detailed analytics for a specific service offering."""
     from datetime import datetime, timedelta
     
-    current_time = datetime.utcnow()
+    current_time = datetime.now(timezone.utc)
     start_time = current_time - timedelta(days=30 * months)
     
     # Mock implementation - replace with actual service call
@@ -465,7 +465,7 @@ async def sync_data_source(
     # Mock implementation - replace with actual service call
     return {
         "source_id": str(source_id),
-        "sync_started": datetime.utcnow().isoformat(),
+        "sync_started": datetime.now(timezone.utc).isoformat(),
         "status": "processing",
         "estimated_duration": "5-10 minutes"
     }
@@ -483,7 +483,7 @@ async def get_data_source_status(
     return {
         "source_id": str(source_id),
         "status": "connected",
-        "last_sync": datetime.utcnow().isoformat(),
+        "last_sync": datetime.now(timezone.utc).isoformat(),
         "health_score": 95.5,
         "records_synced": 12450,
         "errors": []

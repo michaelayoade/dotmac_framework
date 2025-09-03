@@ -50,7 +50,9 @@ test.describe('Critical ISP Business Flows', () => {
       await page.click('[data-testid="create-customer-button"]');
 
       // Verify customer created
-      await expect(page.locator('[data-testid="success-message"]')).toContainText('Customer created successfully');
+      await expect(page.locator('[data-testid="success-message"]')).toContainText(
+        'Customer created successfully'
+      );
       const customerId = await page.locator('[data-testid="customer-id"]').textContent();
       expect(customerId).toMatch(/CUST-\d{4}/);
 
@@ -69,7 +71,9 @@ test.describe('Critical ISP Business Flows', () => {
 
       // Verify successful login to dashboard
       await expect(page).toHaveURL(/.*\/customer\/dashboard/);
-      await expect(page.locator('[data-testid="welcome-message"]')).toContainText(testCustomer.name);
+      await expect(page.locator('[data-testid="welcome-message"]')).toContainText(
+        testCustomer.name
+      );
     });
 
     test('service installation workflow', async ({ page, context }) => {
@@ -115,10 +119,16 @@ test.describe('Critical ISP Business Flows', () => {
       await techPage.check('[data-testid="equipment-installed"]');
       await techPage.check('[data-testid="service-activated"]');
       await techPage.check('[data-testid="customer-trained"]');
-      await techPage.fill('[data-testid="completion-notes"]', 'Installation completed successfully. Customer trained on equipment usage.');
+      await techPage.fill(
+        '[data-testid="completion-notes"]',
+        'Installation completed successfully. Customer trained on equipment usage.'
+      );
 
       // Upload completion photo
-      await techPage.setInputFiles('[data-testid="completion-photo"]', 'test-fixtures/installation-complete.jpg');
+      await techPage.setInputFiles(
+        '[data-testid="completion-photo"]',
+        'test-fixtures/installation-complete.jpg'
+      );
 
       await techPage.click('[data-testid="complete-work-order"]');
 
@@ -134,7 +144,9 @@ test.describe('Critical ISP Business Flows', () => {
 
       // Check service is now active
       await expect(customerPage.locator('[data-testid="service-status"]')).toContainText('Active');
-      await expect(customerPage.locator('[data-testid="current-plan"]')).toContainText(testCustomer.plan);
+      await expect(customerPage.locator('[data-testid="current-plan"]')).toContainText(
+        testCustomer.plan
+      );
     });
   });
 
@@ -188,7 +200,9 @@ test.describe('Critical ISP Business Flows', () => {
       await customerPage.click('[data-testid="submit-payment"]');
 
       // Verify payment success
-      await expect(customerPage.locator('[data-testid="payment-success"]')).toContainText('Payment processed successfully');
+      await expect(customerPage.locator('[data-testid="payment-success"]')).toContainText(
+        'Payment processed successfully'
+      );
       await expect(customerPage.locator('[data-testid="invoice-status"]')).toContainText('Paid');
     });
 
@@ -203,7 +217,9 @@ test.describe('Critical ISP Business Flows', () => {
 
       // Check current month commissions
       await expect(page.locator('[data-testid="current-month-commission"]')).toBeVisible();
-      const commissionAmount = await page.locator('[data-testid="commission-amount"]').textContent();
+      const commissionAmount = await page
+        .locator('[data-testid="commission-amount"]')
+        .textContent();
       expect(commissionAmount).toMatch(/^\$\d+\.\d{2}$/);
 
       // View commission breakdown
@@ -240,16 +256,18 @@ test.describe('Critical ISP Business Flows', () => {
 
       // Simulate network alert
       await page.evaluate(() => {
-        window.dispatchEvent(new CustomEvent('network-alert', {
-          detail: {
-            type: 'latency_high',
-            severity: 'warning',
-            affected_customers: 25,
-            location: 'North District Tower',
-            metric_value: 250,
-            threshold: 200,
-          }
-        }));
+        window.dispatchEvent(
+          new CustomEvent('network-alert', {
+            detail: {
+              type: 'latency_high',
+              severity: 'warning',
+              affected_customers: 25,
+              location: 'North District Tower',
+              metric_value: 250,
+              threshold: 200,
+            },
+          })
+        );
       });
 
       // Verify alert appears
@@ -259,9 +277,15 @@ test.describe('Critical ISP Business Flows', () => {
       // Create maintenance ticket
       await page.click('[data-testid="create-maintenance-ticket"]');
       await page.fill('[data-testid="ticket-title"]', 'High Latency - North District Tower');
-      await page.fill('[data-testid="ticket-description"]', 'Network latency exceeding 250ms threshold');
+      await page.fill(
+        '[data-testid="ticket-description"]',
+        'Network latency exceeding 250ms threshold'
+      );
       await page.selectOption('[data-testid="priority"]', 'high');
-      await page.selectOption('[data-testid="assign-technician"]', testCredentials.technician.username);
+      await page.selectOption(
+        '[data-testid="assign-technician"]',
+        testCredentials.technician.username
+      );
 
       await page.click('[data-testid="create-ticket-button"]');
 
@@ -277,7 +301,10 @@ test.describe('Critical ISP Business Flows', () => {
       await techPage.click('[data-testid="accept-ticket"]');
 
       // Update ticket with resolution
-      await techPage.fill('[data-testid="resolution-notes"]', 'Resolved: Updated router configuration and optimized traffic routing');
+      await techPage.fill(
+        '[data-testid="resolution-notes"]',
+        'Resolved: Updated router configuration and optimized traffic routing'
+      );
       await techPage.selectOption('[data-testid="resolution-status"]', 'resolved');
       await techPage.click('[data-testid="update-ticket"]');
 
@@ -298,7 +325,10 @@ test.describe('Critical ISP Business Flows', () => {
       await customerPage.click('[data-testid="create-ticket"]');
 
       await customerPage.fill('[data-testid="ticket-subject"]', 'Intermittent Connection Issues');
-      await customerPage.fill('[data-testid="ticket-description"]', 'Internet connection drops frequently during peak hours');
+      await customerPage.fill(
+        '[data-testid="ticket-description"]',
+        'Internet connection drops frequently during peak hours'
+      );
       await customerPage.selectOption('[data-testid="ticket-category"]', 'technical');
       await customerPage.selectOption('[data-testid="priority"]', 'medium');
 
@@ -313,13 +343,18 @@ test.describe('Critical ISP Business Flows', () => {
       await page.click(`[data-testid="ticket-${ticketId}"]`);
 
       // Review ticket details
-      await expect(page.locator('[data-testid="ticket-subject"]')).toContainText('Intermittent Connection Issues');
+      await expect(page.locator('[data-testid="ticket-subject"]')).toContainText(
+        'Intermittent Connection Issues'
+      );
       await expect(page.locator('[data-testid="ticket-priority"]')).toContainText('medium');
 
       // Escalate to technical team
       await page.click('[data-testid="escalate-ticket"]');
       await page.selectOption('[data-testid="escalate-to"]', 'technical');
-      await page.fill('[data-testid="escalation-notes"]', 'Customer reporting connection drops during peak hours. Requires network analysis.');
+      await page.fill(
+        '[data-testid="escalation-notes"]',
+        'Customer reporting connection drops during peak hours. Requires network analysis.'
+      );
       await page.click('[data-testid="confirm-escalation"]');
 
       // Verify escalation
@@ -356,7 +391,7 @@ test.describe('Critical ISP Business Flows', () => {
         await page.click(nav);
         await page.waitForLoadState('networkidle');
         const navLoadTime = Date.now() - navStartTime;
-        
+
         expect(navLoadTime).toBeLessThan(2000); // Each section should load within 2 seconds
       }
     });
@@ -378,17 +413,19 @@ test.describe('Critical ISP Business Flows', () => {
       ];
 
       // Login all users concurrently
-      await Promise.all(sessions.map(async ({ context, credentials, portal }) => {
-        const page = await context.newPage();
-        await page.goto(`/${portal}/login`);
-        await page.fill('[data-testid="email-input"]', credentials.username);
-        await page.fill('[data-testid="password-input"]', credentials.password);
-        await page.click('[data-testid="login-button"]');
-        await expect(page).toHaveURL(new RegExp(`.*/${portal}/dashboard`));
-      }));
+      await Promise.all(
+        sessions.map(async ({ context, credentials, portal }) => {
+          const page = await context.newPage();
+          await page.goto(`/${portal}/login`);
+          await page.fill('[data-testid="email-input"]', credentials.username);
+          await page.fill('[data-testid="password-input"]', credentials.password);
+          await page.click('[data-testid="login-button"]');
+          await expect(page).toHaveURL(new RegExp(`.*/${portal}/dashboard`));
+        })
+      );
 
       // Cleanup
-      await Promise.all(contexts.map(context => context.close()));
+      await Promise.all(contexts.map((context) => context.close()));
     });
   });
 
@@ -426,15 +463,19 @@ test.describe('Critical ISP Business Flows', () => {
       await resellerPage.click('[data-testid="login-button"]');
 
       await resellerPage.click('[data-testid="customers-nav"]');
-      
+
       // Search for the customer
       await resellerPage.fill('[data-testid="customer-search"]', testCustomer2.email);
       await expect(resellerPage.locator(`[data-testid="customer-${customerId}"]`)).toBeVisible();
 
       // Verify customer data matches
       await resellerPage.click(`[data-testid="customer-${customerId}"]`);
-      await expect(resellerPage.locator('[data-testid="customer-name"]')).toContainText(testCustomer2.name);
-      await expect(resellerPage.locator('[data-testid="customer-plan"]')).toContainText(testCustomer2.plan);
+      await expect(resellerPage.locator('[data-testid="customer-name"]')).toContainText(
+        testCustomer2.name
+      );
+      await expect(resellerPage.locator('[data-testid="customer-plan"]')).toContainText(
+        testCustomer2.plan
+      );
     });
 
     test('billing calculation accuracy', async ({ page }) => {

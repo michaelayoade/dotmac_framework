@@ -8,9 +8,8 @@ import sys
 from datetime import datetime
 
 # Add project root to Python path
-sys.path.insert(0, os.path.abspath("../isp-framework/src"))
-sys.path.insert(0, os.path.abspath("../management-platform/app"))
-sys.path.insert(0, os.path.abspath("../shared"))
+# Add local project source paths (adjusted to repo layout)
+sys.path.insert(0, os.path.abspath("../src"))
 sys.path.insert(0, os.path.abspath(".."))
 
 # -- Project information -----------------------------------------------------

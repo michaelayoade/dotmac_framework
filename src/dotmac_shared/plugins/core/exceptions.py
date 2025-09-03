@@ -206,3 +206,124 @@ class PluginVersionError(PluginError):
             context["compatibility_mode"] = compatibility_mode
 
         super().__init__(message, plugin_name=plugin_name, context=context)
+
+
+class PluginSecurityError(PluginError):
+    """Raised when plugin security violations occur."""
+
+    def __init__(
+        self,
+        plugin_name: str,
+        security_issue: str,
+        threat_level: str = "medium",
+        security_context: Optional[Dict[str, Any]] = None,
+    ):
+        message = f"Security violation in plugin '{plugin_name}': {security_issue}"
+
+        context = {
+            "security_issue": security_issue,
+            "threat_level": threat_level,
+        }
+
+        if security_context:
+            context["security_context"] = security_context
+
+        super().__init__(message, plugin_name=plugin_name, context=context)
+
+
+class PluginPermissionError(PluginError):
+    """Raised when plugin permission checks fail."""
+
+    def __init__(
+        self,
+        plugin_name: str,
+        permission: str,
+        resource: str,
+        action: str,
+    ):
+        message = f"Permission denied for plugin '{plugin_name}': {action} on {resource} requires {permission}"
+
+        context = {
+            "permission": permission,
+            "resource": resource,
+            "action": action,
+        }
+
+        super().__init__(message, plugin_name=plugin_name, context=context)
+
+
+class PluginAccessDeniedError(PluginError):
+    """Raised when plugin access is denied."""
+
+    def __init__(
+        self,
+        plugin_name: str,
+        resource: str,
+        reason: str,
+        access_context: Optional[Dict[str, Any]] = None,
+    ):
+        message = f"Access denied for plugin '{plugin_name}' to resource '{resource}': {reason}"
+
+        context = {"resource": resource, "reason": reason}
+
+        if access_context:
+            context["access_context"] = access_context
+
+        super().__init__(message, plugin_name=plugin_name, context=context)
+
+
+class PluginCertificationError(PluginError):
+    """Raised when plugin certification issues occur."""
+
+    def __init__(
+        self,
+        plugin_name: str,
+        certification_issue: str,
+        certification_context: Optional[Dict[str, Any]] = None,
+    ):
+        message = f"Certification error for plugin '{plugin_name}': {certification_issue}"
+
+        context = {"certification_issue": certification_issue}
+
+        if certification_context:
+            context["certification_context"] = certification_context
+
+        super().__init__(message, plugin_name=plugin_name, context=context)
+
+
+class PluginGovernanceError(PluginError):
+    """Raised when plugin governance violations occur."""
+
+    def __init__(
+        self,
+        plugin_name: str,
+        governance_issue: str,
+        policy_violated: Optional[str] = None,
+    ):
+        message = f"Governance violation for plugin '{plugin_name}': {governance_issue}"
+
+        context = {"governance_issue": governance_issue}
+
+        if policy_violated:
+            context["policy_violated"] = policy_violated
+
+        super().__init__(message, plugin_name=plugin_name, context=context)
+
+
+class TenantIsolationError(PluginError):
+    """Raised when tenant isolation violations occur."""
+
+    def __init__(
+        self,
+        plugin_name: str,
+        isolation_issue: str,
+        tenant_id: Optional[str] = None,
+    ):
+        message = f"Tenant isolation violation for plugin '{plugin_name}': {isolation_issue}"
+
+        context = {"isolation_issue": isolation_issue}
+
+        if tenant_id:
+            context["tenant_id"] = tenant_id
+
+        super().__init__(message, plugin_name=plugin_name, context=context)

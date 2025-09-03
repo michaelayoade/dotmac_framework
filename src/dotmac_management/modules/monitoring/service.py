@@ -155,7 +155,7 @@ class HealthCheckService(BaseService[HealthCheck]):
             if not request.force_check:
                 # Check if we have a recent health check
                 latest_check = await self.repository.get_latest_check_for_component(component.id)
-                if latest_check and (datetime.utcnow() - latest_check.check_timestamp).seconds < component.check_interval:
+                if latest_check and (datetime.now(timezone.utc) - latest_check.check_timestamp).seconds < component.check_interval:
                     health_checks.append(HealthCheckResponse.model_validate(latest_check))
                     continue
 
@@ -294,7 +294,7 @@ class SystemMetricService(BaseService[SystemMetric]):
             'metric_name': metric_name,
             'statistics': stats,
             'period_hours': hours,
-            'timestamp': datetime.utcnow().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         }
 
     async def query_metrics(self, request: MetricQueryRequest, user_id: UUID) -> MetricQueryResponse:
@@ -385,7 +385,7 @@ class PerformanceMetricService(BaseService[PerformanceMetric]):
             'endpoint': endpoint,
             'statistics': stats,
             'period_hours': hours,
-            'timestamp': datetime.utcnow().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         }
 
     async def get_slow_requests(self, threshold_ms: float = 1000, hours: int = 24) -> List[PerformanceMetricResponse]:
@@ -400,11 +400,11 @@ class PerformanceMetricService(BaseService[PerformanceMetric]):
 
     async def generate_performance_report(self, hours: int = 24) -> PerformanceReportResponse:
         """Generate comprehensive performance report."""
-        end_time = datetime.utcnow()
+        end_time = datetime.now(timezone.utc)
         start_time = end_time - timedelta(hours=hours)
         
         # Get all performance metrics for the period
-        cutoff_time = datetime.utcnow() - timedelta(hours=hours)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
         
         # Mock aggregated data - in real implementation, this would query the database
         return PerformanceReportResponse(
@@ -635,13 +635,13 @@ class MonitoringService(BaseService):
                     'event_type': 'health_check',
                     'component': 'database',
                     'status': 'healthy',
-                    'timestamp': datetime.utcnow().isoformat()
+                    'timestamp': datetime.now(timezone.utc).isoformat()
                 },
                 {
                     'event_type': 'alert_triggered',
                     'component': 'api',
                     'severity': 'medium',
-                    'timestamp': (datetime.utcnow() - timedelta(minutes=15)).isoformat()
+                    'timestamp': (datetime.now(timezone.utc) - timedelta(minutes=15)).isoformat()
                 }
             ],
             component_status={
@@ -692,7 +692,7 @@ class MonitoringService(BaseService):
 
         return SystemHealthResponse(
             overall_status=overall_status,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             uptime_seconds=345678,
             component_checks=component_checks,
             failed_checks=failed_checks,

@@ -71,12 +71,12 @@ class LicenseContract(Base, TimestampMixin, UUIDMixin):
     @property
     def is_expired(self) -> bool:
         """Check if license has expired"""
-        return datetime.utcnow() > self.valid_until
+        return datetime.now(timezone.utc) > self.valid_until
     
     @property
     def days_until_expiry(self) -> int:
         """Days until license expires"""
-        delta = self.valid_until - datetime.utcnow()
+        delta = self.valid_until - datetime.now(timezone.utc)
         return max(0, delta.days)
     
     @property

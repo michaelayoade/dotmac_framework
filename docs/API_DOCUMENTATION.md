@@ -1,4 +1,4 @@
-# DotMac API Documentation
+q# DotMac API Documentation
 
 ## API Overview
 
@@ -106,7 +106,32 @@ GET /health
 
 **Description:** Backwards compatibility endpoint (same as `/health/live`).
 
-## Authentication
+## Authentication & Authorization
+
+### License-Based Feature Access
+
+All API endpoints are protected by feature licensing. Requests to unlicensed features return:
+
+```json
+{
+  "status_code": 402,
+  "error": "Feature not available",
+  "feature": "crm",
+  "message": "Please upgrade your plan to access this feature",
+  "upgrade_url": "/billing/upgrade?feature=crm"
+}
+```
+
+#### Feature Requirements by Endpoint
+
+| Endpoint Pattern | Required Feature | Plan Tier |
+|-----------------|------------------|----------|
+| `/api/v1/network/*` | Core (Always Available) | All |
+| `/api/v1/crm/*` | `crm` | Professional+ |
+| `/api/v1/tickets/*` | `tickets` | Starter+ |
+| `/api/v1/projects/*` | `projects` | Professional+ |
+| `/api/v1/fieldops/*` | `fieldops` | Enterprise |
+| `/api/v1/analytics/*` | `analytics` | Professional+ |
 
 ### OAuth 2.0 + JWT
 
@@ -160,6 +185,21 @@ X-Request-ID: unique_request_id
 
 ## Rate Limiting
 
+API requests are rate-limited based on subscription tier:
+
+### Rate Limits by Plan
+
+| Plan | Requests/Hour | Burst Limit | Concurrent Connections |
+|------|--------------|-------------|------------------------|
+| Starter | 1,000 | 50 | 10 |
+| Professional | 10,000 | 200 | 50 |
+| Enterprise | 100,000 | 1,000 | 200 |
+| Custom | Negotiated | Negotiated | Negotiated |
+
+### Feature-Specific Limits
+
+Some features have additional usage limits:
+
 | Endpoint Type | Rate Limit | Window |
 |--------------|------------|---------|
 | Authentication | 5 requests | 1 minute |
@@ -203,7 +243,78 @@ X-RateLimit-Reset: 1629835200
 | `RATE_LIMITED` | 429 | Too many requests |
 | `INTERNAL_ERROR` | 500 | Server error |
 
-## Customer Management API
+## License Management
+
+### Get Current License
+
+```http
+GET /api/v1/license
+```
+
+**Response:**
+```json
+{
+  "tenant_id": "550e8400-e29b-41d4-a716-446655440000",
+  "plan_tier": "professional",
+  "features": {
+    "crm": true,
+    "tickets": true,
+    "projects": true,
+    "fieldops": false,
+    "analytics": true
+  },
+  "usage_limits": {
+    "max_users": 50,
+    "max_tickets_per_month": 1000,
+    "max_api_calls_per_hour": 10000
+  },
+  "current_usage": {
+    "users": 23,
+    "tickets_this_month": 342,
+    "api_calls_this_hour": 1243
+  },
+  "valid_until": "2024-12-31T23:59:59Z",
+  "auto_renew": true
+}
+```
+
+### Upgrade Subscription
+
+```http
+POST /api/v1/license/upgrade
+Content-Type: application/json
+
+{
+  "new_plan": "enterprise",
+  "billing_period": "annual"
+}
+```
+
+**Response:**
+```json
+{
+  "status": "upgraded",
+  "new_plan": "enterprise",
+  "features_added": ["fieldops", "advanced_analytics"],
+  "effective_date": "2024-01-01T00:00:00Z"
+}
+```
+
+### Add Feature Add-on
+
+```http
+POST /api/v1/license/addon
+Content-Type: application/json
+
+{
+  "feature": "fieldops",
+  "duration_days": 30
+}
+```
+
+## Customer Management
+
+**Required Feature:** `crm` (Professional+ plans) API
 
 ### List Customers
 

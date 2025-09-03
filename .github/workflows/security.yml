@@ -81,10 +81,17 @@ jobs:
         echo "✅ No hard-coded secrets detected"
     
     - name: Security Bootstrap Validation
+      env:
+        AUTH_ADMIN_EMAIL: "${{ secrets.AUTH_ADMIN_EMAIL }}"
+        AUTH_INITIAL_ADMIN_PASSWORD: "${{ secrets.AUTH_INITIAL_ADMIN_PASSWORD }}"
       run: |
-        cd dotmac_platform
-        python -m dotmac_platform.security.bootstrap
-        echo "✅ Security dependencies validated"
+        pip install -e .
+        if [ -z "${AUTH_ADMIN_EMAIL:-}" ] || [ -z "${AUTH_INITIAL_ADMIN_PASSWORD:-}" ]; then
+          echo "⚠️ Skipping bootstrap validation: secrets not configured"
+          exit 0
+        fi
+        dotmac-admin bootstrap --check-only
+        echo "✅ Security bootstrap environment validated"
     
     # Upload security reports
     - name: Upload Security Reports
@@ -105,7 +112,7 @@ jobs:
         echo "✅ Backend security scan: Completed" >> $GITHUB_STEP_SUMMARY
         echo "✅ Container scan: Completed" >> $GITHUB_STEP_SUMMARY
         echo "✅ Secret scanning: No hard-coded secrets" >> $GITHUB_STEP_SUMMARY
-        echo "✅ Security bootstrap: Dependencies validated" >> $GITHUB_STEP_SUMMARY
+        echo "✅ Security bootstrap: Environment validated or skipped (no secrets)" >> $GITHUB_STEP_SUMMARY
         
   dependency-check:
     runs-on: ubuntu-latest

@@ -5,6 +5,7 @@ Provides secure plugin execution environment with resource limits,
 permission controls, and isolation following DRY security patterns.
 """
 
+import ast
 import asyncio
 import hashlib
 import logging
@@ -163,7 +164,7 @@ class PluginSandbox:
         # Sandbox state
         self._temp_dir: Optional[Path] = None
         self._original_cwd: Optional[Path] = None
-        self._monitoring = get_monitoring() if enable_monitoring else None
+        self._monitoring = get_monitoring('plugins.sandbox') if enable_monitoring else None
         self._execution_stats = {
             "start_time": None,
             "end_time": None,
@@ -315,7 +316,7 @@ class PluginSecurityManager:
     """
 
     def __init__(self):
-        self.monitoring = get_monitoring()
+        self.monitoring = get_monitoring('plugins.security')
         self._code_validators: List[callable] = []
         self._trusted_signatures: Set[str] = set()
 

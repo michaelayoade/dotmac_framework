@@ -56,28 +56,28 @@ export class PaymentTestHelper {
 
   async setup() {
     // Set up payment testing environment
-    
+
     // Mock payment processor endpoints
     await this.page.route('**/api/payments/**', async (route: any) => {
       const request = route.request();
       const url = request.url();
       const method = request.method();
-      
+
       if (method === 'POST' && url.includes('/api/payments/process')) {
         const postData = request.postDataJSON();
         const response = await this.mockPaymentProcessing(postData);
         await route.fulfill({
           status: response.status,
           contentType: 'application/json',
-          body: JSON.stringify(response.body)
+          body: JSON.stringify(response.body),
         });
       } else if (method === 'POST' && url.includes('/api/payments/refund')) {
         const postData = request.postDataJSON();
         const response = await this.mockRefundProcessing(postData);
         await route.fulfill({
           status: response.status,
-          contentType: 'application/json', 
-          body: JSON.stringify(response.body)
+          contentType: 'application/json',
+          body: JSON.stringify(response.body),
         });
       } else {
         await route.continue();
@@ -92,7 +92,7 @@ export class PaymentTestHelper {
       await route.fulfill({
         status: response.status,
         contentType: 'application/json',
-        body: JSON.stringify(response.body)
+        body: JSON.stringify(response.body),
       });
     });
 
@@ -101,7 +101,7 @@ export class PaymentTestHelper {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ received: true })
+        body: JSON.stringify({ received: true }),
       });
     });
 
@@ -120,7 +120,7 @@ export class PaymentTestHelper {
     await this.page.fill('[data-testid="expiry"]', data.expiry);
     await this.page.fill('[data-testid="cvv"]', data.cvv);
     await this.page.fill('[data-testid="cardholder-name"]', data.name);
-    
+
     if (data.amount) {
       await this.page.fill('[data-testid="payment-amount"]', data.amount);
     }
@@ -136,7 +136,7 @@ export class PaymentTestHelper {
 
   private async mockPaymentProcessing(paymentData: any) {
     const { card_number, amount } = paymentData;
-    
+
     // Simulate different responses based on test card numbers
     const responses = {
       // Successful payment
@@ -149,10 +149,10 @@ export class PaymentTestHelper {
           currency: 'USD',
           gateway_transaction_id: `txn_${Date.now()}`,
           authorization_code: 'AUTH123',
-          processed_date: new Date().toISOString()
-        }
+          processed_date: new Date().toISOString(),
+        },
       },
-      
+
       // Declined payment
       '4000000000000002': {
         status: 400,
@@ -160,10 +160,10 @@ export class PaymentTestHelper {
           error: 'payment_failed',
           message: 'Your card was declined',
           decline_reason: 'generic_decline',
-          status: 'FAILED'
-        }
+          status: 'FAILED',
+        },
       },
-      
+
       // Insufficient funds
       '4000000000009995': {
         status: 400,
@@ -171,10 +171,10 @@ export class PaymentTestHelper {
           error: 'payment_failed',
           message: 'Your card has insufficient funds',
           decline_reason: 'insufficient_funds',
-          status: 'FAILED'
-        }
+          status: 'FAILED',
+        },
       },
-      
+
       // Expired card
       '4000000000000069': {
         status: 400,
@@ -182,10 +182,10 @@ export class PaymentTestHelper {
           error: 'payment_failed',
           message: 'Your card has expired',
           decline_reason: 'expired_card',
-          status: 'FAILED'
-        }
+          status: 'FAILED',
+        },
       },
-      
+
       // 3DS required
       '4000000000003220': {
         status: 200,
@@ -194,10 +194,10 @@ export class PaymentTestHelper {
           status: 'PROCESSING',
           requires_3ds: true,
           three_ds_challenge_url: '/3ds/challenge',
-          client_secret: `cs_${Date.now()}`
-        }
+          client_secret: `cs_${Date.now()}`,
+        },
       },
-      
+
       // 3DS authentication failed
       '4000000000003253': {
         status: 400,
@@ -205,10 +205,10 @@ export class PaymentTestHelper {
           error: 'authentication_failed',
           message: '3D Secure authentication failed',
           status: 'FAILED',
-          three_ds_result: 'failed'
-        }
+          three_ds_result: 'failed',
+        },
       },
-      
+
       // Fraudulent card
       '4100000000000019': {
         status: 400,
@@ -216,9 +216,9 @@ export class PaymentTestHelper {
           error: 'payment_failed',
           message: 'Your card was declined',
           decline_reason: 'fraudulent',
-          status: 'FAILED'
-        }
-      }
+          status: 'FAILED',
+        },
+      },
     };
 
     return responses[card_number as keyof typeof responses] || responses['4000000000000002'];
@@ -226,7 +226,7 @@ export class PaymentTestHelper {
 
   private async mock3DSAuth(authData: any) {
     const { challenge_response } = authData;
-    
+
     if (challenge_response === 'authenticate') {
       return {
         status: 200,
@@ -234,8 +234,8 @@ export class PaymentTestHelper {
           status: 'COMPLETED',
           authentication_result: 'success',
           payment_id: `pay_${Date.now()}`,
-          redirect_url: '/payment/success'
-        }
+          redirect_url: '/payment/success',
+        },
       };
     } else {
       return {
@@ -243,15 +243,15 @@ export class PaymentTestHelper {
         body: {
           status: 'FAILED',
           authentication_result: 'failed',
-          error: '3D Secure authentication failed'
-        }
+          error: '3D Secure authentication failed',
+        },
       };
     }
   }
 
   private async mockRefundProcessing(refundData: any) {
     const { payment_id, amount, reason } = refundData;
-    
+
     return {
       status: 200,
       body: {
@@ -261,29 +261,32 @@ export class PaymentTestHelper {
         status: 'REFUNDED',
         reason: reason,
         processed_date: new Date().toISOString(),
-        gateway_refund_id: `rfnd_${Date.now()}`
-      }
+        gateway_refund_id: `rfnd_${Date.now()}`,
+      },
     };
   }
 
   async createSuccessfulPayment(data: TestPayment): Promise<string> {
     // Create a successful payment record for testing
     const paymentId = `pay_test_${Date.now()}`;
-    
+
     // Mock API call to create payment
-    await this.page.evaluate(async (payment) => {
-      // Store in session storage for testing
-      const payments = JSON.parse(sessionStorage.getItem('test_payments') || '[]');
-      payments.push({
-        id: payment.id,
-        amount: payment.amount,
-        status: 'COMPLETED',
-        card_number: payment.cardNumber.slice(-4),
-        created_at: new Date().toISOString()
-      });
-      sessionStorage.setItem('test_payments', JSON.stringify(payments));
-    }, { id: paymentId, ...data });
-    
+    await this.page.evaluate(
+      async (payment) => {
+        // Store in session storage for testing
+        const payments = JSON.parse(sessionStorage.getItem('test_payments') || '[]');
+        payments.push({
+          id: payment.id,
+          amount: payment.amount,
+          status: 'COMPLETED',
+          card_number: payment.cardNumber.slice(-4),
+          created_at: new Date().toISOString(),
+        });
+        sessionStorage.setItem('test_payments', JSON.stringify(payments));
+      },
+      { id: paymentId, ...data }
+    );
+
     return paymentId;
   }
 
@@ -293,7 +296,7 @@ export class PaymentTestHelper {
       const payments = JSON.parse(sessionStorage.getItem('test_payments') || '[]');
       return payments.length > 0 ? payments[payments.length - 1].status : 'UNKNOWN';
     });
-    
+
     return status;
   }
 
@@ -304,7 +307,7 @@ export class PaymentTestHelper {
       const refund = refunds.find((r: any) => r.payment_id === id);
       return refund ? refund.status : 'NOT_REFUNDED';
     }, paymentId);
-    
+
     return status;
   }
 
@@ -314,7 +317,7 @@ export class PaymentTestHelper {
       const refund = refunds.find((r: any) => r.payment_id === id);
       return refund ? parseFloat(refund.amount) : 0;
     }, paymentId);
-    
+
     return amount;
   }
 
@@ -322,70 +325,76 @@ export class PaymentTestHelper {
     const remaining = await this.page.evaluate((id) => {
       const payments = JSON.parse(sessionStorage.getItem('test_payments') || '[]');
       const refunds = JSON.parse(sessionStorage.getItem('test_refunds') || '[]');
-      
+
       const payment = payments.find((p: any) => p.id === id);
       const refund = refunds.find((r: any) => r.payment_id === id);
-      
+
       if (!payment) return 0;
-      
+
       const originalAmount = parseFloat(payment.amount);
       const refundedAmount = refund ? parseFloat(refund.amount) : 0;
-      
+
       return originalAmount - refundedAmount;
     }, paymentId);
-    
+
     return remaining;
   }
 
   async simulateChargeback(paymentId: string, chargebackData: ChargebackData) {
     // Simulate chargeback webhook
-    await this.page.evaluate(async (data) => {
-      const chargebacks = JSON.parse(sessionStorage.getItem('test_chargebacks') || '[]');
-      chargebacks.push({
-        id: data.chargebackId,
-        payment_id: data.paymentId,
-        reason: data.reason,
-        amount: data.amount,
-        status: 'received',
-        created_at: new Date().toISOString()
-      });
-      sessionStorage.setItem('test_chargebacks', JSON.stringify(chargebacks));
-    }, { ...chargebackData, paymentId });
+    await this.page.evaluate(
+      async (data) => {
+        const chargebacks = JSON.parse(sessionStorage.getItem('test_chargebacks') || '[]');
+        chargebacks.push({
+          id: data.chargebackId,
+          payment_id: data.paymentId,
+          reason: data.reason,
+          amount: data.amount,
+          status: 'received',
+          created_at: new Date().toISOString(),
+        });
+        sessionStorage.setItem('test_chargebacks', JSON.stringify(chargebacks));
+      },
+      { ...chargebackData, paymentId }
+    );
   }
 
   async createCustomerWithFailedPayment(customerData: TestCustomerData): Promise<string> {
     const customerId = `cust_${Date.now()}`;
-    
-    await this.page.evaluate(async (data) => {
-      // Create customer with failed payment
-      const customers = JSON.parse(sessionStorage.getItem('test_customers') || '[]');
-      customers.push({
-        id: data.customerId,
-        email: data.email,
-        name: data.name || 'Test Customer',
-        failed_payment: {
-          amount: data.failedAmount,
-          failed_date: data.failedDate.toISOString(),
-          retry_count: 1,
-          next_retry: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString() // 3 days
-        },
-        dunning_stage: 'reminder_1',
-        created_at: new Date().toISOString()
-      });
-      sessionStorage.setItem('test_customers', JSON.stringify(customers));
-      
-      // Create dunning email record
-      const emails = JSON.parse(sessionStorage.getItem('test_dunning_emails') || '[]');
-      emails.push({
-        customer_id: data.customerId,
-        email_type: 'payment_failed_reminder',
-        sent_at: new Date().toISOString(),
-        subject: 'Payment Failed - Action Required',
-        content: `Your payment of ${data.failedAmount} failed. Please update your payment method.`
-      });
-      sessionStorage.setItem('test_dunning_emails', JSON.stringify(emails));
-    }, { customerId, ...customerData });
-    
+
+    await this.page.evaluate(
+      async (data) => {
+        // Create customer with failed payment
+        const customers = JSON.parse(sessionStorage.getItem('test_customers') || '[]');
+        customers.push({
+          id: data.customerId,
+          email: data.email,
+          name: data.name || 'Test Customer',
+          failed_payment: {
+            amount: data.failedAmount,
+            failed_date: data.failedDate.toISOString(),
+            retry_count: 1,
+            next_retry: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days
+          },
+          dunning_stage: 'reminder_1',
+          created_at: new Date().toISOString(),
+        });
+        sessionStorage.setItem('test_customers', JSON.stringify(customers));
+
+        // Create dunning email record
+        const emails = JSON.parse(sessionStorage.getItem('test_dunning_emails') || '[]');
+        emails.push({
+          customer_id: data.customerId,
+          email_type: 'payment_failed_reminder',
+          sent_at: new Date().toISOString(),
+          subject: 'Payment Failed - Action Required',
+          content: `Your payment of ${data.failedAmount} failed. Please update your payment method.`,
+        });
+        sessionStorage.setItem('test_dunning_emails', JSON.stringify(emails));
+      },
+      { customerId, ...customerData }
+    );
+
     return customerId;
   }
 
@@ -396,33 +405,36 @@ export class PaymentTestHelper {
         .filter((email: any) => email.customer_id === id)
         .map((email: any) => email.content);
     }, customerId);
-    
+
     return emails;
   }
 
   async createSubscription(data: SubscriptionData): Promise<string> {
     const subscriptionId = `sub_${Date.now()}`;
-    
-    await this.page.evaluate(async (subData) => {
-      const subscriptions = JSON.parse(sessionStorage.getItem('test_subscriptions') || '[]');
-      subscriptions.push({
-        id: subData.subscriptionId,
-        customer_id: subData.customerId,
-        plan_id: subData.planId,
-        status: 'active',
-        current_period_start: new Date().toISOString(),
-        current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        payment_method: {
-          card_last_four: subData.paymentMethod.cardNumber.slice(-4),
-          brand: 'visa',
-          exp_month: parseInt(subData.paymentMethod.expiry.split('/')[0]),
-          exp_year: parseInt('20' + subData.paymentMethod.expiry.split('/')[1])
-        },
-        created_at: new Date().toISOString()
-      });
-      sessionStorage.setItem('test_subscriptions', JSON.stringify(subscriptions));
-    }, { subscriptionId, ...data });
-    
+
+    await this.page.evaluate(
+      async (subData) => {
+        const subscriptions = JSON.parse(sessionStorage.getItem('test_subscriptions') || '[]');
+        subscriptions.push({
+          id: subData.subscriptionId,
+          customer_id: subData.customerId,
+          plan_id: subData.planId,
+          status: 'active',
+          current_period_start: new Date().toISOString(),
+          current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          payment_method: {
+            card_last_four: subData.paymentMethod.cardNumber.slice(-4),
+            brand: 'visa',
+            exp_month: parseInt(subData.paymentMethod.expiry.split('/')[0]),
+            exp_year: parseInt('20' + subData.paymentMethod.expiry.split('/')[1]),
+          },
+          created_at: new Date().toISOString(),
+        });
+        sessionStorage.setItem('test_subscriptions', JSON.stringify(subscriptions));
+      },
+      { subscriptionId, ...data }
+    );
+
     return subscriptionId;
   }
 
@@ -431,17 +443,17 @@ export class PaymentTestHelper {
     await this.page.evaluate(async (id) => {
       const subscriptions = JSON.parse(sessionStorage.getItem('test_subscriptions') || '[]');
       const subscription = subscriptions.find((s: any) => s.id === id);
-      
+
       if (subscription) {
         // Mark as past due
         subscription.status = 'past_due';
         subscription.last_payment_error = {
           code: 'card_declined',
           message: 'Your card was declined',
-          occurred_at: new Date().toISOString()
+          occurred_at: new Date().toISOString(),
         };
         subscription.retry_at = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
-        
+
         sessionStorage.setItem('test_subscriptions', JSON.stringify(subscriptions));
       }
     }, subscriptionId);
@@ -497,21 +509,23 @@ export class PaymentTestHelper {
   }
 
   // Helper for generating test card data
-  static getTestCardData(scenario: 'success' | 'decline' | '3ds' | 'insufficient' | 'expired' | 'fraud') {
+  static getTestCardData(
+    scenario: 'success' | 'decline' | '3ds' | 'insufficient' | 'expired' | 'fraud'
+  ) {
     const cards = {
       success: '4242424242424242',
       decline: '4000000000000002',
       '3ds': '4000000000003220',
       insufficient: '4000000000009995',
       expired: '4000000000000069',
-      fraud: '4100000000000019'
+      fraud: '4100000000000019',
     };
 
     return {
       cardNumber: cards[scenario],
       expiry: scenario === 'expired' ? '01/20' : '12/25',
       cvv: '123',
-      name: 'Test Customer'
+      name: 'Test Customer',
     };
   }
 }

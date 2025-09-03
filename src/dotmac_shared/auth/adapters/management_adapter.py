@@ -124,11 +124,11 @@ class ManagementAuthAdapter:
             "user_type": "admin",
             "platform": "management",
             "session_id": hashlib.sha256(
-                f"{admin_data['admin_id']}{datetime.utcnow()}".encode()
+                f"{admin_data['admin_id']}{datetime.now(timezone.utc)}".encode()
             ).hexdigest(),
             "mfa_verified": admin_data.get("mfa_verified", False),
-            "iat": datetime.utcnow(),
-            "exp": datetime.utcnow() + timedelta(hours=self.token_expiry_hours),
+            "iat": datetime.now(timezone.utc),
+            "exp": datetime.now(timezone.utc) + timedelta(hours=self.token_expiry_hours),
         }
 
         return jwt.encode(payload, self.jwt_secret, algorithm=self.jwt_algorithm)
@@ -224,7 +224,7 @@ class ManagementAuthAdapter:
                 "roles": admin_data["roles"],
                 "permissions": permissions_result.get("permissions", []),
                 "mfa_verified": mfa_verified,
-                "last_login": datetime.utcnow().isoformat(),
+                "last_login": datetime.now(timezone.utc).isoformat(),
             }
 
             # Generate JWT token
@@ -239,7 +239,7 @@ class ManagementAuthAdapter:
                 "admin": auth_data,
                 "token": token,
                 "expires_at": (
-                    datetime.utcnow() + timedelta(hours=self.token_expiry_hours)
+                    datetime.now(timezone.utc) + timedelta(hours=self.token_expiry_hours)
                 ).isoformat(),
                 "session_timeout": self.token_expiry_hours * 3600,  # In seconds
             }
@@ -308,7 +308,7 @@ class ManagementAuthAdapter:
 
             # Check expiration
             exp_timestamp = payload.get("exp")
-            if exp_timestamp and datetime.utcnow().timestamp() > exp_timestamp:
+            if exp_timestamp and datetime.now(timezone.utc).timestamp() > exp_timestamp:
                 return {
                     "success": False,
                     "error": "token_expired",
@@ -383,7 +383,7 @@ class ManagementAuthAdapter:
                 "success": True,
                 "token": new_token,
                 "expires_at": (
-                    datetime.utcnow() + timedelta(hours=self.token_expiry_hours)
+                    datetime.now(timezone.utc) + timedelta(hours=self.token_expiry_hours)
                 ).isoformat(),
             }
 

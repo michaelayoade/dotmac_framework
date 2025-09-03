@@ -44,8 +44,7 @@ curl http://localhost:8000/health
 **Required Reading:**
 - [Platform Architecture Overview](ARCHITECTURE.md)
 - [API Documentation](https://docs.dotmac.platform/api/)
-- [Database Schema Guide](docs/database/SCHEMA.md)
-- [Security Implementation](docs/security/SECURITY_IMPLEMENTATION.md)
+- [Security Production Checklist](SECURITY_PRODUCTION_CHECKLIST.md)
 
 **Hands-On Exercises:**
 1. **API Exploration:**
@@ -784,9 +783,9 @@ curl -X POST "https://api.statuspage.io/v1/pages/$PAGE_ID/incidents" \
 
 ### Documentation Links
 - [API Reference](https://docs.dotmac.platform/api/)
-- [Architecture Guide](docs/ARCHITECTURE.md)
-- [Security Documentation](docs/security/)
-- [Operations Runbooks](docs/operations/)
+- [Architecture Guide](./ARCHITECTURE.md)
+- [Security Production Checklist](./SECURITY_PRODUCTION_CHECKLIST.md)
+- [Production Deployment Runbook](./PRODUCTION_DEPLOYMENT_RUNBOOK.md)
 
 ### Training Videos
 - Platform Overview (30 minutes)

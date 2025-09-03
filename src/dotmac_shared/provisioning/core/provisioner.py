@@ -74,7 +74,7 @@ class ContainerProvisioner:
             isp_id=request.isp_id,
             success=False,
             status=DeploymentStatus.PENDING,
-            start_time=datetime.utcnow(),
+            start_time=datetime.now(timezone.utc),
         )
 
         # Track this operation

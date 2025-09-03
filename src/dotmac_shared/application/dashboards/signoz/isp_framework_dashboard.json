@@ -1,0 +1,317 @@
+{
+  "title": "DotMac ISP Framework - Customer Experience Dashboard",
+  "description": "Customer-focused SLOs and experience metrics for ISP Framework",
+  "tags": ["dotmac", "isp", "customer", "experience", "slo"],
+  "layout": [
+    {
+      "x": 0,
+      "y": 0,
+      "w": 24,
+      "h": 3,
+      "i": "service-health"
+    },
+    {
+      "x": 0,
+      "y": 3,
+      "w": 12,
+      "h": 9,
+      "i": "login-slos"
+    },
+    {
+      "x": 12,
+      "y": 3,
+      "w": 12,
+      "h": 9,
+      "i": "provisioning-slos"
+    },
+    {
+      "x": 0,
+      "y": 12,
+      "w": 24,
+      "h": 9,
+      "i": "support-slos"
+    },
+    {
+      "x": 0,
+      "y": 21,
+      "w": 12,
+      "h": 9,
+      "i": "network-performance"
+    },
+    {
+      "x": 12,
+      "y": 21,
+      "w": 12,
+      "h": 9,
+      "i": "billing-slos"
+    },
+    {
+      "x": 0,
+      "y": 30,
+      "w": 24,
+      "h": 9,
+      "i": "customer-satisfaction"
+    }
+  ],
+  "widgets": [
+    {
+      "id": "service-health",
+      "title": "Service Health & Active Customers",
+      "description": "Overall service health and customer activity",
+      "widgetType": "value",
+      "query": {
+        "queryType": "builder",
+        "promql": "up{service=~\"isp-.*\"}",
+        "builder": {
+          "queryName": "A",
+          "metricName": "up",
+          "tagFilters": {
+            "items": [
+              {
+                "key": "service",
+                "op": "=~",
+                "value": "isp-.*"
+              }
+            ]
+          }
+        }
+      },
+      "panelTypes": "graph",
+      "yAxisUnit": "short"
+    },
+    {
+      "id": "login-slos",
+      "title": "Customer Login SLOs",
+      "description": "Login success rate and response time SLOs",
+      "widgetType": "graph",
+      "query": {
+        "queryType": "builder",
+        "promql": "rate(isp_framework_login_attempts_total{result=\"success\"}[5m]) / rate(isp_framework_login_attempts_total[5m])",
+        "builder": {
+          "queryName": "A",
+          "metricName": "isp_framework_login_attempts_total",
+          "tagFilters": {
+            "items": [
+              {
+                "key": "result",
+                "op": "=",
+                "value": "success"
+              }
+            ]
+          },
+          "aggregateOperator": "rate",
+          "aggregateAttribute": {
+            "key": "5m"
+          }
+        }
+      },
+      "panelTypes": "graph",
+      "yAxisUnit": "percentunit",
+      "thresholds": [
+        {
+          "thresholdValue": 0.98,
+          "thresholdColor": "Green",
+          "thresholdFormat": "Above"
+        },
+        {
+          "thresholdValue": 0.95,
+          "thresholdColor": "Yellow",
+          "thresholdFormat": "Above"
+        }
+      ]
+    },
+    {
+      "id": "provisioning-slos",
+      "title": "Service Provisioning SLOs",
+      "description": "Time to provision new services for customers",
+      "widgetType": "graph",
+      "query": {
+        "queryType": "builder",
+        "promql": "histogram_quantile(0.95, rate(isp_framework_provisioning_duration_seconds_bucket[5m]))",
+        "builder": {
+          "queryName": "A",
+          "metricName": "isp_framework_provisioning_duration_seconds_bucket",
+          "aggregateOperator": "hist_quantile_95",
+          "aggregateAttribute": {
+            "key": "5m"
+          },
+          "groupBy": ["service_type"]
+        }
+      },
+      "panelTypes": "graph",
+      "yAxisUnit": "s",
+      "thresholds": [
+        {
+          "thresholdValue": 60,
+          "thresholdColor": "Green",
+          "thresholdFormat": "Below"
+        },
+        {
+          "thresholdValue": 120,
+          "thresholdColor": "Yellow",
+          "thresholdFormat": "Below"
+        }
+      ]
+    },
+    {
+      "id": "support-slos",
+      "title": "Customer Support SLOs",
+      "description": "Support ticket resolution time and satisfaction",
+      "widgetType": "graph",
+      "query": {
+        "queryType": "builder",
+        "promql": "histogram_quantile(0.95, rate(isp_framework_customer_support_resolution_time_bucket[1h]))",
+        "builder": {
+          "queryName": "A",
+          "metricName": "isp_framework_customer_support_resolution_time_bucket",
+          "aggregateOperator": "hist_quantile_95",
+          "aggregateAttribute": {
+            "key": "1h"
+          }
+        }
+      },
+      "panelTypes": "graph",
+      "yAxisUnit": "s",
+      "thresholds": [
+        {
+          "thresholdValue": 3600,
+          "thresholdColor": "Green",
+          "thresholdFormat": "Below"
+        },
+        {
+          "thresholdValue": 7200,
+          "thresholdColor": "Yellow",
+          "thresholdFormat": "Below"
+        }
+      ]
+    },
+    {
+      "id": "network-performance",
+      "title": "Network API Performance",
+      "description": "Network management API performance metrics",
+      "widgetType": "graph",
+      "query": {
+        "queryType": "builder",
+        "promql": "rate(isp_framework_http_requests_total{endpoint=~\"/api/network/.*\"}[5m])",
+        "builder": {
+          "queryName": "A",
+          "metricName": "isp_framework_http_requests_total",
+          "tagFilters": {
+            "items": [
+              {
+                "key": "endpoint",
+                "op": "=~",
+                "value": "/api/network/.*"
+              }
+            ]
+          },
+          "aggregateOperator": "rate",
+          "aggregateAttribute": {
+            "key": "5m"
+          }
+        }
+      },
+      "panelTypes": "graph",
+      "yAxisUnit": "reqps"
+    },
+    {
+      "id": "billing-slos",
+      "title": "Billing & Payment SLOs",
+      "description": "Billing system performance and revenue metrics",
+      "widgetType": "graph",
+      "query": {
+        "queryType": "builder",
+        "promql": "rate(isp_framework_revenue_transactions_total{result=\"success\"}[5m]) / rate(isp_framework_revenue_transactions_total[5m])",
+        "builder": {
+          "queryName": "A",
+          "metricName": "isp_framework_revenue_transactions_total",
+          "tagFilters": {
+            "items": [
+              {
+                "key": "result",
+                "op": "=",
+                "value": "success"
+              }
+            ]
+          },
+          "aggregateOperator": "rate",
+          "aggregateAttribute": {
+            "key": "5m"
+          }
+        }
+      },
+      "panelTypes": "graph",
+      "yAxisUnit": "percentunit",
+      "thresholds": [
+        {
+          "thresholdValue": 0.99,
+          "thresholdColor": "Green", 
+          "thresholdFormat": "Above"
+        },
+        {
+          "thresholdValue": 0.95,
+          "thresholdColor": "Yellow",
+          "thresholdFormat": "Above"
+        }
+      ]
+    },
+    {
+      "id": "customer-satisfaction",
+      "title": "Customer Experience Metrics",
+      "description": "Overall customer satisfaction and churn metrics",
+      "widgetType": "value",
+      "query": {
+        "queryType": "builder",
+        "promql": "isp_framework_customer_satisfaction_score{score_type=\"nps\"}",
+        "builder": {
+          "queryName": "A",
+          "metricName": "isp_framework_customer_satisfaction_score",
+          "tagFilters": {
+            "items": [
+              {
+                "key": "score_type",
+                "op": "=",
+                "value": "nps"
+              }
+            ]
+          }
+        }
+      },
+      "panelTypes": "graph",
+      "yAxisUnit": "short",
+      "thresholds": [
+        {
+          "thresholdValue": 80,
+          "thresholdColor": "Green",
+          "thresholdFormat": "Above"
+        },
+        {
+          "thresholdValue": 60,
+          "thresholdColor": "Yellow",
+          "thresholdFormat": "Above"
+        }
+      ]
+    }
+  ],
+  "variables": [
+    {
+      "name": "tenant_id",
+      "type": "QUERY",
+      "query": "label_values(isp_framework_http_requests_total, tenant_id)",
+      "sort": "disabled",
+      "multiSelect": true,
+      "includeAllOption": true,
+      "defaultValue": []
+    },
+    {
+      "name": "service_type",
+      "type": "QUERY",
+      "query": "label_values(isp_framework_provisioning_requests_total, service_type)",
+      "sort": "disabled",
+      "multiSelect": true,
+      "includeAllOption": true,
+      "defaultValue": []
+    }
+  ],
+  "version": "v0.21.0"
+}

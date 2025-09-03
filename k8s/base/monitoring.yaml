@@ -1,95 +1,68 @@
-apiVersion: v1
+apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: dotmac-platform-monitor
-  namespace: dotmac-monitoring
+  name: dotmac-management-monitor
+  namespace: dotmac-system
   labels:
-    app: dotmac-platform
-    release: prometheus
+    app.kubernetes.io/name: dotmac-management
+    app.kubernetes.io/instance: dotmac-platform
+    app.kubernetes.io/component: monitoring
 spec:
   selector:
     matchLabels:
-      app: dotmac-platform
-  namespaceSelector:
-    matchNames:
-      - dotmac-production
+      app.kubernetes.io/name: dotmac-management
   endpoints:
-    - port: http
-      path: /metrics
-      interval: 30s
-      scrapeTimeout: 10s
+  - port: http
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
 ---
 apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
+kind: ServiceMonitor
 metadata:
-  name: dotmac-platform-alerts
-  namespace: dotmac-monitoring
+  name: dotmac-plugin-runner-monitor
+  namespace: dotmac-plugins
   labels:
-    app: dotmac-platform
-    release: prometheus
+    app.kubernetes.io/name: dotmac-plugin-runner
+    app.kubernetes.io/instance: dotmac-platform
+    app.kubernetes.io/component: monitoring
 spec:
-  groups:
-    - name: dotmac-platform.rules
-      rules:
-        - alert: DotMacPlatformDown
-          expr: up{job="dotmac-platform"} == 0
-          for: 1m
-          labels:
-            severity: critical
-          annotations:
-            summary: "DotMac Platform is down"
-            description: "DotMac Platform has been down for more than 1 minute"
-
-        - alert: DotMacPlatformHighErrorRate
-          expr: rate(http_requests_total{job="dotmac-platform",status_code=~"5.."}[5m]) > 0.1
-          for: 2m
-          labels:
-            severity: warning
-          annotations:
-            summary: "High error rate on DotMac Platform"
-            description: "Error rate is {{ $value }} errors per second"
-
-        - alert: DotMacPlatformHighLatency
-          expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="dotmac-platform"}[5m])) > 1
-          for: 5m
-          labels:
-            severity: warning
-          annotations:
-            summary: "High latency on DotMac Platform"
-            description: "95th percentile latency is {{ $value }}s"
-
-        - alert: DotMacPlatformCircuitBreakerOpen
-          expr: circuit_breaker_state{job="dotmac-platform"} == 1
-          for: 1m
-          labels:
-            severity: warning
-          annotations:
-            summary: "Circuit breaker open"
-            description: "Circuit breaker {{ $labels.service }}/{{ $labels.operation }} is open"
-
-        - alert: DotMacPlatformDatabaseConnectionFailed
-          expr: database_connections_active{job="dotmac-platform"} == 0
-          for: 30s
-          labels:
-            severity: critical
-          annotations:
-            summary: "Database connection failed"
-            description: "No active database connections"
-
-        - alert: DotMacPlatformHighMemoryUsage
-          expr: container_memory_usage_bytes{pod=~"dotmac-platform-.*"} / container_spec_memory_limit_bytes > 0.9
-          for: 5m
-          labels:
-            severity: warning
-          annotations:
-            summary: "High memory usage"
-            description: "Memory usage is {{ $value | humanizePercentage }}"
-
-        - alert: DotMacPlatformHighCPUUsage
-          expr: rate(container_cpu_usage_seconds_total{pod=~"dotmac-platform-.*"}[5m]) / container_spec_cpu_quota * 100 > 80
-          for: 5m
-          labels:
-            severity: warning
-          annotations:
-            summary: "High CPU usage"
-            description: "CPU usage is {{ $value }}%"
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: dotmac-plugin-runner
+  endpoints:
+  - port: http
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: plugin-health-check
+  namespace: dotmac-plugins
+  labels:
+    app.kubernetes.io/name: plugin-health-check
+    app.kubernetes.io/component: monitoring
+spec:
+  schedule: "*/5 * * * *"  # Every 5 minutes
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: health-checker
+            image: curlimages/curl:latest
+            command:
+            - /bin/sh
+            - -c
+            - |
+              echo "Checking plugin runner health..."
+              if curl -f http://dotmac-plugin-runner.dotmac-plugins.svc.cluster.local:8002/health; then
+                echo "Plugin runner is healthy"
+              else
+                echo "Plugin runner health check failed"
+                exit 1
+              fi
+          restartPolicy: OnFailure
+          activeDeadlineSeconds: 300

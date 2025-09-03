@@ -221,7 +221,7 @@ async def public_tenant_signup(
         # Rate limiting check (basic implementation)
         recent_signups = db.query(CustomerTenant).filter(
             CustomerTenant.admin_email == signup_request.admin_email,
-            CustomerTenant.created_at > datetime.utcnow() - timedelta(hours=1)
+            CustomerTenant.created_at > datetime.now(timezone.utc) - timedelta(hours=1)
         ).count()
         
         if recent_signups >= 3:
@@ -249,14 +249,14 @@ async def public_tenant_signup(
                 "utm_campaign": signup_request.utm_campaign,
                 "utm_source": signup_request.utm_source,
                 "utm_medium": signup_request.utm_medium,
-                "signup_timestamp": datetime.utcnow().isoformat(),
+                "signup_timestamp": datetime.now(timezone.utc).isoformat(),
                 "signup_ip": "0.0.0.0",  # Would get from request
                 "verification_code": verification_code,
-                "verification_expires": (datetime.utcnow() + timedelta(hours=24)).isoformat(),
+                "verification_expires": (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat(),
                 "public_signup": True
             },
             status=TenantStatus.PENDING_VERIFICATION,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         
         # Save tenant to database
@@ -347,7 +347,7 @@ async def verify_email_and_provision(
         
         if expires_str:
             expires = datetime.fromisoformat(expires_str)
-            if datetime.utcnow() > expires:
+            if datetime.now(timezone.utc) > expires:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Verification code has expired"
@@ -355,11 +355,11 @@ async def verify_email_and_provision(
         
         # Mark as verified and queue provisioning
         tenant.status = TenantStatus.REQUESTED
-        tenant.provisioning_started_at = datetime.utcnow()
+        tenant.provisioning_started_at = datetime.now(timezone.utc)
         
         # Clear verification data
         settings["email_verified"] = True
-        settings["email_verified_at"] = datetime.utcnow().isoformat()
+        settings["email_verified_at"] = datetime.now(timezone.utc).isoformat()
         settings.pop("verification_code", None)
         settings.pop("verification_expires", None)
         tenant.settings = settings

@@ -12,7 +12,7 @@ from sqlalchemy.exc import IntegrityError
 
 from dotmac_shared.auth.models import User, Role, Permission
 from dotmac_shared.auth.core.password_service import PasswordService
-from dotmac_shared.database.base import get_db_session
+from dotmac_shared.database.base import get_db_session_sync
 from dotmac_management.models.tenant import ManagementTenant
 from dotmac_shared.core.logging import get_logger
 
@@ -28,11 +28,14 @@ class ManagementBootstrap:
     def should_bootstrap(self) -> bool:
         """Check if bootstrap is needed (no admin users exist)"""
         try:
-            with get_db_session() as db:
+            db = get_db_session_sync()
+            try:
                 admin_count = db.query(User).join(User.roles).filter(
                     Role.name.in_(['super_admin', 'platform_admin'])
                 ).count()
                 return admin_count == 0
+            finally:
+                db.close()
         except Exception as e:
             logger.warning(f"Could not check bootstrap status: {e}")
             return True
@@ -72,7 +75,8 @@ class ManagementBootstrap:
     async def _perform_bootstrap(self, admin_email: str, admin_password: str) -> bool:
         """Perform the actual bootstrap process"""
         try:
-            with get_db_session() as db:
+            db = get_db_session_sync()
+            try:
                 # Create core roles and permissions
                 await self._create_core_roles_permissions(db)
                 
@@ -93,6 +97,9 @@ class ManagementBootstrap:
                 
                 return True
                 
+            finally:
+                db.close()
+        
         except Exception as e:
             logger.error(f"Bootstrap failed: {e}")
             raise

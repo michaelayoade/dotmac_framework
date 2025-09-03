@@ -9,10 +9,15 @@ Turbo, and a component-driven architecture.
 
 ```
 frontend/
-├── apps/                    # Frontend applications
+├── isp-framework/           # ISP applications
 │   ├── admin/              # Admin portal (port 3000)
 │   ├── customer/           # Customer portal (port 3001)
-│   └── reseller/           # Reseller portal (port 3002)
+│   ├── reseller/           # Reseller portal (port 3002)
+│   └── field-ops/          # Technician portal (port 3003)
+├── management-portal/       # Management applications
+│   ├── admin/              # Management admin portal
+│   ├── reseller/           # Management reseller portal
+│   └── tenant/             # Tenant portal
 ├── packages/               # Shared packages
 │   ├── headless/          # Business logic & hooks
 │   ├── primitives/        # UI components
@@ -22,7 +27,7 @@ frontend/
 
 ### Applications
 
-#### 🔧 Admin Portal (`/apps/admin`)
+#### 🔧 Admin Portal (`/isp-framework/admin`)
 
 Full-featured ISP administration interface for:
 
@@ -36,7 +41,7 @@ Full-featured ISP administration interface for:
 
 **Target Users**: ISP administrators, network engineers, support staff
 
-#### 👤 Customer Portal (`/apps/customer`)
+#### 👤 Customer Portal (`/isp-framework/customer`)
 
 Self-service portal for ISP customers:
 
@@ -48,7 +53,7 @@ Self-service portal for ISP customers:
 
 **Target Users**: ISP end customers
 
-#### 🤝 Reseller Portal (`/apps/reseller`)
+#### 🤝 Reseller Portal (`/isp-framework/reseller`)
 
 Partner interface for ISP resellers:
 
@@ -253,9 +258,9 @@ pnpm --filter @dotmac/admin-app build
 
 ```bash
 # Build Docker images
-docker build -f apps/admin/Dockerfile -t dotmac-admin .
-docker build -f apps/customer/Dockerfile -t dotmac-customer .
-docker build -f apps/reseller/Dockerfile -t dotmac-reseller .
+docker build -f isp-framework/admin/Dockerfile -t dotmac-admin .
+docker build -f isp-framework/customer/Dockerfile -t dotmac-customer .
+docker build -f isp-framework/reseller/Dockerfile -t dotmac-reseller .
 
 # Run with Docker Compose
 docker-compose -f docker-compose.frontend.yml up

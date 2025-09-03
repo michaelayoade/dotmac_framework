@@ -1,0 +1,291 @@
+name: E2E Dev 4 - Integration & Communication Tests
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'tests/e2e/management-tenant-communication.spec.ts'
+      - 'tests/e2e/external-integrations.spec.ts'  
+      - 'tests/e2e/realtime-systems.spec.ts'
+      - 'tests/utils/tenant-factory.ts'
+      - 'tests/utils/communication-helpers.ts'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'tests/e2e/management-tenant-communication.spec.ts'
+      - 'tests/e2e/external-integrations.spec.ts'
+      - 'tests/e2e/realtime-systems.spec.ts'
+      - 'tests/utils/**'
+  schedule:
+    # Run integration tests daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+env:
+  NODE_VERSION: '18'
+  PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/pw-browsers
+
+jobs:
+  integration-tests:
+    name: Integration & Communication E2E Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: testpassword
+          POSTGRES_DB: dotmac_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Setup Python for backend services
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Install Python dependencies
+        run: |
+          poetry install
+          poetry run pip install pytest-asyncio
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.PLAYWRIGHT_BROWSERS_PATH }}
+          key: ${{ runner.os }}-playwright-browsers-${{ hashFiles('package-lock.json') }}
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium firefox
+
+      - name: Setup test environment variables
+        run: |
+          echo "DATABASE_URL=postgresql://postgres:testpassword@localhost:5432/dotmac_test" >> $GITHUB_ENV
+          echo "REDIS_URL=redis://localhost:6379" >> $GITHUB_ENV
+          echo "MANAGEMENT_API_URL=http://localhost:8000" >> $GITHUB_ENV
+          echo "TEST_API_KEY=${{ secrets.TEST_API_KEY || 'test_key_ci_12345' }}" >> $GITHUB_ENV
+          echo "STRIPE_TEST_KEY=${{ secrets.STRIPE_TEST_KEY || 'sk_test_mock' }}" >> $GITHUB_ENV
+          echo "SENDGRID_API_KEY=${{ secrets.SENDGRID_TEST_KEY || 'SG.mock.test' }}" >> $GITHUB_ENV
+          echo "TWILIO_ACCOUNT_SID=${{ secrets.TWILIO_TEST_SID || 'AC_mock_test' }}" >> $GITHUB_ENV
+          echo "TWILIO_AUTH_TOKEN=${{ secrets.TWILIO_TEST_TOKEN || 'mock_token' }}" >> $GITHUB_ENV
+          echo "KUBERNETES_CONFIG=mock" >> $GITHUB_ENV
+          echo "CI=true" >> $GITHUB_ENV
+
+      - name: Setup test database
+        run: |
+          poetry run python -c "
+          import asyncpg
+          import asyncio
+          async def setup():
+              conn = await asyncpg.connect('postgresql://postgres:testpassword@localhost:5432/postgres')
+              await conn.execute('DROP DATABASE IF EXISTS dotmac_test')
+              await conn.execute('CREATE DATABASE dotmac_test')
+              await conn.close()
+          asyncio.run(setup())
+          "
+
+      - name: Start Management API server
+        run: |
+          cd src
+          poetry run uvicorn dotmac_management.main:app --host 0.0.0.0 --port 8000 &
+          echo $! > management_api.pid
+          sleep 10
+
+      - name: Start test tenant containers (mock)
+        run: |
+          # Mock tenant containers for testing
+          node tests/mock-servers/tenant-mock.js &
+          echo $! > tenant_mock.pid
+          sleep 5
+
+      - name: Wait for services to be ready
+        run: |
+          timeout 60 bash -c 'until curl -f http://localhost:8000/api/health; do sleep 2; done'
+          timeout 30 bash -c 'until curl -f http://localhost:3100/health; do sleep 2; done'
+
+      - name: Run Management-Tenant Communication Tests
+        run: |
+          npx playwright test tests/e2e/management-tenant-communication.spec.ts \
+            --project=chromium \
+            --reporter=html,junit \
+            --output-dir=test-results/communication
+        continue-on-error: false
+
+      - name: Run Plugin-Based Integration Tests  
+        run: |
+          npx playwright test tests/e2e/plugin-based-integrations.spec.ts \
+            --project=chromium \
+            --reporter=html,junit \
+            --output-dir=test-results/plugins
+        env:
+          # Use mock services in CI unless real credentials provided
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET || 'whsec_mock' }}
+          USE_MOCK_SERVICES: ${{ secrets.USE_REAL_EXTERNAL_SERVICES != 'true' && 'true' || 'false' }}
+
+      - name: Run Real-time System Tests
+        run: |
+          npx playwright test tests/e2e/realtime-systems.spec.ts \
+            --project=chromium \
+            --reporter=html,junit \
+            --output-dir=test-results/realtime
+
+      - name: Generate test coverage report
+        run: |
+          npx nyc report --reporter=html --reporter=lcov --report-dir=coverage/e2e-integration
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-integration-test-results
+          path: |
+            test-results/
+            playwright-report/
+            coverage/e2e-integration/
+          retention-days: 7
+
+      - name: Upload JUnit test results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: E2E Integration Tests
+          path: 'test-results/**/results.xml'
+          reporter: java-junit
+
+      - name: Comment PR with test results
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            let comment = '## 🧪 E2E Integration Test Results\n\n';
+            
+            try {
+              const communicationResults = fs.existsSync('test-results/communication') ? '✅ Passed' : '❌ Failed';
+              const pluginResults = fs.existsSync('test-results/plugins') ? '✅ Passed' : '❌ Failed';  
+              const realtimeResults = fs.existsSync('test-results/realtime') ? '✅ Passed' : '❌ Failed';
+              
+              comment += `- **Management-Tenant Communication**: ${communicationResults}\n`;
+              comment += `- **Plugin-Based Integrations**: ${pluginResults}\n`;
+              comment += `- **Real-time Systems**: ${realtimeResults}\n\n`;
+              comment += `📊 [View detailed results](${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID})\n`;
+            } catch (e) {
+              comment += '⚠️ Unable to parse test results\n';
+            }
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: Cleanup processes
+        if: always()
+        run: |
+          [[ -f management_api.pid ]] && kill $(cat management_api.pid) || true
+          [[ -f tenant_mock.pid ]] && kill $(cat tenant_mock.pid) || true
+
+  integration-smoke-test:
+    name: Integration Smoke Test (Fast)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright
+        run: npx playwright install chromium
+
+      - name: Run critical integration smoke tests
+        run: |
+          # Run only critical test scenarios marked with @smoke
+          npx playwright test \
+            --grep "@smoke" \
+            tests/e2e/management-tenant-communication.spec.ts \
+            tests/e2e/plugin-based-integrations.spec.ts \
+            tests/e2e/realtime-systems.spec.ts \
+            --project=chromium \
+            --reporter=line
+        env:
+          USE_MOCK_SERVICES: true
+          FAST_TEST_MODE: true
+
+  security-scan:
+    name: Security Scan for Integration Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository  
+        uses: actions/checkout@v4
+
+      - name: Run Semgrep security scan
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: |
+            rules:
+              - id: hardcoded-credentials
+                patterns:
+                  - pattern: |
+                      $API_KEY = "..."
+                  - pattern: |
+                      password = "..."
+                message: Hardcoded credentials detected
+                languages: [typescript, javascript]
+                severity: ERROR
+            
+              - id: external-api-calls
+                patterns:
+                  - pattern: fetch($URL, ...)
+                  - pattern: axios.post($URL, ...)
+                message: External API call - ensure proper error handling
+                languages: [typescript, javascript]
+                severity: WARNING
+        env:
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}

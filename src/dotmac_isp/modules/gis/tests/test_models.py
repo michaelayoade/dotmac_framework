@@ -243,7 +243,7 @@ class TestRouteOptimization:
             optimized_route=optimized_route,
             total_distance_km=12.5,
             estimated_duration_minutes=180,
-            calculated_at=datetime.utcnow(),
+            calculated_at=datetime.now(timezone.utc),
         )
 
         assert route.optimization_type == "shortest"

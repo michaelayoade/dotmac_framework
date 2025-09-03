@@ -1,0 +1,246 @@
+groups:
+  # =============================================================================
+  # CRITICAL PRODUCTION ALERTS (5xx, Readiness Down)
+  # =============================================================================
+  - name: dotmac-critical
+    rules:
+      - alert: HighErrorRate5xx
+        expr: |
+          (
+            sum(rate(http_requests_total{status=~"5.."}[5m])) by (job, instance) / 
+            sum(rate(http_requests_total[5m])) by (job, instance)
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          category: availability
+        annotations:
+          summary: "High 5xx error rate on {{ $labels.job }}"
+          description: "{{ $labels.job }} on {{ $labels.instance }} has more than 5% 5xx errors over the last 5 minutes. Current rate: {{ $value | humanizePercentage }}"
+
+      - alert: ServiceDown
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: critical
+          category: availability
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "{{ $labels.job }} on {{ $labels.instance }} has been down for more than 2 minutes"
+
+      - alert: ManagementAPIDown
+        expr: up{job="management-platform"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          category: core_service
+        annotations:
+          summary: "Management API is down"
+          description: "The core Management API is not responding - immediate attention required"
+
+  # =============================================================================
+  # PERFORMANCE ALERTS (Provisioning Latency, Response Times)
+  # =============================================================================
+  - name: dotmac-performance
+    rules:
+      - alert: TenantProvisioningLatencyHigh
+        expr: |
+          histogram_quantile(0.95, 
+            sum(rate(provisioning_duration_seconds_bucket[5m])) by (le)
+          ) > 60
+        for: 10m
+        labels:
+          severity: warning
+          category: performance
+        annotations:
+          summary: "High tenant provisioning latency"
+          description: "Tenant provisioning p95 latency is {{ $value }}s (threshold: 60s) over the last 10 minutes"
+
+      - alert: APIResponseTimeHigh
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(http_request_duration_seconds_bucket{job=~".*-platform"}[5m])) by (job, le)
+          ) > 2
+        for: 5m
+        labels:
+          severity: warning
+          category: performance
+        annotations:
+          summary: "High API response time on {{ $labels.job }}"
+          description: "{{ $labels.job }} p95 response time is {{ $value }}s (threshold: 2s)"
+
+      - alert: DatabaseQueryLatencyHigh
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(database_query_duration_seconds_bucket[5m])) by (le)
+          ) > 1
+        for: 10m
+        labels:
+          severity: warning
+          category: database
+        annotations:
+          summary: "High database query latency"
+          description: "Database p95 query latency is {{ $value }}s (threshold: 1s)"
+
+  # =============================================================================
+  # AUTHENTICATION & SECURITY ALERTS  
+  # =============================================================================
+  - name: dotmac-security
+    rules:
+      - alert: LoginSuccessRateLow
+        expr: |
+          (
+            sum(rate(login_attempts_total{result="success"}[5m])) / 
+            sum(rate(login_attempts_total[5m]))
+          ) < 0.98
+        for: 10m
+        labels:
+          severity: warning
+          category: authentication
+        annotations:
+          summary: "Low login success rate"
+          description: "Login success rate is {{ $value | humanizePercentage }} (threshold: 98%) over the last 10 minutes"
+
+      - alert: HighFailedLoginRate
+        expr: |
+          sum(rate(login_attempts_total{result="failed"}[5m])) > 10
+        for: 5m
+        labels:
+          severity: warning
+          category: security
+        annotations:
+          summary: "High failed login attempts"
+          description: "{{ $value }} failed login attempts per second over the last 5 minutes - possible attack"
+
+      - alert: UnauthorizedAccessAttempts
+        expr: |
+          sum(rate(http_requests_total{status="401"}[5m])) > 20
+        for: 5m
+        labels:
+          severity: warning
+          category: security
+        annotations:
+          summary: "High unauthorized access attempts"
+          description: "{{ $value }} unauthorized access attempts per second - monitoring for security threats"
+
+  # =============================================================================
+  # INFRASTRUCTURE ALERTS
+  # =============================================================================  
+  - name: dotmac-infrastructure
+    rules:
+      - alert: HighMemoryUsage
+        expr: |
+          (
+            (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / 
+            node_memory_MemTotal_bytes
+          ) > 0.9
+        for: 10m
+        labels:
+          severity: warning
+          category: infrastructure
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage is {{ $value | humanizePercentage }} (threshold: 90%)"
+
+      - alert: HighCPUUsage
+        expr: |
+          (
+            100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
+          ) > 85
+        for: 10m
+        labels:
+          severity: warning
+          category: infrastructure
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is {{ $value }}% (threshold: 85%)"
+
+      - alert: DiskSpaceLow
+        expr: |
+          (
+            (node_filesystem_size_bytes - node_filesystem_free_bytes) / 
+            node_filesystem_size_bytes
+          ) > 0.85
+        for: 15m
+        labels:
+          severity: warning
+          category: infrastructure
+        annotations:
+          summary: "Low disk space on {{ $labels.instance }}"
+          description: "Disk usage is {{ $value | humanizePercentage }} on {{ $labels.mountpoint }}"
+
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          category: infrastructure
+        annotations:
+          summary: "Redis is down"
+          description: "Redis cache service is not responding - impacts session management and caching"
+
+      - alert: PostgreSQLDown
+        expr: up{job="postgresql"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          category: infrastructure
+        annotations:
+          summary: "PostgreSQL is down"
+          description: "PostgreSQL database is not responding - critical system failure"
+
+  # =============================================================================
+  # BUSINESS METRICS ALERTS
+  # =============================================================================
+  - name: dotmac-business
+    rules:
+      - alert: CustomerOnboardingRateDown
+        expr: |
+          sum(rate(customer_onboarding_total[1h])) < 5
+        for: 30m
+        labels:
+          severity: info
+          category: business
+        annotations:
+          summary: "Low customer onboarding rate"
+          description: "Customer onboarding rate is {{ $value }} per hour (expected: >5/hour)"
+
+      - alert: RevenueImpactingServiceDown
+        expr: |
+          up{job=~"billing-.*|payment-.*|provisioning-.*"} == 0
+        for: 5m
+        labels:
+          severity: critical
+          category: revenue
+        annotations:
+          summary: "Revenue-impacting service down: {{ $labels.job }}"
+          description: "Critical revenue service {{ $labels.job }} is down - immediate business impact"
+
+  # =============================================================================
+  # PLUGIN SYSTEM ALERTS
+  # =============================================================================
+  - name: dotmac-plugins
+    rules:
+      - alert: PluginExecutionFailureRate
+        expr: |
+          (
+            sum(rate(plugin_execution_total{status="failed"}[5m])) / 
+            sum(rate(plugin_execution_total[5m]))
+          ) > 0.1
+        for: 10m
+        labels:
+          severity: warning
+          category: plugins
+        annotations:
+          summary: "High plugin execution failure rate"
+          description: "Plugin failure rate is {{ $value | humanizePercentage }} (threshold: 10%)"
+
+      - alert: PluginMarketplaceDown
+        expr: up{job="plugin-marketplace"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          category: plugins
+        annotations:
+          summary: "Plugin Marketplace is down"
+          description: "Plugin Marketplace service is not responding"

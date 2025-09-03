@@ -80,7 +80,7 @@ class PendingDelivery(BaseModel):
     @property
     def is_expired(self) -> bool:
         """Check if delivery has expired."""
-        return self.expires_at is not None and datetime.utcnow() > self.expires_at
+        return self.expires_at is not None and datetime.now(timezone.utc) > self.expires_at
     
     @property
     def remaining_connections(self) -> Set[str]:
@@ -186,7 +186,7 @@ class DeliveryGuaranteeManager:
             guarantee_level=guarantee_level,
             max_attempts=max_attempts,
             retry_delay_seconds=retry_delay,
-            expires_at=datetime.utcnow() + timedelta(seconds=ttl_seconds) if ttl_seconds else None,
+            expires_at=datetime.now(timezone.utc) + timedelta(seconds=ttl_seconds) if ttl_seconds else None,
         )
         
         # For exactly-once delivery, check for duplicates
@@ -292,7 +292,7 @@ class DeliveryGuaranteeManager:
         # Create delivery attempt record
         attempt = DeliveryAttempt(
             attempt_number=len(pending_delivery.attempts) + 1,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             connection_id="",  # Will be updated per connection
             success=False,
         )
@@ -412,7 +412,7 @@ class DeliveryGuaranteeManager:
         """Background task to retry failed deliveries."""
         while self._is_running:
             try:
-                current_time = datetime.utcnow()
+                current_time = datetime.now(timezone.utc)
                 deliveries_to_retry = []
                 
                 # Find deliveries that need retry
@@ -448,7 +448,7 @@ class DeliveryGuaranteeManager:
         """Background task to clean up expired deliveries."""
         while self._is_running:
             try:
-                current_time = datetime.utcnow()
+                current_time = datetime.now(timezone.utc)
                 expired_deliveries = []
                 
                 # Find expired deliveries

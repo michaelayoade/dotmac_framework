@@ -57,11 +57,12 @@ services:
       - openbao_shared_data:/openbao/file
       - ./shared/deployments/openbao/config:/openbao/config:ro
       - ./shared/deployments/openbao/logs:/openbao/logs
+      - ./scripts/openbao-healthcheck.sh:/usr/local/bin/openbao-healthcheck.sh:ro
     command: server ${OPENBAO_MODE:-"-dev -dev-no-store-token"}
     networks:
       - dotmac-network
     healthcheck:
-      test: ["CMD", "bao", "status", "-format=json"]
+      test: ["CMD", "sh", "/usr/local/bin/openbao-healthcheck.sh", "--quiet"]
       interval: 30s
       timeout: 10s
       retries: 5

@@ -30,7 +30,7 @@ class SNMPTrapParser:
         "1.3.6.1.4.1.171": "dlink",
     }
 
-    def __init__(self):
+    def __init__(self, timezone):
         """Initialize SNMP trap parser."""
         pass
 
@@ -439,7 +439,7 @@ class EventNormalizer:
 
         return {
             "event_type": "snmp_trap",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "source": {
                 "device": source_device or source_ip,
                 "ip": source_ip,
@@ -467,7 +467,7 @@ class EventNormalizer:
 
         return {
             "event_type": "syslog",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "source": {
                 "device": source_device or parsed_syslog.get("hostname") or source_ip,
                 "ip": source_ip,

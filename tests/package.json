@@ -1,0 +1,65 @@
+{
+  "name": "@dotmac/license-enforcement-tests",
+  "version": "1.0.0",
+  "description": "E2E tests for license enforcement and feature flag management across multi-app platform",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:ui": "playwright test --ui",
+    "test:feature-flags": "playwright test --grep 'Feature Flag'",
+    "test:cross-app": "playwright test --grep 'Cross-App'", 
+    "test:subscription": "playwright test --grep 'Subscription'",
+    "test:basic-plan": "playwright test --grep 'basic'",
+    "test:premium-plan": "playwright test --grep 'premium'",
+    "test:enterprise-plan": "playwright test --grep 'enterprise'",
+    "test:compliance": "playwright test --reporter=./reporters/license-compliance-reporter.ts",
+    "test:ci": "playwright test --reporter=github,junit,./reporters/license-compliance-reporter.ts",
+    "show-report": "playwright show-report test-results/license-enforcement-report",
+    "install-browsers": "playwright install",
+    "install": "npm install && playwright install",
+    "codegen": "playwright codegen localhost:3000",
+    "setup": "node -e \"console.log('Setting up license test environment...'); require('./setup/global.setup.ts').default({})\"",
+    "cleanup": "node -e \"console.log('Cleaning up license test environment...'); require('./setup/global.teardown.ts').default({})\"",
+    "validate": "tsc --noEmit && npm run test:compliance",
+    "lint": "eslint . --ext .ts,.js",
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "@playwright/test": "^1.40.0",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.8.0",
+    "@typescript-eslint/eslint-plugin": "^6.7.0",
+    "@typescript-eslint/parser": "^6.7.0",
+    "eslint": "^8.50.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-playwright": "^0.18.0",
+    "prettier": "^3.0.3",
+    "typescript": "^5.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "e2e-testing",
+    "license-enforcement", 
+    "feature-flags",
+    "multi-app",
+    "compliance-testing",
+    "playwright"
+  ],
+  "author": "DotMac Framework Team",
+  "license": "PRIVATE",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dotmac/framework.git",
+    "directory": "tests"
+  },
+  "playwright": {
+    "testMatch": "**/*.spec.ts"
+  }
+}

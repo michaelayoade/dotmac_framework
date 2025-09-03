@@ -49,7 +49,7 @@ class ErrorResponse:
         self.details = details or {}
         self.field_errors = field_errors or {}
         self.request_id = request_id
-        self.timestamp = datetime.utcnow().isoformat()
+        self.timestamp = datetime.now(timezone.utc).isoformat()
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for JSON response."""
@@ -184,7 +184,7 @@ def standard_exception_handler(func: Callable) -> Callable:
 
         except Exception as e:
             # Handle unexpected errors with enhanced monitoring
-            error_id = f"ERR_{datetime.utcnow().strftime('%Y%m%d_%H%M%S_%f')}"
+            error_id = f"ERR_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S_%f')}"
 
             # Enhanced error logging
             logger.error(
@@ -254,7 +254,7 @@ async def handle_validation_exception(
 
 async def handle_generic_exception(request: Request, exc: Exception) -> JSONResponse:
     """Handle any unhandled exception."""
-    error_id = f"ERR_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
+    error_id = f"ERR_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}"
 
     logger.error(f"Unhandled exception {error_id}: {str(exc)}", exc_info=True)
 

@@ -30,7 +30,7 @@ export class APIBehaviorTester {
       simulateLatency: false,
       simulateErrors: false,
       validateRequests: true,
-      ...config
+      ...config,
     };
   }
 
@@ -41,7 +41,16 @@ export class APIBehaviorTester {
    */
   async mockAndLog(
     pattern: string | RegExp,
-    responder?: (req: { url: string; method: string; body: any; headers: Record<string, string> }) => Promise<{ status?: number; body?: any; headers?: Record<string, string> } | { status?: number; body?: any; headers?: Record<string, string> } | void>
+    responder?: (req: {
+      url: string;
+      method: string;
+      body: any;
+      headers: Record<string, string>;
+    }) => Promise<
+      | { status?: number; body?: any; headers?: Record<string, string> }
+      | { status?: number; body?: any; headers?: Record<string, string> }
+      | void
+    >
   ) {
     await this.page.route(pattern as any, async (route) => {
       await this.logRequest(route);
@@ -53,7 +62,11 @@ export class APIBehaviorTester {
           url: req.url(),
           method: req.method(),
           body: (() => {
-            try { return req.postDataJSON(); } catch { return req.postData(); }
+            try {
+              return req.postDataJSON();
+            } catch {
+              return req.postData();
+            }
           })(),
           headers: req.headers(),
         };
@@ -78,7 +91,7 @@ export class APIBehaviorTester {
   async setupTechnicianMocks() {
     if (!this.config.enableMocking) return;
     await this.mockAndLog(/\/api\/v1\/technician\/work-orders.*/, async () => ({
-      body: { workOrders: [], total: 0 }
+      body: { workOrders: [], total: 0 },
     }));
     await this.mockAndLog('/api/v1/technician/location', async () => ({ body: { ok: true } }));
     await this.mockAndLog('/api/v1/technician/uploads', async () => ({ body: { uploaded: true } }));
@@ -89,12 +102,22 @@ export class APIBehaviorTester {
    */
   async setupResellerMocks() {
     if (!this.config.enableMocking) return;
-    await this.mockAndLog(/\/api\/v1\/reseller\/territory.*/, async () => ({ body: { regions: [] } }));
-    await this.mockAndLog(/\/api\/v1\/reseller\/customers.*/, async () => ({ body: { customers: [], total: 0 } }));
-    await this.mockAndLog(/\/api\/v1\/reseller\/commissions.*/, async () => ({ body: { total: 0 } }));
+    await this.mockAndLog(/\/api\/v1\/reseller\/territory.*/, async () => ({
+      body: { regions: [] },
+    }));
+    await this.mockAndLog(/\/api\/v1\/reseller\/customers.*/, async () => ({
+      body: { customers: [], total: 0 },
+    }));
+    await this.mockAndLog(/\/api\/v1\/reseller\/commissions.*/, async () => ({
+      body: { total: 0 },
+    }));
     await this.mockAndLog(/\/api\/v1\/reseller\/leads.*/, async () => ({ body: { leads: [] } }));
-    await this.mockAndLog(/\/api\/v1\/reseller\/quotes.*/, async () => ({ body: { quoteId: 'Q-TEST' } }));
-    await this.mockAndLog(/\/api\/v1\/reseller\/orders.*/, async () => ({ body: { orderId: 'O-TEST' } }));
+    await this.mockAndLog(/\/api\/v1\/reseller\/quotes.*/, async () => ({
+      body: { quoteId: 'Q-TEST' },
+    }));
+    await this.mockAndLog(/\/api\/v1\/reseller\/orders.*/, async () => ({
+      body: { orderId: 'O-TEST' },
+    }));
   }
 
   /**
@@ -104,18 +127,18 @@ export class APIBehaviorTester {
     if (!this.config.enableMocking) return;
 
     // Dashboard API with business logic validation
-    await this.page.route('/api/v1/customer/dashboard', async route => {
+    await this.page.route('/api/v1/customer/dashboard', async (route) => {
       await this.logRequest(route);
       await this.simulateLatency();
-      
+
       if (this.config.simulateErrors && Math.random() < 0.1) {
         await route.fulfill({
           status: 500,
           contentType: 'application/json',
           body: JSON.stringify({
             error: 'Internal server error',
-            code: 'DASHBOARD_ERROR'
-          })
+            code: 'DASHBOARD_ERROR',
+          }),
         });
         return;
       }
@@ -130,7 +153,7 @@ export class APIBehaviorTester {
             status: 'active',
             plan: 'Fiber 1000Mbps',
             monthly_cost: 89.99,
-            next_billing: '2024-12-01T00:00:00Z'
+            next_billing: '2024-12-01T00:00:00Z',
           },
           service: {
             status: 'online',
@@ -139,24 +162,24 @@ export class APIBehaviorTester {
               current: 750,
               limit: 1000,
               unit: 'GB',
-              reset_date: '2024-12-01T00:00:00Z'
+              reset_date: '2024-12-01T00:00:00Z',
             },
-            uptime: 99.8
+            uptime: 99.8,
           },
           notifications: [
             {
               id: 'notif-001',
               type: 'info',
               message: 'Service operating normally',
-              timestamp: new Date().toISOString()
-            }
-          ]
-        })
+              timestamp: new Date().toISOString(),
+            },
+          ],
+        }),
       });
     });
 
     // Billing API with payment validation
-    await this.page.route('/api/v1/customer/billing', async route => {
+    await this.page.route('/api/v1/customer/billing', async (route) => {
       await this.logRequest(route);
       await this.simulateLatency();
 
@@ -164,13 +187,13 @@ export class APIBehaviorTester {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
-          current_balance: 0.00,
+          current_balance: 0.0,
           next_due_date: '2024-12-01T00:00:00Z',
           next_amount: 89.99,
           payment_method: {
             type: 'card',
             last_four: '4321',
-            expires: '12/26'
+            expires: '12/26',
           },
           recent_invoices: [
             {
@@ -178,8 +201,8 @@ export class APIBehaviorTester {
               date: '2024-11-01T00:00:00Z',
               amount: 89.99,
               status: 'paid',
-              due_date: '2024-12-01T00:00:00Z'
-            }
+              due_date: '2024-12-01T00:00:00Z',
+            },
           ],
           payment_history: [
             {
@@ -187,15 +210,15 @@ export class APIBehaviorTester {
               date: '2024-11-01T10:30:00Z',
               amount: 89.99,
               method: 'auto-pay',
-              status: 'completed'
-            }
-          ]
-        })
+              status: 'completed',
+            },
+          ],
+        }),
       });
     });
 
     // Support tickets API with CRUD operations
-    await this.page.route('/api/v1/customer/support/tickets*', async route => {
+    await this.page.route('/api/v1/customer/support/tickets*', async (route) => {
       await this.logRequest(route);
       await this.simulateLatency();
 
@@ -211,15 +234,15 @@ export class APIBehaviorTester {
                 status: 'resolved',
                 priority: 'medium',
                 created_at: '2024-01-10T14:30:00Z',
-                updated_at: '2024-01-12T16:45:00Z'
-              }
+                updated_at: '2024-01-12T16:45:00Z',
+              },
             ],
-            total: 1
-          })
+            total: 1,
+          }),
         });
       } else if (route.request().method() === 'POST') {
         const requestBody = route.request().postDataJSON();
-        
+
         // Validate required fields
         if (!requestBody.subject || !requestBody.description) {
           await route.fulfill({
@@ -227,8 +250,8 @@ export class APIBehaviorTester {
             contentType: 'application/json',
             body: JSON.stringify({
               error: 'Missing required fields',
-              fields: ['subject', 'description']
-            })
+              fields: ['subject', 'description'],
+            }),
           });
           return;
         }
@@ -241,8 +264,8 @@ export class APIBehaviorTester {
             subject: requestBody.subject,
             status: 'open',
             priority: requestBody.priority || 'medium',
-            created_at: new Date().toISOString()
-          })
+            created_at: new Date().toISOString(),
+          }),
         });
       }
     });
@@ -255,7 +278,7 @@ export class APIBehaviorTester {
     if (!this.config.enableMocking) return;
 
     // Customer management with filtering and pagination
-    await this.page.route('/api/v1/admin/customers*', async route => {
+    await this.page.route('/api/v1/admin/customers*', async (route) => {
       await this.logRequest(route);
       await this.simulateLatency();
 
@@ -273,7 +296,7 @@ export class APIBehaviorTester {
           status: 'active',
           plan: 'Fiber 100Mbps',
           monthly_revenue: 79.99,
-          created_at: '2023-06-15T09:00:00Z'
+          created_at: '2023-06-15T09:00:00Z',
         },
         {
           id: 'CUST-002',
@@ -282,7 +305,7 @@ export class APIBehaviorTester {
           status: 'suspended',
           plan: 'Business 500Mbps',
           monthly_revenue: 199.99,
-          created_at: '2023-08-20T11:15:00Z'
+          created_at: '2023-08-20T11:15:00Z',
         },
         {
           id: 'CUST-003',
@@ -291,22 +314,23 @@ export class APIBehaviorTester {
           status: 'active',
           plan: 'Fiber 500Mbps',
           monthly_revenue: 149.99,
-          created_at: '2024-01-10T14:20:00Z'
-        }
+          created_at: '2024-01-10T14:20:00Z',
+        },
       ];
 
       // Apply business logic filters
       if (search) {
         const query = search.toLowerCase();
-        customers = customers.filter(c =>
-          c.name.toLowerCase().includes(query) ||
-          c.email.toLowerCase().includes(query) ||
-          c.id.toLowerCase().includes(query)
+        customers = customers.filter(
+          (c) =>
+            c.name.toLowerCase().includes(query) ||
+            c.email.toLowerCase().includes(query) ||
+            c.id.toLowerCase().includes(query)
         );
       }
 
       if (status) {
-        customers = customers.filter(c => c.status === status);
+        customers = customers.filter((c) => c.status === status);
       }
 
       // Apply pagination
@@ -322,13 +346,13 @@ export class APIBehaviorTester {
           total: customers.length,
           page,
           limit,
-          total_pages: Math.ceil(customers.length / limit)
-        })
+          total_pages: Math.ceil(customers.length / limit),
+        }),
       });
     });
 
     // Network status with real-time simulation
-    await this.page.route('/api/v1/admin/network/status', async route => {
+    await this.page.route('/api/v1/admin/network/status', async (route) => {
       await this.logRequest(route);
       await this.simulateLatency();
 
@@ -351,7 +375,7 @@ export class APIBehaviorTester {
               status: 'operational',
               utilization: 67.3 + Math.random() * 10,
               capacity: '100Gbps',
-              location: 'Seattle, WA'
+              location: 'Seattle, WA',
             },
             {
               id: 'BEL-DIST-02',
@@ -359,18 +383,21 @@ export class APIBehaviorTester {
               status: currentUtilization > 85 ? 'warning' : 'operational',
               utilization: currentUtilization,
               capacity: '40Gbps',
-              location: 'Bellevue, WA'
-            }
+              location: 'Bellevue, WA',
+            },
           ],
-          alerts: currentUtilization > 80 ? [
-            {
-              id: 'ALR-001',
-              severity: 'warning',
-              message: `High utilization on BEL-DIST-02 (${currentUtilization.toFixed(1)}%)`,
-              timestamp: new Date().toISOString()
-            }
-          ] : []
-        })
+          alerts:
+            currentUtilization > 80
+              ? [
+                  {
+                    id: 'ALR-001',
+                    severity: 'warning',
+                    message: `High utilization on BEL-DIST-02 (${currentUtilization.toFixed(1)}%)`,
+                    timestamp: new Date().toISOString(),
+                  },
+                ]
+              : [],
+        }),
       });
     });
   }
@@ -382,7 +409,7 @@ export class APIBehaviorTester {
     if (!this.config.enableMocking) return;
 
     // Work orders with status transitions
-    await this.page.route('/api/v1/technician/work-orders*', async route => {
+    await this.page.route('/api/v1/technician/work-orders*', async (route) => {
       await this.logRequest(route);
       await this.simulateLatency();
 
@@ -401,7 +428,7 @@ export class APIBehaviorTester {
                 status: 'scheduled',
                 scheduled_date: '2024-12-20T10:00:00Z',
                 estimated_duration: 180,
-                service_type: 'Fiber 1000Mbps'
+                service_type: 'Fiber 1000Mbps',
               },
               {
                 id: 'WO-TEST-002',
@@ -412,42 +439,42 @@ export class APIBehaviorTester {
                 status: 'in_progress',
                 scheduled_date: '2024-12-19T14:00:00Z',
                 estimated_duration: 120,
-                service_type: 'Business 500Mbps'
-              }
+                service_type: 'Business 500Mbps',
+              },
             ],
             total: 2,
             summary: {
               pending: 1,
               in_progress: 1,
               completed_today: 3,
-              scheduled_today: 5
-            }
-          })
+              scheduled_today: 5,
+            },
+          }),
         });
       } else if (route.request().method() === 'PUT') {
         // Handle work order updates
         const requestBody = route.request().postDataJSON();
-        
+
         // Validate status transitions
         const validTransitions = {
-          'scheduled': ['in_progress', 'cancelled'],
-          'in_progress': ['completed', 'paused', 'cancelled'],
-          'paused': ['in_progress', 'cancelled'],
-          'completed': [], // Cannot change completed orders
-          'cancelled': []  // Cannot change cancelled orders
+          scheduled: ['in_progress', 'cancelled'],
+          in_progress: ['completed', 'paused', 'cancelled'],
+          paused: ['in_progress', 'cancelled'],
+          completed: [], // Cannot change completed orders
+          cancelled: [], // Cannot change cancelled orders
         };
-        
+
         const currentStatus = 'scheduled'; // Would come from database
         const newStatus = requestBody.status;
-        
+
         if (!validTransitions[currentStatus]?.includes(newStatus)) {
           await route.fulfill({
             status: 400,
             contentType: 'application/json',
             body: JSON.stringify({
               error: `Invalid status transition from ${currentStatus} to ${newStatus}`,
-              valid_transitions: validTransitions[currentStatus]
-            })
+              valid_transitions: validTransitions[currentStatus],
+            }),
           });
           return;
         }
@@ -459,9 +486,9 @@ export class APIBehaviorTester {
             success: true,
             work_order: {
               ...requestBody,
-              updated_at: new Date().toISOString()
-            }
-          })
+              updated_at: new Date().toISOString(),
+            },
+          }),
         });
       }
     });
@@ -474,7 +501,7 @@ export class APIBehaviorTester {
     if (!this.config.enableMocking) return;
 
     // Dashboard with dynamic commission calculations
-    await this.page.route('/api/v1/reseller/dashboard', async route => {
+    await this.page.route('/api/v1/reseller/dashboard', async (route) => {
       await this.logRequest(route);
       await this.simulateLatency();
 
@@ -493,42 +520,42 @@ export class APIBehaviorTester {
             active_customers: Math.floor(totalCustomers * 0.91),
             monthly_revenue: monthlyRevenue,
             commission_rate: commissionRate,
-            monthly_commission: monthlyCommission
+            monthly_commission: monthlyCommission,
           },
           performance: {
             this_month: {
               new_customers: 8,
               churned_customers: 2,
               net_growth: 6,
-              revenue_growth: 12.4
+              revenue_growth: 12.4,
             },
             targets: {
               monthly_customer_target: 10,
               monthly_revenue_target: 20000,
               progress: {
                 customers: 80.0,
-                revenue: (monthlyRevenue / 20000) * 100
-              }
-            }
+                revenue: (monthlyRevenue / 20000) * 100,
+              },
+            },
           },
           territories: [
             {
               name: 'Downtown District',
               customers: 89,
               potential_customers: 450,
-              penetration_rate: (89 / 450) * 100
-            }
-          ]
-        })
+              penetration_rate: (89 / 450) * 100,
+            },
+          ],
+        }),
       });
     });
 
     // Commission calculations with validation
-    await this.page.route('/api/v1/reseller/commissions', async route => {
+    await this.page.route('/api/v1/reseller/commissions', async (route) => {
       await this.logRequest(route);
       await this.simulateLatency();
 
-      const baseCommission = 2812.50;
+      const baseCommission = 2812.5;
       const variance = Math.random() * 200 - 100; // ±$100 variance
       const totalCommission = baseCommission + variance;
 
@@ -540,7 +567,7 @@ export class APIBehaviorTester {
             period: '2024-11',
             total_commission: totalCommission,
             status: 'pending',
-            payout_date: '2024-12-05T00:00:00Z'
+            payout_date: '2024-12-05T00:00:00Z',
           },
           commission_breakdown: [
             {
@@ -548,12 +575,12 @@ export class APIBehaviorTester {
               customer_name: 'Tech Solutions LLC',
               monthly_value: 299.99,
               commission_rate: 15.0,
-              commission_amount: 45.00
-            }
+              commission_amount: 45.0,
+            },
           ],
           yearly_total: totalCommission * 12,
-          average_monthly: totalCommission
-        })
+          average_monthly: totalCommission,
+        }),
       });
     });
   }
@@ -563,31 +590,31 @@ export class APIBehaviorTester {
    */
   async testErrorHandling() {
     // Test 401 Unauthorized
-    await this.page.route('/api/v1/customer/dashboard', async route => {
+    await this.page.route('/api/v1/customer/dashboard', async (route) => {
       await route.fulfill({
         status: 401,
         contentType: 'application/json',
         body: JSON.stringify({
           error: 'Unauthorized',
-          code: 'AUTH_REQUIRED'
-        })
+          code: 'AUTH_REQUIRED',
+        }),
       });
     });
 
     await this.page.goto('/dashboard');
-    
+
     // Should redirect to login
     await this.page.waitForURL('**/login');
 
     // Test 500 Server Error
-    await this.page.route('/api/v1/customer/dashboard', async route => {
+    await this.page.route('/api/v1/customer/dashboard', async (route) => {
       await route.fulfill({
         status: 500,
         contentType: 'application/json',
         body: JSON.stringify({
           error: 'Internal server error',
-          code: 'SERVER_ERROR'
-        })
+          code: 'SERVER_ERROR',
+        }),
       });
     });
 
@@ -599,15 +626,17 @@ export class APIBehaviorTester {
   /**
    * Test data flow validation
    */
-  async validateDataFlows(expectedFlows: Array<{
-    endpoint: string;
-    method: string;
-    requiredFields?: string[];
-    dataTransformation?: (data: any) => boolean;
-  }>) {
+  async validateDataFlows(
+    expectedFlows: Array<{
+      endpoint: string;
+      method: string;
+      requiredFields?: string[];
+      dataTransformation?: (data: any) => boolean;
+    }>
+  ) {
     for (const flow of expectedFlows) {
-      const matchingRequests = this.requestLog.filter(req => 
-        req.url.includes(flow.endpoint) && req.method === flow.method
+      const matchingRequests = this.requestLog.filter(
+        (req) => req.url.includes(flow.endpoint) && req.method === flow.method
       );
 
       if (matchingRequests.length === 0) {
@@ -644,16 +673,16 @@ export class APIBehaviorTester {
       method: request.method(),
       headers: request.headers(),
       body: request.postDataJSON(),
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
   }
 
   private async simulateLatency() {
     if (!this.config.simulateLatency) return;
-    
+
     // Simulate realistic API latency (50-200ms)
     const latency = 50 + Math.random() * 150;
-    await new Promise(resolve => setTimeout(resolve, latency));
+    await new Promise((resolve) => setTimeout(resolve, latency));
   }
 
   /**

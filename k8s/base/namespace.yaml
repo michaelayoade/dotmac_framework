@@ -1,23 +1,19 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: dotmac-production
+  name: dotmac-system
   labels:
-    name: dotmac-production
-    environment: production
+    app.kubernetes.io/name: dotmac
+    app.kubernetes.io/instance: dotmac-platform
+    app.kubernetes.io/component: namespace
+    app.kubernetes.io/managed-by: kubectl
 ---
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: dotmac-monitoring
+  name: dotmac-plugins
   labels:
-    name: dotmac-monitoring
-    environment: production
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: dotmac-ingress
-  labels:
-    name: dotmac-ingress
-    environment: production
+    app.kubernetes.io/name: dotmac-plugins
+    app.kubernetes.io/instance: dotmac-platform
+    app.kubernetes.io/component: plugin-system
+    app.kubernetes.io/managed-by: kubectl

@@ -17,7 +17,7 @@ from jinja2 import Template
 from dotmac_shared.core.logging import get_logger
 from dotmac_shared.database.base import get_db_session
 from dotmac_management.models.tenant import CustomerTenant, TenantStatus, TenantProvisioningEvent
-from dotmac_management.services.coolify_client import CoolifyClient
+from dotmac_management.services.infrastructure_service import get_infrastructure_service
 from dotmac_management.services.tenant_admin_provisioning import TenantAdminProvisioningService
 from dotmac_management.services.auto_license_provisioning import AutoLicenseProvisioningService
 from dotmac_shared.auth.core.jwt_service import JWTService
@@ -28,107 +28,93 @@ logger = get_logger(__name__)
 
 class TenantProvisioningService:
     """
-    Handles tenant provisioning workflow:
-    1. Generate tenant configuration
-    2. Create database/schema  
-    3. Generate secrets
-    4. Deploy container stack via Coolify API
-    5. Run health checks
-    6. Send welcome notification
+    Pure business logic service for tenant provisioning operations.
+    
+    This service now contains only domain-specific business logic.
+    Orchestration has been moved to the use-case layer (ProvisionTenantUseCase).
+    
+    Responsibilities:
+    - Tenant configuration validation
+    - Secrets generation and management
+    - Database resource creation
+    - Health check execution
+    - Status updates and logging
     """
     
     def __init__(self):
-        self.coolify_client = CoolifyClient()
         self.secrets_manager = SecretsManager()
         self.jwt_service = JWTService()
         self.admin_provisioning = TenantAdminProvisioningService()
         self.license_provisioning = AutoLicenseProvisioningService()
     
-    async def provision_tenant(self, tenant_db_id: int, db: Session) -> bool:
-        """
-        Main provisioning workflow - runs in background task
-        """
-        correlation_id = f"provision-{secrets.token_hex(8)}"
+    # Business Logic Methods (called by use cases)
+    
+    async def validate_tenant_configuration(
+        self, tenant: CustomerTenant, correlation_id: str = None
+    ) -> Dict[str, Any]:
+        """Validate tenant configuration (business logic only)"""
+        return await self._validate_tenant_config(None, tenant, correlation_id)
+    
+    async def generate_tenant_secrets(
+        self, tenant: CustomerTenant, correlation_id: str = None
+    ) -> Dict[str, str]:
+        """Generate tenant-specific secrets (business logic only)"""
+        # Generate JWT secret
+        jwt_secret = secrets.token_urlsafe(32)
         
-        try:
-            # Get tenant from database
-            tenant = db.query(CustomerTenant).filter_by(id=tenant_db_id).first()
-            if not tenant:
-                logger.error(f"Tenant {tenant_db_id} not found for provisioning")
-                return False
-            
-            logger.info(f"Starting provisioning for tenant {tenant.tenant_id} (correlation: {correlation_id})")
-            
-            # Update status to provisioning
-            await self._update_tenant_status(
-                db, tenant, TenantStatus.PROVISIONING,
-                "Starting infrastructure provisioning", correlation_id
-            )
-            
-            # Step 1: Validate configuration
-            if not await self._validate_tenant_config(db, tenant, correlation_id):
-                return False
-            
-            # Step 2: Create database resources
-            if not await self._create_database_resources(db, tenant, correlation_id):
-                return False
-            
-            # Step 3: Generate tenant secrets
-            if not await self._generate_tenant_secrets(db, tenant, correlation_id):
-                return False
-            
-            # Step 4: Deploy container stack
-            if not await self._deploy_container_stack(db, tenant, correlation_id):
-                return False
-            
-            # Step 5: Run database migrations and seeding
-            await self._update_tenant_status(
-                db, tenant, TenantStatus.MIGRATING,
-                "Running database migrations", correlation_id
-            )
-            if not await self._run_tenant_migrations(db, tenant, correlation_id):
-                return False
-            
-            # Step 6: Seed initial data
-            await self._update_tenant_status(
-                db, tenant, TenantStatus.SEEDING,
-                "Seeding initial data", correlation_id
-            )
-            if not await self._seed_tenant_data(db, tenant, correlation_id):
-                return False
-            
-            # Step 7: Create admin account for ISP instance
-            await self._update_tenant_status(
-                db, tenant, TenantStatus.SEEDING,
-                "Creating admin account", correlation_id
-            )
-            admin_info = await self._create_tenant_admin(db, tenant, correlation_id)
-            
-            # Step 8: Provision license contract
-            await self._update_tenant_status(
-                db, tenant, TenantStatus.SEEDING,
-                "Provisioning license", correlation_id
-            )
-            license_info = await self._provision_tenant_license(db, tenant, correlation_id)
-            
-            # Step 9: Health checks
-            await self._update_tenant_status(
-                db, tenant, TenantStatus.TESTING,
-                "Running health checks", correlation_id
-            )
-            if not await self._run_health_checks(db, tenant, correlation_id):
-                return False
-            
-            # Step 10: Finalize and notify
-            await self._finalize_provisioning(db, tenant, correlation_id, admin_info, license_info)
-            
-            logger.info(f"✅ Tenant provisioning completed: {tenant.tenant_id}")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Tenant provisioning failed: {e}")
-            await self._handle_provisioning_failure(db, tenant_db_id, str(e), correlation_id)
-            return False
+        # Generate encryption keys
+        encryption_key = secrets.token_urlsafe(32)
+        
+        # Generate cookie secret
+        cookie_secret = secrets.token_urlsafe(32)
+        
+        # Generate webhook secret
+        webhook_secret = secrets.token_urlsafe(32)
+        
+        # Return secrets dict (caller handles encryption/storage)
+        return {
+            "JWT_SECRET": jwt_secret,
+            "ENCRYPTION_KEY": encryption_key,
+            "COOKIE_SECRET": cookie_secret,
+            "WEBHOOK_SECRET": webhook_secret,
+            "TENANT_ID": tenant.tenant_id,
+            "ADMIN_EMAIL": tenant.admin_email,
+            "ADMIN_NAME": tenant.admin_name
+        }
+    
+    async def validate_subdomain_availability(self, subdomain: str) -> bool:
+        """Check subdomain availability (business logic)"""
+        return await self._check_subdomain_available(subdomain)
+    
+    async def validate_plan_limits(self, plan: str) -> bool:
+        """Validate plan limits (business logic)"""
+        return await self._check_plan_limits(plan)
+    
+    async def validate_region_availability(self, region: str) -> bool:
+        """Check region availability (business logic)"""
+        return await self._check_region_availability(region)
+    
+    async def create_tenant_admin_user(
+        self, tenant: CustomerTenant, correlation_id: str = None
+    ) -> Dict[str, Any]:
+        """Create admin user for tenant (business logic)"""
+        return await self._create_tenant_admin(None, tenant, correlation_id)
+    
+    async def provision_tenant_license(
+        self, tenant: CustomerTenant, correlation_id: str = None
+    ) -> Dict[str, Any]:
+        """Provision license for tenant (business logic)"""
+        return await self._provision_tenant_license(None, tenant, correlation_id)
+    
+    async def perform_health_checks(
+        self, tenant: CustomerTenant, correlation_id: str = None
+    ) -> bool:
+        """Perform tenant health checks (business logic)"""
+        return await self._run_health_checks(None, tenant, correlation_id)
+    
+    async def generate_docker_compose(self, tenant: CustomerTenant) -> str:
+        """Generate docker-compose content for tenant (business logic)"""
+        return await self._generate_tenant_compose(tenant)
     
     async def _update_tenant_status(
         self, db: Session, tenant: CustomerTenant, status: TenantStatus,
@@ -288,11 +274,19 @@ class TenantProvisioningService:
                 "environment": await self._get_tenant_environment_vars(tenant)
             }
             
-            # Deploy via Coolify API
-            deployment_result = await self.coolify_client.create_application(app_config)
+            # Deploy via Infrastructure Service (uses plugins)
+            tenant_config = {
+                "tenant_id": tenant.tenant_id,
+                "name": app_config["name"],
+                "docker_compose": app_config["docker_compose"],
+                "environment": app_config["environment"],
+                "domains": [f"{tenant.subdomain}.{os.getenv('BASE_DOMAIN', 'example.com')}"]
+            }
             
-            # Store container ID
-            tenant.container_id = deployment_result.get("id")
+            deployment_result = await self.infrastructure_service.deploy_tenant_application(tenant_config)
+            
+            # Store container/deployment ID
+            tenant.container_id = deployment_result.get("deployment_id") or deployment_result.get("application_id")
             tenant.domain = f"{tenant.subdomain}.{os.getenv('BASE_DOMAIN', 'example.com')}"
             
             db.commit()
@@ -416,7 +410,7 @@ class TenantProvisioningService:
             
             # Update health status
             tenant.health_status = "healthy"
-            tenant.last_health_check = datetime.utcnow()
+            tenant.last_health_check = datetime.now(timezone.utc)
             db.commit()
             
             await self._log_provisioning_event(
@@ -502,7 +496,7 @@ class TenantProvisioningService:
             "Provisioning completed successfully", correlation_id, 9
         )
         
-        tenant.provisioning_completed_at = datetime.utcnow()
+        tenant.provisioning_completed_at = datetime.now(timezone.utc)
         db.commit()
         
         # Send comprehensive welcome notification
@@ -576,7 +570,7 @@ class TenantProvisioningService:
             step_number=step_number,
             correlation_id=correlation_id,
             operator="system",
-            error_details={"error": error_message, "timestamp": datetime.utcnow().isoformat()}
+            error_details={"error": error_message, "timestamp": datetime.now(timezone.utc).isoformat()}
         )
         
         db.add(event)
@@ -593,7 +587,7 @@ class TenantProvisioningService:
                 tenant.status = TenantStatus.FAILED
                 tenant.settings = tenant.settings or {}
                 tenant.settings["last_error"] = error_message
-                tenant.settings["failed_at"] = datetime.utcnow().isoformat()
+                tenant.settings["failed_at"] = datetime.now(timezone.utc).isoformat()
                 db.commit()
                 
                 logger.error(f"Tenant provisioning failed: {tenant.tenant_id} - {error_message}")
@@ -629,7 +623,7 @@ class TenantProvisioningService:
                 "version": "15"
             }
             
-            db_service = await self.coolify_client.create_database_service(db_config)
+            db_service = await self.infrastructure_service.create_database_service(db_config)
             
             # Return connection URL
             return {
@@ -656,7 +650,7 @@ class TenantProvisioningService:
                 "version": "7"
             }
             
-            redis_service = await self.coolify_client.create_redis_service(redis_config)
+            redis_service = await self.infrastructure_service.create_redis_service(redis_config)
             
             # Return connection URL
             return {
@@ -685,8 +679,8 @@ class TenantProvisioningService:
         
         try:
             while time.time() - start_time < max_wait_time:
-                # Check application status
-                status = await self.coolify_client.get_application_status(container_id)
+                # Check deployment status via infrastructure service
+                status = await self.infrastructure_service.get_deployment_status(container_id)
                 
                 if status.get("status") == "running":
                     logger.info(f"✅ Deployment completed for application {container_id}")
@@ -714,12 +708,16 @@ class TenantProvisioningService:
         
         try:
             while time.time() - start_time < max_wait_time:
-                # Get application status and check for db-migrate service
-                status = await self.coolify_client.get_application_status(container_id)
+                # Get deployment status and check for db-migrate service
+                status = await self.infrastructure_service.get_deployment_status(container_id)
                 
                 # Check if migration container completed successfully
                 # In Docker Compose, a service with restart: "no" that exits 0 means success
-                logs = await self.coolify_client.get_deployment_logs(container_id)
+                # Note: Log retrieval depends on provider capabilities
+                logs = []
+                provider = self.infrastructure_service.infrastructure_manager.get_deployment_provider()
+                if hasattr(provider, 'get_deployment_logs'):
+                    logs = await provider.get_deployment_logs(container_id)
                 
                 # Look for migration completion marker
                 if any("migration_complete" in log for log in logs):

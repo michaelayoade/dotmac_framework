@@ -47,7 +47,7 @@ export class I18nTestHelper {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ locales })
+        body: JSON.stringify({ locales }),
       });
     });
 
@@ -56,11 +56,11 @@ export class I18nTestHelper {
       const url = route.request().url();
       const localeCode = url.split('/').pop();
       const translations = this.getMockTranslations(localeCode);
-      
+
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify(translations)
+        body: JSON.stringify(translations),
       });
     });
 
@@ -70,10 +70,10 @@ export class I18nTestHelper {
       const from = url.searchParams.get('from') || 'USD';
       const to = url.searchParams.get('to') || 'USD';
       const amount = parseFloat(url.searchParams.get('amount') || '1');
-      
+
       const rates = this.getMockExchangeRates();
       const convertedAmount = amount * (rates[to] / rates[from]);
-      
+
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -82,8 +82,8 @@ export class I18nTestHelper {
           to,
           amount,
           converted: convertedAmount,
-          rate: rates[to] / rates[from]
-        })
+          rate: rates[to] / rates[from],
+        }),
       });
     });
 
@@ -99,30 +99,30 @@ export class I18nTestHelper {
     console.log('Testing language switching functionality');
 
     await this.page.goto(portalUrl);
-    
+
     // Verify language selector is present
     await expect(this.page.getByTestId('language-selector')).toBeVisible();
-    
+
     for (const locale of locales) {
       console.log(`Switching to ${locale.name} (${locale.code})`);
-      
+
       // Click language selector
       await this.page.click('[data-testid="language-selector"]');
-      
+
       // Select locale
       await this.page.click(`[data-testid="locale-option-${locale.code}"]`);
-      
+
       // Wait for language switch to complete
       await this.page.waitForTimeout(1000);
-      
+
       // Verify HTML lang attribute
       const htmlLang = await this.page.getAttribute('html', 'lang');
       expect(htmlLang).toBe(locale.code);
-      
+
       // Verify text direction
       const htmlDir = await this.page.getAttribute('html', 'dir');
       expect(htmlDir).toBe(locale.direction);
-      
+
       // Verify key UI elements have been translated
       for (const [testId, expectedText] of Object.entries(locale.translations)) {
         try {
@@ -140,47 +140,48 @@ export class I18nTestHelper {
     console.log(`Testing RTL layout for ${rtlLocale.name}`);
 
     await this.page.goto(portalUrl);
-    
+
     // Switch to RTL locale
     await this.switchToLocale(rtlLocale.code);
-    
+
     // Verify RTL direction
     const htmlDir = await this.page.getAttribute('html', 'dir');
     expect(htmlDir).toBe('rtl');
-    
+
     // Test navigation menu RTL alignment
     const navMenu = this.page.getByTestId('navigation-menu');
     await expect(navMenu).toBeVisible();
-    
+
     const navMenuStyles = await navMenu.evaluate((el) => {
       const styles = window.getComputedStyle(el);
       return {
         textAlign: styles.textAlign,
         direction: styles.direction,
-        float: styles.float
+        float: styles.float,
       };
     });
-    
+
     expect(navMenuStyles.direction).toBe('rtl');
-    
+
     // Test form input RTL alignment
     const inputs = await this.page.getByRole('textbox').all();
     for (const input of inputs) {
       const inputDir = await input.getAttribute('dir');
       expect(inputDir).toBe('rtl');
     }
-    
+
     // Test button and icon positioning
     const buttons = await this.page.getByRole('button').all();
-    for (const button of buttons.slice(0, 3)) { // Test first 3 buttons
+    for (const button of buttons.slice(0, 3)) {
+      // Test first 3 buttons
       const buttonStyles = await button.evaluate((el) => {
         const styles = window.getComputedStyle(el);
         return {
           direction: styles.direction,
-          textAlign: styles.textAlign
+          textAlign: styles.textAlign,
         };
       });
-      
+
       expect(buttonStyles.direction).toBe('rtl');
     }
 
@@ -191,7 +192,7 @@ export class I18nTestHelper {
         const styles = window.getComputedStyle(el);
         return { direction: styles.direction };
       });
-      
+
       expect(tableStyles.direction).toBe('rtl');
     }
 
@@ -202,20 +203,22 @@ export class I18nTestHelper {
     console.log('Testing currency formatting across locales');
 
     await this.page.goto(portalUrl);
-    
+
     for (const test of currencyTests) {
       await this.switchToLocale(test.locale);
-      
+
       // Navigate to billing/payment page if it exists
       try {
         await this.page.goto(`${portalUrl}/billing`);
       } catch {
         // Continue with current page if billing doesn't exist
       }
-      
+
       // Inject test currency amount for formatting
       await this.page.evaluate((testData) => {
-        const amounts = document.querySelectorAll('[data-testid*="amount"], [data-testid*="price"], [data-testid*="total"]');
+        const amounts = document.querySelectorAll(
+          '[data-testid*="amount"], [data-testid*="price"], [data-testid*="total"]'
+        );
         amounts.forEach((el) => {
           if (el instanceof HTMLElement) {
             el.textContent = testData.expected;
@@ -224,16 +227,16 @@ export class I18nTestHelper {
           }
         });
       }, test);
-      
+
       // Wait for formatting to apply
       await this.page.waitForTimeout(500);
-      
+
       // Verify currency formatting
       const formattedElements = await this.page.getByTestId('currency-amount').all();
       if (formattedElements.length > 0) {
         const formattedText = await formattedElements[0].textContent();
         expect(formattedText).toContain(test.symbol);
-        
+
         console.log(`✓ ${test.locale}: ${test.amount} → ${formattedText}`);
       }
     }
@@ -245,13 +248,15 @@ export class I18nTestHelper {
     console.log('Testing date formatting across locales');
 
     await this.page.goto(portalUrl);
-    
+
     for (const test of dateTests) {
       await this.switchToLocale(test.locale);
-      
+
       // Inject test date for formatting
       await this.page.evaluate((testData) => {
-        const dateElements = document.querySelectorAll('[data-testid*="date"], [data-testid*="created"], [data-testid*="updated"]');
+        const dateElements = document.querySelectorAll(
+          '[data-testid*="date"], [data-testid*="created"], [data-testid*="updated"]'
+        );
         dateElements.forEach((el) => {
           if (el instanceof HTMLElement) {
             el.textContent = testData.expected;
@@ -260,10 +265,10 @@ export class I18nTestHelper {
           }
         });
       }, test);
-      
+
       // Wait for formatting to apply
       await this.page.waitForTimeout(500);
-      
+
       // Verify date formatting
       const dateElements = await this.page.getByTestId('formatted-date').all();
       if (dateElements.length > 0) {
@@ -285,7 +290,7 @@ export class I18nTestHelper {
       { value: 1234.56, type: 'decimal' },
       { value: 1234567, type: 'integer' },
       { value: 0.123, type: 'percentage' },
-      { value: 1234567890, type: 'large' }
+      { value: 1234567890, type: 'large' },
     ];
 
     for (const test of testNumbers) {
@@ -294,30 +299,32 @@ export class I18nTestHelper {
         const numberEl = document.createElement('span');
         numberEl.setAttribute('data-testid', `number-${data.type}`);
         numberEl.setAttribute('data-number', data.value.toString());
-        
+
         // Format based on locale
         const locale = document.documentElement.lang;
         let formatted;
-        
+
         switch (data.type) {
           case 'percentage':
             formatted = new Intl.NumberFormat(locale, { style: 'percent' }).format(data.value);
             break;
           case 'decimal':
-            formatted = new Intl.NumberFormat(locale, { minimumFractionDigits: 2 }).format(data.value);
+            formatted = new Intl.NumberFormat(locale, { minimumFractionDigits: 2 }).format(
+              data.value
+            );
             break;
           default:
             formatted = new Intl.NumberFormat(locale).format(data.value);
         }
-        
+
         numberEl.textContent = formatted;
         document.body.appendChild(numberEl);
       }, test);
-      
+
       // Verify number formatting
       const numberEl = this.page.getByTestId(`number-${test.type}`);
       await expect(numberEl).toBeVisible();
-      
+
       const formattedText = await numberEl.textContent();
       console.log(`✓ ${locale} ${test.type}: ${test.value} → ${formattedText}`);
     }
@@ -335,7 +342,7 @@ export class I18nTestHelper {
       { count: 0, key: 'items', context: 'zero/none' },
       { count: 1, key: 'items', context: 'singular' },
       { count: 2, key: 'items', context: 'plural' },
-      { count: 5, key: 'items', context: 'multiple' }
+      { count: 5, key: 'items', context: 'multiple' },
     ];
 
     for (const test of pluralTests) {
@@ -345,7 +352,7 @@ export class I18nTestHelper {
         pluralEl.setAttribute('data-testid', `plural-${data.count}`);
         pluralEl.setAttribute('data-count', data.count.toString());
         pluralEl.setAttribute('data-key', data.key);
-        
+
         // Mock pluralization logic
         let text;
         if (data.count === 0) {
@@ -355,14 +362,14 @@ export class I18nTestHelper {
         } else {
           text = `${data.count} items`;
         }
-        
+
         pluralEl.textContent = text;
         document.body.appendChild(pluralEl);
       }, test);
-      
+
       const pluralEl = this.page.getByTestId(`plural-${test.count}`);
       await expect(pluralEl).toBeVisible();
-      
+
       const text = await pluralEl.textContent();
       console.log(`✓ ${locale} plural (${test.count}): ${text}`);
     }
@@ -395,7 +402,7 @@ export class I18nTestHelper {
     if (await emailInput.isVisible()) {
       await emailInput.fill('invalid-email');
       await this.page.keyboard.press('Tab');
-      
+
       const validationMessage = this.page.getByTestId('email-validation-error');
       if (await validationMessage.isVisible()) {
         const message = await validationMessage.textContent();
@@ -415,14 +422,14 @@ export class I18nTestHelper {
 
     // Test form with RTL layout
     const forms = await this.page.getByRole('form').all();
-    
+
     for (let i = 0; i < Math.min(forms.length, 2); i++) {
       const form = forms[i];
-      
+
       // Check form direction
       const formDir = await form.getAttribute('dir');
       expect(formDir).toBe('rtl');
-      
+
       // Check label alignment
       const labels = await form.getByRole('label').all();
       for (const label of labels.slice(0, 3)) {
@@ -430,13 +437,13 @@ export class I18nTestHelper {
           const styles = window.getComputedStyle(el);
           return {
             textAlign: styles.textAlign,
-            direction: styles.direction
+            direction: styles.direction,
           };
         });
-        
+
         expect(labelStyles.direction).toBe('rtl');
       }
-      
+
       // Check input field alignment
       const inputs = await form.getByRole('textbox').all();
       for (const input of inputs.slice(0, 3)) {
@@ -451,10 +458,10 @@ export class I18nTestHelper {
   async switchToLocale(localeCode: string) {
     // Click language selector
     await this.page.click('[data-testid="language-selector"]');
-    
+
     // Select specific locale
     await this.page.click(`[data-testid="locale-option-${localeCode}"]`);
-    
+
     // Wait for locale switch to complete
     await this.page.waitForTimeout(1000);
   }
@@ -472,8 +479,8 @@ export class I18nTestHelper {
           'welcome-message': 'Welcome',
           'login-button': 'Sign In',
           'dashboard-title': 'Dashboard',
-          'settings-link': 'Settings'
-        }
+          'settings-link': 'Settings',
+        },
       },
       {
         code: 'ar-SA',
@@ -486,8 +493,8 @@ export class I18nTestHelper {
           'welcome-message': 'مرحباً',
           'login-button': 'تسجيل الدخول',
           'dashboard-title': 'لوحة التحكم',
-          'settings-link': 'الإعدادات'
-        }
+          'settings-link': 'الإعدادات',
+        },
       },
       {
         code: 'es-ES',
@@ -500,8 +507,8 @@ export class I18nTestHelper {
           'welcome-message': 'Bienvenido',
           'login-button': 'Iniciar Sesión',
           'dashboard-title': 'Panel de Control',
-          'settings-link': 'Configuración'
-        }
+          'settings-link': 'Configuración',
+        },
       },
       {
         code: 'fr-FR',
@@ -514,8 +521,8 @@ export class I18nTestHelper {
           'welcome-message': 'Bienvenue',
           'login-button': 'Se Connecter',
           'dashboard-title': 'Tableau de Bord',
-          'settings-link': 'Paramètres'
-        }
+          'settings-link': 'Paramètres',
+        },
       },
       {
         code: 'de-DE',
@@ -528,34 +535,35 @@ export class I18nTestHelper {
           'welcome-message': 'Willkommen',
           'login-button': 'Anmelden',
           'dashboard-title': 'Dashboard',
-          'settings-link': 'Einstellungen'
-        }
-      }
+          'settings-link': 'Einstellungen',
+        },
+      },
     ];
   }
 
   getMockTranslations(localeCode: string): Record<string, string> {
     const locales = this.getSupportedLocales();
-    const locale = locales.find(l => l.code === localeCode);
+    const locale = locales.find((l) => l.code === localeCode);
     return locale ? locale.translations : {};
   }
 
   getMockExchangeRates(): Record<string, number> {
     return {
-      'USD': 1.0,
-      'EUR': 0.85,
-      'SAR': 3.75,
-      'GBP': 0.73,
-      'JPY': 110.0
+      USD: 1.0,
+      EUR: 0.85,
+      SAR: 3.75,
+      GBP: 0.73,
+      JPY: 110.0,
     };
   }
 
   private async initializeI18nTestData() {
     await this.page.evaluate(() => {
       sessionStorage.setItem('i18n_test_mode', 'true');
-      sessionStorage.setItem('supported_locales', JSON.stringify([
-        'en-US', 'ar-SA', 'es-ES', 'fr-FR', 'de-DE'
-      ]));
+      sessionStorage.setItem(
+        'supported_locales',
+        JSON.stringify(['en-US', 'ar-SA', 'es-ES', 'fr-FR', 'de-DE'])
+      );
       sessionStorage.setItem('current_locale', 'en-US');
     });
   }
@@ -575,19 +583,19 @@ export class I18nTestHelper {
       { locale: 'ar-SA', amount: 1234.56, expected: '1٬234٫56 ر.س', symbol: 'ر.س' },
       { locale: 'es-ES', amount: 1234.56, expected: '1.234,56 €', symbol: '€' },
       { locale: 'fr-FR', amount: 1234.56, expected: '1 234,56 €', symbol: '€' },
-      { locale: 'de-DE', amount: 1234.56, expected: '1.234,56 €', symbol: '€' }
+      { locale: 'de-DE', amount: 1234.56, expected: '1.234,56 €', symbol: '€' },
     ];
   }
 
   static getDateTestData(): DateTestData[] {
     const testDate = new Date('2024-03-15T10:30:00');
-    
+
     return [
       { locale: 'en-US', date: testDate, expected: '3/15/2024', format: 'short' },
       { locale: 'ar-SA', date: testDate, expected: '15/3/2024', format: 'short' },
       { locale: 'es-ES', date: testDate, expected: '15/3/2024', format: 'short' },
       { locale: 'fr-FR', date: testDate, expected: '15/03/2024', format: 'short' },
-      { locale: 'de-DE', date: testDate, expected: '15.03.2024', format: 'short' }
+      { locale: 'de-DE', date: testDate, expected: '15.03.2024', format: 'short' },
     ];
   }
 }

@@ -64,13 +64,13 @@ export class SSOTestHelper {
         subject_types_supported: ['public'],
         id_token_signing_alg_values_supported: ['RS256'],
         scopes_supported: ['openid', 'email', 'profile'],
-        token_endpoint_auth_methods_supported: ['client_secret_basic']
+        token_endpoint_auth_methods_supported: ['client_secret_basic'],
       };
-      
+
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify(config)
+        body: JSON.stringify(config),
       });
     });
 
@@ -81,17 +81,20 @@ export class SSOTestHelper {
       const redirectUri = url.searchParams.get('redirect_uri');
       const state = url.searchParams.get('state');
       const clientId = url.searchParams.get('client_id');
-      
+
       // Store auth request for later validation
-      await this.page.evaluate((data) => {
-        sessionStorage.setItem('oidc_auth_request', JSON.stringify(data));
-      }, { redirectUri, state, clientId });
+      await this.page.evaluate(
+        (data) => {
+          sessionStorage.setItem('oidc_auth_request', JSON.stringify(data));
+        },
+        { redirectUri, state, clientId }
+      );
 
       // Return mock authorization page
       await route.fulfill({
         status: 200,
         contentType: 'text/html',
-        body: this.generateOIDCAuthPage(redirectUri, state)
+        body: this.generateOIDCAuthPage(redirectUri, state),
       });
     });
 
@@ -99,19 +102,19 @@ export class SSOTestHelper {
     await this.page.route('**/oauth2/token', async (route: any) => {
       const request = route.request();
       const body = request.postDataJSON();
-      
+
       if (body.grant_type === 'authorization_code' && body.code) {
         const tokenResponse = await this.generateOIDCTokenResponse(body.code);
         await route.fulfill({
           status: tokenResponse.status,
           contentType: 'application/json',
-          body: JSON.stringify(tokenResponse.body)
+          body: JSON.stringify(tokenResponse.body),
         });
       } else {
         await route.fulfill({
           status: 400,
           contentType: 'application/json',
-          body: JSON.stringify({ error: 'invalid_request' })
+          body: JSON.stringify({ error: 'invalid_request' }),
         });
       }
     });
@@ -122,17 +125,17 @@ export class SSOTestHelper {
       if (authHeader && authHeader.startsWith('Bearer ')) {
         const token = authHeader.substring(7);
         const userInfo = await this.getUserInfoFromToken(token);
-        
+
         await route.fulfill({
           status: userInfo ? 200 : 401,
           contentType: 'application/json',
-          body: JSON.stringify(userInfo || { error: 'invalid_token' })
+          body: JSON.stringify(userInfo || { error: 'invalid_token' }),
         });
       } else {
         await route.fulfill({
           status: 401,
           contentType: 'application/json',
-          body: JSON.stringify({ error: 'invalid_token' })
+          body: JSON.stringify({ error: 'invalid_token' }),
         });
       }
     });
@@ -141,13 +144,13 @@ export class SSOTestHelper {
     await this.page.route('**/saml/sso**', async (route: any) => {
       const request = route.request();
       const samlRequest = request.postData();
-      
+
       if (samlRequest) {
         const samlResponse = await this.generateSAMLResponse(samlRequest);
         await route.fulfill({
           status: 200,
           contentType: 'text/html',
-          body: samlResponse
+          body: samlResponse,
         });
       } else {
         await route.fulfill({ status: 400 });
@@ -157,19 +160,21 @@ export class SSOTestHelper {
     // Mock JWKS endpoint
     await this.page.route('**/.well-known/jwks.json', async (route: any) => {
       const jwks = {
-        keys: [{
-          kty: 'RSA',
-          use: 'sig',
-          kid: 'mock-key-id',
-          n: 'mock-modulus',
-          e: 'AQAB'
-        }]
+        keys: [
+          {
+            kty: 'RSA',
+            use: 'sig',
+            kid: 'mock-key-id',
+            n: 'mock-modulus',
+            e: 'AQAB',
+          },
+        ],
       };
-      
+
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify(jwks)
+        body: JSON.stringify(jwks),
       });
     });
 
@@ -181,7 +186,12 @@ export class SSOTestHelper {
     await this.clearTestData();
   }
 
-  async testOIDCLogin(portalUrl: string, config: OIDCConfig, user: SSOUser, shouldSucceed: boolean = true) {
+  async testOIDCLogin(
+    portalUrl: string,
+    config: OIDCConfig,
+    user: SSOUser,
+    shouldSucceed: boolean = true
+  ) {
     console.log(`Testing OIDC login for ${portalUrl}`);
 
     // Store user data for mock responses
@@ -191,29 +201,30 @@ export class SSOTestHelper {
 
     // Navigate to portal
     await this.page.goto(portalUrl);
-    
+
     // Click SSO login button
     await expect(this.page.getByTestId('sso-login-button')).toBeVisible();
     await this.page.click('[data-testid="sso-login-button"]');
 
     // Should redirect to OIDC provider
     await this.page.waitForURL(/oauth2\/authorize/);
-    
+
     if (shouldSucceed) {
       // Complete successful authentication
       await this.completeOIDCAuth(user);
-      
+
       // Should redirect back to portal
-      await expect(this.page).toHaveURL(new RegExp(portalUrl.replace('http://localhost:', '').replace(/\/.*/, '')));
-      
+      await expect(this.page).toHaveURL(
+        new RegExp(portalUrl.replace('http://localhost:', '').replace(/\/.*/, ''))
+      );
+
       // Verify user is logged in
       await expect(this.page.getByTestId('user-menu')).toBeVisible();
       await expect(this.page.getByText(user.displayName)).toBeVisible();
-      
     } else {
       // Complete failed authentication
       await this.completeOIDCAuth(user, false);
-      
+
       // Should show error message
       await expect(this.page.getByTestId('sso-error')).toBeVisible();
     }
@@ -221,7 +232,12 @@ export class SSOTestHelper {
     return true;
   }
 
-  async testSAMLLogin(portalUrl: string, config: SAMLConfig, user: SSOUser, shouldSucceed: boolean = true) {
+  async testSAMLLogin(
+    portalUrl: string,
+    config: SAMLConfig,
+    user: SSOUser,
+    shouldSucceed: boolean = true
+  ) {
     console.log(`Testing SAML login for ${portalUrl}`);
 
     // Store user data for mock responses
@@ -230,29 +246,30 @@ export class SSOTestHelper {
     }, user);
 
     await this.page.goto(portalUrl);
-    
+
     // Click SAML SSO button
     await expect(this.page.getByTestId('saml-login-button')).toBeVisible();
     await this.page.click('[data-testid="saml-login-button"]');
 
     // Should redirect to SAML IdP
     await this.page.waitForURL(/saml\/sso/);
-    
+
     if (shouldSucceed) {
       // Complete SAML authentication
       await this.completeSAMLAuth(user);
-      
+
       // Should redirect back to portal
-      await expect(this.page).toHaveURL(new RegExp(portalUrl.replace('http://localhost:', '').replace(/\/.*/, '')));
-      
+      await expect(this.page).toHaveURL(
+        new RegExp(portalUrl.replace('http://localhost:', '').replace(/\/.*/, ''))
+      );
+
       // Verify user is logged in
       await expect(this.page.getByTestId('user-menu')).toBeVisible();
       await expect(this.page.getByText(user.displayName)).toBeVisible();
-      
     } else {
       // Complete failed authentication
       await this.completeSAMLAuth(user, false);
-      
+
       // Should show error message
       await expect(this.page.getByTestId('saml-error')).toBeVisible();
     }
@@ -265,7 +282,7 @@ export class SSOTestHelper {
 
     // Assume user is already logged in via SSO
     await this.page.goto(portalUrl);
-    
+
     // Click logout
     await this.page.click('[data-testid="user-menu"]');
     await this.page.click('[data-testid="logout"]');
@@ -273,16 +290,15 @@ export class SSOTestHelper {
     if (provider === 'oidc') {
       // Should redirect to OIDC end session endpoint
       await this.page.waitForURL(/oauth2\/logout/);
-      
+
       // Mock OIDC logout completion
       await this.page.evaluate(() => {
         window.location.href = '/auth/login';
       });
-      
     } else if (provider === 'saml') {
       // Should initiate SAML SLO
       await this.page.waitForURL(/saml\/slo/);
-      
+
       // Complete SAML logout
       await this.completeSAMLLogout();
     }
@@ -307,7 +323,7 @@ export class SSOTestHelper {
     // Navigate to other portals - should be automatically authenticated
     for (let i = 1; i < portals.length; i++) {
       await this.page.goto(portals[i]);
-      
+
       // Should automatically redirect to dashboard (no login required)
       await expect(this.page.getByTestId('dashboard')).toBeVisible();
       await expect(this.page.getByTestId('user-menu')).toBeVisible();
@@ -327,7 +343,7 @@ export class SSOTestHelper {
 
     await this.page.goto(portalUrl);
     await this.page.click('[data-testid="sso-login-button"]');
-    
+
     // Should show token expired error
     await expect(this.page.getByTestId('token-expired-error')).toBeVisible();
 
@@ -339,7 +355,7 @@ export class SSOTestHelper {
 
     await this.page.reload();
     await this.page.click('[data-testid="sso-login-button"]');
-    
+
     // Should show invalid token error
     await expect(this.page.getByTestId('invalid-token-error')).toBeVisible();
 
@@ -380,14 +396,19 @@ export class SSOTestHelper {
     });
 
     const shouldFail = await this.page.evaluate(() => {
-      return sessionStorage.getItem('mock_token_expired') === 'true' || 
-             sessionStorage.getItem('mock_invalid_signature') === 'true';
+      return (
+        sessionStorage.getItem('mock_token_expired') === 'true' ||
+        sessionStorage.getItem('mock_invalid_signature') === 'true'
+      );
     });
 
     if (shouldFail) {
       return {
         status: 400,
-        body: { error: 'invalid_request', error_description: 'Invalid or expired authorization code' }
+        body: {
+          error: 'invalid_request',
+          error_description: 'Invalid or expired authorization code',
+        },
       };
     }
 
@@ -401,8 +422,8 @@ export class SSOTestHelper {
         token_type: 'Bearer',
         expires_in: 3600,
         id_token: idToken,
-        scope: 'openid email profile'
-      }
+        scope: 'openid email profile',
+      },
     };
   }
 
@@ -419,7 +440,7 @@ export class SSOTestHelper {
       family_name: user.lastName,
       name: user.displayName,
       groups: user.groups || [],
-      ...user.customClaims
+      ...user.customClaims,
     };
 
     // Mock JWT (not actually signed for testing)
@@ -441,7 +462,7 @@ export class SSOTestHelper {
       given_name: user.firstName,
       family_name: user.lastName,
       name: user.displayName,
-      groups: user.groups || []
+      groups: user.groups || [],
     };
   }
 
@@ -467,7 +488,7 @@ export class SSOTestHelper {
 
     // Generate mock SAML response
     const samlResponse = this.generateMockSAMLAssertion(user);
-    
+
     return `
       <!DOCTYPE html>
       <html>
@@ -554,7 +575,7 @@ export class SSOTestHelper {
       clientId: 'mock-client-id',
       redirectUri: '/auth/oidc/callback',
       scopes: ['openid', 'email', 'profile'],
-      responseType: 'code'
+      responseType: 'code',
     };
   }
 
@@ -563,7 +584,7 @@ export class SSOTestHelper {
       entityId: 'mock-saml-idp',
       ssoUrl: `${this.mockIdPUrl}/saml/sso`,
       certificate: 'mock-certificate',
-      nameIdFormat: 'urn:oasis:names:tc:SAML:2.0:nameid-format:email'
+      nameIdFormat: 'urn:oasis:names:tc:SAML:2.0:nameid-format:email',
     };
   }
 
@@ -598,7 +619,7 @@ export class SSOTestHelper {
         lastName: 'User',
         displayName: 'Admin User',
         groups: ['admins', 'users'],
-        roles: ['admin', 'user']
+        roles: ['admin', 'user'],
       },
       customerUser: {
         id: 'customer-456',
@@ -607,7 +628,7 @@ export class SSOTestHelper {
         lastName: 'User',
         displayName: 'Customer User',
         groups: ['customers', 'users'],
-        roles: ['customer']
+        roles: ['customer'],
       },
       technicianUser: {
         id: 'tech-789',
@@ -616,7 +637,7 @@ export class SSOTestHelper {
         lastName: 'User',
         displayName: 'Tech User',
         groups: ['technicians', 'users'],
-        roles: ['technician']
+        roles: ['technician'],
       },
       resellerUser: {
         id: 'reseller-101',
@@ -625,8 +646,8 @@ export class SSOTestHelper {
         lastName: 'User',
         displayName: 'Reseller User',
         groups: ['resellers', 'users'],
-        roles: ['reseller']
-      }
+        roles: ['reseller'],
+      },
     };
   }
 }

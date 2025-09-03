@@ -1,18 +1,44 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: frontend-config
-  namespace: dotmac
+  name: dotmac-config
+  namespace: dotmac-system
+  labels:
+    app.kubernetes.io/name: dotmac-platform
+    app.kubernetes.io/instance: dotmac-platform
+    app.kubernetes.io/component: configuration
+    app.kubernetes.io/managed-by: kubectl
 data:
-  api_url: "http://api-gateway.dotmac.svc.cluster.local:8000"
-  websocket_url: "ws://api-gateway.dotmac.svc.cluster.local:3001"
-  otel_endpoint: "http://otel-collector.monitoring.svc.cluster.local:4318"
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: frontend-secrets
-  namespace: dotmac
-type: Opaque
-stringData:
-  sentry_dsn: "https://your-sentry-dsn@sentry.io/project-id"
+  # Application Configuration
+  DOTMAC_ENVIRONMENT: "production"
+  PROJECT_NAME: "DotMac Management Platform"
+  API_V1_STR: "/api/v1"
+  DEBUG: "false"
+  
+  # Plugin System Configuration
+  PLUGIN_REGISTRY_PATH: "/app/plugins"
+  PLUGIN_DATA_PATH: "/app/data"
+  PLUGIN_LOGS_PATH: "/app/logs"
+  PLUGIN_UPLOAD_PATH: "/app/uploads"
+  PLUGIN_MAX_UPLOAD_SIZE: "100MB"
+  PLUGIN_SECURITY_ENABLED: "true"
+  PLUGIN_SANDBOX_ENABLED: "true"
+  PLUGIN_MEMORY_LIMIT: "512MB"
+  PLUGIN_CPU_LIMIT: "1.0"
+  PLUGIN_EXECUTION_TIMEOUT: "300"
+  PLUGIN_NETWORK_ISOLATION: "true"
+  INIT_PLUGIN_REGISTRY: "true"
+  PLUGIN_MARKETPLACE_ENABLED: "true"
+  PLUGIN_CERTIFICATION_REQUIRED: "true"
+  PLUGIN_CLEANUP_ON_SHUTDOWN: "true"
+  
+  # Monitoring Configuration
+  ENABLE_MONITORING: "true"
+  METRICS_ENABLED: "true"
+  TRACING_ENABLED: "true"
+  
+  # Health Check Configuration
+  HEALTH_CHECK_ENABLED: "true"
+  HEALTH_CHECK_INTERVAL: "30"
+  HEALTH_CHECK_TIMEOUT: "10"
+  HEALTH_CHECK_RETRIES: "3"

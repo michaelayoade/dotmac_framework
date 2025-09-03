@@ -16,7 +16,7 @@ from fastapi import HTTPException, UploadFile
 from dotmac_isp.core.settings import get_settings
 from dotmac_shared.api.exception_handlers import standard_exception_handler
 
-logger = logging.getLogger(__name__, timezone)
+logger = logging.getLogger(__name__)
 settings = get_settings()
 
 

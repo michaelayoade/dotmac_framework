@@ -17,7 +17,7 @@ from .services_complete import ResellerApplicationService, ResellerService
 class ResellerAdminCLI:
     """Command-line interface for reseller administration"""
     
-    def __init__(self, db: AsyncSession, tenant_id: Optional[str] = None):
+    def __init__(self, db: AsyncSession, tenant_id: Optional[str] = None, timezone):
         self.db = db
         self.tenant_id = tenant_id
         self.app_service = ResellerApplicationService(db, tenant_id)
@@ -237,7 +237,7 @@ class ResellerAdminActions:
         total_monthly_sales = sum(float(r.monthly_sales or 0) for r in resellers)
         
         report = {
-            'report_date': datetime.utcnow(),
+            'report_date': datetime.now(timezone.utc),
             'applications': {
                 'total': total_applications,
                 'pending': pending_applications,

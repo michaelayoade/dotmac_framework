@@ -58,8 +58,8 @@ class RedisWebSocketBackend:
         self.registered_instances: Set[str] = set()
         self.instance_info: Dict[str, Any] = {
             "instance_id": self.instance_id,
-            "started_at": datetime.utcnow().isoformat(),
-            "last_heartbeat": datetime.utcnow().isoformat(),
+            "started_at": datetime.now(timezone.utc).isoformat(),
+            "last_heartbeat": datetime.now(timezone.utc).isoformat(),
             "connection_count": 0,
             "message_count": 0,
             "status": "starting",
@@ -205,7 +205,7 @@ class RedisWebSocketBackend:
                 "target_instances": (
                     list(target_instances) if target_instances else None
                 ),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "message_id": str(uuid4()),
                 "payload": message,
             }
@@ -479,7 +479,7 @@ class RedisWebSocketBackend:
         while self.is_running:
             try:
                 # Update instance info
-                self.instance_info["last_heartbeat"] = datetime.utcnow().isoformat()
+                self.instance_info["last_heartbeat"] = datetime.now(timezone.utc).isoformat()
 
                 # Update Redis
                 key = f"websocket:instance:{self.instance_id}"

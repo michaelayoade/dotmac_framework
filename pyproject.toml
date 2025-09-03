@@ -1,73 +1,139 @@
-[project]
+[tool.poetry]
 name = "dotmac-framework"
 version = "0.1.0"
 description = "DotMac ISP Framework - Production-ready ISP management platform"
-authors = [{name = "DotMac Team", email = "team@dotmac.io"}]
+authors = ["DotMac Team <team@dotmac.io>"]
 readme = "README.md"
-requires-python = ">=3.9"
-dynamic = []
-dependencies = [
-    "fastapi>=0.100.0",
-    "uvicorn>=0.23.0",
-    "pydantic>=2.0.0",
-    "pydantic-settings>=2.0.0",
-    "sqlalchemy>=2.0.0",
-    "alembic>=1.11.0",
-    "asyncpg>=0.28.0",
-    "redis>=4.6.0",
-    "python-jose>=3.3.0",
-    "passlib>=1.7.0",
-    "python-multipart>=0.0.6",
-    "cryptography>=41.0.0",
-    "httpx>=0.24.0",
-    "aiohttp>=3.8.0",
-    "python-dotenv>=1.0.0",
-    "click>=8.1.0",
-    "structlog>=23.1.0",
-    # GIS and Spatial Dependencies
-    "geoalchemy2>=0.14.0",
-    "shapely>=2.0.0",
-    "geopy>=2.3.0",
-    "networkx>=3.1.0",
-    # OpenTelemetry Dependencies for SigNoz Integration
-    "opentelemetry-sdk>=1.20.0",
-    "opentelemetry-exporter-otlp>=1.20.0",
-    "opentelemetry-instrumentation-fastapi>=0.41b0",
-    "opentelemetry-instrumentation-asgi>=0.41b0",
-    "opentelemetry-instrumentation-logging>=0.41b0", 
-    "opentelemetry-instrumentation-requests>=0.41b0",
-    "opentelemetry-instrumentation-httpx>=0.41b0",
-    "opentelemetry-instrumentation-sqlalchemy>=0.41b0"
+homepage = "https://dotmac.io"
+repository = "https://github.com/dotmac/dotmac-framework"
+documentation = "https://docs.dotmac.io"
+keywords = ["isp", "framework", "management", "telecommunications", "networking"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Web Environment",
+    "Framework :: FastAPI",
+    "Intended Audience :: Telecommunications Industry",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+    "Topic :: Software Development :: Libraries :: Python Modules"
 ]
+packages = [{include = "dotmac_isp", from = "src"}, {include = "dotmac_management", from = "src"}, {include = "dotmac_shared", from = "src"}]
 
-# Package discovery is handled by setuptools automatically from src/
-# All packages under src/ will be included in the distribution
+[tool.poetry.dependencies]
+python = ">=3.9,<4.0"
+# Core Framework Dependencies
+fastapi = ">=0.100.0"
+uvicorn = {extras = ["standard"], version = ">=0.23.0"}
+pydantic = ">=2.0.0"
+pydantic-settings = ">=2.0.0"
+sqlalchemy = ">=2.0.0"
+alembic = ">=1.11.0"
+asyncpg = ">=0.28.0"
+redis = ">=4.6.0"
 
-[project.optional-dependencies]
-dev = [
-    "pytest>=7.4.0",
-    "pytest-asyncio>=0.21.0",
-    "pytest-cov>=4.1.0",
-    "pytest-xdist>=3.3.0",
-    "pytest-mock>=3.11.0",
-    "factory-boy>=3.3.0",
-    "freezegun>=1.2.0",
-    "responses>=0.23.0",
-    "ruff>=0.0.280",
-    "black>=23.7.0",
-    "mypy>=1.5.0",
-    "pre-commit>=3.3.0",
-    "pytest-benchmark>=4.0.0",
-    "locust>=2.15.0",
-    "playwright>=1.55.0"
-]
-docs = [
-    "mkdocs>=1.5.0",
-    "mkdocs-material>=9.1.0",
-    "mkdocstrings>=0.22.0"
-]
+# Authentication & Security
+python-jose = {extras = ["cryptography"], version = ">=3.3.0"}
+passlib = {extras = ["bcrypt"], version = ">=1.7.0"}
+python-multipart = ">=0.0.6"
+cryptography = ">=41.0.0"
 
-# Scripts are handled by direct commands - use poetry run pytest, poetry run ruff, etc.
+# HTTP & API Clients
+httpx = ">=0.24.0"
+aiohttp = ">=3.8.0"
+
+# Configuration & Environment
+python-dotenv = ">=1.0.0"
+click = ">=8.1.0"
+
+# Logging & Observability
+structlog = ">=23.1.0"
+opentelemetry-sdk = ">=1.20.0"
+opentelemetry-exporter-otlp = ">=1.20.0"
+opentelemetry-instrumentation-fastapi = ">=0.41b0"
+opentelemetry-instrumentation-asgi = ">=0.41b0"
+opentelemetry-instrumentation-logging = ">=0.41b0"
+opentelemetry-instrumentation-requests = ">=0.41b0"
+opentelemetry-instrumentation-httpx = ">=0.41b0"
+opentelemetry-instrumentation-sqlalchemy = ">=0.41b0"
+
+# GIS and Spatial Dependencies
+geoalchemy2 = ">=0.14.0"
+shapely = ">=2.0.0"
+geopy = ">=2.3.0"
+networkx = ">=3.1.0"
+
+# Data Processing & Analysis (Optional)
+pandas = {version = ">=2.0.0", optional = true}
+numpy = {version = ">=1.24.0", optional = true}
+matplotlib = {version = ">=3.8.0", optional = true}
+pillow = {version = ">=10.0.0", optional = true}
+
+# Email & Notifications (Optional)
+aiosmtplib = {version = ">=3.0.0", optional = true}
+jinja2 = {version = ">=3.1.0", optional = true}
+
+[tool.poetry.group.dev.dependencies]
+# Testing Framework
+pytest = ">=7.4.0"
+pytest-asyncio = ">=0.21.0"
+pytest-cov = ">=4.1.0"
+pytest-xdist = ">=3.3.0"
+pytest-mock = ">=3.11.0"
+pytest-benchmark = ">=4.0.0"
+factory-boy = ">=3.3.0"
+freezegun = ">=1.2.0"
+responses = ">=0.23.0"
+faker = ">=19.0.0"
+
+# Code Quality & Formatting
+ruff = ">=0.0.280"
+black = ">=23.7.0"
+mypy = ">=1.5.0"
+pre-commit = ">=3.3.0"
+isort = ">=5.12.0"
+
+# Load Testing & Performance
+locust = ">=2.15.0"
+playwright = ">=1.55.0"
+requests-mock = ">=1.11.0"
+
+# Development Tools
+ipython = ">=8.14.0"
+ipdb = ">=0.13.0"
+watchdog = ">=3.0.0"
+python-lsp-server = {extras = ["all"], version = ">=1.7.0"}
+
+[tool.poetry.group.docs.dependencies]
+mkdocs = ">=1.5.0"
+mkdocs-material = ">=9.1.0"
+mkdocstrings = {extras = ["python"], version = ">=0.22.0"}
+mkdocs-gen-files = ">=0.5.0"
+mkdocs-literate-nav = ">=0.6.0"
+mkdocs-section-index = ">=0.3.0"
+
+[tool.poetry.group.security.dependencies]
+bandit = ">=1.7.0"
+safety = ">=2.3.0"
+semgrep = ">=1.45.0"
+
+[tool.poetry.extras]
+data = ["pandas", "numpy", "matplotlib", "pillow"]
+email = ["aiosmtplib", "jinja2"]
+all = ["pandas", "numpy", "matplotlib", "pillow", "aiosmtplib", "jinja2"]
+
+[tool.poetry.scripts]
+dotmac = "dotmac_isp.cli:main"
+dotmac-migrate = "dotmac_shared.database.migrate:main"
+dotmac-admin = "dotmac_management.cli:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -80,53 +146,137 @@ addopts = [
     "--cov=src",
     "--cov-report=term-missing",
     "--cov-report=html",
+    "--cov-report=xml",
     "-v"
 ]
 markers = [
     "unit: Unit tests",
-    "integration: Integration tests",
+    "integration: Integration tests", 
     "e2e: End-to-end tests",
-    "slow: Tests that take longer than 1 second"
+    "slow: Tests that take longer than 1 second",
+    "security: Security-related tests",
+    "performance: Performance benchmarking tests"
 ]
 asyncio_mode = "auto"
+filterwarnings = [
+    # Suppress warnings that clutter test output
+    "ignore:numpy.dtype size changed.*binary incompatibility:RuntimeWarning",
+    "ignore:Unable to import Axes3D.*multiple versions:UserWarning",
+    "ignore:datetime.datetime.utcnow.*deprecated:DeprecationWarning",
+    "ignore:json_encoders.*deprecated.*Pydantic V2:PydanticDeprecatedSince20",
+    "ignore:declarative_base.*deprecated since. 2.0:sqlalchemy.exc.MovedIn20Warning"
+]
 
 [tool.ruff]
 target-version = "py39"
-select = ["E", "W", "F", "I", "N", "UP"]
-ignore = ["E501"]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings  
+    "F",   # pyflakes
+    "I",   # isort
+    "N",   # pep8-naming
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "S",   # bandit
+    "T20", # flake8-print
+]
+ignore = [
+    "E501",  # line too long
+    "S101",  # use of assert
+    "S104",  # possible binding to all interfaces
+    "S108",  # probable insecure usage of temp file/directory
+]
 src = ["src", "tests"]
 exclude = [
     ".git",
-    "__pycache__",
+    ".mypy_cache", 
+    ".pytest_cache",
+    ".ruff_cache",
     "build",
     "dist",
-    "*.egg-info"
+    "node_modules",
+    "venv",
+    ".venv"
 ]
 
+[tool.ruff.per-file-ignores]
+"tests/*" = ["S101", "S105", "S106"]  # Allow assert and hardcoded passwords in tests
+"src/*/migrations/*" = ["E501"]  # Allow long lines in migrations
+
 [tool.black]
-target-version = ["py39"]
+line-length = 100
+target-version = ['py39', 'py310', 'py311', 'py312']
 include = '\.pyi?$'
-exclude = '''
+extend-exclude = '''
 /(
-    \.git
-  | __pycache__
-  | build
-  | dist
-  | \.pytest_cache
-  | \.venv
+    migrations
+    | node_modules
+    | .venv
 )/
 '''
 
 [tool.mypy]
 python_version = "3.9"
-strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+show_column_numbers = true
+show_error_codes = true
+pretty = true
+
+[[tool.mypy.overrides]]
+module = [
+    "alembic.*",
+    "geoalchemy2.*",
+    "shapely.*",
+    "geopy.*",
+    "redis.*",
+    "structlog.*",
+    "factory.*",
+    "freezegun.*",
+    "responses.*",
+    "locust.*",
+    "playwright.*"
+]
 ignore_missing_imports = true
-exclude = ["build/", "dist/"]
 
-[build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "*/tests/*",
+    "*/migrations/*",
+    "*/__pycache__/*",
+    "*/node_modules/*"
+]
 
-[tool.setuptools]
-packages = {find = {where = ["src"], include = ["dotmac_*"]}}
-package-dir = {"" = "src"}
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "class .*\\(Protocol\\):",
+    "@(abc\\.)?abstractmethod"
+]
+
+[tool.isort]
+profile = "black"
+line_length = 100
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+src_paths = ["src", "tests"]

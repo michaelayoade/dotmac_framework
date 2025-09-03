@@ -34,19 +34,25 @@ test.describe('ISP Reporting System', () => {
 
       // Check if revenue report template exists
       const revenueReportCard = page.locator('[data-testid="report-revenue-analytics"]');
-      if (await revenueReportCard.count() > 0) {
+      if ((await revenueReportCard.count()) > 0) {
         await revenueReportCard.click('[data-testid="generate-report-btn"]');
-        
+
         // Wait for report generation
-        await expect(page.locator('[data-testid="report-status"]')).toContainText('generating', { timeout: 5000 });
-        await expect(page.locator('[data-testid="report-status"]')).toContainText('ready', { timeout: 30000 });
+        await expect(page.locator('[data-testid="report-status"]')).toContainText('generating', {
+          timeout: 5000,
+        });
+        await expect(page.locator('[data-testid="report-status"]')).toContainText('ready', {
+          timeout: 30000,
+        });
 
         // Verify download is available
         await expect(page.locator('[data-testid="download-report-btn"]')).toBeVisible();
       } else {
         // Use fallback generate button
         await page.click('[data-testid="generate-report-button"]');
-        await expect(page.locator('[data-testid="success-message"]')).toBeVisible({ timeout: 10000 });
+        await expect(page.locator('[data-testid="success-message"]')).toBeVisible({
+          timeout: 10000,
+        });
       }
     });
 
@@ -82,29 +88,31 @@ test.describe('ISP Reporting System', () => {
 
       // Look for a completed report
       const readyReports = page.locator('[data-testid^="report-card-"]').filter({
-        has: page.locator('[data-testid="report-status"]:has-text("ready")')
+        has: page.locator('[data-testid="report-status"]:has-text("ready")'),
       });
 
       const readyCount = await readyReports.count();
-      
+
       if (readyCount > 0) {
         // Start download
         const downloadPromise = page.waitForEvent('download');
         await readyReports.first().click('[data-testid="download-report-btn"]');
-        
+
         const download = await downloadPromise;
-        
+
         // Verify download properties
         expect(download.suggestedFilename()).toMatch(/.*\.(pdf|xlsx|csv)$/);
-        
+
         // Save and verify file size
         const downloadPath = await download.path();
         expect(downloadPath).toBeTruthy();
       } else {
         // Generate new report for download test
         await page.click('[data-testid="generate-report-button"]');
-        await expect(page.locator('[data-testid="success-message"]')).toBeVisible({ timeout: 15000 });
-        
+        await expect(page.locator('[data-testid="success-message"]')).toBeVisible({
+          timeout: 15000,
+        });
+
         // Note: In a real test, we'd wait for the report to complete
         // For this demo, we're showing the test structure
       }
@@ -112,7 +120,7 @@ test.describe('ISP Reporting System', () => {
 
     test('validates report data accuracy', async ({ page }) => {
       await page.click('[data-testid="billing-nav"]');
-      
+
       // Navigate to customer list to get reference data
       await page.click('[data-testid="customers-nav"]');
       await page.waitForLoadState('networkidle');
@@ -120,7 +128,7 @@ test.describe('ISP Reporting System', () => {
       // Count active customers
       const customerRows = page.locator('[data-testid^="customer-row-"]');
       const activeCustomers = customerRows.filter({
-        has: page.locator('[data-testid="customer-status"]:has-text("active")')
+        has: page.locator('[data-testid="customer-status"]:has-text("active")'),
       });
       const activeCount = await activeCustomers.count();
 
@@ -144,9 +152,13 @@ test.describe('ISP Reporting System', () => {
       // For this demo, we verify the UI shows consistent data
 
       const reportMetrics = page.locator('[data-testid="report-metrics"]');
-      if (await reportMetrics.count() > 0) {
-        const reportCustomerCount = await reportMetrics.locator('[data-testid="customer-count"]').textContent();
-        const reportRevenueAmount = await reportMetrics.locator('[data-testid="revenue-total"]').textContent();
+      if ((await reportMetrics.count()) > 0) {
+        const reportCustomerCount = await reportMetrics
+          .locator('[data-testid="customer-count"]')
+          .textContent();
+        const reportRevenueAmount = await reportMetrics
+          .locator('[data-testid="revenue-total"]')
+          .textContent();
 
         // Verify consistency (allowing for reasonable variance)
         if (reportCustomerCount) {
@@ -168,13 +180,13 @@ test.describe('ISP Reporting System', () => {
       await page.click('[data-testid="reports-tab"]');
 
       const startTime = Date.now();
-      
+
       // Generate report
       await page.click('[data-testid="generate-report-button"]');
-      
+
       // Wait for completion
       await expect(page.locator('[data-testid="success-message"]')).toBeVisible({ timeout: 30000 });
-      
+
       const endTime = Date.now();
       const duration = endTime - startTime;
 
@@ -199,7 +211,7 @@ test.describe('ISP Reporting System', () => {
 
       // Start report generation simultaneously
       const startTime = Date.now();
-      
+
       await Promise.all([
         page.click('[data-testid="generate-report-button"]'),
         page2.click('[data-testid="generate-report-button"]'),
@@ -247,12 +259,12 @@ test.describe('ISP Reporting System', () => {
 
       // Look for report categories
       const categories = ['financial', 'customer', 'operational'];
-      
+
       for (const category of categories) {
         const categorySection = page.locator(`[data-testid="reports-${category}"]`);
-        if (await categorySection.count() > 0) {
+        if ((await categorySection.count()) > 0) {
           await expect(categorySection).toBeVisible();
-          
+
           // Check for reports in this category
           const categoryReports = categorySection.locator('[data-testid^="report-"]');
           const count = await categoryReports.count();
@@ -268,11 +280,11 @@ test.describe('ISP Reporting System', () => {
       await page.click('[data-testid="reports-tab"]');
 
       // Mock a failure scenario by intercepting the API
-      await page.route('/api/reports/generate', route => {
+      await page.route('/api/reports/generate', (route) => {
         route.fulfill({
           status: 500,
           contentType: 'application/json',
-          body: JSON.stringify({ error: 'Internal server error' })
+          body: JSON.stringify({ error: 'Internal server error' }),
         });
       });
 
@@ -282,7 +294,7 @@ test.describe('ISP Reporting System', () => {
       // Verify error handling
       await expect(page.locator('[data-testid="error-message"]')).toBeVisible({ timeout: 10000 });
       await expect(page.locator('[data-testid="error-message"]')).toContainText(/failed|error/i);
-      
+
       // Verify UI remains functional
       await expect(page.locator('[data-testid="generate-report-button"]')).toBeVisible();
       await expect(page.locator('[data-testid="generate-report-button"]')).toBeEnabled();
@@ -293,14 +305,14 @@ test.describe('ISP Reporting System', () => {
       await page.click('[data-testid="reports-tab"]');
 
       // Mock empty data response
-      await page.route('/api/reports/data', route => {
+      await page.route('/api/reports/data', (route) => {
         route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify({ 
+          body: JSON.stringify({
             reports: [],
-            message: 'No reports available'
-          })
+            message: 'No reports available',
+          }),
         });
       });
 
@@ -308,7 +320,7 @@ test.describe('ISP Reporting System', () => {
 
       // Verify empty state handling
       const emptyState = page.locator('[data-testid="empty-reports"]');
-      if (await emptyState.count() > 0) {
+      if ((await emptyState.count()) > 0) {
         await expect(emptyState).toBeVisible();
         await expect(emptyState).toContainText(/no reports/i);
       } else {
@@ -320,7 +332,7 @@ test.describe('ISP Reporting System', () => {
     test('validates user permissions for report access', async ({ page }) => {
       // This test would verify that only authorized users can access reports
       // For now, we verify the reports section is accessible for admin users
-      
+
       await page.click('[data-testid="billing-nav"]');
       await page.click('[data-testid="reports-tab"]');
 
@@ -345,8 +357,10 @@ test.describe('ISP Reporting System', () => {
       await expect(page.locator(':focus')).toBeVisible();
 
       // Navigate through report elements
-      const focusableElements = await page.locator('button, input, select, [tabindex]:not([tabindex="-1"])').all();
-      
+      const focusableElements = await page
+        .locator('button, input, select, [tabindex]:not([tabindex="-1"])')
+        .all();
+
       for (let i = 0; i < Math.min(focusableElements.length, 5); i++) {
         await page.keyboard.press('Tab');
         const focusedElement = page.locator(':focus');
@@ -355,12 +369,14 @@ test.describe('ISP Reporting System', () => {
 
       // Test Enter key on generate button
       const generateButton = page.locator('[data-testid="generate-report-button"]');
-      if (await generateButton.count() > 0) {
+      if ((await generateButton.count()) > 0) {
         await generateButton.focus();
         await page.keyboard.press('Enter');
-        
+
         // Should trigger report generation
-        await expect(page.locator('[data-testid="success-message"]')).toBeVisible({ timeout: 15000 });
+        await expect(page.locator('[data-testid="success-message"]')).toBeVisible({
+          timeout: 15000,
+        });
       }
     });
 
@@ -380,19 +396,19 @@ test.describe('ISP Reporting System', () => {
       // Check for proper button labels
       const buttons = page.locator('button');
       const buttonCount = await buttons.count();
-      
+
       for (let i = 0; i < Math.min(buttonCount, 5); i++) {
         const button = buttons.nth(i);
         const text = await button.textContent();
         const ariaLabel = await button.getAttribute('aria-label');
-        
+
         // Button should have visible text or aria-label
         expect(text || ariaLabel).toBeTruthy();
       }
 
       // Check for proper list structure if reports are displayed as lists
       const reportLists = page.locator('ul, ol');
-      if (await reportLists.count() > 0) {
+      if ((await reportLists.count()) > 0) {
         const firstList = reportLists.first();
         const listItems = firstList.locator('li');
         const itemCount = await listItems.count();

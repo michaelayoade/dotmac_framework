@@ -578,7 +578,7 @@ async def analyze_commission_config_performance(
     from dotmac_management.models.commission_config import CommissionConfig
     
     # Performance analysis queries
-    since_date = datetime.utcnow().date() - timedelta(days=days_back)
+    since_date = datetime.now(timezone.utc).date() - timedelta(days=days_back)
     
     # Configuration usage statistics
     usage_query = select(

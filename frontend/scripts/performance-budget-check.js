@@ -13,39 +13,39 @@ const { execSync } = require('child_process');
 const PERFORMANCE_BUDGETS = {
   // Bundle size limits (in KB)
   bundleSize: {
-    admin: 800,     // Admin portal bundle
-    customer: 600,  // Customer portal bundle  
-    reseller: 700,  // Reseller portal bundle
+    admin: 800, // Admin portal bundle
+    customer: 600, // Customer portal bundle
+    reseller: 700, // Reseller portal bundle
     technician: 500, // Technician portal bundle
-    shared: 200     // Shared packages
+    shared: 200, // Shared packages
   },
-  
+
   // Lighthouse scores (0-100)
   lighthouse: {
     performance: 90,
     accessibility: 95,
     bestPractices: 90,
     seo: 85,
-    pwa: 80
+    pwa: 80,
   },
-  
+
   // Core Web Vitals
   webVitals: {
-    lcp: 2500,      // Largest Contentful Paint (ms)
-    fid: 100,       // First Input Delay (ms)  
-    cls: 0.1,       // Cumulative Layout Shift
-    fcp: 1800,      // First Contentful Paint (ms)
-    ttfb: 600       // Time to First Byte (ms)
+    lcp: 2500, // Largest Contentful Paint (ms)
+    fid: 100, // First Input Delay (ms)
+    cls: 0.1, // Cumulative Layout Shift
+    fcp: 1800, // First Contentful Paint (ms)
+    ttfb: 600, // Time to First Byte (ms)
   },
-  
+
   // Resource counts
   resources: {
     totalRequests: 50,
     cssFiles: 5,
     jsFiles: 10,
     images: 20,
-    fonts: 4
-  }
+    fonts: 4,
+  },
 };
 
 class PerformanceBudgetChecker {
@@ -53,9 +53,9 @@ class PerformanceBudgetChecker {
     this.results = {
       passed: [],
       failed: [],
-      warnings: []
+      warnings: [],
     };
-    
+
     this.outputPath = process.env.PERFORMANCE_OUTPUT_PATH || './performance-results';
     this.isCI = process.env.CI === 'true';
     this.verbose = process.env.VERBOSE === 'true';
@@ -69,7 +69,7 @@ class PerformanceBudgetChecker {
 
   async checkBundleSizes() {
     this.log('Checking bundle sizes...');
-    
+
     const distPath = path.join(process.cwd(), 'dist');
     if (!fs.existsSync(distPath)) {
       this.results.warnings.push('No dist directory found, skipping bundle size check');
@@ -77,7 +77,7 @@ class PerformanceBudgetChecker {
     }
 
     const apps = ['admin', 'customer', 'reseller', 'technician'];
-    
+
     for (const app of apps) {
       const appPath = path.join(distPath, app);
       if (!fs.existsSync(appPath)) {
@@ -87,26 +87,26 @@ class PerformanceBudgetChecker {
 
       try {
         // Find main JS bundle
-        const jsFiles = this.findFiles(appPath, /\.js$/).filter(f => 
-          f.includes('chunk') || f.includes('main') || f.includes('index')
+        const jsFiles = this.findFiles(appPath, /\.js$/).filter(
+          (f) => f.includes('chunk') || f.includes('main') || f.includes('index')
         );
-        
+
         let totalSize = 0;
-        jsFiles.forEach(file => {
+        jsFiles.forEach((file) => {
           const stats = fs.statSync(file);
           totalSize += stats.size;
         });
 
         const sizeKB = Math.round(totalSize / 1024);
         const budget = PERFORMANCE_BUDGETS.bundleSize[app];
-        
+
         if (sizeKB <= budget) {
           this.results.passed.push({
             check: 'Bundle Size',
             app,
             value: `${sizeKB}KB`,
             threshold: `${budget}KB`,
-            status: 'PASS'
+            status: 'PASS',
           });
         } else {
           this.results.failed.push({
@@ -115,18 +115,19 @@ class PerformanceBudgetChecker {
             value: `${sizeKB}KB`,
             threshold: `${budget}KB`,
             status: 'FAIL',
-            message: `Bundle size exceeds budget by ${sizeKB - budget}KB`
+            message: `Bundle size exceeds budget by ${sizeKB - budget}KB`,
           });
         }
 
-        this.log(`${app}: ${sizeKB}KB (budget: ${budget}KB) - ${sizeKB <= budget ? 'PASS' : 'FAIL'}`);
-        
+        this.log(
+          `${app}: ${sizeKB}KB (budget: ${budget}KB) - ${sizeKB <= budget ? 'PASS' : 'FAIL'}`
+        );
       } catch (error) {
         this.results.failed.push({
           check: 'Bundle Size',
           app,
           status: 'ERROR',
-          message: `Failed to check bundle size: ${error.message}`
+          message: `Failed to check bundle size: ${error.message}`,
         });
       }
     }
@@ -134,7 +135,7 @@ class PerformanceBudgetChecker {
 
   async checkLighthouseScores() {
     this.log('Checking Lighthouse scores...');
-    
+
     const lighthouseResultsPath = path.join(this.outputPath, 'lighthouse');
     if (!fs.existsSync(lighthouseResultsPath)) {
       this.results.warnings.push('No Lighthouse results found');
@@ -142,8 +143,8 @@ class PerformanceBudgetChecker {
     }
 
     try {
-      const reportFiles = this.findFiles(lighthouseResultsPath, /\.json$/).filter(f =>
-        f.includes('lighthouse') || f.includes('report')
+      const reportFiles = this.findFiles(lighthouseResultsPath, /\.json$/).filter(
+        (f) => f.includes('lighthouse') || f.includes('report')
       );
 
       for (const reportFile of reportFiles) {
@@ -156,13 +157,13 @@ class PerformanceBudgetChecker {
           accessibility: Math.round(report.categories.accessibility?.score * 100) || 0,
           bestPractices: Math.round(report.categories['best-practices']?.score * 100) || 0,
           seo: Math.round(report.categories.seo?.score * 100) || 0,
-          pwa: report.categories.pwa ? Math.round(report.categories.pwa?.score * 100) : null
+          pwa: report.categories.pwa ? Math.round(report.categories.pwa?.score * 100) : null,
         };
 
         // Check each score against budget
         Object.entries(scores).forEach(([category, score]) => {
           if (score === null) return;
-          
+
           const threshold = PERFORMANCE_BUDGETS.lighthouse[category];
           const result = {
             check: 'Lighthouse',
@@ -170,34 +171,36 @@ class PerformanceBudgetChecker {
             category,
             value: score,
             threshold,
-            url
+            url,
           };
 
           if (score >= threshold) {
             this.results.passed.push({ ...result, status: 'PASS' });
           } else {
-            this.results.failed.push({ 
-              ...result, 
+            this.results.failed.push({
+              ...result,
               status: 'FAIL',
-              message: `${category} score ${score} below threshold ${threshold}`
+              message: `${category} score ${score} below threshold ${threshold}`,
             });
           }
         });
 
-        this.log(`${app} Lighthouse: Performance ${scores.performance}, Accessibility ${scores.accessibility}, Best Practices ${scores.bestPractices}, SEO ${scores.seo}${scores.pwa ? `, PWA ${scores.pwa}` : ''}`);
+        this.log(
+          `${app} Lighthouse: Performance ${scores.performance}, Accessibility ${scores.accessibility}, Best Practices ${scores.bestPractices}, SEO ${scores.seo}${scores.pwa ? `, PWA ${scores.pwa}` : ''}`
+        );
       }
     } catch (error) {
       this.results.failed.push({
         check: 'Lighthouse',
         status: 'ERROR',
-        message: `Failed to process Lighthouse reports: ${error.message}`
+        message: `Failed to process Lighthouse reports: ${error.message}`,
       });
     }
   }
 
   async checkWebVitals() {
     this.log('Checking Core Web Vitals...');
-    
+
     // Look for web vitals data from Real User Monitoring or lab data
     const webVitalsPath = path.join(this.outputPath, 'web-vitals.json');
     if (!fs.existsSync(webVitalsPath)) {
@@ -207,10 +210,10 @@ class PerformanceBudgetChecker {
 
     try {
       const webVitalsData = JSON.parse(fs.readFileSync(webVitalsPath, 'utf8'));
-      
+
       Object.entries(webVitalsData).forEach(([url, metrics]) => {
         const app = this.extractAppFromUrl(url);
-        
+
         Object.entries(PERFORMANCE_BUDGETS.webVitals).forEach(([metric, threshold]) => {
           const value = metrics[metric];
           if (value === undefined) return;
@@ -221,7 +224,7 @@ class PerformanceBudgetChecker {
             metric: metric.toUpperCase(),
             value,
             threshold,
-            url
+            url,
           };
 
           if (value <= threshold) {
@@ -230,7 +233,7 @@ class PerformanceBudgetChecker {
             this.results.failed.push({
               ...result,
               status: 'FAIL',
-              message: `${metric.toUpperCase()} ${value}ms exceeds threshold ${threshold}ms`
+              message: `${metric.toUpperCase()} ${value}ms exceeds threshold ${threshold}ms`,
             });
           }
         });
@@ -239,14 +242,14 @@ class PerformanceBudgetChecker {
       this.results.failed.push({
         check: 'Web Vitals',
         status: 'ERROR',
-        message: `Failed to process Web Vitals data: ${error.message}`
+        message: `Failed to process Web Vitals data: ${error.message}`,
       });
     }
   }
 
   async checkResourceCounts() {
     this.log('Checking resource counts...');
-    
+
     // This would typically come from HAR files or network analysis
     const harPath = path.join(this.outputPath, 'network.har');
     if (!fs.existsSync(harPath)) {
@@ -257,13 +260,13 @@ class PerformanceBudgetChecker {
     try {
       const harData = JSON.parse(fs.readFileSync(harPath, 'utf8'));
       const entries = harData.log.entries;
-      
+
       const resourceCounts = {
         totalRequests: entries.length,
-        cssFiles: entries.filter(e => e.request.url.endsWith('.css')).length,
-        jsFiles: entries.filter(e => e.request.url.endsWith('.js')).length,
-        images: entries.filter(e => e.response.content.mimeType?.startsWith('image/')).length,
-        fonts: entries.filter(e => e.response.content.mimeType?.includes('font')).length
+        cssFiles: entries.filter((e) => e.request.url.endsWith('.css')).length,
+        jsFiles: entries.filter((e) => e.request.url.endsWith('.js')).length,
+        images: entries.filter((e) => e.response.content.mimeType?.startsWith('image/')).length,
+        fonts: entries.filter((e) => e.response.content.mimeType?.includes('font')).length,
       };
 
       Object.entries(resourceCounts).forEach(([resource, count]) => {
@@ -272,7 +275,7 @@ class PerformanceBudgetChecker {
           check: 'Resource Count',
           resource,
           value: count,
-          threshold
+          threshold,
         };
 
         if (count <= threshold) {
@@ -280,18 +283,20 @@ class PerformanceBudgetChecker {
         } else {
           this.results.failed.push({
             ...result,
-            status: 'FAIL', 
-            message: `${resource} count ${count} exceeds threshold ${threshold}`
+            status: 'FAIL',
+            message: `${resource} count ${count} exceeds threshold ${threshold}`,
           });
         }
       });
 
-      this.log(`Resources: ${resourceCounts.totalRequests} total, ${resourceCounts.jsFiles} JS, ${resourceCounts.cssFiles} CSS, ${resourceCounts.images} images, ${resourceCounts.fonts} fonts`);
+      this.log(
+        `Resources: ${resourceCounts.totalRequests} total, ${resourceCounts.jsFiles} JS, ${resourceCounts.cssFiles} CSS, ${resourceCounts.images} images, ${resourceCounts.fonts} fonts`
+      );
     } catch (error) {
       this.results.failed.push({
         check: 'Resource Count',
         status: 'ERROR',
-        message: `Failed to process HAR file: ${error.message}`
+        message: `Failed to process HAR file: ${error.message}`,
       });
     }
   }
@@ -303,10 +308,10 @@ class PerformanceBudgetChecker {
         total: this.results.passed.length + this.results.failed.length,
         passed: this.results.passed.length,
         failed: this.results.failed.length,
-        warnings: this.results.warnings.length
+        warnings: this.results.warnings.length,
       },
       results: this.results,
-      budgets: PERFORMANCE_BUDGETS
+      budgets: PERFORMANCE_BUDGETS,
     };
 
     // Save JSON report
@@ -350,7 +355,9 @@ class PerformanceBudgetChecker {
         <p><strong>Generated:</strong> ${report.timestamp}</p>
     </div>
 
-    ${this.results.failed.length > 0 ? `
+    ${
+      this.results.failed.length > 0
+        ? `
     <h2>Failed Checks</h2>
     <table>
         <thead>
@@ -364,7 +371,9 @@ class PerformanceBudgetChecker {
             </tr>
         </thead>
         <tbody>
-            ${this.results.failed.map(result => `
+            ${this.results.failed
+              .map(
+                (result) => `
             <tr>
                 <td>${result.check}</td>
                 <td>${result.app || result.resource || '-'}</td>
@@ -373,10 +382,14 @@ class PerformanceBudgetChecker {
                 <td><span class="status-fail">${result.status}</span></td>
                 <td>${result.message || '-'}</td>
             </tr>
-            `).join('')}
+            `
+              )
+              .join('')}
         </tbody>
     </table>
-    ` : ''}
+    `
+        : ''
+    }
 
     <h2>All Results</h2>
     <table>
@@ -390,7 +403,9 @@ class PerformanceBudgetChecker {
             </tr>
         </thead>
         <tbody>
-            ${[...this.results.passed, ...this.results.failed].map(result => `
+            ${[...this.results.passed, ...this.results.failed]
+              .map(
+                (result) => `
             <tr>
                 <td>${result.check}</td>
                 <td>${result.app || result.resource || '-'}</td>
@@ -398,16 +413,22 @@ class PerformanceBudgetChecker {
                 <td>${result.threshold || '-'}</td>
                 <td><span class="status-${result.status.toLowerCase()}">${result.status}</span></td>
             </tr>
-            `).join('')}
+            `
+              )
+              .join('')}
         </tbody>
     </table>
 
-    ${this.results.warnings.length > 0 ? `
+    ${
+      this.results.warnings.length > 0
+        ? `
     <h2>Warnings</h2>
     <ul>
-        ${this.results.warnings.map(warning => `<li class="warning">${warning}</li>`).join('')}
+        ${this.results.warnings.map((warning) => `<li class="warning">${warning}</li>`).join('')}
     </ul>
-    ` : ''}
+    `
+        : ''
+    }
 </body>
 </html>`;
 
@@ -419,18 +440,18 @@ class PerformanceBudgetChecker {
   findFiles(dir, pattern) {
     const files = [];
     const items = fs.readdirSync(dir);
-    
+
     for (const item of items) {
       const fullPath = path.join(dir, item);
       const stat = fs.statSync(fullPath);
-      
+
       if (stat.isDirectory()) {
         files.push(...this.findFiles(fullPath, pattern));
       } else if (pattern.test(item)) {
         files.push(fullPath);
       }
     }
-    
+
     return files;
   }
 
@@ -444,7 +465,7 @@ class PerformanceBudgetChecker {
 
   async run() {
     this.log('Starting performance budget checks...');
-    
+
     // Ensure output directory exists
     if (!fs.existsSync(this.outputPath)) {
       fs.mkdirSync(this.outputPath, { recursive: true });
@@ -464,7 +485,10 @@ class PerformanceBudgetChecker {
     this.log(`  Total checks: ${report.summary.total}`);
     this.log(`  Passed: ${report.summary.passed}`, 'info');
     this.log(`  Failed: ${report.summary.failed}`, report.summary.failed > 0 ? 'error' : 'info');
-    this.log(`  Warnings: ${report.summary.warnings}`, report.summary.warnings > 0 ? 'warning' : 'info');
+    this.log(
+      `  Warnings: ${report.summary.warnings}`,
+      report.summary.warnings > 0 ? 'warning' : 'info'
+    );
 
     // Set GitHub Actions outputs if running in CI
     if (this.isCI) {
@@ -488,7 +512,7 @@ class PerformanceBudgetChecker {
 // Run if called directly
 if (require.main === module) {
   const checker = new PerformanceBudgetChecker();
-  checker.run().catch(error => {
+  checker.run().catch((error) => {
     console.error('Performance budget check failed:', error);
     process.exit(1);
   });

@@ -18,192 +18,187 @@
  */
 
 module.exports = {
-  "ci": {
-    "collect": {
-      "numberOfRuns": 3,
-      "settings": {
-        "chromeFlags": "--no-sandbox --disable-dev-shm-usage --disable-gpu --headless",
-        "preset": "desktop",
-        "onlyCategories": [
-          "performance",
-          "accessibility",
-          "best-practices",
-          "seo"
-        ],
-        "throttling": {
-          "rttMs": 40,
-          "throughputKbps": 10240,
-          "cpuSlowdownMultiplier": 1,
-          "requestLatencyMs": 0,
-          "downloadThroughputKbps": 0,
-          "uploadThroughputKbps": 0
+  ci: {
+    collect: {
+      numberOfRuns: 3,
+      settings: {
+        chromeFlags: '--no-sandbox --disable-dev-shm-usage --disable-gpu --headless',
+        preset: 'desktop',
+        onlyCategories: ['performance', 'accessibility', 'best-practices', 'seo'],
+        throttling: {
+          rttMs: 40,
+          throughputKbps: 10240,
+          cpuSlowdownMultiplier: 1,
+          requestLatencyMs: 0,
+          downloadThroughputKbps: 0,
+          uploadThroughputKbps: 0,
         },
-        "emulatedFormFactor": "desktop",
-        "locale": "en-US",
-        "disableStorageReset": false,
-        "maxWaitForFcp": 30000,
-        "maxWaitForLoad": 45000
-      }
+        emulatedFormFactor: 'desktop',
+        locale: 'en-US',
+        disableStorageReset: false,
+        maxWaitForFcp: 30000,
+        maxWaitForLoad: 45000,
+      },
     },
-    "assert": {
-      "preset": "lighthouse:recommended",
-      "assertions": {
-        "categories:performance": [
-          "error",
+    assert: {
+      preset: 'lighthouse:recommended',
+      assertions: {
+        'categories:performance': [
+          'error',
           {
-            "minScore": 0.9
-          }
+            minScore: 0.9,
+          },
         ],
-        "categories:accessibility": [
-          "error",
+        'categories:accessibility': [
+          'error',
           {
-            "minScore": 0.95
-          }
+            minScore: 0.95,
+          },
         ],
-        "categories:best-practices": [
-          "error",
+        'categories:best-practices': [
+          'error',
           {
-            "minScore": 0.9
-          }
+            minScore: 0.9,
+          },
         ],
-        "categories:seo": [
-          "warn",
+        'categories:seo': [
+          'warn',
           {
-            "minScore": 0.85
-          }
+            minScore: 0.85,
+          },
         ],
-        "first-contentful-paint": [
-          "warn",
+        'first-contentful-paint': [
+          'warn',
           {
-            "maxNumericValue": 1800
-          }
+            maxNumericValue: 1800,
+          },
         ],
-        "largest-contentful-paint": [
-          "error",
+        'largest-contentful-paint': [
+          'error',
           {
-            "maxNumericValue": 2500
-          }
+            maxNumericValue: 2500,
+          },
         ],
-        "first-meaningful-paint": [
-          "warn",
+        'first-meaningful-paint': [
+          'warn',
           {
-            "maxNumericValue": 1800
-          }
+            maxNumericValue: 1800,
+          },
         ],
-        "speed-index": [
-          "warn",
+        'speed-index': [
+          'warn',
           {
-            "maxNumericValue": 2500
-          }
+            maxNumericValue: 2500,
+          },
         ],
-        "interactive": [
-          "error",
+        interactive: [
+          'error',
           {
-            "maxNumericValue": 3000
-          }
+            maxNumericValue: 3000,
+          },
         ],
-        "cumulative-layout-shift": [
-          "error",
+        'cumulative-layout-shift': [
+          'error',
           {
-            "maxNumericValue": 0.1
-          }
+            maxNumericValue: 0.1,
+          },
         ],
-        "total-blocking-time": [
-          "warn",
+        'total-blocking-time': [
+          'warn',
           {
-            "maxNumericValue": 300
-          }
+            maxNumericValue: 300,
+          },
         ],
-        "unused-javascript": [
-          "warn",
+        'unused-javascript': [
+          'warn',
           {
-            "maxNumericValue": 40000
-          }
+            maxNumericValue: 40000,
+          },
         ],
-        "unused-css-rules": [
-          "warn",
+        'unused-css-rules': [
+          'warn',
           {
-            "maxNumericValue": 15000
-          }
+            maxNumericValue: 15000,
+          },
         ],
-        "unminified-css": [
-          "error",
+        'unminified-css': [
+          'error',
           {
-            "maxNumericValue": 0
-          }
+            maxNumericValue: 0,
+          },
         ],
-        "unminified-javascript": [
-          "error",
+        'unminified-javascript': [
+          'error',
           {
-            "maxNumericValue": 0
-          }
+            maxNumericValue: 0,
+          },
         ],
-        "render-blocking-resources": [
-          "warn",
+        'render-blocking-resources': [
+          'warn',
           {
-            "maxNumericValue": 300
-          }
+            maxNumericValue: 300,
+          },
         ],
-        "total-byte-weight": [
-          "warn",
+        'total-byte-weight': [
+          'warn',
           {
-            "maxNumericValue": 1400000
-          }
+            maxNumericValue: 1400000,
+          },
         ],
-        "dom-size": [
-          "warn",
+        'dom-size': [
+          'warn',
           {
-            "maxNumericValue": 1500
-          }
+            maxNumericValue: 1500,
+          },
         ],
-        "uses-webp-images": "warn",
-        "uses-optimized-images": "warn",
-        "uses-responsive-images": "warn",
-        "properly-sized-images": "warn",
-        "offscreen-images": "warn",
-        "uses-long-cache-ttl": "warn",
-        "efficient-animated-content": "warn",
-        "uses-rel-preconnect": "warn",
-        "uses-rel-preload": "warn",
-        "uses-https": "error",
-        "is-on-https": "error",
-        "uses-http2": "warn",
-        "no-vulnerable-libraries": "error",
-        "csp-xss": "warn",
-        "installable-manifest": "warn",
-        "maskable-icon": "warn",
-        "themed-omnibox": "warn",
-        "color-contrast": "error",
-        "button-name": "error",
-        "link-name": "error",
-        "image-alt": "error",
-        "label": "error",
-        "aria-allowed-attr": "error",
-        "aria-required-attr": "error",
-        "aria-valid-attr-value": "error",
-        "aria-valid-attr": "error",
-        "heading-order": "error",
-        "landmark-one-main": "error",
-        "list": "error",
-        "listitem": "error",
-        "definition-list": "error",
-        "tabindex": "error",
-        "duplicate-id-active": "error",
-        "duplicate-id-aria": "error",
-        "document-title": "error",
-        "meta-description": "warn",
-        "link-text": "warn",
-        "crawlable-anchors": "warn",
-        "robots-txt": "warn",
-        "hreflang": "warn",
-        "canonical": "warn"
-      }
+        'uses-webp-images': 'warn',
+        'uses-optimized-images': 'warn',
+        'uses-responsive-images': 'warn',
+        'properly-sized-images': 'warn',
+        'offscreen-images': 'warn',
+        'uses-long-cache-ttl': 'warn',
+        'efficient-animated-content': 'warn',
+        'uses-rel-preconnect': 'warn',
+        'uses-rel-preload': 'warn',
+        'uses-https': 'error',
+        'is-on-https': 'error',
+        'uses-http2': 'warn',
+        'no-vulnerable-libraries': 'error',
+        'csp-xss': 'warn',
+        'installable-manifest': 'warn',
+        'maskable-icon': 'warn',
+        'themed-omnibox': 'warn',
+        'color-contrast': 'error',
+        'button-name': 'error',
+        'link-name': 'error',
+        'image-alt': 'error',
+        label: 'error',
+        'aria-allowed-attr': 'error',
+        'aria-required-attr': 'error',
+        'aria-valid-attr-value': 'error',
+        'aria-valid-attr': 'error',
+        'heading-order': 'error',
+        'landmark-one-main': 'error',
+        list: 'error',
+        listitem: 'error',
+        'definition-list': 'error',
+        tabindex: 'error',
+        'duplicate-id-active': 'error',
+        'duplicate-id-aria': 'error',
+        'document-title': 'error',
+        'meta-description': 'warn',
+        'link-text': 'warn',
+        'crawlable-anchors': 'warn',
+        'robots-txt': 'warn',
+        hreflang: 'warn',
+        canonical: 'warn',
+      },
     },
-    "upload": {
-      "target": "temporary-public-storage"
+    upload: {
+      target: 'temporary-public-storage',
     },
-    "server": {
-      "host": "0.0.0.0"
-    }
-  }
+    server: {
+      host: '0.0.0.0',
+    },
+  },
 };

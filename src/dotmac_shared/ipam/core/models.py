@@ -12,19 +12,7 @@ try:
     from sqlalchemy import ForeignKey, Index, Integer, Numeric, String, Text
     from sqlalchemy.dialects.postgresql import INET, UUID
     from sqlalchemy.ext.hybrid import hybrid_property
-    from sqlalchemy.orm import relationship
-
-    # Try to import shared base classes
-    try:
-        from dotmac_shared.database.base import AuditMixin, StatusMixin, TenantModel
-
-        SHARED_BASE_AVAILABLE = True
-    except ImportError:
-        SHARED_BASE_AVAILABLE = False
-
-    if not SHARED_BASE_AVAILABLE:
-        # Fallback for when shared database components aren't available
-        from sqlalchemy.ext.declarative import declarative_base
+    from sqlalchemy.orm import declarative_base, relationship
 
         Base = declarative_base()
 
@@ -258,7 +246,7 @@ if SQLALCHEMY_AVAILABLE:
         @hybrid_property
         def is_expired(self):
             """Check if allocation has expired."""
-            return self.expires_at and datetime.utcnow() > self.expires_at
+            return self.expires_at and datetime.now(timezone.utc) > self.expires_at
 
         @hybrid_property
         def is_active(self):
@@ -272,7 +260,7 @@ if SQLALCHEMY_AVAILABLE:
         def days_until_expiry(self):
             """Calculate days until expiry."""
             if self.expires_at:
-                delta = self.expires_at - datetime.utcnow()
+                delta = self.expires_at - datetime.now(timezone.utc)
                 return max(0, delta.days)
             return None
 
@@ -344,7 +332,7 @@ if SQLALCHEMY_AVAILABLE:
         @hybrid_property
         def is_expired(self):
             """Check if reservation has expired."""
-            return datetime.utcnow() > self.expires_at
+            return datetime.now(timezone.utc) > self.expires_at
 
         @hybrid_property
         def is_active(self):
@@ -358,7 +346,7 @@ if SQLALCHEMY_AVAILABLE:
         def minutes_until_expiry(self):
             """Calculate minutes until expiry."""
             if self.expires_at:
-                delta = self.expires_at - datetime.utcnow()
+                delta = self.expires_at - datetime.now(timezone.utc)
                 return max(0, int(delta.total_seconds() / 60))
             return None
 

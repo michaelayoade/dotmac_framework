@@ -143,11 +143,11 @@ class KubernetesAdapter:
                     "isp-id": str(isp_id),
                     "plan": config.plan_type.value,
                     "managed-by": "dotmac-provisioning",
-                    "created-at": datetime.utcnow().strftime("%Y-%m-%d"),
+                    "created-at": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
                 },
                 annotations={
                     "dotmac.app/tenant-name": config.display_name,
-                    "dotmac.app/provisioned-at": datetime.utcnow().isoformat(),
+                    "dotmac.app/provisioned-at": datetime.now(timezone.utc).isoformat(),
                 },
             )
         )

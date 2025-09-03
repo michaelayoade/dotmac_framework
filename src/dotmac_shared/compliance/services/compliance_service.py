@@ -130,7 +130,7 @@ class ComplianceService(StatefulService):
             self.set_state("events_processed", 0)
             self.set_state("reports_generated", 0)
             self.set_state("alerts_created", 0)
-            self.set_state("last_health_check", datetime.utcnow().isoformat())
+            self.set_state("last_health_check", datetime.now(timezone.utc).isoformat())
             
             await self._set_status(
                 ServiceStatus.READY,
@@ -205,7 +205,7 @@ class ComplianceService(StatefulService):
                 )
             
             # Update last health check
-            self.set_state("last_health_check", datetime.utcnow().isoformat())
+            self.set_state("last_health_check", datetime.now(timezone.utc).isoformat())
             
             return ServiceHealth(
                 status=ServiceStatus.READY,

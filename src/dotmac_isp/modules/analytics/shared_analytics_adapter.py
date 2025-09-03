@@ -138,8 +138,8 @@ class ISPAnalyticsAdapter:
                 id=UUID("00000000-0000-0000-0000-000000000000"),  # Placeholder
                 name=metric_data.name,
                 tenant_id=self.tenant_id,
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow(),
+                created_at=datetime.now(timezone.utc),
+                updated_at=datetime.now(timezone.utc),
             )
         except Exception as e:
             logger.error(f"Failed to create metric {metric_data.name}: {e}")
@@ -174,8 +174,8 @@ class ISPAnalyticsAdapter:
                 name=report_data.name,
                 tenant_id=self.tenant_id,
                 data=report_data_result,
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow(),
+                created_at=datetime.now(timezone.utc),
+                updated_at=datetime.now(timezone.utc),
             )
         except Exception as e:
             logger.error(f"Failed to create report {report_data.name}: {e}")
@@ -223,7 +223,7 @@ class ISPAnalyticsAdapter:
                 "shared_analytics": analytics_health.get("status", "unknown"),
                 "cache_service": "available" if self.cache_service else "unavailable",
                 "event_bus": "available" if self.event_bus else "unavailable",
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
         except Exception as e:
@@ -231,7 +231,7 @@ class ISPAnalyticsAdapter:
             return {
                 "adapter": "unhealthy",
                 "error": str(e),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
 

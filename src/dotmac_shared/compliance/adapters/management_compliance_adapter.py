@@ -294,7 +294,7 @@ class ManagementComplianceAdapter:
             "check_type": "tenant_isolation",
             "checks": results,
             "overall_status": "compliant" if all(r["status"] == "compliant" for r in results) else "non_compliant",
-            "checked_at": datetime.utcnow().isoformat(),
+            "checked_at": datetime.now(timezone.utc).isoformat(),
         }
     
     @standard_exception_handler
@@ -307,16 +307,16 @@ class ManagementComplianceAdapter:
         """Audit administrative activities for compliance."""
         
         if not period_start:
-            period_start = datetime.utcnow() - timedelta(days=30)
+            period_start = datetime.now(timezone.utc) - timedelta(days=30)
         if not period_end:
-            period_end = datetime.utcnow()
+            period_end = datetime.now(timezone.utc)
         
         # This would typically query stored compliance events
         # For demo, return simulated admin activity data
         
         activities = [
             {
-                "timestamp": (datetime.utcnow() - timedelta(hours=i)).isoformat(),
+                "timestamp": (datetime.now(timezone.utc) - timedelta(hours=i)).isoformat(),
                 "event_type": "config_change" if i % 3 == 0 else "user_access",
                 "admin_user": admin_user_id,
                 "resource": f"tenant_{i % 5 + 1}" if i % 2 == 0 else "platform_config",
@@ -396,7 +396,7 @@ class ManagementComplianceAdapter:
             "frameworks": dashboard["frameworks"],
             "critical_alerts": dashboard["overall"]["critical_alerts"],
             "total_issues": dashboard["overall"]["total_issues"],
-            "last_updated": datetime.utcnow().isoformat(),
+            "last_updated": datetime.now(timezone.utc).isoformat(),
         }
     
     async def health_check(self) -> Dict[str, Any]:
@@ -411,14 +411,14 @@ class ManagementComplianceAdapter:
                 "compliance_service": compliance_health.status.value,
                 "cache_service": "available" if self.cache_service else "unavailable",
                 "event_bus": "available" if self.event_bus else "unavailable",
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
             
         except Exception as e:
             return {
                 "adapter": "unhealthy",
                 "error": str(e),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
 

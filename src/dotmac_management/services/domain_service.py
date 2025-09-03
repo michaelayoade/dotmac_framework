@@ -471,7 +471,7 @@ class DomainService:
                 await self.domain_repository.update_dns_record(
                     record_id=record.record_id,
                     tenant_id=record.tenant_id,
-                    updates={'sync_status': 'synced', 'last_sync_attempt': datetime.utcnow()},
+                    updates={'sync_status': 'synced', 'last_sync_attempt': datetime.now(timezone.utc)},
                     user_id="system"
                 )
                 synced_count += 1
@@ -484,7 +484,7 @@ class DomainService:
                     updates={
                         'sync_status': 'failed',
                         'sync_error_message': str(e),
-                        'last_sync_attempt': datetime.utcnow()
+                        'last_sync_attempt': datetime.now(timezone.utc)
                     },
                     user_id="system"
                 )
@@ -617,8 +617,8 @@ class DomainService:
             'verification_token': verification_token,
             'verification_value': f"dotmac-verification={verification_token}",
             'status': VerificationStatus.PENDING,
-            'expires_at': datetime.utcnow() + timedelta(days=7),  # 7 day expiry
-            'next_check': datetime.utcnow() + timedelta(minutes=5)  # Check in 5 minutes
+            'expires_at': datetime.now(timezone.utc) + timedelta(days=7),  # 7 day expiry
+            'next_check': datetime.now(timezone.utc) + timedelta(minutes=5)  # Check in 5 minutes
         }
         
         return await self.domain_repository.create_domain_verification(
@@ -643,7 +643,7 @@ class DomainService:
             await self.domain_repository.update_domain(
                 domain_id=verification.domain_id,
                 tenant_id=verification.tenant_id,
-                updates={'verification_status': VerificationStatus.VERIFIED, 'verified_at': datetime.utcnow()},
+                updates={'verification_status': VerificationStatus.VERIFIED, 'verified_at': datetime.now(timezone.utc)},
                 user_id="system"
             )
         else:
@@ -659,7 +659,7 @@ class DomainService:
         return {
             'verification_id': verification.verification_id,
             'status': status,
-            'checked_at': datetime.utcnow()
+            'checked_at': datetime.now(timezone.utc)
         }
 
     async def _request_ssl_certificate(
@@ -675,8 +675,8 @@ class DomainService:
             'common_name': domain.full_domain,
             'issuer': certificate_authority,
             'certificate_authority': certificate_authority,
-            'issued_at': datetime.utcnow(),
-            'expires_at': datetime.utcnow() + timedelta(days=90),  # 90 day cert
+            'issued_at': datetime.now(timezone.utc),
+            'expires_at': datetime.now(timezone.utc) + timedelta(days=90),  # 90 day cert
             'ssl_status': SSLStatus.PENDING,
             'auto_renew': True
         }

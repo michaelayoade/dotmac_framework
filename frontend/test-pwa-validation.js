@@ -8,12 +8,12 @@ console.log('🔍 DotMac PWA Validation Test\n');
 // Test configuration
 const testConfig = {
   resellerApp: {
-    path: './apps/reseller',
+    path: './isp-framework/reseller',
     port: 3002,
     name: 'Reseller Portal',
   },
   technicianApp: {
-    path: './apps/technician',
+    path: './isp-framework/field-ops',
     port: 3003,
     name: 'Technician Mobile Portal',
   },

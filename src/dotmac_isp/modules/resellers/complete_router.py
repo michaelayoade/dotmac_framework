@@ -158,7 +158,7 @@ async def ping():
     """Health check endpoint"""
     return {
         "message": "Reseller API is working",
-        "timestamp": datetime.utcnow(),
+        "timestamp": datetime.now(timezone.utc),
         "version": "1.0.0"
     }
 
@@ -528,7 +528,7 @@ async def update_reseller_metrics(
             "message": "Metrics updated successfully",
             "reseller_id": updated_reseller.reseller_id,
             "updated_metrics": metrics_data,
-            "updated_at": datetime.utcnow()
+            "updated_at": datetime.now(timezone.utc)
         }
     
     except HTTPException:

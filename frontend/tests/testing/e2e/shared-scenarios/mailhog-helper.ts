@@ -1,7 +1,10 @@
 import { Page } from '@playwright/test';
 
 export class MailHogHelper {
-  constructor(private page: Page, private baseUrl = 'http://localhost:8025') {}
+  constructor(
+    private page: Page,
+    private baseUrl = 'http://localhost:8025'
+  ) {}
 
   async fetchLatestEmail(toContains: string): Promise<{ subject: string; body: string } | null> {
     try {
@@ -30,4 +33,3 @@ export class MailHogHelper {
     await this.page.goto(link);
   }
 }
-

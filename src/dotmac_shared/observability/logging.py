@@ -12,7 +12,7 @@ from opentelemetry import trace, baggage
 from opentelemetry.trace.span import INVALID_SPAN
 
 
-class OTelTraceContextFilter(logging.Filter):
+class OTelTraceContextFilter(logging.Filter, timezone):
     """Inject OpenTelemetry trace context into log records."""
     
     def filter(self, record: logging.LogRecord) -> bool:
@@ -62,7 +62,7 @@ class StructuredFormatter(logging.Formatter):
         """Format log record as structured JSON."""
         # Base log structure
         log_entry = {
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
             "level": record.levelname,
             "logger": record.name,
             "message": record.getMessage(),

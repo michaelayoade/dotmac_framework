@@ -7,7 +7,7 @@ from decimal import Decimal
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from base import BasePlugin, BillablePlugin, PluginMeta, PluginType, TenantAwarePlugin
+from .base import BasePlugin, BillablePlugin, PluginMeta, PluginType, TenantAwarePlugin
 
 
 class MonitoringProviderPlugin(BasePlugin):
@@ -406,4 +406,89 @@ class AnalyticsProviderPlugin(TenantAwarePlugin):
     @abstractmethod
     def get_supported_report_types(self) -> List[str]:
         """Return supported report types."""
+        pass
+
+
+class DNSProviderPlugin(BasePlugin):
+    """Interface for DNS management and validation provider plugins."""
+
+    @property
+    def meta(self) -> PluginMeta:
+        return PluginMeta(
+            name=self.__class__.__name__,
+            version="1.0.0",
+            plugin_type=PluginType.DNS_PROVIDER,
+            description="DNS provider plugin",
+            author="DotMac",
+        )
+
+    @abstractmethod
+    async def validate_subdomain_available(self, subdomain: str, base_domain: str) -> Dict[str, Any]:
+        """Check if a subdomain is available for provisioning."""
+        pass
+
+    @abstractmethod
+    async def validate_ssl_certificate(self, domain: str) -> Dict[str, Any]:
+        """Validate SSL certificate for domain."""
+        pass
+
+    @abstractmethod
+    async def create_dns_record(
+        self, domain: str, record_type: str, value: str, ttl: int = 300
+    ) -> Dict[str, Any]:
+        """Create DNS record."""
+        pass
+
+    @abstractmethod
+    async def delete_dns_record(self, domain: str, record_id: str) -> bool:
+        """Delete DNS record."""
+        pass
+
+    @abstractmethod
+    async def check_dns_propagation(self, domain: str, expected_value: str) -> Dict[str, Any]:
+        """Check DNS propagation status."""
+        pass
+
+    @abstractmethod
+    async def get_ssl_certificate_info(self, domain: str) -> Dict[str, Any]:
+        """Get SSL certificate information."""
+        pass
+
+    @abstractmethod
+    def get_supported_record_types(self) -> List[str]:
+        """Return supported DNS record types."""
+        pass
+
+
+class InfrastructureProviderPlugin(BasePlugin):
+    """Base interface for general infrastructure provider plugins."""
+
+    @property
+    def meta(self) -> PluginMeta:
+        return PluginMeta(
+            name=self.__class__.__name__,
+            version="1.0.0",
+            plugin_type=PluginType.INFRASTRUCTURE_PROVIDER,
+            description="Infrastructure provider plugin",
+            author="DotMac",
+        )
+
+    @abstractmethod
+    async def health_check(self) -> Dict[str, Any]:
+        """Check infrastructure provider health."""
+        pass
+
+    @abstractmethod
+    async def get_provider_info(self) -> Dict[str, Any]:
+        """Get infrastructure provider information."""
+        pass
+
+    @abstractmethod
+    async def validate_configuration(self, config: Dict[str, Any]) -> Dict[str, Any]:
+        """Validate provider configuration."""
+        pass
+
+    @abstractmethod
+    def get_supported_services(self) -> List[str]:
+        """Return list of supported services."""
         pass

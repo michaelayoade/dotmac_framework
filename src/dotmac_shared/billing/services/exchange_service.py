@@ -218,7 +218,7 @@ class ExchangeRateService:
             .filter(
                 # Check if rate is still valid
                 (ManualExchangeRate.valid_until.is_(None)) |
-                (ManualExchangeRate.valid_until > datetime.utcnow())
+                (ManualExchangeRate.valid_until > datetime.now(timezone.utc))
             )
             .order_by(ManualExchangeRate.rate_date.desc())
             .first()

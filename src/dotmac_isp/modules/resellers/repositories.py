@@ -115,7 +115,7 @@ class ResellerApplicationRepository(BaseRepository):
             return None
         
         application.status = status
-        application.reviewed_at = datetime.utcnow()
+        application.reviewed_at = datetime.now(timezone.utc)
         if reviewer_id:
             application.reviewed_by = reviewer_id
         if notes:
@@ -141,7 +141,7 @@ class ResellerApplicationRepository(BaseRepository):
         if not application.communication_log:
             application.communication_log = []
         
-        communication['timestamp'] = datetime.utcnow().isoformat()
+        communication['timestamp'] = datetime.now(timezone.utc).isoformat()
         application.communication_log.append(communication)
         
         await self.db.flush()

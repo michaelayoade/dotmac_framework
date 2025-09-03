@@ -258,7 +258,52 @@ class StandardLifecycleManager:
             raise
 
     async def _initialize_observability(self, app: FastAPI, startup_manager):
-        """Initialize observability system."""
+        """Initialize comprehensive observability system."""
+        try:
+            from .observability_setup import setup_observability
+            
+            logger.info("🔍 Initializing comprehensive observability system...")
+            
+            # Enable business SLOs for production environments
+            enable_business_slos = self.platform_config.observability_config.tier in ["comprehensive", "business"]
+            
+            # Set up complete observability stack
+            observability_components = await setup_observability(
+                app=app,
+                platform_config=self.platform_config,
+                enable_business_slos=enable_business_slos
+            )
+            
+            # Store components for health checks and monitoring
+            app.state.observability_components = observability_components
+            app.state.observability_tier = self.platform_config.observability_config.tier
+            
+            # Log successful initialization
+            component_count = len(observability_components)
+            logger.info(f"✅ Comprehensive observability initialized")
+            logger.info(f"   Components: {component_count}")
+            logger.info(f"   Tier: {self.platform_config.observability_config.tier}")
+            logger.info(f"   Business SLOs: {'Enabled' if enable_business_slos else 'Disabled'}")
+            
+            # Record initialization metric
+            if "metrics_registry" in observability_components:
+                metrics_registry = observability_components["metrics_registry"]
+                metrics_registry.increment_counter(
+                    "observability_initialization_total",
+                    1,
+                    {"status": "success", "tier": self.platform_config.observability_config.tier}
+                )
+
+        except ImportError as e:
+            logger.warning(f"New observability system not available, falling back: {e}")
+            await self._fallback_observability_initialization(app, startup_manager)
+        except Exception as e:
+            logger.error(f"Observability initialization failed: {e}")
+            await self._fallback_observability_initialization(app, startup_manager)
+            raise
+    
+    async def _fallback_observability_initialization(self, app: FastAPI, startup_manager):
+        """Fallback to legacy observability initialization."""
         try:
             # Try to get settings for observability
             settings = None
@@ -267,7 +312,6 @@ class StandardLifecycleManager:
 
                 if mode == DeploymentMode.TENANT_CONTAINER:
                     from dotmac_isp.core.settings import get_settings
-
                     settings = get_settings()
                 elif mode == DeploymentMode.MANAGEMENT_PLATFORM:
                     from dotmac_management.config import settings
@@ -286,10 +330,10 @@ class StandardLifecycleManager:
                 app.state.observability_instance = observability_instance
                 app.state.observability_tier = status["tier"]
 
-                logger.info(f"🎯 Observability initialized - Tier: {status['tier']}")
+                logger.info(f"🎯 Legacy observability initialized - Tier: {status['tier']}")
 
         except Exception as e:
-            logger.warning(f"Observability initialization failed: {e}")
+            logger.warning(f"Legacy observability initialization failed: {e}")
 
     async def _setup_health_checks(self, app: FastAPI, startup_manager):
         """Set up health check system."""
@@ -451,13 +495,28 @@ class StandardLifecycleManager:
     async def _shutdown_observability(self, app: FastAPI):
         """Shutdown observability system."""
         try:
-            if (
+            # Shutdown new observability system
+            if hasattr(app.state, "observability_components"):
+                components = app.state.observability_components
+                
+                # Shutdown OTEL bootstrap
+                if "otel_bootstrap" in components and components["otel_bootstrap"]:
+                    try:
+                        components["otel_bootstrap"].shutdown()
+                        logger.info("OTEL bootstrap shutdown complete")
+                    except Exception as e:
+                        logger.warning(f"OTEL bootstrap shutdown failed: {e}")
+                
+                logger.info("New observability system shutdown complete")
+            
+            # Fallback to legacy shutdown
+            elif (
                 hasattr(app.state, "observability_instance")
                 and app.state.observability_instance
             ):
                 if hasattr(app.state.observability_instance, "shutdown"):
                     app.state.observability_instance.shutdown()
-                logger.info("Observability shutdown complete")
+                logger.info("Legacy observability shutdown complete")
 
         except Exception as e:
             logger.warning(f"Observability shutdown failed: {e}")

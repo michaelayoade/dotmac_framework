@@ -1039,7 +1039,7 @@ interface AuthFlowConfig {
 
 - [Architecture Documentation](./ARCHITECTURE.md)
 - [API Documentation](./API_DOCUMENTATION.md)
-- [Deployment Guide](./DEPLOYMENT_GUIDE.md)
+- [Comprehensive Deployment Guide](./COMPREHENSIVE_DEPLOYMENT_GUIDE.md)
 - [Testing Strategy](./AI_FIRST_TESTING_STRATEGY.md)
 
 ### **External Standards**

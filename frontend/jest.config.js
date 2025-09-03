@@ -21,9 +21,7 @@ module.exports = {
         '<rootDir>/tests/a11y/',
         '<rootDir>/apps/',
       ],
-      modulePathIgnorePatterns: [
-        '<rootDir>/apps/.*/__mocks__/',
-      ],
+      modulePathIgnorePatterns: ['<rootDir>/apps/.*/__mocks__/'],
       setupFilesAfterEnv: ['<rootDir>/jest-setup.js'],
       testEnvironment: 'jsdom',
       transform: {
@@ -103,9 +101,7 @@ module.exports = {
         '<rootDir>/dist/',
         '<rootDir>/apps/',
       ],
-      modulePathIgnorePatterns: [
-        '<rootDir>/apps/.*/__mocks__/',
-      ],
+      modulePathIgnorePatterns: ['<rootDir>/apps/.*/__mocks__/'],
       setupFilesAfterEnv: ['<rootDir>/jest-setup.js', '<rootDir>/jest-integration-setup.js'],
       testEnvironment: 'jsdom',
       transform: {
@@ -167,9 +163,7 @@ module.exports = {
         '<rootDir>/dist/',
         '<rootDir>/apps/',
       ],
-      modulePathIgnorePatterns: [
-        '<rootDir>/apps/.*/__mocks__/',
-      ],
+      modulePathIgnorePatterns: ['<rootDir>/apps/.*/__mocks__/'],
       setupFilesAfterEnv: ['<rootDir>/jest-a11y-setup.js'],
       testEnvironment: 'jsdom',
       transform: {

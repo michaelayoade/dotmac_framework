@@ -334,7 +334,7 @@ class AlertManager:
     
     async def _handle_alert_triggered(self, alert_key: str, rule: AlertRule, value: float, labels: Dict[str, str]):
         """Handle when an alert condition is triggered."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         
         if alert_key in self.active_alerts:
             # Update existing alert
@@ -377,7 +377,7 @@ class AlertManager:
         if alert_key in self.active_alerts:
             alert = self.active_alerts[alert_key]
             alert.status = AlertStatus.RESOLVED
-            alert.resolved_at = datetime.utcnow()
+            alert.resolved_at = datetime.now(timezone.utc)
             
             # Move to history
             self.alert_history.append(alert)
@@ -394,7 +394,7 @@ class AlertManager:
     
     async def _queue_notification(self, alert: Alert, current_value: float):
         """Queue a notification for processing."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         rule = self.alert_rules[alert.rule_name]
         
         # Check cooldown period
@@ -419,7 +419,7 @@ class AlertManager:
         notification_data = {
             "type": "resolution", 
             "alert": alert,
-            "timestamp": datetime.utcnow()
+            "timestamp": datetime.now(timezone.utc)
         }
         
         await self.notification_queue.put(notification_data)
@@ -625,7 +625,7 @@ Resolved: {alert.resolved_at.isoformat()}
     
     def _is_business_hours(self) -> bool:
         """Check if current time is within business hours."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         # Assuming business hours are 9 AM to 5 PM UTC, Monday to Friday
         return (
             now.weekday() < 5 and  # Monday = 0, Friday = 4
@@ -649,7 +649,7 @@ Resolved: {alert.resolved_at.isoformat()}
             try:
                 await asyncio.sleep(300)  # Check escalations every 5 minutes
                 
-                now = datetime.utcnow()
+                now = datetime.now(timezone.utc)
                 for alert_key, alert in list(self.active_alerts.items()):
                     if alert.severity == AlertSeverity.CRITICAL and alert.status == AlertStatus.ACTIVE:
                         time_active = (now - alert.started_at).total_seconds() / 60
@@ -672,7 +672,7 @@ Resolved: {alert.resolved_at.isoformat()}
             f"Alert escalated: {alert.rule_name}",
             rule_name=alert.rule_name,
             escalation_level=alert.escalation_level,
-            time_active_minutes=(datetime.utcnow() - alert.started_at).total_seconds() / 60
+            time_active_minutes=(datetime.now(timezone.utc) - alert.started_at).total_seconds() / 60
         )
         
         # Queue escalated notification
@@ -680,7 +680,7 @@ Resolved: {alert.resolved_at.isoformat()}
             "type": "escalation",
             "alert": alert,
             "escalation_level": alert.escalation_level,
-            "timestamp": datetime.utcnow()
+            "timestamp": datetime.now(timezone.utc)
         }
         
         await self.notification_queue.put(notification_data)

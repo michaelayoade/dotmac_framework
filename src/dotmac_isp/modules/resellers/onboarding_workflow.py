@@ -399,7 +399,7 @@ class OnboardingWorkflowEngine:
         checklist_data = {
             'reseller_id': reseller.id,
             'checklist_version': '1.0',
-            'target_completion_date': datetime.utcnow() + timedelta(days=45),  # 45 days to complete
+            'target_completion_date': datetime.now(timezone.utc) + timedelta(days=45),  # 45 days to complete
             'metadata': {
                 'created_by': 'system',
                 'reseller_type': reseller.reseller_type.value if reseller.reseller_type else 'standard'
@@ -428,7 +428,7 @@ class OnboardingWorkflowEngine:
                 'completion_criteria': task_template.get('completion_criteria', ''),
                 'resources': task_template.get('resources', []),
                 'prerequisites': task_template.get('prerequisites', []),
-                'due_date': datetime.utcnow() + timedelta(days=task_template.get('due_days', 30)),
+                'due_date': datetime.now(timezone.utc) + timedelta(days=task_template.get('due_days', 30)),
                 'metadata': {
                     'template_version': '1.0',
                     'auto_created': True
@@ -548,7 +548,7 @@ class OnboardingWorkflowEngine:
             'reseller_id': reseller_id,
             'old_status': 'pending',  # Would come from database
             'new_status': new_status,
-            'updated_at': datetime.utcnow().isoformat(),
+            'updated_at': datetime.now(timezone.utc).isoformat(),
             'completion_notes': completion_notes,
             'completion_percentage': completion_percentage or 0
         }

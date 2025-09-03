@@ -254,8 +254,8 @@ class IPAMSDK:
         if not SERVICES_AVAILABLE:
             return {
                 "allocation_id": allocation_id,
-                "renewed_at": datetime.utcnow().isoformat(),
-                "expires_at": (datetime.utcnow().replace(hour=23, minute=59, second=59)).isoformat(),
+                "renewed_at": datetime.now(timezone.utc).isoformat(),
+                "expires_at": (datetime.now(timezone.utc).replace(hour=23, minute=59, second=59)).isoformat(),
                 "status": "active"
             }
         
@@ -265,10 +265,10 @@ class IPAMSDK:
         if allocation:
             # Extend expiration by 24 hours as example
             from datetime import timedelta
-            new_expiry = datetime.utcnow() + timedelta(hours=24)
+            new_expiry = datetime.now(timezone.utc) + timedelta(hours=24)
             return {
                 "allocation_id": allocation_id,
-                "renewed_at": datetime.utcnow().isoformat(),
+                "renewed_at": datetime.now(timezone.utc).isoformat(),
                 "expires_at": new_expiry.isoformat(),
                 "status": "active"
             }
@@ -340,7 +340,7 @@ class IPAMSDK:
         if not SERVICES_AVAILABLE:
             return {
                 "reservation_id": reservation_id,
-                "cancelled_at": datetime.utcnow().isoformat(),
+                "cancelled_at": datetime.now(timezone.utc).isoformat(),
                 "status": "cancelled"
             }
         
@@ -349,7 +349,7 @@ class IPAMSDK:
         # Mock cancellation response
         return {
             "reservation_id": reservation_id,
-            "cancelled_at": datetime.utcnow().isoformat(),
+            "cancelled_at": datetime.now(timezone.utc).isoformat(),
             "status": "cancelled"
         }
 
@@ -563,7 +563,7 @@ class IPAMSDK:
                 "expired_allocations_cleaned": 0,
                 "expired_reservations_cleaned": 0,
                 "orphaned_ips_released": 0,
-                "cleanup_timestamp": datetime.utcnow().isoformat()
+                "cleanup_timestamp": datetime.now(timezone.utc).isoformat()
             }
         
         # In a full implementation, this would clean up expired resources
@@ -573,5 +573,5 @@ class IPAMSDK:
             "expired_allocations_cleaned": 0,
             "expired_reservations_cleaned": 0, 
             "orphaned_ips_released": 0,
-            "cleanup_timestamp": datetime.utcnow().isoformat()
+            "cleanup_timestamp": datetime.now(timezone.utc).isoformat()
         }

@@ -194,15 +194,15 @@ jobs:
 
       - name: Run Admin portal E2E (Chromium)
         working-directory: frontend
-        run: npx playwright test -c apps/admin/playwright.config.ts --project=chromium
+        run: npx playwright test -c isp-framework/admin/playwright.config.ts --project=chromium
 
       - name: Run Customer portal E2E (Chromium)
         working-directory: frontend
-        run: npx playwright test -c apps/customer/playwright.config.ts --project=chromium
+        run: npx playwright test -c isp-framework/customer/playwright.config.ts --project=chromium
 
       - name: Run Reseller portal E2E (Chromium)
         working-directory: frontend
-        run: npx playwright test -c apps/reseller/playwright.config.ts --project=chromium
+        run: npx playwright test -c isp-framework/reseller/playwright.config.ts --project=chromium
 
       - name: Upload Workflow Automation E2E report
         uses: actions/upload-artifact@v3
@@ -322,7 +322,7 @@ jobs:
         run: pnpm run build
 
       - name: Enforce bundle size (Customer)
-        run: npx size-limit --files apps/customer/.next/static/chunks/*.js --limit 350 KB
+        run: npx size-limit --files isp-framework/customer/.next/static/chunks/*.js --limit 350 KB
 
       - name: Analyze bundle size
         run: pnpm run bundle:analyze

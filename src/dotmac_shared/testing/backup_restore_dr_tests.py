@@ -522,7 +522,7 @@ class BackupRestoreDRE2E:
                     "tenant_id": self.test_tenant_id,
                     "username": f"test_user_{i}",
                     "email": f"user{i}@{self.test_tenant_id}.test.com",
-                    "created_at": datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(timezone.utc).isoformat(),
                     "role": "customer" if i < 8 else "admin"
                 }
                 test_entities["users"].append(user)
@@ -535,7 +535,7 @@ class BackupRestoreDRE2E:
                     "name": f"Test Customer {i}",
                     "email": f"customer{i}@example.com",
                     "status": "active",
-                    "created_at": datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(timezone.utc).isoformat(),
                     "plan": "premium" if i < 5 else "basic"
                 }
                 test_entities["customers"].append(customer)
@@ -548,7 +548,7 @@ class BackupRestoreDRE2E:
                     "customer_id": test_entities["customers"][i % 15]["id"],
                     "amount": round((i + 1) * 10.99, 2),
                     "status": "completed" if i < 20 else "pending",
-                    "created_at": datetime.utcnow().isoformat()
+                    "created_at": datetime.now(timezone.utc).isoformat()
                 }
                 test_entities["orders"].append(order)
 
@@ -560,7 +560,7 @@ class BackupRestoreDRE2E:
                     "customer_id": test_entities["customers"][i % 15]["id"],
                     "amount": round((i + 1) * 29.99, 2),
                     "status": "paid" if i < 25 else "overdue",
-                    "due_date": (datetime.utcnow() + timedelta(days=30)).isoformat()
+                    "due_date": (datetime.now(timezone.utc) + timedelta(days=30)).isoformat()
                 }
                 test_entities["billing_records"].append(billing)
 
@@ -573,7 +573,7 @@ class BackupRestoreDRE2E:
                     "subject": f"Test Support Issue {i}",
                     "status": "open" if i < 6 else "resolved",
                     "priority": "high" if i < 3 else "normal",
-                    "created_at": datetime.utcnow().isoformat()
+                    "created_at": datetime.now(timezone.utc).isoformat()
                 }
                 test_entities["tickets"].append(ticket)
 
@@ -611,7 +611,7 @@ class BackupRestoreDRE2E:
                 "backup_type": "full",
                 "backup_id": backup_id,
                 "tenant_id": self.test_tenant_id,
-                "created_at": datetime.utcnow().isoformat(),
+                "created_at": datetime.now(timezone.utc).isoformat(),
                 "schema_version": "1.0.0",
                 "tables": list(self.test_data.keys()),
                 "record_counts": {k: len(v) for k, v in self.test_data.items()},
@@ -729,7 +729,7 @@ class BackupRestoreDRE2E:
                     "tenant_id": self.test_tenant_id,
                     "username": f"additional_user_{i}",
                     "email": f"adduser{i}@{self.test_tenant_id}.test.com",
-                    "created_at": datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(timezone.utc).isoformat(),
                     "role": "customer"
                 }
                 additional_data["users"].append(user)
@@ -743,7 +743,7 @@ class BackupRestoreDRE2E:
                     "name": f"Additional Customer {i}",
                     "email": f"addcustomer{i}@example.com",
                     "status": "active",
-                    "created_at": datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(timezone.utc).isoformat(),
                     "plan": "basic"
                 }
                 additional_data["customers"].append(customer)
@@ -757,7 +757,7 @@ class BackupRestoreDRE2E:
                     "customer_id": self.test_data["customers"][-1]["id"],  # Use recent customer
                     "amount": round((i + 1) * 15.99, 2),
                     "status": "pending",
-                    "created_at": datetime.utcnow().isoformat()
+                    "created_at": datetime.now(timezone.utc).isoformat()
                 }
                 additional_data["orders"].append(order)
                 self.test_data["orders"].append(order)
@@ -802,7 +802,7 @@ class BackupRestoreDRE2E:
                 "backup_id": backup_id,
                 "base_backup_id": base_backup_id,
                 "tenant_id": self.test_tenant_id,
-                "created_at": datetime.utcnow().isoformat(),
+                "created_at": datetime.now(timezone.utc).isoformat(),
                 "schema_version": "1.0.0",
                 "tables": list(incremental_data.keys()),
                 "record_counts": {k: len(v) for k, v in incremental_data.items()},
@@ -900,7 +900,7 @@ class BackupRestoreDRE2E:
                     "TENANT_ID": self.test_tenant_id,
                     "ENVIRONMENT": "test"
                 },
-                "created_at": datetime.utcnow().isoformat()
+                "created_at": datetime.now(timezone.utc).isoformat()
             }
 
             # Mock container startup
@@ -933,7 +933,7 @@ class BackupRestoreDRE2E:
                 "snapshot_id": snapshot_id,
                 "container_id": container_id,
                 "tenant_id": self.test_tenant_id,
-                "created_at": datetime.utcnow().isoformat(),
+                "created_at": datetime.now(timezone.utc).isoformat(),
                 "size_mb": 512,
                 "volumes_included": ["/data", "/config", "/logs"],
                 "checksum": f"snap_checksum_{snapshot_id}"
@@ -1081,7 +1081,7 @@ class BackupRestoreDRE2E:
 
             backup_bundle = {
                 "bundle_id": backup_bundle_id,
-                "created_at": datetime.utcnow().isoformat(),
+                "created_at": datetime.now(timezone.utc).isoformat(),
                 "components": backup_components,
                 "total_size_mb": 1500,
                 "checksum": f"system_checksum_{backup_bundle_id}"
@@ -1110,7 +1110,7 @@ class BackupRestoreDRE2E:
         
         try:
             system_state = {
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "database_records": sum(len(v) for v in self.test_data.values()),
                 "active_containers": 5,
                 "running_services": ["web", "api", "worker", "scheduler", "monitoring"],
@@ -1186,7 +1186,7 @@ class BackupRestoreDRE2E:
                 completed_steps.append({
                     "step": step,
                     "status": "completed",
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 })
 
             return {
@@ -1356,7 +1356,7 @@ class BackupRestoreDRE2E:
                     "name": f"Test Tenant {i}",
                     "slug": f"tenant-{i}",
                     "status": "active",
-                    "created_at": datetime.utcnow().isoformat()
+                    "created_at": datetime.now(timezone.utc).isoformat()
                 }
                 tenants.append(tenant)
 
@@ -1435,7 +1435,7 @@ class BackupRestoreDRE2E:
                     "user_count": 3,
                     "customer_count": 2,
                     "status": "active",
-                    "last_activity": datetime.utcnow().isoformat()
+                    "last_activity": datetime.now(timezone.utc).isoformat()
                 }
 
             await asyncio.sleep(1)

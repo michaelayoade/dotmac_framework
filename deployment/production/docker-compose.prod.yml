@@ -101,6 +101,7 @@ services:
       - openbao_data:/openbao/data
       - ./shared/openbao/config.hcl:/openbao/config/config.hcl:ro
       - ./shared/openbao/certs:/openbao/certs:ro
+      - ../../scripts/openbao-healthcheck.sh:/usr/local/bin/openbao-healthcheck.sh:ro
     ports:
       - "${OPENBAO_PORT:-8200}:8200"
     networks:
@@ -113,7 +114,7 @@ services:
           memory: 256M
           cpus: '0.25'
     healthcheck:
-      test: ["CMD", "bao", "status"]
+      test: ["CMD", "sh", "/usr/local/bin/openbao-healthcheck.sh", "--quiet", "--addr=https://localhost:8200"]
       interval: 30s
       timeout: 10s
       retries: 3

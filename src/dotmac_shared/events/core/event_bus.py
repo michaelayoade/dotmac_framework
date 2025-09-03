@@ -527,7 +527,7 @@ class EventBus:
             dlq_metadata = event.metadata.model_copy()
             dlq_metadata.headers["error"] = error
             dlq_metadata.headers["original_topic"] = event.topic or self.default_topic
-            dlq_metadata.headers["failed_at"] = datetime.utcnow().isoformat()
+            dlq_metadata.headers["failed_at"] = datetime.now(timezone.utc).isoformat()
 
             dlq_event = EventRecord(
                 event_type=f"dlq.{event.event_type}",

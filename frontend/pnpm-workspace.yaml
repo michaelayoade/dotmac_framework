@@ -1,3 +1,4 @@
 packages:
-  - 'apps/*'
-  - 'packages/*'
+  - 'management-portal/*'
+  - 'isp-framework/*'
+  - 'shared/packages/*'

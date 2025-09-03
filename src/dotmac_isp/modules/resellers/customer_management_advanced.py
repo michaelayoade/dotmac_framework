@@ -19,7 +19,7 @@ from .commission_system import CommissionService
 class AdvancedCustomerManager:
     """Advanced customer management with lifecycle integration"""
     
-    def __init__(self, db: AsyncSession, tenant_id: Optional[str] = None):
+    def __init__(self, db: AsyncSession, tenant_id: Optional[str] = None, timezone):
         self.db = db
         self.tenant_id = tenant_id
         self.customer_service = ResellerCustomerService(db, tenant_id)
@@ -92,7 +92,7 @@ class AdvancedCustomerManager:
             'revenue_summary': revenue_summary,
             'growth_metrics': growth_metrics,
             'recommendations': recommendations,
-            'last_updated': datetime.utcnow().isoformat()
+            'last_updated': datetime.now(timezone.utc).isoformat()
         }
     
     async def get_customer_health_dashboard(self, reseller_id: str) -> Dict[str, Any]:
@@ -184,9 +184,9 @@ class AdvancedCustomerManager:
         action_plan = {
             'customer_id': str(customer_id),
             'reseller_id': reseller_id,
-            'plan_created_at': datetime.utcnow().isoformat(),
+            'plan_created_at': datetime.now(timezone.utc).isoformat(),
             'timeline_days': timeline_days,
-            'target_completion_date': (datetime.utcnow() + timedelta(days=timeline_days)).isoformat(),
+            'target_completion_date': (datetime.now(timezone.utc) + timedelta(days=timeline_days)).isoformat(),
             'focus_areas': focus_areas,
             'current_state': {
                 'lifecycle_stage': lifecycle_summary.get('current_stage', 'unknown'),
@@ -214,7 +214,7 @@ class AdvancedCustomerManager:
                     'id': 'health_check_call',
                     'title': 'Schedule health check call',
                     'description': 'Proactive call to understand concerns and satisfaction',
-                    'due_date': (datetime.utcnow() + timedelta(days=7)).isoformat(),
+                    'due_date': (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
                     'priority': 'high',
                     'estimated_duration': 60
                 },
@@ -222,7 +222,7 @@ class AdvancedCustomerManager:
                     'id': 'satisfaction_survey',
                     'title': 'Send satisfaction survey',
                     'description': 'Gather detailed feedback on service experience',
-                    'due_date': (datetime.utcnow() + timedelta(days=14)).isoformat(),
+                    'due_date': (datetime.now(timezone.utc) + timedelta(days=14)).isoformat(),
                     'priority': 'medium',
                     'estimated_duration': 15
                 }
@@ -241,7 +241,7 @@ class AdvancedCustomerManager:
                     'id': 'usage_analysis',
                     'title': 'Analyze customer usage patterns',
                     'description': 'Review usage data to identify expansion opportunities',
-                    'due_date': (datetime.utcnow() + timedelta(days=14)).isoformat(),
+                    'due_date': (datetime.now(timezone.utc) + timedelta(days=14)).isoformat(),
                     'priority': 'medium',
                     'estimated_duration': 90
                 },
@@ -249,7 +249,7 @@ class AdvancedCustomerManager:
                     'id': 'expansion_proposal',
                     'title': 'Create expansion proposal',
                     'description': 'Develop customized expansion proposal with ROI analysis',
-                    'due_date': (datetime.utcnow() + timedelta(days=30)).isoformat(),
+                    'due_date': (datetime.now(timezone.utc) + timedelta(days=30)).isoformat(),
                     'priority': 'medium',
                     'estimated_duration': 120
                 }
@@ -261,7 +261,7 @@ class AdvancedCustomerManager:
                     'id': 'training_session',
                     'title': 'Schedule product training session',
                     'description': 'Provide advanced training to increase product adoption',
-                    'due_date': (datetime.utcnow() + timedelta(days=21)).isoformat(),
+                    'due_date': (datetime.now(timezone.utc) + timedelta(days=21)).isoformat(),
                     'priority': 'medium',
                     'estimated_duration': 90
                 },
@@ -269,7 +269,7 @@ class AdvancedCustomerManager:
                     'id': 'quarterly_review',
                     'title': 'Schedule quarterly business review',
                     'description': 'Regular strategic review meeting to align on goals',
-                    'due_date': (datetime.utcnow() + timedelta(days=45)).isoformat(),
+                    'due_date': (datetime.now(timezone.utc) + timedelta(days=45)).isoformat(),
                     'priority': 'low',
                     'estimated_duration': 120
                 }
@@ -279,19 +279,19 @@ class AdvancedCustomerManager:
         action_plan['milestones'] = [
             {
                 'milestone': '30-day check-in',
-                'date': (datetime.utcnow() + timedelta(days=30)).isoformat(),
+                'date': (datetime.now(timezone.utc) + timedelta(days=30)).isoformat(),
                 'description': 'Review progress on initial action items',
                 'success_criteria': 'At least 80% of high-priority actions completed'
             },
             {
                 'milestone': '60-day assessment',
-                'date': (datetime.utcnow() + timedelta(days=60)).isoformat(),
+                'date': (datetime.now(timezone.utc) + timedelta(days=60)).isoformat(),
                 'description': 'Measure impact of interventions on health score',
                 'success_criteria': 'Health score improvement of at least 10 points'
             },
             {
                 'milestone': '90-day review',
-                'date': (datetime.utcnow() + timedelta(days=90)).isoformat(),
+                'date': (datetime.now(timezone.utc) + timedelta(days=90)).isoformat(),
                 'description': 'Final assessment of action plan success',
                 'success_criteria': 'All objectives met or exceeded'
             }
@@ -419,7 +419,7 @@ class AdvancedCustomerManager:
     def _calculate_acquisition_rate(self, customers) -> float:
         """Calculate customer acquisition rate"""
         # Simple calculation based on recent customers
-        recent_customers = [c for c in customers if c.created_at >= datetime.utcnow() - timedelta(days=30)]
+        recent_customers = [c for c in customers if c.created_at >= datetime.now(timezone.utc) - timedelta(days=30)]
         return (len(recent_customers) / 30) * 365  # Annualized rate
     
     def _calculate_churn_rate(self, customers) -> float:
@@ -503,7 +503,7 @@ class AdvancedCustomerManager:
             customer.relationship_status != 'active' or
             customer.monthly_recurring_revenue < 50 or
             (customer.last_service_date and 
-             (datetime.utcnow().date() - customer.last_service_date).days > 60)
+             (datetime.now(timezone.utc).date() - customer.last_service_date).days > 60)
         )
     
     def _has_expansion_opportunity(self, customer) -> bool:
@@ -511,7 +511,7 @@ class AdvancedCustomerManager:
         return (
             customer.relationship_status == 'active' and
             customer.monthly_recurring_revenue >= 200 and
-            (datetime.utcnow() - customer.created_at).days >= 90  # Customer for at least 90 days
+            (datetime.now(timezone.utc) - customer.created_at).days >= 90  # Customer for at least 90 days
         )
     
     async def _generate_portfolio_recommendations(

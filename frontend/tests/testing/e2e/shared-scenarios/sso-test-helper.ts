@@ -26,10 +26,26 @@ export class SSOTestHelper {
 
   static getTestUsers() {
     return {
-      adminUser: { email: 'admin@test.local', displayName: 'Admin User', roles: ['admin','customer','technician','reseller'] } as SSOUser,
-      customerUser: { email: 'customer@test.local', displayName: 'Customer User', roles: ['customer'] } as SSOUser,
-      technicianUser: { email: 'technician@test.local', displayName: 'Technician User', roles: ['technician'] } as SSOUser,
-      resellerUser: { email: 'reseller@test.local', displayName: 'Reseller User', roles: ['reseller'] } as SSOUser,
+      adminUser: {
+        email: 'admin@test.local',
+        displayName: 'Admin User',
+        roles: ['admin', 'customer', 'technician', 'reseller'],
+      } as SSOUser,
+      customerUser: {
+        email: 'customer@test.local',
+        displayName: 'Customer User',
+        roles: ['customer'],
+      } as SSOUser,
+      technicianUser: {
+        email: 'technician@test.local',
+        displayName: 'Technician User',
+        roles: ['technician'],
+      } as SSOUser,
+      resellerUser: {
+        email: 'reseller@test.local',
+        displayName: 'Reseller User',
+        roles: ['reseller'],
+      } as SSOUser,
     };
   }
 
@@ -38,7 +54,7 @@ export class SSOTestHelper {
       issuer: 'https://idp.test',
       clientId: 'dotmac-e2e',
       redirectUri: '/auth/callback/oidc',
-      scopes: ['openid','profile','email'],
+      scopes: ['openid', 'profile', 'email'],
     };
   }
 
@@ -68,19 +84,35 @@ export class SSOTestHelper {
 
     // Generic callback handlers: simulate creating a session
     await this.page.route('**/auth/callback/**', async (route) => {
-      await route.fulfill({ status: 200, contentType: 'text/html', body: '<script>localStorage.setItem("auth-session", JSON.stringify({ sessionId: "sid-"+Date.now() })); location.href="/dashboard"</script>' });
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/html',
+        body: '<script>localStorage.setItem("auth-session", JSON.stringify({ sessionId: "sid-"+Date.now() })); location.href="/dashboard"</script>',
+      });
     });
 
     await this.page.route('**/saml/acs**', async (route) => {
-      await route.fulfill({ status: 200, contentType: 'text/html', body: '<script>localStorage.setItem("auth-session", JSON.stringify({ sessionId: "sid-"+Date.now() })); location.href="/dashboard"</script>' });
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/html',
+        body: '<script>localStorage.setItem("auth-session", JSON.stringify({ sessionId: "sid-"+Date.now() })); location.href="/dashboard"</script>',
+      });
     });
 
     // Logout endpoints
     await this.page.route('**/oauth2/logout**', async (route) => {
-      await route.fulfill({ status: 200, contentType: 'text/html', body: '<script>localStorage.removeItem("auth-session"); location.href="/auth/login"</script>' });
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/html',
+        body: '<script>localStorage.removeItem("auth-session"); location.href="/auth/login"</script>',
+      });
     });
     await this.page.route('**/saml/slo**', async (route) => {
-      await route.fulfill({ status: 200, contentType: 'text/html', body: '<script>localStorage.removeItem("auth-session"); location.href="/auth/login"</script>' });
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/html',
+        body: '<script>localStorage.removeItem("auth-session"); location.href="/auth/login"</script>',
+      });
     });
   }
 
@@ -111,7 +143,9 @@ export class SSOTestHelper {
 
   async testSSOLogout(baseUrl: string, provider: Provider): Promise<boolean> {
     await this.page.goto(baseUrl);
-    await this.page.evaluate(() => localStorage.setItem('auth-session', JSON.stringify({ sessionId: 'sid-123' })));
+    await this.page.evaluate(() =>
+      localStorage.setItem('auth-session', JSON.stringify({ sessionId: 'sid-123' }))
+    );
     if (provider === 'oidc') {
       await this.page.goto('/oauth2/logout');
     } else {
@@ -124,16 +158,35 @@ export class SSOTestHelper {
   private async safeClick(selector: string) {
     const loc = this.page.locator(selector);
     if (await loc.count()) {
-      await loc.first().click({ timeout: 2000 }).catch(async () => {
-        // If not present, inject a button to proceed
-        await this.page.evaluate((sel) => { const b = document.createElement('button'); b.setAttribute('data-testid', sel.replace('[data-testid="','').replace('"]','')); b.id = sel; b.onclick = () => {}; document.body.appendChild(b); }, selector);
-      });
-      if (await loc.count()) await loc.first().click().catch(() => {});
+      await loc
+        .first()
+        .click({ timeout: 2000 })
+        .catch(async () => {
+          // If not present, inject a button to proceed
+          await this.page.evaluate((sel) => {
+            const b = document.createElement('button');
+            b.setAttribute('data-testid', sel.replace('[data-testid="', '').replace('"]', ''));
+            b.id = sel;
+            b.onclick = () => {};
+            document.body.appendChild(b);
+          }, selector);
+        });
+      if (await loc.count())
+        await loc
+          .first()
+          .click()
+          .catch(() => {});
     } else {
       // Inject and click
-      await this.page.evaluate((sel) => { const b = document.createElement('button'); b.setAttribute('data-testid', 'oidc-login-button'); document.body.appendChild(b); }, selector);
-      await this.page.locator('[data-testid="oidc-login-button"]').click().catch(() => {});
+      await this.page.evaluate((sel) => {
+        const b = document.createElement('button');
+        b.setAttribute('data-testid', 'oidc-login-button');
+        document.body.appendChild(b);
+      }, selector);
+      await this.page
+        .locator('[data-testid="oidc-login-button"]')
+        .click()
+        .catch(() => {});
     }
   }
 }
-

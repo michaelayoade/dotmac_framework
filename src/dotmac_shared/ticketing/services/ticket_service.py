@@ -248,7 +248,7 @@ class TicketService:
         self, db: AsyncSession, tenant_id: str
     ) -> List[TicketResponse]:
         """Get tickets that are past their SLA."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         filters = {"created_before": now}
 
         tickets, _ = await self.ticket_manager.list_tickets(db, tenant_id, filters)
@@ -277,9 +277,9 @@ class TicketService:
         if start_date and end_date:
             date_range = (start_date, end_date)
         elif start_date:
-            date_range = (start_date, datetime.utcnow())
+            date_range = (start_date, datetime.now(timezone.utc))
         elif end_date:
-            date_range = (datetime.utcnow() - timedelta(days=30), end_date)
+            date_range = (datetime.now(timezone.utc) - timedelta(days=30), end_date)
 
         metrics = await self.ticket_manager.get_ticket_metrics(
             db, tenant_id, date_range

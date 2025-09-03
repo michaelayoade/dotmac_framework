@@ -165,7 +165,7 @@ class RedisEventAdapter(EventAdapter):
                 ).encode(),
                 "tenant_id": (event.tenant_id or "").encode(),
                 "partition_key": (event.partition_key or "").encode(),
-                "timestamp": datetime.utcnow().isoformat().encode(),
+                "timestamp": datetime.now(timezone.utc).isoformat().encode(),
             }
 
             # Add to Redis stream with optional maxlen
@@ -181,7 +181,7 @@ class RedisEventAdapter(EventAdapter):
                 topic=topic or event.topic or "default",
                 partition=None,  # Redis Streams don't have partitions
                 offset=message_id.decode(),
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
             )
 
             logger.debug(
@@ -224,7 +224,7 @@ class RedisEventAdapter(EventAdapter):
                     ).encode(),
                     "tenant_id": (event.tenant_id or "").encode(),
                     "partition_key": (event.partition_key or "").encode(),
-                    "timestamp": datetime.utcnow().isoformat().encode(),
+                    "timestamp": datetime.now(timezone.utc).isoformat().encode(),
                 }
 
                 pipeline.xadd(
@@ -245,7 +245,7 @@ class RedisEventAdapter(EventAdapter):
                     topic=topic or event.topic or "default",
                     partition=None,
                     offset=message_id.decode(),
-                    timestamp=datetime.utcnow(),
+                    timestamp=datetime.now(timezone.utc),
                 )
                 results.append(result)
 
@@ -356,7 +356,7 @@ class RedisEventAdapter(EventAdapter):
                                     topic=topic,
                                     partition=0,  # Redis Streams don't have partitions
                                     offset=msg_id.decode(),
-                                    timestamp=datetime.utcnow(),
+                                    timestamp=datetime.now(timezone.utc),
                                 )
 
                                 yield consumer_record

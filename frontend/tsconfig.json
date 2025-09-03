@@ -28,26 +28,26 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"],
-      "@dotmac/headless": ["./packages/headless/src"],
-      "@dotmac/headless/*": ["./packages/headless/src/*"],
-      "@dotmac/primitives": ["./packages/primitives/src"],
-      "@dotmac/primitives/*": ["./packages/primitives/src/*"],
-      "@dotmac/styled-components": ["./packages/styled-components/src"],
-      "@dotmac/styled-components/*": ["./packages/styled-components/src/*"],
-      "@dotmac/typescript-config": ["./packages/typescript-config"],
-      "@dotmac/typescript-config/*": ["./packages/typescript-config/*"],
-      "@dotmac/registry": ["./packages/registry/src"],
-      "@dotmac/registry/*": ["./packages/registry/src/*"],
-      "@dotmac/mapping": ["./packages/mapping/src"],
-      "@dotmac/mapping/*": ["./packages/mapping/src/*"],
-      "@dotmac/testing": ["./packages/testing/src"],
-      "@dotmac/testing/*": ["./packages/testing/src/*"],
-      "@dotmac/security": ["./packages/security/src"],
-      "@dotmac/security/*": ["./packages/security/src/*"],
-      "@dotmac/monitoring": ["./packages/monitoring/src"],
-      "@dotmac/monitoring/*": ["./packages/monitoring/src/*"],
-      "@dotmac/patterns": ["./packages/patterns/src"],
-      "@dotmac/patterns/*": ["./packages/patterns/src/*"]
+      "@dotmac/headless": ["./shared/packages/headless/src"],
+      "@dotmac/headless/*": ["./shared/packages/headless/src/*"],
+      "@dotmac/primitives": ["./shared/packages/primitives/src"],
+      "@dotmac/primitives/*": ["./shared/packages/primitives/src/*"],
+      "@dotmac/styled-components": ["./shared/packages/styled-components/src"],
+      "@dotmac/styled-components/*": ["./shared/packages/styled-components/src/*"],
+      "@dotmac/typescript-config": ["./shared/packages/typescript-config"],
+      "@dotmac/typescript-config/*": ["./shared/packages/typescript-config/*"],
+      "@dotmac/registry": ["./shared/packages/registry/src"],
+      "@dotmac/registry/*": ["./shared/packages/registry/src/*"],
+      "@dotmac/mapping": ["./shared/packages/mapping/src"],
+      "@dotmac/mapping/*": ["./shared/packages/mapping/src/*"],
+      "@dotmac/testing": ["./shared/packages/testing/src"],
+      "@dotmac/testing/*": ["./shared/packages/testing/src/*"],
+      "@dotmac/security": ["./shared/packages/security/src"],
+      "@dotmac/security/*": ["./shared/packages/security/src/*"],
+      "@dotmac/monitoring": ["./shared/packages/monitoring/src"],
+      "@dotmac/monitoring/*": ["./shared/packages/monitoring/src/*"],
+      "@dotmac/patterns": ["./shared/packages/patterns/src"],
+      "@dotmac/patterns/*": ["./shared/packages/patterns/src/*"]
     },
     "outDir": "dist",
     "rootDir": ".",
@@ -74,34 +74,34 @@
   ],
   "references": [
     {
-      "path": "./packages/headless"
+      "path": "./shared/packages/headless"
     },
     {
-      "path": "./packages/primitives"
+      "path": "./shared/packages/primitives"
     },
     {
-      "path": "./packages/styled-components"
+      "path": "./shared/packages/styled-components"
     },
     {
-      "path": "./packages/typescript-config"
+      "path": "./shared/packages/typescript-config"
     },
     {
-      "path": "./packages/registry"
+      "path": "./shared/packages/registry"
     },
     {
-      "path": "./packages/mapping"
+      "path": "./shared/packages/mapping"
     },
     {
-      "path": "./packages/testing"
+      "path": "./shared/packages/testing"
     },
     {
-      "path": "./packages/security"
+      "path": "./shared/packages/security"
     },
     {
-      "path": "./packages/monitoring"
+      "path": "./shared/packages/monitoring"
     },
     {
-      "path": "./packages/patterns"
+      "path": "./shared/packages/patterns"
     }
   ]
 }

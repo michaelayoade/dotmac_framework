@@ -18,7 +18,7 @@ from .models import Device, LinkType, NetworkLink, NetworkNode, NodeType
 class NetworkTopologyManager:
     """Network topology manager for database operations."""
 
-    def __init__(self, session: Session, tenant_id: str):
+    def __init__(self, session: Session, tenant_id: str, timezone):
         self.session = session
         self.tenant_id = tenant_id
 
@@ -113,7 +113,7 @@ class NetworkTopologyManager:
             ]:
                 setattr(node, key, value)
 
-        node.updated_at = datetime.utcnow()
+        node.updated_at = datetime.now(timezone.utc)
         self.session.commit()
         return node
 

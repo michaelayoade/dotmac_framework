@@ -52,12 +52,14 @@ const faker = {
   },
   datatype: {
     uuid: (): string => 'test-uuid-' + Math.random().toString(36).substr(2, 9),
-    number: (opts?: FakeOptions): number => Math.floor(Math.random() * (opts?.max || 100)) + (opts?.min || 1),
+    number: (opts?: FakeOptions): number =>
+      Math.floor(Math.random() * (opts?.max || 100)) + (opts?.min || 1),
     boolean: (): boolean => Math.random() > 0.5,
   } as FakeDatatype,
   number: {
-    int: (opts?: FakeOptions): number => Math.floor(Math.random() * (opts?.max || 100)) + (opts?.min || 1),
-    float: (opts?: FakeOptions): number => (Math.random() * (opts?.max || 100)) + (opts?.min || 0),
+    int: (opts?: FakeOptions): number =>
+      Math.floor(Math.random() * (opts?.max || 100)) + (opts?.min || 1),
+    float: (opts?: FakeOptions): number => Math.random() * (opts?.max || 100) + (opts?.min || 0),
   },
   date: {
     recent: (): Date => new Date(),
@@ -66,8 +68,12 @@ const faker = {
   } as FakeDate,
   lorem: {
     sentence: (): string => 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
-    paragraph: (): string => 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-    paragraphs: (count?: number): string => Array(count || 1).fill('Lorem ipsum dolor sit amet, consectetur adipiscing elit.').join('\n\n'),
+    paragraph: (): string =>
+      'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+    paragraphs: (count?: number): string =>
+      Array(count || 1)
+        .fill('Lorem ipsum dolor sit amet, consectetur adipiscing elit.')
+        .join('\n\n'),
   },
   finance: {
     amount: (): string => '99.99',
@@ -93,7 +99,7 @@ const faker = {
       return result;
     },
     slugify: (str: string): string => str.toLowerCase().replace(/\s+/g, '-'),
-  } as FakeHelpers
+  } as FakeHelpers,
 };
 
 /**
@@ -159,8 +165,8 @@ class UserFactory extends BaseFactory {
         firstName: faker.person.firstName(),
         lastName: faker.person.lastName(),
         phone: faker.phone.number(),
-        avatar: faker.image.avatar()
-      }
+        avatar: faker.image.avatar(),
+      },
     };
   }
 
@@ -169,7 +175,7 @@ class UserFactory extends BaseFactory {
     return this.build({
       role: 'admin',
       permissions: ['read', 'write', 'delete', 'admin'],
-      ...overrides
+      ...overrides,
     });
   }
 
@@ -178,7 +184,7 @@ class UserFactory extends BaseFactory {
       role: 'customer',
       permissions: ['read'],
       subscription: SubscriptionFactory.build(),
-      ...overrides
+      ...overrides,
     });
   }
 
@@ -187,7 +193,7 @@ class UserFactory extends BaseFactory {
       role: 'technician',
       permissions: ['read', 'write'],
       skills: faker.helpers.arrayElements(['networking', 'hardware', 'software']),
-      ...overrides
+      ...overrides,
     });
   }
 }
@@ -239,20 +245,20 @@ class TenantFactory extends BaseFactory {
         branding: {
           logo: faker.image.url(),
           primaryColor: faker.internet.color(),
-          companyName: companyName
+          companyName: companyName,
         },
         features: {
           billing: true,
           analytics: true,
-          support: true
+          support: true,
         },
         limits: {
           maxCustomers: faker.number.int({ min: 100, max: 10000 }),
-          maxTechnicians: faker.number.int({ min: 5, max: 100 })
-        }
+          maxTechnicians: faker.number.int({ min: 5, max: 100 }),
+        },
       },
       createdAt: faker.date.past(),
-      updatedAt: faker.date.recent()
+      updatedAt: faker.date.recent(),
     };
   }
 }
@@ -308,23 +314,23 @@ class CustomerFactory extends BaseFactory {
         city: faker.location.city(),
         state: faker.location.state(),
         zipCode: faker.location.zipCode(),
-        country: faker.location.country()
+        country: faker.location.country(),
       },
       status: faker.helpers.arrayElement(['active', 'inactive', 'suspended']),
       plan: faker.helpers.arrayElement(['basic', 'premium', 'enterprise']),
       billingInfo: {
         balance: parseFloat(faker.finance.amount()),
         lastPayment: faker.date.recent(),
-        nextBilling: faker.date.future()
+        nextBilling: faker.date.future(),
       },
       serviceInfo: {
         connectionStatus: faker.helpers.arrayElement(['connected', 'disconnected', 'maintenance']),
         ipAddress: faker.internet.ipv4(),
-        dataUsage: parseFloat(faker.number.float({ min: 0, max: 1000 }).toString())
+        dataUsage: parseFloat(faker.number.float({ min: 0, max: 1000 }).toString()),
       },
       tenantId: faker.datatype.uuid(),
       createdAt: faker.date.past(),
-      updatedAt: faker.date.recent()
+      updatedAt: faker.date.recent(),
     };
   }
 }
@@ -351,7 +357,11 @@ class SubscriptionFactory extends BaseFactory {
     return {
       id: faker.datatype.uuid(),
       planId: faker.datatype.uuid(),
-      planName: faker.helpers.arrayElement(['Basic Internet', 'Premium Package', 'Enterprise Solution']),
+      planName: faker.helpers.arrayElement([
+        'Basic Internet',
+        'Premium Package',
+        'Enterprise Solution',
+      ]),
       price: parseFloat(faker.commerce.price()),
       currency: 'USD',
       status: faker.helpers.arrayElement(['active', 'cancelled', 'past_due']),
@@ -363,8 +373,8 @@ class SubscriptionFactory extends BaseFactory {
         'Static IP',
         'Priority Support',
         '24/7 Monitoring',
-        'Advanced Security'
-      ])
+        'Advanced Security',
+      ]),
     };
   }
 }
@@ -390,7 +400,7 @@ class CommentFactory extends BaseFactory {
       authorId: faker.datatype.uuid(),
       authorName: faker.person.fullName(),
       createdAt: faker.date.recent(),
-      isInternal: faker.datatype.boolean()
+      isInternal: faker.datatype.boolean(),
     };
   }
 }
@@ -426,7 +436,7 @@ class TicketFactory extends BaseFactory {
       assignedTo: faker.datatype.uuid(),
       createdAt: faker.date.past(),
       updatedAt: faker.date.recent(),
-      comments: CommentFactory.buildList(faker.number.int({ min: 0, max: 5 }))
+      comments: CommentFactory.buildList(faker.number.int({ min: 0, max: 5 })),
     };
   }
 }
@@ -463,16 +473,16 @@ class AnalyticsFactory extends BaseFactory {
       change: parseFloat(faker.number.float({ min: -50, max: 50 }).toString()),
       changeType: faker.helpers.arrayElement(['increase', 'decrease', 'neutral']),
       period: faker.helpers.arrayElement(['daily', 'weekly', 'monthly', 'yearly']),
-      timestamp: faker.date.recent()
+      timestamp: faker.date.recent(),
     };
   }
 
   static dashboard(): DashboardAnalytics {
     return {
-      revenue: this.build({ metric: 'revenue', value: 45230.50 }),
+      revenue: this.build({ metric: 'revenue', value: 45230.5 }),
       customers: this.build({ metric: 'customers', value: 1247 }),
       tickets: this.build({ metric: 'tickets', value: 23 }),
-      uptime: this.build({ metric: 'uptime', value: 99.8 })
+      uptime: this.build({ metric: 'uptime', value: 99.8 }),
     };
   }
 }
@@ -518,7 +528,7 @@ class ApiResponseFactory extends BaseFactory {
       success: true,
       data,
       message: 'Operation completed successfully',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 
@@ -528,13 +538,17 @@ class ApiResponseFactory extends BaseFactory {
       error: {
         message,
         code,
-        details: faker.lorem.sentence()
+        details: faker.lorem.sentence(),
       },
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 
-  static paginated<T = any>(items: T[], page: number = 1, limit: number = 10): ApiSuccess<PaginatedResponse<T>> {
+  static paginated<T = any>(
+    items: T[],
+    page: number = 1,
+    limit: number = 10
+  ): ApiSuccess<PaginatedResponse<T>> {
     const total = items.length;
     const pages = Math.ceil(total / limit);
     const startIndex = (page - 1) * limit;
@@ -548,8 +562,8 @@ class ApiResponseFactory extends BaseFactory {
         total,
         pages,
         hasNext: page < pages,
-        hasPrev: page > 1
-      }
+        hasPrev: page > 1,
+      },
     });
   }
 }
@@ -563,7 +577,7 @@ export const factories = {
   Ticket: TicketFactory,
   Comment: CommentFactory,
   Analytics: AnalyticsFactory,
-  ApiResponse: ApiResponseFactory
+  ApiResponse: ApiResponseFactory,
 };
 
 // Quick access functions for common patterns
@@ -577,7 +591,7 @@ export const createMockData = {
   // Bulk data generation
   customers: (count: number = 10): Customer[] => CustomerFactory.buildList(count),
   tickets: (count: number = 5): Ticket[] => TicketFactory.buildList(count),
-  users: (count: number = 5): User[] => UserFactory.buildList(count)
+  users: (count: number = 5): User[] => UserFactory.buildList(count),
 };
 
 // Export individual factories
@@ -589,7 +603,7 @@ export {
   TicketFactory,
   CommentFactory,
   AnalyticsFactory,
-  ApiResponseFactory
+  ApiResponseFactory,
 };
 
 // Export types for use in tests
@@ -603,5 +617,5 @@ export type {
   Analytics,
   ApiSuccess,
   ApiError,
-  PaginatedResponse
+  PaginatedResponse,
 };

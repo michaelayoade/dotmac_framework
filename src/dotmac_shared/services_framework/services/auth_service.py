@@ -190,7 +190,7 @@ class AuthService(StatefulService):
             if len(self.active_tokens) >= self.auth_config.max_active_tokens:
                 raise RuntimeError("Maximum active tokens limit reached")
 
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         expiry = now + timedelta(hours=self.auth_config.expiry_hours)
 
         token_payload = {

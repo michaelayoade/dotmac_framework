@@ -129,6 +129,54 @@ __all__ = [
     "__version__",
 ]
 
+# Migration shim for backward compatibility with new dotmac.secrets package
+import warnings
+
+# Try to import the new secrets package
+try:
+    from dotmac.secrets import (
+        SecretsManager as _NewSecretsManager,
+        from_env as _secrets_from_env,
+        JWTKeypair,
+        DatabaseCredentials,
+        SecretNotFoundError,
+        SecretValidationError,
+    )
+    
+    def SecretsManager(*args, **kwargs):
+        """DEPRECATED: Use dotmac.secrets.from_env() instead."""
+        warnings.warn(
+            "dotmac_shared.secrets.SecretsManager is deprecated. "
+            "Use 'from dotmac.secrets import from_env' instead.",
+            DeprecationWarning,
+            stacklevel=2
+        )
+        return _secrets_from_env()
+    
+    def from_env(*args, **kwargs):
+        """DEPRECATED: Use dotmac.secrets.from_env() instead."""
+        warnings.warn(
+            "dotmac_shared.secrets.from_env is deprecated. "
+            "Use 'from dotmac.secrets import from_env' instead.",
+            DeprecationWarning,
+            stacklevel=2
+        )
+        return _secrets_from_env(*args, **kwargs)
+        
+    # Add new exports to __all__
+    __all__.extend([
+        "SecretsManager",
+        "from_env", 
+        "JWTKeypair",
+        "DatabaseCredentials",
+        "SecretNotFoundError",
+        "SecretValidationError",
+    ])
+    
+except ImportError:
+    # New package not available, continue with existing functionality
+    pass
+
 # Configuration defaults
 DEFAULT_CONFIG = {
     "vault": {

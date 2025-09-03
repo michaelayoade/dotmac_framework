@@ -92,7 +92,7 @@ class PortalAccountRepository(BaseRepository[PortalAccount]):
     @standard_exception_handler
     async def find_locked_accounts(self) -> List[PortalAccount]:
         """Find currently locked accounts."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         query = select(PortalAccount).where(
             and_(
                 PortalAccount.tenant_id == self.tenant_id,
@@ -121,7 +121,7 @@ class PortalAccountRepository(BaseRepository[PortalAccount]):
     @standard_exception_handler
     async def find_accounts_with_expired_passwords(self, expiry_days: int = 90) -> List[PortalAccount]:
         """Find accounts with expired passwords."""
-        expiry_threshold = datetime.utcnow() - timedelta(days=expiry_days)
+        expiry_threshold = datetime.now(timezone.utc) - timedelta(days=expiry_days)
         
         query = select(PortalAccount).where(
             and_(
@@ -153,7 +153,7 @@ class PortalAccountRepository(BaseRepository[PortalAccount]):
     @standard_exception_handler
     async def find_accounts_by_last_login(self, days_inactive: int = 30) -> List[PortalAccount]:
         """Find accounts by last login activity."""
-        threshold_date = datetime.utcnow() - timedelta(days=days_inactive)
+        threshold_date = datetime.now(timezone.utc) - timedelta(days=days_inactive)
         
         query = select(PortalAccount).where(
             and_(
@@ -222,7 +222,7 @@ class PortalAccountRepository(BaseRepository[PortalAccount]):
                 and_(
                     PortalAccount.tenant_id == self.tenant_id,
                     PortalAccount.locked_until.isnot(None),
-                    PortalAccount.locked_until > datetime.utcnow()
+                    PortalAccount.locked_until > datetime.now(timezone.utc)
                 )
             )
         )
@@ -277,7 +277,7 @@ class PortalSessionRepository(BaseRepository[PortalSession]):
     @standard_exception_handler
     async def find_active_sessions_by_account(self, portal_account_id: UUID) -> List[PortalSession]:
         """Find active sessions for a portal account."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         query = select(PortalSession).where(
             and_(
                 PortalSession.tenant_id == self.tenant_id,
@@ -293,7 +293,7 @@ class PortalSessionRepository(BaseRepository[PortalSession]):
     @standard_exception_handler
     async def find_expired_sessions(self) -> List[PortalSession]:
         """Find expired sessions that need cleanup."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         query = select(PortalSession).where(
             and_(
                 PortalSession.tenant_id == self.tenant_id,
@@ -319,7 +319,7 @@ class PortalSessionRepository(BaseRepository[PortalSession]):
         )
         
         if active_only:
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             query = query.where(
                 and_(
                     PortalSession.is_active == True,
@@ -351,7 +351,7 @@ class PortalSessionRepository(BaseRepository[PortalSession]):
     @standard_exception_handler
     async def find_long_running_sessions(self, hours_threshold: int = 24) -> List[PortalSession]:
         """Find long-running active sessions."""
-        threshold_time = datetime.utcnow() - timedelta(hours=hours_threshold)
+        threshold_time = datetime.now(timezone.utc) - timedelta(hours=hours_threshold)
         
         query = select(PortalSession).options(
             joinedload(PortalSession.portal_account)
@@ -369,7 +369,7 @@ class PortalSessionRepository(BaseRepository[PortalSession]):
     @standard_exception_handler
     async def cleanup_expired_sessions(self) -> int:
         """Mark expired sessions as inactive and return count."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         
         # Get expired sessions
         expired_sessions = await self.find_expired_sessions()
@@ -396,7 +396,7 @@ class PortalSessionRepository(BaseRepository[PortalSession]):
     @standard_exception_handler
     async def get_session_statistics(self, days_back: int = 30) -> Dict[str, Any]:
         """Get session statistics."""
-        start_date = datetime.utcnow() - timedelta(days=days_back)
+        start_date = datetime.now(timezone.utc) - timedelta(days=days_back)
         
         total_sessions = await self.session.execute(
             select(func.count(PortalSession.id)).where(
@@ -412,7 +412,7 @@ class PortalSessionRepository(BaseRepository[PortalSession]):
                 and_(
                     PortalSession.tenant_id == self.tenant_id,
                     PortalSession.is_active == True,
-                    PortalSession.expires_at > datetime.utcnow()
+                    PortalSession.expires_at > datetime.now(timezone.utc)
                 )
             )
         )
@@ -470,7 +470,7 @@ class PortalLoginAttemptRepository(BaseRepository[PortalLoginAttempt]):
     async def find_by_ip_address(self, ip_address: str, 
                                hours_back: int = 24) -> List[PortalLoginAttempt]:
         """Find login attempts from an IP address."""
-        start_time = datetime.utcnow() - timedelta(hours=hours_back)
+        start_time = datetime.now(timezone.utc) - timedelta(hours=hours_back)
         
         query = select(PortalLoginAttempt).where(
             and_(
@@ -487,7 +487,7 @@ class PortalLoginAttemptRepository(BaseRepository[PortalLoginAttempt]):
     async def find_failed_attempts(self, hours_back: int = 24, 
                                   min_attempts: int = 1) -> List[PortalLoginAttempt]:
         """Find failed login attempts."""
-        start_time = datetime.utcnow() - timedelta(hours=hours_back)
+        start_time = datetime.now(timezone.utc) - timedelta(hours=hours_back)
         
         query = select(PortalLoginAttempt).where(
             and_(
@@ -535,7 +535,7 @@ class PortalLoginAttemptRepository(BaseRepository[PortalLoginAttempt]):
     @standard_exception_handler
     async def get_attempt_statistics(self, days_back: int = 7) -> Dict[str, Any]:
         """Get login attempt statistics."""
-        start_date = datetime.utcnow() - timedelta(days=days_back)
+        start_date = datetime.now(timezone.utc) - timedelta(days=days_back)
         
         total_attempts = await self.session.execute(
             select(func.count(PortalLoginAttempt.id)).where(

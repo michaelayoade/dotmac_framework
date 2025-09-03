@@ -4,6 +4,29 @@
 
 set -e
 
+# Track whether we should auto-cleanup
+AUTO_CLEANUP=${AUTO_CLEANUP:-true}
+CLEANUP_ON_SUCCESS=${CLEANUP_ON_SUCCESS:-true}
+CLEANUP_ON_FAILURE=${CLEANUP_ON_FAILURE:-true}
+
+# Function to handle cleanup on exit
+cleanup_on_exit() {
+    local exit_code=$?
+    
+    if [ "$AUTO_CLEANUP" = "true" ]; then
+        if [ $exit_code -eq 0 ] && [ "$CLEANUP_ON_SUCCESS" = "true" ]; then
+            log_info "Tests completed successfully, cleaning up..."
+            clean_tests
+        elif [ $exit_code -ne 0 ] && [ "$CLEANUP_ON_FAILURE" = "true" ]; then
+            log_warn "Tests failed (exit code: $exit_code), cleaning up..."
+            clean_tests
+        fi
+    fi
+}
+
+# Set trap to cleanup on exit
+trap cleanup_on_exit EXIT INT TERM
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -51,6 +74,9 @@ OPTIONS:
     -q, --quiet        Quiet output (errors only)
     --no-cache         Build without cache
     --rebuild          Force rebuild of containers
+    --no-auto-cleanup  Disable automatic cleanup on exit
+    --no-cleanup-success  Skip cleanup on successful tests
+    --no-cleanup-failure  Skip cleanup on failed tests
 
 EXAMPLES:
     $0 unit                    # Run unit tests
@@ -74,7 +100,14 @@ check_dependencies() {
         exit 1
     fi
 
-    if ! command -v docker-compose &> /dev/null; then
+    # Check for Docker Compose (v2 or v1)
+    if command -v docker &> /dev/null && docker compose version &> /dev/null; then
+        COMPOSE_CMD="docker compose"
+        log_info "Using Docker Compose v2"
+    elif command -v docker-compose &> /dev/null; then
+        COMPOSE_CMD="docker-compose"
+        log_info "Using Docker Compose v1"
+    else
         log_error "Docker Compose is required but not installed"
         exit 1
     fi
@@ -83,9 +116,40 @@ check_dependencies() {
 # Clean up test environment
 clean_tests() {
     log_info "Cleaning up test environment..."
-    docker-compose -f docker-compose.test.yml down -v --remove-orphans
+    $COMPOSE_CMD -f docker-compose.test.yml down -v --remove-orphans
     docker system prune -f --filter label=com.docker.compose.project=dotmac_framework
+    
+    # Clean up any conflicting networks
+    docker network ls --filter name=dotmac-test --format "{{.Name}}" | xargs -r docker network rm 2>/dev/null || true
+    
+    # In CI environments, be more aggressive with cleanup
+    if [ "${CI:-false}" = "true" ]; then
+        log_info "CI environment detected, performing aggressive cleanup..."
+        docker container prune -f --filter label=com.docker.compose.project=dotmac_framework
+        docker volume prune -f --filter label=com.docker.compose.project=dotmac_framework
+        docker network prune -f
+    fi
+    
     log_success "Test environment cleaned"
+}
+
+# Check for port conflicts and suggest alternatives
+check_port_conflicts() {
+    local ports=("5434" "6380" "5673" "15673" "8201")
+    local conflicts=()
+    
+    for port in "${ports[@]}"; do
+        if lsof -i ":$port" >/dev/null 2>&1; then
+            conflicts+=("$port")
+        fi
+    done
+    
+    if [ ${#conflicts[@]} -gt 0 ]; then
+        log_warn "Port conflicts detected on: ${conflicts[*]}"
+        log_info "Consider stopping conflicting services or using --rebuild to force cleanup"
+        return 1
+    fi
+    return 0
 }
 
 # Build test infrastructure
@@ -96,22 +160,28 @@ build_tests() {
     fi
 
     log_info "Building test infrastructure..."
-    docker-compose -f docker-compose.test.yml build $no_cache_flag
+    $COMPOSE_CMD -f docker-compose.test.yml build $no_cache_flag
     log_success "Test infrastructure built"
 }
 
 # Start infrastructure services
 start_infrastructure() {
+    log_info "Checking for port conflicts..."
+    if ! check_port_conflicts; then
+        log_info "Attempting to resolve conflicts by cleaning up..."
+        clean_tests
+    fi
+    
     log_info "Starting infrastructure services..."
-    docker-compose -f docker-compose.test.yml up -d test-postgres test-redis httpbin
+    $COMPOSE_CMD -f docker-compose.test.yml up -d postgres-test redis-test rabbitmq-test openbao-test
 
     # Wait for services to be healthy
     log_info "Waiting for services to be ready..."
-    local timeout=60
+    local timeout=180
     local elapsed=0
 
     while [ $elapsed -lt $timeout ]; do
-        if docker-compose -f docker-compose.test.yml ps | grep -q "healthy"; then
+        if $COMPOSE_CMD -f docker-compose.test.yml ps | grep -q "healthy"; then
             log_success "Infrastructure services are ready"
             return 0
         fi
@@ -121,7 +191,7 @@ start_infrastructure() {
     done
 
     log_error "Infrastructure services failed to start within ${timeout}s"
-    docker-compose -f docker-compose.test.yml logs
+    $COMPOSE_CMD -f docker-compose.test.yml logs
     return 1
 }
 
@@ -139,30 +209,31 @@ run_tests() {
     case $test_type in
         "unit")
             log_info "Running unit tests..."
-            docker-compose -f docker-compose.test.yml run --rm dotmac-platform-tests \
+            $COMPOSE_CMD -f docker-compose.test.yml run --rm test-runner \
                 pytest -m "unit" $verbose_flag --tb=short
             ;;
         "integration")
             start_infrastructure
             log_info "Running integration tests..."
-            docker-compose -f docker-compose.test.yml run --rm dotmac-platform-tests \
+            $COMPOSE_CMD -f docker-compose.test.yml run --rm test-runner \
                 pytest -m "integration" $verbose_flag --tb=short
             ;;
         "smoke")
             start_infrastructure
             log_info "Running smoke tests..."
-            docker-compose -f docker-compose.test.yml run --rm dotmac-platform-tests \
+            $COMPOSE_CMD -f docker-compose.test.yml run --rm test-runner \
                 pytest -m "smoke" $verbose_flag --tb=short --maxfail=1
             ;;
         "all")
             start_infrastructure
             log_info "Running all tests..."
-            docker-compose -f docker-compose.test.yml run --rm dotmac-platform-tests \
+            $COMPOSE_CMD -f docker-compose.test.yml run --rm test-runner \
                 pytest $verbose_flag --tb=short
             ;;
         "lint")
             log_info "Running code quality checks..."
-            docker-compose -f docker-compose.test.yml run --rm lint-check
+            $COMPOSE_CMD -f docker-compose.test.yml run --rm test-runner \
+                python -m ruff check src/ && python -m mypy src/
             ;;
         *)
             log_error "Unknown test type: $test_type"
@@ -175,6 +246,17 @@ run_tests() {
 # Main execution
 main() {
     check_dependencies
+
+    # Parse cleanup options
+    if [[ "$*" == *"--no-auto-cleanup"* ]]; then
+        AUTO_CLEANUP=false
+    fi
+    if [[ "$*" == *"--no-cleanup-success"* ]]; then
+        CLEANUP_ON_SUCCESS=false
+    fi
+    if [[ "$*" == *"--no-cleanup-failure"* ]]; then
+        CLEANUP_ON_FAILURE=false
+    fi
 
     # Handle rebuild flag
     if [[ "$*" == *"--rebuild"* ]]; then

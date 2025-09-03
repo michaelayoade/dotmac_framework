@@ -218,7 +218,7 @@ async def cancel_task(
     return {
         "message": "Task cancelled successfully",
         "task_id": task_id,
-        "cancelled_at": datetime.utcnow().isoformat()
+        "cancelled_at": datetime.now(timezone.utc).isoformat()
     }
 
 
@@ -246,7 +246,7 @@ async def retry_task(
         "message": "Task retry initiated",
         "original_task_id": task_id,
         "new_task_id": new_task_id,
-        "retried_at": datetime.utcnow().isoformat()
+        "retried_at": datetime.now(timezone.utc).isoformat()
     }
 
 
@@ -267,7 +267,7 @@ async def delete_task(
     return {
         "message": "Task deleted successfully",
         "task_id": task_id,
-        "deleted_at": datetime.utcnow().isoformat()
+        "deleted_at": datetime.now(timezone.utc).isoformat()
     }
 
 
@@ -280,7 +280,7 @@ async def bulk_task_operation(
 ) -> BulkOperationResponse:
     """Perform bulk operations on multiple tasks"""
     
-    start_time = datetime.utcnow()
+    start_time = datetime.now(timezone.utc)
     
     results = await engine.bulk_operation(
         task_ids=request.task_ids,
@@ -289,7 +289,7 @@ async def bulk_task_operation(
         parameters=request.parameters or {}
     )
     
-    end_time = datetime.utcnow()
+    end_time = datetime.now(timezone.utc)
     processing_time = (end_time - start_time).total_seconds()
     
     return BulkOperationResponse(
@@ -347,7 +347,7 @@ async def get_detailed_metrics(
 ) -> TaskMetricsResponse:
     """Get detailed metrics and analytics"""
     
-    end_time = datetime.utcnow()
+    end_time = datetime.now(timezone.utc)
     start_time = end_time - timedelta(hours=hours)
     
     metrics = await monitor.get_detailed_metrics(
@@ -403,7 +403,7 @@ async def websocket_task_progress(
                 status=task_data["status"],
                 progress=task_data["progress"],
                 error=task_data.get("error"),
-                timestamp=datetime.utcnow()
+                timestamp=datetime.now(timezone.utc)
             )
             await websocket.send_json(message.model_dump())
             
@@ -453,7 +453,7 @@ async def websocket_workflow_progress(
                 progress=workflow_data["progress"],
                 completed_steps=workflow_data["completed_steps"],
                 total_steps=workflow_data["total_steps"],
-                timestamp=datetime.utcnow()
+                timestamp=datetime.now(timezone.utc)
             )
             await websocket.send_json(message.model_dump())
             
@@ -488,7 +488,7 @@ async def websocket_system_metrics(
             metrics = await monitor.get_real_time_metrics()
             
             message = SystemMetricsMessage(
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
                 queue_depth=metrics["queue_depth"],
                 active_tasks=metrics["active_tasks"],
                 worker_utilization=metrics["worker_utilization"],
@@ -520,7 +520,7 @@ async def purge_completed_tasks(
 ) -> Dict[str, Any]:
     """Purge completed tasks older than specified days"""
     
-    cutoff_date = datetime.utcnow() - timedelta(days=older_than_days)
+    cutoff_date = datetime.now(timezone.utc) - timedelta(days=older_than_days)
     
     result = await engine.purge_completed_tasks(
         cutoff_date=cutoff_date,
@@ -533,7 +533,7 @@ async def purge_completed_tasks(
         "cutoff_date": cutoff_date.isoformat(),
         "tasks_affected": result["count"],
         "dry_run": dry_run,
-        "processed_at": datetime.utcnow().isoformat()
+        "processed_at": datetime.now(timezone.utc).isoformat()
     }
 
 
@@ -550,5 +550,5 @@ async def reset_dead_letter_queue(
     return {
         "message": "Dead letter queue reset completed",
         "tasks_moved": result["count"],
-        "processed_at": datetime.utcnow().isoformat()
+        "processed_at": datetime.now(timezone.utc).isoformat()
     }

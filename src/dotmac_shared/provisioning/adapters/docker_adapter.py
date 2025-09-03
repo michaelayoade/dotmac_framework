@@ -140,7 +140,7 @@ class DockerAdapter:
                 labels={
                     "tenant": config.tenant_name,
                     "managed-by": "dotmac-provisioning",
-                    "created-at": datetime.utcnow().isoformat(),
+                    "created-at": datetime.now(timezone.utc).isoformat(),
                 },
             )
 

@@ -53,7 +53,7 @@ def query_cache(ttl_seconds: int = 300, cache_key_prefix: str = "") -> Callable[
             cache_key = f"{cache_key_prefix}:{hashlib.md5(json.dumps(cache_data, sort_keys=True).encode()).hexdigest()}"
             
             # Check cache
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             if cache_key in _query_cache:
                 cached_result, cached_time = _query_cache[cache_key]
                 if (now - cached_time).total_seconds() < ttl_seconds:
@@ -328,7 +328,7 @@ async def bulk_insert(session: AsyncSession, model_class, items: List[Dict[str, 
         
         try:
             # Add timestamp fields if not present
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             for item in batch:
                 if 'created_at' not in item:
                     item['created_at'] = now
@@ -372,7 +372,7 @@ async def bulk_update(session: AsyncSession, model_class, updates: List[Dict[str
         
         try:
             # Add updated_at timestamp
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             for item in batch:
                 item['updated_at'] = now
             
@@ -508,7 +508,7 @@ def clear_query_cache():
 
 def get_cache_stats() -> Dict[str, Any]:
     """Get query cache statistics."""
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     valid_entries = 0
     expired_entries = 0
     
@@ -529,7 +529,7 @@ def get_cache_stats() -> Dict[str, Any]:
 
 def cleanup_expired_cache():
     """Clean up expired cache entries."""
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     expired_keys = []
     
     for key, (result, cached_time) in _query_cache.items():

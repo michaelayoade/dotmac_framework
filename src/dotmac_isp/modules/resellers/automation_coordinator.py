@@ -82,7 +82,7 @@ class ResellerAutomationCoordinator:
         schedules_created.append(quarterly_review_schedule)
         
         return {
-            'automation_initialized_at': datetime.utcnow().isoformat(),
+            'automation_initialized_at': datetime.now(timezone.utc).isoformat(),
             'schedules_created': len(schedules_created),
             'active_schedules': schedules_created,
             'next_execution_dates': {
@@ -94,8 +94,8 @@ class ResellerAutomationCoordinator:
     async def execute_daily_automation_cycle(self) -> Dict[str, Any]:
         """Execute daily automation cycle - monitors and triggers actions"""
         
-        daily_cycle_id = f"DAILY_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
-        cycle_start = datetime.utcnow()
+        daily_cycle_id = f"DAILY_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}"
+        cycle_start = datetime.now(timezone.utc)
         
         # Daily tasks to execute
         daily_results = {
@@ -162,12 +162,12 @@ class ResellerAutomationCoordinator:
         except Exception as e:
             daily_results['errors_encountered'].append({
                 'error': str(e),
-                'timestamp': datetime.utcnow().isoformat(),
+                'timestamp': datetime.now(timezone.utc).isoformat(),
                 'task': 'daily_cycle_execution'
             })
         
-        daily_results['completed_at'] = datetime.utcnow().isoformat()
-        daily_results['execution_duration_minutes'] = (datetime.utcnow() - cycle_start).total_seconds() / 60
+        daily_results['completed_at'] = datetime.now(timezone.utc).isoformat()
+        daily_results['execution_duration_minutes'] = (datetime.now(timezone.utc) - cycle_start).total_seconds() / 60
         
         return daily_results
     
@@ -180,7 +180,7 @@ class ResellerAutomationCoordinator:
     ) -> Dict[str, Any]:
         """Trigger emergency intervention workflow for partner in crisis"""
         
-        intervention_id = f"EMERGENCY_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8].upper()}"
+        intervention_id = f"EMERGENCY_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8].upper()}"
         
         # Get current partner state
         health_analysis = await self.success_engine.calculate_partner_health_score(reseller_id)
@@ -230,12 +230,12 @@ class ResellerAutomationCoordinator:
             'reseller_id': reseller_id,
             'crisis_type': crisis_type,
             'severity': severity,
-            'triggered_at': datetime.utcnow().isoformat(),
+            'triggered_at': datetime.now(timezone.utc).isoformat(),
             'current_health_score': health_analysis['health_score'],
             'intervention_plan': intervention_plan,
             'immediate_actions_taken': immediate_actions,
             'estimated_resolution_timeline': self._estimate_resolution_timeline(crisis_type, severity),
-            'next_checkpoint': (datetime.utcnow() + timedelta(hours=24)).isoformat(),
+            'next_checkpoint': (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat(),
             'escalation_contacts': await self._get_escalation_contacts(reseller_id, crisis_type),
             'success_criteria': await self._define_success_criteria(crisis_type, health_analysis)
         }
@@ -245,7 +245,7 @@ class ResellerAutomationCoordinator:
     async def orchestrate_end_of_month_workflows(self, target_month: date) -> Dict[str, Any]:
         """Orchestrate comprehensive end-of-month processing"""
         
-        orchestration_id = f"EOM_{target_month.strftime('%Y%m')}_{datetime.utcnow().strftime('%H%M%S')}"
+        orchestration_id = f"EOM_{target_month.strftime('%Y%m')}_{datetime.now(timezone.utc).strftime('%H%M%S')}"
         
         # Define workflow sequence
         workflow_sequence = [
@@ -260,7 +260,7 @@ class ResellerAutomationCoordinator:
         orchestration_results = {
             'orchestration_id': orchestration_id,
             'target_month': target_month.strftime('%Y-%m'),
-            'started_at': datetime.utcnow().isoformat(),
+            'started_at': datetime.now(timezone.utc).isoformat(),
             'workflow_sequence': workflow_sequence,
             'workflow_results': {},
             'overall_status': 'running'
@@ -269,7 +269,7 @@ class ResellerAutomationCoordinator:
         try:
             # Execute workflows in sequence
             for workflow_step in workflow_sequence:
-                step_start = datetime.utcnow()
+                step_start = datetime.now(timezone.utc)
                 
                 if workflow_step == "commission_calculation":
                     result = await self.commission_engine.schedule_monthly_commission_run(target_month)
@@ -294,13 +294,13 @@ class ResellerAutomationCoordinator:
                 elif workflow_step == "monthly_reporting":
                     result = await self._generate_monthly_executive_report(target_month)
                 
-                step_duration = (datetime.utcnow() - step_start).total_seconds()
+                step_duration = (datetime.now(timezone.utc) - step_start).total_seconds()
                 
                 orchestration_results['workflow_results'][workflow_step] = {
                     'status': 'completed',
                     'result': result,
                     'duration_seconds': step_duration,
-                    'completed_at': datetime.utcnow().isoformat()
+                    'completed_at': datetime.now(timezone.utc).isoformat()
                 }
                 
                 # Small delay between workflows
@@ -312,9 +312,9 @@ class ResellerAutomationCoordinator:
             orchestration_results['overall_status'] = 'failed'
             orchestration_results['error'] = str(e)
         
-        orchestration_results['completed_at'] = datetime.utcnow().isoformat()
+        orchestration_results['completed_at'] = datetime.now(timezone.utc).isoformat()
         orchestration_results['total_duration_minutes'] = (
-            datetime.utcnow() - datetime.fromisoformat(orchestration_results['started_at'].replace('Z', '+00:00'))
+            datetime.now(timezone.utc) - datetime.fromisoformat(orchestration_results['started_at'].replace('Z', '+00:00'))
         ).total_seconds() / 60
         
         return orchestration_results
@@ -322,7 +322,7 @@ class ResellerAutomationCoordinator:
     async def generate_automation_health_report(self) -> Dict[str, Any]:
         """Generate comprehensive automation system health report"""
         
-        report_date = datetime.utcnow()
+        report_date = datetime.now(timezone.utc)
         
         # Analyze automation system performance
         system_health = {
@@ -406,7 +406,7 @@ class ResellerAutomationCoordinator:
             'schedule_id': f"HEALTH_MONITOR_{uuid.uuid4().hex[:8].upper()}",
             'schedule_name': "Weekly Partner Health Monitoring",
             'frequency': "weekly",
-            'next_execution': (datetime.utcnow() + timedelta(days=7 - datetime.utcnow().weekday())).isoformat(),
+            'next_execution': (datetime.now(timezone.utc) + timedelta(days=7 - datetime.now(timezone.utc).weekday())).isoformat(),
             'status': 'active'
         }
     
@@ -429,7 +429,7 @@ class ResellerAutomationCoordinator:
             'schedule_id': f"QUARTERLY_REVIEW_{uuid.uuid4().hex[:8].upper()}",
             'schedule_name': "Quarterly Partner Success Review",
             'frequency': "quarterly",
-            'next_execution': (datetime.utcnow() + timedelta(days=90)).isoformat(),
+            'next_execution': (datetime.now(timezone.utc) + timedelta(days=90)).isoformat(),
             'status': 'active'
         }
     
@@ -502,7 +502,7 @@ class ResellerAutomationCoordinator:
         return {
             'action': 'management_alert',
             'recipients': ['management@company.com', 'partnerships@company.com'],
-            'alert_sent_at': datetime.utcnow().isoformat(),
+            'alert_sent_at': datetime.now(timezone.utc).isoformat(),
             'urgency': 'high'
         }
     
@@ -512,7 +512,7 @@ class ResellerAutomationCoordinator:
             'action': 'process_suspension',
             'suspended_processes': ['automated_billing', 'performance_warnings'],
             'suspension_duration': '72 hours',
-            'review_scheduled': (datetime.utcnow() + timedelta(days=3)).isoformat()
+            'review_scheduled': (datetime.now(timezone.utc) + timedelta(days=3)).isoformat()
         }
     
     async def _enable_accelerated_monitoring(self, reseller_id: str) -> Dict[str, Any]:
@@ -578,7 +578,7 @@ class ResellerAutomationCoordinator:
                 'interventions_executed': 15,
                 'success_rate': 84.5
             },
-            'generated_at': datetime.utcnow().isoformat()
+            'generated_at': datetime.now(timezone.utc).isoformat()
         }
 
 
