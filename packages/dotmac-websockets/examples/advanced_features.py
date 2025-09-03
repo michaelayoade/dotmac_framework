@@ -15,6 +15,7 @@ This example demonstrates:
 import asyncio
 import json
 import jwt
+import os
 import time
 import logging
 from dotmac.websockets import (

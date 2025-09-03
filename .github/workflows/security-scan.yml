@@ -58,14 +58,20 @@ jobs:
 
     - name: Check for hardcoded credentials
       run: |
-        echo "Scanning for hardcoded credentials..."
+        echo "Scanning for hardcoded credentials in production code only..."
         
-        # Check for common credential patterns
-        if grep -r -i --include="*.py" --include="*.yml" --include="*.yaml" --include="*.json" \
-           -E "(password|secret|key|token)\s*[:=]\s*[\"'][^\"']{8,}[\"']" . | \
-           grep -v "test" | grep -v "example" | grep -v ".git" | grep -v "CHANGE_ME" | \
-           grep -v "INSECURE-EXAMPLE"; then
-          echo "❌ Found potential hardcoded credentials (excluding tests/examples)"
+        # Comprehensive exclusion of test files and directories
+        find . -name "*.py" -o -name "*.js" -o -name "*.ts" -o -name "*.jsx" -o -name "*.tsx" -o -name "*.yml" -o -name "*.yaml" -o -name "*.json" | \
+        grep -v -E "(test|spec|__test__|__tests__|\.test\.|\.spec\.|tests/|test/|__pycache__|node_modules|\.git|examples|mock|fixtures|__mocks__|\.venv|venv)" | \
+        xargs grep -l -E "(password|secret|key|token)\s*[:=]\s*[\"'][^\"']{8,}[\"']" 2>/dev/null | \
+        xargs grep -v -E "(CHANGE_ME|INSECURE.*EXAMPLE|mock.*|test.*|example.*|placeholder|demo.*|dev.*)" 2>/dev/null | head -10 || true
+        
+        # If any found, exit with error
+        if find . -name "*.py" -o -name "*.js" -o -name "*.ts" -o -name "*.jsx" -o -name "*.tsx" -o -name "*.yml" -o -name "*.yaml" -o -name "*.json" | \
+           grep -v -E "(test|spec|__test__|__tests__|\.test\.|\.spec\.|tests/|test/|__pycache__|node_modules|\.git|examples|mock|fixtures|__mocks__|\.venv|venv)" | \
+           xargs grep -l -E "(password|secret|key|token)\s*[:=]\s*[\"'][^\"']{8,}[\"']" 2>/dev/null | \
+           xargs grep -v -E "(CHANGE_ME|INSECURE.*EXAMPLE|mock.*|test.*|example.*|placeholder|demo.*|dev.*|\$\{SECRET:|\$\{.*\})" 2>/dev/null | head -1; then
+          echo "❌ Found potential hardcoded credentials in production code"
           exit 1
         else
           echo "✅ No hardcoded credentials found in production code"

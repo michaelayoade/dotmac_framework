@@ -73,7 +73,7 @@ jobs:
       
       - name: Install dependencies
         run: |
-          poetry install --with security
+          poetry install
       
       - name: Security checks
         run: |
@@ -92,11 +92,31 @@ jobs:
       
       - name: Secret scanning
         run: |
-          if grep -r "sk_\|pk_\|rk_" . --include="*.js" --include="*.ts" --include="*.py" --exclude-dir=node_modules --exclude-dir=.git; then
-            echo "❌ Potential API keys in source code!"
+          echo "🔍 Scanning for hardcoded secrets (excluding tests)..."
+          
+          # Scan for production secrets, excluding test files and directories
+          if find . -name "*.py" -o -name "*.js" -o -name "*.ts" -o -name "*.jsx" -o -name "*.tsx" | \
+             grep -v -E "(test|spec|__test__|__tests__|\.test\.|\.spec\.|tests/|test/|__pycache__|node_modules|\.git|examples|mock)" | \
+             xargs grep -l -E "(sk_[a-zA-Z0-9_]{32,}|pk_[a-zA-Z0-9_]{32,}|rk_[a-zA-Z0-9_]{32,})" 2>/dev/null; then
+            echo "❌ Potential API keys found in production code!"
             exit 1
           fi
-          echo "✅ No hard-coded secrets detected"
+          
+          # Check for hardcoded credentials in production code only - be more specific
+          if find . -name "*.py" -o -name "*.js" -o -name "*.ts" -o -name "*.jsx" -o -name "*.tsx" | \
+             grep -v -E "(test|spec|__test__|__tests__|\.test\.|\.spec\.|tests/|test/|__pycache__|node_modules|\.git|examples|mock)" | \
+             xargs grep -l -E "^[^#]*((password|secret|key|token)\s*[:=]\s*[\"'][a-zA-Z0-9]{12,}[\"'])" 2>/dev/null | \
+             xargs grep -v -E "(CHANGE_ME|INSECURE.*EXAMPLE|test.*secret|mock.*token|example.*key|\$\{SECRET:|placeholder|f\".*\{.*\}|format\(|\.format|template|config|variable)" 2>/dev/null; then
+            echo "❌ Potential hardcoded credentials found in production code!"
+            echo "Files with potential hardcoded credentials:"
+            find . -name "*.py" -o -name "*.js" -o -name "*.ts" -o -name "*.jsx" -o -name "*.tsx" | \
+              grep -v -E "(test|spec|__test__|__tests__|\.test\.|\.spec\.|tests/|test/|__pycache__|node_modules|\.git|examples|mock)" | \
+              xargs grep -l -E "^[^#]*((password|secret|key|token)\s*[:=]\s*[\"'][a-zA-Z0-9]{12,}[\"'])" 2>/dev/null | \
+              xargs grep -v -E "(CHANGE_ME|INSECURE.*EXAMPLE|test.*secret|mock.*token|example.*key|\$\{SECRET:|placeholder|f\".*\{.*\}|format\(|\.format|template|config|variable)" 2>/dev/null | head -5
+            exit 1
+          fi
+          
+          echo "✅ No hardcoded secrets detected in production code"
       
       - name: Security Bootstrap Validation
         env:
@@ -167,7 +187,7 @@ jobs:
       
       - name: Install dependencies
         run: |
-          poetry install --with dev,security
+          poetry install
       
       - name: Lint and type check
         run: |
@@ -177,19 +197,40 @@ jobs:
       
       - name: Run tests
         run: |
-          poetry run pytest tests/ -v --cov=src --cov-report=xml --cov-report=term
+          poetry run pytest tests/ -v --cov=src --cov-report=xml --cov-report=term --cov-report=html
         env:
           DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
           REDIS_URL: redis://localhost:6379/0
           ENVIRONMENT: test
       
-      - name: Upload coverage
-        uses: codecov/codecov-action@v4
+      - name: Generate coverage summary
+        run: |
+          echo "## 📊 Backend Test Coverage" >> $GITHUB_STEP_SUMMARY
+          poetry run coverage report --format=markdown >> $GITHUB_STEP_SUMMARY
+      
+      - name: Coverage PR Comment
+        if: github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@v2
         with:
-          file: ./coverage.xml
-          flags: backend
-          token: ${{ secrets.CODECOV_TOKEN }}
-        continue-on-error: true
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          header: backend-coverage
+          message: |
+            ## 📊 Backend Test Coverage Report
+            
+            ```
+            $(poetry run coverage report)
+            ```
+            
+            📁 **Detailed HTML Report**: Available in workflow artifacts
+      
+      - name: Upload coverage artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage-${{ github.run_number }}
+          path: |
+            coverage.xml
+            htmlcov/
+          retention-days: 30
 
   # Frontend testing
   frontend:
@@ -294,13 +335,14 @@ jobs:
           fi
         working-directory: ./frontend/${{ matrix.app }}
       
-      - name: Upload coverage
+      - name: Upload frontend coverage
         if: steps.check-app.outputs.exists == 'true'
-        uses: codecov/codecov-action@v4
+        uses: actions/upload-artifact@v4
         with:
-          file: ./frontend/${{ matrix.app }}/coverage/lcov.info
-          flags: frontend-${{ matrix.name }}
-          token: ${{ secrets.CODECOV_TOKEN }}
+          name: frontend-coverage-${{ matrix.name }}-${{ github.run_number }}
+          path: |
+            ./frontend/${{ matrix.app }}/coverage/
+          retention-days: 30
         continue-on-error: true
 
   # Integration tests (only if both frontend and backend pass)

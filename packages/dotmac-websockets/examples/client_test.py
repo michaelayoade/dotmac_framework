@@ -9,6 +9,7 @@ with various features like authentication, channels, and messaging.
 import asyncio
 import json
 import logging
+import os
 import websockets
 from typing import Optional, Dict, Any
 import jwt
