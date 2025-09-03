@@ -18,7 +18,7 @@ import time
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-JWT_SECRET = "your-super-secret-jwt-key-change-in-production"
+JWT_SECRET = os.getenv("JWT_SECRET", "INSECURE-EXAMPLE-KEY-NEVER-USE-IN-PRODUCTION")
 
 
 def create_test_jwt_token(user_id: str, tenant_id: str, roles=None, permissions=None):

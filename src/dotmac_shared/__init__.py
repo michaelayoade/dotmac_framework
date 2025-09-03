@@ -38,10 +38,13 @@ optional_modules = [
     "websockets",
 ]
 
-# Import core modules
+# Import core modules safely
+import importlib
 for module_name in core_modules:
     try:
-        exec(f"from . import {module_name}")
+        # Use importlib instead of exec() for safe dynamic imports
+        module = importlib.import_module(f".{module_name}", package=__name__)
+        globals()[module_name] = module
         _available_modules.append(module_name)
     except ImportError as e:
         import warnings
@@ -51,7 +54,9 @@ for module_name in core_modules:
 # Import optional modules with graceful fallback
 for module_name in optional_modules:
     try:
-        exec(f"from . import {module_name}")
+        # Use importlib instead of exec() for safe dynamic imports
+        module = importlib.import_module(f".{module_name}", package=__name__)
+        globals()[module_name] = module
         _available_modules.append(module_name)
     except ImportError:
         # Optional modules can fail silently

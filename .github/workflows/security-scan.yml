@@ -1,0 +1,134 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    - cron: '0 2 * * *'  # Daily at 2 AM
+
+jobs:
+  security-scan:
+    name: Security Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install security scanning tools
+      run: |
+        pip install bandit[toml] safety semgrep
+        
+    - name: Run Bandit security scanner
+      run: |
+        bandit -r . -f json -o bandit-report.json || true
+        bandit -r . -f txt
+      continue-on-error: true
+
+    - name: Run Safety scanner for dependencies
+      run: |
+        pip freeze | safety check --json --output safety-report.json || true
+        pip freeze | safety check
+      continue-on-error: true
+
+    - name: Run Semgrep security scanner
+      run: |
+        semgrep --config=auto --json --output=semgrep-report.json . || true
+        semgrep --config=auto .
+      continue-on-error: true
+
+    - name: Scan for secrets with TruffleHog
+      uses: trufflesecurity/trufflehog@main
+      with:
+        path: ./
+        base: main
+        head: HEAD
+        extra_args: --debug --only-verified
+
+    - name: Check for hardcoded credentials
+      run: |
+        echo "Scanning for hardcoded credentials..."
+        
+        # Check for common credential patterns
+        if grep -r -i --include="*.py" --include="*.yml" --include="*.yaml" --include="*.json" \
+           -E "(password|secret|key|token)\s*[:=]\s*[\"'][^\"']{8,}[\"']" . | \
+           grep -v "test" | grep -v "example" | grep -v ".git" | grep -v "CHANGE_ME" | \
+           grep -v "INSECURE-EXAMPLE"; then
+          echo "❌ Found potential hardcoded credentials (excluding tests/examples)"
+          exit 1
+        else
+          echo "✅ No hardcoded credentials found in production code"
+        fi
+
+    - name: Validate production configurations
+      run: |
+        echo "Validating production configurations..."
+        
+        # Check that production configs use environment variables
+        if find . -name "*.yml" -o -name "*.yaml" | xargs grep -l "production" | \
+           xargs grep -E "(password|secret|key).*:" | \
+           grep -v "\${" | grep -v "CHANGE_ME"; then
+          echo "❌ Found hardcoded values in production configurations"
+          exit 1
+        else
+          echo "✅ Production configurations properly use environment variables"
+        fi
+
+    - name: Upload security reports
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: security-reports
+        path: |
+          bandit-report.json
+          safety-report.json
+          semgrep-report.json
+
+    - name: Comment PR with security summary
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          
+          let summary = '## 🛡️ Security Scan Results\n\n';
+          
+          // Read bandit results
+          try {
+            const banditData = JSON.parse(fs.readFileSync('bandit-report.json', 'utf8'));
+            const issues = banditData.results.length;
+            summary += `**Bandit (Static Analysis):** ${issues} potential issues found\n`;
+          } catch (e) {
+            summary += `**Bandit:** Scan completed\n`;
+          }
+          
+          // Read safety results
+          try {
+            const safetyData = JSON.parse(fs.readFileSync('safety-report.json', 'utf8'));
+            const vulns = safetyData.length;
+            summary += `**Safety (Dependencies):** ${vulns} vulnerabilities found\n`;
+          } catch (e) {
+            summary += `**Safety:** Scan completed\n`;
+          }
+          
+          summary += `\n✅ Hardcoded credentials check: Passed\n`;
+          summary += `✅ Production configuration check: Passed\n\n`;
+          summary += `See job artifacts for detailed reports.`;
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: summary
+          });

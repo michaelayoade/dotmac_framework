@@ -14,6 +14,9 @@ services:
       - SERVICE_TYPE=migration
       - DATABASE_URL=${DATABASE_URL}
       - PYTHONPATH=/app/src
+      - ENVIRONMENT=production
+      - STRICT_PROD_BASELINE=true
+      - APPLY_RLS_AFTER_MIGRATION=true
     volumes:
       - migration_logs:/app/logs
     healthcheck:
@@ -37,22 +40,42 @@ services:
       # Service Configuration
       - SERVICE_TYPE=isp
       
+      # Production Baseline
+      - ENVIRONMENT=production
+      - STRICT_PROD_BASELINE=true
+      - DEBUG=false
+      - LOG_LEVEL=info
+      
       # Database Connection (injected by Coolify)
       - DATABASE_URL=${DATABASE_URL}
+      - ASYNC_DATABASE_URL=${DATABASE_URL}
       
       # Redis Connection (injected by Coolify)  
       - REDIS_URL=${REDIS_URL}
       
-      # Application Settings
+      # Security & Secrets
       - SECRET_KEY=${SECRET_KEY}
-      - DEBUG=false
-      - ENVIRONMENT=production
-      - LOG_LEVEL=info
+      - JWT_SECRET=${JWT_SECRET}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - OPENBAO_URL=${OPENBAO_URL}
+      - OPENBAO_TOKEN=${OPENBAO_TOKEN}
+      
+      # Row-Level Security
+      - APPLY_RLS_AFTER_MIGRATION=true
+      
+      # API Configuration
+      - API_V1_STR=/api/v1
+      - CORS_ORIGINS=${CORS_ORIGINS}
       
       # ISP-specific settings
       - ISP_API_VERSION=v1
       - MAX_UPLOAD_SIZE=100MB
       - RATE_LIMIT_PER_MINUTE=1000
+      
+      # Observability
+      - OPENTELEMETRY_SERVICE_NAME=dotmac-isp
+      - ENABLE_METRICS=true
+      - ENABLE_TRACING=true
       
     ports:
       - "8000:8000"
@@ -89,22 +112,57 @@ services:
       # Service Configuration
       - SERVICE_TYPE=management
       
+      # Production Baseline
+      - ENVIRONMENT=production
+      - STRICT_PROD_BASELINE=true
+      - DEBUG=false
+      - LOG_LEVEL=info
+      
       # Database Connection (injected by Coolify)
       - DATABASE_URL=${DATABASE_URL}
+      - ASYNC_DATABASE_URL=${DATABASE_URL}
+      - MANAGEMENT_DATABASE_URL=${DATABASE_URL}
       
       # Redis Connection (injected by Coolify)
       - REDIS_URL=${REDIS_URL}
       
-      # Application Settings
+      # Security & Secrets
       - SECRET_KEY=${SECRET_KEY}
-      - DEBUG=false
-      - ENVIRONMENT=production
-      - LOG_LEVEL=info
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_ALGORITHM=HS256
+      - JWT_ACCESS_TOKEN_EXPIRE_MINUTES=30
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - OPENBAO_URL=${OPENBAO_URL}
+      - OPENBAO_TOKEN=${OPENBAO_TOKEN}
+      
+      # Row-Level Security
+      - APPLY_RLS_AFTER_MIGRATION=true
+      
+      # API Configuration
+      - API_V1_STR=/api/v1
+      - CORS_ORIGINS=${CORS_ORIGINS}
+      
+      # SaaS Platform
+      - CONTAINER_ORCHESTRATION_ENABLED=true
+      - TENANT_ISOLATION_ENABLED=true
       
       # Management-specific settings
       - MANAGEMENT_API_VERSION=v1
       - ADMIN_EMAIL=${ADMIN_EMAIL}
       - WEBHOOK_SECRET=${WEBHOOK_SECRET}
+      
+      # Production Optimizations
+      - WEB_CONCURRENCY=4
+      - MAX_WORKERS=4
+      - KEEPALIVE=2
+      - GRACEFUL_TIMEOUT=30
+      
+      # Observability
+      - OPENTELEMETRY_SERVICE_NAME=dotmac-management
+      - ENABLE_METRICS=true
+      - ENABLE_TRACING=true
+      - ENABLE_DEBUG_LOGS=false
       
     ports:
       - "8001:8001"

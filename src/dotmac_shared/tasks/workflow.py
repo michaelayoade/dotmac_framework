@@ -65,20 +65,69 @@ class StepCondition:
     context_vars: List[str] = field(default_factory=list)  # Variables available in expression
     
     def evaluate(self, context: Dict[str, Any]) -> bool:
-        """Evaluate condition against workflow context."""
+        """Evaluate condition against workflow context using safe expression evaluation."""
         try:
-            # Create safe evaluation environment
-            safe_dict = {
-                "__builtins__": {},
-                **{var: context.get(var) for var in self.context_vars}
-            }
-            
-            result = eval(self.expression, safe_dict)
-            return bool(result)
+            # Use safe expression evaluation instead of eval()
+            return self._safe_evaluate_expression(self.expression, context)
             
         except Exception as e:
             logger.warning(f"Condition evaluation failed: {e}")
             return False
+    
+    def _safe_evaluate_expression(self, expression: str, context: Dict[str, Any]) -> bool:
+        """Safely evaluate simple boolean expressions without using eval()."""
+        import re
+        from operator import eq, ne, lt, le, gt, ge
+        
+        # Remove whitespace
+        expr = expression.strip()
+        
+        # Support basic comparison operations
+        operators = {
+            '==': eq, '!=': ne, '<': lt, '<=': le, '>': gt, '>=': ge
+        }
+        
+        # Find operator in expression
+        for op_str, op_func in operators.items():
+            if op_str in expr:
+                left, right = expr.split(op_str, 1)
+                left, right = left.strip(), right.strip()
+                
+                # Get values from context
+                left_val = self._get_safe_value(left, context)
+                right_val = self._get_safe_value(right, context)
+                
+                return op_func(left_val, right_val)
+        
+        # Handle boolean constants
+        if expr.lower() in ('true', '1'):
+            return True
+        elif expr.lower() in ('false', '0'):
+            return False
+        
+        # Handle simple variable lookup
+        return bool(self._get_safe_value(expr, context))
+    
+    def _get_safe_value(self, value_str: str, context: Dict[str, Any]) -> Any:
+        """Safely get value from context or parse literal."""
+        # Remove quotes for string literals
+        if (value_str.startswith('"') and value_str.endswith('"')) or \
+           (value_str.startswith("'") and value_str.endswith("'")):
+            return value_str[1:-1]
+        
+        # Try to parse as number
+        try:
+            if '.' in value_str:
+                return float(value_str)
+            return int(value_str)
+        except ValueError:
+            pass
+        
+        # Look up in context (only allow variables from context_vars)
+        if value_str in self.context_vars:
+            return context.get(value_str)
+        
+        raise ValueError(f"Unknown variable or invalid literal: {value_str}")
 
 
 @dataclass

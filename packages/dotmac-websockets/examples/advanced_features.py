@@ -42,8 +42,8 @@ from dotmac.websockets import (
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# JWT Secret for demo
-JWT_SECRET = "your-super-secret-jwt-key-change-in-production"
+# JWT Secret for demo - NEVER use this in production
+JWT_SECRET = os.getenv("JWT_SECRET", "INSECURE-EXAMPLE-KEY-NEVER-USE-IN-PRODUCTION")
 
 
 def create_demo_jwt_token(user_id: str, tenant_id: str, roles=None, permissions=None):
