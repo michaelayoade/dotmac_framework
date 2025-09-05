@@ -37,7 +37,7 @@ jobs:
     - name: Backend Security Scan
       run: |
         # Python security scanning
-        safety check --json --output safety-report.json || true
+        safety scan --output json > safety-report.json || true
         bandit -r . -f json -o bandit-report.json || true
         
         # Semgrep security rules
@@ -88,9 +88,20 @@ jobs:
           echo "⚠️ Skipping bootstrap validation: secrets not configured"
           exit 0
         fi
-        # Try to install package safely
-        pip install -e . 2>/dev/null || echo "⚠️ Package installation failed, skipping bootstrap validation"
-        dotmac-admin bootstrap --check-only 2>/dev/null || echo "⚠️ Bootstrap check failed"
+        # Basic validation of environment variables for security bootstrap
+        echo "🔐 Validating security bootstrap environment..."
+        
+        # Check email format
+        if [[ ! "${AUTH_ADMIN_EMAIL}" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
+          echo "❌ Invalid email format for AUTH_ADMIN_EMAIL"
+          exit 1
+        fi
+        
+        # Check password strength (basic)
+        if [[ ${#AUTH_INITIAL_ADMIN_PASSWORD} -lt 12 ]]; then
+          echo "❌ AUTH_INITIAL_ADMIN_PASSWORD too short (minimum 12 characters)"
+          exit 1
+        fi
         echo "✅ Security bootstrap environment validated"
     
     - name: Upload Security Reports
