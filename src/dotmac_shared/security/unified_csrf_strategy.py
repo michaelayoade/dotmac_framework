@@ -200,11 +200,11 @@ class CSRFToken:
                 return False
 
             # Validate bindings if provided
-            if session_id and f":session:{session_id}" not in token_data:
+            if session_id and ":session:" + session_id not in token_data:
                 logger.debug("CSRF token session binding failed")
                 return False
 
-            if user_id and f":user:{user_id}" not in token_data:
+            if user_id and ":user:" + user_id not in token_data:
                 logger.debug("CSRF token user binding failed")
                 return False
 
@@ -654,11 +654,3 @@ def get_portal_csrf_config(portal_type: str) -> CSRFConfig:
     }
     factory = mapping.get(portal_type)
     return factory() if factory else CSRFConfig()
-
-
-class CSRFTokenExpiredError(CSRFError):
-    """Raised when CSRF token is expired."""
-
-
-class CSRFTokenMismatchError(CSRFError):
-    """Raised when CSRF token signature or bindings mismatch."""
