@@ -3,12 +3,12 @@ name: Exception Handling Standards
 on:
   pull_request:
     paths:
-      - 'src/dotmac_shared/repositories/**'
+      - 'src/dotmac_shared/**'
       - 'src/dotmac_management/core/**'
       - 'scripts/check_broad_exceptions.py'
   push:
     paths:
-      - 'src/dotmac_shared/repositories/**'
+      - 'src/dotmac_shared/**'
       - 'src/dotmac_management/core/**'
 
 jobs:
@@ -20,27 +20,39 @@ jobs:
         uses: actions/checkout@v4
         
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: '3.11'
           
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install ruff
+          python3 -m pip install --upgrade pip
+          pip3 install ruff
           
       - name: Check for broad exceptions in critical modules
         run: |
           echo "🔍 Checking critical modules for broad exception handling..."
-          python scripts/check_broad_exceptions.py
+          python3 scripts/check_broad_exceptions.py
           
       - name: Run ruff BLE001 check on critical modules
         run: |
-          echo "🛡️ Running strict BLE001 check on fixed modules..."
-          ruff check --select=BLE001 src/dotmac_shared/repositories/async_base_repository.py src/dotmac_shared/repositories/sync_base_repository.py src/dotmac_management/core/sanitization.py || true
+          echo "🛡️ Running BLE001 check on existing critical modules..."
+          
+          # Check files that actually exist
+          if [ -f "src/dotmac_management/core/sanitization.py" ]; then
+            echo "Checking sanitization.py..."
+            ruff check --select=BLE001 src/dotmac_management/core/sanitization.py || echo "BLE001 violations found in sanitization.py"
+          fi
+          
+          # Check repository files if they exist
+          if [ -d "src/dotmac_shared/repositories" ]; then
+            echo "Checking repository modules..."
+            ruff check --select=BLE001 src/dotmac_shared/repositories/ || echo "BLE001 violations found in repositories"
+          fi
           
       - name: Check overall BLE001 status
         run: |
           echo "📊 Overall BLE001 violation count:"
-          ruff check --select=BLE001 | wc -l || echo "ruff check failed"
-          echo "✅ BLE001 is enabled and detecting broad exception handling"
+          violation_count=$(ruff check --select=BLE001 src/ 2>/dev/null | wc -l || echo "0")
+          echo "Found $violation_count BLE001 violations"
+          echo "✅ BLE001 check completed"

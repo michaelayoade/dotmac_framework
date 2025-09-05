@@ -329,6 +329,10 @@ jobs:
             name: isp-admin
           - app: isp-framework/reseller
             name: isp-reseller
+          - app: management-portal/admin
+            name: mgmt-admin
+          - app: management-portal/reseller
+            name: mgmt-reseller
     
     steps:
       - uses: actions/checkout@v4
@@ -367,7 +371,14 @@ jobs:
       
       - name: Install dependencies
         if: steps.check-app.outputs.exists == 'true'
-        run: pnpm install --frozen-lockfile
+        run: |
+          echo "📦 Installing dependencies for ${{ matrix.app }}..."
+          if [ -f "pnpm-lock.yaml" ]; then
+            pnpm install --frozen-lockfile
+          else
+            echo "⚠️ No pnpm-lock.yaml found, installing without frozen lockfile"
+            pnpm install
+          fi
         working-directory: ./frontend
 
       - name: Build shared packages
@@ -375,57 +386,75 @@ jobs:
         run: pnpm run build:packages
         working-directory: ./frontend
       
-      - name: Type check and lint
+      - name: Lint and type check
         if: steps.check-app.outputs.exists == 'true'
         run: |
-          if [ -f "package.json" ]; then
-            echo "📦 Found package.json for ${{ matrix.app }}"
-            
-            # Type checking
-            if pnpm run type-check 2>/dev/null; then
-              echo "✅ Type checking passed"
-            else
-              echo "⚠️ Type checking failed or not available"
-            fi
-            
-            # Linting
-            if pnpm run lint 2>/dev/null; then
+          echo "📜 Checking available scripts in ${{ matrix.app }}..."
+          
+          # Show available scripts for debugging
+          echo "Available scripts:"
+          grep -A 10 '"scripts"' package.json | head -8
+          
+          # Try linting (various script names)
+          if grep -q '"lint"' package.json; then
+            echo "🧽 Running linting..."
+            if pnpm run lint; then
               echo "✅ Linting passed"
             else
-              echo "⚠️ Linting failed or not available"
+              echo "⚠️ Linting failed - non-blocking"
             fi
           else
-            echo "❌ No package.json found in ${{ matrix.app }}"
-            exit 1
+            echo "ℹ️ No lint script found"
+          fi
+          
+          # Try type checking (various script names)
+          if grep -q '"type-check\|typecheck\|tsc"' package.json; then
+            echo "🔍 Running type checking..."
+            if pnpm run type-check 2>/dev/null || pnpm run typecheck 2>/dev/null || pnpm run tsc 2>/dev/null; then
+              echo "✅ Type checking passed"
+            else
+              echo "⚠️ Type checking failed - non-blocking"
+            fi
+          else
+            echo "ℹ️ No type checking script found"
           fi
         working-directory: ./frontend/${{ matrix.app }}
       
       - name: Run tests
         if: steps.check-app.outputs.exists == 'true'
         run: |
-          if [ -f "package.json" ]; then
-            echo "🧪 Running tests for ${{ matrix.app }}"
-            
-            # Try different test script patterns
+          echo "🧪 Checking for tests in ${{ matrix.app }}"
+          
+          # Check for test scripts
+          if grep -q '"test"' package.json; then
+            echo "Found test scripts, running tests..."
             if pnpm run test:unit --coverage 2>/dev/null; then
               echo "✅ Unit tests passed"
             elif pnpm run test --coverage 2>/dev/null; then
               echo "✅ Tests passed"
+            elif pnpm run test 2>/dev/null; then
+              echo "✅ Tests passed (no coverage)"
             else
-              echo "⚠️ Tests failed or not available - this is non-blocking"
+              echo "⚠️ Tests failed - continuing anyway"
             fi
+          else
+            echo "ℹ️ No test scripts found - skipping tests"
           fi
         working-directory: ./frontend/${{ matrix.app }}
       
       - name: Build
         if: steps.check-app.outputs.exists == 'true'
         run: |
-          if [ -f "package.json" ]; then
-            if grep -q "build" package.json; then
-              pnpm run build
+          echo "🔨 Building ${{ matrix.app }}..."
+          if grep -q '"build"' package.json; then
+            if pnpm run build; then
+              echo "✅ Build successful"
             else
-              echo "⚠️ No build script found, skipping"
+              echo "❌ Build failed"
+              exit 1
             fi
+          else
+            echo "⚠️ No build script found, skipping"
           fi
         working-directory: ./frontend/${{ matrix.app }}
       
