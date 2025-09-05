@@ -1,196 +1,54 @@
-# Dependabot configuration for DotMac Framework
-# Automated dependency updates with security focus
+# DotMac Framework - Optimized Dependabot Configuration
+# Reduced email spam, focuses on actual directories
 
 version: 2
 updates:
-  # Python dependencies - Root level
+  # Root Python dependencies (main project)
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "monthly"  # Reduced from weekly
       day: "monday"
       time: "09:00"
       timezone: "UTC"
     commit-message:
       prefix: "deps"
-      prefix-development: "deps-dev"
       include: "scope"
-    reviewers:
-      - "security-team"
-    assignees:
-      - "security-team"
     labels:
       - "dependencies"
-      - "security"
-    open-pull-requests-limit: 10
+      - "automerge-candidate"
+    open-pull-requests-limit: 5  # Reduced from 10
     allow:
       - dependency-type: "direct"
       - dependency-type: "indirect"
-    # Enable vulnerability alerts
-    vulnerability-alerts:
-      enabled: true
-    # Auto-merge configuration for patch updates  
-    auto-merge:
-      - dependency-type: "development"
-        update-type: "patch"
-      - dependency-type: "direct"
-        update-type: "patch"
-        package-patterns: 
-          - "bandit*"
-          - "safety*" 
-          - "pytest*"
-          - "black*"
-          - "ruff*"
-    # Group related updates
-    groups:
-      security-updates:
-        patterns:
-          - "bandit"
-          - "safety"
-          - "semgrep"
-          - "pip-audit"
-        update-types:
-          - "minor"
-          - "patch"
-      testing-frameworks:
-        patterns:
-          - "pytest*"
-          - "coverage"
-          - "factory-boy"
-        update-types:
-          - "minor"
-          - "patch"
-      development-tools:
-        patterns:
-          - "black"
-          - "ruff"
-          - "mypy"
-          - "pre-commit"
-        update-types:
-          - "minor"
-          - "patch"
 
-  # Python dependencies - Core Events
-  - package-ecosystem: "pip"
-    directory: "/dotmac_core_events"
+  # Core packages (consolidated)
+  - package-ecosystem: "pip" 
+    directory: "/packages"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
       day: "monday"
     commit-message:
-      prefix: "deps(core-events)"
+      prefix: "deps(packages)"
     labels:
       - "dependencies"
-      - "core-events"
+      - "packages"
+    open-pull-requests-limit: 8
 
-  # Python dependencies - Core Ops
-  - package-ecosystem: "pip"
-    directory: "/dotmac_core_ops"
+  # Frontend dependencies (pnpm)
+  - package-ecosystem: "npm"
+    directory: "/frontend"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
       day: "monday"
     commit-message:
-      prefix: "deps(core-ops)"
+      prefix: "deps(frontend)"
     labels:
-      - "dependencies"
-      - "core-ops"
+      - "dependencies" 
+      - "frontend"
+    open-pull-requests-limit: 5
 
-  # Python dependencies - Identity
-  - package-ecosystem: "pip"
-    directory: "/dotmac_identity"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-    commit-message:
-      prefix: "deps(identity)"
-    labels:
-      - "dependencies"
-      - "identity"
-
-  # Python dependencies - Billing
-  - package-ecosystem: "pip"
-    directory: "/dotmac_billing"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-    commit-message:
-      prefix: "deps(billing)"
-    labels:
-      - "dependencies"
-      - "billing"
-
-  # Python dependencies - Services
-  - package-ecosystem: "pip"
-    directory: "/dotmac_services"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-    commit-message:
-      prefix: "deps(services)"
-    labels:
-      - "dependencies"
-      - "services"
-
-  # Python dependencies - Networking
-  - package-ecosystem: "pip"
-    directory: "/dotmac_networking"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-    commit-message:
-      prefix: "deps(networking)"
-    labels:
-      - "dependencies"
-      - "networking"
-
-  # Python dependencies - Analytics
-  - package-ecosystem: "pip"
-    directory: "/dotmac_analytics"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-    commit-message:
-      prefix: "deps(analytics)"
-    labels:
-      - "dependencies"
-      - "analytics"
-
-  # Python dependencies - API Gateway
-  - package-ecosystem: "pip"
-    directory: "/dotmac_api_gateway"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-    commit-message:
-      prefix: "deps(api-gateway)"
-    labels:
-      - "dependencies"
-      - "api-gateway"
-
-  # Python dependencies - Platform
-  - package-ecosystem: "pip"
-    directory: "/dotmac_platform"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-    commit-message:
-      prefix: "deps(platform)"
-    labels:
-      - "dependencies"
-      - "platform"
-
-  # Python dependencies - DevTools
-  - package-ecosystem: "pip"
-    directory: "/dotmac_devtools"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-    commit-message:
-      prefix: "deps(devtools)"
-    labels:
-      - "dependencies"
-      - "devtools"
-
-  # GitHub Actions
+  # GitHub Actions (keep weekly for security)
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -200,15 +58,20 @@ updates:
       prefix: "ci"
     labels:
       - "github-actions"
-      - "ci-cd"
+      - "automerge-candidate"
+    open-pull-requests-limit: 3
 
-  # Docker (if we add Dockerfiles later)
+  # Docker (if Dockerfiles exist)
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
     commit-message:
-      prefix: "docker"
+      prefix: "deps(docker)"
     labels:
+      - "dependencies"
       - "docker"
-      - "infrastructure"
+    open-pull-requests-limit: 2
+
+# Global settings to reduce noise
+enable-beta-ecosystems: false

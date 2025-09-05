@@ -1,6 +1,7 @@
 {
   "extends": "@dotmac/typescript-config/nextjs.json",
   "compilerOptions": {
+    "baseUrl": ".",
     "noEmit": true,
     "skipLibCheck": true,
     "allowJs": true,

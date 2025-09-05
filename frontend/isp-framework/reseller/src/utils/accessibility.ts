@@ -6,14 +6,16 @@
 export class FocusTrap {
   private element: HTMLElement;
   private focusableElements: NodeListOf<HTMLElement>;
-  private firstFocusable: HTMLElement;
-  private lastFocusable: HTMLElement;
+  private firstFocusable?: HTMLElement;
+  private lastFocusable?: HTMLElement;
 
   constructor(element: HTMLElement) {
     this.element = element;
     this.focusableElements = this.getFocusableElements();
-    this.firstFocusable = this.focusableElements[0];
-    this.lastFocusable = this.focusableElements[this.focusableElements.length - 1];
+    this.firstFocusable = this.focusableElements[0] ?? undefined;
+    this.lastFocusable = this.focusableElements.length
+      ? this.focusableElements[this.focusableElements.length - 1]
+      : undefined;
   }
 
   private getFocusableElements(): NodeListOf<HTMLElement> {
@@ -26,13 +28,13 @@ export class FocusTrap {
     if (event.key !== 'Tab') return;
 
     if (event.shiftKey) {
-      if (document.activeElement === this.firstFocusable) {
-        this.lastFocusable.focus();
+      if (this.firstFocusable && document.activeElement === this.firstFocusable) {
+        this.lastFocusable?.focus();
         event.preventDefault();
       }
     } else {
-      if (document.activeElement === this.lastFocusable) {
-        this.firstFocusable.focus();
+      if (this.lastFocusable && document.activeElement === this.lastFocusable) {
+        this.firstFocusable?.focus();
         event.preventDefault();
       }
     }
@@ -196,28 +198,31 @@ export function getContrastRatio(color1: string, color2: string): number {
 }
 
 function getLuminance(color: string): number {
-  // Convert color to RGB values
   const rgb = hexToRgb(color);
   if (!rgb) return 0;
 
-  // Convert RGB to relative luminance
-  const [r, g, b] = [rgb.r, rgb.g, rgb.b].map((c) => {
-    c = c / 255;
+  const convert = (value: number): number => {
+    const c = value / 255;
     return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
-  });
+  };
+
+  const r = convert(rgb.r);
+  const g = convert(rgb.g);
+  const b = convert(rgb.b);
 
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 }
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result
-    ? {
-        r: parseInt(result[1], 16),
-        g: parseInt(result[2], 16),
-        b: parseInt(result[3], 16),
-      }
-    : null;
+  if (!result) return null;
+  const [, rHex, gHex, bHex] = result;
+  if (!rHex || !gHex || !bHex) return null;
+  return {
+    r: parseInt(rHex, 16),
+    g: parseInt(gHex, 16),
+    b: parseInt(bHex, 16),
+  };
 }
 
 // Keyboard shortcut manager

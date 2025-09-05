@@ -43,8 +43,8 @@ export interface Territory {
 export interface TerritoryFilters {
   searchTerm: string;
   sortBy: 'name' | 'revenue' | 'growth' | 'penetration';
-  region?: string;
-  competitionLevel?: 'low' | 'medium' | 'high';
+  region?: string | undefined;
+  competitionLevel?: 'low' | 'medium' | 'high' | undefined;
 }
 
 export interface UseTerritoryDataReturn {
@@ -55,7 +55,7 @@ export interface UseTerritoryDataReturn {
   filters: TerritoryFilters;
   updateFilters: (updates: Partial<TerritoryFilters>) => void;
   refreshData: () => Promise<void>;
-  isUsingMockData: boolean;
+  isUsingMockData?: boolean;
 }
 
 // Development-only mock data - automatically removed from production builds
