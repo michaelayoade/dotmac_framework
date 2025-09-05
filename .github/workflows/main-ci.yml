@@ -13,7 +13,7 @@ permissions:
   statuses: write
 
 env:
-  PYTHON_VERSION: '3.9'
+  PYTHON_VERSION: '3.11'
   NODE_VERSION: '18'
   PNPM_VERSION: '8'
 
@@ -184,6 +184,36 @@ jobs:
           fi
           
           echo "✅ Security bootstrap environment validated"
+
+  # Frontend lint + typecheck (monorepo)
+  frontend:
+    name: Frontend Lint and Typecheck
+    runs-on: ubuntu-latest
+    needs: [detect-changes, security]
+    if: needs.detect-changes.outputs.frontend == 'true' || needs.detect-changes.outputs.shared == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install frontend dependencies
+        run: pnpm -C frontend install --frozen-lockfile
+
+      - name: Lint (ESLint)
+        run: pnpm -C frontend -r run lint
+
+      - name: Typecheck (TypeScript)
+        run: pnpm -C frontend -r run typecheck || pnpm -C frontend -r run type-check || pnpm -C frontend -r run ts:check
 
   # Backend testing
   backend:
