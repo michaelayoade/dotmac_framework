@@ -6,9 +6,8 @@ from enum import Enum
 from typing import Any, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field
-
 from dotmac_isp.shared.schemas import TenantModelSchema
+from pydantic import BaseModel, Field
 
 
 class ServiceType(str, Enum):

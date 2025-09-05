@@ -25,9 +25,6 @@ __version__ = "1.0.0"
 
 # Core project management components
 from .core.models import (
-    ProjectUpdate,  # Main entities; Enums and types; Pydantic schemas
-)
-from .core.models import (
     MilestoneCreate,
     MilestoneResponse,
     MilestoneType,
@@ -45,6 +42,7 @@ from .core.models import (
     ProjectResponse,
     ProjectStatus,
     ProjectType,
+    ProjectUpdate,  # Main entities; Enums and types; Pydantic schemas
     ResourceType,
     UpdateCreate,
     UpdateResponse,

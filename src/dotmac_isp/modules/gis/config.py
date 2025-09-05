@@ -6,9 +6,8 @@ Follows existing configuration patterns for consistency.
 import os
 from typing import Any, Optional
 
-from pydantic import BaseModel, Field
-
 from dotmac_isp.core.settings import get_settings
+from pydantic import BaseModel, Field
 
 
 class GISConfig(BaseModel):

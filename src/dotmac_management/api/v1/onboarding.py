@@ -7,10 +7,6 @@ from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID
 
-from fastapi import Depends, HTTPException
-
-from dotmac.application import standard_exception_handler
-from dotmac.application.api.router_factory import RouterFactory
 from dotmac_shared.api.dependencies import (
     PaginatedDependencies,
     StandardDependencies,
@@ -18,6 +14,10 @@ from dotmac_shared.api.dependencies import (
     get_standard_deps,
 )
 from dotmac_shared.api.rate_limiting_decorators import rate_limit, rate_limit_strict
+from fastapi import Depends, HTTPException
+
+from dotmac.application import standard_exception_handler
+from dotmac.application.api.router_factory import RouterFactory
 
 from ..repositories.onboarding import (
     OnboardingArtifactRepository,

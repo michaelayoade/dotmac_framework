@@ -5,14 +5,14 @@ Handles one-time initialization of the management platform
 
 import os
 
+from dotmac_management.models.tenant import ManagementTenant
+from dotmac_shared.core.logging import get_logger
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from dotmac.database.base import get_db_session_sync
 from dotmac.platform.auth.core.password_service import PasswordService
 from dotmac.platform.auth.models import Permission, Role, User
-from dotmac_management.models.tenant import ManagementTenant
-from dotmac_shared.core.logging import get_logger
 
 logger = get_logger(__name__)
 

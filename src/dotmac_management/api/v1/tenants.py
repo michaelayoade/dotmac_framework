@@ -17,6 +17,10 @@ from datetime import datetime, timezone
 from typing import Optional
 from uuid import UUID
 
+from dotmac_management.models.tenant import CustomerTenant, TenantPlan, TenantStatus
+from dotmac_management.use_cases import ProvisionTenantInput, ProvisionTenantUseCase
+from dotmac_management.use_cases.base import UseCaseContext
+from dotmac_shared.api.response import APIResponse
 from fastapi import APIRouter, BackgroundTasks, Depends, Path, Query
 from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
 
@@ -29,10 +33,6 @@ from dotmac.application.dependencies.dependencies import (
 )
 from dotmac.core.schemas.base_schemas import PaginatedResponseSchema
 from dotmac.platform.observability.logging import get_logger
-from dotmac_management.models.tenant import CustomerTenant, TenantPlan, TenantStatus
-from dotmac_management.use_cases import ProvisionTenantInput, ProvisionTenantUseCase
-from dotmac_management.use_cases.base import UseCaseContext
-from dotmac_shared.api.response import APIResponse
 
 logger = get_logger(__name__)
 router = APIRouter(

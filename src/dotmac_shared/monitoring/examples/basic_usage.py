@@ -50,13 +50,12 @@ def example_fastapi_integration():
     """Example of FastAPI integration (requires fastapi)."""
 
     try:
-        from fastapi import FastAPI
-
         from dotmac_shared.monitoring import (
             AuditMiddleware,
             create_audit_api_router,
             init_audit_logger,
         )
+        from fastapi import FastAPI
 
         # Initialize audit logger
         audit_logger = init_audit_logger("api-service")

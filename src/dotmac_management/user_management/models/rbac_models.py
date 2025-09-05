@@ -6,6 +6,7 @@ Implements comprehensive role and permission management with multi-tenant suppor
 import enum
 from datetime import datetime
 
+from dotmac_management.models.base import BaseModel
 from sqlalchemy import (
     JSON,
     Boolean,
@@ -21,8 +22,6 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import ENUM
 from sqlalchemy.dialects.postgresql import UUID as PostgreSQLUUID
 from sqlalchemy.orm import relationship
-
-from dotmac_management.models.base import BaseModel
 
 
 class PermissionType(enum.Enum):

@@ -6,8 +6,9 @@ High-level service layer that integrates infrastructure plugins with business lo
 from datetime import datetime, timezone
 from typing import Any, Optional
 
-from dotmac.application import standard_exception_handler
 from dotmac_shared.core.logging import get_logger
+
+from dotmac.application import standard_exception_handler
 
 from ..core.plugins.base import PluginError
 from ..core.plugins.infrastructure_manager import InfrastructurePluginManager

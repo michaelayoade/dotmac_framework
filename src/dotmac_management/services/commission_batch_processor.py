@@ -18,14 +18,15 @@ from datetime import datetime, timezone
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Any, Optional
 
+from dotmac_management.models.commission_config import CommissionConfig
+from dotmac_shared.core.logging import get_logger
+
 from dotmac.database.base import get_db_session
 from dotmac.tasks.decorators import (
     TaskExecutionContext,
     background_task,
     scheduled_task,
 )
-from dotmac_management.models.commission_config import CommissionConfig
-from dotmac_shared.core.logging import get_logger
 
 logger = get_logger(__name__)
 

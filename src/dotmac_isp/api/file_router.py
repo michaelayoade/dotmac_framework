@@ -14,6 +14,7 @@ import os
 from pathlib import Path
 from typing import Optional
 
+from dotmac_shared.api.rate_limiting_decorators import rate_limit, rate_limit_strict
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, field_validator
@@ -25,7 +26,6 @@ from dotmac.application.dependencies.dependencies import (
 )
 from dotmac.core.schemas.base_schemas import BaseResponseSchema
 from dotmac.platform.observability.logging import get_logger
-from dotmac_shared.api.rate_limiting_decorators import rate_limit, rate_limit_strict
 
 from ..core.file_handlers import (
     FileUploadManager,

@@ -2,12 +2,11 @@
 
 from collections.abc import AsyncGenerator, Generator
 
+from dotmac_isp.core.settings import get_settings
+from dotmac_isp.shared.database.base import Base
 from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import Session, sessionmaker
-
-from dotmac_isp.core.settings import get_settings
-from dotmac_isp.shared.database.base import Base
 
 settings = get_settings()
 

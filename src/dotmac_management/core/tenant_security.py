@@ -6,8 +6,9 @@ Thin adapter layer that uses the shared tenant security implementation.
 import logging
 from typing import Optional
 
-from dotmac.platform.auth.core.tenant_security import TenantSecurityManager
 from fastapi import FastAPI
+
+from dotmac.platform.auth.core.tenant_security import TenantSecurityManager
 
 logger = logging.getLogger(__name__)
 

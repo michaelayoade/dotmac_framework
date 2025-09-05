@@ -10,9 +10,8 @@ from typing import Any, Optional
 from uuid import UUID
 
 from dotmac_plugins.core.manager import PluginManager
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from dotmac_shared.monitoring import get_monitoring
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..core.exceptions import BusinessLogicError, ValidationError
 from ..core.logging import get_logger

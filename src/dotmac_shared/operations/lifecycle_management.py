@@ -13,16 +13,16 @@ from enum import Enum
 from typing import Any, Optional
 from uuid import UUID, uuid4
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from dotmac.application import standard_exception_handler
-from dotmac.core.exceptions import BusinessRuleError
 from dotmac_management.user_management.core.user_repository import UserRepository
 from dotmac_management.user_management.schemas.lifecycle_schemas import (
     UserLifecycleEvent,
     UserRegistration,
 )
 from dotmac_management.user_management.schemas.user_schemas import UserStatus
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from dotmac.application import standard_exception_handler
+from dotmac.core.exceptions import BusinessRuleError
 
 logger = logging.getLogger(__name__)
 

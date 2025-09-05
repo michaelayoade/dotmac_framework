@@ -8,12 +8,13 @@ from datetime import datetime, timezone
 from typing import Any, Optional
 from uuid import UUID
 
-from dotmac.communications.events import EventBus
-from dotmac.core import create_cache_service
 from dotmac_shared.services_framework.services.analytics_service import (
     AnalyticsService,
     AnalyticsServiceConfig,
 )
+
+from dotmac.communications.events import EventBus
+from dotmac.core import create_cache_service
 
 from . import schemas
 

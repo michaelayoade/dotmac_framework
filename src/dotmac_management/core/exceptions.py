@@ -8,11 +8,10 @@ import logging
 from typing import Any, Optional
 from uuid import UUID
 
+from dotmac_shared.exceptions import DotMacException
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-
-from dotmac_shared.exceptions import DotMacException
 
 logger = logging.getLogger(__name__)
 

@@ -15,6 +15,7 @@ import colorsys
 from datetime import datetime, timezone
 from uuid import UUID
 
+from dotmac_shared.api.rate_limiting_decorators import rate_limit, rate_limit_strict
 from fastapi import APIRouter, Depends, Path, status
 
 from dotmac.application import standard_exception_handler
@@ -23,7 +24,6 @@ from dotmac.application.dependencies.dependencies import (
     get_standard_deps,
 )
 from dotmac.platform.observability.logging import get_logger
-from dotmac_shared.api.rate_limiting_decorators import rate_limit, rate_limit_strict
 
 from ...models.partner import Partner
 from ...models.partner_branding import (

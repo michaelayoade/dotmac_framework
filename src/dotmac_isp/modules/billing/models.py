@@ -17,6 +17,7 @@ from dotmac_business_logic.billing.core.models import (
 from dotmac_business_logic.billing.core.models import Payment as SharedPayment
 from dotmac_business_logic.billing.core.models import Subscription as SharedSubscription
 from dotmac_business_logic.billing.core.models import UsageRecord as SharedUsageRecord
+from dotmac_isp.shared.database.base import BaseModel
 from sqlalchemy import (
     Boolean,
     Column,
@@ -30,8 +31,6 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as SQLAuuid
 from sqlalchemy.orm import relationship
-
-from dotmac_isp.shared.database.base import BaseModel
 
 
 class BillingCustomer(SharedCustomer, BaseModel):

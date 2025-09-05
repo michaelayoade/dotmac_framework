@@ -9,16 +9,16 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import httpx
-from pydantic import BaseModel, ConfigDict, field_validator
-
-from dotmac.communications.notifications import (
-    UnifiedNotificationService as NotificationService,
-)
 from dotmac_management.models.tenant import CustomerTenant
 from dotmac_shared.core.error_utils import service_operation
 from dotmac_shared.core.logging import get_logger
 from dotmac_shared.security.secrets import SecretsManager
 from dotmac_shared.validation.common_validators import CommonValidators
+from pydantic import BaseModel, ConfigDict, field_validator
+
+from dotmac.communications.notifications import (
+    UnifiedNotificationService as NotificationService,
+)
 
 logger = get_logger(__name__)
 

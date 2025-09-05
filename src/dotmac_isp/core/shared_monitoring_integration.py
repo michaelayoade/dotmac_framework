@@ -7,16 +7,17 @@ import logging
 from datetime import datetime, timezone
 from typing import Any, Optional
 
-from dotmac.communications.events import EventBus
-from dotmac.communications.notifications import (
-    NotificationService as UnifiedNotificationService,
-)
 from dotmac_shared.monitoring.integrations import (
     AlertConfig,
     IntegratedMonitoringService,
     create_integrated_monitoring_service,
 )
 from dotmac_shared.services_framework.services.analytics_service import AnalyticsService
+
+from dotmac.communications.events import EventBus
+from dotmac.communications.notifications import (
+    NotificationService as UnifiedNotificationService,
+)
 
 logger = logging.getLogger(__name__)
 

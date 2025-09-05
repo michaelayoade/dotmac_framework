@@ -10,16 +10,17 @@ from enum import Enum
 from typing import Any, Optional
 from uuid import UUID, uuid4
 
-from dotmac.application import standard_exception_handler
-from dotmac.communications.events import EventBus
-from dotmac.core import create_cache_service
-from dotmac.core.schemas.base_schemas import TenantBaseModel
 from dotmac_shared.application.config import DeploymentContext
 from dotmac_shared.services_framework.core.base import (
     ServiceHealth,
     ServiceStatus,
     StatefulService,
 )
+
+from dotmac.application import standard_exception_handler
+from dotmac.communications.events import EventBus
+from dotmac.core import create_cache_service
+from dotmac.core.schemas.base_schemas import TenantBaseModel
 
 logger = logging.getLogger(__name__)
 

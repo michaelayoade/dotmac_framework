@@ -9,8 +9,9 @@ from typing import Any, Optional
 
 import asyncpg
 import structlog
-from alembic.config import Config
 from tenacity import retry, stop_after_attempt, wait_exponential
+
+from alembic.config import Config
 
 from .database_creator import DatabaseInstance
 

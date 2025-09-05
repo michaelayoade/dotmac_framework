@@ -27,10 +27,10 @@ from .models import (
     ProjectPhase,
     ProjectStatus,
     ProjectType,
+    ProjectUpdate,
+    UpdateCreate,
 )
-from .models import ProjectUpdate
 from .models import ProjectUpdate as ProjectUpdateSchema
-from .models import UpdateCreate
 
 logger = logging.getLogger(__name__)
 

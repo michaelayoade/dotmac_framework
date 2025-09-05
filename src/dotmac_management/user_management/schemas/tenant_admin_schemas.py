@@ -8,9 +8,8 @@ from enum import Enum
 from typing import Any, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field, field_validator
-
 from dotmac_shared.common.schemas import BaseCreateSchema, BaseResponseSchema
+from pydantic import BaseModel, Field, field_validator
 
 
 class ApplicationType(str, Enum):

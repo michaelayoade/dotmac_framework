@@ -7,13 +7,12 @@ It wraps the actual identity module repositories to maintain proper architectura
 from typing import Any, Optional
 from uuid import UUID
 
-from sqlalchemy.orm import Session
-
 from dotmac_isp.modules.identity.models import User
 from dotmac_isp.modules.identity.repository import (
     UserRepository as IdentityUserRepository,
 )
 from dotmac_isp.sdks.core.exceptions import SDKError
+from sqlalchemy.orm import Session
 
 
 class UserRepository:

@@ -1,5 +1,7 @@
 """Monitoring database models for system health, metrics and alerts."""
 
+from dotmac_shared.db.mixins import AuditMixin, TenantMixin
+from dotmac_shared.db.models import Base
 from sqlalchemy import (
     JSON,
     Boolean,
@@ -17,9 +19,6 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-
-from dotmac_shared.db.mixins import AuditMixin, TenantMixin
-from dotmac_shared.db.models import Base
 
 
 class HealthCheckStatus(str, Enum):

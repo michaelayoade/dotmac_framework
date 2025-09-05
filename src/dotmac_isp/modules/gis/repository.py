@@ -8,11 +8,10 @@ data access patterns across the GIS module.
 from typing import Any, Optional
 from uuid import UUID
 
+from dotmac_shared.db.operations import DatabaseOperations
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-
-from dotmac_shared.db.operations import DatabaseOperations
 
 from .models import (
     CoverageGap,

@@ -7,13 +7,13 @@ Leverages existing services with DRY principles for complete automation.
 
 from typing import Any, Optional
 
+from dotmac_shared.core.logging import get_logger
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from dotmac.application import standard_exception_handler
 from dotmac.database.base import get_db_session
-from dotmac_shared.core.logging import get_logger
 
 logger = get_logger(__name__)
 

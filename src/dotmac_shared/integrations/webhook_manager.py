@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 from typing import Any, Optional
 from uuid import UUID, uuid4
 
+from dotmac_shared.api.dependencies import StandardDependencies, get_standard_deps
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -23,7 +24,6 @@ from dotmac.core.schemas.base_schemas import (
     BaseResponseSchema,
     BaseUpdateSchema,
 )
-from dotmac_shared.api.dependencies import StandardDependencies, get_standard_deps
 
 logger = logging.getLogger(__name__)
 

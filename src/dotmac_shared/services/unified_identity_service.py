@@ -21,12 +21,11 @@ from enum import Enum
 from typing import Any
 from uuid import uuid4
 
+from dotmac_shared.core.exceptions import AuthenticationError, ValidationError
+from dotmac_shared.services.base import BaseService
 from passlib.context import CryptContext
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
-
-from dotmac_shared.core.exceptions import AuthenticationError, ValidationError
-from dotmac_shared.services.base import BaseService
 
 logger = logging.getLogger(__name__)
 

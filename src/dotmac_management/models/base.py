@@ -2,10 +2,11 @@
 Management Platform base models using DRY shared patterns.
 """
 
-from dotmac.database.base import AuditableMixin
-from dotmac.database.base import BaseModel as SharedBaseModel
 from sqlalchemy import JSON, Boolean, Column
 from sqlalchemy.ext.declarative import declared_attr
+
+from dotmac.database.base import AuditableMixin
+from dotmac.database.base import BaseModel as SharedBaseModel
 
 __all__ = ["BaseModel"]
 

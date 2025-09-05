@@ -16,14 +16,15 @@ import time
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
+from dotmac_management.models.partner_branding import PartnerBrandConfig
+from dotmac_shared.core.logging import get_logger
+
 from dotmac.database.base import get_db_session
 from dotmac.tasks.decorators import (
     TaskExecutionContext,
     background_task,
     high_priority_task,
 )
-from dotmac_management.models.partner_branding import PartnerBrandConfig
-from dotmac_shared.core.logging import get_logger
 
 logger = get_logger(__name__)
 

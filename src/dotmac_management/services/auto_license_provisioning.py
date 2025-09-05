@@ -7,11 +7,10 @@ import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict
-from sqlalchemy.orm import Session
-
 from dotmac_management.models.tenant import CustomerTenant, TenantPlan
 from dotmac_shared.core.logging import get_logger
+from pydantic import BaseModel, ConfigDict
+from sqlalchemy.orm import Session
 
 logger = get_logger(__name__)
 

@@ -13,10 +13,9 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Optional
 
+from dotmac_isp.shared.cache import get_cache_manager
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
-
-from dotmac_isp.shared.cache import get_cache_manager
 
 logger = logging.getLogger(__name__)
 

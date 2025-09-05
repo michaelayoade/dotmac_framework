@@ -4,10 +4,9 @@ from datetime import date
 from decimal import Decimal
 from typing import Optional
 
+from dotmac_isp.modules.billing.models import Subscription
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from dotmac_isp.modules.billing.models import Subscription
 
 
 class SubscriptionService:

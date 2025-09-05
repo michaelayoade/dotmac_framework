@@ -5,12 +5,12 @@ Provides HTML pages for reseller portal functionality using RouterFactory patter
 
 from uuid import UUID
 
+from dotmac_shared.api.dependencies import StandardDependencies, get_standard_deps
 from fastapi import Depends, Form, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from dotmac.application import RouterFactory, standard_exception_handler
-from dotmac_shared.api.dependencies import StandardDependencies, get_standard_deps
 
 from .schemas import ResellerResponseSchema
 from .services_complete import ResellerService

@@ -7,16 +7,16 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from fastapi import Body, Depends, Query
-from pydantic import BaseModel, Field
-
-from dotmac.application import RouterFactory, standard_exception_handler
 from dotmac_shared.api.dependencies import (
     PaginatedDependencies,
     StandardDependencies,
     get_paginated_deps,
     get_standard_deps,
 )
+from fastapi import Body, Depends, Query
+from pydantic import BaseModel, Field
+
+from dotmac.application import RouterFactory, standard_exception_handler
 
 from ..services.network_orchestrator import NetworkOrchestrationService
 

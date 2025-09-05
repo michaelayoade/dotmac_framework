@@ -11,11 +11,11 @@ from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID
 
+from dotmac_shared.services.base import BaseService
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from dotmac.core.exceptions import EntityNotFoundError as NotFoundError
-from dotmac_shared.services.base import BaseService
 
 from .models import NetworkNode, RouteOptimization, ServiceArea, Territory
 from .schemas import (

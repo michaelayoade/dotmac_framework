@@ -8,8 +8,6 @@ state changes, and device lifecycle events.
 import logging
 from typing import Any
 
-from sqlalchemy.orm import Session
-
 from dotmac_isp.modules.noc.services.alarm_management_service import (
     AlarmManagementService,
 )
@@ -19,6 +17,7 @@ from dotmac_isp.modules.noc.services.event_correlation_service import (
 from dotmac_shared.device_management.dotmac_device_management.services.device_service import (
     DeviceService,
 )
+from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 

@@ -7,10 +7,9 @@ import logging
 from datetime import datetime, timezone
 from typing import Any
 
+from dotmac_shared.core.error_utils import send_ws
 from fastapi import WebSocket
 from starlette.websockets import WebSocketDisconnect
-
-from dotmac_shared.core.error_utils import send_ws
 
 logger = logging.getLogger(__name__)
 

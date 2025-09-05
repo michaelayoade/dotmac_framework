@@ -10,8 +10,9 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Optional
 
-from dotmac.application import standard_exception_handler
 from dotmac_shared.core.logging import get_logger
+
+from dotmac.application import standard_exception_handler
 
 from .base import BasePlugin, PluginStatus
 from .infrastructure_manager import InfrastructurePluginManager

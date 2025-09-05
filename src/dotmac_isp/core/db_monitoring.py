@@ -45,7 +45,6 @@ from datetime import datetime, timezone
 from typing import Any, Optional
 
 import asyncpg
-
 from dotmac_shared.monitoring import get_monitoring
 
 logger = logging.getLogger(__name__)

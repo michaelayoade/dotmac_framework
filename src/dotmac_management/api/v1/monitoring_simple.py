@@ -8,12 +8,12 @@ module-specific models that duplicate core tables.
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
+from dotmac_shared.api.dependencies import StandardDependencies, get_standard_deps
+from dotmac_shared.api.rate_limiting_decorators import rate_limit
 from fastapi import Depends, Query
 
 from dotmac.application import standard_exception_handler
 from dotmac.application.api.router_factory import RouterFactory
-from dotmac_shared.api.dependencies import StandardDependencies, get_standard_deps
-from dotmac_shared.api.rate_limiting_decorators import rate_limit
 
 from ...repositories.monitoring import MonitoringRepository
 

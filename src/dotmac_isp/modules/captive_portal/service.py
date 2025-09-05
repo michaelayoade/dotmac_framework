@@ -11,6 +11,8 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 from uuid import uuid4
 
+from dotmac_shared.logging import get_logger
+from dotmac_shared.services.base import BaseTenantService
 from sqlalchemy.orm import Session
 
 from dotmac.core.exceptions import (
@@ -20,8 +22,6 @@ from dotmac.core.exceptions import (
     ServiceError,
     ValidationError,
 )
-from dotmac_shared.logging import get_logger
-from dotmac_shared.services.base import BaseTenantService
 
 # Import existing ISP services for integration
 # Note: These integrations can be added once the services are properly implemented

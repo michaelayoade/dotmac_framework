@@ -8,7 +8,6 @@ from dataclasses import dataclass
 from typing import Any, Optional
 
 import httpx
-
 from dotmac_shared.core.error_utils import service_operation
 from dotmac_shared.core.logging import get_logger
 

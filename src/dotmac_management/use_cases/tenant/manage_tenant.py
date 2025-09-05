@@ -8,11 +8,11 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Optional
 
+from dotmac_shared.core.logging import get_logger
+from dotmac_shared.exceptions import ExceptionContext
 from sqlalchemy.exc import SQLAlchemyError
 
 from dotmac.database.base import get_db_session
-from dotmac_shared.core.logging import get_logger
-from dotmac_shared.exceptions import ExceptionContext
 
 from ...infrastructure import get_adapter_factory
 from ...models.tenant import CustomerTenant, TenantStatus

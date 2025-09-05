@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from typing import Optional
 from uuid import UUID
 
+from dotmac_shared.auth.services import AuthService
 from fastapi import HTTPException, Request, status
 from fastapi.security import HTTPBearer
 from jose import JWTError, jwt
@@ -14,7 +15,6 @@ from starlette.responses import JSONResponse
 
 from dotmac.database.session import get_db_session
 from dotmac.platform.observability.logging import get_logger
-from dotmac_shared.auth.services import AuthService
 
 from ..schemas.user_schemas import UserResponseSchema
 from ..services.user_service import UserService

@@ -5,8 +5,6 @@ import logging
 import os
 from typing import Optional
 
-from fastapi import FastAPI
-
 from dotmac_shared.application import (
     DeploymentContext,
     DeploymentMode,
@@ -31,6 +29,7 @@ from dotmac_shared.observability import (
 # Import new observability and auth systems
 from dotmac_shared.tenant.identity import TenantIdentityResolver
 from dotmac_shared.tenant.middleware import TenantMiddleware
+from fastapi import FastAPI
 
 logger = logging.getLogger(__name__)
 

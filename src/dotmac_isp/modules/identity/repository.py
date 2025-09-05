@@ -8,11 +8,10 @@ from datetime import datetime, timezone
 from typing import Optional
 from uuid import UUID
 
+from dotmac_isp.shared.base_repository import BaseTenantRepository as BaseRepository
 from sqlalchemy import and_, desc, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-
-from dotmac_isp.shared.base_repository import BaseTenantRepository as BaseRepository
 
 from .models import AuthenticationLog, Customer, Role, User, UserRole, UserSession
 

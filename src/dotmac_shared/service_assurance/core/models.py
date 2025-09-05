@@ -12,9 +12,19 @@ except ImportError:
     BaseModel = object
 
 try:
-    from sqlalchemy import JSON, Boolean, Column, DateTime
+    from sqlalchemy import (
+        JSON,
+        Boolean,
+        Column,
+        DateTime,
+        Float,
+        ForeignKey,
+        Index,
+        Integer,
+        String,
+        Text,
+    )
     from sqlalchemy import Enum as SQLEnum
-    from sqlalchemy import Float, ForeignKey, Index, Integer, String, Text
     from sqlalchemy.dialects.postgresql import INET, UUID
     from sqlalchemy.ext.hybrid import hybrid_property
     from sqlalchemy.orm import declarative_base, relationship

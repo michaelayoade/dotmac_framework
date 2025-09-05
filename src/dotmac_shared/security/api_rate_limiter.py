@@ -14,9 +14,10 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Optional
 
-import redis
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
+
+import redis
 
 logger = logging.getLogger(__name__)
 

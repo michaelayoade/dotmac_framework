@@ -7,12 +7,6 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Any, Optional
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
-from sqlalchemy import JSON, Boolean, Column, Date
-from sqlalchemy import Enum as SQLEnum
-from sqlalchemy import Numeric, String, Text
-from sqlalchemy.dialects.postgresql import UUID
-
 from dotmac_shared.sales.core.reseller_models import (
     CommissionStructure,
     ResellerTier,
@@ -22,6 +16,10 @@ from dotmac_shared.validation.common_validators import (
     CommonValidators,
     ValidationPatterns,
 )
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+from sqlalchemy import JSON, Boolean, Column, Date, Numeric, String, Text
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy.dialects.postgresql import UUID
 
 from .base import BaseModel as DBBaseModel
 

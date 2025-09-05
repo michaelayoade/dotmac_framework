@@ -7,11 +7,10 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
-from fastapi import APIRouter, Body, Depends, Path, Query
-
 from dotmac_shared.api import StandardDependencies, standard_exception_handler
 from dotmac_shared.api.dependencies import get_standard_deps
 from dotmac_shared.schemas import BaseResponseSchema
+from fastapi import APIRouter, Body, Depends, Path, Query
 
 from ..schemas import CaptivePortalSessionResponse, PortalConfigResponse
 from ..services import CaptivePortalService, get_captive_portal_service

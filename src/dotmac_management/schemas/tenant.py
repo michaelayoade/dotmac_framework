@@ -6,12 +6,11 @@ from datetime import datetime
 from typing import Any, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field, field_validator
-
 from dotmac_shared.validation.common_validators import (
     CommonValidators,
     ValidationPatterns,
 )
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 from ..core.sanitization import (
     validate_email_string,

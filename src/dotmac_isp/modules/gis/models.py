@@ -6,13 +6,11 @@ Following DRY patterns with proper inheritance.
 import enum
 from uuid import UUID
 
-from sqlalchemy import Column, DateTime
+from dotmac_isp.shared.database.base import BaseModel
+from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy import Enum as SQLEnum
-from sqlalchemy import Float, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
-
-from dotmac_isp.shared.database.base import BaseModel
 
 
 class ServiceTypeEnum(str, enum.Enum):

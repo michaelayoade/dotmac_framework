@@ -7,13 +7,12 @@ from enum import Enum
 from typing import Any, Optional
 from uuid import UUID
 
-from pydantic import Field, field_validator
-
 from dotmac_shared.common.schemas import (
     BaseCreateSchema,
     BaseResponseSchema,
     BaseUpdateSchema,
 )
+from pydantic import Field, field_validator
 
 
 class ContactType(str, Enum):

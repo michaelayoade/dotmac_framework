@@ -7,6 +7,12 @@ import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
+from dotmac_management.models.tenant import CustomerTenant, TenantPlan, TenantStatus
+from dotmac_management.services.tenant_provisioning import TenantProvisioningService
+from dotmac_shared.api.exceptions import StandardExceptions, subdomain_taken
+from dotmac_shared.api.rate_limiting_decorators import RateLimitType, rate_limit
+from dotmac_shared.api.response import APIResponse
+from dotmac_shared.validation.common_validators import ValidatorMixins
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from pydantic import BaseModel, EmailStr, Field, field_validator
 from sqlalchemy.orm import Session
@@ -17,12 +23,6 @@ from dotmac.communications.notifications import (
 )
 from dotmac.database.base import get_db_session
 from dotmac.platform.observability.logging import get_logger
-from dotmac_management.models.tenant import CustomerTenant, TenantPlan, TenantStatus
-from dotmac_management.services.tenant_provisioning import TenantProvisioningService
-from dotmac_shared.api.exceptions import StandardExceptions, subdomain_taken
-from dotmac_shared.api.rate_limiting_decorators import RateLimitType, rate_limit
-from dotmac_shared.api.response import APIResponse
-from dotmac_shared.validation.common_validators import ValidatorMixins
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/public", tags=["public-signup"])

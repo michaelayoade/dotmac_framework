@@ -12,12 +12,12 @@ from typing import Any, Optional
 from uuid import UUID
 
 from dotmac_business_logic.billing import BillingService
-
-from dotmac.platform.auth import get_auth_service
 from dotmac_management.user_management.services.user_service import (
     UserManagementService,
 )
 from dotmac_shared.monitoring import get_monitoring
+
+from dotmac.platform.auth import get_auth_service
 
 from ..adapters.base import CustomerPortalAdapter
 from .auth import PortalAuthenticationManager

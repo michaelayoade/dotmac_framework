@@ -8,10 +8,9 @@ import os
 import sys
 
 import click
-from sqlalchemy.exc import SQLAlchemyError
-
 from dotmac_management.core.bootstrap import bootstrap_manager, run_bootstrap_if_needed
 from dotmac_shared.core.logging import get_logger
+from sqlalchemy.exc import SQLAlchemyError
 
 logger = get_logger(__name__)
 

@@ -8,8 +8,9 @@ extending the shared framework settings.
 import os
 from functools import lru_cache
 
-from config.shared_settings import SharedSettings
 from pydantic import ConfigDict, Field, field_validator
+
+from config.shared_settings import SharedSettings
 
 
 class ManagementPlatformSettings(SharedSettings):

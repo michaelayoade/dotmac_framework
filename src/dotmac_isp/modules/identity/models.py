@@ -6,14 +6,12 @@ SQLAlchemy models for users, customers, and identity-related entities.
 import uuid
 from enum import Enum
 
-from sqlalchemy import Boolean, Column, DateTime
+from dotmac_isp.shared.database.base import Base, BaseModel
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy import Enum as SQLEnum
-from sqlalchemy import ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-
-from dotmac_isp.shared.database.base import Base, BaseModel
 
 
 class AccountStatus(str, Enum):

@@ -4,15 +4,15 @@ Partner management API used by the management-reseller portal.
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
-
-from dotmac.application import standard_exception_handler
 from dotmac_shared.api.dependencies import (
     PaginatedDependencies,
     StandardDependencies,
     get_paginated_deps,
     get_standard_deps,
 )
+from fastapi import APIRouter, Depends
+
+from dotmac.application import standard_exception_handler
 
 from ....repositories.partner import PartnerRepository
 from .schemas import (

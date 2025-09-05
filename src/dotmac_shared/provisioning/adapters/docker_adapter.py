@@ -10,9 +10,10 @@ from pathlib import Path
 from typing import Any, Optional
 from uuid import UUID
 
-import docker
 import structlog
 import yaml
+
+import docker
 
 from ..core.exceptions import DeploymentError, InfrastructureError
 from ..core.models import DeploymentArtifacts, ISPConfig, ResourceRequirements

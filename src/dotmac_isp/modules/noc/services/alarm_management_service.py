@@ -10,12 +10,12 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 from uuid import uuid4
 
+from dotmac_shared.services.base import BaseTenantService
 from sqlalchemy import and_, desc
 from sqlalchemy.orm import Session
 
 from dotmac.application import standard_exception_handler
 from dotmac.core.exceptions import EntityNotFoundError, ValidationError
-from dotmac_shared.services.base import BaseTenantService
 
 from ..models.alarms import Alarm, AlarmRule, AlarmStatus
 from ..models.events import EventSeverity, EventType, NetworkEvent

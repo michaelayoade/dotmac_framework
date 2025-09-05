@@ -7,6 +7,7 @@ import logging
 from typing import Any, Optional
 from uuid import UUID
 
+from dotmac_shared.api.dependencies import StandardDependencies, get_standard_deps
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,7 +17,6 @@ from dotmac.core.schemas.base_schemas import (
     BaseResponseSchema,
     BaseUpdateSchema,
 )
-from dotmac_shared.api.dependencies import StandardDependencies, get_standard_deps
 
 from .base_integration import BaseIntegration, IntegrationConfig, IntegrationMetrics
 

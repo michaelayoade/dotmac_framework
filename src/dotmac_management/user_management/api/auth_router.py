@@ -5,6 +5,9 @@ Provides comprehensive authentication endpoints using RouterFactory patterns.
 from typing import Optional
 from uuid import UUID
 
+from dotmac_shared.api.dependencies import get_current_tenant_id, get_current_user
+from dotmac_shared.auth.services import AuthService
+from dotmac_shared.common.exceptions import standard_exception_handler
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,9 +15,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from dotmac.application import RouterFactory
 from dotmac.database.session import get_db_session
 from dotmac.platform.observability.logging import get_logger
-from dotmac_shared.api.dependencies import get_current_tenant_id, get_current_user
-from dotmac_shared.auth.services import AuthService
-from dotmac_shared.common.exceptions import standard_exception_handler
 
 from ..schemas.auth_schemas import (
     ApiKeyCreateSchema,

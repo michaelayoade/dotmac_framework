@@ -4,6 +4,7 @@ import io
 import logging
 from typing import Any, Optional
 
+from dotmac_isp.modules.billing.models import Invoice, InvoiceLineItem, Payment, Receipt
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_LEFT, TA_RIGHT
 from reportlab.lib.pagesizes import letter
@@ -11,8 +12,6 @@ from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 from reportlab.platypus.flowables import HRFlowable
-
-from dotmac_isp.modules.billing.models import Invoice, InvoiceLineItem, Payment, Receipt
 
 logger = logging.getLogger(__name__)
 

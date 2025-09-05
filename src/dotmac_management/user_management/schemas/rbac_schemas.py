@@ -8,14 +8,13 @@ from enum import Enum
 from typing import Any, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
-
 from dotmac_shared.common.schemas import (
     BaseCreateSchema,
     BaseResponseSchema,
     BaseUpdateSchema,
     PaginatedResponseSchema,
 )
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from ..models.rbac_models import PermissionScope, PermissionType
 

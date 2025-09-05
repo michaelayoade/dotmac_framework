@@ -10,11 +10,11 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 from uuid import uuid4
 
+from dotmac_shared.services.base import BaseTenantService
 from sqlalchemy import and_
 from sqlalchemy.orm import Session
 
 from dotmac.application import standard_exception_handler
-from dotmac_shared.services.base import BaseTenantService
 
 from ..models.events import EventRule, EventSeverity, EventType, NetworkEvent
 

@@ -8,17 +8,6 @@ import secrets
 from datetime import datetime, timezone
 from typing import Any, Optional
 
-from packages.dotmac_network_automation.dotmac_network.ssh.automation import (
-    SSHAutomation,
-)
-from packages.dotmac_network_automation.dotmac_network.ssh.types import (
-    DeviceCredentials,
-    DeviceType,
-    SSHConnectionConfig,
-)
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session
-
 from dotmac_management.models.vps_customer import (
     VPSCustomer,
     VPSDeploymentEvent,
@@ -27,6 +16,17 @@ from dotmac_management.models.vps_customer import (
 from dotmac_management.services.vps_requirements import VPSRequirementsService
 from dotmac_shared.api.exceptions import standard_exception_handler
 from dotmac_shared.core.logging import get_logger
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
+
+from packages.dotmac_network_automation.dotmac_network.ssh.automation import (
+    SSHAutomation,
+)
+from packages.dotmac_network_automation.dotmac_network.ssh.types import (
+    DeviceCredentials,
+    DeviceType,
+    SSHConnectionConfig,
+)
 
 logger = get_logger(__name__)
 

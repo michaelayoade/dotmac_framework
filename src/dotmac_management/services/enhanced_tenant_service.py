@@ -10,12 +10,11 @@ from datetime import datetime, timezone
 from typing import Any, Optional
 from uuid import UUID
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from dotmac_shared.services_framework.core.registry import (
     ServiceConfig,
     ServiceRegistry,
 )
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..core.application_registry import initialize_application_registry_with_services
 from ..core.exceptions import BusinessLogicError, TenantNotFoundError

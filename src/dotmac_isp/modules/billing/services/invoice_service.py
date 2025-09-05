@@ -3,10 +3,9 @@
 from decimal import Decimal
 from typing import Optional
 
+from dotmac_isp.modules.billing.models import Invoice, InvoiceStatus
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from dotmac_isp.modules.billing.models import Invoice, InvoiceStatus
 
 
 class InvoiceService:

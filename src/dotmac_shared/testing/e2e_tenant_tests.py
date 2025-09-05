@@ -19,13 +19,13 @@ from uuid import uuid4
 
 import pytest
 import requests
+from dotmac_shared.container_monitoring.core.metrics_collector import (
+    ContainerMetricsCollector,
+)
 from playwright.async_api import Page, async_playwright
 
 from dotmac.application import standard_exception_handler
 from dotmac.core.exceptions import BusinessRuleError
-from dotmac_shared.container_monitoring.core.metrics_collector import (
-    ContainerMetricsCollector,
-)
 
 logger = logging.getLogger(__name__)
 

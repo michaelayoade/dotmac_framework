@@ -8,6 +8,7 @@ Integrates with existing authentication, authorization, and monitoring systems.
 from typing import Optional
 from uuid import UUID
 
+from dotmac_shared.api.rate_limiting_decorators import rate_limit, rate_limit_strict
 from fastapi import BackgroundTasks, Depends, Query
 
 from dotmac.application import standard_exception_handler
@@ -18,7 +19,6 @@ from dotmac.application.dependencies.dependencies import (
 )
 from dotmac.core.schemas.base_schemas import PaginatedResponseSchema
 from dotmac.platform.observability.logging import get_logger
-from dotmac_shared.api.rate_limiting_decorators import rate_limit, rate_limit_strict
 
 from ...core.auth import require_plugin_install, require_plugin_uninstall
 

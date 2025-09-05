@@ -1,7 +1,6 @@
 """Main entry point for the DotMac ISP Framework."""
 
 import uvicorn
-
 from dotmac_isp.core.settings import get_settings
 
 

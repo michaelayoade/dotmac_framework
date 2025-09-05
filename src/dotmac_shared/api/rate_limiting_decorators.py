@@ -12,10 +12,9 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional
 
+from dotmac_shared.monitoring.base import get_monitoring
 from fastapi import HTTPException, Request
 from fastapi.security.utils import get_authorization_scheme_param
-
-from dotmac_shared.monitoring.base import get_monitoring
 
 
 class RateLimitType(Enum):

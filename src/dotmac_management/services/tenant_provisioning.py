@@ -12,10 +12,6 @@ from datetime import datetime, timezone
 from typing import Any, Optional
 
 import httpx
-from jinja2 import Template
-from sqlalchemy.orm import Session
-
-from dotmac.platform.auth.jwt_service import JWTService
 from dotmac_management.models.tenant import (
     CustomerTenant,
     TenantProvisioningEvent,
@@ -30,6 +26,10 @@ from dotmac_management.services.tenant_admin_provisioning import (
 from dotmac_shared.core.error_utils import service_operation
 from dotmac_shared.core.logging import get_logger
 from dotmac_shared.security.secrets import SecretsManager
+from jinja2 import Template
+from sqlalchemy.orm import Session
+
+from dotmac.platform.auth.jwt_service import JWTService
 
 logger = get_logger(__name__)
 

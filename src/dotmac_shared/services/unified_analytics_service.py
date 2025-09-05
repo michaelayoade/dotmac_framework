@@ -19,11 +19,10 @@ from enum import Enum
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Session
-
 from dotmac_shared.core.exceptions import ValidationError
 from dotmac_shared.services.base import BaseService
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 

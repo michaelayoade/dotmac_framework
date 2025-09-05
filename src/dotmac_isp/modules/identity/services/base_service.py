@@ -4,9 +4,8 @@ import logging
 from typing import Optional
 from uuid import UUID
 
-from sqlalchemy.orm import Session
-
 from dotmac_isp.core.settings import get_settings
+from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 

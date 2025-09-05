@@ -6,6 +6,7 @@ from decimal import Decimal
 from typing import Any, Optional
 from uuid import UUID, uuid4
 
+from dotmac_shared.services.base import BaseTenantService
 from sqlalchemy.orm import Session
 
 from dotmac.application import standard_exception_handler
@@ -14,7 +15,6 @@ from dotmac.core.exceptions import (
     EntityNotFoundError,
     ValidationError,
 )
-from dotmac_shared.services.base import BaseTenantService
 
 from . import schemas
 from .models import ServiceInstance

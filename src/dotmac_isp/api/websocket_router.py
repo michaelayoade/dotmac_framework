@@ -4,12 +4,12 @@ import json
 import logging
 from typing import Optional
 
+from dotmac_shared.api.rate_limiting_decorators import RateLimitDecorators
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.security import HTTPBearer
 from starlette.websockets import WebSocketState
 
 from dotmac.application import standard_exception_handler
-from dotmac_shared.api.rate_limiting_decorators import RateLimitDecorators
 
 from ..core.websocket_manager import EventType, WebSocketMessage, websocket_manager
 from ..shared.auth import get_current_user_optional, verify_websocket_token

@@ -55,8 +55,8 @@ class SecretMetadata:
     secret_type: SecretType
     path: str
     version: int
-    created_at: Optional[str] = None
-    last_accessed: Optional[str] = None
+    created_at: str | None = None
+    last_accessed: str | None = None
     rotation_scheduled: bool = False
 
 
@@ -65,10 +65,10 @@ class SecretAuditLog:
     secret_type: SecretType
     action: str
     path: str
-    tenant_id: Optional[Any]
+    tenant_id: Any | None
     environment: Environment
     success: bool
-    error_message: Optional[str] = None
+    error_message: str | None = None
 
 
 class OpenBaoClient:
@@ -113,7 +113,7 @@ class OpenBaoClient:
 
 
 class HardenedSecretsManager:
-    def __init__(self, environment: Environment, vault_client: Optional[OpenBaoClient]):
+    def __init__(self, environment: Environment, vault_client: OpenBaoClient | None):
         self.environment = environment
         self.vault_client = vault_client
         if (
@@ -127,7 +127,7 @@ class HardenedSecretsManager:
         secret_type: SecretType,
         category: str,
         key: str,
-        tenant_id: Optional[Any] = None,
+        tenant_id: Any | None = None,
     ) -> str:
         if self.environment == Environment.DEVELOPMENT and self.vault_client is None:
             env_key = f"{category}_{key}".upper()

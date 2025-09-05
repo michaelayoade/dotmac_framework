@@ -9,8 +9,9 @@ from decimal import Decimal
 from typing import Any, Optional
 from uuid import UUID, uuid4
 
-from dotmac.application import standard_exception_handler
 from dotmac_shared.services.base import BaseService
+
+from dotmac.application import standard_exception_handler
 
 from .repository import (
     BillingCustomerRepository,

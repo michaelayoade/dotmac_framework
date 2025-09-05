@@ -4,10 +4,9 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 from uuid import UUID
 
+from dotmac_shared.db.repositories import BaseRepository
 from sqlalchemy import and_, desc, func
 from sqlalchemy.orm import Session, joinedload
-
-from dotmac_shared.db.repositories import BaseRepository
 
 from .models import (
     Alert,

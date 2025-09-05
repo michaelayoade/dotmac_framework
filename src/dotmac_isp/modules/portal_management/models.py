@@ -4,11 +4,10 @@ import enum
 from datetime import datetime, timedelta
 from typing import Optional
 
+from dotmac_isp.shared.database.base import BaseModel
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
-
-from dotmac_isp.shared.database.base import BaseModel
 
 
 class PortalAccountStatus(enum.Enum):

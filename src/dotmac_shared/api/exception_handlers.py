@@ -26,8 +26,8 @@ from ..core.exceptions import (
     ExternalServiceError,
     RateLimitError,
     ServiceError,
+    ValidationError,
 )
-from ..core.exceptions import ValidationError
 from ..core.exceptions import ValidationError as CustomValidationError
 
 logger = logging.getLogger(__name__)

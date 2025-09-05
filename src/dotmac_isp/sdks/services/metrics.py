@@ -8,9 +8,8 @@ from decimal import Decimal
 from typing import Any, Optional
 from uuid import UUID
 
-from sqlalchemy.orm import Session
-
 from dotmac_isp.sdks.core.exceptions import SDKError
+from sqlalchemy.orm import Session
 
 
 class MetricService:

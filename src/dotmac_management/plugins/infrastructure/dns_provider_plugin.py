@@ -13,9 +13,9 @@ from typing import Any, Optional
 import dns.exception
 import dns.resolver
 import httpx
+from dotmac_shared.core.logging import get_logger
 
 from dotmac.application import standard_exception_handler
-from dotmac_shared.core.logging import get_logger
 
 from ...core.plugins.base import PluginError, PluginMeta, PluginStatus, PluginType
 from ...core.plugins.interfaces import DNSProviderPlugin

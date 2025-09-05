@@ -5,10 +5,9 @@ FastAPI routes for feature flag management (clean minimal version).
 from datetime import datetime
 from typing import Any, Optional
 
+from dotmac_shared.core.logging import get_logger
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
-
-from dotmac_shared.core.logging import get_logger
 
 from .client import FeatureFlagClient
 from .models import FeatureFlag, FeatureFlagStatus, RolloutStrategy

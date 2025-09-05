@@ -10,9 +10,9 @@ from pathlib import Path
 from typing import Any, Optional
 
 import yaml
+from dotmac_shared.core.logging import get_logger
 
 from dotmac.application import standard_exception_handler
-from dotmac_shared.core.logging import get_logger
 
 from .base import PluginError, PluginType
 

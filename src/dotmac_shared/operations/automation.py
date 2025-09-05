@@ -15,11 +15,11 @@ from pathlib import Path
 from typing import Any, Optional
 from uuid import UUID, uuid4
 
+from dotmac_shared.monitoring.config import MonitoringConfig
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from dotmac.application import standard_exception_handler
 from dotmac.core.exceptions import ServiceError
-from dotmac_shared.monitoring.config import MonitoringConfig
 
 logger = logging.getLogger(__name__)
 

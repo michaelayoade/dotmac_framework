@@ -6,13 +6,6 @@ import secrets
 from datetime import datetime, timezone
 from typing import Any, Optional
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
-from pydantic import BaseModel, ConfigDict, IPvAnyAddress, field_validator
-
-from dotmac.application import StandardDependencies, get_standard_deps
-from dotmac.platform.auth.dependencies import get_current_active_user
-from dotmac.platform.auth.models import User
-from dotmac.platform.observability.logging import get_logger
 from dotmac_management.models.tenant import TenantPlan
 from dotmac_management.models.vps_customer import SupportTier, VPSCustomer, VPSStatus
 from dotmac_management.services.vps_provisioning import VPSProvisioningService
@@ -20,6 +13,13 @@ from dotmac_management.services.vps_requirements import VPSRequirementsService
 from dotmac_shared.api.exceptions import standard_exception_handler
 from dotmac_shared.api.response import APIResponse
 from dotmac_shared.validation.common_validators import CommonValidators
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from pydantic import BaseModel, ConfigDict, IPvAnyAddress, field_validator
+
+from dotmac.application import StandardDependencies, get_standard_deps
+from dotmac.platform.auth.dependencies import get_current_active_user
+from dotmac.platform.auth.models import User
+from dotmac.platform.observability.logging import get_logger
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/vps-customers", tags=["vps-customers"])

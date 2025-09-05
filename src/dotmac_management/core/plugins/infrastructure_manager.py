@@ -8,8 +8,9 @@ import logging
 from contextlib import asynccontextmanager
 from typing import Any, Optional, TypeVar
 
-from dotmac.application import standard_exception_handler
 from dotmac_shared.exceptions import ExceptionContext
+
+from dotmac.application import standard_exception_handler
 
 from .base import PluginError
 from .health_monitor import PluginHealthMonitor

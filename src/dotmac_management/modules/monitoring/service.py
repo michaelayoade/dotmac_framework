@@ -4,10 +4,10 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 from uuid import UUID
 
+from dotmac_shared.services.base import BaseService
 from sqlalchemy.orm import Session
 
 from dotmac.core.exceptions import BusinessLogicError, NotFoundError
-from dotmac_shared.services.base import BaseService
 
 from .models import (
     HealthCheck,

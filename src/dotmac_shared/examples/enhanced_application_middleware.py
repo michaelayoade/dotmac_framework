@@ -10,9 +10,6 @@ Demonstrates:
 import logging
 from datetime import datetime, timedelta, timezone
 
-from fastapi import FastAPI, HTTPException, Request
-
-from dotmac.security.tenant_isolation import TenantSecurityEnforcer
 from dotmac_shared.application.config import (
     DeploymentContext,
     DeploymentMode,
@@ -27,6 +24,9 @@ from dotmac_shared.middleware.api_versioning import (
 from dotmac_shared.middleware.background_operations import (
     BackgroundOperationsMiddleware,
 )
+from fastapi import FastAPI, HTTPException, Request
+
+from dotmac.security.tenant_isolation import TenantSecurityEnforcer
 
 logger = logging.getLogger(__name__)
 

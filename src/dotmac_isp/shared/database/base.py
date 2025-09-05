@@ -2,11 +2,12 @@
 ISP Framework base models using DRY shared patterns.
 """
 
+from sqlalchemy import Boolean, Column, String
+from sqlalchemy.ext.declarative import declared_attr
+
 from dotmac.database.base import Base
 from dotmac.database.base import BaseModel as SharedBaseModel
 from dotmac.database.mixins import ISPModelMixin
-from sqlalchemy import Boolean, Column, String
-from sqlalchemy.ext.declarative import declared_attr
 
 __all__ = ["BaseModel", "Base"]
 

@@ -4,9 +4,8 @@ Onboarding data models: requests, steps, and artifacts.
 
 from enum import Enum
 
-from sqlalchemy import JSON, Column, DateTime
+from sqlalchemy import JSON, Column, DateTime, ForeignKey, String
 from sqlalchemy import Enum as SQLEnum
-from sqlalchemy import ForeignKey, String
 from sqlalchemy.orm import relationship
 
 from .base import UUID as GUID

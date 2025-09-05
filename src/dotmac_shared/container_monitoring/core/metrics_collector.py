@@ -13,8 +13,9 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 from uuid import UUID
 
-import docker
 import psutil
+
+import docker
 
 PROMETHEUS_AVAILABLE = False
 

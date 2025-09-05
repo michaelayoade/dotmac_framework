@@ -10,10 +10,10 @@ from datetime import datetime, timezone
 from typing import Any
 from uuid import uuid4
 
+from dotmac_shared.services.base_service import BaseService
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from dotmac.application import standard_exception_handler
-from dotmac_shared.services.base_service import BaseService
 
 logger = logging.getLogger(__name__)
 

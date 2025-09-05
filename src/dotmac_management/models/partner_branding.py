@@ -8,12 +8,11 @@ import urllib.parse
 from datetime import datetime
 from typing import Any, Optional
 
+from dotmac_shared.validation.common_validators import CommonValidators
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy import JSON, Boolean, Column, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
-
-from dotmac_shared.validation.common_validators import CommonValidators
 
 from .base import BaseModel as DBBaseModel
 

@@ -16,13 +16,13 @@ import pyotp
 
 # Moved to top: import pyotp
 import qrcode
+from dotmac_shared.common.exceptions import standard_exception_handler
+from dotmac_shared.config.secure_config import get_jwt_secret_sync
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from dotmac.platform.observability.logging import get_logger
-from dotmac_shared.common.exceptions import standard_exception_handler
-from dotmac_shared.config.secure_config import get_jwt_secret_sync
 
 from ..repositories.auth_repository import (
     ApiKeyRepository,

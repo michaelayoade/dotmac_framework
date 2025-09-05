@@ -10,10 +10,10 @@ from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Any, Optional
 
+from dotmac_shared.core.logging import get_logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from dotmac.application import standard_exception_handler
-from dotmac_shared.core.logging import get_logger
 
 from .commission_automation import CommissionAutomationEngine
 from .commission_system import CommissionService

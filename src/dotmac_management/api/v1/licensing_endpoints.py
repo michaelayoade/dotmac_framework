@@ -7,6 +7,8 @@ import time
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
+from dotmac_management.models.tenant import CustomerTenant
+from dotmac_shared.api.response import APIResponse
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy.future import select
@@ -18,8 +20,6 @@ from dotmac.application import (
     standard_exception_handler,
 )
 from dotmac.platform.observability.logging import get_logger
-from dotmac_management.models.tenant import CustomerTenant
-from dotmac_shared.api.response import APIResponse
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/licensing", tags=["licensing"])

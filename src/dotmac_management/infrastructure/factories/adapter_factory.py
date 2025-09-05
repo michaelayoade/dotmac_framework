@@ -6,9 +6,10 @@ Factory for creating and managing infrastructure adapters
 from dataclasses import dataclass
 from typing import Any, Optional
 
-from dotmac.application import standard_exception_handler
 from dotmac_shared.core.logging import get_logger
 from dotmac_shared.exceptions import ExceptionContext
+
+from dotmac.application import standard_exception_handler
 
 from ..deployment.coolify_adapter import CoolifyDeploymentAdapter
 from ..dns.dns_validation_adapter import DNSValidationAdapter

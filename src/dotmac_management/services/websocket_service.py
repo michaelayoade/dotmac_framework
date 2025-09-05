@@ -6,10 +6,10 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 from uuid import uuid4
 
+from dotmac_shared.core.error_utils import send_ws
 from fastapi import WebSocket
 
 from dotmac.core import ValidationError
-from dotmac_shared.core.error_utils import send_ws
 
 from ..models.websocket_event import (
     DeliveryStatus,

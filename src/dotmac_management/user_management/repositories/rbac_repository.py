@@ -7,12 +7,12 @@ from datetime import datetime, timezone
 from typing import Any, Optional
 from uuid import UUID
 
+from dotmac_shared.common.exceptions import standard_exception_handler
 from sqlalchemy import and_, delete, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from dotmac.platform.observability.logging import get_logger
-from dotmac_shared.common.exceptions import standard_exception_handler
 
 from ..models.rbac_models import (
     PermissionModel,

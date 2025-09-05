@@ -7,9 +7,10 @@ import logging
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
+from dotmac_shared.services.base import BaseService
+
 from dotmac.platform.auth.core.jwt_service import JWTService
 from dotmac.platform.auth.core.sessions import SessionManager
-from dotmac_shared.services.base import BaseService
 
 from ..models import User
 from ..repository import AuthenticationRepository, UserRepository

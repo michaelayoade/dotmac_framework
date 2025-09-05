@@ -8,9 +8,21 @@ from enum import Enum
 from typing import Optional
 
 try:
-    from sqlalchemy import JSON, Boolean, Column, Date, DateTime
+    from sqlalchemy import (
+        JSON,
+        Boolean,
+        Column,
+        Date,
+        DateTime,
+        Float,
+        ForeignKey,
+        Index,
+        Integer,
+        Numeric,
+        String,
+        Text,
+    )
     from sqlalchemy import Enum as SQLEnum
-    from sqlalchemy import Float, ForeignKey, Index, Integer, Numeric, String, Text
     from sqlalchemy.dialects.postgresql import UUID
     from sqlalchemy.ext.hybrid import hybrid_property
     from sqlalchemy.orm import relationship

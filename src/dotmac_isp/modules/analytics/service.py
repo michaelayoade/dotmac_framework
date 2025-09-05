@@ -14,11 +14,11 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 from uuid import UUID
 
+from dotmac_shared.services.base import BaseService, BaseTenantService
 from sqlalchemy.orm import Session
 
 from dotmac.application import standard_exception_handler
 from dotmac.core.exceptions import BusinessLogicError, NotFoundError
-from dotmac_shared.services.base import BaseService, BaseTenantService
 
 from .models import Alert, Dashboard, Metric, Report, Widget
 from .repository import (

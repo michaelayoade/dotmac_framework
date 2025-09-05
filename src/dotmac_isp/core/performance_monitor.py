@@ -12,11 +12,11 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
 
+from dotmac_isp.shared.cache import get_cache_manager
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
 
 from dotmac.platform.observability.core.signoz_integration import get_signoz
-from dotmac_isp.shared.cache import get_cache_manager
 
 logger = logging.getLogger(__name__)
 

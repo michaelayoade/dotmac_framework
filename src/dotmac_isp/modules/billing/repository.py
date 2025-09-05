@@ -10,10 +10,9 @@ from decimal import Decimal
 from typing import Any, Optional
 from uuid import UUID
 
+from dotmac_isp.shared.base_repository import BaseTenantRepository
 from sqlalchemy import and_, desc, extract, func, or_
 from sqlalchemy.orm import Session, joinedload
-
-from dotmac_isp.shared.base_repository import BaseTenantRepository
 
 from .models import (
     BillingCustomer,

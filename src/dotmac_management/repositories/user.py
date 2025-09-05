@@ -7,9 +7,8 @@ from datetime import timezone
 from typing import Optional
 from uuid import UUID
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from dotmac_shared.repositories import AsyncBaseRepository
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models.user import User, UserInvitation, UserSession
 

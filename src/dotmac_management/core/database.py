@@ -7,10 +7,9 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from typing import Optional
 
+from dotmac_shared.exceptions import ExceptionContext
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from dotmac_shared.exceptions import ExceptionContext
 
 from ..database import async_session_maker as SessionLocal
 from ..database import get_db

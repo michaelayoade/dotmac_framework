@@ -13,6 +13,7 @@ These endpoints require superuser privileges and should be used carefully.
 import os
 import time
 
+from dotmac_shared.api.response import APIResponse
 from fastapi import Depends, HTTPException, status
 
 from dotmac.application import (
@@ -24,7 +25,6 @@ from dotmac.application import (
 )
 from dotmac.application.api.router_factory import RouterFactory
 from dotmac.platform.observability.logging import get_logger
-from dotmac_shared.api.response import APIResponse
 
 logger = get_logger(__name__)
 router = RouterFactory("Admin").create_router(prefix="/admin", tags=["Admin"])

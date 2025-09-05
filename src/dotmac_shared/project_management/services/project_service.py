@@ -24,9 +24,9 @@ from ..core.models import (
     ProjectResponse,
     ProjectStatus,
     ProjectType,
+    UpdateCreate,
 )
 from ..core.models import ProjectUpdate as ProjectUpdateSchema
-from ..core.models import UpdateCreate
 from ..core.project_manager import ProjectManager
 
 logger = logging.getLogger(__name__)

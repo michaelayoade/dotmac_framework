@@ -16,8 +16,6 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Optional
 
-from pydantic import BaseModel, Field
-
 from dotmac_shared.benchmarking.analyzers.benchmark_comparator import (
     BenchmarkComparator,
     BenchmarkComparisonConfig,
@@ -38,6 +36,7 @@ from dotmac_shared.benchmarking.profilers.database_benchmark import (
     DatabaseBenchmarkConfig,
     DatabaseQueryBenchmarker,
 )
+from pydantic import BaseModel, Field
 
 from ..utils.decorators import standard_exception_handler
 

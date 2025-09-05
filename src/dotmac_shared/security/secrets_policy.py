@@ -22,9 +22,7 @@ class HardenedSecretsManager:
     def __init__(self, env: Environment | str = Environment.development):
         self.env = Environment(env) if not isinstance(env, Environment) else env
 
-    def get(
-        self, key: str, default: Optional[str] = None
-    ) -> Optional[str]:  # noqa: ANN001
+    def get(self, key: str, default: str | None = None) -> str | None:  # noqa: ANN001
         return default
 
     def validate(self) -> dict[str, Any]:

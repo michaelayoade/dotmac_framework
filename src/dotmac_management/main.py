@@ -21,6 +21,11 @@ import logging
 import os
 from typing import Optional
 
+# Import shared systems
+from dotmac_shared.application import create_management_platform_app
+
+# Import new observability and auth systems
+from dotmac_shared.middleware.dotmac_middleware.tenant import TenantMiddleware
 from fastapi import FastAPI, Request
 
 from dotmac.platform.auth.edge_validation import EdgeAuthMiddleware, EdgeJWTValidator
@@ -34,12 +39,6 @@ from dotmac.platform.observability import (
     initialize_otel,
     initialize_tenant_metrics,
 )
-
-# Import shared systems
-from dotmac_shared.application import create_management_platform_app
-
-# Import new observability and auth systems
-from dotmac_shared.middleware.dotmac_middleware.tenant import TenantMiddleware
 
 logger = logging.getLogger(__name__)
 

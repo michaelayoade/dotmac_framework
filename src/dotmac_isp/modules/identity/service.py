@@ -7,10 +7,10 @@ import logging
 from typing import Any, Optional
 from uuid import UUID
 
+from dotmac_shared.services.base import BaseService
 from sqlalchemy.orm import Session
 
 from dotmac.application import standard_exception_handler
-from dotmac_shared.services.base import BaseService
 
 from . import schemas
 from .services.identity_orchestrator import IdentityOrchestrator

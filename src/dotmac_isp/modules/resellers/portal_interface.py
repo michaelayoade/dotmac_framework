@@ -9,13 +9,13 @@ from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Any, Optional
 
+from dotmac_shared.core.logging import get_logger
 from fastapi import Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from dotmac.application import standard_exception_handler
-from dotmac_shared.core.logging import get_logger
 
 from .commission_system import CommissionReportGenerator, CommissionService
 from .db_models import ResellerCustomer

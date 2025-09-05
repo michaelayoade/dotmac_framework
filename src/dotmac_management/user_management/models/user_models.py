@@ -6,14 +6,23 @@ Leverages existing base model patterns for DRY approach.
 from datetime import datetime, timezone
 from typing import Any, Optional
 
-from sqlalchemy import JSON, Boolean, Column, DateTime
+from dotmac_management.models.base import BaseModel
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Column,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy import Enum as SQLEnum
-from sqlalchemy import ForeignKey, Index, Integer, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
-
-from dotmac_management.models.base import BaseModel
 
 from ..schemas.user_schemas import UserStatus, UserType
 

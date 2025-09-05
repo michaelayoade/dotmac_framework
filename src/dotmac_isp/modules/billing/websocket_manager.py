@@ -9,11 +9,11 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Optional
 
-import redis.asyncio as redis
 import websockets
+from dotmac_isp.core.settings import get_settings
 from websockets.exceptions import ConnectionClosedError, ConnectionClosedOK
 
-from dotmac_isp.core.settings import get_settings
+import redis.asyncio as redis
 
 logger = logging.getLogger(__name__)
 settings = get_settings()

@@ -9,10 +9,9 @@ import logging
 from datetime import datetime, timezone
 from typing import Optional
 
+from dotmac_isp.shared.base_repository import BaseTenantRepository
 from sqlalchemy import and_, desc, func, or_
 from sqlalchemy.orm import joinedload, selectinload
-
-from dotmac_isp.shared.base_repository import BaseTenantRepository
 
 from .models import (
     AuthMethod,

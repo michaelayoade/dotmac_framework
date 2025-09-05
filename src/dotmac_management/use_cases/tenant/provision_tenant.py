@@ -10,12 +10,12 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Optional
 
-from sqlalchemy.exc import SQLAlchemyError
-
-from dotmac.database.base import get_db_session
 from dotmac_shared.core.logging import get_logger
 from dotmac_shared.exceptions import ExceptionContext
 from dotmac_shared.security.secrets import SecretsManager
+from sqlalchemy.exc import SQLAlchemyError
+
+from dotmac.database.base import get_db_session
 
 from ...infrastructure import get_adapter_factory
 from ...infrastructure.interfaces.deployment_provider import (

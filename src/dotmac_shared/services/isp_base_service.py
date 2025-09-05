@@ -3,12 +3,12 @@
 from typing import Any, Optional
 from uuid import UUID
 
+from dotmac_shared.services.base import BaseService
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from dotmac.application import standard_exception_handler
-from dotmac_shared.services.base import BaseService
 
 
 class ISPBaseService(BaseService):

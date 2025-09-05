@@ -8,11 +8,11 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
 
+from dotmac_shared.api.dependencies import StandardDependencies, get_standard_deps
 from fastapi import Depends, Query
 from pydantic import BaseModel, Field
 
 from dotmac.application import RouterFactory, standard_exception_handler
-from dotmac_shared.api.dependencies import StandardDependencies, get_standard_deps
 
 logger = logging.getLogger(__name__)
 

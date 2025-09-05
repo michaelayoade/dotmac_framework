@@ -12,14 +12,14 @@ from typing import Any, Optional
 from uuid import UUID
 
 from dotmac_plugins.isolation.tenant_plugin_manager import get_tenant_plugin_manager
-
-from dotmac.security.sandbox import SecurityScanner
 from dotmac_shared.workflows.base import BaseWorkflow, WorkflowResult
 from dotmac_shared.workflows.exceptions import (
     WorkflowError,
     WorkflowTransientError,
     WorkflowValidationError,
 )
+
+from dotmac.security.sandbox import SecurityScanner
 
 from ..core.notifications import NotificationService
 from ..core.plugins.base import PluginError

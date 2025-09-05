@@ -4,11 +4,11 @@ import logging
 from typing import Any, Optional
 from uuid import UUID
 
+from dotmac_isp.modules.identity import schemas
+from dotmac_isp.modules.portal_management.models import PortalAccountType
 from sqlalchemy.orm import Session
 
 from dotmac.core.exceptions import ServiceError
-from dotmac_isp.modules.identity import schemas
-from dotmac_isp.modules.portal_management.models import PortalAccountType
 
 from .customer_service import CustomerService
 from .portal_service import PortalService

@@ -6,11 +6,10 @@ from datetime import datetime
 from typing import Any, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Body, Depends, Path, Query
-from pydantic import BaseModel
-
 from dotmac_shared.api import StandardDependencies, standard_exception_handler
 from dotmac_shared.api.dependencies import get_standard_deps
+from fastapi import APIRouter, Body, Depends, Path, Query
+from pydantic import BaseModel
 
 from ..workflow_analytics import (
     WorkflowAnalyticsService,

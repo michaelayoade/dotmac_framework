@@ -2,6 +2,7 @@
 
 from enum import Enum
 
+from dotmac_isp.shared.database.base import BaseModel
 from sqlalchemy import (
     Boolean,
     Column,
@@ -16,8 +17,6 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-
-from dotmac_isp.shared.database.base import BaseModel
 
 
 class ServiceType(str, Enum):

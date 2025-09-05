@@ -9,12 +9,12 @@ import logging
 from typing import Any, Optional
 from uuid import UUID, uuid4
 
+from dotmac_management.user_management.schemas.lifecycle_schemas import UserRegistration
+from dotmac_management.user_management.schemas.user_schemas import UserType
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from dotmac.application import standard_exception_handler
 from dotmac.core.exceptions import BusinessRuleError, EntityNotFoundError
-from dotmac_management.user_management.schemas.lifecycle_schemas import UserRegistration
-from dotmac_management.user_management.schemas.user_schemas import UserType
 
 from .automation import OperationsOrchestrator
 from .health_monitoring import (

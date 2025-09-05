@@ -12,7 +12,6 @@ from typing import Any
 import dns.exception
 import dns.resolver
 import httpx
-
 from dotmac_shared.core.logging import get_logger
 
 logger = get_logger(__name__)

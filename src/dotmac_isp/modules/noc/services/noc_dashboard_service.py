@@ -9,10 +9,6 @@ import logging
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
-from sqlalchemy import and_, desc, func
-from sqlalchemy.orm import Session
-
-from dotmac.application import standard_exception_handler
 from dotmac_shared.device_management.dotmac_device_management.core.models import (
     Device,
     MonitoringRecord,
@@ -21,6 +17,10 @@ from dotmac_shared.device_management.dotmac_device_management.services.device_se
     DeviceService,
 )
 from dotmac_shared.services.base import BaseTenantService
+from sqlalchemy import and_, desc, func
+from sqlalchemy.orm import Session
+
+from dotmac.application import standard_exception_handler
 
 from ..models.alarms import Alarm, AlarmSeverity, AlarmStatus
 from ..models.events import NetworkEvent

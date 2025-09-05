@@ -6,11 +6,11 @@ Production-ready user management using RouterFactory patterns.
 from typing import Any
 from uuid import UUID
 
+from dotmac_shared.api.dependencies import StandardDependencies, get_standard_deps
 from fastapi import Body, Depends, Path, Query
 from pydantic import BaseModel, Field
 
 from dotmac.application import RouterFactory, standard_exception_handler
-from dotmac_shared.api.dependencies import StandardDependencies, get_standard_deps
 
 from ..schemas.user_schemas import (
     UserCreateSchema,

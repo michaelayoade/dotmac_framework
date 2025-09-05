@@ -7,7 +7,6 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from celery import shared_task
-
 from dotmac_shared.exceptions import ExceptionContext
 
 
