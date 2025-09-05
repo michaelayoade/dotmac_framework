@@ -5,10 +5,19 @@ Plugin registry and management system.
 import asyncio
 import logging
 from collections import defaultdict
-from typing import Any, Dict, List, Optional, Type
-from uuid import UUID
+from typing import Any, Optional
 
-from .base import BasePlugin, PluginError, PluginStatus, PluginType
+from dotmac_shared.exceptions import ExceptionContext
+
+from .base import (
+    BasePlugin,
+    PluginError,
+    PluginExecutionError,
+    PluginStatus,
+    PluginType,
+    PluginValidationError,
+    safe_plugin_call,
+)
 from .loader import PluginLoader
 
 logger = logging.getLogger(__name__)
@@ -18,30 +27,30 @@ class PluginRegistry:
     """Central registry for managing plugins."""
 
     def __init__(self):
-        self._plugins: Dict[str, BasePlugin] = {}
-        self._plugins_by_type: Dict[PluginType, List[BasePlugin]] = defaultdict(list)
-        self._plugin_dependencies: Dict[str, List[str]] = {}
+        self._plugins: dict[str, BasePlugin] = {}
+        self._plugins_by_type: dict[PluginType, list[BasePlugin]] = defaultdict(list)
+        self._plugin_dependencies: dict[str, list[str]] = {}
         self._loader = PluginLoader()
         self._lock = asyncio.Lock()
 
     async def register_plugin(self, plugin: BasePlugin, force: bool = False) -> bool:
         """Register a plugin instance."""
         async with self._lock:
-            try:
-                plugin_name = plugin.meta.name
+            plugin_name = plugin.meta.name
 
-                # Check if plugin already exists
+            try:
                 if plugin_name in self._plugins and not force:
                     raise PluginError(f"Plugin {plugin_name} already registered")
 
                 # Validate plugin
-                if not await self._validate_plugin(plugin):
-                    return False
+                ok, _, err = await safe_plugin_call(self._validate_plugin, plugin)
+                if not ok:
+                    raise err or PluginValidationError("Plugin validation failed", plugin_name=plugin_name)
 
                 # Initialize plugin
-                if not await plugin.initialize():
-                    logger.error(f"Failed to initialize plugin: {plugin_name}")
-                    return False
+                ok, init_ok, err = await safe_plugin_call(plugin.initialize)
+                if not ok or not init_ok:
+                    raise PluginExecutionError(f"Failed to initialize plugin: {plugin_name}")
 
                 # Register plugin
                 self._plugins[plugin_name] = plugin
@@ -52,8 +61,8 @@ class PluginRegistry:
                 logger.info(f"Plugin registered successfully: {plugin_name}")
                 return True
 
-            except Exception as e:
-                logger.error(f"Failed to register plugin {plugin.meta.name}: {e}")
+            except PluginError as e:
+                logger.exception("Failed to register plugin %s", plugin_name)
                 plugin.log_error(e, "registration")
                 return False
 
@@ -62,9 +71,7 @@ class PluginRegistry:
         async with self._lock:
             try:
                 if plugin_name not in self._plugins:
-                    logger.warning(
-                        f"Plugin not found for unregistration: {plugin_name}"
-                    )
+                    logger.warning(f"Plugin not found for unregistration: {plugin_name}")
                     return False
 
                 plugin = self._plugins[plugin_name]
@@ -72,12 +79,13 @@ class PluginRegistry:
                 # Check for dependent plugins
                 dependents = self._get_dependent_plugins(plugin_name)
                 if dependents:
-                    raise PluginError(
-                        f"Cannot unregister plugin {plugin_name}: required by {dependents}"
-                    )
+                    raise PluginError(f"Cannot unregister plugin {plugin_name}: required by {dependents}")
 
-                # Shutdown plugin
-                await plugin.shutdown()
+                # Shutdown plugin safely
+                ok, _, err = await safe_plugin_call(plugin.shutdown)
+                if not ok:
+                    plugin.log_error(err or PluginExecutionError("Shutdown failed"), "shutdown")
+                    return False
 
                 # Remove from registry
                 del self._plugins[plugin_name]
@@ -88,23 +96,23 @@ class PluginRegistry:
                 logger.info(f"Plugin unregistered: {plugin_name}")
                 return True
 
-            except Exception as e:
-                logger.error(f"Failed to unregister plugin {plugin_name}: {e}")
+            except PluginError:
+                logger.exception("Failed to unregister plugin %s", plugin_name)
                 return False
 
     def get_plugin(self, plugin_name: str) -> Optional[BasePlugin]:
         """Get plugin by name."""
         return self._plugins.get(plugin_name)
 
-    def get_plugins_by_type(self, plugin_type: PluginType) -> List[BasePlugin]:
+    def get_plugins_by_type(self, plugin_type: PluginType) -> list[BasePlugin]:
         """Get all plugins of a specific type."""
         return self._plugins_by_type.get(plugin_type, [])
 
-    def get_active_plugins(self) -> List[BasePlugin]:
+    def get_active_plugins(self) -> list[BasePlugin]:
         """Get all active plugins."""
         return [p for p in self._plugins.values() if p.status == PluginStatus.ACTIVE]
 
-    def list_plugins(self) -> Dict[str, Dict[str, Any]]:
+    def list_plugins(self) -> dict[str, dict[str, Any]]:
         """List all registered plugins with their status."""
         plugins_info = {}
 
@@ -122,67 +130,65 @@ class PluginRegistry:
 
         return plugins_info
 
-    async def health_check_all(self) -> Dict[str, Dict[str, Any]]:
+    async def health_check_all(self) -> dict[str, dict[str, Any]]:
         """Perform health check on all plugins."""
         health_results = {}
 
         for name, plugin in self._plugins.items():
-            try:
-                health_results[name] = await plugin.health_check()
-            except Exception as e:
-                health_results[name] = {"status": "error", "error": str(e)}
+            ok, res, err = await safe_plugin_call(plugin.health_check)
+            if ok:
+                health_results[name] = res
+            else:
+                health_results[name] = {"status": "error", "error": str(err) if err else "plugin_error"}
 
         return health_results
 
     async def reload_plugin(self, plugin_name: str) -> bool:
         """Reload a plugin."""
-        try:
-            if plugin_name not in self._plugins:
-                logger.error(f"Plugin not found for reload: {plugin_name}")
-                return False
-
-            plugin = self._plugins[plugin_name]
-            plugin_class = type(plugin)
-            config = plugin.config
-
-            # Unregister current plugin
-            await self.unregister_plugin(plugin_name)
-
-            # Create new instance and register
-            new_plugin = plugin_class(config)
-            return await self.register_plugin(new_plugin)
-
-        except Exception as e:
-            logger.error(f"Failed to reload plugin {plugin_name}: {e}")
+        if plugin_name not in self._plugins:
+            logger.error(f"Plugin not found for reload: {plugin_name}")
             return False
+
+        plugin = self._plugins[plugin_name]
+        plugin_class = type(plugin)
+        config = plugin.config
+
+        # Unregister current plugin
+        if not await self.unregister_plugin(plugin_name):
+            return False
+
+        # Create new instance and register
+        ok, instance, err = await safe_plugin_call(plugin_class, config)
+        if not ok or instance is None:
+            logger.exception("Failed to instantiate plugin %s during reload", plugin_name)
+            return False
+
+        return await self.register_plugin(instance)
 
     async def _validate_plugin(self, plugin: BasePlugin) -> bool:
         """Validate plugin before registration."""
-        try:
-            # Check plugin metadata
-            if not plugin.meta.name:
-                raise PluginError("Plugin name is required")
+        # Check plugin metadata
+        if not plugin.meta.name:
+            raise PluginValidationError("Plugin name is required")
 
-            if not plugin.meta.version:
-                raise PluginError("Plugin version is required")
+        if not plugin.meta.version:
+            raise PluginValidationError("Plugin version is required")
 
-            # Validate dependencies
-            for dep in plugin.meta.dependencies:
-                if dep not in self._plugins:
-                    logger.warning(f"Plugin dependency not found: {dep}")
-                    # Don't fail validation, just warn
+        # Validate dependencies (warn-only)
+        for dep in plugin.meta.dependencies:
+            if dep not in self._plugins:
+                logger.warning(f"Plugin dependency not found: {dep}")
 
-            # Validate configuration
-            if not await plugin.validate_configuration(plugin.config):
-                raise PluginError("Plugin configuration validation failed")
+        # Validate configuration safely
+        ok, valid, err = await safe_plugin_call(plugin.validate_configuration, plugin.config)
+        if not ok:
+            raise err or PluginValidationError("Plugin configuration validation failed")
+        if not valid:
+            raise PluginValidationError("Plugin configuration validation failed")
 
-            return True
+        return True
 
-        except Exception as e:
-            logger.error(f"Plugin validation failed: {e}")
-            return False
-
-    def _get_dependent_plugins(self, plugin_name: str) -> List[str]:
+    def _get_dependent_plugins(self, plugin_name: str) -> list[str]:
         """Get list of plugins that depend on the given plugin."""
         dependents = []
 
@@ -199,29 +205,25 @@ class PluginRegistry:
             loaded_count = 0
 
             for plugin_class, config in discovered_plugins:
-                try:
-                    plugin_instance = plugin_class(config)
-                    if await self.register_plugin(plugin_instance):
-                        loaded_count += 1
-                except Exception as e:
-                    logger.error(f"Failed to load discovered plugin: {e}")
+                ok, plugin_instance, err = await safe_plugin_call(plugin_class, config)
+                if not ok or plugin_instance is None:
+                    logger.error("Failed to instantiate discovered plugin: %s", err)
+                    continue
+                if await self.register_plugin(plugin_instance):
+                    loaded_count += 1
 
             logger.info(f"Loaded {loaded_count} plugins from {plugin_directory}")
             return loaded_count
 
-        except Exception as e:
-            logger.error(f"Failed to discover and load plugins: {e}")
+        except ExceptionContext.LIFECYCLE_EXCEPTIONS:
+            logger.exception("Failed to discover and load plugins")
             return 0
 
-    async def get_plugin_metrics(self) -> Dict[str, Any]:
+    async def get_plugin_metrics(self) -> dict[str, Any]:
         """Get metrics about registered plugins."""
         total_plugins = len(self._plugins)
-        active_plugins = len(
-            [p for p in self._plugins.values() if p.status == PluginStatus.ACTIVE]
-        )
-        error_plugins = len(
-            [p for p in self._plugins.values() if p.status == PluginStatus.ERROR]
-        )
+        active_plugins = len([p for p in self._plugins.values() if p.status == PluginStatus.ACTIVE])
+        error_plugins = len([p for p in self._plugins.values() if p.status == PluginStatus.ERROR])
 
         plugins_by_type = {}
         for plugin_type, plugins in self._plugins_by_type.items():

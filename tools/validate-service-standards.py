@@ -13,7 +13,7 @@ import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Optional
 
 
 @dataclass
@@ -58,9 +58,9 @@ class ServiceStandardsValidator:
         with open(standards_file) as f:
             self.standards = json.load(f)["service_standards"]
 
-        self.issues: List[ValidationIssue] = []
+        self.issues: list[ValidationIssue] = []
 
-    def validate_directory(self, directory: str) -> List[ValidationIssue]:
+    def validate_directory(self, directory: str) -> list[ValidationIssue]:
         """
         Validate all Python files in directory.
 
@@ -80,7 +80,7 @@ class ServiceStandardsValidator:
 
         return self.issues
 
-    def _find_service_files(self, directory: str) -> List[str]:
+    def _find_service_files(self, directory: str) -> list[str]:
         """Find all service-related Python files."""
         service_files = []
 
@@ -349,7 +349,6 @@ def main():
     """Main CLI function."""
     import argparse
 
-    from dotmac_shared.api.exception_handlers import standard_exception_handler
 
     parser = argparse.ArgumentParser(
         description="Validate service standards compliance"

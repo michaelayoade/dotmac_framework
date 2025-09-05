@@ -7,7 +7,7 @@ import ast
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class SecurityValidationResult:
     """Result of security validation for an endpoint."""
+
     endpoint_path: str
     method: str
     function_name: str
@@ -23,19 +24,20 @@ class SecurityValidationResult:
     has_input_validation: bool
     has_authorization: bool
     security_score: float
-    issues: List[str]
+    issues: list[str]
 
 
 @dataclass
 class SecurityValidationReport:
     """Complete security validation report."""
+
     total_endpoints: int
     secure_endpoints: int
     insecure_endpoints: int
-    endpoints: List[SecurityValidationResult]
+    endpoints: list[SecurityValidationResult]
     security_percentage: float
-    critical_issues: List[str]
-    recommendations: List[str]
+    critical_issues: list[str]
+    recommendations: list[str]
 
 
 class EndpointSecurityValidator:
@@ -43,27 +45,43 @@ class EndpointSecurityValidator:
 
     def __init__(self):
         self.auth_patterns = [
-            'authenticate_user', 'get_current_user', 'Depends',
-            'HTTPBearer', 'OAuth2PasswordBearer', 'Security',
-            'require_permissions', 'require_roles'
+            "authenticate_user",
+            "get_current_user",
+            "Depends",
+            "HTTPBearer",
+            "OAuth2PasswordBearer",
+            "Security",
+            "require_permissions",
+            "require_roles",
         ]
 
         self.validation_patterns = [
-            'BaseModel', 'Field', 'field_validator', 'model_validator',
-            'ValidationError', 'validator', 'Query', 'Path', 'Body'
+            "BaseModel",
+            "Field",
+            "field_validator",
+            "model_validator",
+            "ValidationError",
+            "validator",
+            "Query",
+            "Path",
+            "Body",
         ]
 
         self.authorization_patterns = [
-            'require_permissions', 'require_roles', 'check_permission',
-            'authorize', 'has_permission', 'can_access'
+            "require_permissions",
+            "require_roles",
+            "check_permission",
+            "authorize",
+            "has_permission",
+            "can_access",
         ]
 
-    def validate_file_security(self, file_path: str) -> List[SecurityValidationResult]:
+    def validate_file_security(self, file_path: str) -> list[SecurityValidationResult]:
         """Validate security of all endpoints in a file."""
         results = []
 
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding="utf-8") as f:
                 source = f.read()
 
             tree = ast.parse(source, filename=file_path)
@@ -81,10 +99,7 @@ class EndpointSecurityValidator:
         return results
 
     def _analyze_endpoint_security(
-        self,
-        func_node: ast.FunctionDef,
-        source: str,
-        file_path: str
+        self, func_node: ast.FunctionDef, source: str, file_path: str
     ) -> Optional[SecurityValidationResult]:
         """Analyze security of a single endpoint function."""
         # Check if this is an API endpoint
@@ -114,20 +129,21 @@ class EndpointSecurityValidator:
             has_input_validation=has_validation,
             has_authorization=has_authorization,
             security_score=score,
-            issues=issues
-)
+            issues=issues,
+        )
+
     def _extract_endpoint_info(self, func_node: ast.FunctionDef) -> Optional[tuple]:
         """Extract method and path from endpoint decorators."""
         for decorator in func_node.decorator_list:
             if isinstance(decorator, ast.Attribute):
                 # @router.get, @router.post, etc.
                 method = decorator.attr.upper()
-                if method in ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS']:
+                if method in ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"]:
                     return method, "/"
             elif isinstance(decorator, ast.Call) and isinstance(decorator.func, ast.Attribute):
                 # @router.get("/path")
                 method = decorator.func.attr.upper()
-                if method in ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS']:
+                if method in ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"]:
                     path = "/"
                     if decorator.args and isinstance(decorator.args[0], ast.Constant):
                         path = decorator.args[0].value
@@ -144,7 +160,7 @@ class EndpointSecurityValidator:
 
         # Check function parameters for Depends(authenticate_user)
         for arg in func_node.args.args:
-            if hasattr(arg, 'annotation') and arg.annotation:
+            if hasattr(arg, "annotation") and arg.annotation:
                 if self._contains_auth_pattern(ast.dump(arg.annotation)):
                     return True
 
@@ -159,7 +175,7 @@ class EndpointSecurityValidator:
         """Check if endpoint has input validation."""
         # Check for Pydantic models in parameters
         for arg in func_node.args.args:
-            if hasattr(arg, 'annotation') and arg.annotation:
+            if hasattr(arg, "annotation") and arg.annotation:
                 annotation_str = ast.dump(arg.annotation)
 
                 # Check for Pydantic patterns
@@ -169,13 +185,13 @@ class EndpointSecurityValidator:
                 # Check for common request model naming patterns
                 if isinstance(arg.annotation, ast.Name):
                     name = arg.annotation.id
-                    if any(suffix in name for suffix in ['Request', 'Create', 'Update', 'Model', 'Schema']):
+                    if any(suffix in name for suffix in ["Request", "Create", "Update", "Model", "Schema"]):
                         return True
 
         # Check for Query, Path, Body parameters
         for default in func_node.args.defaults:
             default_str = ast.dump(default)
-            if any(pattern in default_str for pattern in ['Query', 'Path', 'Body']):
+            if any(pattern in default_str for pattern in ["Query", "Path", "Body"]):
                 return True
 
         return False
@@ -189,7 +205,7 @@ class EndpointSecurityValidator:
 
         # Check function parameters for authorization dependencies
         for arg in func_node.args.args:
-            if hasattr(arg, 'annotation') and arg.annotation:
+            if hasattr(arg, "annotation") and arg.annotation:
                 if any(pattern in ast.dump(arg.annotation) for pattern in self.authorization_patterns):
                     return True
 
@@ -215,30 +231,26 @@ class EndpointSecurityValidator:
         return score
 
     def _identify_security_issues(
-        self,
-        has_auth: bool,
-        has_validation: bool,
-        has_authorization: bool,
-        method: str
-    ) -> List[str]:
+        self, has_auth: bool, has_validation: bool, has_authorization: bool, method: str
+    ) -> list[str]:
         """Identify specific security issues."""
         issues = []
 
         if not has_auth:
             issues.append("Missing authentication - endpoint is publicly accessible")
 
-        if not has_validation and method in ['POST', 'PUT', 'PATCH']:
+        if not has_validation and method in ["POST", "PUT", "PATCH"]:
             issues.append("Missing input validation - vulnerable to malicious input")
 
         if not has_authorization and has_auth:
             issues.append("Missing authorization - all authenticated users can access")
 
-        if method == 'DELETE' and not has_authorization:
+        if method == "DELETE" and not has_authorization:
             issues.append("DELETE endpoint without explicit authorization is risky")
 
         return issues
 
-    def validate_routers_security(self, router_paths: List[str]) -> SecurityValidationReport:
+    def validate_routers_security(self, router_paths: list[str]) -> SecurityValidationReport:
         """Validate security of multiple router files."""
         all_results = []
 
@@ -273,36 +285,29 @@ class EndpointSecurityValidator:
             endpoints=all_results,
             security_percentage=security_percentage,
             critical_issues=critical_issues,
-            recommendations=recommendations
-)
-    def _generate_recommendations(self, results: List[SecurityValidationResult]) -> List[str]:
+            recommendations=recommendations,
+        )
+
+    def _generate_recommendations(self, results: list[SecurityValidationResult]) -> list[str]:
         """Generate security recommendations."""
         recommendations = []
 
         # Authentication recommendations
         no_auth = [r for r in results if not r.has_authentication]
         if no_auth:
-            recommendations.append(
-                f"Add authentication to {len(no_auth)} endpoints using Depends(authenticate_user)"
-)
+            recommendations.append(f"Add authentication to {len(no_auth)} endpoints using Depends(authenticate_user)")
         # Validation recommendations
         no_validation = [r for r in results if not r.has_input_validation]
         if no_validation:
-            recommendations.append(
-                f"Add input validation to {len(no_validation)} endpoints using Pydantic models"
-)
+            recommendations.append(f"Add input validation to {len(no_validation)} endpoints using Pydantic models")
         # Authorization recommendations
         no_authz = [r for r in results if r.has_authentication and not r.has_authorization]
         if no_authz:
-            recommendations.append(
-                f"Add role-based authorization to {len(no_authz)} sensitive endpoints"
-)
+            recommendations.append(f"Add role-based authorization to {len(no_authz)} sensitive endpoints")
         # Specific endpoint recommendations
-        delete_endpoints = [r for r in results if r.method == 'DELETE' and r.security_score < 100]
+        delete_endpoints = [r for r in results if r.method == "DELETE" and r.security_score < 100]
         if delete_endpoints:
-            recommendations.append(
-                f"Review {len(delete_endpoints)} DELETE endpoints for proper authorization"
-)
+            recommendations.append(f"Review {len(delete_endpoints)} DELETE endpoints for proper authorization")
         return recommendations
 
     def print_security_report(self, report: SecurityValidationReport):
@@ -323,7 +328,7 @@ class EndpointSecurityValidator:
                 logger.warning(f"Low security score endpoint: {endpoint.path} (score: {endpoint.security_score})")
 
 
-def validate_endpoint_security(router_paths: List[str] = None) -> SecurityValidationReport:
+def validate_endpoint_security(router_paths: Optional[list[str]] = None) -> SecurityValidationReport:
     """Main entry point for endpoint security validation."""
     if router_paths is None:
         # Default router paths

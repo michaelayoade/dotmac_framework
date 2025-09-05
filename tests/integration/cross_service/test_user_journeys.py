@@ -3,18 +3,15 @@ Cross-Service Integration Tests - Complete User Journeys
 Tests end-to-end workflows across ISP → Management → Customer services
 """
 import asyncio
-import pytest
-import httpx
-from typing import Dict, Any, List
-from unittest.mock import AsyncMock
 import uuid
 from datetime import datetime, timedelta
+from typing import Any
 
+import pytest
+from dotmac_shared.models.service_plan import BandwidthTier
+from dotmac_shared.testing.event_tracer import EventTracer
 from dotmac_shared.testing.integration_base import IntegrationTestBase
 from dotmac_shared.testing.service_clients import ServiceClientManager
-from dotmac_shared.testing.event_tracer import EventTracer
-from dotmac_shared.models.customer import Customer, CustomerTier
-from dotmac_shared.models.service_plan import ServicePlan, BandwidthTier
 
 
 class TestCompleteUserJourneys(IntegrationTestBase):
@@ -340,7 +337,7 @@ class TestCompleteUserJourneys(IntegrationTestBase):
         
         await self._validate_event_sequence(events, expected_sequence)
 
-    async def _validate_event_sequence(self, events: List[Dict], expected_sequence: List[str]):
+    async def _validate_event_sequence(self, events: list[Dict], expected_sequence: list[str]):
         """Validate that events occurred in the expected sequence with proper timing"""
         events_by_type = {event["type"]: event for event in events}
         
@@ -353,7 +350,7 @@ class TestCompleteUserJourneys(IntegrationTestBase):
                 assert current_timestamp >= prev_timestamp, f"Event {event_type} occurred out of sequence"
             prev_timestamp = current_timestamp
 
-    async def _create_test_customer(self, journey_id: str, tier: str = "basic") -> Dict[str, Any]:
+    async def _create_test_customer(self, journey_id: str, tier: str = "basic") -> dict[str, Any]:
         """Helper to create a test customer with active subscription"""
         # Implementation would create customer, subscription, and billing account
         # This is a placeholder for the actual implementation

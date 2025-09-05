@@ -7,16 +7,12 @@ across the DotMac Framework, ensuring production-ready security validation.
 
 import asyncio
 from datetime import datetime, timedelta
-from typing import Any, Dict, Optional
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from dotmac_isp.core.auth import AuthService
-from dotmac_management.core.auth import ManagementAuthService
-
 # Import framework components
-from dotmac_shared.auth.current_user import get_current_tenant, get_current_user
+from dotmac.auth.current_user import get_current_tenant, get_current_user
 from dotmac_shared.core.exceptions import AuthenticationError, AuthorizationError
 
 

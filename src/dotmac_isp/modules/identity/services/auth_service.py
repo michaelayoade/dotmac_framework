@@ -4,23 +4,22 @@ Handles authentication workflows and session management.
 """
 
 import logging
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
-from uuid import UUID
+from datetime import datetime, timedelta, timezone
+from typing import Any, Optional
 
-from dotmac_isp.shared.base_service import BaseService
-from dotmac_shared.auth.core.jwt_service import JWTService
-from dotmac_shared.auth.core.sessions import SessionManager
+from dotmac.platform.auth.core.jwt_service import JWTService
+from dotmac.platform.auth.core.sessions import SessionManager
+from dotmac_shared.services.base import BaseService
 
-from ..models import User, LoginAttempt, UserSession
-from ..repository import UserRepository, AuthenticationRepository
+from ..models import User
+from ..repository import AuthenticationRepository, UserRepository
 
 logger = logging.getLogger(__name__)
 
 
 class AuthService(BaseService):
     """Authentication service for identity operations."""
-    
+
     def __init__(self, db_session, tenant_id: str):
         super().__init__(db_session, tenant_id)
         self.user_repo = UserRepository(db_session, tenant_id)
@@ -29,24 +28,24 @@ class AuthService(BaseService):
         self.session_manager = SessionManager()
 
     async def authenticate_user(
-        self, 
-        email: str, 
+        self,
+        email: str,
         password: str,
         portal_type: str = "customer",
         ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None
-    ) -> Optional[Dict[str, Any]]:
+        user_agent: Optional[str] = None,
+    ) -> Optional[dict[str, Any]]:
         """Authenticate user and create session."""
         try:
             # Find user
             user = await self.user_repo.get_by_email(email)
             if not user:
                 await self._log_failed_attempt(
-                    email=email, 
+                    email=email,
                     reason="User not found",
                     ip_address=ip_address,
                     user_agent=user_agent,
-                    portal_type=portal_type
+                    portal_type=portal_type,
                 )
                 return None
 
@@ -57,7 +56,7 @@ class AuthService(BaseService):
                     reason="Account inactive",
                     ip_address=ip_address,
                     user_agent=user_agent,
-                    portal_type=portal_type
+                    portal_type=portal_type,
                 )
                 return None
 
@@ -67,7 +66,7 @@ class AuthService(BaseService):
                     reason="Account locked",
                     ip_address=ip_address,
                     user_agent=user_agent,
-                    portal_type=portal_type
+                    portal_type=portal_type,
                 )
                 return None
 
@@ -79,55 +78,47 @@ class AuthService(BaseService):
                     reason="Invalid password",
                     ip_address=ip_address,
                     user_agent=user_agent,
-                    portal_type=portal_type
+                    portal_type=portal_type,
                 )
                 return None
 
             # Create session
-            session_data = await self._create_user_session(
-                user, portal_type, ip_address, user_agent
-            )
-            
+            session_data = await self._create_user_session(user, portal_type, ip_address, user_agent)
+
             # Update user login info
             await self.user_repo.update_last_login(user.id)
-            
+
             # Log successful authentication
             await self._log_successful_attempt(
-                email=email,
-                ip_address=ip_address,
-                user_agent=user_agent,
-                portal_type=portal_type
+                email=email, ip_address=ip_address, user_agent=user_agent, portal_type=portal_type
             )
-            
+
             return session_data
-            
+
         except Exception as e:
             logger.error(f"Authentication error for {email}: {e}")
             return None
 
-    async def refresh_session(
-        self, 
-        session_id: str
-    ) -> Optional[Dict[str, Any]]:
+    async def refresh_session(self, session_id: str) -> Optional[dict[str, Any]]:
         """Refresh user session."""
         try:
             session = await self.auth_repo.get_active_session(session_id)
             if not session:
                 return None
-            
+
             # Update last activity
             session.last_activity = datetime.now(timezone.utc)
             await self.db.commit()
-            
+
             # Return updated session data
             return {
                 "session_id": session.id,
                 "user_id": str(session.user_id),
                 "tenant_id": session.tenant_id,
                 "portal_type": session.portal_type,
-                "expires_at": session.expires_at.isoformat()
+                "expires_at": session.expires_at.isoformat(),
             }
-            
+
         except Exception as e:
             logger.error(f"Session refresh error for {session_id}: {e}")
             return None
@@ -149,26 +140,22 @@ class AuthService(BaseService):
         return password_hash is not None and len(password) >= 8
 
     async def _create_user_session(
-        self, 
-        user: User, 
-        portal_type: str,
-        ip_address: Optional[str],
-        user_agent: Optional[str]
-    ) -> Dict[str, Any]:
+        self, user: User, portal_type: str, ip_address: Optional[str], user_agent: Optional[str]
+    ) -> dict[str, Any]:
         """Create new user session."""
         session_id = self.session_manager.generate_session_id()
         expires_at = datetime.now(timezone.utc) + timedelta(hours=8)
-        
-        session = await self.auth_repo.create_session(
+
+        await self.auth_repo.create_session(
             session_id=session_id,
             user_id=user.id,
             tenant_id=self.tenant_id,
             portal_type=portal_type,
             expires_at=expires_at,
             ip_address=ip_address,
-            user_agent=user_agent
+            user_agent=user_agent,
         )
-        
+
         # Create JWT token
         token_payload = {
             "user_id": str(user.id),
@@ -178,11 +165,11 @@ class AuthService(BaseService):
             "portal_type": portal_type,
             "session_id": session_id,
             "permissions": user.permissions or [],
-            "exp": expires_at.timestamp()
+            "exp": expires_at.timestamp(),
         }
-        
+
         access_token = self.jwt_service.create_token(token_payload)
-        
+
         return {
             "access_token": access_token,
             "token_type": "bearer",
@@ -195,8 +182,8 @@ class AuthService(BaseService):
                 "first_name": user.first_name,
                 "last_name": user.last_name,
                 "portal_type": portal_type,
-                "tenant_id": self.tenant_id
-            }
+                "tenant_id": self.tenant_id,
+            },
         }
 
     async def _log_successful_attempt(
@@ -204,7 +191,7 @@ class AuthService(BaseService):
         email: str,
         ip_address: Optional[str] = None,
         user_agent: Optional[str] = None,
-        portal_type: Optional[str] = None
+        portal_type: Optional[str] = None,
     ):
         """Log successful authentication attempt."""
         await self.auth_repo.log_authentication_attempt(
@@ -213,7 +200,7 @@ class AuthService(BaseService):
             success=True,
             ip_address=ip_address,
             user_agent=user_agent,
-            portal_type=portal_type
+            portal_type=portal_type,
         )
 
     async def _log_failed_attempt(
@@ -222,7 +209,7 @@ class AuthService(BaseService):
         reason: str,
         ip_address: Optional[str] = None,
         user_agent: Optional[str] = None,
-        portal_type: Optional[str] = None
+        portal_type: Optional[str] = None,
     ):
         """Log failed authentication attempt."""
         await self.auth_repo.log_authentication_attempt(
@@ -232,9 +219,9 @@ class AuthService(BaseService):
             failure_reason=reason,
             ip_address=ip_address,
             user_agent=user_agent,
-            portal_type=portal_type
+            portal_type=portal_type,
         )
 
 
 # Export service
-__all__ = ['AuthService']
+__all__ = ["AuthService"]

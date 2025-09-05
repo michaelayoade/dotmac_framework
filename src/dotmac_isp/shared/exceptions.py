@@ -1,6 +1,6 @@
 """Shared exceptions for the DotMac ISP Framework."""
 
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 
 class DotMacISPError(Exception):
@@ -10,7 +10,7 @@ class DotMacISPError(Exception):
         self,
         message: str,
         error_code: Optional[str] = None,
-        details: Optional[Dict[str, Any]] = None,
+        details: Optional[dict[str, Any]] = None,
     ):
         """Initialize DotMac ISP error."""
         self.message = message

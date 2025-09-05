@@ -7,25 +7,30 @@ import functools
 import logging
 import sys
 import traceback
-from datetime import datetime
-from typing import Any, Callable, Dict, Optional
+from collections.abc import Callable
+from datetime import datetime, timezone
+from typing import Any, Optional
 
-from fastapi import HTTPException, Depends, Request, status
+from fastapi import HTTPException, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from pydantic import ValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from dotmac_shared.core.exceptions import (
+from ..core.exceptions import (
     AuthenticationError,
     AuthorizationError,
     BusinessRuleError,
+    DatabaseError,
+    DuplicateEntityError,
     EntityNotFoundError,
     ExternalServiceError,
     RateLimitError,
     ServiceError,
+    ValidationError,
 )
-from dotmac_shared.core.exceptions import ValidationError as CustomValidationError
+from ..core.exceptions import (
+    ValidationError as CustomValidationError,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -40,8 +45,8 @@ class ErrorResponse:
         self,
         error_code: str,
         message: str,
-        details: Optional[Dict[str, Any]] = None,
-        field_errors: Optional[Dict[str, str]] = None,
+        details: Optional[dict[str, Any]] = None,
+        field_errors: Optional[dict[str, str]] = None,
         request_id: Optional[str] = None,
     ):
         self.error_code = error_code
@@ -51,7 +56,7 @@ class ErrorResponse:
         self.request_id = request_id
         self.timestamp = datetime.now(timezone.utc).isoformat()
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON response."""
         response = {
             "error": {
@@ -84,6 +89,8 @@ EXCEPTION_STATUS_MAP = {
     RateLimitError: status.HTTP_429_TOO_MANY_REQUESTS,
     ExternalServiceError: status.HTTP_502_BAD_GATEWAY,
     ServiceError: status.HTTP_500_INTERNAL_SERVER_ERROR,
+    DuplicateEntityError: status.HTTP_409_CONFLICT,
+    DatabaseError: status.HTTP_500_INTERNAL_SERVER_ERROR,
 }
 
 ERROR_CODE_MAP = {
@@ -95,6 +102,8 @@ ERROR_CODE_MAP = {
     RateLimitError: "RATE_LIMIT_EXCEEDED",
     ExternalServiceError: "EXTERNAL_SERVICE_ERROR",
     ServiceError: "INTERNAL_ERROR",
+    DuplicateEntityError: "DUPLICATE_ENTITY",
+    DatabaseError: "DATABASE_ERROR",
 }
 
 
@@ -134,11 +143,10 @@ def standard_exception_handler(func: Callable) -> Callable:
             RateLimitError,
             ExternalServiceError,
             ServiceError,
+            DuplicateEntityError,
+            DatabaseError,
         ) as e:
-
-            status_code = EXCEPTION_STATUS_MAP.get(
-                type(e), status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+            status_code = EXCEPTION_STATUS_MAP.get(type(e), status.HTTP_500_INTERNAL_SERVER_ERROR)
             error_code = ERROR_CODE_MAP.get(type(e), "UNKNOWN_ERROR")
 
             # Enhanced logging with context
@@ -159,7 +167,7 @@ def standard_exception_handler(func: Callable) -> Callable:
                     message=str(e),
                     details=getattr(e, "details", None),
                 ).to_dict(),
-            )
+            ) from e
 
         except ValidationError as e:
             # Enhanced Pydantic validation error handling
@@ -180,7 +188,7 @@ def standard_exception_handler(func: Callable) -> Callable:
                     message="Request validation failed",
                     field_errors=field_errors,
                 ).to_dict(),
-            )
+            ) from e
 
         except Exception as e:
             # Handle unexpected errors with enhanced monitoring
@@ -208,7 +216,7 @@ def standard_exception_handler(func: Callable) -> Callable:
                     message="An internal error occurred",
                     details={"error_id": error_id} if not is_production else {},
                 ).to_dict(),
-            )
+            ) from e
 
     return wrapper
 
@@ -216,9 +224,7 @@ def standard_exception_handler(func: Callable) -> Callable:
 # === Application-Level Exception Handlers ===
 
 
-async def handle_http_exception(
-    request: Request, exc: StarletteHTTPException
-) -> JSONResponse:
+async def handle_http_exception(request: Request, exc: StarletteHTTPException) -> JSONResponse:
     """Handle HTTP exceptions with standardized format."""
     return JSONResponse(
         status_code=exc.status_code,
@@ -230,15 +236,11 @@ async def handle_http_exception(
     )
 
 
-async def handle_validation_exception(
-    request: Request, exc: RequestValidationError
-) -> JSONResponse:
+async def handle_validation_exception(request: Request, exc: RequestValidationError) -> JSONResponse:
     """Handle FastAPI validation errors."""
     field_errors = {}
     for error in exc.errors():
-        field_name = ".".join(
-            str(loc) for loc in error["loc"][1:]
-        )  # Skip 'body' prefix
+        field_name = ".".join(str(loc) for loc in error["loc"][1:])  # Skip 'body' prefix
         field_errors[field_name] = error["msg"]
 
     return JSONResponse(
@@ -282,7 +284,7 @@ def billing_exception_handler(func: Callable) -> Callable:
             return await func(*args, **kwargs)
         except ValueError as e:
             if "payment" in str(e).lower():
-                raise CustomValidationError(f"Payment validation failed: {str(e)}")
+                raise CustomValidationError(f"Payment validation failed: {str(e)}") from e
             raise
 
     return wrapper
@@ -298,7 +300,7 @@ def auth_exception_handler(func: Callable) -> Callable:
             return await func(*args, **kwargs)
         except KeyError as e:
             if "token" in str(e).lower():
-                raise AuthenticationError("Invalid or missing authentication token")
+                raise AuthenticationError("Invalid or missing authentication token") from e
             raise
 
     return wrapper
@@ -313,9 +315,9 @@ def network_exception_handler(func: Callable) -> Callable:
         try:
             return await func(*args, **kwargs)
         except ConnectionError as e:
-            raise ExternalServiceError(f"Network service unavailable: {str(e)}")
+            raise ExternalServiceError(f"Network service unavailable: {str(e)}") from e
         except TimeoutError as e:
-            raise ExternalServiceError(f"Network operation timed out: {str(e)}")
+            raise ExternalServiceError(f"Network operation timed out: {str(e)}") from e
 
     return wrapper
 
@@ -337,7 +339,7 @@ class ErrorLogger:
     """Centralized error logging with context."""
 
     @staticmethod
-    def log_business_error(error: Exception, context: Dict[str, Any]):
+    def log_business_error(error: Exception, context: dict[str, Any]):
         """Log business rule violations."""
         logger.warning(
             f"Business error: {str(error)}",
@@ -345,7 +347,7 @@ class ErrorLogger:
         )
 
     @staticmethod
-    def log_system_error(error: Exception, context: Dict[str, Any]):
+    def log_system_error(error: Exception, context: dict[str, Any]):
         """Log system errors."""
         logger.error(
             f"System error: {str(error)}",
@@ -362,7 +364,7 @@ class ErrorLogger:
 """
 BEFORE (repeated in every router):
 @router.post("/customers")
-async def create_customer(data: CustomerCreate, db = Depends(get_db)):
+async def create_customer(data: CustomerCreate, db = Depends(get_db)):  # noqa: B008
     try:
         service = CustomerService(db)
         return await service.create_customer(data)
@@ -372,12 +374,12 @@ async def create_customer(data: CustomerCreate, db = Depends(get_db)):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"Error creating customer: {e}")
-        raise HTTPException(status_code=500, detail="Internal error")
+        raise HTTPException(status_code=500, detail="Internal error") from e
 
 AFTER (DRY approach):
 @router.post("/customers")
 @standard_exception_handler
-async def create_customer(data: CustomerCreate, deps: StandardDependencies = Depends(get_standard_deps)):
+async def create_customer(data: CustomerCreate, deps: StandardDependencies = Depends(get_standard_deps)):  # noqa: B008
     service = CustomerService(deps.db)
     return await service.create_customer(data)
 

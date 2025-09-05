@@ -2,20 +2,16 @@
 Schema Manager - Handles database schema migrations and management.
 """
 
-import asyncio
 import json
-import os
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 import asyncpg
 import structlog
-from alembic import command
-from alembic.config import Config
-from alembic.runtime.migration import MigrationContext
-from alembic.script import ScriptDirectory
 from tenacity import retry, stop_after_attempt, wait_exponential
+
+from alembic.config import Config
 
 from .database_creator import DatabaseInstance
 
@@ -25,13 +21,9 @@ logger = structlog.get_logger(__name__)
 class SchemaManager:
     """Manages database schema migrations and initialization."""
 
-    def __init__(
-        self, db_instance: DatabaseInstance, migrations_path: Optional[str] = None
-    ):
+    def __init__(self, db_instance: DatabaseInstance, migrations_path: Optional[str] = None):
         self.db_instance = db_instance
-        self.logger = logger.bind(
-            component="schema_manager", database=db_instance.database_name
-        )
+        self.logger = logger.bind(component="schema_manager", database=db_instance.database_name)
 
         # Set up migrations path
         self.migrations_path = migrations_path or self._get_default_migrations_path()
@@ -53,9 +45,7 @@ class SchemaManager:
         alembic_cfg.set_main_option("script_location", self.migrations_path)
 
         # Set the database URL
-        alembic_cfg.set_main_option(
-            "sqlalchemy.url", self.db_instance.connection_string
-        )
+        alembic_cfg.set_main_option("sqlalchemy.url", self.db_instance.connection_string)
 
         # Set other necessary options
         alembic_cfg.set_main_option(
@@ -66,9 +56,7 @@ class SchemaManager:
 
         return alembic_cfg
 
-    @retry(
-        stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10)
-    )
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
     async def initialize_schema(self) -> bool:
         """
         Initialize the database schema using Alembic migrations.
@@ -97,9 +85,7 @@ class SchemaManager:
                 raise RuntimeError("Schema integrity check failed")
 
         except Exception as e:
-            self.logger.error(
-                "Schema initialization failed", error=str(e), exc_info=True
-            )
+            self.logger.error("Schema initialization failed", error=str(e), exc_info=True)
             return False
 
     async def _validate_database_connection(self) -> bool:
@@ -316,7 +302,7 @@ def downgrade() -> None:
             self.logger.info("Loading base schema")
 
             try:
-                with open(schema_template_path, "r") as f:
+                with open(schema_template_path) as f:
                     schema_sql = f.read()
 
                 conn = await asyncpg.connect(**self.db_instance.get_connection_params())
@@ -340,9 +326,7 @@ def downgrade() -> None:
             conn = await asyncpg.connect(**self.db_instance.get_connection_params())
 
             try:
-                revision = await conn.fetchval(
-                    "SELECT version_num FROM alembic_version LIMIT 1"
-                )
+                revision = await conn.fetchval("SELECT version_num FROM alembic_version LIMIT 1")
                 return revision
 
             finally:
@@ -352,7 +336,7 @@ def downgrade() -> None:
             # Table might not exist yet
             return None
 
-    async def _get_available_migrations(self) -> List[Dict[str, Any]]:
+    async def _get_available_migrations(self) -> list[dict[str, Any]]:
         """Get list of available migration files."""
         migrations = []
         versions_dir = Path(self.migrations_path) / "versions"
@@ -372,7 +356,7 @@ def downgrade() -> None:
 
         return migrations
 
-    async def _apply_migration(self, migration: Dict[str, Any]) -> None:
+    async def _apply_migration(self, migration: dict[str, Any]) -> None:
         """Apply a specific migration with backup and rollback support."""
         self.logger.info("Applying migration", migration=migration["name"])
 
@@ -396,9 +380,7 @@ def downgrade() -> None:
                     migration["revision"],
                 )
 
-            self.logger.info(
-                "Migration applied successfully", revision=migration["revision"]
-            )
+            self.logger.info("Migration applied successfully", revision=migration["revision"])
 
         except Exception as e:
             self.logger.error(
@@ -411,7 +393,7 @@ def downgrade() -> None:
         finally:
             await conn.close()
 
-    async def _create_pre_migration_backup(self, revision: str) -> Dict[str, Any]:
+    async def _create_pre_migration_backup(self, revision: str) -> dict[str, Any]:
         """Create backup before applying migration."""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         backup_name = f"pre_migration_{revision}_{timestamp}"
@@ -439,9 +421,7 @@ def downgrade() -> None:
                 # Store backup metadata in Redis (leveraging existing coordination)
                 await self._store_backup_metadata(backup_info)
 
-                self.logger.info(
-                    "Pre-migration backup created", backup_name=backup_name
-                )
+                self.logger.info("Pre-migration backup created", backup_name=backup_name)
                 return backup_info
 
             finally:
@@ -451,7 +431,7 @@ def downgrade() -> None:
             self.logger.warning("Backup creation failed", error=str(e))
             return {"backup_name": None, "error": str(e)}
 
-    async def _store_backup_metadata(self, backup_info: Dict[str, Any]) -> None:
+    async def _store_backup_metadata(self, backup_info: dict[str, Any]) -> None:
         """Store backup metadata using existing Redis infrastructure."""
         try:
             # Leverage existing database coordination Redis connection
@@ -469,14 +449,14 @@ def downgrade() -> None:
         except Exception as e:
             self.logger.warning("Failed to store backup metadata", error=str(e))
 
-    async def _execute_migration_file(self, conn, migration: Dict[str, Any]) -> None:
+    async def _execute_migration_file(self, conn, migration: dict[str, Any]) -> None:
         """Execute migration file content."""
         migration_file = Path(migration["file"])
 
         if migration_file.exists():
             try:
                 # Parse migration file for SQL commands
-                with open(migration_file, "r") as f:
+                with open(migration_file) as f:
                     content = f.read()
 
                 # Extract upgrade() function SQL commands
@@ -539,26 +519,20 @@ def downgrade() -> None:
                 return True
 
             # Get available migrations for rollback path
-            rollback_path = await self._get_rollback_path(
-                current_revision, target_revision
-            )
+            rollback_path = await self._get_rollback_path(current_revision, target_revision)
 
             # Apply rollbacks in reverse order
             for migration in reversed(rollback_path):
                 await self._apply_rollback_migration(migration)
 
-            self.logger.info(
-                "Rollback completed successfully", target_revision=target_revision
-            )
+            self.logger.info("Rollback completed successfully", target_revision=target_revision)
             return True
 
         except Exception as e:
             self.logger.error("Rollback failed", error=str(e))
             return False
 
-    async def _get_rollback_path(
-        self, from_revision: str, to_revision: str
-    ) -> List[Dict[str, Any]]:
+    async def _get_rollback_path(self, from_revision: str, to_revision: str) -> list[dict[str, Any]]:
         """Get the path of migrations to rollback."""
         # For now, return empty list - in production this would parse migration dependencies
         available_migrations = await self._get_available_migrations()
@@ -566,15 +540,12 @@ def downgrade() -> None:
         # Simple implementation: return migrations between revisions
         rollback_migrations = []
         for migration in available_migrations:
-            if (
-                migration["revision"] > to_revision
-                and migration["revision"] <= from_revision
-            ):
+            if migration["revision"] > to_revision and migration["revision"] <= from_revision:
                 rollback_migrations.append(migration)
 
         return rollback_migrations
 
-    async def _apply_rollback_migration(self, migration: Dict[str, Any]) -> None:
+    async def _apply_rollback_migration(self, migration: dict[str, Any]) -> None:
         """Apply rollback for a specific migration."""
         self.logger.info("Rolling back migration", migration=migration["name"])
 
@@ -586,9 +557,7 @@ def downgrade() -> None:
                 await self._execute_rollback_file(conn, migration)
 
                 # Update version table to previous revision
-                previous_revision = await self._get_previous_revision(
-                    migration["revision"]
-                )
+                previous_revision = await self._get_previous_revision(migration["revision"])
 
                 await conn.execute("DELETE FROM alembic_version")
                 if previous_revision:
@@ -602,13 +571,13 @@ def downgrade() -> None:
         finally:
             await conn.close()
 
-    async def _execute_rollback_file(self, conn, migration: Dict[str, Any]) -> None:
+    async def _execute_rollback_file(self, conn, migration: dict[str, Any]) -> None:
         """Execute rollback operations from migration file."""
         migration_file = Path(migration["file"])
 
         if migration_file.exists():
             try:
-                with open(migration_file, "r") as f:
+                with open(migration_file) as f:
                     content = f.read()
 
                 # Extract downgrade() function SQL commands
@@ -648,7 +617,7 @@ def downgrade() -> None:
 
         return None
 
-    async def get_rollback_info(self, revision: str) -> Dict[str, Any]:
+    async def get_rollback_info(self, revision: str) -> dict[str, Any]:
         """Get information about available rollbacks."""
         try:
             current_revision = await self._get_current_revision()
@@ -669,7 +638,7 @@ def downgrade() -> None:
         except Exception as e:
             return {"error": str(e), "can_rollback": False}
 
-    async def _get_backup_info(self, revision: str) -> Optional[Dict[str, Any]]:
+    async def _get_backup_info(self, revision: str) -> Optional[dict[str, Any]]:
         """Get backup information for a revision."""
         try:
             from ...database.coordination import DatabaseCoordinator
@@ -680,17 +649,9 @@ def downgrade() -> None:
             if coordinator._redis_client:
                 backups = await coordinator._redis_client.hgetall("migration_backups")
                 for backup_name, backup_data in backups.items():
-                    if revision in (
-                        backup_name.decode()
-                        if isinstance(backup_name, bytes)
-                        else backup_name
-                    ):
+                    if revision in (backup_name.decode() if isinstance(backup_name, bytes) else backup_name):
                         try:
-                            return json.loads(
-                                backup_data.decode()
-                                if isinstance(backup_data, bytes)
-                                else backup_data
-                            )
+                            return json.loads(backup_data.decode() if isinstance(backup_data, bytes) else backup_data)
                         except (json.JSONDecodeError, ValueError) as e:
                             self.logger.warning(
                                 "Failed to parse backup data",
@@ -742,7 +703,7 @@ def downgrade() -> None:
             self.logger.error("Schema integrity verification failed", error=str(e))
             return False
 
-    async def get_schema_info(self) -> Dict[str, Any]:
+    async def get_schema_info(self) -> dict[str, Any]:
         """Get information about the current schema."""
         try:
             conn = await asyncpg.connect(**self.db_instance.get_connection_params())

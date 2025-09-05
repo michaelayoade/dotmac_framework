@@ -3,7 +3,7 @@ Base repository with common CRUD operations.
 """
 
 from datetime import datetime, timezone
-from typing import Any, Dict, Generic, List, Optional, Tuple, Type, TypeVar
+from typing import Any, Generic, Optional, TypeVar
 from uuid import UUID
 
 from sqlalchemy import delete, func, select, update
@@ -11,7 +11,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from ..database import Base
-from dotmac_shared.core.pagination import PaginationParams
 
 ModelType = TypeVar("ModelType", bound=Base)
 
@@ -19,13 +18,11 @@ ModelType = TypeVar("ModelType", bound=Base)
 class BaseRepository(Generic[ModelType]):
     """Base repository with common CRUD operations."""
 
-    def __init__(self, db: AsyncSession, model: Type[ModelType]):
+    def __init__(self, db: AsyncSession, model: type[ModelType]):
         self.db = db
         self.model = model
 
-    async def create(
-        self, obj_data: Dict[str, Any], user_id: Optional[str] = None
-    ) -> ModelType:
+    async def create(self, obj_data: dict[str, Any], user_id: Optional[str] = None) -> ModelType:
         """Create a new record."""
         if user_id:
             obj_data["created_by"] = user_id
@@ -41,13 +38,13 @@ class BaseRepository(Generic[ModelType]):
         self,
         id: UUID,
         include_deleted: bool = False,
-        relationships: Optional[List[str]] = None,
+        relationships: Optional[list[str]] = None,
     ) -> Optional[ModelType]:
         """Get record by ID."""
         query = select(self.model).where(self.model.id == id)
 
         if not include_deleted:
-            query = query.where(self.model.is_deleted == False)
+            query = query.where(self.model.is_deleted is False)
 
         if relationships:
             for rel in relationships:
@@ -56,15 +53,13 @@ class BaseRepository(Generic[ModelType]):
         result = await self.db.execute(query)
         return result.scalar_one_or_none()
 
-    async def get_by_field(
-        self, field_name: str, value: Any, include_deleted: bool = False
-    ) -> Optional[ModelType]:
+    async def get_by_field(self, field_name: str, value: Any, include_deleted: bool = False) -> Optional[ModelType]:
         """Get record by any field."""
         field = getattr(self.model, field_name)
         query = select(self.model).where(field == value)
 
         if not include_deleted:
-            query = query.where(self.model.is_deleted == False)
+            query = query.where(self.model.is_deleted is False)
 
         result = await self.db.execute(query)
         return result.scalar_one_or_none()
@@ -73,16 +68,16 @@ class BaseRepository(Generic[ModelType]):
         self,
         skip: int = 0,
         limit: int = 100,
-        filters: Optional[Dict[str, Any]] = None,
+        filters: Optional[dict[str, Any]] = None,
         order_by: Optional[str] = None,
         include_deleted: bool = False,
-        relationships: Optional[List[str]] = None,
-    ) -> List[ModelType]:
+        relationships: Optional[list[str]] = None,
+    ) -> list[ModelType]:
         """List records with filtering and pagination."""
         query = select(self.model)
 
         if not include_deleted:
-            query = query.where(self.model.is_deleted == False)
+            query = query.where(self.model.is_deleted is False)
 
         if filters:
             for field_name, value in filters.items():
@@ -118,17 +113,17 @@ class BaseRepository(Generic[ModelType]):
         self,
         page: int = 1,
         per_page: int = 20,
-        filters: Optional[Dict[str, Any]] = None,
+        filters: Optional[dict[str, Any]] = None,
         order_by: Optional[str] = None,
         include_deleted: bool = False,
-        relationships: Optional[List[str]] = None,
-    ) -> Tuple[List[ModelType], int]:
+        relationships: Optional[list[str]] = None,
+    ) -> tuple[list[ModelType], int]:
         """List records with proper pagination and total count."""
         # Build base query
         query = select(self.model)
 
         if not include_deleted:
-            query = query.where(self.model.is_deleted == False)
+            query = query.where(self.model.is_deleted is False)
 
         if filters:
             for field_name, value in filters.items():
@@ -166,17 +161,17 @@ class BaseRepository(Generic[ModelType]):
         cursor_field: str = "id",
         limit: int = 20,
         cursor: Optional[str] = None,
-        filters: Optional[Dict[str, Any]] = None,
+        filters: Optional[dict[str, Any]] = None,
         ascending: bool = True,
         include_deleted: bool = False,
-        relationships: Optional[List[str]] = None,
-    ) -> Tuple[List[ModelType], Optional[str], bool]:
+        relationships: Optional[list[str]] = None,
+    ) -> tuple[list[ModelType], Optional[str], bool]:
         """Cursor-based pagination for large datasets."""
         # Build base query
         query = select(self.model)
 
         if not include_deleted:
-            query = query.where(self.model.is_deleted == False)
+            query = query.where(self.model.is_deleted is False)
 
         if filters:
             for field_name, value in filters.items():
@@ -227,14 +222,12 @@ class BaseRepository(Generic[ModelType]):
 
         return items, next_cursor, has_next
 
-    async def count(
-        self, filters: Optional[Dict[str, Any]] = None, include_deleted: bool = False
-    ) -> int:
+    async def count(self, filters: Optional[dict[str, Any]] = None, include_deleted: bool = False) -> int:
         """Count records with filtering."""
         query = select(func.count(self.model.id))
 
         if not include_deleted:
-            query = query.where(self.model.is_deleted == False)
+            query = query.where(self.model.is_deleted is False)
 
         if filters:
             for field_name, value in filters.items():
@@ -248,9 +241,7 @@ class BaseRepository(Generic[ModelType]):
         result = await self.db.execute(query)
         return result.scalar()
 
-    async def update(
-        self, id: UUID, obj_data: Dict[str, Any], user_id: Optional[str] = None
-    ) -> Optional[ModelType]:
+    async def update(self, id: UUID, obj_data: dict[str, Any], user_id: Optional[str] = None) -> Optional[ModelType]:
         """Update a record."""
         # Set audit fields
         obj_data["updated_at"] = datetime.now(timezone.utc)
@@ -260,7 +251,7 @@ class BaseRepository(Generic[ModelType]):
         query = (
             update(self.model)
             .where(self.model.id == id)
-            .where(self.model.is_deleted == False)
+            .where(self.model.is_deleted is False)
             .values(**obj_data)
             .execution_options(synchronize_session="fetch")
         )
@@ -271,9 +262,7 @@ class BaseRepository(Generic[ModelType]):
 
         return await self.get_by_id(id)
 
-    async def delete(
-        self, id: UUID, soft_delete: bool = True, user_id: Optional[str] = None
-    ) -> bool:
+    async def delete(self, id: UUID, soft_delete: bool = True, user_id: Optional[str] = None) -> bool:
         """Delete a record (soft or hard delete)."""
         if soft_delete:
             obj_data = {"is_deleted": True, "deleted_at": func.now()}
@@ -281,19 +270,14 @@ class BaseRepository(Generic[ModelType]):
                 obj_data["updated_by"] = user_id
 
             query = (
-                update(self.model)
-                .where(self.model.id == id)
-                .where(self.model.is_deleted == False)
-                .values(**obj_data)
+                update(self.model).where(self.model.id == id).where(self.model.is_deleted is False).values(**obj_data)
             )
         else:
             query = delete(self.model).where(self.model.id == id)
         result = await self.db.execute(query)
         return result.rowcount > 0
 
-    async def bulk_create(
-        self, objects_data: List[Dict[str, Any]], user_id: Optional[str] = None
-    ) -> List[ModelType]:
+    async def bulk_create(self, objects_data: list[dict[str, Any]], user_id: Optional[str] = None) -> list[ModelType]:
         """Create multiple records."""
         if user_id:
             for obj_data in objects_data:
@@ -311,20 +295,18 @@ class BaseRepository(Generic[ModelType]):
 
     async def exists(self, id: UUID) -> bool:
         """Check if record exists."""
-        query = select(func.count(self.model.id)).where(
-            self.model.id == id, self.model.is_deleted == False
-        )
+        query = select(func.count(self.model.id)).where(self.model.id == id, self.model.is_deleted is False)
         result = await self.db.execute(query)
         return result.scalar() > 0
 
     async def search(
         self,
         search_term: str,
-        search_fields: List[str],
+        search_fields: list[str],
         skip: int = 0,
         limit: int = 100,
-        filters: Optional[Dict[str, Any]] = None,
-    ) -> List[ModelType]:
+        filters: Optional[dict[str, Any]] = None,
+    ) -> list[ModelType]:
         """Search records across multiple fields."""
         query = select(self.model)
 
@@ -340,7 +322,7 @@ class BaseRepository(Generic[ModelType]):
 
             query = query.where(or_(*search_conditions))
 
-        query = query.where(self.model.is_deleted == False)
+        query = query.where(self.model.is_deleted is False)
 
         if filters:
             for field_name, value in filters.items():

@@ -1,7 +1,7 @@
 """Workflow contract definitions."""
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from .base import BaseContract
 
@@ -12,8 +12,8 @@ class WorkflowStep:
 
     name: str
     action: str
-    params: Dict[str, Any] = field(default_factory=dict)
-    conditions: Optional[Dict[str, Any]] = None
+    params: dict[str, Any] = field(default_factory=dict)
+    conditions: Optional[dict[str, Any]] = None
 
 
 @dataclass
@@ -22,13 +22,13 @@ class WorkflowContract(BaseContract):
 
     name: str = ""
     description: str = ""
-    steps: List[WorkflowStep] = field(default_factory=list)
+    steps: list[WorkflowStep] = field(default_factory=list)
 
     def add_step(self, step: WorkflowStep):
         """Add step to workflow."""
         self.steps.append(step)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         base_dict = super().to_dict()
         base_dict.update(

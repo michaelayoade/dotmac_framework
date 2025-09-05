@@ -3,7 +3,7 @@ Verification-related models for SDKs.
 """
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Optional
 from uuid import UUID, uuid4
@@ -50,15 +50,11 @@ class EmailVerification:
         self.email = kwargs.get("email")
         self.verification_token = kwargs.get("verification_token")
         self.status = kwargs.get("status", VerificationStatus.PENDING)
-        self.deliverability_status = kwargs.get(
-            "deliverability_status", DeliverabilityStatus.UNKNOWN
-        )
+        self.deliverability_status = kwargs.get("deliverability_status", DeliverabilityStatus.UNKNOWN)
         self.created_at = kwargs.get("created_at", datetime.now(timezone.utc))
         self.verified_at = kwargs.get("verified_at")
         # Default expiry: 24 hours from creation
-        self.expires_at = kwargs.get(
-            "expires_at", self.created_at + timedelta(hours=24)
-        )
+        self.expires_at = kwargs.get("expires_at", self.created_at + timedelta(hours=24))
         self.attempts = kwargs.get("attempts", 0)
         self.max_attempts = kwargs.get("max_attempts", 3)
 
@@ -104,9 +100,7 @@ class PhoneVerification:
         self.created_at = kwargs.get("created_at", datetime.now(timezone.utc))
         self.verified_at = kwargs.get("verified_at")
         # Default expiry: 15 minutes from creation
-        self.expires_at = kwargs.get(
-            "expires_at", self.created_at + timedelta(minutes=15)
-        )
+        self.expires_at = kwargs.get("expires_at", self.created_at + timedelta(minutes=15))
         self.attempts = kwargs.get("attempts", 0)
         self.max_attempts = kwargs.get("max_attempts", 3)
 

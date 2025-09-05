@@ -3,17 +3,14 @@ Integration tests for GIS services.
 Tests service layer functionality and business logic.
 """
 
-from datetime import datetime
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import Mock, patch
 from uuid import uuid4
 
 import pytest
-
 from dotmac_isp.modules.gis.models import (
     CoverageGap,
     NetworkNode,
     NetworkNodeTypeEnum,
-    RouteOptimization,
     ServiceArea,
     Territory,
 )
@@ -81,18 +78,13 @@ class TestGISAnalysisService:
             ),
         ]
 
-        with patch.object(
-            analysis_service.repository, "get_by_id", return_value=mock_service_area
-        ):
-            with patch.object(
-                analysis_service, "_get_network_nodes", return_value=mock_nodes
-            ):
+        with patch.object(analysis_service.repository, "get_by_id", return_value=mock_service_area):
+            with patch.object(analysis_service, "_get_network_nodes", return_value=mock_nodes):
                 with patch.object(
                     analysis_service,
                     "_calculate_coverage_percentage",
                     return_value=85.5,
                 ):
-
                     result = await analysis_service.analyze_service_area_coverage(
                         tenant_id=tenant_id, service_area_id=service_area_id
                     )
@@ -116,12 +108,8 @@ class TestGISAnalysisService:
             population=3000,
         )
 
-        with patch.object(
-            analysis_service.repository, "get_by_id", return_value=mock_service_area
-        ):
-            with patch.object(
-                analysis_service, "_analyze_coverage_gaps"
-            ) as mock_analyze:
+        with patch.object(analysis_service.repository, "get_by_id", return_value=mock_service_area):
+            with patch.object(analysis_service, "_analyze_coverage_gaps") as mock_analyze:
                 mock_analyze.return_value = [
                     {
                         "gap_type": "no_coverage",
@@ -163,9 +151,7 @@ class TestGISAnalysisService:
             )
         ]
 
-        with patch.object(
-            analysis_service, "_get_coverage_gaps", return_value=mock_gaps
-        ):
+        with patch.object(analysis_service, "_get_coverage_gaps", return_value=mock_gaps):
             recommendations = await analysis_service.generate_coverage_recommendations(
                 tenant_id=tenant_id, service_area_id=service_area_id
             )
@@ -209,12 +195,8 @@ class TestTerritoryManagementService:
 
         mock_territory = Territory(id=uuid4(), tenant_id=tenant_id, **territory_data)
 
-        with patch.object(
-            territory_service.repository, "create", return_value=mock_territory
-        ):
-            result = await territory_service.create_territory(
-                tenant_id=tenant_id, territory_data=territory_data
-            )
+        with patch.object(territory_service.repository, "create", return_value=mock_territory):
+            result = await territory_service.create_territory(tenant_id=tenant_id, territory_data=territory_data)
 
             assert result.name == "Northwest Territory"
             assert result.territory_type == "sales"
@@ -234,9 +216,7 @@ class TestTerritoryManagementService:
             customer_count=120,
         )
 
-        with patch.object(
-            territory_service.repository, "get_by_id", return_value=mock_territory
-        ):
+        with patch.object(territory_service.repository, "get_by_id", return_value=mock_territory):
             performance = await territory_service.calculate_territory_performance(
                 tenant_id=tenant_id, territory_id=territory_id
             )
@@ -268,21 +248,15 @@ class TestTerritoryManagementService:
             ),
         ]
 
-        with patch.object(
-            territory_service.repository, "get_by_tenant", return_value=mock_territories
-        ):
-            with patch.object(
-                territory_service, "_calculate_optimal_boundaries"
-            ) as mock_calc:
+        with patch.object(territory_service.repository, "get_by_tenant", return_value=mock_territories):
+            with patch.object(territory_service, "_calculate_optimal_boundaries") as mock_calc:
                 mock_calc.return_value = {
                     "optimized_territories": 2,
                     "performance_improvement": 15.2,
                     "recommendations": ["Rebalance customer distribution"],
                 }
 
-                result = await territory_service.optimize_territory_boundaries(
-                    tenant_id
-                )
+                result = await territory_service.optimize_territory_boundaries(tenant_id)
 
                 assert result["optimized_territories"] == 2
                 assert result["performance_improvement"] > 0
@@ -326,9 +300,7 @@ class TestRouteOptimizationService:
                 "estimated_duration_minutes": 120,
             }
 
-            result = await route_service.optimize_service_route(
-                tenant_id=tenant_id, route_request=route_request
-            )
+            result = await route_service.optimize_service_route(tenant_id=tenant_id, route_request=route_request)
 
             assert result["total_distance_km"] == 8.5
             assert result["estimated_duration_minutes"] == 120
@@ -386,24 +358,16 @@ class TestGISServiceIntegration:
             ]
         }
 
-        with patch.object(
-            analysis_service, "analyze_tenant_coverage", return_value=coverage_results
-        ):
-            with patch.object(
-                territory_service, "optimize_territory_boundaries"
-            ) as mock_optimize:
+        with patch.object(analysis_service, "analyze_tenant_coverage", return_value=coverage_results):
+            with patch.object(territory_service, "optimize_territory_boundaries") as mock_optimize:
                 mock_optimize.return_value = {
                     "optimized_territories": 3,
                     "performance_improvement": 22.5,
                 }
 
                 # Simulate workflow
-                coverage_data = await analysis_service.analyze_tenant_coverage(
-                    tenant_id
-                )
-                optimization_result = (
-                    await territory_service.optimize_territory_boundaries(tenant_id)
-                )
+                coverage_data = await analysis_service.analyze_tenant_coverage(tenant_id)
+                optimization_result = await territory_service.optimize_territory_boundaries(tenant_id)
 
                 assert len(coverage_data["low_coverage_areas"]) == 2
                 assert optimization_result["performance_improvement"] > 0

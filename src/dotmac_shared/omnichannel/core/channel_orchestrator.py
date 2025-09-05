@@ -13,22 +13,19 @@ Author: DotMac Framework Team
 License: MIT
 """
 
-import asyncio
-import json
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Optional
 from uuid import UUID, uuid4
 
-import httpx
-from jinja2 import BaseLoader, Environment, select_autoescape
-from pydantic import BaseModel, Field, ConfigDict
-
-from dotmac_shared.plugins.adapters.communication import (
+from dotmac_plugins.adapters.communication import (
     MessagePriority as PluginMessagePriority,
 )
+from jinja2 import BaseLoader, Environment, select_autoescape
+from pydantic import BaseModel, ConfigDict, Field
 
 from ..integrations.plugin_system_integration import (
     OmnichannelPluginManager,
@@ -65,7 +62,7 @@ class ChannelConfig:
 
     channel_type: ChannelType
     provider: str
-    config: Dict[str, Any]
+    config: dict[str, Any]
     enabled: bool = True
     rate_limit: Optional[int] = None  # messages per minute
     retry_attempts: int = 3
@@ -82,8 +79,8 @@ class MessageTemplate:
     subject: Optional[str] = None
     content: str = ""
     content_type: MessageType = MessageType.TEXT
-    variables: List[str] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    variables: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -116,7 +113,7 @@ class OutboundMessage(BaseModel):
     content: str
     content_type: MessageType = MessageType.TEXT
     template_id: Optional[str] = None
-    template_variables: Dict[str, Any] = Field(default_factory=dict)
+    template_variables: dict[str, Any] = Field(default_factory=dict)
 
     # Delivery settings
     priority: DeliveryPriority = DeliveryPriority.NORMAL
@@ -124,7 +121,7 @@ class OutboundMessage(BaseModel):
     expires_at: Optional[datetime] = None
 
     # Attachments
-    attachments: List[Dict[str, Any]] = Field(default_factory=list)
+    attachments: list[dict[str, Any]] = Field(default_factory=list)
 
     # Status and tracking
     status: MessageStatus = MessageStatus.PENDING
@@ -143,11 +140,9 @@ class OutboundMessage(BaseModel):
     # Metadata
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
-    extra_data: Dict[str, Any] = Field(default_factory=dict, alias="metadata")
+    extra_data: dict[str, Any] = Field(default_factory=dict, alias="metadata")
 
-    model_config = ConfigDict(
-        use_enum_values=True
-    )
+    model_config = ConfigDict(use_enum_values=True)
 
 
 class InboundMessage(BaseModel):
@@ -169,7 +164,7 @@ class InboundMessage(BaseModel):
     content_type: MessageType = MessageType.TEXT
 
     # Attachments
-    attachments: List[Dict[str, Any]] = Field(default_factory=list)
+    attachments: list[dict[str, Any]] = Field(default_factory=list)
 
     # Processing status
     processed: bool = False
@@ -183,11 +178,9 @@ class InboundMessage(BaseModel):
 
     # Metadata
     received_at: datetime = Field(default_factory=datetime.utcnow)
-    extra_data: Dict[str, Any] = Field(default_factory=dict, alias="metadata")
+    extra_data: dict[str, Any] = Field(default_factory=dict, alias="metadata")
 
-    model_config = ConfigDict(
-        use_enum_values=True
-    )
+    model_config = ConfigDict(use_enum_values=True)
 
 
 class ChannelOrchestrator:
@@ -205,29 +198,25 @@ class ChannelOrchestrator:
         self.plugin_manager = OmnichannelPluginManager(tenant_id)
 
         # Channel configurations
-        self.channel_configs: Dict[ChannelType, ChannelConfig] = {}
+        self.channel_configs: dict[ChannelType, ChannelConfig] = {}
 
         # Template management
-        self.templates: Dict[str, MessageTemplate] = {}
-        self.template_engine = Environment(
-            loader=BaseLoader(), autoescape=select_autoescape(["html", "xml"])
-        )
+        self.templates: dict[str, MessageTemplate] = {}
+        self.template_engine = Environment(loader=BaseLoader(), autoescape=select_autoescape(["html", "xml"]))
 
         # Message queues and tracking
-        self.outbound_queue: List[OutboundMessage] = []
-        self.message_tracking: Dict[UUID, OutboundMessage] = {}
-        self.delivery_callbacks: Dict[ChannelType, List[Callable]] = {}
+        self.outbound_queue: list[OutboundMessage] = []
+        self.message_tracking: dict[UUID, OutboundMessage] = {}
+        self.delivery_callbacks: dict[ChannelType, list[Callable]] = {}
 
         # Rate limiting
-        self.rate_limiters: Dict[ChannelType, Dict[str, List[datetime]]] = {}
+        self.rate_limiters: dict[ChannelType, dict[str, list[datetime]]] = {}
 
         # Retry management
-        self.retry_queue: List[OutboundMessage] = []
+        self.retry_queue: list[OutboundMessage] = []
         self.max_retry_delay = timedelta(hours=24)
 
-    async def configure_channel(
-        self, channel_type: ChannelType, provider: str, config: Dict[str, Any]
-    ):
+    async def configure_channel(self, channel_type: ChannelType, provider: str, config: dict[str, Any]):
         """Configure a communication channel"""
         try:
             channel_config = ChannelConfig(
@@ -268,9 +257,7 @@ class ChannelOrchestrator:
         """Register a message template"""
         try:
             self.templates[template.template_id] = template
-            logger.info(
-                f"Registered template {template.template_id} for {template.channel_type}"
-            )
+            logger.info(f"Registered template {template.template_id} for {template.channel_type}")
 
         except Exception as e:
             logger.error(f"Failed to register template: {e}")
@@ -285,8 +272,8 @@ class ChannelOrchestrator:
         agent_id: Optional[UUID] = None,
         customer_id: Optional[UUID] = None,
         template_id: Optional[str] = None,
-        template_vars: Optional[Dict[str, Any]] = None,
-        attachments: Optional[List[MessageAttachment]] = None,
+        template_vars: Optional[dict[str, Any]] = None,
+        attachments: Optional[list[MessageAttachment]] = None,
         priority: DeliveryPriority = DeliveryPriority.NORMAL,
         scheduled_at: Optional[datetime] = None,
     ) -> OutboundMessage:
@@ -305,24 +292,17 @@ class ChannelOrchestrator:
                 template_variables=template_vars or {},
                 priority=priority,
                 scheduled_at=scheduled_at,
-                attachments=[
-                    att.__dict__ if hasattr(att, "__dict__") else att
-                    for att in (attachments or [])
-                ],
+                attachments=[att.__dict__ if hasattr(att, "__dict__") else att for att in (attachments or [])],
             )
 
             # Render template if specified
             if template_id and template_id in self.templates:
-                rendered_content = await self._render_template(
-                    template_id, template_vars or {}
-                )
+                rendered_content = await self._render_template(template_id, template_vars or {})
                 message.content = rendered_content
 
                 template = self.templates[template_id]
                 if template.subject:
-                    message.subject = await self._render_text(
-                        template.subject, template_vars or {}
-                    )
+                    message.subject = await self._render_text(template.subject, template_vars or {})
 
             # Validate channel is configured and enabled
             if not await self._validate_channel(channel):
@@ -361,8 +341,8 @@ class ChannelOrchestrator:
         subject: Optional[str] = None,
         external_id: Optional[str] = None,
         thread_id: Optional[str] = None,
-        attachments: Optional[List[Dict]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        attachments: Optional[list[dict]] = None,
+        metadata: Optional[dict[str, Any]] = None,
     ) -> InboundMessage:
         """Handle incoming message from any channel"""
         try:
@@ -392,7 +372,7 @@ class ChannelOrchestrator:
             logger.error(f"Failed to handle incoming message: {e}")
             raise
 
-    async def get_message_status(self, message_id: UUID) -> Optional[Dict[str, Any]]:
+    async def get_message_status(self, message_id: UUID) -> Optional[dict[str, Any]]:
         """Get message delivery status"""
         try:
             message = self.message_tracking.get(message_id)
@@ -463,11 +443,7 @@ class ChannelOrchestrator:
 
             # Find messages ready for retry
             for message in list(self.retry_queue):
-                if (
-                    message.next_retry_at
-                    and message.next_retry_at <= now
-                    and message.retry_count < message.max_retries
-                ):
+                if message.next_retry_at and message.next_retry_at <= now and message.retry_count < message.max_retries:
                     retry_messages.append(message)
                     self.retry_queue.remove(message)
 
@@ -476,9 +452,7 @@ class ChannelOrchestrator:
                 try:
                     message.retry_count += 1
                     await self._deliver_message(message)
-                    logger.info(
-                        f"Retried message {message.id} (attempt {message.retry_count})"
-                    )
+                    logger.info(f"Retried message {message.id} (attempt {message.retry_count})")
 
                 except Exception as e:
                     logger.error(f"Failed to retry message {message.id}: {e}")
@@ -499,7 +473,7 @@ class ChannelOrchestrator:
         except Exception as e:
             logger.error(f"Failed to retry messages: {e}")
 
-    async def get_available_channels(self) -> Dict[ChannelType, List[Dict[str, Any]]]:
+    async def get_available_channels(self) -> dict[ChannelType, list[dict[str, Any]]]:
         """Get all available channels from plugin system"""
         try:
             return await self.plugin_manager.get_available_channels()
@@ -507,9 +481,7 @@ class ChannelOrchestrator:
             logger.error(f"Failed to get available channels: {e}")
             return {}
 
-    async def get_plugin_status(
-        self, plugin_id: Optional[str] = None
-    ) -> Dict[str, Any]:
+    async def get_plugin_status(self, plugin_id: Optional[str] = None) -> dict[str, Any]:
         """Get status of specific plugin or all plugins"""
         try:
             if plugin_id:
@@ -520,7 +492,7 @@ class ChannelOrchestrator:
                 all_channels = await self.get_available_channels()
                 all_status = {}
 
-                for channel_type, plugins in all_channels.items():
+                for _channel_type, plugins in all_channels.items():
                     for plugin_info in plugins:
                         plugin_id = plugin_info["plugin_id"]
                         all_status[plugin_id] = plugin_info
@@ -531,50 +503,22 @@ class ChannelOrchestrator:
             logger.error(f"Failed to get plugin status: {e}")
             return {}
 
-    async def get_channel_statistics(self) -> Dict[ChannelType, Dict[str, Any]]:
+    async def get_channel_statistics(self) -> dict[ChannelType, dict[str, Any]]:
         """Get statistics for all channels"""
         try:
             stats = {}
 
             for channel_type in self.channel_configs.keys():
-                channel_messages = [
-                    msg
-                    for msg in self.message_tracking.values()
-                    if msg.channel == channel_type
-                ]
+                channel_messages = [msg for msg in self.message_tracking.values() if msg.channel == channel_type]
 
                 stats[channel_type] = {
                     "total_messages": len(channel_messages),
-                    "sent": len(
-                        [m for m in channel_messages if m.status == MessageStatus.SENT]
-                    ),
-                    "delivered": len(
-                        [
-                            m
-                            for m in channel_messages
-                            if m.status == MessageStatus.DELIVERED
-                        ]
-                    ),
-                    "failed": len(
-                        [
-                            m
-                            for m in channel_messages
-                            if m.status == MessageStatus.FAILED
-                        ]
-                    ),
-                    "pending": len(
-                        [
-                            m
-                            for m in channel_messages
-                            if m.status == MessageStatus.PENDING
-                        ]
-                    ),
-                    "avg_delivery_time": await self._calculate_avg_delivery_time(
-                        channel_messages
-                    ),
-                    "success_rate": await self._calculate_success_rate(
-                        channel_messages
-                    ),
+                    "sent": len([m for m in channel_messages if m.status == MessageStatus.SENT]),
+                    "delivered": len([m for m in channel_messages if m.status == MessageStatus.DELIVERED]),
+                    "failed": len([m for m in channel_messages if m.status == MessageStatus.FAILED]),
+                    "pending": len([m for m in channel_messages if m.status == MessageStatus.PENDING]),
+                    "avg_delivery_time": await self._calculate_avg_delivery_time(channel_messages),
+                    "success_rate": await self._calculate_success_rate(channel_messages),
                 }
 
             return stats
@@ -607,9 +551,7 @@ class ChannelOrchestrator:
             if recipient not in self.rate_limiters[channel]:
                 self.rate_limiters[channel][recipient] = []
 
-            recent_messages = [
-                ts for ts in self.rate_limiters[channel][recipient] if ts > window_start
-            ]
+            recent_messages = [ts for ts in self.rate_limiters[channel][recipient] if ts > window_start]
             self.rate_limiters[channel][recipient] = recent_messages
 
             # Check limit
@@ -647,9 +589,7 @@ class ChannelOrchestrator:
 
             # Update based on plugin system result
             if delivery_result.success:
-                message.status = plugin_to_omnichannel_message_status(
-                    delivery_result.status
-                )
+                message.status = plugin_to_omnichannel_message_status(delivery_result.status)
                 if message.status == MessageStatus.SENT:
                     message.sent_at = datetime.now(timezone.utc)
                 elif message.status == MessageStatus.DELIVERED:
@@ -670,9 +610,7 @@ class ChannelOrchestrator:
             message.updated_at = datetime.now(timezone.utc)
             logger.error(f"Failed to deliver message {message.id}: {e}")
 
-    async def _render_template(
-        self, template_id: str, variables: Dict[str, Any]
-    ) -> str:
+    async def _render_template(self, template_id: str, variables: dict[str, Any]) -> str:
         """Render message template with variables"""
         try:
             template = self.templates.get(template_id)
@@ -686,7 +624,7 @@ class ChannelOrchestrator:
             logger.error(f"Failed to render template {template_id}: {e}")
             raise
 
-    async def _render_text(self, text: str, variables: Dict[str, Any]) -> str:
+    async def _render_text(self, text: str, variables: dict[str, Any]) -> str:
         """Render text with template variables"""
         try:
             jinja_template = self.template_engine.from_string(text)
@@ -708,9 +646,7 @@ class ChannelOrchestrator:
             # 3. Link message to conversation thread
 
             # For now, just log the identification attempt
-            logger.info(
-                f"Identifying customer for {message.channel} message from {message.sender}"
-            )
+            logger.info(f"Identifying customer for {message.channel} message from {message.sender}")
 
         except Exception as e:
             logger.error(f"Failed to identify customer: {e}")
@@ -741,9 +677,7 @@ class ChannelOrchestrator:
         except Exception as e:
             logger.error(f"Failed to trigger callbacks: {e}")
 
-    async def _calculate_avg_delivery_time(
-        self, messages: List[OutboundMessage]
-    ) -> float:
+    async def _calculate_avg_delivery_time(self, messages: list[OutboundMessage]) -> float:
         """Calculate average delivery time for messages"""
         try:
             delivered_messages = [m for m in messages if m.sent_at and m.delivered_at]
@@ -751,9 +685,7 @@ class ChannelOrchestrator:
             if not delivered_messages:
                 return 0.0
 
-            total_time = sum(
-                (m.delivered_at - m.sent_at).total_seconds() for m in delivered_messages
-            )
+            total_time = sum((m.delivered_at - m.sent_at).total_seconds() for m in delivered_messages)
 
             return total_time / len(delivered_messages)
 
@@ -761,19 +693,14 @@ class ChannelOrchestrator:
             logger.error(f"Failed to calculate avg delivery time: {e}")
             return 0.0
 
-    async def _calculate_success_rate(self, messages: List[OutboundMessage]) -> float:
+    async def _calculate_success_rate(self, messages: list[OutboundMessage]) -> float:
         """Calculate message success rate"""
         try:
             if not messages:
                 return 0.0
 
             successful = len(
-                [
-                    m
-                    for m in messages
-                    if m.status
-                    in [MessageStatus.SENT, MessageStatus.DELIVERED, MessageStatus.READ]
-                ]
+                [m for m in messages if m.status in [MessageStatus.SENT, MessageStatus.DELIVERED, MessageStatus.READ]]
             )
 
             return (successful / len(messages)) * 100.0
@@ -788,9 +715,7 @@ class ChannelOrchestrator:
             self.delivery_callbacks[channel] = []
         self.delivery_callbacks[channel].append(callback)
 
-    def _convert_to_plugin_priority(
-        self, priority: DeliveryPriority
-    ) -> PluginMessagePriority:
+    def _convert_to_plugin_priority(self, priority: DeliveryPriority) -> PluginMessagePriority:
         """Convert omnichannel priority to plugin system priority"""
         priority_mapping = {
             DeliveryPriority.LOW: PluginMessagePriority.LOW,

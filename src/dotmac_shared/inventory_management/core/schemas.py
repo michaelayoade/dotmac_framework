@@ -4,10 +4,10 @@ Pydantic schemas for inventory management API validation.
 
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, validator
+from pydantic import BaseModel, ConfigDict, Field
 
 from .models import (
     ItemCondition,
@@ -59,13 +59,13 @@ class ItemCreate(ItemBase):
 
     # Physical attributes
     weight_kg: Optional[float] = Field(None, ge=0)
-    dimensions: Optional[Dict[str, float]] = None
+    dimensions: Optional[dict[str, float]] = None
     color: Optional[str] = Field(None, max_length=50)
 
     # Specifications
-    technical_specs: Optional[Dict[str, Any]] = None
-    compatibility: Optional[List[str]] = None
-    operating_conditions: Optional[Dict[str, Any]] = None
+    technical_specs: Optional[dict[str, Any]] = None
+    compatibility: Optional[list[str]] = None
+    operating_conditions: Optional[dict[str, Any]] = None
 
     # Stock management
     unit_of_measure: str = Field("each", max_length=20)
@@ -84,8 +84,8 @@ class ItemCreate(ItemBase):
 
     # Quality and compliance
     quality_grade: Optional[str] = Field(None, max_length=20)
-    certifications: Optional[List[str]] = None
-    regulatory_info: Optional[Dict[str, Any]] = None
+    certifications: Optional[list[str]] = None
+    regulatory_info: Optional[dict[str, Any]] = None
 
     # Vendor information
     primary_vendor_id: Optional[str] = Field(None, max_length=255)
@@ -98,8 +98,8 @@ class ItemCreate(ItemBase):
     maintenance_required: bool = False
 
     # Documentation
-    documentation_links: Optional[List[str]] = None
-    image_urls: Optional[List[str]] = None
+    documentation_links: Optional[list[str]] = None
+    image_urls: Optional[list[str]] = None
     safety_data_sheet_url: Optional[str] = Field(None, max_length=500)
 
     # Tracking preferences
@@ -108,8 +108,8 @@ class ItemCreate(ItemBase):
     track_expiry_dates: bool = False
 
     # Additional metadata
-    tags: Optional[List[str]] = None
-    platform_data: Optional[Dict[str, Any]] = None
+    tags: Optional[list[str]] = None
+    platform_data: Optional[dict[str, Any]] = None
 
 
 class ItemUpdate(InventoryBase):
@@ -130,12 +130,12 @@ class ItemUpdate(InventoryBase):
     manufacturer_part_number: Optional[str] = Field(None, max_length=100)
 
     weight_kg: Optional[float] = Field(None, ge=0)
-    dimensions: Optional[Dict[str, float]] = None
+    dimensions: Optional[dict[str, float]] = None
     color: Optional[str] = Field(None, max_length=50)
 
-    technical_specs: Optional[Dict[str, Any]] = None
-    compatibility: Optional[List[str]] = None
-    operating_conditions: Optional[Dict[str, Any]] = None
+    technical_specs: Optional[dict[str, Any]] = None
+    compatibility: Optional[list[str]] = None
+    operating_conditions: Optional[dict[str, Any]] = None
 
     unit_of_measure: Optional[str] = Field(None, max_length=20)
     reorder_point: Optional[int] = Field(None, ge=0)
@@ -150,8 +150,8 @@ class ItemUpdate(InventoryBase):
     end_of_life_date: Optional[date] = None
 
     quality_grade: Optional[str] = Field(None, max_length=20)
-    certifications: Optional[List[str]] = None
-    regulatory_info: Optional[Dict[str, Any]] = None
+    certifications: Optional[list[str]] = None
+    regulatory_info: Optional[dict[str, Any]] = None
 
     primary_vendor_id: Optional[str] = Field(None, max_length=255)
     vendor_item_code: Optional[str] = Field(None, max_length=100)
@@ -161,8 +161,8 @@ class ItemUpdate(InventoryBase):
     service_level: Optional[str] = Field(None, max_length=50)
     maintenance_required: Optional[bool] = None
 
-    documentation_links: Optional[List[str]] = None
-    image_urls: Optional[List[str]] = None
+    documentation_links: Optional[list[str]] = None
+    image_urls: Optional[list[str]] = None
     safety_data_sheet_url: Optional[str] = Field(None, max_length=500)
 
     track_serial_numbers: Optional[bool] = None
@@ -172,8 +172,8 @@ class ItemUpdate(InventoryBase):
     is_active: Optional[bool] = None
     is_discontinued: Optional[bool] = None
 
-    tags: Optional[List[str]] = None
-    platform_data: Optional[Dict[str, Any]] = None
+    tags: Optional[list[str]] = None
+    platform_data: Optional[dict[str, Any]] = None
 
 
 class ItemResponse(ItemBase):
@@ -189,12 +189,12 @@ class ItemResponse(ItemBase):
     manufacturer_part_number: Optional[str] = None
 
     weight_kg: Optional[float] = None
-    dimensions: Optional[Dict[str, float]] = None
+    dimensions: Optional[dict[str, float]] = None
     color: Optional[str] = None
 
-    technical_specs: Optional[Dict[str, Any]] = None
-    compatibility: Optional[List[str]] = None
-    operating_conditions: Optional[Dict[str, Any]] = None
+    technical_specs: Optional[dict[str, Any]] = None
+    compatibility: Optional[list[str]] = None
+    operating_conditions: Optional[dict[str, Any]] = None
 
     unit_of_measure: str = "each"
     reorder_point: int = 0
@@ -211,8 +211,8 @@ class ItemResponse(ItemBase):
     end_of_life_date: Optional[date] = None
 
     quality_grade: Optional[str] = None
-    certifications: Optional[List[str]] = None
-    regulatory_info: Optional[Dict[str, Any]] = None
+    certifications: Optional[list[str]] = None
+    regulatory_info: Optional[dict[str, Any]] = None
 
     primary_vendor_id: Optional[str] = None
     vendor_item_code: Optional[str] = None
@@ -222,8 +222,8 @@ class ItemResponse(ItemBase):
     service_level: Optional[str] = None
     maintenance_required: bool = False
 
-    documentation_links: Optional[List[str]] = None
-    image_urls: Optional[List[str]] = None
+    documentation_links: Optional[list[str]] = None
+    image_urls: Optional[list[str]] = None
     safety_data_sheet_url: Optional[str] = None
 
     track_serial_numbers: bool = False
@@ -233,8 +233,8 @@ class ItemResponse(ItemBase):
     is_active: bool = True
     is_discontinued: bool = False
 
-    tags: Optional[List[str]] = None
-    platform_data: Optional[Dict[str, Any]] = None
+    tags: Optional[list[str]] = None
+    platform_data: Optional[dict[str, Any]] = None
 
     # Audit fields
     created_at: datetime
@@ -275,10 +275,10 @@ class WarehouseCreate(WarehouseBase):
     total_area_sqm: Optional[float] = Field(None, ge=0)
     storage_capacity: Optional[int] = Field(None, ge=0)
     zone_count: int = Field(1, ge=1)
-    bin_locations: Optional[List[str]] = None
+    bin_locations: Optional[list[str]] = None
 
     # Operations
-    operating_hours: Optional[Dict[str, str]] = None
+    operating_hours: Optional[dict[str, str]] = None
     manager_name: Optional[str] = Field(None, max_length=200)
     staff_count: int = Field(1, ge=1)
 
@@ -293,7 +293,7 @@ class WarehouseCreate(WarehouseBase):
     rfid_enabled: bool = False
 
     notes: Optional[str] = None
-    platform_data: Optional[Dict[str, Any]] = None
+    platform_data: Optional[dict[str, Any]] = None
 
 
 class WarehouseUpdate(InventoryBase):
@@ -317,9 +317,9 @@ class WarehouseUpdate(InventoryBase):
     total_area_sqm: Optional[float] = Field(None, ge=0)
     storage_capacity: Optional[int] = Field(None, ge=0)
     zone_count: Optional[int] = Field(None, ge=1)
-    bin_locations: Optional[List[str]] = None
+    bin_locations: Optional[list[str]] = None
 
-    operating_hours: Optional[Dict[str, str]] = None
+    operating_hours: Optional[dict[str, str]] = None
     manager_name: Optional[str] = Field(None, max_length=200)
     staff_count: Optional[int] = Field(None, ge=1)
 
@@ -333,7 +333,7 @@ class WarehouseUpdate(InventoryBase):
 
     is_active: Optional[bool] = None
     notes: Optional[str] = None
-    platform_data: Optional[Dict[str, Any]] = None
+    platform_data: Optional[dict[str, Any]] = None
 
 
 class WarehouseResponse(WarehouseBase):
@@ -357,10 +357,10 @@ class WarehouseResponse(WarehouseBase):
     total_area_sqm: Optional[float] = None
     storage_capacity: Optional[int] = None
     zone_count: int = 1
-    bin_locations: Optional[List[str]] = None
+    bin_locations: Optional[list[str]] = None
 
     # Operations
-    operating_hours: Optional[Dict[str, str]] = None
+    operating_hours: Optional[dict[str, str]] = None
     manager_name: Optional[str] = None
     staff_count: int = 1
 
@@ -376,7 +376,7 @@ class WarehouseResponse(WarehouseBase):
 
     is_active: bool = True
     notes: Optional[str] = None
-    platform_data: Optional[Dict[str, Any]] = None
+    platform_data: Optional[dict[str, Any]] = None
 
     # Audit fields
     created_at: datetime
@@ -406,9 +406,9 @@ class StockItemResponse(InventoryBase):
     condition: ItemCondition = ItemCondition.NEW
     item_status: ItemStatus = ItemStatus.AVAILABLE
 
-    serial_numbers: Optional[List[str]] = None
-    lot_numbers: Optional[List[str]] = None
-    expiry_dates: Optional[List[date]] = None
+    serial_numbers: Optional[list[str]] = None
+    lot_numbers: Optional[list[str]] = None
+    expiry_dates: Optional[list[date]] = None
 
     unit_cost: Optional[Decimal] = None
     total_value: Optional[Decimal] = None
@@ -421,7 +421,7 @@ class StockItemResponse(InventoryBase):
     last_counted_date: Optional[date] = None
 
     notes: Optional[str] = None
-    platform_data: Optional[Dict[str, Any]] = None
+    platform_data: Optional[dict[str, Any]] = None
 
     created_at: datetime
     updated_at: Optional[datetime] = None
@@ -458,12 +458,12 @@ class StockMovementCreate(InventoryBase):
     project_id: Optional[str] = Field(None, max_length=255)
     invoice_number: Optional[str] = Field(None, max_length=100)
 
-    serial_numbers: Optional[List[str]] = None
-    lot_numbers: Optional[List[str]] = None
+    serial_numbers: Optional[list[str]] = None
+    lot_numbers: Optional[list[str]] = None
     expiry_date: Optional[date] = None
 
     notes: Optional[str] = None
-    platform_data: Optional[Dict[str, Any]] = None
+    platform_data: Optional[dict[str, Any]] = None
 
 
 class StockMovementResponse(InventoryBase):
@@ -499,12 +499,12 @@ class StockMovementResponse(InventoryBase):
     approved_date: Optional[datetime] = None
     processed_by: str
 
-    serial_numbers: Optional[List[str]] = None
-    lot_numbers: Optional[List[str]] = None
+    serial_numbers: Optional[list[str]] = None
+    lot_numbers: Optional[list[str]] = None
     expiry_date: Optional[date] = None
 
     notes: Optional[str] = None
-    platform_data: Optional[Dict[str, Any]] = None
+    platform_data: Optional[dict[str, Any]] = None
 
     created_at: datetime
 
@@ -537,7 +537,7 @@ class PurchaseOrderCreate(InventoryBase):
 
     terms_and_conditions: Optional[str] = None
     notes: Optional[str] = None
-    platform_data: Optional[Dict[str, Any]] = None
+    platform_data: Optional[dict[str, Any]] = None
 
 
 class PurchaseOrderUpdate(InventoryBase):
@@ -561,7 +561,7 @@ class PurchaseOrderUpdate(InventoryBase):
 
     terms_and_conditions: Optional[str] = None
     notes: Optional[str] = None
-    platform_data: Optional[Dict[str, Any]] = None
+    platform_data: Optional[dict[str, Any]] = None
 
 
 class PurchaseOrderResponse(InventoryBase):
@@ -602,7 +602,7 @@ class PurchaseOrderResponse(InventoryBase):
 
     terms_and_conditions: Optional[str] = None
     notes: Optional[str] = None
-    platform_data: Optional[Dict[str, Any]] = None
+    platform_data: Optional[dict[str, Any]] = None
 
     created_at: datetime
     updated_at: Optional[datetime] = None
@@ -611,7 +611,7 @@ class PurchaseOrderResponse(InventoryBase):
 
     # Related data
     warehouse: Optional["WarehouseResponse"] = None
-    line_items: Optional[List["PurchaseOrderLineResponse"]] = None
+    line_items: Optional[list["PurchaseOrderLineResponse"]] = None
 
 
 class PurchaseOrderLineCreate(InventoryBase):
@@ -630,7 +630,7 @@ class PurchaseOrderLineCreate(InventoryBase):
 
     vendor_item_code: Optional[str] = Field(None, max_length=100)
     notes: Optional[str] = None
-    platform_data: Optional[Dict[str, Any]] = None
+    platform_data: Optional[dict[str, Any]] = None
 
 
 class PurchaseOrderLineResponse(InventoryBase):
@@ -659,7 +659,7 @@ class PurchaseOrderLineResponse(InventoryBase):
 
     vendor_item_code: Optional[str] = None
     notes: Optional[str] = None
-    platform_data: Optional[Dict[str, Any]] = None
+    platform_data: Optional[dict[str, Any]] = None
 
     created_at: datetime
     updated_at: Optional[datetime] = None
@@ -677,15 +677,15 @@ class StockCountCreate(InventoryBase):
     count_type: str = Field(..., max_length=50)  # full, cycle, spot
 
     warehouse_id: UUID
-    locations: Optional[List[str]] = None
-    items_filter: Optional[Dict[str, Any]] = None
+    locations: Optional[list[str]] = None
+    items_filter: Optional[dict[str, Any]] = None
 
     count_date: Optional[date] = None
     count_supervisor: str = Field(..., max_length=200)
-    counters: Optional[List[str]] = None
+    counters: Optional[list[str]] = None
 
     notes: Optional[str] = None
-    platform_data: Optional[Dict[str, Any]] = None
+    platform_data: Optional[dict[str, Any]] = None
 
 
 class StockCountResponse(InventoryBase):
@@ -701,14 +701,14 @@ class StockCountResponse(InventoryBase):
     count_type: str
 
     warehouse_id: UUID
-    locations: Optional[List[str]] = None
-    items_filter: Optional[Dict[str, Any]] = None
+    locations: Optional[list[str]] = None
+    items_filter: Optional[dict[str, Any]] = None
 
     count_status: str = "planned"
     progress_percentage: int = 0
 
     count_supervisor: str
-    counters: Optional[List[str]] = None
+    counters: Optional[list[str]] = None
 
     items_counted: int = 0
     discrepancies_found: int = 0
@@ -719,14 +719,14 @@ class StockCountResponse(InventoryBase):
     finalized_date: Optional[date] = None
 
     notes: Optional[str] = None
-    platform_data: Optional[Dict[str, Any]] = None
+    platform_data: Optional[dict[str, Any]] = None
 
     created_at: datetime
     updated_at: Optional[datetime] = None
 
     # Related data
     warehouse: Optional["WarehouseResponse"] = None
-    count_lines: Optional[List["StockCountLineResponse"]] = None
+    count_lines: Optional[list["StockCountLineResponse"]] = None
 
     # Computed fields
     accuracy_percentage: Optional[float] = None
@@ -757,7 +757,7 @@ class StockCountLineResponse(InventoryBase):
     adjustment_made: bool = False
 
     notes: Optional[str] = None
-    platform_data: Optional[Dict[str, Any]] = None
+    platform_data: Optional[dict[str, Any]] = None
 
     created_at: datetime
 

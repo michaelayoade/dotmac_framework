@@ -2,10 +2,10 @@
 Pydantic schemas for Partner API.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field, ConfigDict
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class PartnerBase(BaseModel):
@@ -44,12 +44,11 @@ class PartnerResponse(BaseModel):
     tier: str
     status: str
 
-    model_config = ConfigDict(
-        from_attributes=True
-    )
+    model_config = ConfigDict(from_attributes=True)
+
 
 class PaginatedPartners(BaseModel):
-    items: List[PartnerResponse]
+    items: list[PartnerResponse]
     total: int
     page: int
     size: int
@@ -61,4 +60,3 @@ class TierUpdateRequest(BaseModel):
 
 class SuspendRequest(BaseModel):
     reason: Optional[str] = None
-

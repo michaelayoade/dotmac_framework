@@ -4,21 +4,19 @@ All schemas inherit from base classes to eliminate code duplication.
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 from uuid import UUID
 
-from pydantic import Field, field_validator
-
-from dotmac_shared.schemas.base_schemas import (
+from dotmac.core.schemas.base_schemas import (
     BaseCreateSchema,
     BaseResponseSchema,
     BaseUpdateSchema,
     CurrencyMixin,
     GeoLocationMixin,
-    TenantEntity,
 )
+from pydantic import Field, field_validator
 
-from .models import CoverageStatusEnum, NetworkNodeTypeEnum, ServiceTypeEnum
+from .models import NetworkNodeTypeEnum, ServiceTypeEnum
 
 # ============================================================================
 # SERVICE AREA SCHEMAS
@@ -28,14 +26,10 @@ from .models import CoverageStatusEnum, NetworkNodeTypeEnum, ServiceTypeEnum
 class ServiceAreaCreate(BaseCreateSchema, GeoLocationMixin):
     """Create schema for service areas - inherits geo location fields."""
 
-    name: str = Field(
-        ..., min_length=1, max_length=200, description="Service area name"
-    )
+    name: str = Field(..., min_length=1, max_length=200, description="Service area name")
     description: Optional[str] = Field(None, max_length=1000)
-    polygon_coordinates: List[Dict[str, float]] = Field(
-        ..., description="Area boundary coordinates"
-    )
-    service_types: List[ServiceTypeEnum] = Field(..., description="Available services")
+    polygon_coordinates: list[dict[str, float]] = Field(..., description="Area boundary coordinates")
+    service_types: list[ServiceTypeEnum] = Field(..., description="Available services")
 
     @field_validator("polygon_coordinates")
     @classmethod
@@ -51,16 +45,16 @@ class ServiceAreaUpdate(BaseUpdateSchema):
 
     name: Optional[str] = Field(None, min_length=1, max_length=200)
     description: Optional[str] = Field(None, max_length=1000)
-    polygon_coordinates: Optional[List[Dict[str, float]]] = None
-    service_types: Optional[List[ServiceTypeEnum]] = None
+    polygon_coordinates: Optional[list[dict[str, float]]] = None
+    service_types: Optional[list[ServiceTypeEnum]] = None
     is_active: Optional[bool] = None
 
 
 class ServiceAreaResponse(BaseResponseSchema, GeoLocationMixin):
     """Response schema inheriting all standard fields."""
 
-    polygon_coordinates: List[Dict[str, float]]
-    service_types: List[ServiceTypeEnum]
+    polygon_coordinates: list[dict[str, float]]
+    service_types: list[ServiceTypeEnum]
     population: int = 0
     households: int = 0
     businesses: int = 0
@@ -81,9 +75,7 @@ class NetworkNodeCreate(BaseCreateSchema, GeoLocationMixin):
     ip_address: Optional[str] = Field(None, description="IP address")
     mac_address: Optional[str] = Field(None, description="MAC address")
     bandwidth_mbps: Optional[int] = Field(None, ge=1, description="Bandwidth in Mbps")
-    coverage_radius_km: Optional[float] = Field(
-        None, ge=0, description="Coverage radius"
-    )
+    coverage_radius_km: Optional[float] = Field(None, ge=0, description="Coverage radius")
     service_area_id: Optional[UUID] = Field(None, description="Associated service area")
 
 
@@ -124,12 +116,10 @@ class CoverageAnalysisRequest(BaseCreateSchema):
     """Request for coverage analysis."""
 
     service_area_id: UUID = Field(..., description="Service area to analyze")
-    service_types: List[ServiceTypeEnum] = Field(..., description="Services to analyze")
+    service_types: list[ServiceTypeEnum] = Field(..., description="Services to analyze")
     include_demographics: bool = Field(True, description="Include demographic data")
     include_competition: bool = Field(False, description="Include competitor analysis")
-    analysis_parameters: Optional[Dict[str, Any]] = Field(
-        {}, description="Custom parameters"
-    )
+    analysis_parameters: Optional[dict[str, Any]] = Field({}, description="Custom parameters")
 
 
 class CoverageGapSchema(BaseResponseSchema):
@@ -137,12 +127,12 @@ class CoverageGapSchema(BaseResponseSchema):
 
     gap_type: str
     severity: str
-    polygon_coordinates: List[Dict[str, float]]
+    polygon_coordinates: list[dict[str, float]]
     affected_customers: int = 0
     potential_revenue: float = 0.0
     buildout_cost: float = 0.0
     priority_score: float = 0.0
-    recommendations: List[str] = []
+    recommendations: list[str] = []
 
 
 class CoverageRecommendationSchema(BaseResponseSchema, CurrencyMixin):
@@ -152,27 +142,27 @@ class CoverageRecommendationSchema(BaseResponseSchema, CurrencyMixin):
     priority: str
     description: str
     timeframe: Optional[str] = None
-    requirements: List[str] = []
-    affected_areas: List[Dict[str, Any]] = []
+    requirements: list[str] = []
+    affected_areas: list[dict[str, Any]] = []
 
 
 class CoverageAnalysisResponse(BaseResponseSchema):
     """Complete coverage analysis results."""
 
     service_area_id: UUID
-    service_types: List[ServiceTypeEnum]
+    service_types: list[ServiceTypeEnum]
     coverage_percentage: float
     population: int = 0
     households: int = 0
     businesses: int = 0
 
     # Analysis results
-    gaps: List[CoverageGapSchema] = []
-    recommendations: List[CoverageRecommendationSchema] = []
+    gaps: list[CoverageGapSchema] = []
+    recommendations: list[CoverageRecommendationSchema] = []
 
     # Demographics (optional)
-    demographics: Optional[Dict[str, Any]] = None
-    competitor_analysis: Optional[Dict[str, Any]] = None
+    demographics: Optional[dict[str, Any]] = None
+    competitor_analysis: Optional[dict[str, Any]] = None
 
 
 # ============================================================================
@@ -185,13 +175,9 @@ class TerritoryCreate(BaseCreateSchema):
 
     name: str = Field(..., min_length=1, max_length=200)
     description: Optional[str] = Field(None, max_length=1000)
-    boundary_coordinates: List[Dict[str, float]] = Field(
-        ..., description="Territory boundary"
-    )
+    boundary_coordinates: list[dict[str, float]] = Field(..., description="Territory boundary")
     territory_type: str = Field("sales", description="Territory type")
-    color: Optional[str] = Field(
-        None, pattern=r"^#[0-9A-Fa-f]{6}$", description="Hex color"
-    )
+    color: Optional[str] = Field(None, pattern=r"^#[0-9A-Fa-f]{6}$", description="Hex color")
     assigned_user_id: Optional[UUID] = None
     revenue_target: Optional[float] = Field(None, ge=0)
 
@@ -209,7 +195,7 @@ class TerritoryUpdate(BaseUpdateSchema):
 
     name: Optional[str] = Field(None, min_length=1, max_length=200)
     description: Optional[str] = Field(None, max_length=1000)
-    boundary_coordinates: Optional[List[Dict[str, float]]] = None
+    boundary_coordinates: Optional[list[dict[str, float]]] = None
     territory_type: Optional[str] = None
     color: Optional[str] = Field(None, pattern=r"^#[0-9A-Fa-f]{6}$")
     assigned_user_id: Optional[UUID] = None
@@ -220,7 +206,7 @@ class TerritoryUpdate(BaseUpdateSchema):
 class TerritoryResponse(BaseResponseSchema):
     """Territory response schema."""
 
-    boundary_coordinates: List[Dict[str, float]]
+    boundary_coordinates: list[dict[str, float]]
     territory_type: str
     color: Optional[str] = None
     assigned_user_id: Optional[UUID] = None
@@ -228,8 +214,8 @@ class TerritoryResponse(BaseResponseSchema):
     customer_count: int = 0
     revenue_target: float = 0.0
     actual_revenue: float = 0.0
-    competitor_analysis: Dict[str, Any] = {}
-    demographics: Dict[str, Any] = {}
+    competitor_analysis: dict[str, Any] = {}
+    demographics: dict[str, Any] = {}
 
 
 # ============================================================================
@@ -240,12 +226,12 @@ class TerritoryResponse(BaseResponseSchema):
 class RouteOptimizationRequest(BaseCreateSchema):
     """Route optimization request."""
 
-    start_coordinates: Dict[str, float] = Field(..., description="Starting point")
-    end_coordinates: Optional[Dict[str, float]] = Field(None, description="End point")
-    waypoints: List[Dict[str, float]] = Field([], description="Intermediate points")
+    start_coordinates: dict[str, float] = Field(..., description="Starting point")
+    end_coordinates: Optional[dict[str, float]] = Field(None, description="End point")
+    waypoints: list[dict[str, float]] = Field([], description="Intermediate points")
     optimization_type: str = Field("shortest", description="Optimization goal")
     vehicle_type: str = Field("truck", description="Vehicle type")
-    constraints: Dict[str, Any] = Field({}, description="Route constraints")
+    constraints: dict[str, Any] = Field({}, description="Route constraints")
 
     @field_validator("start_coordinates")
     @classmethod
@@ -260,14 +246,14 @@ class RouteOptimizationRequest(BaseCreateSchema):
 class RouteOptimizationResponse(BaseResponseSchema):
     """Route optimization results."""
 
-    start_coordinates: Dict[str, float]
-    end_coordinates: Optional[Dict[str, float]] = None
-    waypoints: List[Dict[str, float]] = []
+    start_coordinates: dict[str, float]
+    end_coordinates: Optional[dict[str, float]] = None
+    waypoints: list[dict[str, float]] = []
     optimization_type: str
     vehicle_type: str
 
     # Results
-    optimized_route: Optional[List[Dict[str, float]]] = None
+    optimized_route: Optional[list[dict[str, float]]] = None
     total_distance_km: Optional[float] = None
     estimated_duration_minutes: Optional[int] = None
     calculated_at: Optional[datetime] = None
@@ -281,13 +267,9 @@ class RouteOptimizationResponse(BaseResponseSchema):
 class GeocodingRequest(BaseCreateSchema):
     """Geocoding request schema."""
 
-    address: str = Field(
-        ..., min_length=1, max_length=500, description="Address to geocode"
-    )
+    address: str = Field(..., min_length=1, max_length=500, description="Address to geocode")
     country: Optional[str] = Field(None, description="Country filter")
-    bounds: Optional[Dict[str, float]] = Field(
-        None, description="Bounding box for results"
-    )
+    bounds: Optional[dict[str, float]] = Field(None, description="Bounding box for results")
 
 
 class ReverseGeocodingRequest(BaseCreateSchema):
@@ -304,7 +286,7 @@ class GeocodingResponse(BaseResponseSchema):
     latitude: float
     longitude: float
     confidence: float = Field(..., ge=0, le=1, description="Result confidence score")
-    components: Dict[str, str] = Field({}, description="Address components")
+    components: dict[str, str] = Field({}, description="Address components")
 
 
 # Export all schemas

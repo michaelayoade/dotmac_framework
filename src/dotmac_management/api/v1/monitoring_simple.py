@@ -6,32 +6,31 @@ module-specific models that duplicate core tables.
 """
 
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List
+from typing import Any, Optional
 
-from fastapi import APIRouter, HTTPException, Depends, Query, status
+from dotmac.application import standard_exception_handler
+from dotmac.application.api.router_factory import RouterFactory
 from dotmac_shared.api.dependencies import (
     StandardDependencies,
-    PaginatedDependencies,
-    SearchParams,
     get_standard_deps,
-    get_paginated_deps,
-    get_admin_deps
 )
-from dotmac_shared.api.exception_handlers import standard_exception_handler
+from dotmac_shared.api.rate_limiting_decorators import rate_limit
+from fastapi import Depends, Query
 
 from ...repositories.monitoring import MonitoringRepository
 
-
-router = APIRouter(prefix="/monitoring", tags=["Monitoring"])
+# DRY Router
+router = RouterFactory("Monitoring").create_router(prefix="/monitoring", tags=["Monitoring"])
 
 
 @router.get("/health/recent")
+@rate_limit(max_requests=120, time_window_seconds=60)
 @standard_exception_handler
 async def recent_health_checks(
     deps: StandardDependencies = Depends(get_standard_deps),
     limit: int = Query(10, ge=1, le=200),
-    check_type: str | None = Query(None),
-) -> Dict[str, Any]:
+    check_type: Optional[str] = Query(None),
+) -> dict[str, Any]:
     repo = MonitoringRepository(deps.db)
     checks = await repo.get_tenant_health_checks(deps.tenant_id, limit, check_type)
     return {
@@ -53,8 +52,11 @@ async def recent_health_checks(
 
 
 @router.get("/alerts/active")
+@rate_limit(max_requests=120, time_window_seconds=60)
 @standard_exception_handler
-async def active_alerts(deps: StandardDependencies = Depends(get_standard_deps)) -> Dict[str, Any]:
+async def active_alerts(
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> dict[str, Any]:
     repo = MonitoringRepository(deps.db)
     alerts = await repo.get_active_alerts(deps.tenant_id)
     return {
@@ -77,19 +79,18 @@ async def active_alerts(deps: StandardDependencies = Depends(get_standard_deps))
 
 
 @router.get("/metrics/{metric_name}")
+@rate_limit(max_requests=120, time_window_seconds=60)
 @standard_exception_handler
 async def metrics_by_name(
     metric_name: str,
     deps: StandardDependencies = Depends(get_standard_deps),
     hours: int = Query(24, ge=1, le=168),
     limit: int = Query(500, ge=1, le=5000),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     repo = MonitoringRepository(deps.db)
     end_time = datetime.now(timezone.utc)
     start_time = end_time - timedelta(hours=hours)
-    metrics = await repo.get_tenant_metrics(
-        deps.tenant_id, [metric_name], start_time, end_time, limit
-    )
+    metrics = await repo.get_tenant_metrics(deps.tenant_id, [metric_name], start_time, end_time, limit)
     return {
         "tenant_id": deps.tenant_id,
         "metric": metric_name,
@@ -106,4 +107,3 @@ async def metrics_by_name(
             for m in metrics
         ],
     }
-

@@ -1,0 +1,107 @@
+# GitLeaks configuration for DotMac Framework
+# Handles legitimate secret templates while catching real secrets
+
+[extend]
+# Use default rules as base
+useDefault = true
+
+# =============================================================================
+# ALLOWLIST - LEGITIMATE PATTERNS
+# =============================================================================
+
+[[rules]]
+id = "secret-template-allowlist"
+description = "Allow ${SECRET:*} templates - these are legitimate placeholders"
+regex = '''\$\{SECRET:[^}]+\}'''
+allowlist.regexes = [
+  '''\$\{SECRET:[^}]+\}''', # Secret injection templates
+]
+
+# =============================================================================
+# CUSTOM RULES - ENHANCED DETECTION
+# =============================================================================
+
+[[rules]]
+id = "hardcoded-password-not-template"
+description = "Hardcoded password (excluding templates)"
+regex = '''password\s*[:=]\s*['"][^'"]{6,}['"]'''
+allowlist.regexes = [
+  '''\$\{SECRET:.*\}''',          # Templates
+  '''password.*test''',           # Test files
+  '''PASSWORD\s*=\s*"pwd"''',     # Our enum fix
+]
+
+[[rules]] 
+id = "hardcoded-api-key-not-template"
+description = "Hardcoded API key (excluding templates)" 
+regex = '''api_key\s*[:=]\s*['"][^'"]{20,}['"]'''
+allowlist.regexes = [
+  '''\$\{SECRET:.*api_key\}''',   # API key templates
+  '''api_key.*example''',         # Example values
+]
+
+[[rules]]
+id = "hardcoded-secret-not-template"
+description = "Hardcoded secret (excluding templates)"
+regex = '''secret\s*[:=]\s*['"][^'"]{10,}['"]'''
+allowlist.regexes = [
+  '''\$\{SECRET:.*\}''',          # Templates
+  '''secret.*test''',             # Test values
+]
+
+# =============================================================================
+# PATH-BASED ALLOWLISTS
+# =============================================================================
+
+[[rules]]
+id = "config-generator-templates"
+description = "Allow templates in configuration generators"
+regex = '''(password|api_key|secret)\s*[:=]'''
+allowlist.paths = [
+  '''.*config_generator\.py''',   # Config generation files
+  '''.*template.*\.py''',         # Template files
+]
+
+# =============================================================================
+# GLOBAL ALLOWLISTS
+# =============================================================================
+
+[allowlist]
+description = "Global allowlists for legitimate patterns"
+
+# File patterns to ignore completely
+paths = [
+  '''.*\.md''',                   # Documentation files
+  '''.*test.*''',                 # Test files
+  '''.*example.*''',              # Example files
+  '''.*\.template''',             # Template files
+]
+
+# Regex patterns to allow globally
+regexes = [
+  '''SECRET:\"\)''',              # Validation code patterns
+  '''"SECRET:" in ''',            # Detection logic
+  '''\.startswith\("SECRET:''',   # Placeholder checks
+]
+
+# =============================================================================
+# ENTROPY RULES
+# =============================================================================
+
+[[rules]]
+id = "high-entropy-not-template"
+description = "High entropy strings (excluding templates)"
+regex = '''['"][A-Za-z0-9+/]{32,}['"]'''
+entropy = 4.3
+allowlist.regexes = [
+  '''\$\{SECRET:[^}]+\}''',       # Templates have low entropy
+  '''test|example|sample''',      # Test values
+]
+
+# =============================================================================
+# OUTPUT CONFIGURATION
+# =============================================================================
+
+[output]
+format = "json"
+path = "gitleaks-report.json"

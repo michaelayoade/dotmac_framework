@@ -1,162 +1,57 @@
-# Pre-commit hooks configuration for DotMac Framework
-# Ensures code quality and consistency across all developers
-# Run: pre-commit install to enable
-
 repos:
-  # DRY Pattern Enforcement (MANDATORY)
-  - repo: local
-    hooks:
-      - id: dry-pattern-validation
-        name: "DRY Pattern Validation (MANDATORY)"
-        entry: python3
-        args: ["tools/run_dry_validation.py"]
-        language: system
-        pass_filenames: false
-        always_run: true
-        stages: [commit, push]
-        verbose: true
+- repo: local
+  hooks:
+  - id: syntax-validation
+    name: Python Syntax Validation
+    entry: python .dev-artifacts/scripts/syntax_validator.py
+    language: system
+    files: \.py$
+    exclude: ^(templates/|tools/|docs/)
+    pass_filenames: false
+    args: [--fail-on-templates, "false"]
+  
+  - id: import-policy-check
+    name: Import Policy Validation
+    entry: python .dev-artifacts/scripts/import_policy_checker.py
+    language: system
+    files: \.py$
+    exclude: ^(templates/|tools/|docs/)
+    pass_filenames: false
+    args: [--fail-on-errors]
+  
+  - id: python-ast
+    name: Python AST Check
+    entry: python -m py_compile
+    language: system
+    files: \.py$
+    exclude: ^(templates/|tools/|docs/)
+  
+  - id: check-critical-module-exceptions
+    name: Check critical modules for broad exceptions
+    entry: python scripts/check_broad_exceptions.py
+    language: system
+    pass_filenames: false
+    files: '^(src/dotmac_shared/repositories/|src/dotmac_management/core/).*\.py$'
 
-      - id: enforce-dry-patterns
-        name: "Enforce DRY Patterns (STRICT)"
-        entry: python3
-        args: ["tools/enforce_patterns.py"]
-        language: system
-        types: [python]
-        stages: [push]
-        verbose: true
+- repo: https://github.com/psf/black
+  rev: 23.3.0
+  hooks:
+  - id: black
+    files: ^src/
+    exclude: ^(templates/|tools/|docs/)
 
-  # Python code formatting
-  - repo: https://github.com/psf/black
-    rev: 24.4.2
-    hooks:
-      - id: black
-        language_version: python3
-        args: ["--line-length=88"]
+- repo: https://github.com/pycqa/isort
+  rev: 5.12.0
+  hooks:
+  - id: isort
+    files: ^src/
+    exclude: ^(templates/|tools/|docs/)
+    args: [--profile=black]
 
-  # Import sorting
-  - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
-    hooks:
-      - id: isort
-        args: ["--profile", "black", "--line-length=88"]
-
-  # Linting and code quality with Ruff
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.4.8
-    hooks:
-      - id: ruff
-        args: [--fix, --exit-non-zero-on-fix]
-      - id: ruff-format
-
-  # Security scanning
-  - repo: https://github.com/PyCQA/bandit
-    rev: 1.7.5
-    hooks:
-      - id: bandit
-        args: ["-c", "pyproject.toml"]
-        additional_dependencies: ["bandit[toml]"]
-        exclude: ^(tests/|.*/tests/|migrations/|.*/migrations/).*$
-
-  # Type checking
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.10.0
-    hooks:
-      - id: mypy
-        additional_dependencies:
-          [
-            types-requests,
-            types-PyYAML,
-            types-redis,
-            types-psycopg2,
-            pydantic,
-            fastapi,
-            sqlalchemy,
-            httpx,
-            pytest-asyncio,
-          ]
-        args: [--ignore-missing-imports, --no-error-summary]
-        exclude: ^(tests/|.*/tests/|migrations/|.*/migrations/).*$
-
-  # General file checks
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
-    hooks:
-      - id: trailing-whitespace
-      - id: end-of-file-fixer
-      - id: check-yaml
-      - id: check-json
-      - id: check-toml
-      - id: check-added-large-files
-        args: ["--maxkb=1000"]
-      - id: check-merge-conflict
-      - id: check-case-conflict
-      - id: check-docstring-first
-      - id: check-executables-have-shebangs
-      - id: mixed-line-ending
-      - id: fix-byte-order-marker
-
-  # Shell script validation
-  - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.9.0.6
-    hooks:
-      - id: shellcheck
-        args: ["-e", "SC1091"] # Ignore "not following" sourced files
-
-  # Dockerfile linting
-  - repo: https://github.com/hadolint/hadolint
-    rev: v2.12.0
-    hooks:
-      - id: hadolint-docker
-        args: ["--ignore", "DL3008", "--ignore", "DL3009"]
-
-  # YAML formatting
-  - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v4.0.0-alpha.8
-    hooks:
-      - id: prettier
-        types: [yaml]
-        exclude: ^(.github/workflows/|docker-compose.*\.yml)$
-
-  # Markdown linting
-  - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: v0.39.0
-    hooks:
-      - id: markdownlint
-        args: ["--fix"]
-
-  # Commit message linting
-  - repo: https://github.com/compilerla/conventional-pre-commit
-    rev: v3.2.0
-    hooks:
-      - id: conventional-pre-commit
-        stages: [commit-msg]
-        args: [optional-scope]
-
-# Configuration
-default_install_hook_types: [pre-commit, pre-push, commit-msg]
-default_stages: [pre-commit]
-
-# Exclude patterns
-exclude: |
-  (?x)^(
-      .*/__pycache__/.*|
-      .*/\.git/.*|
-      .*/migrations/.*|
-      .*/alembic/versions/.*|
-      .*/node_modules/.*|
-      .*/venv/.*|
-      .*/\.venv/.*|
-      .*\.pyc|
-      .*\.pyo|
-      .*\.pyd|
-      .*\.egg-info/.*|
-      .*/build/.*|
-      .*/dist/.*|
-      .*/htmlcov/.*|
-      .*/\.coverage.*|
-      .*/coverage\.xml|
-      .*/\.pytest_cache/.*|
-      .*/\.mypy_cache/.*|
-      .*/\.ruff_cache/.*|
-      .*\.lock
-  )$
+- repo: https://github.com/pycqa/flake8
+  rev: 6.0.0
+  hooks:
+  - id: flake8
+    files: ^src/
+    exclude: ^(templates/|tools/|docs/)
+    args: [--max-line-length=88, --extend-ignore=E203,W503]

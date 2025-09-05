@@ -2,20 +2,16 @@
 Partner management API used by the management-reseller portal.
 """
 
-from typing import Any, Dict
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Depends
-
+from dotmac.application import standard_exception_handler
 from dotmac_shared.api.dependencies import (
-    StandardDependencies,
     PaginatedDependencies,
-    SearchParams,
-    get_standard_deps,
+    StandardDependencies,
     get_paginated_deps,
-    get_admin_deps
+    get_standard_deps,
 )
-from dotmac_shared.api.exception_handlers import standard_exception_handler
+from fastapi import APIRouter, Depends
 
 from ....repositories.partner import PartnerRepository
 from .schemas import (
@@ -26,7 +22,6 @@ from .schemas import (
     SuspendRequest,
     TierUpdateRequest,
 )
-
 
 router = APIRouter(prefix="/partners", tags=["Partner Management"])
 
@@ -63,7 +58,7 @@ async def get_partner(partner_id: UUID, deps: StandardDependencies = Depends(get
     repo = PartnerRepository(deps.db)
     partner = await repo.get_by_id(partner_id)
     if not partner:
-        from fastapi import HTTPException, Depends
+        from fastapi import HTTPException
 
         raise HTTPException(status_code=404, detail="Partner not found")
     return PartnerResponse.model_validate(partner)
@@ -71,7 +66,10 @@ async def get_partner(partner_id: UUID, deps: StandardDependencies = Depends(get
 
 @router.post("/", response_model=PartnerResponse, status_code=201)
 @standard_exception_handler
-async def create_partner(data: PartnerCreate, deps: StandardDependencies = Depends(get_standard_deps)) -> PartnerResponse:
+async def create_partner(
+    data: PartnerCreate,
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> PartnerResponse:
     repo = PartnerRepository(deps.db)
     obj = await repo.create(data.model_dump(), user_id=deps.user_id)
     return PartnerResponse.model_validate(obj)
@@ -80,12 +78,14 @@ async def create_partner(data: PartnerCreate, deps: StandardDependencies = Depen
 @router.put("/{partner_id}", response_model=PartnerResponse)
 @standard_exception_handler
 async def update_partner(
-    partner_id: UUID, data: PartnerUpdate, deps: StandardDependencies = Depends(get_standard_deps)
+    partner_id: UUID,
+    data: PartnerUpdate,
+    deps: StandardDependencies = Depends(get_standard_deps),
 ) -> PartnerResponse:
     repo = PartnerRepository(deps.db)
     partner = await repo.get_by_id(partner_id)
     if not partner:
-        from fastapi import HTTPException, Depends
+        from fastapi import HTTPException
 
         raise HTTPException(status_code=404, detail="Partner not found")
     update_data = data.model_dump(exclude_unset=True)
@@ -99,11 +99,11 @@ async def update_partner(
 
 @router.delete("/{partner_id}")
 @standard_exception_handler
-async def delete_partner(partner_id: UUID, deps: StandardDependencies = Depends(get_standard_deps)) -> Dict[str, str]:
+async def delete_partner(partner_id: UUID, deps: StandardDependencies = Depends(get_standard_deps)) -> dict[str, str]:
     repo = PartnerRepository(deps.db)
     partner = await repo.get_by_id(partner_id)
     if not partner:
-        from fastapi import HTTPException, Depends
+        from fastapi import HTTPException
 
         raise HTTPException(status_code=404, detail="Partner not found")
     partner.is_deleted = True
@@ -117,7 +117,7 @@ async def approve_partner(partner_id: UUID, deps: StandardDependencies = Depends
     repo = PartnerRepository(deps.db)
     partner = await repo.approve(partner_id)
     if not partner:
-        from fastapi import HTTPException, Depends
+        from fastapi import HTTPException
 
         raise HTTPException(status_code=404, detail="Partner not found")
     return PartnerResponse.model_validate(partner)
@@ -126,12 +126,14 @@ async def approve_partner(partner_id: UUID, deps: StandardDependencies = Depends
 @router.post("/{partner_id}/suspend", response_model=PartnerResponse)
 @standard_exception_handler
 async def suspend_partner(
-    partner_id: UUID, data: SuspendRequest, deps: StandardDependencies = Depends(get_standard_deps)
+    partner_id: UUID,
+    data: SuspendRequest,
+    deps: StandardDependencies = Depends(get_standard_deps),
 ) -> PartnerResponse:
     repo = PartnerRepository(deps.db)
     partner = await repo.suspend(partner_id, data.reason)
     if not partner:
-        from fastapi import HTTPException, Depends
+        from fastapi import HTTPException
 
         raise HTTPException(status_code=404, detail="Partner not found")
     return PartnerResponse.model_validate(partner)
@@ -140,13 +142,14 @@ async def suspend_partner(
 @router.put("/{partner_id}/tier", response_model=PartnerResponse)
 @standard_exception_handler
 async def update_partner_tier(
-    partner_id: UUID, data: TierUpdateRequest, deps: StandardDependencies = Depends(get_standard_deps)
+    partner_id: UUID,
+    data: TierUpdateRequest,
+    deps: StandardDependencies = Depends(get_standard_deps),
 ) -> PartnerResponse:
     repo = PartnerRepository(deps.db)
     partner = await repo.update_tier(partner_id, data.tier)
     if not partner:
-        from fastapi import HTTPException, Depends
+        from fastapi import HTTPException
 
         raise HTTPException(status_code=404, detail="Partner not found")
     return PartnerResponse.model_validate(partner)
-

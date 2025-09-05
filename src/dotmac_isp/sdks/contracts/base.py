@@ -1,7 +1,7 @@
 """Base contract definitions."""
 
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 
 @dataclass
@@ -10,8 +10,8 @@ class BaseContract:
 
     id: Optional[str] = None
     version: str = "1.0"
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: Optional[dict[str, Any]] = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {"id": self.id, "version": self.version, "metadata": self.metadata or {}}

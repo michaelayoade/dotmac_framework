@@ -27,9 +27,9 @@ jobs:
           npm -v
           npx playwright install --with-deps
 
-      - name: Start Notification Test Stack
+      - name: Start Notification Test Stack (removed)
         run: |
-          docker compose -f docker/test-services/docker-compose.test-notifications.yml up -d --build
+          echo "Notification tester stack removed; configure your own if needed."
 
       - name: Wait for Notification Services
         run: |
@@ -37,26 +37,22 @@ jobs:
           timeout 120 bash -c 'until curl -sf http://localhost:3030/health; do sleep 2; done'
           timeout 120 bash -c 'until curl -sf http://localhost:8080/health; do sleep 2; done'
 
-      - name: Start File Storage Test Stack
+      - name: Start File Storage Test Stack (removed)
         run: |
-          docker compose -f docker/test-services/docker-compose.test-filestorage.yml up -d --build
+          echo "File storage tester stack removed; configure your own if needed."
 
       - name: Wait for File Storage Services
         run: |
           timeout 180 bash -c 'until curl -sf http://localhost:9000/minio/health/live; do sleep 3; done'
           timeout 180 bash -c 'until curl -sf http://localhost:8081/health; do sleep 3; done'
 
-      - name: Run Notification Tester
+      - name: Run Notification Tester (removed)
         run: |
-          curl -sf -X POST http://localhost:8080/run-tests
-          sleep 2
-          curl -sf http://localhost:8080/results | tee notification-results.json
+          echo "Notification tester removed."
 
-      - name: Run File Storage Tester
+      - name: Run File Storage Tester (removed)
         run: |
-          curl -sf -X POST http://localhost:8081/run-tests
-          sleep 2
-          curl -sf http://localhost:8081/results | tee filestorage-results.json
+          echo "File storage tester removed."
 
       - name: Run Mocked SSO Playwright Suite
         working-directory: frontend
@@ -79,8 +75,7 @@ jobs:
         run: |
           python -m pytest -m "e2e" -v --tb=short
 
-      - name: Tear down services
+      - name: Tear down services (none)
         if: always()
         run: |
-          docker compose -f docker/test-services/docker-compose.test-filestorage.yml down -v
-          docker compose -f docker/test-services/docker-compose.test-notifications.yml down -v
+          echo "No external tester services to tear down."

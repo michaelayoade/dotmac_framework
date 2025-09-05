@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from .transport import RequestContext
 
@@ -11,7 +11,7 @@ from .transport import RequestContext
 class AuthenticationMethod(str, Enum):
     """Authentication method types."""
 
-    PASSWORD = "password"
+    PASSWORD = "pwd"  # noqa: S105 - enum label, not a secret
     JWT = "jwt"
     API_KEY = "api_key"
     OAUTH2 = "oauth2"
@@ -59,7 +59,7 @@ class AuthenticationRequest:
     password: Optional[str] = None
     token: Optional[str] = None
     method: AuthenticationMethod = AuthenticationMethod.PASSWORD
-    client_info: Optional[Dict[str, Any]] = None
+    client_info: Optional[dict[str, Any]] = None
     mfa_code: Optional[str] = None
     context: Optional[RequestContext] = None
 
@@ -74,8 +74,8 @@ class AuthenticationResponse:
     access_token: Optional[str] = None
     refresh_token: Optional[str] = None
     expires_at: Optional[datetime] = None
-    permissions: Optional[List[str]] = None
-    roles: Optional[List[str]] = None
+    permissions: Optional[list[str]] = None
+    roles: Optional[list[str]] = None
     session_id: Optional[str] = None
     mfa_required: bool = False
     error_message: Optional[str] = None
@@ -87,7 +87,7 @@ class TokenValidationRequest:
 
     token: str
     token_type: TokenType = TokenType.ACCESS
-    required_permissions: Optional[List[str]] = None
+    required_permissions: Optional[list[str]] = None
     context: Optional[RequestContext] = None
 
 
@@ -98,8 +98,8 @@ class TokenValidationResponse:
     valid: bool
     user_id: Optional[str] = None
     tenant_id: Optional[str] = None
-    permissions: Optional[List[str]] = None
-    roles: Optional[List[str]] = None
+    permissions: Optional[list[str]] = None
+    roles: Optional[list[str]] = None
     expires_at: Optional[datetime] = None
     error_message: Optional[str] = None
 
@@ -115,8 +115,8 @@ class SessionInfo:
     last_activity: datetime
     ip_address: Optional[str] = None
     user_agent: Optional[str] = None
-    permissions: Optional[List[str]] = None
-    roles: Optional[List[str]] = None
+    permissions: Optional[list[str]] = None
+    roles: Optional[list[str]] = None
 
 
 @dataclass
@@ -178,7 +178,7 @@ class RolePermission:
     """Role and permission mapping."""
 
     role: str
-    permissions: List[str]
+    permissions: list[str]
     description: Optional[str] = None
     scope: Optional[str] = None  # "tenant", "global", "resource"
 
@@ -191,10 +191,10 @@ class UserAuthProfile:
     username: str
     email: str
     tenant_id: str
-    roles: List[str]
-    permissions: List[str]
+    roles: list[str]
+    permissions: list[str]
     mfa_enabled: bool = False
-    mfa_methods: Optional[List[str]] = None
+    mfa_methods: Optional[list[str]] = None
     last_login: Optional[datetime] = None
     password_changed_at: Optional[datetime] = None
     account_locked: bool = False
@@ -213,8 +213,8 @@ class AuthResponse:
     access_token: Optional[str] = None
     refresh_token: Optional[str] = None
     expires_at: Optional[datetime] = None
-    permissions: Optional[List[str]] = None
-    roles: Optional[List[str]] = None
+    permissions: Optional[list[str]] = None
+    roles: Optional[list[str]] = None
     session_id: Optional[str] = None
     mfa_required: bool = False
     error_message: Optional[str] = None
@@ -229,7 +229,7 @@ class AuthToken:
     expires_at: Optional[datetime] = None
     user_id: Optional[str] = None
     tenant_id: Optional[str] = None
-    permissions: Optional[List[str]] = None
+    permissions: Optional[list[str]] = None
 
 
 @dataclass

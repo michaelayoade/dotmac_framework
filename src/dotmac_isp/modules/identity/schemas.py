@@ -1,18 +1,15 @@
 """Identity schemas for API requests and responses."""
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
-
-from dotmac_isp.modules.identity.models import AccountStatus, CustomerType, UserRole
-
-# Import SDK schemas to avoid duplication
+from dotmac_isp.modules.identity.models import AccountStatus, CustomerType
 from dotmac_isp.sdks.identity.schemas import CustomerCreate as SDKCustomerCreate
 from dotmac_isp.sdks.identity.schemas import CustomerResponse as SDKCustomerResponse
 from dotmac_isp.sdks.identity.schemas import CustomerUpdate as SDKCustomerUpdate
 from dotmac_isp.shared.schemas import AddressSchema, ContactSchema, TenantModelSchema
+from pydantic import BaseModel, EmailStr, Field
 
 
 class UserBase(ContactSchema):
@@ -30,7 +27,7 @@ class UserCreate(UserBase):
     """Schema for creating users."""
 
     password: str = Field(..., min_length=8, max_length=128)
-    role_ids: Optional[List[UUID]] = None
+    role_ids: Optional[list[UUID]] = None
 
 
 class UserUpdate(UserBase):
@@ -43,7 +40,7 @@ class UserUpdate(UserBase):
     timezone: Optional[str] = None
     language: Optional[str] = None
     is_active: Optional[bool] = None
-    role_ids: Optional[List[UUID]] = None
+    role_ids: Optional[list[UUID]] = None
 
 
 class UserResponse(TenantModelSchema, UserBase):
@@ -53,7 +50,7 @@ class UserResponse(TenantModelSchema, UserBase):
     is_verified: bool
     last_login: Optional[datetime] = None
     avatar_url: Optional[str] = None
-    roles: List["RoleResponse"] = []
+    roles: list["RoleResponse"] = []
 
     @property
     def full_name(self) -> str:
@@ -130,13 +127,9 @@ class CustomerResponseAPI(TenantModelSchema):
     """API schema for customer responses - includes portal_id as primary identifier."""
 
     # Primary identifier - Portal ID
-    portal_id: str = Field(
-        ..., description="Primary portal identifier for the customer"
-    )
+    portal_id: str = Field(..., description="Primary portal identifier for the customer")
     # Generated password for portal access (only returned on creation)
-    portal_password: Optional[str] = Field(
-        None, description="Generated password for portal access"
-    )
+    portal_password: Optional[str] = Field(None, description="Generated password for portal access")
     # Core fields from SDK
     customer_id: UUID
     customer_number: str
@@ -144,8 +137,8 @@ class CustomerResponseAPI(TenantModelSchema):
     customer_type: str
     customer_segment: str
     state: str
-    tags: List[str] = Field(default_factory=list)
-    custom_fields: Dict[str, Any] = Field(default_factory=dict)
+    tags: list[str] = Field(default_factory=list)
+    custom_fields: dict[str, Any] = Field(default_factory=dict)
 
     # Contact information - direct fields (customers can have multiple contacts)
     first_name: Optional[str] = None
@@ -307,7 +300,7 @@ class CustomerFilters(BaseModel):
     customer_segment: Optional[str] = None
     account_status: Optional[AccountStatus] = None
     search_query: Optional[str] = Field(None, max_length=200)
-    tags: Optional[List[str]] = None
+    tags: Optional[list[str]] = None
     created_after: Optional[datetime] = None
     created_before: Optional[datetime] = None
     has_services: Optional[bool] = None
@@ -316,7 +309,7 @@ class CustomerFilters(BaseModel):
 class CustomerListResponse(BaseModel):
     """Schema for paginated customer list responses."""
 
-    customers: List[CustomerResponseAPI]
+    customers: list[CustomerResponseAPI]
     total_count: int
     limit: int
     offset: int

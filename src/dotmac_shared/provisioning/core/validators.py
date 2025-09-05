@@ -4,8 +4,8 @@ Container health validation for the DotMac Provisioning Service.
 
 import asyncio
 import time
-from datetime import datetime, timedelta
-from typing import Any, Callable, Dict, List, Optional
+from datetime import datetime, timezone
+from typing import Any, Optional
 from uuid import UUID
 
 import aiohttp
@@ -26,9 +26,7 @@ class HealthValidator:
 
     async def __aenter__(self):
         """Async context manager entry."""
-        self.session = aiohttp.ClientSession(
-            timeout=aiohttp.ClientTimeout(total=self.timeout)
-        )
+        self.session = aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=self.timeout))
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
@@ -40,7 +38,7 @@ class HealthValidator:
         self,
         container_id: str,
         base_url: str,
-        expected_checks: Optional[List[str]] = None,
+        expected_checks: Optional[list[str]] = None,
     ) -> ContainerHealth:
         """Perform comprehensive container health validation."""
 
@@ -50,16 +48,12 @@ class HealthValidator:
             base_url=base_url,
         )
 
-        health_result = ContainerHealth(
-            overall_status=HealthStatus.STARTING, last_check=datetime.now(timezone.utc)
-        )
+        health_result = ContainerHealth(overall_status=HealthStatus.STARTING, last_check=datetime.now(timezone.utc))
 
         try:
             # Initialize session if not already done
             if not self.session:
-                self.session = aiohttp.ClientSession(
-                    timeout=aiohttp.ClientTimeout(total=self.timeout)
-                )
+                self.session = aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=self.timeout))
 
             # Perform individual health checks
             await self._check_api_health(base_url, health_result)
@@ -69,9 +63,7 @@ class HealthValidator:
 
             # Additional container-specific checks
             if expected_checks:
-                await self._check_custom_endpoints(
-                    base_url, expected_checks, health_result
-                )
+                await self._check_custom_endpoints(base_url, expected_checks, health_result)
 
             # Determine overall status
             health_result.overall_status = self._determine_overall_status(health_result)
@@ -95,9 +87,7 @@ class HealthValidator:
 
         return health_result
 
-    async def _check_api_health(
-        self, base_url: str, health_result: ContainerHealth
-    ) -> None:
+    async def _check_api_health(self, base_url: str, health_result: ContainerHealth) -> None:
         """Check API endpoint health."""
         try:
             start_time = time.time()
@@ -114,9 +104,7 @@ class HealthValidator:
                 else:
                     health_result.api_healthy = False
                     health_result.failed_checks.append("api_health")
-                    health_result.error_messages["api_health"] = (
-                        f"HTTP {response.status}"
-                    )
+                    health_result.error_messages["api_health"] = f"HTTP {response.status}"
                     logger.warning("API health check failed", status=response.status)
 
         except Exception as e:
@@ -125,9 +113,7 @@ class HealthValidator:
             health_result.error_messages["api_health"] = str(e)
             logger.error("API health check error", error=str(e))
 
-    async def _check_database_health(
-        self, base_url: str, health_result: ContainerHealth
-    ) -> None:
+    async def _check_database_health(self, base_url: str, health_result: ContainerHealth) -> None:
         """Check database connectivity."""
         try:
             start_time = time.time()
@@ -144,12 +130,8 @@ class HealthValidator:
                 else:
                     health_result.database_healthy = False
                     health_result.failed_checks.append("database_health")
-                    health_result.error_messages["database_health"] = (
-                        f"HTTP {response.status}"
-                    )
-                    logger.warning(
-                        "Database health check failed", status=response.status
-                    )
+                    health_result.error_messages["database_health"] = f"HTTP {response.status}"
+                    logger.warning("Database health check failed", status=response.status)
 
         except Exception as e:
             health_result.database_healthy = False
@@ -157,9 +139,7 @@ class HealthValidator:
             health_result.error_messages["database_health"] = str(e)
             logger.error("Database health check error", error=str(e))
 
-    async def _check_cache_health(
-        self, base_url: str, health_result: ContainerHealth
-    ) -> None:
+    async def _check_cache_health(self, base_url: str, health_result: ContainerHealth) -> None:
         """Check cache (Redis) connectivity."""
         try:
             async with self.session.get(f"{base_url}/health/cache") as response:
@@ -169,9 +149,7 @@ class HealthValidator:
                 else:
                     health_result.cache_healthy = False
                     health_result.failed_checks.append("cache_health")
-                    health_result.error_messages["cache_health"] = (
-                        f"HTTP {response.status}"
-                    )
+                    health_result.error_messages["cache_health"] = f"HTTP {response.status}"
                     logger.warning("Cache health check failed", status=response.status)
 
         except Exception as e:
@@ -180,9 +158,7 @@ class HealthValidator:
             health_result.error_messages["cache_health"] = str(e)
             logger.error("Cache health check error", error=str(e))
 
-    async def _check_ssl_health(
-        self, base_url: str, health_result: ContainerHealth
-    ) -> None:
+    async def _check_ssl_health(self, base_url: str, health_result: ContainerHealth) -> None:
         """Check SSL certificate status."""
         try:
             # Only check SSL if URL uses HTTPS
@@ -197,9 +173,7 @@ class HealthValidator:
                 else:
                     health_result.ssl_healthy = False
                     health_result.failed_checks.append("ssl_health")
-                    health_result.error_messages["ssl_health"] = (
-                        f"HTTP {response.status}"
-                    )
+                    health_result.error_messages["ssl_health"] = f"HTTP {response.status}"
                     logger.warning("SSL health check failed", status=response.status)
 
         except Exception as e:
@@ -209,7 +183,7 @@ class HealthValidator:
             logger.error("SSL health check error", error=str(e))
 
     async def _check_custom_endpoints(
-        self, base_url: str, endpoints: List[str], health_result: ContainerHealth
+        self, base_url: str, endpoints: list[str], health_result: ContainerHealth
     ) -> None:
         """Check custom health endpoints."""
         for endpoint in endpoints:
@@ -218,9 +192,7 @@ class HealthValidator:
                 async with self.session.get(endpoint_url) as response:
                     if response.status != 200:
                         health_result.failed_checks.append(f"custom_{endpoint}")
-                        health_result.error_messages[f"custom_{endpoint}"] = (
-                            f"HTTP {response.status}"
-                        )
+                        health_result.error_messages[f"custom_{endpoint}"] = f"HTTP {response.status}"
                         logger.warning(
                             "Custom endpoint check failed",
                             endpoint=endpoint,
@@ -232,9 +204,7 @@ class HealthValidator:
             except Exception as e:
                 health_result.failed_checks.append(f"custom_{endpoint}")
                 health_result.error_messages[f"custom_{endpoint}"] = str(e)
-                logger.error(
-                    "Custom endpoint check error", endpoint=endpoint, error=str(e)
-                )
+                logger.error("Custom endpoint check error", endpoint=endpoint, error=str(e))
 
     def _determine_overall_status(self, health_result: ContainerHealth) -> HealthStatus:
         """Determine overall health status based on individual checks."""
@@ -270,14 +240,10 @@ class HealthValidator:
 
         while time.time() - start_time < max_wait_seconds:
             attempt += 1
-            logger.debug(
-                "Health check attempt", attempt=attempt, container_id=container_id
-            )
+            logger.debug("Health check attempt", attempt=attempt, container_id=container_id)
 
             try:
-                health_result = await self.validate_container_health(
-                    container_id, base_url
-                )
+                health_result = await self.validate_container_health(container_id, base_url)
 
                 if health_result.overall_status == HealthStatus.HEALTHY:
                     logger.info(
@@ -320,16 +286,14 @@ class HealthValidator:
             container_id=container_id,
         )
 
-    async def get_container_metrics(self, base_url: str) -> Dict[str, Any]:
+    async def get_container_metrics(self, base_url: str) -> dict[str, Any]:
         """Get container performance metrics."""
         try:
             async with self.session.get(f"{base_url}/metrics") as response:
                 if response.status == 200:
-                    return await response.model_dump_json()
+                    return await response.json()
                 else:
-                    logger.warning(
-                        "Failed to get container metrics", status=response.status
-                    )
+                    logger.warning("Failed to get container metrics", status=response.status)
                     return {}
         except Exception as e:
             logger.error("Error getting container metrics", error=str(e))
@@ -340,7 +304,7 @@ async def validate_container_health(
     container_id: str,
     base_url: str,
     timeout: int = 60,
-    expected_checks: Optional[List[str]] = None,
+    expected_checks: Optional[list[str]] = None,
 ) -> ContainerHealth:
     """
     Standalone function to validate container health.
@@ -414,9 +378,7 @@ class ProvisioningValidator:
         )
 
     @staticmethod
-    async def validate_infrastructure_readiness(
-        infrastructure_type: str, region: str = "us-east-1"
-    ) -> bool:
+    async def validate_infrastructure_readiness(infrastructure_type: str, region: str = "us-east-1") -> bool:
         """Validate that infrastructure is ready for deployment."""
 
         # This would check:

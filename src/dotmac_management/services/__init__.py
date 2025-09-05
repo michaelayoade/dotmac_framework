@@ -1,19 +1,9 @@
-"""
-Service layer for business logic.
-"""
+"""Service layer package.
 
-from .auth_service import AuthService
-from .billing_service import BillingService
-from .deployment_service import DeploymentService
-from .monitoring_service import MonitoringService
-from .plugin_service import PluginService
-from .tenant_service import TenantService
+This package intentionally avoids importing submodules at import time to prevent
+test discovery/import issues when optional services are not present.
+Import submodules directly, e.g.:
 
-__all__ = [
-    "AuthService",
-    "TenantService",
-    "BillingService",
-    "DeploymentService",
-    "PluginService",
-    "MonitoringService",
-]
+from dotmac_management.services.tenant_provisioning import TenantProvisioningService
+"""
+__all__ = []

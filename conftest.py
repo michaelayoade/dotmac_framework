@@ -17,8 +17,9 @@ os.environ.setdefault("ENVIRONMENT", "test")
 os.environ.setdefault("TESTING", "true")
 os.environ.setdefault("DATABASE_URL", "sqlite:///test.db")
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 
 @pytest.fixture(scope="session")
@@ -29,7 +30,7 @@ def test_environment():
         "database_url": "sqlite:///test.db",
         "redis_url": "redis://localhost:6379/1",
         "api_base_url": "http://localhost:8000",
-        "frontend_base_url": "http://localhost:3000"
+        "frontend_base_url": "http://localhost:3000",
     }
 
 
@@ -43,7 +44,7 @@ def mock_database():
     return mock_db
 
 
-@pytest.fixture  
+@pytest.fixture
 def mock_redis():
     """Mock Redis connection for testing"""
     mock_redis = MagicMock()
@@ -68,6 +69,7 @@ def mock_secrets_manager():
 def event_loop():
     """Create event loop for async tests"""
     import asyncio
+
     loop = asyncio.new_event_loop()
     yield loop
     loop.close()
@@ -94,5 +96,5 @@ def sample_customer_data():
         "name": "Test Customer",
         "email": "customer@test.com",
         "status": "active",
-        "tenant_id": "test-tenant-123"
+        "tenant_id": "test-tenant-123",
     }

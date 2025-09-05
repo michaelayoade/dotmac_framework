@@ -1,11 +1,16 @@
 """Portal Management Schemas - Pydantic models for Portal ID system."""
 
 from datetime import datetime
-from enum import Enum
-from typing import List, Optional
+from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    EmailStr,
+    Field,
+    field_validator,
+)
 
 from .models import PortalAccountStatus, PortalAccountType
 
@@ -19,9 +24,7 @@ class PortalAccountBase(BaseModel):
     theme_preference: str = Field(default="light", pattern="^(light|dark|auto)$")
     language_preference: str = Field(default="en", max_length=10)
     timezone_preference: str = Field(default="UTC", max_length=50)
-    session_timeout_minutes: int = Field(
-        default=30, ge=5, le=480
-    )  # 5 minutes to 8 hours
+    session_timeout_minutes: int = Field(default=30, ge=5, le=480)  # 5 minutes to 8 hours
 
 
 class PortalAccountCreate(PortalAccountBase):
@@ -45,9 +48,7 @@ class PortalAccountCreate(PortalAccountBase):
         has_special = any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?" for c in v)
 
         if not (has_upper and has_lower and has_digit and has_special):
-            raise ValueError(
-                "Password must contain uppercase, lowercase, digit, and special character"
-            )
+            raise ValueError("Password must contain uppercase, lowercase, digit, and special character")
         return v
 
 
@@ -102,7 +103,7 @@ class PortalLoginResponse(BaseModel):
     portal_account: Optional[PortalAccountResponse] = None
     require_password_change: bool = False
     require_two_factor: bool = False
-    two_factor_methods: List[str] = []
+    two_factor_methods: list[str] = []
     message: Optional[str] = None
 
 
@@ -125,9 +126,7 @@ class PortalPasswordChangeRequest(BaseModel):
         has_special = any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?" for c in v)
 
         if not (has_upper and has_lower and has_digit and has_special):
-            raise ValueError(
-                "Password must contain uppercase, lowercase, digit, and special character"
-            )
+            raise ValueError("Password must contain uppercase, lowercase, digit, and special character")
         return v
 
 
@@ -158,9 +157,7 @@ class PortalPasswordResetConfirm(BaseModel):
         has_special = any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?" for c in v)
 
         if not (has_upper and has_lower and has_digit and has_special):
-            raise ValueError(
-                "Password must contain uppercase, lowercase, digit, and special character"
-            )
+            raise ValueError("Password must contain uppercase, lowercase, digit, and special character")
         return v
 
 
@@ -176,7 +173,7 @@ class Portal2FASetupResponse(BaseModel):
 
     secret: Optional[str] = None  # TOTP secret
     qr_code_url: Optional[str] = None  # QR code for TOTP apps
-    backup_codes: List[str] = []
+    backup_codes: list[str] = []
     setup_complete: bool = False
 
 
@@ -246,7 +243,7 @@ class PortalAccountAdminUpdate(PortalAccountUpdate):
 class PortalBulkOperationRequest(BaseModel):
     """Schema for bulk operations on Portal Accounts."""
 
-    portal_account_ids: List[UUID] = Field(..., min_length=1, max_length=100)
+    portal_account_ids: list[UUID] = Field(..., min_length=1, max_length=100)
     operation: str = Field(..., pattern="^(activate|suspend|lock|unlock|reset_2fa)$")
     reason: Optional[str] = Field(None, max_length=255)
 
@@ -257,8 +254,8 @@ class PortalBulkOperationResponse(BaseModel):
     total_requested: int
     successful: int
     failed: int
-    errors: List[str] = []
-    processed_ids: List[UUID] = []
+    errors: list[str] = []
+    processed_ids: list[UUID] = []
 
 
 class PortalAnalyticsResponse(BaseModel):
@@ -277,7 +274,7 @@ class PortalAnalyticsResponse(BaseModel):
     two_factor_enabled_count: int
     password_expires_soon_count: int  # Within 30 days
 
-    top_locations: List[dict] = []  # Country/city usage stats
+    top_locations: list[dict] = []  # Country/city usage stats
     security_alerts_count: int
 
     model_config = ConfigDict(from_attributes=True)

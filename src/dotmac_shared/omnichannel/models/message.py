@@ -4,10 +4,10 @@ Message and communication models.
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
-from uuid import UUID, uuid4
+from typing import Any, Optional
+from uuid import uuid4
 
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class MessageStatus(str, Enum):
@@ -29,7 +29,7 @@ class Message(BaseModel):
 
     # Recipients
     recipient: str = Field(..., min_length=1)
-    recipients: List[str] = Field(default_factory=list)  # For bulk messages
+    recipients: list[str] = Field(default_factory=list)  # For bulk messages
 
     # Content
     subject: str = Field(default="")
@@ -50,24 +50,22 @@ class Message(BaseModel):
 
     # Templating
     template_id: Optional[str] = None
-    template_data: Dict[str, Any] = Field(default_factory=dict)
+    template_data: dict[str, Any] = Field(default_factory=dict)
 
     # Priority and routing
     priority: str = "normal"  # low, normal, high, urgent
 
     # Attachments
-    attachments: List[Dict[str, Any]] = Field(default_factory=list)
+    attachments: list[dict[str, Any]] = Field(default_factory=list)
 
     # Timing
     scheduled_at: Optional[datetime] = None
     expires_at: Optional[datetime] = None
 
     # Additional data
-    extra_data: Dict[str, Any] = Field(default_factory=dict, alias="metadata")
+    extra_data: dict[str, Any] = Field(default_factory=dict, alias="metadata")
 
-    model_config = ConfigDict(
-        populate_by_name=True
-    )
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class MessageResult(BaseModel):
@@ -90,24 +88,22 @@ class MessageResult(BaseModel):
     # Provider information
     provider: Optional[str] = None
     provider_message_id: Optional[str] = None
-    provider_response: Optional[Dict[str, Any]] = None
+    provider_response: Optional[dict[str, Any]] = None
 
     # Costs and limits
     cost: Optional[float] = None
     rate_limit_reset: Optional[datetime] = None
 
     # Additional data
-    extra_data: Dict[str, Any] = Field(default_factory=dict, alias="metadata")
+    extra_data: dict[str, Any] = Field(default_factory=dict, alias="metadata")
 
-    model_config = ConfigDict(
-        populate_by_name=True
-    )
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class BulkMessageRequest(BaseModel):
     """Request for sending bulk messages."""
 
-    messages: List[Message] = Field(..., min_length=1, max_length=1000)
+    messages: list[Message] = Field(..., min_length=1, max_length=1000)
     channel: str = Field(..., min_length=1)
 
     # Batch settings
@@ -121,9 +117,7 @@ class BulkMessageRequest(BaseModel):
     # Timing
     scheduled_at: Optional[datetime] = None
 
-    model_config = ConfigDict(
-        populate_by_name=True
-    )
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class BulkMessageResult(BaseModel):
@@ -134,7 +128,7 @@ class BulkMessageResult(BaseModel):
     failed_messages: int
 
     # Results per message
-    results: List[MessageResult] = Field(default_factory=list)
+    results: list[MessageResult] = Field(default_factory=list)
 
     # Timing
     started_at: datetime = Field(default_factory=datetime.utcnow)
@@ -145,7 +139,7 @@ class BulkMessageResult(BaseModel):
     average_send_time: Optional[float] = None
 
     # Error summary
-    error_summary: Dict[str, int] = Field(default_factory=dict)
+    error_summary: dict[str, int] = Field(default_factory=dict)
 
     @property
     def success_rate(self) -> float:
@@ -170,12 +164,12 @@ class MessageTemplate(BaseModel):
     content_template: str = Field(..., min_length=1)
 
     # Channel support
-    supported_channels: List[str] = Field(default_factory=list)
+    supported_channels: list[str] = Field(default_factory=list)
 
     # Template variables
-    required_variables: List[str] = Field(default_factory=list)
-    optional_variables: List[str] = Field(default_factory=list)
-    sample_data: Dict[str, Any] = Field(default_factory=dict)
+    required_variables: list[str] = Field(default_factory=list)
+    optional_variables: list[str] = Field(default_factory=list)
+    sample_data: dict[str, Any] = Field(default_factory=dict)
 
     # Status
     active: bool = True
@@ -185,8 +179,6 @@ class MessageTemplate(BaseModel):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
     # Additional data
-    extra_data: Dict[str, Any] = Field(default_factory=dict, alias="metadata")
+    extra_data: dict[str, Any] = Field(default_factory=dict, alias="metadata")
 
-    model_config = ConfigDict(
-        populate_by_name=True
-    )
+    model_config = ConfigDict(populate_by_name=True)

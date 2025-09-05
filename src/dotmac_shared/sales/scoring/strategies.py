@@ -5,8 +5,7 @@ Replaces the 14-complexity _calculate_lead_score method with focused scoring str
 
 import logging
 from abc import ABC, abstractmethod
-from enum import Enum
-from typing import Any, Dict
+from typing import Any
 
 try:
     from ..core.models import CustomerType, LeadSource
@@ -20,7 +19,7 @@ class LeadScoringStrategy(ABC):
     """Base strategy for lead scoring criteria."""
 
     @abstractmethod
-    def calculate_score(self, lead_data: Dict[str, Any]) -> int:
+    def calculate_score(self, lead_data: dict[str, Any]) -> int:
         """Calculate score for this criteria."""
         pass
 
@@ -33,7 +32,7 @@ class LeadScoringStrategy(ABC):
 class BudgetScoringStrategy(LeadScoringStrategy):
     """Strategy for scoring based on budget capacity."""
 
-    def calculate_score(self, lead_data: Dict[str, Any]) -> int:
+    def calculate_score(self, lead_data: dict[str, Any]) -> int:
         """Calculate budget score based on budget ranges."""
         budget = lead_data.get("budget")
         if not budget:
@@ -74,7 +73,7 @@ class CustomerTypeScoringStrategy(LeadScoringStrategy):
             CustomerType.NON_PROFIT: 15,
         }
 
-    def calculate_score(self, lead_data: Dict[str, Any]) -> int:
+    def calculate_score(self, lead_data: dict[str, Any]) -> int:
         """Calculate score based on customer type."""
         customer_type = lead_data.get("customer_type")
         if not customer_type:
@@ -106,7 +105,7 @@ class LeadSourceScoringStrategy(LeadScoringStrategy):
             LeadSource.OTHER: 5,
         }
 
-    def calculate_score(self, lead_data: Dict[str, Any]) -> int:
+    def calculate_score(self, lead_data: dict[str, Any]) -> int:
         """Calculate score based on lead source."""
         source = lead_data.get("lead_source")
         if not source:
@@ -122,7 +121,7 @@ class LeadSourceScoringStrategy(LeadScoringStrategy):
 class BANTScoringStrategy(LeadScoringStrategy):
     """Strategy for scoring based on BANT (Budget, Authority, Need, Timeline) criteria."""
 
-    def calculate_score(self, lead_data: Dict[str, Any]) -> int:
+    def calculate_score(self, lead_data: dict[str, Any]) -> int:
         """Calculate score based on BANT criteria."""
         score = 0
 
@@ -154,7 +153,7 @@ class BANTScoringStrategy(LeadScoringStrategy):
 class CompanySizeScoringStrategy(LeadScoringStrategy):
     """Strategy for scoring based on company size indicators."""
 
-    def calculate_score(self, lead_data: Dict[str, Any]) -> int:
+    def calculate_score(self, lead_data: dict[str, Any]) -> int:
         """Calculate score based on company size metrics."""
         score = 0
 
@@ -188,7 +187,7 @@ class CompanySizeScoringStrategy(LeadScoringStrategy):
 class EngagementScoringStrategy(LeadScoringStrategy):
     """Strategy for scoring based on engagement indicators."""
 
-    def calculate_score(self, lead_data: Dict[str, Any]) -> int:
+    def calculate_score(self, lead_data: dict[str, Any]) -> int:
         """Calculate score based on engagement metrics."""
         score = 0
 

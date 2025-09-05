@@ -15,10 +15,9 @@ Usage:
 
 import asyncio
 import os
-from typing import List
 
-from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy import text
+from sqlalchemy.ext.asyncio import create_async_engine
 
 
 def _get_async_db_url() -> str:
@@ -49,7 +48,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 """
 
 
-async def _fetch_tenant_tables(conn) -> List[str]:
+async def _fetch_tenant_tables(conn) -> list[str]:
     query = text(
         """
         SELECT table_schema, table_name
@@ -126,4 +125,3 @@ END$$;
 
 if __name__ == "__main__":
     asyncio.run(apply_rls())
-

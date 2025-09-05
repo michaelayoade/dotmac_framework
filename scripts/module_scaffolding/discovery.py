@@ -6,12 +6,11 @@ import asyncio
 import importlib
 import importlib.util
 import logging
-import os
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Type
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -42,12 +41,12 @@ class ModuleInfo:
     dependencies_available: bool = False
     exceptions_available: bool = False
     router_instance: Any = None
-    service_class: Type = None
+    service_class: type = None
     last_health_check: Optional[float] = None
     status: ModuleStatus = ModuleStatus.LOADING
     error_message: Optional[str] = None
-    additional_files: List[str] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    additional_files: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class ModuleDiscovery:
@@ -56,9 +55,9 @@ class ModuleDiscovery:
     def __init__(self, framework_root: Optional[Path] = None):
         self.framework_root = framework_root or Path(__file__).parent.parent.parent
         self.src_root = self.framework_root / "src"
-        self.discovered_modules: Dict[str, ModuleInfo] = {}
+        self.discovered_modules: dict[str, ModuleInfo] = {}
 
-    async def discover_all_modules(self) -> Dict[str, ModuleInfo]:
+    async def discover_all_modules(self) -> dict[str, ModuleInfo]:
         """Discover all modules in the framework."""
         logger.info("🔍 Starting module discovery...")
 
@@ -75,7 +74,7 @@ class ModuleDiscovery:
         logger.info(f"📊 Discovered {len(self.discovered_modules)} modules total")
         return self.discovered_modules
 
-    async def _discover_platform_modules(self, platform: str) -> Dict[str, ModuleInfo]:
+    async def _discover_platform_modules(self, platform: str) -> dict[str, ModuleInfo]:
         """Discover modules for a specific platform."""
         if platform == "isp":
             modules_dir = self.src_root / "dotmac_isp" / "modules"
@@ -96,9 +95,7 @@ class ModuleDiscovery:
 
             for module_dir in modules_dir.iterdir():
                 if module_dir.is_dir() and not module_dir.name.startswith("_"):
-                    task = executor.submit(
-                        self._discover_single_module, module_dir, platform, base_package
-                    )
+                    task = executor.submit(self._discover_single_module, module_dir, platform, base_package)
                     tasks.append(task)
 
             # Wait for all discovery tasks to complete
@@ -112,9 +109,7 @@ class ModuleDiscovery:
 
         return modules
 
-    def _discover_single_module(
-        self, module_dir: Path, platform: str, base_package: str
-    ) -> Optional[ModuleInfo]:
+    def _discover_single_module(self, module_dir: Path, platform: str, base_package: str) -> Optional[ModuleInfo]:
         """Discover a single module synchronously."""
         try:
             module_name = module_dir.name
@@ -161,10 +156,7 @@ class ModuleDiscovery:
         for file_path in module_dir.rglob("*.py"):
             if file_path.is_file():
                 rel_path = file_path.relative_to(module_dir)
-                if (
-                    str(rel_path) not in components.values()
-                    and str(rel_path) != "__init__.py"
-                ):
+                if str(rel_path) not in components.values() and str(rel_path) != "__init__.py":
                     module_info.additional_files.append(str(rel_path))
 
     def _import_module_components(self, module_info: ModuleInfo, base_package: str):
@@ -180,21 +172,15 @@ class ModuleDiscovery:
                     module_info.metadata["router_prefix"] = getattr(
                         router_module.router, "prefix", f"/{module_info.name}"
                     )
-                    module_info.metadata["router_tags"] = getattr(
-                        router_module.router, "tags", [module_info.name]
-                    )
+                    module_info.metadata["router_tags"] = getattr(router_module.router, "tags", [module_info.name])
 
             # Try to import service class
             if module_info.service_available:
                 service_module = importlib.import_module(f"{module_package}.service")
                 # Look for service class (convention: ModuleNameService)
-                service_class_name = (
-                    f"{module_info.name.title().replace('_', '')}Service"
-                )
+                service_class_name = f"{module_info.name.title().replace('_', '')}Service"
                 if hasattr(service_module, service_class_name):
-                    module_info.service_class = getattr(
-                        service_module, service_class_name
-                    )
+                    module_info.service_class = getattr(service_module, service_class_name)
 
             # Try to import main module (for metadata)
             try:
@@ -207,9 +193,7 @@ class ModuleDiscovery:
                 pass
 
         except ImportError as e:
-            logger.warning(
-                f"Could not import components for module {module_info.name}: {e}"
-            )
+            logger.warning(f"Could not import components for module {module_info.name}: {e}")
             module_info.error_message = str(e)
         except Exception as e:
             logger.error(f"Unexpected error importing module {module_info.name}: {e}")
@@ -255,7 +239,7 @@ class ModuleRegistry:
     """Module registry and management system."""
 
     def __init__(self):
-        self.modules: Dict[str, ModuleInfo] = {}
+        self.modules: dict[str, ModuleInfo] = {}
         self.discovery = ModuleDiscovery()
         self._health_check_interval = 300  # 5 minutes
         self._health_check_task = None
@@ -304,8 +288,6 @@ class ModuleRegistry:
         """Check health of a specific module."""
         import time
 
-        from dotmac_shared.api.exception_handlers import standard_exception_handler
-
         try:
             # Basic availability check
             if module_info.router_instance:
@@ -344,17 +326,11 @@ class ModuleRegistry:
             logger.info(f"  {status.title()}: {count} modules")
 
         # Log unhealthy modules
-        unhealthy = [
-            m
-            for m in self.modules.values()
-            if m.status in [ModuleStatus.ERROR, ModuleStatus.UNAVAILABLE]
-        ]
+        unhealthy = [m for m in self.modules.values() if m.status in [ModuleStatus.ERROR, ModuleStatus.UNAVAILABLE]]
         if unhealthy:
             logger.warning(f"⚠️  {len(unhealthy)} modules need attention:")
             for module in unhealthy:
-                logger.warning(
-                    f"    - {module.name} ({module.platform}): {module.status.value}"
-                )
+                logger.warning(f"    - {module.name} ({module.platform}): {module.status.value}")
                 if module.error_message:
                     logger.warning(f"      Error: {module.error_message}")
 
@@ -362,28 +338,27 @@ class ModuleRegistry:
         """Get module information by name."""
         return self.modules.get(name)
 
-    def get_modules_by_platform(self, platform: str) -> List[ModuleInfo]:
+    def get_modules_by_platform(self, platform: str) -> list[ModuleInfo]:
         """Get all modules for a specific platform."""
         return [m for m in self.modules.values() if m.platform == platform]
 
-    def get_modules_by_status(self, status: ModuleStatus) -> List[ModuleInfo]:
+    def get_modules_by_status(self, status: ModuleStatus) -> list[ModuleInfo]:
         """Get all modules with a specific status."""
         return [m for m in self.modules.values() if m.status == status]
 
-    def get_healthy_modules(self) -> List[ModuleInfo]:
+    def get_healthy_modules(self) -> list[ModuleInfo]:
         """Get all healthy modules."""
         return self.get_modules_by_status(ModuleStatus.HEALTHY)
 
-    def get_available_routers(self) -> Dict[str, Any]:
+    def get_available_routers(self) -> dict[str, Any]:
         """Get all available router instances."""
         return {
             name: module.router_instance
             for name, module in self.modules.items()
-            if module.router_instance
-            and module.status in [ModuleStatus.HEALTHY, ModuleStatus.DEGRADED]
+            if module.router_instance and module.status in [ModuleStatus.HEALTHY, ModuleStatus.DEGRADED]
         }
 
-    def get_registry_stats(self) -> Dict[str, Any]:
+    def get_registry_stats(self) -> dict[str, Any]:
         """Get comprehensive registry statistics."""
         stats = {
             "total_modules": len(self.modules),
@@ -401,11 +376,7 @@ class ModuleRegistry:
             },
             "healthy_routers": len(self.get_available_routers()),
             "last_health_check": max(
-                [
-                    m.last_health_check
-                    for m in self.modules.values()
-                    if m.last_health_check
-                ],
+                [m.last_health_check for m in self.modules.values() if m.last_health_check],
                 default=0,
             ),
         }
@@ -432,11 +403,7 @@ class ModuleRegistry:
 
         try:
             # Rediscover the specific module
-            platform = (
-                self.modules[module_name].platform
-                if module_name in self.modules
-                else None
-            )
+            platform = self.modules[module_name].platform if module_name in self.modules else None
 
             if not platform:
                 logger.error(f"Module {module_name} not found for refresh")

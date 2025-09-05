@@ -6,8 +6,7 @@ import logging
 import os
 import time
 from dataclasses import dataclass
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from ...application.config import DeploymentContext, DeploymentMode
 from ..core.base import ServiceHealth, ServiceStatus, StatefulService
@@ -31,7 +30,7 @@ class AnalyticsServiceConfig:
     max_cached_metrics: int = 10000
 
     # Custom metrics configuration
-    custom_metrics: Dict[str, Any] = None
+    custom_metrics: dict[str, Any] = None
 
     def __post_init__(self):
         """Validate configuration after initialization."""
@@ -41,25 +40,19 @@ class AnalyticsServiceConfig:
         # Get provider-specific configuration
         if self.provider.lower() == "prometheus":
             if not self.endpoint:
-                self.endpoint = os.getenv(
-                    "PROMETHEUS_ENDPOINT", "http://localhost:9090"
-                )
+                self.endpoint = os.getenv("PROMETHEUS_ENDPOINT", "http://localhost:9090")
 
         elif self.provider.lower() == "datadog":
             if not self.api_key:
                 self.api_key = os.getenv("DATADOG_API_KEY")
             if not self.endpoint:
-                self.endpoint = os.getenv(
-                    "DATADOG_ENDPOINT", "https://api.datadoghq.com"
-                )
+                self.endpoint = os.getenv("DATADOG_ENDPOINT", "https://api.datadoghq.com")
 
         elif self.provider.lower() == "newrelic":
             if not self.api_key:
                 self.api_key = os.getenv("NEWRELIC_API_KEY")
             if not self.endpoint:
-                self.endpoint = os.getenv(
-                    "NEWRELIC_ENDPOINT", "https://api.newrelic.com"
-                )
+                self.endpoint = os.getenv("NEWRELIC_ENDPOINT", "https://api.newrelic.com")
 
         # Try tenant-specific configuration
         if (
@@ -85,11 +78,9 @@ class AnalyticsService(StatefulService):
 
     def __init__(self, config: AnalyticsServiceConfig):
         """__init__ service method."""
-        super().__init__(
-            name="analytics", config=config.__dict__, required_config=["provider"]
-        )
+        super().__init__(name="analytics", config=config.__dict__, required_config=["provider"])
         self.analytics_config = config
-        self.metrics_cache: List[Dict[str, Any]] = []
+        self.metrics_cache: list[dict[str, Any]] = []
         self.priority = 90  # High priority for monitoring
         self._last_collection = 0
         self._last_cleanup = 0
@@ -138,9 +129,7 @@ class AnalyticsService(StatefulService):
             raise ValueError("Prometheus endpoint is required")
 
         # Test connection (simulated)
-        logger.info(
-            f"✅ Prometheus connection validated: {self.analytics_config.endpoint}"
-        )
+        logger.info(f"✅ Prometheus connection validated: {self.analytics_config.endpoint}")
 
     async def _initialize_datadog(self):
         """Initialize Datadog analytics provider."""
@@ -171,9 +160,7 @@ class AnalyticsService(StatefulService):
 
     async def shutdown(self) -> bool:
         """Shutdown analytics service."""
-        await self._set_status(
-            ServiceStatus.SHUTTING_DOWN, "Shutting down analytics service"
-        )
+        await self._set_status(ServiceStatus.SHUTTING_DOWN, "Shutting down analytics service")
 
         # Send any remaining metrics
         if self.metrics_cache:
@@ -183,9 +170,7 @@ class AnalyticsService(StatefulService):
         self.metrics_cache.clear()
         self.clear_state()
 
-        await self._set_status(
-            ServiceStatus.SHUTDOWN, "Analytics service shutdown complete"
-        )
+        await self._set_status(ServiceStatus.SHUTDOWN, "Analytics service shutdown complete")
         return True
 
     async def _health_check_stateful_service(self) -> ServiceHealth:
@@ -224,7 +209,7 @@ class AnalyticsService(StatefulService):
         # In real implementation, this would test actual provider APIs
         return True
 
-    def _get_health_details(self) -> Dict[str, Any]:
+    def _get_health_details(self) -> dict[str, Any]:
         """Get health check details."""
         return {
             "provider": self.analytics_config.provider,
@@ -243,7 +228,7 @@ class AnalyticsService(StatefulService):
         self,
         metric_name: str,
         value: float,
-        tags: Dict[str, str] = None,
+        tags: Optional[dict[str, str]] = None,
         timestamp: Optional[float] = None,
     ) -> bool:
         """Record a single metric."""
@@ -259,10 +244,7 @@ class AnalyticsService(StatefulService):
         timestamp = timestamp or time.time()
 
         # Add tenant context if available
-        if (
-            self.analytics_config.deployment_context
-            and self.analytics_config.deployment_context.tenant_id
-        ):
+        if self.analytics_config.deployment_context and self.analytics_config.deployment_context.tenant_id:
             tags["tenant_id"] = self.analytics_config.deployment_context.tenant_id
 
         # Add deployment context
@@ -270,9 +252,7 @@ class AnalyticsService(StatefulService):
             if self.analytics_config.deployment_context.platform:
                 tags["platform"] = self.analytics_config.deployment_context.platform
             if self.analytics_config.deployment_context.environment:
-                tags["environment"] = (
-                    self.analytics_config.deployment_context.environment
-                )
+                tags["environment"] = self.analytics_config.deployment_context.environment
 
         metric = {
             "name": metric_name,
@@ -301,7 +281,7 @@ class AnalyticsService(StatefulService):
     async def record_event(
         self,
         event_name: str,
-        properties: Dict[str, Any] = None,
+        properties: Optional[dict[str, Any]] = None,
         timestamp: Optional[float] = None,
     ) -> bool:
         """Record an analytics event."""
@@ -312,10 +292,7 @@ class AnalyticsService(StatefulService):
         timestamp = timestamp or time.time()
 
         # Add tenant context if available
-        if (
-            self.analytics_config.deployment_context
-            and self.analytics_config.deployment_context.tenant_id
-        ):
+        if self.analytics_config.deployment_context and self.analytics_config.deployment_context.tenant_id:
             properties["tenant_id"] = self.analytics_config.deployment_context.tenant_id
 
         # Convert event to metric format
@@ -328,7 +305,7 @@ class AnalyticsService(StatefulService):
 
         return True
 
-    async def record_batch_metrics(self, metrics: List[Dict[str, Any]]) -> int:
+    async def record_batch_metrics(self, metrics: list[dict[str, Any]]) -> int:
         """Record multiple metrics in batch."""
         if not self.is_ready():
             raise RuntimeError("Analytics service not ready")
@@ -393,27 +370,27 @@ class AnalyticsService(StatefulService):
         # Send oldest metrics
         await self._send_metrics_batch(oldest_metrics)
 
-    async def _send_to_prometheus(self, metrics: List[Dict[str, Any]]):
+    async def _send_to_prometheus(self, metrics: list[dict[str, Any]]):
         """Send metrics to Prometheus."""
         # Simulate Prometheus metrics sending
         logger.debug(f"Sending {len(metrics)} metrics to Prometheus")
 
-    async def _send_to_datadog(self, metrics: List[Dict[str, Any]]):
+    async def _send_to_datadog(self, metrics: list[dict[str, Any]]):
         """Send metrics to Datadog."""
         # Simulate Datadog metrics sending
         logger.debug(f"Sending {len(metrics)} metrics to Datadog")
 
-    async def _send_to_newrelic(self, metrics: List[Dict[str, Any]]):
+    async def _send_to_newrelic(self, metrics: list[dict[str, Any]]):
         """Send metrics to New Relic."""
         # Simulate New Relic metrics sending
         logger.debug(f"Sending {len(metrics)} metrics to New Relic")
 
-    async def _send_to_custom(self, metrics: List[Dict[str, Any]]):
+    async def _send_to_custom(self, metrics: list[dict[str, Any]]):
         """Send metrics to custom provider."""
         # Custom provider implementation
         logger.debug(f"Sending {len(metrics)} metrics to custom provider")
 
-    async def _send_metrics_batch(self, metrics: List[Dict[str, Any]]):
+    async def _send_metrics_batch(self, metrics: list[dict[str, Any]]):
         """Send a batch of metrics to the configured provider."""
         provider = self.analytics_config.provider.lower()
 
@@ -439,9 +416,7 @@ class AnalyticsService(StatefulService):
 
         # Remove metrics older than retention period
         old_metrics = [
-            metric
-            for metric in self.metrics_cache
-            if current_time - metric["recorded_at"] > retention_seconds
+            metric for metric in self.metrics_cache if current_time - metric["recorded_at"] > retention_seconds
         ]
 
         for metric in old_metrics:
@@ -455,7 +430,7 @@ class AnalyticsService(StatefulService):
         errors = self.get_state("analytics_errors", 0)
         self.set_state("analytics_errors", errors + 1)
 
-    def get_analytics_stats(self) -> Dict[str, Any]:
+    def get_analytics_stats(self) -> dict[str, Any]:
         """Get analytics service statistics."""
         return {
             "provider": self.analytics_config.provider,

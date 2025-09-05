@@ -4,13 +4,12 @@ This provides backward compatibility while using the shared service.
 """
 
 import logging
-from datetime import datetime
-from typing import Any, Dict, List, Optional
+from datetime import datetime, timezone
+from typing import Any, Optional
 from uuid import UUID
 
-from dotmac_shared.api.exception_handlers import standard_exception_handler
-from dotmac_shared.cache import create_cache_service
-from dotmac_shared.events import EventBus
+from dotmac.communications.events import EventBus
+from dotmac.core import create_cache_service
 from dotmac_shared.services_framework.services.analytics_service import (
     AnalyticsService,
     AnalyticsServiceConfig,
@@ -55,9 +54,7 @@ class ISPAnalyticsAdapter:
             await self.analytics_service.initialize()
             if self.cache_service:
                 await self.cache_service.initialize()
-            logger.info(
-                f"✅ ISP Analytics Adapter initialized for tenant {self.tenant_id}"
-            )
+            logger.info(f"✅ ISP Analytics Adapter initialized for tenant {self.tenant_id}")
             return True
         except Exception as e:
             logger.error(f"❌ Failed to initialize ISP Analytics Adapter: {e}")
@@ -65,9 +62,7 @@ class ISPAnalyticsAdapter:
 
     # Backward compatibility methods for existing ISP analytics API
 
-    async def track_event(
-        self, event_type: str, entity_id: str, metadata: Optional[Dict[str, Any]] = None
-    ) -> bool:
+    async def track_event(self, event_type: str, entity_id: str, metadata: Optional[dict[str, Any]] = None) -> bool:
         """Track an event using shared analytics service."""
         try:
             await self.analytics_service.track_event(
@@ -98,10 +93,10 @@ class ISPAnalyticsAdapter:
 
     async def get_metrics(
         self,
-        metric_names: List[str],
+        metric_names: list[str],
         start_time: Optional[datetime] = None,
         end_time: Optional[datetime] = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Get metrics data using shared analytics service."""
         try:
             # Use shared analytics service to get metrics
@@ -117,19 +112,13 @@ class ISPAnalyticsAdapter:
             logger.error(f"Failed to get metrics {metric_names}: {e}")
             return {}
 
-    async def create_metric(
-        self, metric_data: schemas.MetricCreate
-    ) -> Optional[schemas.MetricResponse]:
+    async def create_metric(self, metric_data: schemas.MetricCreate) -> Optional[schemas.MetricResponse]:
         """Create a metric configuration (mapped to shared analytics)."""
         try:
             # Convert ISP metric schema to shared analytics format
             await self.analytics_service.configure_custom_metric(
                 metric_name=metric_data.name,
-                metric_type=(
-                    metric_data.metric_type.value
-                    if hasattr(metric_data, "metric_type")
-                    else "counter"
-                ),
+                metric_type=(metric_data.metric_type.value if hasattr(metric_data, "metric_type") else "counter"),
                 tenant_id=self.tenant_id,
                 metadata=metric_data.model_dump() if hasattr(metric_data, "dict") else {},
             )
@@ -145,18 +134,12 @@ class ISPAnalyticsAdapter:
             logger.error(f"Failed to create metric {metric_data.name}: {e}")
             return None
 
-    async def create_report(
-        self, report_data: schemas.ReportCreate
-    ) -> Optional[schemas.ReportResponse]:
+    async def create_report(self, report_data: schemas.ReportCreate) -> Optional[schemas.ReportResponse]:
         """Create a report using cached analytics data."""
         try:
             # Generate report using shared analytics
             report_data_result = await self.analytics_service.generate_report(
-                report_type=(
-                    report_data.report_type.value
-                    if hasattr(report_data, "report_type")
-                    else "summary"
-                ),
+                report_type=(report_data.report_type.value if hasattr(report_data, "report_type") else "summary"),
                 tenant_id=self.tenant_id,
                 parameters=report_data.model_dump() if hasattr(report_data, "dict") else {},
             )
@@ -181,15 +164,13 @@ class ISPAnalyticsAdapter:
             logger.error(f"Failed to create report {report_data.name}: {e}")
             return None
 
-    async def get_dashboard_data(self, dashboard_id: UUID) -> Optional[Dict[str, Any]]:
+    async def get_dashboard_data(self, dashboard_id: UUID) -> Optional[dict[str, Any]]:
         """Get dashboard data using shared analytics."""
         try:
             # Check cache first
             if self.cache_service:
                 cache_key = f"dashboard:{self.tenant_id}:{dashboard_id}"
-                cached_data = await self.cache_service.get(
-                    cache_key, tenant_id=self.tenant_id
-                )
+                cached_data = await self.cache_service.get(cache_key, tenant_id=self.tenant_id)
                 if cached_data:
                     return cached_data
 
@@ -212,7 +193,7 @@ class ISPAnalyticsAdapter:
             logger.error(f"Failed to get dashboard data {dashboard_id}: {e}")
             return None
 
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """Health check for the adapter."""
         try:
             analytics_health = await self.analytics_service.health_check()

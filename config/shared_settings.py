@@ -9,19 +9,17 @@ import logging.config
 import os
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Optional
 
 from pydantic import Field, field_validator
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class SharedSettings(BaseSettings):
     """Base shared settings for all DotMac Framework services."""
 
     # Environment and deployment
-    environment: str = Field(
-        default="development", description="Deployment environment"
-    )
+    environment: str = Field(default="development", description="Deployment environment")
     debug: bool = Field(default=False, description="Enable debug mode")
     log_level: str = Field(default="INFO", description="Logging level")
 
@@ -31,21 +29,15 @@ class SharedSettings(BaseSettings):
 
     # Security settings
     secret_key: str = Field(
-        default_factory=lambda: os.getenv(
-            "SECRET_KEY", "dev-secret-key-change-in-production"
-        ),
+        default_factory=lambda: os.getenv("SECRET_KEY", "dev-secret-key-change-in-production"),
         description="Application secret key",
     )
     jwt_secret_key: str = Field(
-        default_factory=lambda: os.getenv(
-            "JWT_SECRET_KEY", "jwt-dev-secret-change-in-production"
-        ),
+        default_factory=lambda: os.getenv("JWT_SECRET_KEY", "jwt-dev-secret-change-in-production"),
         description="JWT secret key",
     )
     jwt_algorithm: str = Field(default="HS256", description="JWT algorithm")
-    jwt_expire_hours: int = Field(
-        default=24, description="JWT expiration time in hours"
-    )
+    jwt_expire_hours: int = Field(default=24, description="JWT expiration time in hours")
 
     # Database settings
     database_url: str = Field(
@@ -55,12 +47,8 @@ class SharedSettings(BaseSettings):
         ),
         description="Primary database URL",
     )
-    database_pool_size: int = Field(
-        default=10, description="Database connection pool size"
-    )
-    database_max_overflow: int = Field(
-        default=20, description="Database max overflow connections"
-    )
+    database_pool_size: int = Field(default=10, description="Database connection pool size")
+    database_max_overflow: int = Field(default=20, description="Database max overflow connections")
 
     # Redis settings
     redis_url: str = Field(
@@ -71,18 +59,16 @@ class SharedSettings(BaseSettings):
 
     # API settings
     api_v1_prefix: str = Field(default="/api/v1", description="API v1 prefix")
-    cors_origins: List[str] = Field(
-        default_factory=lambda: os.getenv(
-            "CORS_ORIGINS", "https://app.dotmac.local,https://admin.dotmac.local"
-        ).split(","),
+    cors_origins: list[str] = Field(
+        default_factory=lambda: os.getenv("CORS_ORIGINS", "https://app.dotmac.local,https://admin.dotmac.local").split(
+            ","
+        ),
         description="CORS allowed origins",
     )
 
     # File storage settings
     upload_directory: str = Field(default="uploads", description="Upload directory")
-    max_upload_size: int = Field(
-        default=104857600, description="Max upload size in bytes (100MB)"
-    )
+    max_upload_size: int = Field(default=104857600, description="Max upload size in bytes (100MB)")
 
     # Monitoring and observability
     signoz_endpoint: Optional[str] = Field(
@@ -93,9 +79,7 @@ class SharedSettings(BaseSettings):
     enable_metrics: bool = Field(default=True, description="Enable metrics collection")
 
     # Multi-tenancy
-    enable_multi_tenancy: bool = Field(
-        default=True, description="Enable multi-tenant features"
-    )
+    enable_multi_tenancy: bool = Field(default=True, description="Enable multi-tenant features")
     default_tenant_id: str = Field(default="default", description="Default tenant ID")
 
     # External service integrations
@@ -130,17 +114,13 @@ class SharedSettings(BaseSettings):
             raise ValueError(f"Log level must be one of {allowed}")
         return v.upper()
 
-    class Config:
-        env_file = ".env"
-        case_sensitive = False
+    model_config = SettingsConfigDict(env_file=".env", case_sensitive=False)
 
 
 class ISPSettings(SharedSettings):
     """ISP Framework specific settings."""
 
-    app_name: str = Field(
-        default="DotMac ISP Framework", description="ISP Application name"
-    )
+    app_name: str = Field(default="DotMac ISP Framework", description="ISP Application name")
     port: int = Field(default=8001, description="ISP service port")
 
     # ISP specific settings
@@ -155,37 +135,33 @@ class ISPSettings(SharedSettings):
 class ManagementSettings(SharedSettings):
     """Management Platform specific settings."""
 
-    app_name: str = Field(
-        default="DotMac Management Platform", description="Management Application name"
-    )
+    app_name: str = Field(default="DotMac Management Platform", description="Management Application name")
     port: int = Field(default=8002, description="Management service port")
 
     # Management specific settings
     max_tenants: int = Field(default=1000, description="Maximum tenants")
-    tenant_isolation_level: str = Field(
-        default="strict", description="Tenant isolation level"
-    )
+    tenant_isolation_level: str = Field(default="strict", description="Tenant isolation level")
 
 
-@lru_cache()
+@lru_cache
 def get_shared_settings() -> SharedSettings:
     """Get cached shared settings instance."""
     return SharedSettings()
 
 
-@lru_cache()
+@lru_cache
 def get_isp_settings() -> ISPSettings:
     """Get cached ISP settings instance."""
     return ISPSettings()
 
 
-@lru_cache()
+@lru_cache
 def get_management_settings() -> ManagementSettings:
     """Get cached management settings instance."""
     return ManagementSettings()
 
 
-def setup_logging(config_path: str = None):
+def setup_logging(config_path: Optional[str] = None):
     """Setup logging configuration."""
     if config_path is None:
         config_path = Path(__file__).parent / "logging.conf"

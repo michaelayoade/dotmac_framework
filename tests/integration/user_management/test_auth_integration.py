@@ -2,25 +2,22 @@
 Integration tests for user management v2 authentication system.
 Tests the complete authentication flow including login, MFA, sessions, and API keys.
 """
-import pytest
-import asyncio
-from datetime import datetime, timedelta
+from collections.abc import AsyncGenerator
 from uuid import UUID, uuid4
-from typing import AsyncGenerator
 
-from sqlalchemy.ext.asyncio import AsyncSession
-from httpx import AsyncClient
-
-from dotmac_shared.database.session import get_db_session
+import pytest
 from dotmac_management.user_management.models.user_models import UserModel
-from dotmac_management.user_management.models.auth_models import UserPasswordModel, UserSessionModel
-from dotmac_management.user_management.services.user_service import UserService
-from dotmac_management.user_management.services.auth_service import AuthService
-from dotmac_management.user_management.schemas.user_schemas import UserCreateSchema, UserType
 from dotmac_management.user_management.schemas.auth_schemas import (
-    LoginRequestSchema, MFASetupRequestSchema, MFAType,
-    PasswordChangeRequestSchema, APIKeyCreateRequestSchema
+    APIKeyCreateRequestSchema,
+    MFASetupRequestSchema,
+    MFAType,
+    PasswordChangeRequestSchema,
 )
+from dotmac_management.user_management.schemas.user_schemas import UserCreateSchema, UserType
+from dotmac_management.user_management.services.user_service import UserService
+from dotmac_shared.database.session import get_db_session
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 @pytest.fixture
 async def db_session() -> AsyncGenerator[AsyncSession, None]:

@@ -6,7 +6,7 @@ Defines the contract that platform-specific adapters must implement.
 
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 from uuid import UUID
 
 from ..core.schemas import ServiceSummary, ServiceUsageData, UsageSummary
@@ -25,7 +25,7 @@ class CustomerPortalAdapter(ABC):
         self.tenant_id = tenant_id
 
     @abstractmethod
-    async def get_customer_info(self, customer_id: UUID) -> Dict[str, Any]:
+    async def get_customer_info(self, customer_id: UUID) -> dict[str, Any]:
         """
         Get basic customer information from the platform.
 
@@ -38,7 +38,7 @@ class CustomerPortalAdapter(ABC):
         pass
 
     @abstractmethod
-    async def get_customer_services(self, customer_id: UUID) -> List[ServiceSummary]:
+    async def get_customer_services(self, customer_id: UUID) -> list[ServiceSummary]:
         """
         Get customer's services from the platform.
 
@@ -47,7 +47,7 @@ class CustomerPortalAdapter(ABC):
         pass
 
     @abstractmethod
-    async def get_platform_data(self, customer_id: UUID) -> Dict[str, Any]:
+    async def get_platform_data(self, customer_id: UUID) -> dict[str, Any]:
         """
         Get platform-specific data for the customer.
 
@@ -57,9 +57,7 @@ class CustomerPortalAdapter(ABC):
         pass
 
     @abstractmethod
-    async def update_customer_custom_fields(
-        self, customer_id: UUID, custom_fields: Dict[str, Any]
-    ) -> bool:
+    async def update_customer_custom_fields(self, customer_id: UUID, custom_fields: dict[str, Any]) -> bool:
         """
         Update platform-specific custom fields for the customer.
         """
@@ -91,9 +89,7 @@ class CustomerPortalAdapter(ABC):
         """
         return None
 
-    async def validate_customer_access(
-        self, customer_id: UUID, requesting_user_id: UUID
-    ) -> bool:
+    async def validate_customer_access(self, customer_id: UUID, requesting_user_id: UUID) -> bool:
         """
         Validate that the requesting user can access this customer's data.
 
@@ -102,7 +98,7 @@ class CustomerPortalAdapter(ABC):
         """
         return customer_id == requesting_user_id
 
-    async def get_available_actions(self, customer_id: UUID) -> List[str]:
+    async def get_available_actions(self, customer_id: UUID) -> list[str]:
         """
         Get available actions for the customer in this platform.
 

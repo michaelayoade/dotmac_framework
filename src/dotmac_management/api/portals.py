@@ -4,9 +4,6 @@ Portal-specific API routes for different user interfaces.
 
 from fastapi import APIRouter
 
-from dotmac_shared.api.router_factory import RouterFactory
-
-# Create main portals router
 portals_router = APIRouter()
 portals_router = APIRouter()
 

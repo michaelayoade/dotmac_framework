@@ -1,28 +1,23 @@
-import logging
-
-logger = logging.getLogger(__name__)
-
 """Relationship registry for handling cross-module SQLAlchemy relationships.
 
 This module provides a way to register and configure cross-module relationships
 after all models have been loaded, avoiding circular import and model resolution issues.
 """
 
-from typing import Any, Callable, Dict, List
+import logging
+from collections.abc import Callable
 
-from sqlalchemy.orm import relationship
+logger = logging.getLogger(__name__)
 
 
 class RelationshipRegistry:
     """Registry for deferred cross-module relationships."""
 
     def __init__(self):
-        self._deferred_relationships: List[Callable] = []
+        self._deferred_relationships: list[Callable] = []
         self._configured = False
 
-    def register_relationship(
-        self, model_class: type, attr_name: str, relationship_fn: Callable
-    ):
+    def register_relationship(self, model_class: type, attr_name: str, relationship_fn: Callable):
         """Register a relationship to be configured later.
 
         Args:
@@ -75,9 +70,7 @@ def register_cross_module_relationship(model_class: type, attr_name: str):
     """
 
     def decorator(relationship_fn):
-        relationship_registry.register_relationship(
-            model_class, attr_name, relationship_fn
-        )
+        relationship_registry.register_relationship(model_class, attr_name, relationship_fn)
         return relationship_fn
 
     return decorator

@@ -4,11 +4,11 @@ Account service for SDK operations.
 This is a minimal implementation for SDK compatibility.
 """
 
-from datetime import datetime
-from typing import Any, Dict, List, Optional
-from uuid import UUID, uuid4
+from datetime import datetime, timezone
+from typing import Any, Optional
+from uuid import UUID
 
-from ..models.accounts import Account, AccountStatus, MFAFactor, MFAFactorType
+from ..models.accounts import Account, MFAFactor, MFAFactorType
 
 
 class AccountService:
@@ -16,12 +16,10 @@ class AccountService:
 
     def __init__(self, timezone):
         """Init   operation."""
-        self._accounts: Dict[UUID, Account] = {}
-        self._mfa_factors: Dict[UUID, List[MFAFactor]] = {}
+        self._accounts: dict[UUID, Account] = {}
+        self._mfa_factors: dict[UUID, list[MFAFactor]] = {}
 
-    async def create_account(
-        self, username: str, email: str, password: Optional[str] = None, **kwargs
-    ) -> Account:
+    async def create_account(self, username: str, email: str, password: Optional[str] = None, **kwargs) -> Account:
         """Create a new account."""
         account = Account(username=username, email=email, **kwargs)
         self._accounts[account.id] = account
@@ -69,7 +67,7 @@ class AccountService:
         self,
         account_id: UUID,
         factor_type: MFAFactorType,
-        factor_data: Dict[str, Any],
+        factor_data: dict[str, Any],
         name: str,
     ) -> MFAFactor:
         """Add MFA factor to account."""
@@ -85,7 +83,7 @@ class AccountService:
         self._mfa_factors[account_id].append(factor)
         return factor
 
-    async def get_mfa_factors(self, account_id: UUID) -> List[MFAFactor]:
+    async def get_mfa_factors(self, account_id: UUID) -> list[MFAFactor]:
         """Get MFA factors for account."""
         return self._mfa_factors.get(account_id, [])
 

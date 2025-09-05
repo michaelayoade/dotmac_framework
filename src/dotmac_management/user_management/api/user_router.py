@@ -1,64 +1,48 @@
 """
-Production-ready user management API using RouterFactory.
-Implements comprehensive user operations with DRY patterns.
+User Management API Router - DRY Migration
+Production-ready user management using RouterFactory patterns.
 """
 
-from typing import Any, Dict, List
+from typing import Any
 from uuid import UUID
 
+from dotmac.application import RouterFactory, standard_exception_handler
+from dotmac_shared.api.dependencies import (
+    StandardDependencies,
+    get_standard_deps,
+)
 from fastapi import Body, Depends, Path, Query
-from sqlalchemy.ext.asyncio import AsyncSession
+from pydantic import BaseModel, Field
 
-from dotmac_shared.api.dependencies import get_db, get_current_user, get_admin_user
-from dotmac_shared.api.router_factory import RouterFactory
-from dotmac_shared.api.exception_handlers import standard_exception_handler
-from dotmac_shared.schemas.base_schemas import PaginatedResponseSchema
-
-from ..services.user_service import UserService, UserProfileService, UserManagementService
 from ..schemas.user_schemas import (
     UserCreateSchema,
-    UserUpdateSchema,
     UserResponseSchema,
-    UserSummarySchema,
-    UserSearchSchema,
-    UserBulkOperationSchema,
-    UserInvitationSchema,
-    UserActivationSchema
+    UserUpdateSchema,
 )
+from ..services.user_service import UserService
+
+# === Additional Request Schemas ===
 
 
-# === User Dependencies ===
+class UserSearchRequest(BaseModel):
+    """User search request schema."""
 
-async def get_user_service(
-    db: AsyncSession = Depends(get_db),
-    current_user = Depends(get_current_user)
-) -> UserService:
-    """Get user service with tenant context."""
-    tenant_id = getattr(current_user, 'tenant_id', None)
-    return UserService(db, tenant_id)
+    query: str | None = Field(None, description="Search query")
+    filters: dict[str, Any] = Field(default_factory=dict, description="Search filters")
+    page: int = Field(1, ge=1, description="Page number")
+    page_size: int = Field(20, ge=1, le=100, description="Page size")
 
 
-async def get_profile_service(
-    db: AsyncSession = Depends(get_db),
-    current_user = Depends(get_current_user)
-) -> UserProfileService:
-    """Get profile service with tenant context."""
-    tenant_id = getattr(current_user, 'tenant_id', None)
-    return UserProfileService(db, tenant_id)
+class BulkUserOperation(BaseModel):
+    """Bulk user operation request."""
 
-
-async def get_management_service(
-    db: AsyncSession = Depends(get_db),
-    current_user = Depends(get_current_user)
-) -> UserManagementService:
-    """Get management service with tenant context."""
-    tenant_id = getattr(current_user, 'tenant_id', None)
-    return UserManagementService(db, tenant_id)
+    operation: str = Field(..., description="Operation type (activate, deactivate, delete)")
+    user_ids: list[UUID] = Field(..., description="List of user IDs")
+    reason: str | None = Field(None, description="Operation reason")
 
 
 # === Main User Router ===
 
-# Create standard CRUD router using RouterFactory
 user_router = RouterFactory.create_crud_router(
     service_class=UserService,
     create_schema=UserCreateSchema,
@@ -66,67 +50,73 @@ user_router = RouterFactory.create_crud_router(
     response_schema=UserResponseSchema,
     prefix="/users",
     tags=["users", "user-management"],
-    require_admin=True,  # Requires admin permissions
     enable_search=True,
     enable_bulk_operations=True,
 )
 
 
-# === Custom User Endpoints ===
+# === User Profile Management ===
+
 
 @user_router.get("/me", response_model=UserResponseSchema)
 @standard_exception_handler
 async def get_current_user_profile(
-    user_service: UserService = Depends(get_user_service),
-    current_user = Depends(get_current_user)
+    deps: StandardDependencies = Depends(get_standard_deps),
 ) -> UserResponseSchema:
     """Get current user's profile."""
-    return await user_service.get_user(current_user.user_id, include_profile=True)
+    service = UserService(deps.db, deps.tenant_id)
+    return await service.get_user(deps.user_id, include_profile=True)
 
 
 @user_router.put("/me", response_model=UserResponseSchema)
 @standard_exception_handler
 async def update_current_user_profile(
-    user_data: UserUpdateSchema = Body(...),
-    user_service: UserService = Depends(get_user_service),
-    current_user = Depends(get_current_user)
+    user_data: UserUpdateSchema,
+    deps: StandardDependencies = Depends(get_standard_deps),
 ) -> UserResponseSchema:
     """Update current user's profile."""
-    return await user_service.update_user(
-        user_id=UUID(current_user.user_id),
+    service = UserService(deps.db, deps.tenant_id)
+    return await service.update_user(
+        user_id=UUID(deps.user_id),
         user_data=user_data,
-        updated_by=UUID(current_user.user_id)
+        updated_by=UUID(deps.user_id),
     )
 
 
-@user_router.post("/search", response_model=PaginatedResponseSchema[UserSummarySchema])
+# === User Search ===
+
+
+@user_router.post("/search", response_model=dict[str, Any])
 @standard_exception_handler
 async def search_users(
-    search_params: UserSearchSchema = Body(...),
-    user_service: UserService = Depends(get_user_service),
-    current_user = Depends(get_current_user)
-) -> PaginatedResponseSchema[UserSummarySchema]:
+    search_request: UserSearchRequest,
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> dict[str, Any]:
     """Search users with advanced filtering."""
-    users, total_count = await user_service.search_users(search_params)
-    
-    return PaginatedResponseSchema(
-        items=users,
-        total=total_count,
-        page=search_params.page,
-        size=search_params.page_size,
-    )
+    service = UserService(deps.db, deps.tenant_id)
+    users, total_count = await service.search_users(search_request)
+
+    return {
+        "items": users,
+        "total": total_count,
+        "page": search_request.page,
+        "page_size": search_request.page_size,
+        "total_pages": (total_count // search_request.page_size) + (1 if total_count % search_request.page_size else 0),
+    }
 
 
 @user_router.get("/username/{username}", response_model=UserResponseSchema)
-@standard_exception_handler 
+@standard_exception_handler
 async def get_user_by_username(
     username: str = Path(..., description="Username to lookup"),
-    user_service: UserService = Depends(get_user_service),
-    current_user = Depends(get_current_user)
+    deps: StandardDependencies = Depends(get_standard_deps),
 ) -> UserResponseSchema:
     """Get user by username."""
-    user = await user_service.get_user_by_username(username)
+    service = UserService(deps.db, deps.tenant_id)
+    user = await service.get_user_by_username(username)
     if not user:
+        from dotmac_shared.exceptions import EntityNotFoundError
+
         raise EntityNotFoundError(f"User not found with username: {username}")
     return user
 
@@ -135,27 +125,30 @@ async def get_user_by_username(
 @standard_exception_handler
 async def get_user_by_email(
     email: str = Path(..., description="Email to lookup"),
-    user_service: UserService = Depends(get_user_service),
-    current_user = Depends(get_current_user)
+    deps: StandardDependencies = Depends(get_standard_deps),
 ) -> UserResponseSchema:
     """Get user by email."""
-    user = await user_service.get_user_by_email(email)
+    service = UserService(deps.db, deps.tenant_id)
+    user = await service.get_user_by_email(email)
     if not user:
+        from dotmac_shared.exceptions import EntityNotFoundError
+
         raise EntityNotFoundError(f"User not found with email: {email}")
     return user
 
 
 # === User Status Management ===
 
+
 @user_router.post("/{user_id}/activate", response_model=UserResponseSchema)
 @standard_exception_handler
 async def activate_user(
     user_id: UUID = Path(..., description="User ID to activate"),
-    user_service: UserService = Depends(get_user_service),
-    admin_user = Depends(get_admin_user)
+    deps: StandardDependencies = Depends(get_standard_deps),
 ) -> UserResponseSchema:
     """Activate user account."""
-    return await user_service.activate_user(user_id, UUID(admin_user["user_id"]))
+    service = UserService(deps.db, deps.tenant_id)
+    return await service.activate_user(user_id, UUID(deps.user_id))
 
 
 @user_router.post("/{user_id}/deactivate", response_model=UserResponseSchema)
@@ -163,15 +156,11 @@ async def activate_user(
 async def deactivate_user(
     user_id: UUID = Path(..., description="User ID to deactivate"),
     reason: str = Body(..., embed=True, description="Deactivation reason"),
-    user_service: UserService = Depends(get_user_service),
-    admin_user = Depends(get_admin_user)
+    deps: StandardDependencies = Depends(get_standard_deps),
 ) -> UserResponseSchema:
     """Deactivate user account."""
-    return await user_service.deactivate_user(
-        user_id, 
-        UUID(admin_user["user_id"]), 
-        reason
-    )
+    service = UserService(deps.db, deps.tenant_id)
+    return await service.deactivate_user(user_id, UUID(deps.user_id), reason)
 
 
 @user_router.post("/{user_id}/suspend", response_model=UserResponseSchema)
@@ -179,174 +168,64 @@ async def deactivate_user(
 async def suspend_user(
     user_id: UUID = Path(..., description="User ID to suspend"),
     reason: str = Body(..., embed=True, description="Suspension reason"),
-    duration_days: int = Body(None, embed=True, description="Suspension duration in days"),
-    user_service: UserService = Depends(get_user_service),
-    admin_user = Depends(get_admin_user)
+    duration_days: int | None = Body(None, embed=True, description="Suspension duration in days"),
+    deps: StandardDependencies = Depends(get_standard_deps),
 ) -> UserResponseSchema:
     """Suspend user account."""
-    return await user_service.suspend_user(
-        user_id,
-        UUID(admin_user["user_id"]),
-        reason,
-        duration_days
-    )
+    service = UserService(deps.db, deps.tenant_id)
+    return await service.suspend_user(user_id, UUID(deps.user_id), reason, duration_days)
 
 
 # === Bulk Operations ===
 
-@user_router.post("/bulk-operation", response_model=Dict[str, Any])
+
+@user_router.post("/bulk-operation", response_model=dict[str, Any])
 @standard_exception_handler
 async def bulk_user_operation(
-    operation_data: UserBulkOperationSchema = Body(...),
-    user_service: UserService = Depends(get_user_service),
-    admin_user = Depends(get_admin_user)
-) -> Dict[str, Any]:
+    operation_data: BulkUserOperation,
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> dict[str, Any]:
     """Perform bulk operations on users."""
-    return await user_service.bulk_operation(
-        operation_data,
-        UUID(admin_user["user_id"])
-    )
+    service = UserService(deps.db, deps.tenant_id)
+    return await service.bulk_operation(operation_data, UUID(deps.user_id))
 
 
 # === User Statistics ===
 
-@user_router.get("/statistics", response_model=Dict[str, Any])
+
+@user_router.get("/statistics", response_model=dict[str, Any])
 @standard_exception_handler
 async def get_user_statistics(
-    user_service: UserService = Depends(get_user_service),
-    admin_user = Depends(get_admin_user)
-) -> Dict[str, Any]:
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> dict[str, Any]:
     """Get user statistics."""
-    return await user_service.get_user_statistics()
+    service = UserService(deps.db, deps.tenant_id)
+    return await service.get_user_statistics()
 
 
-@user_router.get("/recent", response_model=List[UserSummarySchema])
+@user_router.get("/recent", response_model=list[dict[str, Any]])
 @standard_exception_handler
 async def get_recent_users(
-    limit: int = Query(10, ge=1, le=50, description="Number of users to return"),
-    user_service: UserService = Depends(get_user_service),
-    admin_user = Depends(get_admin_user)
-) -> List[UserSummarySchema]:
+    limit: int = Query(10, ge=1, le=50, description="Number of recent users to return"),
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> list[dict[str, Any]]:
     """Get recently created users."""
-    return await user_service.get_recent_users(limit)
-
-
-# === User Profile Router ===
-
-profile_router = RouterFactory.create_standard_router(
-    prefix="/users/{user_id}/profile",
-    tags=["users", "profiles"]
-)
-
-
-@profile_router.get("/", response_model=Dict[str, Any])
-@standard_exception_handler
-async def get_user_profile(
-    user_id: UUID = Path(..., description="User ID"),
-    profile_service: UserProfileService = Depends(get_profile_service),
-    current_user = Depends(get_current_user)
-) -> Dict[str, Any]:
-    """Get user profile."""
-    profile = await profile_service.get_profile(user_id)
-    if not profile:
-        raise EntityNotFoundError(f"Profile not found for user: {user_id}")
-    return profile
-
-
-@profile_router.put("/", response_model=Dict[str, Any])
-@standard_exception_handler
-async def update_user_profile(
-    user_id: UUID = Path(..., description="User ID"),
-    profile_data: Dict[str, Any] = Body(...),
-    profile_service: UserProfileService = Depends(get_profile_service),
-    current_user = Depends(get_current_user)
-) -> Dict[str, Any]:
-    """Update user profile."""
-    return await profile_service.update_profile(
-        user_id,
-        profile_data,
-        UUID(current_user.user_id)
-    )
-
-
-# === Admin Management Router ===
-
-admin_router = RouterFactory.create_standard_router(
-    prefix="/admin/users",
-    tags=["admin", "user-management"]
-)
-
-
-@admin_router.post("/invite", response_model=Dict[str, str])
-@standard_exception_handler
-async def invite_user(
-    invitation_data: UserInvitationSchema = Body(...),
-    management_service: UserManagementService = Depends(get_management_service),
-    admin_user = Depends(get_admin_user)
-) -> Dict[str, str]:
-    """Send user invitation."""
-    # Implementation would handle invitation logic
-    return {"message": "Invitation sent successfully"}
-
-
-@admin_router.post("/activate-invitation", response_model=UserResponseSchema)
-@standard_exception_handler
-async def activate_user_invitation(
-    activation_data: UserActivationSchema = Body(...),
-    management_service: UserManagementService = Depends(get_management_service)
-) -> UserResponseSchema:
-    """Activate user account from invitation."""
-    # Implementation would handle activation logic
-    pass
-
-
-@admin_router.get("/pending-approvals", response_model=List[UserSummarySchema])
-@standard_exception_handler
-async def get_pending_approvals(
-    user_service: UserService = Depends(get_user_service),
-    admin_user = Depends(get_admin_user)
-) -> List[UserSummarySchema]:
-    """Get users pending approval."""
-    search_params = UserSearchSchema(
-        status="pending",
-        page=1,
-        page_size=50
-    )
-    users, _ = await user_service.search_users(search_params)
-    return users
-
-
-# === User Onboarding ===
-
-@admin_router.post("/onboard", response_model=UserResponseSchema)
-@standard_exception_handler
-async def onboard_user(
-    user_data: UserCreateSchema = Body(...),
-    profile_data: Dict[str, Any] = Body(None),
-    management_service: UserManagementService = Depends(get_management_service),
-    admin_user = Depends(get_admin_user)
-) -> UserResponseSchema:
-    """Complete user onboarding workflow."""
-    return await management_service.onboard_user(
-        user_data,
-        profile_data,
-        UUID(admin_user["user_id"])
-    )
+    service = UserService(deps.db, deps.tenant_id)
+    return await service.get_recent_users(limit)
 
 
 # === Health Check ===
 
-@user_router.get("/health", response_model=Dict[str, Any])
+
+@user_router.get("/health", response_model=dict[str, Any])
 @standard_exception_handler
 async def user_service_health(
-    user_service: UserService = Depends(get_user_service)
-) -> Dict[str, Any]:
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> dict[str, Any]:
     """Check user service health."""
-    return await user_service.health_check()
+    service = UserService(deps.db, deps.tenant_id)
+    return await service.health_check()
 
 
-__all__ = [
-    "user_router",
-    "profile_router", 
-    "admin_router",
-]
+# Export the router
+__all__ = ["user_router"]

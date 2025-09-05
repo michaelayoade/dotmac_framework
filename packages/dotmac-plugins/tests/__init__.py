@@ -1,1 +1,3 @@
-# Tests for dotmac-plugins package
+"""
+Tests for the DotMac Plugin System.
+"""

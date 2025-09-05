@@ -2,9 +2,6 @@
 Plugin repository implementations.
 """
 
-from typing import List, Optional
-from uuid import UUID
-
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models.plugin import Plugin, PluginCategory, PluginLicense

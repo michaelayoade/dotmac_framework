@@ -1,8 +1,7 @@
 """Analytics database models for metrics, reports, dashboards and alerting."""
 
-from datetime import datetime
-from typing import Any, Dict, List, Optional
-
+from dotmac.database.base import Base
+from dotmac.database.mixins import ISPModelMixin
 from sqlalchemy import (
     JSON,
     Boolean,
@@ -20,11 +19,6 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-
-from dotmac_shared.database.mixins import ISPModelMixin
-# ISPModelMixin includes everything needed (TenantMixin, TimestampMixin, UUIDMixin, audit)
-# Use it as the single comprehensive mixin
-from dotmac_shared.database.base import Base
 
 from .schemas import AlertSeverity, MetricType, ReportType
 
@@ -81,7 +75,9 @@ class MetricValue(Base, ISPModelMixin):
     )
 
     def __repr__(self):
-        return f"<MetricValue(id={self.id}, metric_id={self.metric_id}, value={self.value}, timestamp={self.timestamp})>"
+        return (
+            f"<MetricValue(id={self.id}, metric_id={self.metric_id}, value={self.value}, timestamp={self.timestamp})>"
+        )
 
 
 class Report(Base, ISPModelMixin):
@@ -300,12 +296,14 @@ class MetricAggregation(Base, ISPModelMixin):
 
     __table_args__ = (
         UniqueConstraint(
-            "metric_id", "aggregation_type", "period", "period_start",
-            name="uq_metric_aggregation_unique"
+            "metric_id", "aggregation_type", "period", "period_start", name="uq_metric_aggregation_unique"
         ),
         Index("idx_metric_agg_metric_period", "metric_id", "period"),
         Index("idx_metric_agg_period_range", "period_start", "period_end"),
     )
 
     def __repr__(self):
-        return f"<MetricAggregation(id={self.id}, metric_id={self.metric_id}, type={self.aggregation_type}, period={self.period})>"
+        return (
+            f"<MetricAggregation(id={self.id}, metric_id={self.metric_id}, "
+            f"type={self.aggregation_type}, period={self.period})>"
+        )

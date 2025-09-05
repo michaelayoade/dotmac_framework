@@ -15,7 +15,7 @@ from pathlib import Path
 
 
 def main() -> int:
-    repo_root = Path(__file__).resolve().parents[1]
+    repo_root = Path(__file__).resolve().parents[1]  # noqa: B008
     src_dir = repo_root / "src"
     standards_file = repo_root / ".service-standards.json"
 

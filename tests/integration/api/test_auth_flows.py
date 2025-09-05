@@ -3,22 +3,15 @@ Test authentication flows for the DotMac ISP Framework API.
 Comprehensive testing of login, logout, token refresh, and JWT validation.
 """
 
-import asyncio
 import json
-import jwt
-import pytest
 from datetime import datetime, timedelta, timezone
-from typing import Dict, Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
-from fastapi import HTTPException
-from fastapi.testclient import TestClient
-
-from dotmac_isp.modules.identity.router import identity_router
-from dotmac_isp.modules.identity.services import AuthService
-from dotmac_shared.auth.jwt import create_access_token, verify_token
-from dotmac_shared.auth.models import UserToken, SessionData
+import jwt
+import pytest
+from dotmac.auth.jwt import create_access_token, verify_token
+from dotmac.auth.models import SessionData
 
 
 class TestAuthenticationFlows:
@@ -134,7 +127,7 @@ class TestAuthenticationFlows:
     def test_logout_success(self, client, auth_service_mock, valid_jwt_token):
         """Test successful logout flow."""
         with patch('dotmac_isp.modules.identity.router.AuthService', return_value=auth_service_mock):
-            with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
+            with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
                 mock_get_user.return_value = {"id": "user-123", "username": "testuser"}
                 
                 headers = {"Authorization": f"Bearer {valid_jwt_token}"}
@@ -167,7 +160,7 @@ class TestAuthenticationFlows:
     def test_logout_service_error(self, client, valid_jwt_token):
         """Test logout when service throws exception."""
         with patch('dotmac_isp.modules.identity.router.AuthService') as mock_service:
-            with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
+            with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
                 mock_instance = AsyncMock()
                 mock_instance.logout_user.side_effect = Exception("Service error")
                 mock_service.return_value = mock_instance
@@ -363,7 +356,7 @@ class TestMultiTenantAuthentication:
             "exp": datetime.now(timezone.utc) + timedelta(hours=1)
         })
         
-        with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
+        with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
             mock_get_user.return_value = {
                 "id": "user-1",
                 "tenant_id": "tenant-1"
@@ -501,8 +494,8 @@ class TestAuthenticationIntegration:
                 token = login_response.json()["access_token"]
                 
                 # Use token to access user endpoint
-                with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
-                    with patch('dotmac_shared.auth.dependencies.require_permissions') as mock_perms:
+                with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
+                    with patch('dotmac.auth.dependencies.require_permissions') as mock_perms:
                         mock_get_user.return_value = {"id": "user-123"}
                         mock_perms.return_value = lambda: None
                         
@@ -545,7 +538,7 @@ class TestAuthenticationIntegration:
             token = login_response.json()["access_token"]
             
             # Step 2: Use authenticated endpoint
-            with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
+            with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
                 mock_get_user.return_value = {
                     "id": "user-123",
                     "username": "lifecycleuser"

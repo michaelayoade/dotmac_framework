@@ -6,21 +6,22 @@ Thin adapter layer that uses the shared tenant security implementation.
 import logging
 from typing import Optional
 
+from dotmac.platform.auth.core.tenant_security import TenantSecurityManager
 from fastapi import FastAPI
-
-from dotmac_shared.auth.core.tenant_security import TenantSecurityService
 
 logger = logging.getLogger(__name__)
 
 # Global tenant security service instance
-_tenant_security_service: Optional[TenantSecurityService] = None
+_tenant_security_service: Optional[TenantSecurityManager] = None
 
 
-def get_tenant_security_service() -> TenantSecurityService:
+def get_tenant_security_service() -> TenantSecurityManager:
     """Get or create the tenant security service."""
     global _tenant_security_service
+
     if _tenant_security_service is None:
-        _tenant_security_service = TenantSecurityService()
+        _tenant_security_service = TenantSecurityManager()
+
     return _tenant_security_service
 
 
@@ -31,11 +32,11 @@ def add_management_tenant_security_middleware(app: FastAPI):
     middleware for Management Platform specific needs.
     """
     try:
-        from fastapi import HTTPException, Request
+        from fastapi import Request
         from starlette.middleware.base import BaseHTTPMiddleware
 
         class ManagementTenantSecurityMiddleware(BaseHTTPMiddleware):
-            def __init__(self, app, tenant_security_service: TenantSecurityService):
+            def __init__(self, app, tenant_security_service: TenantSecurityManager):
                 super().__init__(app)
                 self.tenant_security = tenant_security_service
 
@@ -53,8 +54,8 @@ def add_management_tenant_security_middleware(app: FastAPI):
 
         logger.info("Management tenant security middleware added")
 
-    except Exception as e:
-        logger.error(f"Failed to add Management tenant security middleware: {e}")
+    except Exception:  # noqa: BLE001 - wrap and re-raise with context
+        logger.exception("Failed to add Management tenant security middleware")
         raise
 
 
@@ -65,11 +66,11 @@ async def init_management_tenant_security():
     service for Management Platform usage.
     """
     try:
-        tenant_security_service = get_tenant_security_service()
+        get_tenant_security_service()
 
         # Add any Management Platform-specific tenant security initialization here
         logger.info("Management tenant security initialized")
 
-    except Exception as e:
-        logger.error(f"Failed to initialize Management tenant security: {e}")
+    except Exception:  # noqa: BLE001 - wrap and re-raise with context
+        logger.exception("Failed to initialize Management tenant security")
         raise

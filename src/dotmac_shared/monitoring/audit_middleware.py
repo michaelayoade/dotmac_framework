@@ -6,7 +6,21 @@ and other audit-worthy activities for compliance and security monitoring.
 """
 
 import uuid
-from typing import Any, Callable, Dict, List, Optional, Set
+from collections.abc import Callable
+from typing import Optional
+
+from .audit import (
+    AuditActor,
+    AuditContext,
+    AuditEvent,
+    AuditEventType,
+    AuditLogger,
+    AuditOutcome,
+    AuditResource,
+    AuditSeverity,
+    get_audit_logger,
+)
+from .utils import format_duration_ms, get_current_timestamp, get_logger, sanitize_dict
 
 try:
     from fastapi import Request, Response
@@ -26,21 +40,7 @@ except ImportError:
             self.app = app
 
 
-from .utils import format_duration_ms, get_current_timestamp, get_logger, sanitize_dict
-
 logger = get_logger(__name__)
-
-from .audit import (
-    AuditActor,
-    AuditContext,
-    AuditEvent,
-    AuditEventType,
-    AuditLogger,
-    AuditOutcome,
-    AuditResource,
-    AuditSeverity,
-    get_audit_logger,
-)
 
 
 class AuditMiddleware(BaseHTTPMiddleware):
@@ -55,12 +55,12 @@ class AuditMiddleware(BaseHTTPMiddleware):
         self,
         app,
         audit_logger: Optional[AuditLogger] = None,
-        excluded_paths: Optional[Set[str]] = None,
-        excluded_methods: Optional[Set[str]] = None,
+        excluded_paths: Optional[set[str]] = None,
+        excluded_methods: Optional[set[str]] = None,
         log_request_body: bool = False,
         log_response_body: bool = False,
         max_body_size: int = 1024 * 10,  # 10KB
-        sensitive_headers: Optional[Set[str]] = None,
+        sensitive_headers: Optional[set[str]] = None,
         extract_actor: Optional[Callable[[Request], Optional[AuditActor]]] = None,
         extract_resource: Optional[Callable[[Request], Optional[AuditResource]]] = None,
     ):
@@ -117,10 +117,7 @@ class AuditMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         # Skip excluded paths and methods
-        if (
-            request.url.path in self.excluded_paths
-            or request.method in self.excluded_methods
-        ):
+        if request.url.path in self.excluded_paths or request.method in self.excluded_methods:
             return await call_next(request)
 
         # Get or create audit logger
@@ -159,9 +156,7 @@ class AuditMiddleware(BaseHTTPMiddleware):
 
             # Create audit event
             event = AuditEvent(
-                event_type=self._determine_event_type(
-                    request.method, response.status_code
-                ),
+                event_type=self._determine_event_type(request.method, response.status_code),
                 message=f"{request.method} {request.url.path} -> {response.status_code}",
                 description=f"HTTP request processed: {request.method} {request.url}",
                 actor=actor,
@@ -298,7 +293,7 @@ class AuditMiddleware(BaseHTTPMiddleware):
             logger.warning(f"Failed to read response body: {e}")
             return None
 
-    def _sanitize_headers(self, headers: Dict[str, str]) -> Dict[str, str]:
+    def _sanitize_headers(self, headers: dict[str, str]) -> dict[str, str]:
         """Sanitize sensitive headers."""
         return sanitize_dict(headers, self.sensitive_headers)
 
@@ -392,7 +387,7 @@ class AuditEventCollector:
         self.audit_logger = audit_logger
         self.batch_size = batch_size
         self.flush_interval = flush_interval
-        self.events: List[AuditEvent] = []
+        self.events: list[AuditEvent] = []
         self.last_flush = get_current_timestamp()
 
     def add_event(self, event: AuditEvent):
@@ -400,10 +395,7 @@ class AuditEventCollector:
         self.events.append(event)
 
         # Check if we should flush
-        if (
-            len(self.events) >= self.batch_size
-            or get_current_timestamp() - self.last_flush >= self.flush_interval
-        ):
+        if len(self.events) >= self.batch_size or get_current_timestamp() - self.last_flush >= self.flush_interval:
             self.flush()
 
     def flush(self):
@@ -425,15 +417,15 @@ class AuditEventCollector:
             logger.error(f"Failed to flush audit events: {e}")
 
 
-def create_audit_middleware(
-    audit_logger: Optional[AuditLogger] = None, **kwargs
-) -> AuditMiddleware:
+def create_audit_middleware(audit_logger: Optional[AuditLogger] = None, **kwargs) -> AuditMiddleware:
     """Factory function to create audit middleware."""
     if not FASTAPI_AVAILABLE:
         raise ImportError("FastAPI is required for audit middleware")
 
     return AuditMiddleware(
-        app=None, audit_logger=audit_logger, **kwargs  # Will be set by FastAPI
+        app=None,
+        audit_logger=audit_logger,
+        **kwargs,  # Will be set by FastAPI
     )
 
 

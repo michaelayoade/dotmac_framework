@@ -1,13 +1,11 @@
 """Payment service for managing payments."""
 
-from datetime import date
 from decimal import Decimal
-from typing import List, Optional
+from typing import Optional
 
+from dotmac_isp.modules.billing.models import Payment, PaymentStatus
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from dotmac_isp.modules.billing.models import Payment, PaymentMethod, PaymentStatus
 
 
 class PaymentService:
@@ -21,13 +19,9 @@ class PaymentService:
         """Get payment by ID."""
         return await self.db_session.get(Payment, payment_id)
 
-    async def get_payments_by_invoice(
-        self, invoice_id: str, tenant_id: str
-    ) -> List[Payment]:
+    async def get_payments_by_invoice(self, invoice_id: str, tenant_id: str) -> list[Payment]:
         """Get all payments for an invoice."""
-        query = select(Payment).where(
-            Payment.invoice_id == invoice_id, Payment.tenant_id == tenant_id
-        )
+        query = select(Payment).where(Payment.invoice_id == invoice_id, Payment.tenant_id == tenant_id)
         result = await self.db_session.execute(query)
         return result.scalars().all()
 

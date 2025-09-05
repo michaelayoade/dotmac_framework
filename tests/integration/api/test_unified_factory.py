@@ -8,7 +8,6 @@ with all required endpoints, middleware, and health checks working correctly.
 import asyncio
 
 import pytest
-from fastapi.testclient import TestClient
 
 from tests.utilities.test_helpers import create_unified_test_client
 

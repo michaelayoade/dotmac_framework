@@ -2,12 +2,12 @@
 Billing repository for subscription and payment operations.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 from uuid import UUID
 
-from sqlalchemy import and_, func, or_, select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models.billing import (
@@ -35,7 +35,7 @@ class PricingPlanRepository(BaseRepository[PricingPlan]):
         """Get pricing plan by slug."""
         return await self.get_by_field("slug", slug)
 
-    async def get_active_plans(self, public_only: bool = True) -> List[PricingPlan]:
+    async def get_active_plans(self, public_only: bool = True) -> list[PricingPlan]:
         """Get active pricing plans."""
         filters = {"is_active": True}
         if public_only:
@@ -43,9 +43,7 @@ class PricingPlanRepository(BaseRepository[PricingPlan]):
 
         return await self.list(filters=filters, order_by="base_price_cents")
 
-    async def get_by_stripe_price_id(
-        self, stripe_price_id: str
-    ) -> Optional[PricingPlan]:
+    async def get_by_stripe_price_id(self, stripe_price_id: str) -> Optional[PricingPlan]:
         """Get plan by Stripe price ID."""
         return await self.get_by_field("stripe_price_id", stripe_price_id)
 
@@ -56,7 +54,7 @@ class SubscriptionRepository(BaseRepository[Subscription]):
     def __init__(self, db: AsyncSession):
         super().__init__(db, Subscription)
 
-    async def get_by_tenant(self, tenant_id: UUID) -> List[Subscription]:
+    async def get_by_tenant(self, tenant_id: UUID) -> list[Subscription]:
         """Get subscriptions for a tenant."""
         return await self.list(
             filters={"tenant_id": tenant_id},
@@ -70,10 +68,8 @@ class SubscriptionRepository(BaseRepository[Subscription]):
             select(Subscription)
             .where(
                 Subscription.tenant_id == tenant_id,
-                Subscription.status.in_(
-                    [SubscriptionStatus.TRIAL, SubscriptionStatus.ACTIVE]
-                ),
-                Subscription.is_deleted == False,
+                Subscription.status.in_([SubscriptionStatus.TRIAL, SubscriptionStatus.ACTIVE]),
+                Subscription.is_deleted is False,
             )
             .order_by(Subscription.created_at.desc())
             .limit(1)
@@ -82,45 +78,38 @@ class SubscriptionRepository(BaseRepository[Subscription]):
         result = await self.db.execute(query)
         return result.scalar_one_or_none()
 
-    async def get_by_stripe_id(
-        self, stripe_subscription_id: str
-    ) -> Optional[Subscription]:
+    async def get_by_stripe_id(self, stripe_subscription_id: str) -> Optional[Subscription]:
         """Get subscription by Stripe ID."""
         return await self.get_by_field("stripe_subscription_id", stripe_subscription_id)
 
-    async def get_expiring_trials(self, days_ahead: int = 3) -> List[Subscription]:
+    async def get_expiring_trials(self, days_ahead: int = 3) -> list[Subscription]:
         """Get trial subscriptions expiring soon."""
         expiry_date = datetime.now(timezone.utc) + timedelta(days=days_ahead)
 
         query = select(Subscription).where(
             Subscription.status == SubscriptionStatus.TRIAL,
             Subscription.trial_end <= expiry_date,
-            Subscription.is_deleted == False,
+            Subscription.is_deleted is False,
         )
         result = await self.db.execute(query)
         return result.scalars().all()
 
-    async def get_subscriptions_for_renewal(self) -> List[Subscription]:
+    async def get_subscriptions_for_renewal(self) -> list[Subscription]:
         """Get subscriptions due for renewal."""
         tomorrow = datetime.now(timezone.utc) + timedelta(days=1)
 
         query = select(Subscription).where(
             Subscription.status == SubscriptionStatus.ACTIVE,
             Subscription.current_period_end <= tomorrow,
-            Subscription.cancel_at_period_end == False,
-            Subscription.is_deleted == False,
+            Subscription.cancel_at_period_end is False,
+            Subscription.is_deleted is False,
         )
         result = await self.db.execute(query)
         return result.scalars().all()
 
-    async def update_usage(
-        self, subscription_id: UUID, usage_data: Dict[str, Any]
-    ) -> bool:
+    async def update_usage(self, subscription_id: UUID, usage_data: dict[str, Any]) -> bool:
         """Update subscription usage."""
-        return (
-            await self.update(subscription_id, {"current_usage": usage_data})
-            is not None
-        )
+        return await self.update(subscription_id, {"current_usage": usage_data}) is not None
 
 
 class InvoiceRepository(BaseRepository[Invoice]):
@@ -133,9 +122,7 @@ class InvoiceRepository(BaseRepository[Invoice]):
         """Get invoice by number."""
         return await self.get_by_field("invoice_number", invoice_number)
 
-    async def get_by_subscription(
-        self, subscription_id: UUID, skip: int = 0, limit: int = 100
-    ) -> List[Invoice]:
+    async def get_by_subscription(self, subscription_id: UUID, skip: int = 0, limit: int = 100) -> list[Invoice]:
         """Get invoices for a subscription."""
         return await self.list(
             filters={"subscription_id": subscription_id},
@@ -145,26 +132,22 @@ class InvoiceRepository(BaseRepository[Invoice]):
             relationships=["subscription", "payments"],
         )
 
-    async def get_overdue_invoices(self) -> List[Invoice]:
+    async def get_overdue_invoices(self) -> list[Invoice]:
         """Get overdue invoices."""
         today = datetime.now(timezone.utc)
 
         query = select(Invoice).where(
             Invoice.due_date < today,
             Invoice.status.in_([InvoiceStatus.SENT, InvoiceStatus.DRAFT]),
-            Invoice.is_deleted == False,
+            Invoice.is_deleted is False,
         )
         result = await self.db.execute(query)
         return result.scalars().all()
 
-    async def get_unpaid_invoices(
-        self, tenant_id: Optional[UUID] = None
-    ) -> List[Invoice]:
+    async def get_unpaid_invoices(self, tenant_id: Optional[UUID] = None) -> list[Invoice]:
         """Get unpaid invoices."""
         query = (
-            select(Invoice)
-            .join(Subscription)
-            .where(Invoice.status != InvoiceStatus.PAID, Invoice.is_deleted == False)
+            select(Invoice).join(Subscription).where(Invoice.status != InvoiceStatus.PAID, Invoice.is_deleted is False)
         )
         if tenant_id:
             query = query.where(Subscription.tenant_id == tenant_id)
@@ -180,17 +163,13 @@ class InvoiceRepository(BaseRepository[Invoice]):
         today = datetime.now(timezone.utc)
         month_start = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
-        query = select(func.count(Invoice.id)).where(
-            Invoice.invoice_date >= month_start
-        )
+        query = select(func.count(Invoice.id)).where(Invoice.invoice_date >= month_start)
         result = await self.db.execute(query)
         count = result.scalar() + 1
 
         return f"INV-{today.strftime('%Y%m')}-{count:04d}"
 
-    async def mark_as_paid(
-        self, invoice_id: UUID, payment_date: Optional[datetime] = None
-    ) -> bool:
+    async def mark_as_paid(self, invoice_id: UUID, payment_date: Optional[datetime] = None) -> bool:
         """Mark invoice as paid."""
         update_data = {
             "status": InvoiceStatus.PAID,
@@ -207,19 +186,13 @@ class PaymentRepository(BaseRepository[Payment]):
     def __init__(self, db: AsyncSession):
         super().__init__(db, Payment)
 
-    async def get_by_invoice(self, invoice_id: UUID) -> List[Payment]:
+    async def get_by_invoice(self, invoice_id: UUID) -> list[Payment]:
         """Get payments for an invoice."""
-        return await self.list(
-            filters={"invoice_id": invoice_id}, order_by="-created_at"
-        )
+        return await self.list(filters={"invoice_id": invoice_id}, order_by="-created_at")
 
-    async def get_by_stripe_payment_intent(
-        self, stripe_payment_intent_id: str
-    ) -> Optional[Payment]:
+    async def get_by_stripe_payment_intent(self, stripe_payment_intent_id: str) -> Optional[Payment]:
         """Get payment by Stripe payment intent ID."""
-        return await self.get_by_field(
-            "stripe_payment_intent_id", stripe_payment_intent_id
-        )
+        return await self.get_by_field("stripe_payment_intent_id", stripe_payment_intent_id)
 
     async def get_successful_payments(
         self,
@@ -227,9 +200,8 @@ class PaymentRepository(BaseRepository[Payment]):
         end_date: Optional[datetime] = None,
         skip: int = 0,
         limit: int = 100,
-    ) -> List[Payment]:
+    ) -> list[Payment]:
         """Get successful payments in date range."""
-        filters = {"status": PaymentStatus.SUCCEEDED}
 
         query = select(Payment).where(Payment.status == PaymentStatus.SUCCEEDED)
 
@@ -243,9 +215,7 @@ class PaymentRepository(BaseRepository[Payment]):
         result = await self.db.execute(query)
         return result.scalars().all()
 
-    async def get_failed_payments(
-        self, retry_eligible: bool = True, skip: int = 0, limit: int = 100
-    ) -> List[Payment]:
+    async def get_failed_payments(self, retry_eligible: bool = True, skip: int = 0, limit: int = 100) -> list[Payment]:
         """Get failed payments, optionally only retry-eligible ones."""
         query = select(Payment).where(Payment.status == PaymentStatus.FAILED)
 
@@ -269,11 +239,7 @@ class PaymentRepository(BaseRepository[Payment]):
             Payment.processed_at <= end_date,
         )
         if tenant_id:
-            query = (
-                query.join(Invoice)
-                .join(Subscription)
-                .where(Subscription.tenant_id == tenant_id)
-            )
+            query = query.join(Invoice).join(Subscription).where(Subscription.tenant_id == tenant_id)
         result = await self.db.execute(query)
         total_cents = result.scalar() or 0
         return Decimal(total_cents) / 100
@@ -285,38 +251,29 @@ class UsageRecordRepository(BaseRepository[UsageRecord]):
     def __init__(self, db: AsyncSession):
         super().__init__(db, UsageRecord)
 
-    async def get_unbilled_usage(
-        self, subscription_id: UUID, end_date: Optional[datetime] = None
-    ) -> List[UsageRecord]:
+    async def get_unbilled_usage(self, subscription_id: UUID, end_date: Optional[datetime] = None) -> list[UsageRecord]:
         """Get unbilled usage records for subscription."""
-        filters = {"subscription_id": subscription_id, "billed": False}
 
-        query = select(UsageRecord).where(
-            UsageRecord.subscription_id == subscription_id, UsageRecord.billed == False
-        )
+        query = select(UsageRecord).where(UsageRecord.subscription_id == subscription_id, UsageRecord.billed is False)
         if end_date:
             query = query.where(UsageRecord.usage_date <= end_date)
 
         result = await self.db.execute(query)
         return result.scalars().all()
 
-    async def mark_as_billed(
-        self, usage_record_ids: List[UUID], invoice_id: UUID
-    ) -> int:
+    async def mark_as_billed(self, usage_record_ids: list[UUID], invoice_id: UUID) -> int:
         """Mark usage records as billed."""
         from sqlalchemy import update
 
         query = (
-            update(UsageRecord)
-            .where(UsageRecord.id.in_(usage_record_ids))
-            .values(billed=True, invoice_id=invoice_id)
+            update(UsageRecord).where(UsageRecord.id.in_(usage_record_ids)).values(billed=True, invoice_id=invoice_id)
         )
         result = await self.db.execute(query)
         return result.rowcount
 
     async def get_usage_summary(
         self, subscription_id: UUID, start_date: datetime, end_date: datetime
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Get usage summary for subscription in date range."""
         query = (
             select(
@@ -356,7 +313,7 @@ class CommissionRepository(BaseRepository[Commission]):
         status: Optional[CommissionStatus] = None,
         skip: int = 0,
         limit: int = 100,
-    ) -> List[Commission]:
+    ) -> list[Commission]:
         """Get commissions for a reseller."""
         filters = {"reseller_id": reseller_id}
 
@@ -371,9 +328,7 @@ class CommissionRepository(BaseRepository[Commission]):
             relationships=["tenant", "subscription"],
         )
 
-    async def get_unpaid_commissions(
-        self, reseller_id: Optional[UUID] = None
-    ) -> List[Commission]:
+    async def get_unpaid_commissions(self, reseller_id: Optional[UUID] = None) -> list[Commission]:
         """Get unpaid commissions."""
         filters = {"status": CommissionStatus.APPROVED}
 
@@ -390,9 +345,7 @@ class CommissionRepository(BaseRepository[Commission]):
         end_date: Optional[datetime] = None,
     ) -> Decimal:
         """Calculate total commission amount."""
-        query = select(func.sum(Commission.commission_amount_cents)).where(
-            Commission.reseller_id == reseller_id
-        )
+        query = select(func.sum(Commission.commission_amount_cents)).where(Commission.reseller_id == reseller_id)
         if status:
             query = query.where(Commission.status == status)
         if start_date:
@@ -404,9 +357,7 @@ class CommissionRepository(BaseRepository[Commission]):
         total_cents = result.scalar() or 0
         return Decimal(total_cents) / 100
 
-    async def approve_commissions(
-        self, commission_ids: List[UUID], user_id: Optional[str] = None
-    ) -> int:
+    async def approve_commissions(self, commission_ids: list[UUID], user_id: Optional[str] = None) -> int:
         """Approve multiple commissions."""
         from sqlalchemy import update
 
@@ -426,7 +377,7 @@ class CommissionRepository(BaseRepository[Commission]):
 
     async def mark_as_paid(
         self,
-        commission_ids: List[UUID],
+        commission_ids: list[UUID],
         payment_reference: str,
         user_id: Optional[str] = None,
     ) -> int:

@@ -4,13 +4,12 @@ Billing and subscription schemas for validation and serialization.
 
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field
-from schemas.common import BaseSchema, PaginatedResponse
 
-# Stripe Integration Schemas
+from .common import BaseSchema, PaginatedResponse
 
 
 class StripeCustomerCreate(BaseModel):
@@ -18,7 +17,7 @@ class StripeCustomerCreate(BaseModel):
 
     email: str = Field(..., description="Customer email")
     name: str = Field(..., description="Customer name")
-    metadata: Optional[Dict[str, str]] = Field(None, description="Additional metadata")
+    metadata: Optional[dict[str, str]] = Field(None, description="Additional metadata")
 
 
 class StripeSubscriptionCreate(BaseModel):
@@ -27,7 +26,7 @@ class StripeSubscriptionCreate(BaseModel):
     customer_id: str = Field(..., description="Stripe customer ID")
     price_id: str = Field(..., description="Stripe price ID")
     trial_days: Optional[int] = Field(None, description="Trial period in days")
-    metadata: Optional[Dict[str, str]] = Field(None, description="Additional metadata")
+    metadata: Optional[dict[str, str]] = Field(None, description="Additional metadata")
 
 
 class StripeWebhookEvent(BaseModel):
@@ -36,7 +35,7 @@ class StripeWebhookEvent(BaseModel):
     id: str = Field(..., description="Event ID")
     object: str = Field(..., description="Event object type")
     type: str = Field(..., description="Event type")
-    data: Dict[str, Any] = Field(..., description="Event data")
+    data: dict[str, Any] = Field(..., description="Event data")
     created: int = Field(..., description="Event creation timestamp")
 
 
@@ -46,7 +45,7 @@ class PaymentIntentCreate(BaseModel):
     amount_cents: int = Field(..., gt=0, description="Amount in cents")
     currency: str = Field(default="usd", description="Currency code")
     customer_id: Optional[str] = Field(None, description="Stripe customer ID")
-    metadata: Optional[Dict[str, str]] = Field(None, description="Additional metadata")
+    metadata: Optional[dict[str, str]] = Field(None, description="Additional metadata")
 
 
 class PaymentIntentResponse(BaseModel):
@@ -63,7 +62,7 @@ class BillingPlanBase(BaseModel):
 
     name: str = Field(..., description="Plan name")
     description: Optional[str] = Field(None, description="Plan description")
-    features: Dict[str, Any] = Field(default_factory=dict, description="Plan features")
+    features: dict[str, Any] = Field(default_factory=dict, description="Plan features")
     pricing_model: str = Field(..., description="Pricing model (flat, tiered, usage)")
     base_price: Decimal = Field(..., ge=0, description="Base price")
     currency: str = Field(default="USD", description="Currency code")
@@ -82,7 +81,7 @@ class BillingPlanUpdate(BaseModel):
 
     name: Optional[str] = None
     description: Optional[str] = None
-    features: Optional[Dict[str, Any]] = None
+    features: Optional[dict[str, Any]] = None
     pricing_model: Optional[str] = None
     base_price: Optional[Decimal] = None
     currency: Optional[str] = None
@@ -104,7 +103,7 @@ class PricingPlanBase(BaseModel):
     base_price_cents: int = Field(..., ge=0, description="Base price in cents")
     currency: str = Field(default="USD", description="Currency code")
     billing_cycle: str = Field(..., description="Billing cycle (monthly, yearly)")
-    features: Optional[Dict[str, Any]] = Field(None, description="Plan features")
+    features: Optional[dict[str, Any]] = Field(None, description="Plan features")
     is_active: bool = Field(default=True, description="Whether plan is active")
 
 
@@ -122,7 +121,7 @@ class PricingPlanUpdate(BaseModel):
     base_price_cents: Optional[int] = Field(None, ge=0)
     currency: Optional[str] = None
     billing_cycle: Optional[str] = None
-    features: Optional[Dict[str, Any]] = None
+    features: Optional[dict[str, Any]] = None
     is_active: Optional[bool] = None
 
 
@@ -142,9 +141,7 @@ class SubscriptionBase(BaseModel):
     end_date: Optional[date] = Field(None, description="Subscription end date")
     trial_end_date: Optional[date] = Field(None, description="Trial end date")
     auto_renew: bool = Field(default=True, description="Auto-renewal setting")
-    custom_pricing: Optional[Dict[str, Any]] = Field(
-        None, description="Custom pricing overrides"
-    )
+    custom_pricing: Optional[dict[str, Any]] = Field(None, description="Custom pricing overrides")
 
 
 class SubscriptionCreate(SubscriptionBase):
@@ -161,7 +158,7 @@ class SubscriptionUpdate(BaseModel):
     end_date: Optional[date] = None
     trial_end_date: Optional[date] = None
     auto_renew: Optional[bool] = None
-    custom_pricing: Optional[Dict[str, Any]] = None
+    custom_pricing: Optional[dict[str, Any]] = None
 
 
 class Subscription(SubscriptionBase, BaseSchema):
@@ -185,9 +182,7 @@ class InvoiceBase(BaseModel):
     currency: str = Field(default="USD", description="Currency code")
     billing_period_start: date = Field(..., description="Billing period start")
     billing_period_end: date = Field(..., description="Billing period end")
-    metadata: Optional[Dict[str, Any]] = Field(
-        default_factory=dict, description="Additional metadata"
-    )
+    metadata: Optional[dict[str, Any]] = Field(default_factory=dict, description="Additional metadata")
 
 
 class InvoiceCreate(InvoiceBase):
@@ -201,7 +196,7 @@ class InvoiceUpdate(BaseModel):
 
     status: Optional[str] = None
     due_date: Optional[date] = None
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: Optional[dict[str, Any]] = None
 
 
 class Invoice(InvoiceBase, BaseSchema):
@@ -218,9 +213,7 @@ class InvoiceLineItemBase(BaseModel):
     quantity: Decimal = Field(..., gt=0, description="Quantity")
     unit_price: Decimal = Field(..., ge=0, description="Unit price")
     total_price: Decimal = Field(..., ge=0, description="Total price")
-    metadata: Optional[Dict[str, Any]] = Field(
-        default_factory=dict, description="Additional metadata"
-    )
+    metadata: Optional[dict[str, Any]] = Field(default_factory=dict, description="Additional metadata")
 
 
 class InvoiceLineItemCreate(InvoiceLineItemBase):
@@ -245,12 +238,8 @@ class PaymentBase(BaseModel):
     status: str = Field(..., description="Payment status")
     payment_method: str = Field(..., description="Payment method")
     transaction_id: Optional[str] = Field(None, description="External transaction ID")
-    processed_at: Optional[datetime] = Field(
-        None, description="Payment processing timestamp"
-    )
-    metadata: Optional[Dict[str, Any]] = Field(
-        default_factory=dict, description="Additional metadata"
-    )
+    processed_at: Optional[datetime] = Field(None, description="Payment processing timestamp")
+    metadata: Optional[dict[str, Any]] = Field(default_factory=dict, description="Additional metadata")
 
 
 class PaymentCreate(PaymentBase):
@@ -265,7 +254,7 @@ class PaymentUpdate(BaseModel):
     status: Optional[str] = None
     transaction_id: Optional[str] = None
     processed_at: Optional[datetime] = None
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: Optional[dict[str, Any]] = None
 
 
 class Payment(PaymentBase, BaseSchema):
@@ -282,9 +271,7 @@ class UsageRecordBase(BaseModel):
     metric_name: str = Field(..., description="Usage metric name")
     quantity: Decimal = Field(..., ge=0, description="Usage quantity")
     timestamp: datetime = Field(..., description="Usage timestamp")
-    metadata: Optional[Dict[str, Any]] = Field(
-        default_factory=dict, description="Additional metadata"
-    )
+    metadata: Optional[dict[str, Any]] = Field(default_factory=dict, description="Additional metadata")
 
 
 class UsageRecordCreate(UsageRecordBase):
@@ -303,31 +290,31 @@ class UsageRecord(UsageRecordBase, BaseSchema):
 class BillingPlanListResponse(PaginatedResponse):
     """BillingPlanListResponse implementation."""
 
-    items: List[BillingPlan]
+    items: list[BillingPlan]
 
 
 class SubscriptionListResponse(PaginatedResponse):
     """SubscriptionListResponse implementation."""
 
-    items: List[Subscription]
+    items: list[Subscription]
 
 
 class InvoiceListResponse(PaginatedResponse):
     """InvoiceListResponse implementation."""
 
-    items: List[Invoice]
+    items: list[Invoice]
 
 
 class PaymentListResponse(PaginatedResponse):
     """PaymentListResponse implementation."""
 
-    items: List[Payment]
+    items: list[Payment]
 
 
 class UsageRecordListResponse(PaginatedResponse):
     """UsageRecordListResponse implementation."""
 
-    items: List[UsageRecord]
+    items: list[UsageRecord]
 
 
 # Analytics schemas
@@ -351,9 +338,9 @@ class TenantBillingOverview(BaseModel):
 
     tenant_id: UUID
     subscription: Optional[Subscription]
-    current_period_usage: Dict[str, Decimal]
+    current_period_usage: dict[str, Decimal]
     outstanding_balance: Decimal
     next_billing_date: Optional[date]
     payment_method_status: str
-    recent_invoices: List[Invoice]
-    recent_payments: List[Payment]
+    recent_invoices: list[Invoice]
+    recent_payments: list[Payment]

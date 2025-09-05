@@ -7,21 +7,35 @@ tenant provisioning, container lifecycle, and isolation tests.
 Uses factory-boy pattern for reproducible test data generation.
 """
 
+import importlib
 import secrets
-from datetime import datetime, timedelta
-from typing import Dict, Any, Optional, List
-from factory import Factory, Faker, LazyAttribute, SubFactory, Sequence
-from factory.alchemy import SQLAlchemyModelFactory
+from datetime import datetime, timedelta, timezone
+from typing import Any, Optional
 
-from dotmac_management.models.tenant import CustomerTenant, TenantStatus, TenantProvisioningEvent
+# Optional test dependency: factory_boy
+_factory = importlib.import_module("factory")
+Factory = _factory.Factory
+Faker = _factory.Faker
+LazyAttribute = _factory.LazyAttribute
+SubFactory = _factory.SubFactory
+Sequence = _factory.Sequence
+try:
+    SQLAlchemyModelFactory = importlib.import_module("factory.alchemy").SQLAlchemyModelFactory
+except Exception:  # Optional
+
+    class SQLAlchemyModelFactory:  # type: ignore
+        pass
+
+
+from dotmac_management.models.tenant import TenantStatus
 
 
 class TenantFactory(Factory, timezone):
     """Factory for creating test tenant data."""
-    
+
     class Meta:
         model = dict
-    
+
     tenant_id = LazyAttribute(lambda obj: f"tenant_{secrets.token_hex(6)}")
     subdomain = LazyAttribute(lambda obj: f"test{secrets.token_hex(4)}")
     company_name = Faker("company")
@@ -32,7 +46,7 @@ class TenantFactory(Factory, timezone):
     status = TenantStatus.PENDING
     created_at = Faker("date_time_this_month")
     settings = {}
-    
+
     @classmethod
     def create_provisioning_workflow_tenant(cls, **kwargs):
         """Create tenant data optimized for provisioning workflow tests."""
@@ -43,16 +57,13 @@ class TenantFactory(Factory, timezone):
             "plan": "professional",
             "region": "us-east-1",
             "status": TenantStatus.PENDING,
-            "settings": {
-                "enable_test_mode": True,
-                "skip_email_verification": True
-            }
+            "settings": {"enable_test_mode": True, "skip_email_verification": True},
         }
         defaults.update(kwargs)
         return cls(**defaults)
-    
+
     @classmethod
-    def create_isolation_test_tenants(cls, count: int = 2) -> List[Dict[str, Any]]:
+    def create_isolation_test_tenants(cls, count: int = 2) -> list[dict[str, Any]]:
         """Create multiple tenants for isolation testing."""
         tenants = []
         for i in range(count):
@@ -60,12 +71,12 @@ class TenantFactory(Factory, timezone):
                 company_name=f"Isolation Test ISP {chr(65 + i)}",  # A, B, C...
                 admin_email=f"admin_{chr(97 + i)}@isolation-test.com",  # a, b, c...
                 subdomain=f"iso{chr(97 + i)}",
-                tenant_id=f"tenant_isolation_{chr(97 + i)}"
+                tenant_id=f"tenant_isolation_{chr(97 + i)}",
             )
             tenants.append(tenant_data)
         return tenants
-    
-    @classmethod 
+
+    @classmethod
     def create_lifecycle_test_tenant(cls, **kwargs):
         """Create tenant for container lifecycle testing."""
         defaults = {
@@ -75,11 +86,7 @@ class TenantFactory(Factory, timezone):
             "plan": "professional",
             "region": "us-east-1",
             "status": TenantStatus.READY,  # Start as ready for lifecycle tests
-            "settings": {
-                "enable_container_monitoring": True,
-                "enable_scaling": True,
-                "test_mode": True
-            }
+            "settings": {"enable_container_monitoring": True, "enable_scaling": True, "test_mode": True},
         }
         defaults.update(kwargs)
         return cls(**defaults)
@@ -87,32 +94,35 @@ class TenantFactory(Factory, timezone):
 
 class ProvisioningEventFactory(Factory):
     """Factory for tenant provisioning events."""
-    
+
     class Meta:
         model = dict
-    
+
     tenant_id = LazyAttribute(lambda obj: f"tenant_{secrets.token_hex(6)}")
-    event_type = Faker("random_element", elements=[
-        "status_change.pending",
-        "status_change.provisioning", 
-        "status_change.migrating",
-        "status_change.seeding",
-        "status_change.testing",
-        "status_change.ready",
-        "status_change.active"
-    ])
+    event_type = Faker(
+        "random_element",
+        elements=[
+            "status_change.pending",
+            "status_change.provisioning",
+            "status_change.migrating",
+            "status_change.seeding",
+            "status_change.testing",
+            "status_change.ready",
+            "status_change.active",
+        ],
+    )
     status = "in_progress"
     message = Faker("sentence", nb_words=6)
     step_number = Faker("random_int", min=1, max=10)
     correlation_id = LazyAttribute(lambda obj: f"provision-{secrets.token_hex(8)}")
     operator = "system"
     created_at = Faker("date_time_this_hour")
-    
+
     @classmethod
-    def create_provisioning_sequence(cls, tenant_id: str, correlation_id: str) -> List[Dict[str, Any]]:
+    def create_provisioning_sequence(cls, tenant_id: str, correlation_id: str) -> list[dict[str, Any]]:
         """Create a complete provisioning event sequence."""
         events = []
-        
+
         provisioning_steps = [
             ("status_change.pending", "Tenant creation initiated", 1),
             ("status_change.validating", "Validating tenant configuration", 2),
@@ -129,9 +139,9 @@ class ProvisioningEventFactory(Factory):
             ("status_change.testing", "Running health checks", 13),
             ("health_check_passed", "Health checks passed", 14),
             ("status_change.ready", "Provisioning completed successfully", 15),
-            ("status_change.active", "Tenant is now active", 16)
+            ("status_change.active", "Tenant is now active", 16),
         ]
-        
+
         for event_type, message, step_number in provisioning_steps:
             event = cls(
                 tenant_id=tenant_id,
@@ -139,62 +149,66 @@ class ProvisioningEventFactory(Factory):
                 message=message,
                 step_number=step_number,
                 correlation_id=correlation_id,
-                status="success" if step_number <= 16 else "in_progress"
+                status="success" if step_number <= 16 else "in_progress",
             )
             events.append(event)
-        
+
         return events
 
 
 class ContainerLifecycleDataFactory(Factory):
     """Factory for container lifecycle test data."""
-    
+
     class Meta:
         model = dict
-    
+
     container_id = LazyAttribute(lambda obj: f"app_{secrets.token_hex(8)}")
     tenant_id = LazyAttribute(lambda obj: f"tenant_{secrets.token_hex(6)}")
     status = "running"
     health = "healthy"
     cpu_usage = Faker("random_int", min=10, max=80)
-    memory_usage = Faker("random_int", min=128, max=2048) 
+    memory_usage = Faker("random_int", min=128, max=2048)
     disk_usage = Faker("random_int", min=1, max=50)
-    
+
     @classmethod
-    def create_scaling_scenario(cls, base_container_id: str) -> List[Dict[str, Any]]:
+    def create_scaling_scenario(cls, base_container_id: str) -> list[dict[str, Any]]:
         """Create container data for scaling scenarios."""
         scenarios = []
-        
+
         # Base container
-        scenarios.append(cls(
-            container_id=base_container_id,
-            status="running",
-            cpu_usage=85,  # High CPU triggers scaling
-            memory_usage=1800,  # High memory
-            replicas=1
-        ))
-        
+        scenarios.append(
+            cls(
+                container_id=base_container_id,
+                status="running",
+                cpu_usage=85,  # High CPU triggers scaling
+                memory_usage=1800,  # High memory
+                replicas=1,
+            )
+        )
+
         # Scaled up containers
         for i in range(2, 4):  # Scale to 3 total
-            scenarios.append(cls(
-                container_id=f"{base_container_id}-{i}",
-                status="running", 
-                cpu_usage=30,  # Distributed load
-                memory_usage=600,
-                replicas=i
-            ))
-        
+            scenarios.append(
+                cls(
+                    container_id=f"{base_container_id}-{i}",
+                    status="running",
+                    cpu_usage=30,  # Distributed load
+                    memory_usage=600,
+                    replicas=i,
+                )
+            )
+
         return scenarios
 
 
 class DatabaseIsolationFactory(Factory):
     """Factory for database isolation test data."""
-    
+
     class Meta:
         model = dict
-    
+
     @classmethod
-    def create_customer_data(cls, tenant_prefix: str) -> Dict[str, Any]:
+    def create_customer_data(cls, tenant_prefix: str) -> dict[str, Any]:
         """Create customer data specific to a tenant."""
         return {
             "id": f"{tenant_prefix}_customer_{secrets.token_hex(4)}",
@@ -205,11 +219,11 @@ class DatabaseIsolationFactory(Factory):
             "city": f"{tenant_prefix.title()} City",
             "tenant_id": f"tenant_{tenant_prefix}",
             "created_at": datetime.now(timezone.utc).isoformat(),
-            "is_active": True
+            "is_active": True,
         }
-    
+
     @classmethod
-    def create_service_data(cls, tenant_prefix: str, customer_id: str) -> Dict[str, Any]:
+    def create_service_data(cls, tenant_prefix: str, customer_id: str) -> dict[str, Any]:
         """Create service data for a customer."""
         return {
             "id": f"{tenant_prefix}_service_{secrets.token_hex(4)}",
@@ -219,11 +233,11 @@ class DatabaseIsolationFactory(Factory):
             "bandwidth": Faker("random_element", elements=["100/10", "500/50", "1000/1000"]).generate(),
             "monthly_rate": Faker("random_int", min=50, max=200).generate(),
             "status": "active",
-            "tenant_id": f"tenant_{tenant_prefix}"
+            "tenant_id": f"tenant_{tenant_prefix}",
         }
-    
+
     @classmethod
-    def create_billing_data(cls, tenant_prefix: str, customer_id: str) -> Dict[str, Any]:
+    def create_billing_data(cls, tenant_prefix: str, customer_id: str) -> dict[str, Any]:
         """Create billing data for a customer."""
         return {
             "id": f"{tenant_prefix}_bill_{secrets.token_hex(4)}",
@@ -231,62 +245,62 @@ class DatabaseIsolationFactory(Factory):
             "amount": Faker("random_int", min=5000, max=20000).generate() / 100,  # $50-$200
             "due_date": (datetime.now(timezone.utc) + timedelta(days=30)).isoformat(),
             "status": "unpaid",
-            "tenant_id": f"tenant_{tenant_prefix}"
+            "tenant_id": f"tenant_{tenant_prefix}",
         }
 
 
 class ApiTestDataFactory(Factory):
     """Factory for API test data."""
-    
+
     class Meta:
         model = dict
-    
+
     @classmethod
-    def create_management_admin_credentials(cls) -> Dict[str, str]:
+    def create_management_admin_credentials(cls) -> dict[str, str]:
         """Create management admin test credentials."""
         return {
             "username": "test_management_admin",
             "password": "test_password_123!",
             "email": "management.admin@test.com",
-            "role": "management_admin"
+            "role": "management_admin",
         }
-    
+
     @classmethod
-    def create_tenant_admin_credentials(cls, tenant_id: str) -> Dict[str, str]:
+    def create_tenant_admin_credentials(cls, tenant_id: str) -> dict[str, str]:
         """Create tenant admin test credentials."""
         return {
             "username": f"admin_{tenant_id}",
             "password": "tenant_admin_pass_123!",
             "email": f"admin@{tenant_id}.test.com",
             "role": "tenant_admin",
-            "tenant_id": tenant_id
+            "tenant_id": tenant_id,
         }
-    
+
     @classmethod
-    def create_test_jwt_payload(cls, tenant_id: Optional[str] = None, role: str = "user") -> Dict[str, Any]:
+    def create_test_jwt_payload(cls, tenant_id: Optional[str] = None, role: str = "user") -> dict[str, Any]:
         """Create JWT payload for API testing."""
         payload = {
             "sub": f"test_user_{secrets.token_hex(4)}",
             "email": "test@user.com",
             "role": role,
             "iat": datetime.now(timezone.utc).timestamp(),
-            "exp": (datetime.now(timezone.utc) + timedelta(hours=1)).timestamp()
+            "exp": (datetime.now(timezone.utc) + timedelta(hours=1)).timestamp(),
         }
-        
+
         if tenant_id:
             payload["tenant_id"] = tenant_id
-        
+
         return payload
 
 
 class HealthCheckDataFactory(Factory):
     """Factory for health check test data."""
-    
+
     class Meta:
         model = dict
-    
+
     @classmethod
-    def create_healthy_response(cls) -> Dict[str, Any]:
+    def create_healthy_response(cls) -> dict[str, Any]:
         """Create healthy system response."""
         return {
             "status": "healthy",
@@ -294,38 +308,34 @@ class HealthCheckDataFactory(Factory):
             "services": {
                 "database": {"status": "healthy", "response_time": 0.05},
                 "redis": {"status": "healthy", "response_time": 0.01},
-                "container": {"status": "running", "uptime": 3600}
-            }
+                "container": {"status": "running", "uptime": 3600},
+            },
         }
-    
+
     @classmethod
-    def create_unhealthy_response(cls, failing_service: str) -> Dict[str, Any]:
+    def create_unhealthy_response(cls, failing_service: str) -> dict[str, Any]:
         """Create unhealthy system response."""
         services = {
             "database": {"status": "healthy", "response_time": 0.05},
-            "redis": {"status": "healthy", "response_time": 0.01}, 
-            "container": {"status": "running", "uptime": 3600}
+            "redis": {"status": "healthy", "response_time": 0.01},
+            "container": {"status": "running", "uptime": 3600},
         }
-        
+
         services[failing_service] = {
             "status": "unhealthy",
             "error": f"{failing_service} connection failed",
-            "last_success": (datetime.now(timezone.utc) - timedelta(minutes=5)).isoformat()
+            "last_success": (datetime.now(timezone.utc) - timedelta(minutes=5)).isoformat(),
         }
-        
-        return {
-            "status": "unhealthy",
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "services": services
-        }
+
+        return {"status": "unhealthy", "timestamp": datetime.now(timezone.utc).isoformat(), "services": services}
 
 
 # Export all factories
 __all__ = [
     "TenantFactory",
-    "ProvisioningEventFactory", 
+    "ProvisioningEventFactory",
     "ContainerLifecycleDataFactory",
     "DatabaseIsolationFactory",
     "ApiTestDataFactory",
-    "HealthCheckDataFactory"
+    "HealthCheckDataFactory",
 ]

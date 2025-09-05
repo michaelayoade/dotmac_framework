@@ -2,13 +2,9 @@
 Module template system for generating standardized module structures.
 """
 
-import os
-import textwrap
 from dataclasses import dataclass
 from enum import Enum
-from pathlib import Path
 from string import Template
-from typing import Any, Dict, List, Optional
 
 
 class Platform(Enum):
@@ -26,7 +22,7 @@ class ComponentConfig:
     filename: str
     template_content: str
     required: bool = True
-    dependencies: List[str] = None
+    dependencies: list[str] = None
 
     def __post_init__(self):
         if self.dependencies is None:
@@ -72,13 +68,13 @@ __all__ = [
 ${module_name} API endpoints.
 """
 
-from typing import List, Optional
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from ${relative_import_base}.database import get_db
-from dotmac_shared.auth import get_current_user, require_permission
-from dotmac_shared.cache import CacheService
+from dotmac.auth import get_current_user, require_scopes
+from dotmac.core.cache import CacheService
 from dotmac_shared.files import FileService
 from dotmac_shared.webhooks import WebhookService
 from .service import ${service_class}
@@ -98,16 +94,16 @@ router = APIRouter(
 ${service_var} = ${service_class}()
 
 
-@router.get("/", response_model=List[${schema_class}Response])
+@router.get("/", response_model=list[${schema_class}Response])
 async def list_${module_name}(
-    skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=1000),
-    db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    skip: int = Query(0, ge=0),  # noqa: B008
+    limit: int = Query(100, ge=1, le=1000),  # noqa: B008
+    db: Session = Depends(get_db),  # noqa: B008
+    current_user = Depends(get_current_user)  # noqa: B008
 ):
     """List all ${module_name}."""
     try:
-        query = ${schema_class}Query(skip=skip, limit=limit)
+        query = ${schema_class}Query(skip=skip, limit=limit)  # noqa: B008
         return await ${service_var}.list_${module_name}(query, db, current_user)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -116,8 +112,8 @@ async def list_${module_name}(
 @router.get("/{item_id}", response_model=${schema_class}Response)
 async def get_${module_name_singular}(
     item_id: int,
-    db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    db: Session = Depends(get_db),  # noqa: B008
+    current_user = Depends(get_current_user)  # noqa: B008
 ):
     """Get ${module_name_singular} by ID."""
     try:
@@ -134,8 +130,8 @@ async def get_${module_name_singular}(
 @router.post("/", response_model=${schema_class}Response)
 async def create_${module_name_singular}(
     item: ${schema_class}Create,
-    db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    db: Session = Depends(get_db),  # noqa: B008
+    current_user = Depends(get_current_user)  # noqa: B008
 ):
     """Create new ${module_name_singular}."""
     try:
@@ -148,8 +144,8 @@ async def create_${module_name_singular}(
 async def update_${module_name_singular}(
     item_id: int,
     item: ${schema_class}Update,
-    db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    db: Session = Depends(get_db),  # noqa: B008
+    current_user = Depends(get_current_user)  # noqa: B008
 ):
     """Update ${module_name_singular}."""
     try:
@@ -166,8 +162,8 @@ async def update_${module_name_singular}(
 @router.delete("/{item_id}")
 async def delete_${module_name_singular}(
     item_id: int,
-    db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    db: Session = Depends(get_db),  # noqa: B008
+    current_user = Depends(get_current_user)  # noqa: B008
 ):
     """Delete ${module_name_singular}."""
     try:
@@ -202,13 +198,13 @@ ${module_name} business logic service.
 """
 
 import logging
-from typing import List, Optional, Any, Dict
+from typing import Any, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 
 from ${relative_import_base}.core.exceptions import ValidationError, NotFoundError, PermissionError
-from dotmac_shared.auth import AuthService
-from dotmac_shared.cache import CacheService
+from dotmac.auth import JWTService
+from dotmac.core.cache import CacheService
 from dotmac_shared.files import FileService
 from dotmac_shared.webhooks import WebhookService
 from .repository import ${repository_class}
@@ -238,7 +234,7 @@ class ${service_class}:
         query: ${schema_class}Query,
         db: Session,
         current_user: Any
-    ) -> List[${schema_class}Response]:
+    ) -> list[${schema_class}Response]:
         """List ${module_name} with filtering and pagination."""
         try:
             # Apply tenant filtering if needed
@@ -257,7 +253,7 @@ class ${service_class}:
                 filters=filters
             )
 
-            result = [${schema_class}Response.from_orm(item) for item in items]
+            result = [${schema_class}Response.model_validate(item) for item in items]
 
             # Cache the result
             await self.cache_service.set(cache_key, result, ttl=300)  # 5 minutes
@@ -285,7 +281,7 @@ class ${service_class}:
             if not self._can_access_item(item, current_user):
                 raise PermissionError("Access denied to this ${module_name_singular}")
 
-            return ${schema_class}Response.from_orm(item)
+            return ${schema_class}Response.model_validate(item)
 
         except SQLAlchemyError as e:
             logger.error(f"Database error in get_${module_name_singular}: {e}")
@@ -303,7 +299,7 @@ class ${service_class}:
             await self._validate_create_data(item_data, current_user)
 
             # Create model instance
-            item_dict = item_data.dict()
+            item_dict = item_data.model_dump()
             item_dict = self._enrich_create_data(item_dict, current_user)
 
             item = ${model_class}(**item_dict)
@@ -320,7 +316,7 @@ class ${service_class}:
             )
 
             logger.info(f"Created ${module_name_singular} {created_item.id} by user {current_user.id}")
-            return ${schema_class}Response.from_orm(created_item)
+            return ${schema_class}Response.model_validate(created_item)
 
         except SQLAlchemyError as e:
             logger.error(f"Database error in create_${module_name_singular}: {e}")
@@ -349,13 +345,13 @@ class ${service_class}:
             await self._validate_update_data(item_data, existing_item, current_user)
 
             # Update item
-            update_dict = item_data.dict(exclude_unset=True)
+            update_dict = item_data.model_dump(exclude_unset=True)
             update_dict = self._enrich_update_data(update_dict, current_user)
 
             updated_item = await self.repository.update(db, existing_item, update_dict)
 
             logger.info(f"Updated ${module_name_singular} {item_id} by user {current_user.id}")
-            return ${schema_class}Response.from_orm(updated_item)
+            return ${schema_class}Response.model_validate(updated_item)
 
         except SQLAlchemyError as e:
             logger.error(f"Database error in update_${module_name_singular}: {e}")
@@ -395,7 +391,7 @@ class ${service_class}:
             db.rollback()
             raise ValidationError("Failed to delete ${module_name_singular}")
 
-    def _build_filters(self, query: ${schema_class}Query, current_user: Any) -> Dict[str, Any]:
+    def _build_filters(self, query: ${schema_class}Query, current_user: Any) -> dict[str, Any]:
         """Build database filters from query parameters."""
         filters = {}
 
@@ -420,7 +416,7 @@ class ${service_class}:
         """Check if user can delete this item."""
         return self._can_modify_item(item, current_user)
 
-    def _enrich_create_data(self, data: Dict[str, Any], current_user: Any) -> Dict[str, Any]:
+    def _enrich_create_data(self, data: dict[str, Any], current_user: Any) -> dict[str, Any]:
         """Enrich create data with user and tenant info."""
         if hasattr(current_user, 'id'):
             data['created_by'] = current_user.id
@@ -428,7 +424,7 @@ class ${service_class}:
             data['tenant_id'] = current_user.tenant_id
         return data
 
-    def _enrich_update_data(self, data: Dict[str, Any], current_user: Any) -> Dict[str, Any]:
+    def _enrich_update_data(self, data: dict[str, Any], current_user: Any) -> dict[str, Any]:
         """Enrich update data with user info."""
         if hasattr(current_user, 'id'):
             data['updated_by'] = current_user.id
@@ -464,7 +460,7 @@ class ${service_class}:
 ${module_name} data access repository.
 """
 
-from typing import List, Optional, Dict, Any
+from typing import Any, Optional
 from sqlalchemy.orm import Session, Query
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import and_, or_, func
@@ -484,8 +480,8 @@ class ${repository_class}(BaseRepository[${model_class}]):
         db: Session,
         skip: int = 0,
         limit: int = 100,
-        filters: Optional[Dict[str, Any]] = None
-    ) -> List[${model_class}]:
+        filters: Optional[dict[str, Any]] = None
+    ) -> list[${model_class}]:
         """List items with pagination and filtering."""
         try:
             query = db.query(self.model)
@@ -506,7 +502,7 @@ class ${repository_class}(BaseRepository[${model_class}]):
     async def count_with_filters(
         self,
         db: Session,
-        filters: Optional[Dict[str, Any]] = None
+        filters: Optional[dict[str, Any]] = None
     ) -> int:
         """Count items with filtering."""
         try:
@@ -540,7 +536,7 @@ class ${repository_class}(BaseRepository[${model_class}]):
         db: Session,
         attribute: str,
         value: Any
-    ) -> List[${model_class}]:
+    ) -> list[${model_class}]:
         """Find all items by specific attribute."""
         try:
             return db.query(self.model).filter(
@@ -554,8 +550,8 @@ class ${repository_class}(BaseRepository[${model_class}]):
         self,
         db: Session,
         search_term: str,
-        search_fields: Optional[List[str]] = None
-    ) -> List[${model_class}]:
+        search_fields: Optional[list[str]] = None
+    ) -> list[${model_class}]:
         """Search items by text in specified fields."""
         try:
             if not search_fields:
@@ -580,7 +576,7 @@ class ${repository_class}(BaseRepository[${model_class}]):
         except SQLAlchemyError as e:
             raise e
 
-    def _apply_filters(self, query: Query, filters: Dict[str, Any]) -> Query:
+    def _apply_filters(self, query: Query, filters: dict[str, Any]) -> Query:
         """Apply filters to query."""
         for key, value in filters.items():
             if hasattr(self.model, key) and value is not None:
@@ -604,7 +600,7 @@ class ${repository_class}(BaseRepository[${model_class}]):
 
         return query
 
-    def _get_searchable_fields(self) -> List[str]:
+    def _get_searchable_fields(self) -> list[str]:
         """Get list of searchable text fields."""
         # Override this method in subclasses to specify searchable fields
         searchable_fields = []
@@ -706,9 +702,9 @@ class ${model_class}(BaseTenantModel, AuditMixin, StatusMixin):
 ${module_name} Pydantic schemas for request/response validation.
 """
 
-from typing import Optional, List, Any, Dict
+from typing import Any, Optional
 from datetime import datetime
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from ${relative_import_base}.shared.schemas.base_schemas import (
     BaseSchema,
@@ -764,11 +760,9 @@ class ${schema_class}Response(${schema_class}Base, TenantSchema, AuditSchema):
     """Schema for ${module_name_singular} responses."""
     id: int = Field(..., description="Unique identifier")
 
-    class Config:
-        from_attributes = True  # For Pydantic v2
-        # orm_mode = True  # For Pydantic v1
+    model_config = ConfigDict(from_attributes=True)
 
-        schema_extra = {
+    json_schema_extra = {
             "example": {
                 "id": 1,
                 "name": "Example ${module_name_singular}",
@@ -805,7 +799,7 @@ class ${schema_class}Query(PaginationSchema):
 
 class ${schema_class}List(BaseModel):
     """Schema for ${module_name} list responses with pagination."""
-    items: List[${schema_class}Response]
+    items: list[${schema_class}Response]
     total: int = Field(..., description="Total number of items")
     page: int = Field(..., description="Current page number")
     pages: int = Field(..., description="Total number of pages")
@@ -821,8 +815,7 @@ class ${schema_class}Summary(BaseModel):
     status: str
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 '''
         return ComponentConfig(
             name="schemas",
@@ -839,7 +832,7 @@ ${module_name} background tasks.
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 from celery import shared_task
 from sqlalchemy.orm import Session
 
@@ -853,7 +846,7 @@ logger = logging.getLogger(__name__)
 
 
 @shared_task(bind=True, max_retries=3, default_retry_delay=60)
-def process_${module_name_singular}_async(self, item_data: Dict[str, Any], user_id: int):
+def process_${module_name_singular}_async(self, item_data: dict[str, Any], user_id: int):
     """Process ${module_name_singular} asynchronously."""
     try:
         logger.info(f"Starting async processing for ${module_name_singular}: {item_data}")
@@ -887,7 +880,7 @@ def process_${module_name_singular}_async(self, item_data: Dict[str, Any], user_
 
 
 @shared_task(bind=True)
-def bulk_update_${module_name}(self, item_ids: List[int], update_data: Dict[str, Any], user_id: int):
+def bulk_update_${module_name}(self, item_ids: list[int], update_data: dict[str, Any], user_id: int):
     """Bulk update ${module_name}."""
     try:
         logger.info(f"Starting bulk update for {len(item_ids)} ${module_name}")
@@ -955,7 +948,7 @@ def cleanup_old_${module_name}(days: int = 30):
 
 
 @shared_task
-def generate_${module_name}_report(filters: Dict[str, Any], user_id: int):
+def generate_${module_name}_report(filters: dict[str, Any], user_id: int):
     """Generate ${module_name} report."""
     try:
         logger.info(f"Generating ${module_name} report for user {user_id}")
@@ -993,9 +986,7 @@ def generate_${module_name}_report(filters: Dict[str, Any], user_id: int):
         logger.error(f"Error generating report: {e}")
         return {"success": False, "error": str(e)}
 '''
-        return ComponentConfig(
-            name="tasks", filename="tasks.py", template_content=template, required=False
-        )
+        return ComponentConfig(name="tasks", filename="tasks.py", template_content=template, required=False)
 
     @staticmethod
     def get_dependencies_template() -> ComponentConfig:
@@ -1009,8 +1000,8 @@ from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from ${relative_import_base}.database import get_db
-from dotmac_shared.auth import get_current_user, require_permission
-from dotmac_shared.cache import CacheService
+from dotmac.auth import get_current_user, require_scopes
+from dotmac.core.cache import CacheService
 from dotmac_shared.files import FileService
 from dotmac_shared.webhooks import WebhookService
 from .service import ${service_class}
@@ -1064,7 +1055,7 @@ def require_${module_name}_permission(action: str = "read"):
         current_user: Annotated[dict, Depends(get_current_user)]
     ):
         permission_name = f"${module_name}:{action}"
-        if not require_permission(permission_name, current_user):
+        if not require_scopes([permission_name], current_user):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"Permission '{permission_name}' required"
@@ -1138,7 +1129,7 @@ ${module_name} module specific exceptions.
 """
 
 from ${relative_import_base}.core.exceptions import DotMacError, ValidationError, NotFoundError
-from dotmac_shared.api.exception_handlers import standard_exception_handler
+from dotmac.application import standard_exception_handler
 
 
 class ${module_name_singular}Error(DotMacError):
@@ -1240,9 +1231,7 @@ class ModuleTemplate:
             "exceptions": ComponentTemplate.get_exceptions_template(),
         }
 
-    def generate_module_variables(
-        self, module_name: str, platform: Platform
-    ) -> Dict[str, str]:
+    def generate_module_variables(self, module_name: str, platform: Platform) -> dict[str, str]:
         """Generate template variables for a module."""
         # Convert module name formats
         module_name_clean = module_name.lower().replace("-", "_").replace(" ", "_")
@@ -1293,7 +1282,7 @@ class ModuleTemplate:
             return word[:-1]
         return word
 
-    def generate_component(self, component_name: str, variables: Dict[str, str]) -> str:
+    def generate_component(self, component_name: str, variables: dict[str, str]) -> str:
         """Generate a specific component with template variables."""
         if component_name not in self.component_templates:
             raise ValueError(f"Unknown component: {component_name}")
@@ -1303,17 +1292,15 @@ class ModuleTemplate:
 
         return template_obj.safe_substitute(variables)
 
-    def get_required_components(self) -> List[str]:
+    def get_required_components(self) -> list[str]:
         """Get list of required component names."""
-        return [
-            name for name, config in self.component_templates.items() if config.required
-        ]
+        return [name for name, config in self.component_templates.items() if config.required]
 
-    def get_all_components(self) -> List[str]:
+    def get_all_components(self) -> list[str]:
         """Get list of all component names."""
         return list(self.component_templates.keys())
 
-    def get_component_dependencies(self, component_name: str) -> List[str]:
+    def get_component_dependencies(self, component_name: str) -> list[str]:
         """Get dependencies for a specific component."""
         if component_name not in self.component_templates:
             return []

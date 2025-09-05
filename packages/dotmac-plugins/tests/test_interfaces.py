@@ -5,30 +5,27 @@ Tests plugin interface contracts, method signatures, and
 specialized plugin types (export, deployment, DNS, observer, router).
 """
 
-import pytest
 import asyncio
-from abc import ABC
-from typing import Dict, Any, List, Optional
-from unittest.mock import Mock, AsyncMock
+from typing import Any
 
+import pytest
 from dotmac.plugins import (
-    IPlugin,
-    IExportPlugin,
+    Author,
+    DeploymentResult,
+    ExportResult,
     IDeploymentProvider,
     IDNSProvider,
+    IExportPlugin,
     IObserver,
-    PluginKind,
-    PluginStatus,
+    IPlugin,
     PluginContext,
+    PluginKind,
     PluginMetadata,
-    Version,
-    Author,
-    ExportResult,
-    DeploymentResult,
+    PluginStatus,
     ValidationResult,
 )
-from conftest import TestPlugin, TestExportPlugin
 
+from conftest import TestPlugin
 
 # Test implementations for interface testing
 
@@ -79,7 +76,7 @@ class ConcreteExportPlugin(IExportPlugin):
     def stop(self) -> bool:
         return True
         
-    async def export(self, task: Dict[str, Any]) -> ExportResult:
+    async def export(self, task: dict[str, Any]) -> ExportResult:
         return ExportResult(
             success=True,
             file_url=f"/exports/test_{task.get('format', 'csv')}.csv",
@@ -87,7 +84,7 @@ class ConcreteExportPlugin(IExportPlugin):
             metadata={"rows": 100, "format": task.get('format', 'csv')}
         )
         
-    def get_supported_formats(self) -> List[str]:
+    def get_supported_formats(self) -> list[str]:
         return ["csv", "xlsx", "json"]
 
 
@@ -138,7 +135,7 @@ class ConcreteDeploymentProvider(IDeploymentProvider):
     def stop(self) -> bool:
         return True
         
-    async def deploy(self, config: Dict[str, Any]) -> DeploymentResult:
+    async def deploy(self, config: dict[str, Any]) -> DeploymentResult:
         return DeploymentResult(
             success=True,
             deployment_id=f"deploy_{config.get('service', 'unknown')}",
@@ -154,7 +151,7 @@ class ConcreteDeploymentProvider(IDeploymentProvider):
             metadata={"timestamp": "2024-01-01T00:05:00Z"}
         )
         
-    async def get_deployment_status(self, deployment_id: str) -> Dict[str, Any]:
+    async def get_deployment_status(self, deployment_id: str) -> dict[str, Any]:
         return {
             "deployment_id": deployment_id,
             "status": "running",
@@ -216,7 +213,7 @@ class ConcreteDNSProvider(IDNSProvider):
             details={"domain": domain, "valid": True}
         )
         
-    async def create_dns_record(self, domain: str, record_type: str, value: str) -> Dict[str, Any]:
+    async def create_dns_record(self, domain: str, record_type: str, value: str) -> dict[str, Any]:
         return {
             "record_id": f"{domain}_{record_type}",
             "domain": domain,
@@ -277,10 +274,10 @@ class ConcreteObserver(IObserver):
     def stop(self) -> bool:
         return True
         
-    async def on_event(self, event_type: str, data: Dict[str, Any]) -> None:
+    async def on_event(self, event_type: str, data: dict[str, Any]) -> None:
         self.observed_events.append({"type": event_type, "data": data})
         
-    def get_subscribed_events(self) -> List[str]:
+    def get_subscribed_events(self) -> list[str]:
         return ["plugin.registered", "plugin.started", "plugin.stopped"]
 
 

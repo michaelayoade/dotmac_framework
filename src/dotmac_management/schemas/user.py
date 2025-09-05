@@ -3,11 +3,12 @@ User schemas for authentication and user management.
 """
 
 from datetime import datetime
-from typing import List, Optional
+from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
-from schemas.common import BaseResponse
+from pydantic import BaseModel, EmailStr, Field
+
+from .common import BaseResponse
 
 
 class UserBase(BaseModel):
@@ -15,9 +16,7 @@ class UserBase(BaseModel):
 
     email: EmailStr = Field(..., description="User email address")
     full_name: str = Field(..., min_length=2, max_length=255, description="Full name")
-    username: Optional[str] = Field(
-        None, min_length=3, max_length=100, description="Username"
-    )
+    username: Optional[str] = Field(None, min_length=3, max_length=100, description="Username")
     phone: Optional[str] = Field(None, max_length=20, description="Phone number")
     timezone: str = Field("UTC", max_length=50, description="User timezone")
     language: str = Field("en", max_length=10, description="Preferred language")
@@ -46,9 +45,7 @@ class UserPasswordUpdate(BaseModel):
     """Schema for password update."""
 
     current_password: str = Field(..., description="Current password")
-    new_password: str = Field(
-        ..., min_length=8, max_length=255, description="New password"
-    )
+    new_password: str = Field(..., min_length=8, max_length=255, description="New password")
 
 
 class UserResponse(BaseResponse):
@@ -100,9 +97,7 @@ class UserInvitationCreate(BaseModel):
     email: EmailStr = Field(..., description="Email to invite")
     role: str = Field(..., description="Role to assign")
     tenant_id: Optional[UUID] = Field(None, description="Tenant ID for tenant users")
-    message: Optional[str] = Field(
-        None, max_length=1000, description="Personal message"
-    )
+    message: Optional[str] = Field(None, max_length=1000, description="Personal message")
 
 
 class UserInvitationResponse(BaseResponse):
@@ -157,7 +152,7 @@ class UserSessionResponse(BaseResponse):
 class UserListResponse(BaseModel):
     """User list response schema."""
 
-    users: List[UserResponse]
+    users: list[UserResponse]
     total: int
     page: int
     per_page: int
@@ -187,7 +182,7 @@ class ChangeEmail(BaseModel):
 class UserPermissions(BaseModel):
     """User permissions schema."""
 
-    permissions: List[str] = Field(..., description="List of user permissions")
+    permissions: list[str] = Field(..., description="List of user permissions")
     role: str = Field(..., description="User role")
 
 

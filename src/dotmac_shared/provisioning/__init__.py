@@ -12,7 +12,7 @@ Key Features:
 - Rollback capability if provisioning fails
 
 Usage:
-    from dotmac_shared.provisioning import provision_isp_container
+    from dotmac_shared.provisioning import provision_isp_container  # noqa: F401
 
     result = await provision_isp_container(
         isp_id=UUID("..."),

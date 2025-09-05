@@ -7,12 +7,11 @@ CSRF, and other web-based attacks on API endpoints
 """
 
 import logging
-import re
-from typing import Any, Callable, Dict, List, Optional, Union
+from collections.abc import Callable
+from typing import Any, Optional
 
-from fastapi import Request, Response
+from fastapi import Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +55,7 @@ class SecurityHeaders:
         cls,
         strict_mode: bool = True,
         allow_inline_scripts: bool = False,
-        allowed_domains: Optional[List[str]] = None,
+        allowed_domains: Optional[list[str]] = None,
     ) -> str:
         """
         Generate Content Security Policy header
@@ -133,8 +132,8 @@ class CORSPolicyManager:
     def get_cors_configuration(
         self,
         api_type: str = "api",  # api, admin, public
-        tenant_domains: Optional[List[str]] = None,
-    ) -> Dict:
+        tenant_domains: Optional[list[str]] = None,
+    ) -> dict:
         """
         Get CORS configuration based on environment and API type
         """
@@ -258,9 +257,9 @@ class APISecurityMiddleware:
         environment: str = "development",
         api_type: str = "api",
         strict_csp: bool = True,
-        custom_headers: Optional[Dict[str, str]] = None,
-        exempt_paths: Optional[List[str]] = None,
-        tenant_domains: Optional[List[str]] = None,
+        custom_headers: Optional[dict[str, str]] = None,
+        exempt_paths: Optional[list[str]] = None,
+        tenant_domains: Optional[list[str]] = None,
     ):
         self.app = app
         self.environment = environment
@@ -279,7 +278,7 @@ class APISecurityMiddleware:
         # Apply to all paths except explicitly exempted ones
         return not any(path.startswith(exempt) for exempt in self.exempt_paths)
 
-    def get_security_headers(self, request: Request) -> Dict[str, str]:
+    def get_security_headers(self, request: Request) -> dict[str, str]:
         """Get security headers for the request"""
         headers = self.security_headers.DEFAULT_SECURITY_HEADERS.copy()
 
@@ -293,9 +292,7 @@ class APISecurityMiddleware:
 
         # Add HSTS for HTTPS
         if request.url.scheme == "https" or self.environment == "production":
-            headers["Strict-Transport-Security"] = (
-                self.security_headers.get_strict_transport_security()
-            )
+            headers["Strict-Transport-Security"] = self.security_headers.get_strict_transport_security()
 
         # Add custom headers
         headers.update(self.custom_headers)
@@ -345,7 +342,7 @@ class APISecurityConfig:
         app,
         environment: str = "development",
         api_type: str = "api",
-        tenant_domains: Optional[List[str]] = None,
+        tenant_domains: Optional[list[str]] = None,
     ):
         """Configure CORS middleware for FastAPI app"""
         cors_manager = CORSPolicyManager(environment)
@@ -353,32 +350,25 @@ class APISecurityConfig:
 
         app.add_middleware(CORSMiddleware, **cors_config)
 
-        logger.info(
-            f"CORS configured for {environment} environment, {api_type} API type"
-        )
+        logger.info(f"CORS configured for {environment} environment, {api_type} API type")
 
     @staticmethod
-    def add_security_headers_middleware(
-        app, environment: str = "development", api_type: str = "api", **kwargs
-    ):
+    def add_security_headers_middleware(app, environment: str = "development", api_type: str = "api", **kwargs):
         """Add security headers middleware to FastAPI app"""
-        security_middleware = APISecurityMiddleware(
-            app=app, environment=environment, api_type=api_type, **kwargs
-        )
+        security_middleware = APISecurityMiddleware(app=app, environment=environment, api_type=api_type, **kwargs)
 
         app.middleware("http")(security_middleware)
         logger.info(f"Security headers middleware configured for {environment}")
 
     @staticmethod
-    def validate_security_configuration(app, environment: str) -> Dict[str, Any]:
+    def validate_security_configuration(app, environment: str) -> dict[str, Any]:
         """Validate security configuration"""
         issues = []
         recommendations = []
 
         # Check if CORS is configured
         cors_configured = any(
-            isinstance(middleware, CORSMiddleware)
-            for middleware in getattr(app, "user_middleware", [])
+            isinstance(middleware, CORSMiddleware) for middleware in getattr(app, "user_middleware", [])
         )
 
         if not cors_configured:
@@ -401,16 +391,12 @@ class APISecurityConfig:
 
 
 # Factory functions
-def create_security_headers_middleware(
-    environment: str = "development", api_type: str = "api", **kwargs
-) -> Callable:
+def create_security_headers_middleware(environment: str = "development", api_type: str = "api", **kwargs) -> Callable:
     """Factory for creating security headers middleware"""
 
     def middleware_factory(app):
         """middleware_factory operation."""
-        return APISecurityMiddleware(
-            app=app, environment=environment, api_type=api_type, **kwargs
-        )
+        return APISecurityMiddleware(app=app, environment=environment, api_type=api_type, **kwargs)
 
     return middleware_factory
 
@@ -419,21 +405,17 @@ def setup_api_security(
     app,
     environment: str = "development",
     api_type: str = "api",
-    tenant_domains: Optional[List[str]] = None,
+    tenant_domains: Optional[list[str]] = None,
     **kwargs,
 ):
     """
     Complete API security setup with CORS and security headers
     """
     # Configure CORS
-    APISecurityConfig.configure_cors_middleware(
-        app, environment, api_type, tenant_domains
-    )
+    APISecurityConfig.configure_cors_middleware(app, environment, api_type, tenant_domains)
 
     # Add security headers
-    APISecurityConfig.add_security_headers_middleware(
-        app, environment, api_type, **kwargs
-    )
+    APISecurityConfig.add_security_headers_middleware(app, environment, api_type, **kwargs)
 
     logger.info(f"Complete API security setup configured for {environment}")
 

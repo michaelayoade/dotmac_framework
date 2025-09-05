@@ -2,17 +2,17 @@
 Commission calculation engine for partner management
 """
 
-import json
-from datetime import datetime, timedelta
-from typing import Any, Dict, List
+from datetime import datetime, timedelta, timezone
+from typing import Optional
 
 from pydantic import BaseModel, Field
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from ..models.partner import Commission, Partner, PartnerCustomer
 
 
-class CommissionTier(BaseModel, timezone):
+class CommissionTier(BaseModel):
     """Commission tier configuration"""
 
     id: str
@@ -20,7 +20,7 @@ class CommissionTier(BaseModel, timezone):
     minimum_revenue: float
     base_rate: float  # Decimal (0.05 = 5%)
     bonus_rate: float = 0.0
-    product_multipliers: Dict[str, float] = Field(default_factory=dict)
+    product_multipliers: dict[str, float] = Field(default_factory=dict)
 
 
 class CommissionResult(BaseModel):
@@ -33,9 +33,9 @@ class CommissionResult(BaseModel):
     total_commission: float
     effective_rate: float
     tier: str
-    breakdown: Dict[str, float]
+    breakdown: dict[str, float]
     calculated_at: datetime
-    audit_trail: List[str]
+    audit_trail: list[str]
 
 
 class CommissionCalculator:
@@ -96,9 +96,9 @@ class CommissionCalculator:
         ),
     ]
 
-    def __init__(self, custom_tiers: List[CommissionTier] = None):
+    def __init__(self, custom_tiers: Optional[list[CommissionTier]] = None):
         self.tiers = {tier.id: tier for tier in (custom_tiers or self.DEFAULT_TIERS)}
-        self.audit_log: List[str] = []
+        self.audit_log: list[str] = []
 
     def _add_audit(self, message: str) -> None:
         """Add message to audit trail"""
@@ -112,22 +112,16 @@ class CommissionCalculator:
             raise ValueError(f"Invalid commission tier: {tier_id}")
         return tier
 
-    def _validate_tier_eligibility(
-        self, lifetime_revenue: float, tier: CommissionTier
-    ) -> bool:
+    def _validate_tier_eligibility(self, lifetime_revenue: float, tier: CommissionTier) -> bool:
         """Check if partner is eligible for tier"""
         return lifetime_revenue >= tier.minimum_revenue
 
-    def _calculate_new_customer_bonus(
-        self, tier: CommissionTier, monthly_revenue: float
-    ) -> float:
+    def _calculate_new_customer_bonus(self, tier: CommissionTier, monthly_revenue: float) -> float:
         """Calculate new customer bonus (50% of first month's commission)"""
         base_commission = monthly_revenue * tier.base_rate
         return base_commission * 0.5
 
-    def _calculate_contract_length_bonus(
-        self, contract_length: int, base_commission: float
-    ) -> float:
+    def _calculate_contract_length_bonus(self, contract_length: int, base_commission: float) -> float:
         """Calculate bonus based on contract length"""
         if contract_length >= 24:
             return base_commission * 0.1  # 10% for 2+ years
@@ -135,9 +129,7 @@ class CommissionCalculator:
             return base_commission * 0.05  # 5% for 1+ year
         return 0.0
 
-    def _calculate_territory_bonus(
-        self, territory_bonus_rate: float, base_commission: float
-    ) -> float:
+    def _calculate_territory_bonus(self, territory_bonus_rate: float, base_commission: float) -> float:
         """Calculate territory-specific bonus"""
         return base_commission * territory_bonus_rate
 
@@ -185,23 +177,14 @@ class CommissionCalculator:
             new_customer_bonus = self._calculate_new_customer_bonus(tier, customer.mrr)
             self._add_audit(f"New customer bonus: ${new_customer_bonus:.2f}")
 
-        contract_length_bonus = self._calculate_contract_length_bonus(
-            customer.contract_length, base_commission
-        )
+        contract_length_bonus = self._calculate_contract_length_bonus(customer.contract_length, base_commission)
         self._add_audit(f"Contract length bonus: ${contract_length_bonus:.2f}")
 
-        territory_bonus = self._calculate_territory_bonus(
-            territory_bonus_rate, base_commission
-        )
+        territory_bonus = self._calculate_territory_bonus(territory_bonus_rate, base_commission)
         self._add_audit(f"Territory bonus: ${territory_bonus:.2f}")
 
         # Calculate total before promotional adjustment
-        pre_promotional_total = (
-            base_commission
-            + new_customer_bonus
-            + contract_length_bonus
-            + territory_bonus
-        )
+        pre_promotional_total = base_commission + new_customer_bonus + contract_length_bonus + territory_bonus
 
         # Apply promotional adjustment
         total_commission = pre_promotional_total * promotional_rate
@@ -210,14 +193,14 @@ class CommissionCalculator:
         bonus_commission = new_customer_bonus + contract_length_bonus + territory_bonus
         effective_rate = total_commission / customer.mrr if customer.mrr > 0 else 0
 
-        self._add_audit(
-            f"Final commission: ${total_commission:.2f} ({effective_rate * 100:.2f}% effective rate)"
-        )
+        self._add_audit(f"Final commission: ${total_commission:.2f} ({effective_rate * 100:.2f}% effective rate)")
 
         # Security check: Ensure commission doesn't exceed reasonable limits
         max_commission_rate = 0.5  # 50% maximum
         if effective_rate > max_commission_rate:
-            error_msg = f"Commission rate {effective_rate * 100:.2f}% exceeds maximum allowed {max_commission_rate * 100}%"
+            error_msg = (
+                f"Commission rate {effective_rate * 100:.2f}% exceeds maximum allowed {max_commission_rate * 100}%"
+            )
             self._add_audit(f"SECURITY ERROR: {error_msg}")
             raise ValueError(error_msg)
 
@@ -265,9 +248,7 @@ class CommissionCalculator:
             new_customer_bonus=commission_result.breakdown["new_customer_bonus"],
             territory_bonus=commission_result.breakdown["territory_bonus"],
             contract_length_bonus=commission_result.breakdown["contract_length_bonus"],
-            promotional_adjustment=commission_result.breakdown[
-                "promotional_adjustment"
-            ],
+            promotional_adjustment=commission_result.breakdown["promotional_adjustment"],
             commission_type="monthly",
             period_start=now,
             period_end=now + timedelta(days=30),
@@ -310,9 +291,7 @@ class CommissionCalculator:
 
         if not commission:
             # Create new record if none exists
-            return self.create_commission_record(
-                db, customer_id, partner_id, commission_result
-            )
+            return self.create_commission_record(db, customer_id, partner_id, commission_result)
 
         # Update existing record
         commission.amount = commission_result.total_commission
@@ -320,19 +299,11 @@ class CommissionCalculator:
         commission.bonus_amount = commission_result.bonus_commission
         commission.effective_rate = commission_result.effective_rate
         commission.tier_multiplier = commission_result.breakdown["tier_multiplier"]
-        commission.product_multiplier = commission_result.breakdown[
-            "product_multiplier"
-        ]
-        commission.new_customer_bonus = commission_result.breakdown[
-            "new_customer_bonus"
-        ]
+        commission.product_multiplier = commission_result.breakdown["product_multiplier"]
+        commission.new_customer_bonus = commission_result.breakdown["new_customer_bonus"]
         commission.territory_bonus = commission_result.breakdown["territory_bonus"]
-        commission.contract_length_bonus = commission_result.breakdown[
-            "contract_length_bonus"
-        ]
-        commission.promotional_adjustment = commission_result.breakdown[
-            "promotional_adjustment"
-        ]
+        commission.contract_length_bonus = commission_result.breakdown["contract_length_bonus"]
+        commission.promotional_adjustment = commission_result.breakdown["promotional_adjustment"]
 
         commission.calculation_details = {
             "audit_trail": commission_result.audit_trail,
@@ -348,9 +319,7 @@ class CommissionCalculator:
 
         return commission
 
-    def validate_commission(
-        self, commission: Commission, customer: PartnerCustomer, partner: Partner
-    ) -> bool:
+    def validate_commission(self, commission: Commission, customer: PartnerCustomer, partner: Partner) -> bool:
         """Validate existing commission calculation"""
 
         try:
@@ -358,25 +327,17 @@ class CommissionCalculator:
 
             # Compare with tolerance for floating point precision
             tolerance = 0.01
-            total_match = (
-                abs(recalculated.total_commission - commission.amount) < tolerance
-            )
-            rate_match = (
-                abs(recalculated.effective_rate - commission.effective_rate) < tolerance
-            )
+            total_match = abs(recalculated.total_commission - commission.amount) < tolerance
+            rate_match = abs(recalculated.effective_rate - commission.effective_rate) < tolerance
 
             return total_match and rate_match
-        except Exception:
+        except (ValueError, TypeError):
             return False
 
     def determine_eligible_tier(self, lifetime_revenue: float) -> CommissionTier:
         """Determine highest tier partner qualifies for"""
 
-        eligible_tiers = [
-            tier
-            for tier in self.tiers.values()
-            if lifetime_revenue >= tier.minimum_revenue
-        ]
+        eligible_tiers = [tier for tier in self.tiers.values() if lifetime_revenue >= tier.minimum_revenue]
 
         # Sort by minimum revenue descending to get highest tier first
         eligible_tiers.sort(key=lambda t: t.minimum_revenue, reverse=True)
@@ -385,7 +346,7 @@ class CommissionCalculator:
 
     def calculate_batch_commissions(
         self, db: Session, partner_id: str, recalculate_all: bool = False
-    ) -> List[CommissionResult]:
+    ) -> list[CommissionResult]:
         """Calculate commissions for all partner customers"""
 
         partner = db.query(Partner).filter(Partner.id == partner_id).first()
@@ -399,28 +360,21 @@ class CommissionCalculator:
             # Only calculate for customers without pending commissions
             customers_with_commissions = (
                 db.query(Commission.customer_id)
-                .filter(
-                    Commission.partner_id == partner_id, Commission.status == "pending"
-                )
+                .filter(Commission.partner_id == partner_id, Commission.status == "pending")
                 .subquery()
             )
 
-            customers_query = customers_query.filter(
-                ~PartnerCustomer.id.in_(customers_with_commissions)
-            )
+            customers_query = customers_query.filter(~PartnerCustomer.id.in_(customers_with_commissions))
         customers = customers_query.all()
         results = []
 
         for customer in customers:
             try:
                 # Determine if this is a new customer (activated in last 30 days)
-                is_new = (
-                    customer.activated_at
-                    and customer.activated_at >= datetime.now(timezone.utc) - timedelta(days=30)
+                is_new = customer.activated_at and customer.activated_at >= datetime.now(timezone.utc) - timedelta(
+                    days=30
                 )
-                result = self.calculate_customer_commission(
-                    customer, partner, is_new_customer=is_new
-                )
+                result = self.calculate_customer_commission(customer, partner, is_new_customer=is_new)
                 results.append(result)
 
                 # Create or update commission record
@@ -429,10 +383,8 @@ class CommissionCalculator:
                 else:
                     self.create_commission_record(db, customer.id, partner_id, result)
 
-            except Exception as e:
-                self._add_audit(
-                    f"Error calculating commission for customer {customer.id}: {str(e)}"
-                )
+            except (ValueError, TypeError, SQLAlchemyError) as e:
+                self._add_audit(f"Error calculating commission for customer {customer.id}: {str(e)}")
                 continue
 
         return results

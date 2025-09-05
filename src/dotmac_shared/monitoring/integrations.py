@@ -8,7 +8,7 @@ to follow DRY principles and leverage existing infrastructure.
 import logging
 import time
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from .base import BaseMonitoringService, HealthCheck, HealthStatus
 
@@ -20,7 +20,7 @@ class AlertConfig:
     """Configuration for monitoring alerts."""
 
     enabled: bool = True
-    notification_channels: List[str] = field(default_factory=lambda: ["email"])
+    notification_channels: list[str] = field(default_factory=lambda: ["email"])
     error_threshold: int = 5  # Number of errors before alerting
     response_time_threshold_ms: float = 5000  # 5 seconds
     alert_cooldown_minutes: int = 15  # Minimum time between similar alerts
@@ -56,8 +56,8 @@ class IntegratedMonitoringService(BaseMonitoringService):
         self.alert_config = alert_config or AlertConfig()
 
         # Error tracking for alerting
-        self._error_counts: Dict[str, int] = {}
-        self._last_alert_times: Dict[str, float] = {}
+        self._error_counts: dict[str, int] = {}
+        self._last_alert_times: dict[str, float] = {}
 
         logger.info(f"Initialized integrated monitoring for {service_name}")
 
@@ -75,18 +75,11 @@ class IntegratedMonitoringService(BaseMonitoringService):
         effective_tenant_id = tenant_id or self.tenant_id
 
         # Log the HTTP request
-        logger.info(
-            f"HTTP {method} {endpoint} -> {status_code} ({duration:.3f}s) [tenant: {effective_tenant_id}]"
-        )
+        logger.info(f"HTTP {method} {endpoint} -> {status_code} ({duration:.3f}s) [tenant: {effective_tenant_id}]")
 
         # Check for slow requests
-        if (
-            self.alert_config.enabled
-            and duration * 1000 > self.alert_config.response_time_threshold_ms
-        ):
-            logger.warning(
-                f"Slow response detected: {method} {endpoint} took {duration:.2f}s"
-            )
+        if self.alert_config.enabled and duration * 1000 > self.alert_config.response_time_threshold_ms:
+            logger.warning(f"Slow response detected: {method} {endpoint} took {duration:.2f}s")
 
     def record_database_query(
         self,
@@ -100,9 +93,7 @@ class IntegratedMonitoringService(BaseMonitoringService):
         effective_tenant_id = tenant_id or self.tenant_id
         status = "SUCCESS" if success else "FAILED"
 
-        logger.info(
-            f"DB {operation} {table} -> {status} ({duration:.3f}s) [tenant: {effective_tenant_id}]"
-        )
+        logger.info(f"DB {operation} {table} -> {status} ({duration:.3f}s) [tenant: {effective_tenant_id}]")
 
     def record_cache_operation(
         self,
@@ -115,9 +106,7 @@ class IntegratedMonitoringService(BaseMonitoringService):
         effective_tenant_id = tenant_id or self.tenant_id
         status = "HIT" if success else "MISS"
 
-        logger.info(
-            f"CACHE {operation} {cache_name} -> {status} [tenant: {effective_tenant_id}]"
-        )
+        logger.info(f"CACHE {operation} {cache_name} -> {status} [tenant: {effective_tenant_id}]")
 
     def record_error(
         self,
@@ -137,13 +126,10 @@ class IntegratedMonitoringService(BaseMonitoringService):
         )
 
         # Check if alert threshold reached
-        if (
-            self.alert_config.enabled
-            and self._error_counts[error_key] >= self.alert_config.error_threshold
-        ):
+        if self.alert_config.enabled and self._error_counts[error_key] >= self.alert_config.error_threshold:
             self._send_error_alert(error_type, service, self._error_counts[error_key])
 
-    def perform_health_check(self) -> List[HealthCheck]:
+    def perform_health_check(self) -> list[HealthCheck]:
         """Perform comprehensive health checks using existing services."""
         health_checks = []
 
@@ -198,15 +184,13 @@ class IntegratedMonitoringService(BaseMonitoringService):
         operation_name: str,
         duration: float,
         success: bool,
-        labels: Dict[str, str],
+        labels: dict[str, str],
     ) -> None:
         """Record operation duration with comprehensive logging."""
         status = "SUCCESS" if success else "FAILED"
         tenant_id = labels.get("tenant_id", self.tenant_id)
 
-        logger.info(
-            f"OPERATION {operation_name} -> {status} ({duration:.3f}s) [tenant: {tenant_id}]"
-        )
+        logger.info(f"OPERATION {operation_name} -> {status} ({duration:.3f}s) [tenant: {tenant_id}]")
 
     def _send_error_alert(self, error_type: str, service: str, count: int) -> None:
         """Send error alert (simplified sync version)."""
@@ -216,15 +200,12 @@ class IntegratedMonitoringService(BaseMonitoringService):
         # Check cooldown
         if (
             alert_key in self._last_alert_times
-            and current_time - self._last_alert_times[alert_key]
-            < self.alert_config.alert_cooldown_minutes * 60
+            and current_time - self._last_alert_times[alert_key] < self.alert_config.alert_cooldown_minutes * 60
         ):
             return
 
         # Log the alert (in a real implementation, this would send notifications)
-        logger.critical(
-            f"ALERT: Error threshold reached - {count} occurrences of {error_type} in {service}"
-        )
+        logger.critical(f"ALERT: Error threshold reached - {count} occurrences of {error_type} in {service}")
         self._last_alert_times[alert_key] = current_time
 
 
@@ -242,6 +223,4 @@ def create_integrated_monitoring_service(
     Returns:
         IntegratedMonitoringService with available integrations
     """
-    return IntegratedMonitoringService(
-        service_name=service_name, tenant_id=tenant_id, **integrations
-    )
+    return IntegratedMonitoringService(service_name=service_name, tenant_id=tenant_id, **integrations)

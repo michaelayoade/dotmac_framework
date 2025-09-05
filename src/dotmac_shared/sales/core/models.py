@@ -3,60 +3,72 @@
 from datetime import date, datetime
 from decimal import Decimal
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Optional
 
 try:
-    from sqlalchemy import JSON, Boolean, Column, Date, DateTime
+    from sqlalchemy import (
+        JSON,
+        Boolean,
+        Column,
+        Date,
+        DateTime,
+        Float,
+        ForeignKey,
+        Index,
+        Integer,
+        Numeric,
+        String,
+        Text,
+    )
     from sqlalchemy import Enum as SQLEnum
-    from sqlalchemy import Float, ForeignKey, Index, Integer, Numeric, String, Text
     from sqlalchemy.dialects.postgresql import UUID
     from sqlalchemy.ext.hybrid import hybrid_property
     from sqlalchemy.orm import declarative_base, relationship
 
-        Base = declarative_base()
+    Base = declarative_base()
 
-        class TenantModel(Base):
-            """TenantModel implementation."""
+    class TenantModel(Base):
+        """TenantModel implementation."""
 
-            __abstract__ = True
-            id = Column(UUID(as_uuid=True), primary_key=True)
-            tenant_id = Column(String(100), nullable=False, index=True)
+        __abstract__ = True
+        id = Column(UUID(as_uuid=True), primary_key=True)
+        tenant_id = Column(String(100), nullable=False, index=True)
 
-        class StatusMixin:
-            """StatusMixin implementation."""
+    class StatusMixin:
+        """StatusMixin implementation."""
 
-            __abstract__ = True
-            is_active = Column(Boolean, default=True, nullable=False)
+        __abstract__ = True
+        is_active = Column(Boolean, default=True, nullable=False)
 
-        class AuditMixin:
-            """AuditMixin implementation."""
+    class AuditMixin:
+        """AuditMixin implementation."""
 
-            __abstract__ = True
-            created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-            updated_at = Column(
-                DateTime,
-                default=datetime.utcnow,
-                onupdate=datetime.utcnow,
-                nullable=False,
-            )
+        __abstract__ = True
+        created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+        updated_at = Column(
+            DateTime,
+            default=datetime.utcnow,
+            onupdate=datetime.utcnow,
+            nullable=False,
+        )
 
-        class ContactMixin:
-            """ContactMixin implementation."""
+    class ContactMixin:
+        """ContactMixin implementation."""
 
-            __abstract__ = True
-            email = Column(String(255), nullable=True)
-            phone = Column(String(20), nullable=True)
-            mobile = Column(String(20), nullable=True)
+        __abstract__ = True
+        email = Column(String(255), nullable=True)
+        phone = Column(String(20), nullable=True)
+        mobile = Column(String(20), nullable=True)
 
-        class AddressMixin:
-            """AddressMixin implementation."""
+    class AddressMixin:
+        """AddressMixin implementation."""
 
-            __abstract__ = True
-            street_address = Column(String(255), nullable=True)
-            city = Column(String(100), nullable=True)
-            state_province = Column(String(100), nullable=True)
-            postal_code = Column(String(20), nullable=True)
-            country_code = Column(String(3), nullable=True)
+        __abstract__ = True
+        street_address = Column(String(255), nullable=True)
+        city = Column(String(100), nullable=True)
+        state_province = Column(String(100), nullable=True)
+        postal_code = Column(String(20), nullable=True)
+        country_code = Column(String(3), nullable=True)
 
     SQLALCHEMY_AVAILABLE = True
 except ImportError:
@@ -170,6 +182,7 @@ class CustomerType(str, Enum):
 
 # SQLAlchemy models (only available if SQLAlchemy is installed)
 if SQLALCHEMY_AVAILABLE:
+    pass
 
     class Lead(TenantModel, StatusMixin, AuditMixin, ContactMixin, AddressMixin):
         """Sales leads and prospects."""
@@ -187,9 +200,7 @@ if SQLALCHEMY_AVAILABLE:
 
         # Lead classification
         lead_source = Column(SQLEnum(LeadSource), nullable=False, index=True)
-        lead_status = Column(
-            SQLEnum(LeadStatus), default=LeadStatus.NEW, nullable=False, index=True
-        )
+        lead_status = Column(SQLEnum(LeadStatus), default=LeadStatus.NEW, nullable=False, index=True)
         customer_type = Column(SQLEnum(CustomerType), nullable=True, index=True)
 
         # Qualification
@@ -262,8 +273,7 @@ if SQLALCHEMY_AVAILABLE:
             """Check if lead is overdue for follow-up."""
             return self.next_follow_up_date and date.today() > self.next_follow_up_date
 
-        def __repr__(self):
-            return f"<Lead(id='{self.lead_id}', name='{self.full_name}', status='{self.lead_status}')>"
+    # __repr__ intentionally omitted for brevity
 
     class Opportunity(TenantModel, StatusMixin, AuditMixin, AddressMixin):
         """Sales opportunities and deals."""
@@ -276,9 +286,7 @@ if SQLALCHEMY_AVAILABLE:
         description = Column(Text, nullable=True)
 
         # Customer information
-        lead_id = Column(
-            UUID(as_uuid=True), ForeignKey("sales_leads.id"), nullable=True, index=True
-        )
+        lead_id = Column(UUID(as_uuid=True), ForeignKey("sales_leads.id"), nullable=True, index=True)
         customer_id = Column(UUID(as_uuid=True), nullable=True, index=True)
         account_name = Column(String(300), nullable=False)
         contact_name = Column(String(200), nullable=True)
@@ -362,9 +370,7 @@ if SQLALCHEMY_AVAILABLE:
             foreign_keys="[SalesActivity.opportunity_id]",
             back_populates="opportunity",
         )
-        quotes = relationship(
-            "Quote", back_populates="opportunity", cascade="all, delete-orphan"
-        )
+        quotes = relationship("Quote", back_populates="opportunity", cascade="all, delete-orphan")
 
         __table_args__ = (
             Index(
@@ -388,18 +394,14 @@ if SQLALCHEMY_AVAILABLE:
         @hybrid_property
         def is_overdue(self) -> bool:
             """Check if opportunity is overdue."""
-            return (
-                self.opportunity_status == OpportunityStatus.ACTIVE
-                and date.today() > self.expected_close_date
-            )
+            return self.opportunity_status == OpportunityStatus.ACTIVE and date.today() > self.expected_close_date
 
         @hybrid_property
         def age_days(self) -> int:
             """Calculate opportunity age in days."""
             return (date.today() - self.created_date).days
 
-        def __repr__(self):
-            return f"<Opportunity(id='{self.opportunity_id}', name='{self.opportunity_name}', stage='{self.opportunity_stage}')>"
+    # __repr__ intentionally omitted for brevity
 
     class SalesActivity(TenantModel, AuditMixin):
         """Sales activities and interactions."""
@@ -412,9 +414,7 @@ if SQLALCHEMY_AVAILABLE:
         description = Column(Text, nullable=True)
 
         # References
-        lead_id = Column(
-            UUID(as_uuid=True), ForeignKey("sales_leads.id"), nullable=True, index=True
-        )
+        lead_id = Column(UUID(as_uuid=True), ForeignKey("sales_leads.id"), nullable=True, index=True)
         opportunity_id = Column(
             UUID(as_uuid=True),
             ForeignKey("sales_opportunities.id"),
@@ -470,9 +470,7 @@ if SQLALCHEMY_AVAILABLE:
 
         # Relationships
         lead = relationship("Lead", foreign_keys=[lead_id], back_populates="activities")
-        opportunity = relationship(
-            "Opportunity", foreign_keys=[opportunity_id], back_populates="activities"
-        )
+        opportunity = relationship("Opportunity", foreign_keys=[opportunity_id], back_populates="activities")
 
         __table_args__ = (
             Index("ix_activities_type_date", "activity_type", "scheduled_date"),
@@ -483,18 +481,14 @@ if SQLALCHEMY_AVAILABLE:
         @hybrid_property
         def is_overdue(self) -> bool:
             """Check if activity is overdue."""
-            return (
-                self.activity_status == ActivityStatus.PLANNED
-                and datetime.now() > self.scheduled_date
-            )
+            return self.activity_status == ActivityStatus.PLANNED and datetime.now() > self.scheduled_date
 
         @hybrid_property
         def days_until_scheduled(self) -> int:
             """Calculate days until scheduled date."""
             return (self.scheduled_date.date() - date.today()).days
 
-        def __repr__(self):
-            return f"<SalesActivity(id='{self.activity_id}', type='{self.activity_type}', status='{self.activity_status}')>"
+    # __repr__ intentionally omitted for brevity
 
     class Quote(TenantModel, StatusMixin, AuditMixin, AddressMixin):
         """Sales quotes and proposals."""
@@ -521,9 +515,7 @@ if SQLALCHEMY_AVAILABLE:
         customer_email = Column(String(255), nullable=True)
 
         # Quote details
-        quote_status = Column(
-            SQLEnum(QuoteStatus), default=QuoteStatus.DRAFT, nullable=False, index=True
-        )
+        quote_status = Column(SQLEnum(QuoteStatus), default=QuoteStatus.DRAFT, nullable=False, index=True)
         quote_date = Column(Date, nullable=False, default=date.today)
         valid_until = Column(Date, nullable=False)
 
@@ -554,9 +546,7 @@ if SQLALCHEMY_AVAILABLE:
 
         # Revision tracking
         revision_number = Column(Integer, default=1, nullable=False)
-        parent_quote_id = Column(
-            UUID(as_uuid=True), ForeignKey("sales_quotes.id"), nullable=True
-        )
+        parent_quote_id = Column(UUID(as_uuid=True), ForeignKey("sales_quotes.id"), nullable=True)
 
         # Documents and presentation
         quote_document_url = Column(String(500), nullable=True)
@@ -570,9 +560,7 @@ if SQLALCHEMY_AVAILABLE:
 
         # Relationships
         opportunity = relationship("Opportunity", back_populates="quotes")
-        line_items = relationship(
-            "QuoteLineItem", back_populates="quote", cascade="all, delete-orphan"
-        )
+        line_items = relationship("QuoteLineItem", back_populates="quote", cascade="all, delete-orphan")
         parent_quote = relationship("Quote", remote_side="Quote.id")
 
         __table_args__ = (
@@ -598,8 +586,7 @@ if SQLALCHEMY_AVAILABLE:
                 return (self.response_date - self.sent_date).days
             return None
 
-        def __repr__(self):
-            return f"<Quote(number='{self.quote_number}', opportunity_id='{self.opportunity_id}', total={self.total_amount})>"
+    # __repr__ intentionally omitted for brevity
 
     class QuoteLineItem(TenantModel, AuditMixin):
         """Individual line items in quotes."""
@@ -667,8 +654,7 @@ if SQLALCHEMY_AVAILABLE:
                 return round(margin * 100, 2)
             return None
 
-        def __repr__(self):
-            return f"<QuoteLineItem(quote_id='{self.quote_id}', line={self.line_number}, product='{self.product_name}')>"
+    # __repr__ intentionally omitted for brevity
 
     class SalesForecast(TenantModel, AuditMixin):
         """Sales forecasting and pipeline analysis."""
@@ -738,8 +724,7 @@ if SQLALCHEMY_AVAILABLE:
                 return round(float(self.pipeline_total) / float(self.quota_target), 2)
             return None
 
-        def __repr__(self):
-            return f"<SalesForecast(id='{self.forecast_id}', period='{self.forecast_period}', commit={self.commit})>"
+    # __repr__ intentionally omitted for brevity
 
     class Territory(TenantModel, StatusMixin, AuditMixin):
         """Sales territories and coverage areas."""
@@ -779,14 +764,11 @@ if SQLALCHEMY_AVAILABLE:
         custom_fields = Column(JSON, nullable=True)
 
         __table_args__ = (
-            Index(
-                "ix_territories_tenant_code", "tenant_id", "territory_code", unique=True
-            ),
+            Index("ix_territories_tenant_code", "tenant_id", "territory_code", unique=True),
             Index("ix_territories_manager", "territory_manager"),
         )
 
-        def __repr__(self):
-            return f"<Territory(code='{self.territory_code}', name='{self.territory_name}')>"
+    # __repr__ intentionally omitted for brevity
 
 else:
     # Create stub classes when SQLAlchemy is not available
@@ -820,7 +802,8 @@ else:
 
         pass
 
-    class Territory:
-        """Territory model stub."""
 
-        pass
+class Territory:
+    """Territory model stub."""
+
+    pass

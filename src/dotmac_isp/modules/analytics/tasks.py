@@ -1,11 +1,9 @@
 """Analytics and reporting background tasks."""
 
 import logging
-from datetime import datetime, timedelta
-from typing import Any, Dict
+from datetime import datetime, timedelta, timezone
 
 from dotmac_isp.core.celery_app import celery_app
-from dotmac_shared.api.exception_handlers import standard_exception_handler
 
 logger = logging.getLogger(__name__)
 

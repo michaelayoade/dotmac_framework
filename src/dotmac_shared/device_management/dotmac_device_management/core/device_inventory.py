@@ -5,9 +5,8 @@ Provides comprehensive device inventory tracking with modules, interfaces,
 and hardware lifecycle management.
 """
 
-import uuid
-from datetime import datetime
-from typing import Any, Dict, List, Optional
+from datetime import datetime, timezone
+from typing import Any, Optional
 
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
@@ -44,9 +43,7 @@ class DeviceInventoryManager:
         # Check if device already exists
         existing = (
             self.session.query(Device)
-            .filter(
-                and_(Device.device_id == device_id, Device.tenant_id == self.tenant_id)
-            )
+            .filter(and_(Device.device_id == device_id, Device.tenant_id == self.tenant_id))
             .first()
         )
 
@@ -85,15 +82,11 @@ class DeviceInventoryManager:
         """Get device by ID."""
         return (
             self.session.query(Device)
-            .filter(
-                and_(Device.device_id == device_id, Device.tenant_id == self.tenant_id)
-            )
+            .filter(and_(Device.device_id == device_id, Device.tenant_id == self.tenant_id))
             .first()
         )
 
-    async def update_device(
-        self, device_id: str, updates: Dict[str, Any]
-    ) -> Optional[Device]:
+    async def update_device(self, device_id: str, updates: dict[str, Any]) -> Optional[Device]:
         """Update device information."""
         device = await self.get_device(device_id)
         if not device:
@@ -130,7 +123,7 @@ class DeviceInventoryManager:
         vendor: Optional[str] = None,
         limit: int = 100,
         offset: int = 0,
-    ) -> List[Device]:
+    ) -> list[Device]:
         """List devices with filtering."""
         query = self.session.query(Device).filter(Device.tenant_id == self.tenant_id)
 
@@ -249,7 +242,7 @@ class DeviceInventoryManager:
         self.session.commit()
         return interface
 
-    async def get_device_interfaces(self, device_id: str) -> List[DeviceInterface]:
+    async def get_device_interfaces(self, device_id: str) -> list[DeviceInterface]:
         """Get all interfaces for a device."""
         return (
             self.session.query(DeviceInterface)
@@ -262,7 +255,7 @@ class DeviceInventoryManager:
             .all()
         )
 
-    async def get_device_modules(self, device_id: str) -> List[DeviceModule]:
+    async def get_device_modules(self, device_id: str) -> list[DeviceModule]:
         """Get all modules for a device."""
         return (
             self.session.query(DeviceModule)
@@ -313,7 +306,7 @@ class DeviceInventoryManager:
         self.session.commit()
         return interface
 
-    async def search_devices(self, query: str) -> List[Device]:
+    async def search_devices(self, query: str) -> list[Device]:
         """Search devices by hostname, IP, or serial number."""
         search_filter = or_(
             Device.hostname.ilike(f"%{query}%"),
@@ -322,13 +315,9 @@ class DeviceInventoryManager:
             Device.device_id.ilike(f"%{query}%"),
         )
 
-        return (
-            self.session.query(Device)
-            .filter(and_(Device.tenant_id == self.tenant_id, search_filter))
-            .all()
-        )
+        return self.session.query(Device).filter(and_(Device.tenant_id == self.tenant_id, search_filter)).all()
 
-    async def get_device_count_by_type(self) -> Dict[str, int]:
+    async def get_device_count_by_type(self) -> dict[str, int]:
         """Get device count grouped by type."""
         from sqlalchemy import func
 
@@ -339,14 +328,12 @@ class DeviceInventoryManager:
             .all()
         )
 
-        return {device_type: count for device_type, count in results}
+        return dict(results)
 
-    async def get_devices_by_site(self, site_id: str) -> List[Device]:
+    async def get_devices_by_site(self, site_id: str) -> list[Device]:
         """Get all devices for a specific site."""
         return (
-            self.session.query(Device)
-            .filter(and_(Device.site_id == site_id, Device.tenant_id == self.tenant_id))
-            .all()
+            self.session.query(Device).filter(and_(Device.site_id == site_id, Device.tenant_id == self.tenant_id)).all()
         )
 
 
@@ -359,7 +346,7 @@ class DeviceInventoryService:
 
     async def provision_device(
         self, device_id: str, hostname: str, device_type: str, site_id: str, **kwargs
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Provision a new device with full setup."""
         # Create device
         device = await self.manager.create_device(
@@ -408,16 +395,14 @@ class DeviceInventoryService:
             "provisioned_at": device.created_at.isoformat(),
         }
 
-    async def decommission_device(self, device_id: str) -> Dict[str, Any]:
+    async def decommission_device(self, device_id: str) -> dict[str, Any]:
         """Decommission a device."""
         device = await self.manager.get_device(device_id)
         if not device:
             raise DeviceInventoryError(f"Device not found: {device_id}")
 
         # Update status to decommissioned
-        await self.manager.update_device(
-            device_id, {"status": DeviceStatus.DECOMMISSIONED}
-        )
+        await self.manager.update_device(device_id, {"status": DeviceStatus.DECOMMISSIONED})
 
         return {
             "device_id": device_id,
@@ -425,7 +410,7 @@ class DeviceInventoryService:
             "decommissioned_at": datetime.now(timezone.utc).isoformat(),
         }
 
-    async def get_device_health_summary(self, device_id: str) -> Dict[str, Any]:
+    async def get_device_health_summary(self, device_id: str) -> dict[str, Any]:
         """Get comprehensive device health summary."""
         device = await self.manager.get_device(device_id)
         if not device:
@@ -438,12 +423,8 @@ class DeviceInventoryService:
         interface_summary = {
             "total": len(interfaces),
             "up": len([i for i in interfaces if i.oper_status == InterfaceStatus.UP]),
-            "down": len(
-                [i for i in interfaces if i.oper_status == InterfaceStatus.DOWN]
-            ),
-            "admin_down": len(
-                [i for i in interfaces if i.admin_status == InterfaceStatus.ADMIN_DOWN]
-            ),
+            "down": len([i for i in interfaces if i.oper_status == InterfaceStatus.DOWN]),
+            "admin_down": len([i for i in interfaces if i.admin_status == InterfaceStatus.ADMIN_DOWN]),
         }
 
         # Calculate module status summary
@@ -462,9 +443,5 @@ class DeviceInventoryService:
             "interfaces": interface_summary,
             "modules": module_summary,
             "last_updated": device.updated_at.isoformat(),
-            "uptime_days": (
-                (datetime.now(timezone.utc) - device.created_at).days
-                if device.install_date
-                else None
-            ),
+            "uptime_days": ((datetime.now(timezone.utc) - device.created_at).days if device.install_date else None),
         }

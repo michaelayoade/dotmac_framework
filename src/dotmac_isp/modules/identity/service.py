@@ -4,17 +4,15 @@ Coordinates all identity operations and integrates sub-services.
 """
 
 import logging
-from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 from uuid import UUID
 
+from dotmac.application import standard_exception_handler
+from dotmac_shared.services.base import BaseService
 from sqlalchemy.orm import Session
 
-from dotmac_isp.shared.base_service import BaseService
-from dotmac_shared.api.exception_handlers import standard_exception_handler
-
-from .services.identity_orchestrator import IdentityOrchestrator
 from . import schemas
+from .services.identity_orchestrator import IdentityOrchestrator
 
 logger = logging.getLogger(__name__)
 
@@ -49,11 +47,8 @@ class IdentityService(BaseService):
 
     @standard_exception_handler
     async def list_users(
-        self, 
-        skip: int = 0, 
-        limit: int = 100,
-        filters: Optional[Dict[str, Any]] = None
-    ) -> List[schemas.User]:
+        self, skip: int = 0, limit: int = 100, filters: Optional[dict[str, Any]] = None
+    ) -> list[schemas.User]:
         """List users with optional filtering."""
         return await self.orchestrator.list_users(skip=skip, limit=limit, filters=filters)
 
@@ -80,11 +75,8 @@ class IdentityService(BaseService):
 
     @standard_exception_handler
     async def list_customers(
-        self, 
-        skip: int = 0, 
-        limit: int = 100,
-        filters: Optional[Dict[str, Any]] = None
-    ) -> List[schemas.Customer]:
+        self, skip: int = 0, limit: int = 100, filters: Optional[dict[str, Any]] = None
+    ) -> list[schemas.Customer]:
         """List customers with optional filtering."""
         return await self.orchestrator.list_customers(skip=skip, limit=limit, filters=filters)
 
@@ -127,38 +119,38 @@ class IdentityService(BaseService):
 
     # Bulk operations
     @standard_exception_handler
-    async def bulk_create_users(self, users_data: List[schemas.UserCreate]) -> List[schemas.User]:
+    async def bulk_create_users(self, users_data: list[schemas.UserCreate]) -> list[schemas.User]:
         """Create multiple users in bulk."""
         return await self.orchestrator.bulk_create_users(users_data)
 
     @standard_exception_handler
-    async def bulk_update_users(self, updates: Dict[UUID, schemas.UserUpdate]) -> List[schemas.User]:
+    async def bulk_update_users(self, updates: dict[UUID, schemas.UserUpdate]) -> list[schemas.User]:
         """Update multiple users in bulk."""
         return await self.orchestrator.bulk_update_users(updates)
 
     # Search and analytics
     @standard_exception_handler
-    async def search_users(self, query: str, filters: Optional[Dict[str, Any]] = None) -> List[schemas.User]:
+    async def search_users(self, query: str, filters: Optional[dict[str, Any]] = None) -> list[schemas.User]:
         """Search users by query."""
         return await self.orchestrator.search_users(query, filters)
 
     @standard_exception_handler
-    async def search_customers(self, query: str, filters: Optional[Dict[str, Any]] = None) -> List[schemas.Customer]:
+    async def search_customers(self, query: str, filters: Optional[dict[str, Any]] = None) -> list[schemas.Customer]:
         """Search customers by query."""
         return await self.orchestrator.search_customers(query, filters)
 
     @standard_exception_handler
-    async def get_identity_statistics(self) -> Dict[str, Any]:
+    async def get_identity_statistics(self) -> dict[str, Any]:
         """Get identity module statistics."""
         return await self.orchestrator.get_identity_statistics()
 
     # Validation and business rules
     @standard_exception_handler
-    async def validate_user_data(self, user_data: schemas.UserCreate) -> Dict[str, Any]:
+    async def validate_user_data(self, user_data: schemas.UserCreate) -> dict[str, Any]:
         """Validate user data against business rules."""
         return await self.orchestrator.validate_user_data(user_data)
 
     @standard_exception_handler
-    async def validate_customer_data(self, customer_data: schemas.CustomerCreate) -> Dict[str, Any]:
+    async def validate_customer_data(self, customer_data: schemas.CustomerCreate) -> dict[str, Any]:
         """Validate customer data against business rules."""
         return await self.orchestrator.validate_customer_data(customer_data)

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Developer Environment Setup Script for DotMac Framework
 
@@ -6,12 +5,11 @@ This script automates the setup of a complete development environment
 including all dependencies, tools, and configurations.
 """
 
-import os
 import platform
 import subprocess
 import sys
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
 
 class Colors:
@@ -46,19 +44,6 @@ class DevSetup:
 
     def print_banner(self):
         """Print setup banner."""
-        banner = f"""
-{Colors.CYAN}{Colors.BOLD}
-╔══════════════════════════════════════════════════════════════╗
-║                    DotMac Framework                          ║
-║                Development Setup Script                      ║
-╚══════════════════════════════════════════════════════════════╝
-{Colors.END}
-
-🚀 Setting up your development environment...
-📍 Project root: {self.project_root}
-🖥️  System: {self.system}
-🐍 Python: {self.python_version}
-"""
 
     def run_setup(self):
         """Run complete development setup."""
@@ -123,10 +108,10 @@ class DevSetup:
     def log_error(self, message: str):
         """Log an error message."""
 
-    def run_command(self, command: List[str], cwd: Optional[Path] = None) -> bool:
+    def run_command(self, command: list[str], cwd: Optional[Path] = None) -> bool:
         """Run a command and return success status."""
         try:
-            result = subprocess.run(
+            subprocess.run(
                 command,
                 cwd=cwd or self.project_root,
                 capture_output=True,
@@ -158,9 +143,7 @@ class DevSetup:
             if tool not in version_commands:
                 return False
 
-            result = subprocess.run(
-                version_commands[tool], capture_output=True, text=True, check=True
-            )
+            result = subprocess.run(version_commands[tool], capture_output=True, text=True, check=True)
 
             # Simple version check (could be more sophisticated)
             return result.returncode == 0
@@ -177,9 +160,7 @@ class DevSetup:
                 self.log_success(f"{tool} is available")
             else:
                 missing_tools.append(tool)
-                self.log_warning(
-                    f"{tool} is missing or outdated (requires {required_version}+)"
-                )
+                self.log_warning(f"{tool} is missing or outdated (requires {required_version}+)")
 
         if missing_tools:
             self.log_error("Please install missing tools before continuing:")
@@ -201,7 +182,7 @@ class DevSetup:
             "python": "Install Python 3.9+ from https://python.org",
         }
 
-        instruction = instructions.get(tool, f"Please install {tool}")
+        instructions.get(tool, f"Please install {tool}")
 
     def setup_python_environment(self):
         """Set up Python virtual environment and tools."""
@@ -224,9 +205,7 @@ class DevSetup:
             self.log_success("Running in virtual environment")
 
         # Upgrade pip
-        if self.run_command(
-            [sys.executable, "-m", "pip", "install", "--upgrade", "pip"]
-        ):
+        if self.run_command([sys.executable, "-m", "pip", "install", "--upgrade", "pip"]):
             self.log_success("pip upgraded")
 
         # Install pip-tools
@@ -798,33 +777,6 @@ python scripts/generate-test-report.py
 
     def print_success_message(self):
         """Print setup completion message."""
-        success_message = f"""
-{Colors.GREEN}{Colors.BOLD}
-🎉 Development environment setup completed successfully!
-
-Next steps:
-{Colors.END}{Colors.GREEN}
-1. Activate your virtual environment (if not already activated)
-2. Run your first test: make test-unit
-3. Start developing: git checkout -b feature/your-feature-name
-4. Read the documentation in docs/development/
-
-Useful commands:
-• make test          - Run all tests
-• make lint          - Check code quality
-• make security      - Run security scans
-• make check         - Run all quality checks
-• make dev           - Start development environment
-
-Happy coding! 🚀
-{Colors.END}
-
-{Colors.CYAN}📚 Documentation generated in docs/development/
-🔧 VS Code configuration created in .vscode/
-🐳 Docker test environment ready
-🧪 Test examples available in tests/examples/
-{Colors.END}
-"""
 
 
 def main():

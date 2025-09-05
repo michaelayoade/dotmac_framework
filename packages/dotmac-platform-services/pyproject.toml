@@ -1,0 +1,75 @@
+[tool.poetry]
+name = "dotmac-platform-services"
+version = "1.0.0"
+description = "DotMac Platform Services - Unified auth, secrets, and observability"
+authors = ["DotMac Team <dev@dotmac.com>"]
+readme = "README.md"
+packages = [{include = "dotmac", from = "src"}]
+
+[tool.poetry.dependencies]
+python = ">=3.9,<4.0"
+fastapi = "^0.104.0"
+pydantic = "^2.5.0"
+sqlalchemy = "^2.0.23"
+redis = "^5.0.1"
+cryptography = "^41.0.0"
+python-jose = {extras = ["cryptography"], version = "^3.3.0"}
+passlib = {extras = ["bcrypt"], version = "^1.7.4"}
+hvac = "^2.0.0"
+prometheus-client = "^0.19.0"
+opentelemetry-api = "^1.21.0"
+opentelemetry-sdk = "^1.21.0"
+opentelemetry-instrumentation-fastapi = "^0.42b0"
+opentelemetry-instrumentation-sqlalchemy = "^0.42b0"
+opentelemetry-exporter-prometheus = "^1.12.0rc1"
+structlog = "^23.2.0"
+pyotp = "^2.9.0"
+
+# Core dependency - required for platform services
+dotmac-core = {path = "../dotmac-core"}
+
+# Optional dependencies for extended functionality  
+
+[tool.poetry.extras]
+# No optional extras currently
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.3"
+pytest-asyncio = "^0.21.1"
+pytest-cov = "^4.1.0"
+black = "^23.11.0"
+ruff = "^0.1.6"
+mypy = "^1.7.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = ["migrations/"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "ANN", "S", "BLE", "B", "A", "C4", "ICN", "PIE", "PT", "RSE", "RET", "SIM", "ARG", "PTH", "ERA", "PL", "RUF"]
+ignore = ["ANN101", "ANN102", "S101", "PLR0913", "PLR0915"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+plugins = ["pydantic.mypy"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--cov=src/dotmac",
+    "--cov-report=term-missing:skip-covered",
+    "--cov-report=html",
+    "--cov-report=xml",
+    "--cov-fail-under=85"
+]

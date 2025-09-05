@@ -1,22 +1,22 @@
 """Metrics calculation and aggregation utilities."""
 
-import math
 import statistics
-from collections import defaultdict, deque
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple, Union
+from collections import defaultdict
+from datetime import datetime, timedelta, timezone
+from typing import Any, Optional, Union
 
 
 class PerformanceMetrics:
     """Calculate performance metrics from time series data."""
 
-    def __init__(self, max_data_points: int = 10000, timezone):
+    # TODO: Fix parameter ordering - parameters without defaults must come before those with defaults
+    def __init__(self, max_data_points: int = 10000, timezone: Optional[str] = None):
         """Initialize performance metrics calculator."""
         self.max_data_points = max_data_points
 
     def calculate_availability(
-        self, measurements: List[Dict[str, Any]], success_key: str = "success"
-    ) -> Dict[str, float]:
+        self, measurements: list[dict[str, Any]], success_key: str = "success"
+    ) -> dict[str, float]:
         """Calculate availability metrics from measurements."""
         if not measurements:
             return {
@@ -40,15 +40,15 @@ class PerformanceMetrics:
 
     def calculate_latency_statistics(
         self,
-        measurements: List[Dict[str, Any]],
+        measurements: list[dict[str, Any]],
         latency_key: str = "response_time_ms",
-        percentiles: List[float] = [50, 90, 95, 99],
-    ) -> Dict[str, float]:
+        percentiles: Optional[list[float]] = None,
+    ) -> dict[str, float]:
         """Calculate latency statistics from measurements."""
+        if percentiles is None:
+            percentiles = [50, 90, 95, 99]
         latency_values = [
-            m.get(latency_key, 0)
-            for m in measurements
-            if m.get(latency_key) is not None and m.get("success", False)
+            m.get(latency_key, 0) for m in measurements if m.get(latency_key) is not None and m.get("success", False)
         ]
 
         if not latency_values:
@@ -68,9 +68,7 @@ class PerformanceMetrics:
             "median_ms": round(statistics.median(latency_values), 3),
             "min_ms": round(min(latency_values), 3),
             "max_ms": round(max(latency_values), 3),
-            "std_dev_ms": round(
-                statistics.stdev(latency_values) if len(latency_values) > 1 else 0.0, 3
-            ),
+            "std_dev_ms": round(statistics.stdev(latency_values) if len(latency_values) > 1 else 0.0, 3),
         }
 
         # Calculate percentiles
@@ -84,11 +82,11 @@ class PerformanceMetrics:
 
     def calculate_throughput_metrics(
         self,
-        measurements: List[Dict[str, Any]],
+        measurements: list[dict[str, Any]],
         time_key: str = "timestamp",
         count_key: str = "count",
         window_minutes: int = 5,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """Calculate throughput metrics."""
         if not measurements:
             return {
@@ -108,9 +106,7 @@ class PerformanceMetrics:
 
             if timestamp_str:
                 try:
-                    timestamp = datetime.fromisoformat(
-                        timestamp_str.replace("Z", "+00:00")
-                    )
+                    timestamp = datetime.fromisoformat(timestamp_str.replace("Z", "+00:00"))
                     # Round down to window boundary
                     window_start = timestamp.replace(
                         minute=(timestamp.minute // window_minutes) * window_minutes,
@@ -134,9 +130,7 @@ class PerformanceMetrics:
         window_counts = list(windows.values())
         total_windows = len(windows)
 
-        average_per_window = (
-            sum(window_counts) / total_windows if total_windows > 0 else 0
-        )
+        average_per_window = sum(window_counts) / total_windows if total_windows > 0 else 0
         peak_per_window = max(window_counts) if window_counts else 0
 
         return {
@@ -149,10 +143,10 @@ class PerformanceMetrics:
 
     def calculate_error_rate(
         self,
-        measurements: List[Dict[str, Any]],
+        measurements: list[dict[str, Any]],
         success_key: str = "success",
         time_window_minutes: int = 15,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Calculate error rate over time."""
         if not measurements:
             return {
@@ -170,12 +164,9 @@ class PerformanceMetrics:
 
             if timestamp_str:
                 try:
-                    timestamp = datetime.fromisoformat(
-                        timestamp_str.replace("Z", "+00:00")
-                    )
+                    timestamp = datetime.fromisoformat(timestamp_str.replace("Z", "+00:00"))
                     window_start = timestamp.replace(
-                        minute=(timestamp.minute // time_window_minutes)
-                        * time_window_minutes,
+                        minute=(timestamp.minute // time_window_minutes) * time_window_minutes,
                         second=0,
                         microsecond=0,
                     )
@@ -188,19 +179,13 @@ class PerformanceMetrics:
         # Calculate overall error rate
         total_measurements = sum(w["total"] for w in windows.values())
         total_errors = sum(w["errors"] for w in windows.values())
-        overall_error_rate = (
-            (total_errors / total_measurements * 100) if total_measurements > 0 else 0
-        )
+        overall_error_rate = (total_errors / total_measurements * 100) if total_measurements > 0 else 0
 
         # Calculate trend
         trend = []
         for window_time in sorted(windows.keys()):
             window_data = windows[window_time]
-            error_rate = (
-                (window_data["errors"] / window_data["total"] * 100)
-                if window_data["total"] > 0
-                else 0
-            )
+            error_rate = (window_data["errors"] / window_data["total"] * 100) if window_data["total"] > 0 else 0
             trend.append(
                 {
                     "timestamp": window_time.isoformat(),
@@ -228,11 +213,11 @@ class SLACalculator:
 
     def calculate_sla_compliance(
         self,
-        measurements: List[Dict[str, Any]],
+        measurements: list[dict[str, Any]],
         availability_threshold: float = 99.9,
         latency_threshold_ms: float = 100.0,
         measurement_window_hours: int = 24,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Calculate SLA compliance against thresholds."""
         if not measurements:
             return {
@@ -244,11 +229,7 @@ class SLACalculator:
 
         # Filter measurements to window
         cutoff_time = datetime.now(timezone.utc) - timedelta(hours=measurement_window_hours)
-        windowed_measurements = [
-            m
-            for m in measurements
-            if self._parse_timestamp(m.get("timestamp")) >= cutoff_time
-        ]
+        windowed_measurements = [m for m in measurements if self._parse_timestamp(m.get("timestamp")) >= cutoff_time]
 
         if not windowed_measurements:
             return {
@@ -259,16 +240,12 @@ class SLACalculator:
             }
 
         # Calculate availability
-        availability_metrics = PerformanceMetrics().calculate_availability(
-            windowed_measurements
-        )
+        availability_metrics = PerformanceMetrics().calculate_availability(windowed_measurements)
         availability_actual = availability_metrics["availability_percent"]
         availability_compliant = availability_actual >= availability_threshold
 
         # Calculate latency
-        latency_metrics = PerformanceMetrics().calculate_latency_statistics(
-            windowed_measurements
-        )
+        latency_metrics = PerformanceMetrics().calculate_latency_statistics(windowed_measurements)
         latency_actual = latency_metrics["average_ms"]
         latency_compliant = latency_actual <= latency_threshold_ms
 
@@ -298,8 +275,8 @@ class SLACalculator:
     def calculate_sla_credits(
         self,
         actual_availability: float,
-        sla_tiers: List[Dict[str, Union[float, str]]] = None,
-    ) -> Dict[str, Any]:
+        sla_tiers: Optional[list[dict[str, Union[float, str]]]] = None,
+    ) -> dict[str, Any]:
         """Calculate SLA credits based on availability."""
         if sla_tiers is None:
             sla_tiers = [
@@ -346,8 +323,8 @@ class TrafficAnalyzer:
         pass
 
     def analyze_flow_patterns(
-        self, flow_records: List[Dict[str, Any]], analysis_window_hours: int = 1
-    ) -> Dict[str, Any]:
+        self, flow_records: list[dict[str, Any]], analysis_window_hours: int = 1
+    ) -> dict[str, Any]:
         """Analyze traffic flow patterns."""
         if not flow_records:
             return {
@@ -360,9 +337,7 @@ class TrafficAnalyzer:
         # Filter to analysis window
         cutoff_time = datetime.now(timezone.utc) - timedelta(hours=analysis_window_hours)
         windowed_flows = [
-            flow
-            for flow in flow_records
-            if self._parse_timestamp(flow.get("ingested_at")) >= cutoff_time
+            flow for flow in flow_records if self._parse_timestamp(flow.get("ingested_at")) >= cutoff_time
         ]
 
         if not windowed_flows:
@@ -403,12 +378,8 @@ class TrafficAnalyzer:
 
         # Calculate rates
         window_seconds = analysis_window_hours * 3600
-        flows_per_second = (
-            len(windowed_flows) / window_seconds if window_seconds > 0 else 0
-        )
-        bits_per_second = (
-            (total_bytes * 8) / window_seconds if window_seconds > 0 else 0
-        )
+        flows_per_second = len(windowed_flows) / window_seconds if window_seconds > 0 else 0
+        bits_per_second = (total_bytes * 8) / window_seconds if window_seconds > 0 else 0
         packets_per_second = total_packets / window_seconds if window_seconds > 0 else 0
 
         return {
@@ -423,30 +394,20 @@ class TrafficAnalyzer:
                 "mbps": round(bits_per_second / 1_000_000, 3),
             },
             "protocol_distribution": dict(
-                sorted(
-                    protocol_stats.items(), key=lambda x: x[1]["bytes"], reverse=True
-                )[:10]
+                sorted(protocol_stats.items(), key=lambda x: x[1]["bytes"], reverse=True)[:10]
             ),
-            "top_ports": dict(
-                sorted(port_stats.items(), key=lambda x: x[1]["bytes"], reverse=True)[
-                    :10
-                ]
-            ),
-            "top_talkers": dict(
-                sorted(talker_stats.items(), key=lambda x: x[1]["bytes"], reverse=True)[
-                    :10
-                ]
-            ),
+            "top_ports": dict(sorted(port_stats.items(), key=lambda x: x[1]["bytes"], reverse=True)[:10]),
+            "top_talkers": dict(sorted(talker_stats.items(), key=lambda x: x[1]["bytes"], reverse=True)[:10]),
             "flow_size_stats": self._calculate_flow_size_stats(windowed_flows),
         }
 
     def detect_traffic_anomalies(
         self,
-        flow_records: List[Dict[str, Any]],
+        flow_records: list[dict[str, Any]],
         baseline_window_hours: int = 24,
         detection_window_minutes: int = 15,
         anomaly_threshold: float = 2.0,  # Standard deviations
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Detect traffic anomalies using statistical analysis."""
         if len(flow_records) < 10:
             return {
@@ -458,9 +419,7 @@ class TrafficAnalyzer:
         # Calculate baseline statistics
         baseline_cutoff = datetime.now(timezone.utc) - timedelta(hours=baseline_window_hours)
         baseline_flows = [
-            flow
-            for flow in flow_records
-            if self._parse_timestamp(flow.get("ingested_at")) >= baseline_cutoff
+            flow for flow in flow_records if self._parse_timestamp(flow.get("ingested_at")) >= baseline_cutoff
         ]
 
         if len(baseline_flows) < 10:
@@ -471,9 +430,7 @@ class TrafficAnalyzer:
             }
 
         # Group baseline into windows for statistical analysis
-        window_stats = self._group_flows_by_time_windows(
-            baseline_flows, window_minutes=detection_window_minutes
-        )
+        window_stats = self._group_flows_by_time_windows(baseline_flows, window_minutes=detection_window_minutes)
 
         if len(window_stats) < 3:
             return {
@@ -487,28 +444,19 @@ class TrafficAnalyzer:
         flows_values = [w["total_flows"] for w in window_stats]
 
         baseline_bytes_mean = statistics.mean(bytes_values)
-        baseline_bytes_stdev = (
-            statistics.stdev(bytes_values) if len(bytes_values) > 1 else 0
-        )
+        baseline_bytes_stdev = statistics.stdev(bytes_values) if len(bytes_values) > 1 else 0
         baseline_flows_mean = statistics.mean(flows_values)
-        baseline_flows_stdev = (
-            statistics.stdev(flows_values) if len(flows_values) > 1 else 0
-        )
+        baseline_flows_stdev = statistics.stdev(flows_values) if len(flows_values) > 1 else 0
 
         # Check recent windows for anomalies
-        recent_cutoff = datetime.now(timezone.utc) - timedelta(
-            minutes=detection_window_minutes * 3
-        )
+        recent_cutoff = datetime.now(timezone.utc) - timedelta(minutes=detection_window_minutes * 3)
         recent_windows = [w for w in window_stats if w["window_start"] >= recent_cutoff]
 
         anomalies = []
         for window in recent_windows:
             # Check bytes anomaly
             if baseline_bytes_stdev > 0:
-                bytes_z_score = (
-                    abs(window["total_bytes"] - baseline_bytes_mean)
-                    / baseline_bytes_stdev
-                )
+                bytes_z_score = abs(window["total_bytes"] - baseline_bytes_mean) / baseline_bytes_stdev
                 if bytes_z_score > anomaly_threshold:
                     anomalies.append(
                         {
@@ -524,10 +472,7 @@ class TrafficAnalyzer:
 
             # Check flows anomaly
             if baseline_flows_stdev > 0:
-                flows_z_score = (
-                    abs(window["total_flows"] - baseline_flows_mean)
-                    / baseline_flows_stdev
-                )
+                flows_z_score = abs(window["total_flows"] - baseline_flows_mean) / baseline_flows_stdev
                 if flows_z_score > anomaly_threshold:
                     anomalies.append(
                         {
@@ -559,9 +504,7 @@ class TrafficAnalyzer:
             },
         }
 
-    def _calculate_flow_size_stats(
-        self, flows: List[Dict[str, Any]]
-    ) -> Dict[str, float]:
+    def _calculate_flow_size_stats(self, flows: list[dict[str, Any]]) -> dict[str, float]:
         """Calculate flow size statistics."""
         sizes = [flow.get("bytes", 0) for flow in flows if flow.get("bytes", 0) > 0]
 
@@ -583,8 +526,8 @@ class TrafficAnalyzer:
         }
 
     def _group_flows_by_time_windows(
-        self, flows: List[Dict[str, Any]], window_minutes: int = 15
-    ) -> List[Dict[str, Any]]:
+        self, flows: list[dict[str, Any]], window_minutes: int = 15
+    ) -> list[dict[str, Any]]:
         """Group flows by time windows for analysis."""
         windows = defaultdict(
             lambda: {
@@ -658,10 +601,10 @@ class AlertingThresholds:
 
     def calculate_dynamic_thresholds(
         self,
-        historical_values: List[float],
+        historical_values: list[float],
         confidence_level: float = 0.95,
         seasonal_adjustment: bool = True,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """Calculate dynamic thresholds based on historical data."""
         if len(historical_values) < 10:
             return {
@@ -712,7 +655,7 @@ class AlertingThresholds:
             "insufficient_data": False,
         }
 
-    def _remove_outliers(self, values: List[float], method: str = "iqr") -> List[float]:
+    def _remove_outliers(self, values: list[float], method: str = "iqr") -> list[float]:
         """Remove outliers from data using IQR method."""
         if len(values) < 4:
             return values

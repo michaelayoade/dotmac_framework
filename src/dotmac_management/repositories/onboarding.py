@@ -3,7 +3,7 @@ Onboarding repositories for requests, steps, and artifacts.
 """
 
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 from uuid import UUID
 
 from sqlalchemy import select
@@ -28,8 +28,8 @@ class OnboardingRequestRepository(BaseRepository[OnboardingRequest]):
 
     async def list_paginated(
         self, page: int, size: int, partner_id: Optional[UUID] = None
-    ) -> Tuple[List[OnboardingRequest], int]:
-        query = select(OnboardingRequest).where(OnboardingRequest.is_deleted == False)
+    ) -> tuple[list[OnboardingRequest], int]:
+        query = select(OnboardingRequest).where(OnboardingRequest.is_deleted is False)
         if partner_id:
             query = query.where(OnboardingRequest.partner_id == partner_id)
         total_result = await self.db.execute(query.with_only_columns(OnboardingRequest.id))
@@ -39,9 +39,9 @@ class OnboardingRequestRepository(BaseRepository[OnboardingRequest]):
         )
         return result.scalars().all(), total
 
-    async def list_active_by_partner(self, partner_id: UUID) -> List[OnboardingRequest]:
+    async def list_active_by_partner(self, partner_id: UUID) -> list[OnboardingRequest]:
         query = select(OnboardingRequest).where(
-            OnboardingRequest.is_deleted == False,
+            OnboardingRequest.is_deleted is False,
             OnboardingRequest.partner_id == partner_id,
             OnboardingRequest.status == OnboardingStatus.IN_PROGRESS,
         )
@@ -53,9 +53,7 @@ class OnboardingStepRepository(BaseRepository[OnboardingStep]):
     def __init__(self, db: AsyncSession):
         super().__init__(db, OnboardingStep)
 
-    async def upsert_step(
-        self, request_id: UUID, step_key: str, name: str
-    ) -> OnboardingStep:
+    async def upsert_step(self, request_id: UUID, step_key: str, name: str) -> OnboardingStep:
         query = select(OnboardingStep).where(
             OnboardingStep.request_id == request_id, OnboardingStep.step_key == step_key
         )
@@ -73,7 +71,11 @@ class OnboardingStepRepository(BaseRepository[OnboardingStep]):
         return step
 
     async def set_status(
-        self, step_id: UUID, status: StepStatus, error_message: Optional[str] = None, data: Optional[Dict[str, Any]] = None
+        self,
+        step_id: UUID,
+        status: StepStatus,
+        error_message: Optional[str] = None,
+        data: Optional[dict[str, Any]] = None,
     ) -> OnboardingStep:
         step = await self.get_by_id(step_id)
         if not step:
@@ -94,9 +96,7 @@ class OnboardingStepRepository(BaseRepository[OnboardingStep]):
         await self.db.refresh(step)
         return step
 
-    async def set_status_by_key(
-        self, step_key: str, status: StepStatus, reason: Optional[str] = None
-    ) -> int:
+    async def set_status_by_key(self, step_key: str, status: StepStatus, reason: Optional[str] = None) -> int:
         """Update all steps with a given key across requests."""
         # Fetch steps by key; perform python-side updates to set timestamps correctly
         query = select(OnboardingStep).where(OnboardingStep.step_key == step_key)

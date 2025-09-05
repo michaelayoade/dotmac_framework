@@ -5,26 +5,24 @@ Comprehensive testing for field operations management system including
 technician management, work orders, dispatch, and performance analytics.
 """
 
-import pytest
-import asyncio
 from datetime import date, datetime, timedelta
-from decimal import Decimal
-from uuid import uuid4
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import patch
 
-from sqlalchemy.orm import Session
-from sqlalchemy.exc import IntegrityError
-
+import pytest
+from dotmac_shared.exceptions import BusinessLogicError, ValidationError
 from dotmac_shared.field_operations.models import (
-    Technician, WorkOrder, WorkOrderStatusHistory, TechnicianTimeEntry,
-    TechnicianPerformance, DispatchZone, WorkOrderEquipment,
-    TechnicianStatus, WorkOrderStatus, WorkOrderPriority, WorkOrderType,
-    SkillLevel, TechnicianCreate, TechnicianUpdate, WorkOrderCreate,
-    PerformanceMetrics
+    SkillLevel,
+    TechnicianCreate,
+    TechnicianStatus,
+    TechnicianUpdate,
+    WorkOrderCreate,
+    WorkOrderPriority,
+    WorkOrderStatus,
+    WorkOrderType,
 )
-from dotmac_shared.field_operations.service import FieldOperationsService, DispatchService
+from dotmac_shared.field_operations.service import DispatchService, FieldOperationsService
 from dotmac_shared.location.models import Coordinates
-from dotmac_shared.exceptions import ValidationError, NotFoundError, BusinessLogicError
+from sqlalchemy.orm import Session
 
 
 class TestFieldOperationsService:

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Comprehensive API Security Validation Script
 Tests all security components independently and provides detailed security assessment
@@ -7,18 +6,16 @@ Tests all security components independently and provides detailed security asses
 import asyncio
 import logging
 import sys
-from datetime import datetime
-from typing import Any, Dict, List
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='.format(levelname)s: .format(message)s')
+logging.basicConfig(level=logging.INFO, format=".format(levelname)s: .format(message)s")
 logger = logging.getLogger(__name__)
+
 
 async def validate_request_validation():
     """Test request validation security features"""
     try:
         from request_validation import (
-            BaseSecureModel,
             SecureStringField,
             SecurityValidators,
         )
@@ -48,7 +45,7 @@ async def validate_request_validation():
 
         # Test secure string field
         try:
-            field = SecureStringField(value="normal text")
+            SecureStringField(value="normal text")
             results["passed"].append("Secure string field validation working")
         except Exception as e:
             results["failed"].append(f"Secure string field failed: {e}")
@@ -57,6 +54,7 @@ async def validate_request_validation():
 
     except Exception as e:
         return {"passed": [], "failed": [f"Module import failed: {e}"]}
+
 
 async def validate_rate_limiting():
     """Test rate limiting functionality"""
@@ -68,7 +66,7 @@ async def validate_rate_limiting():
         # Test quota configuration
         try:
             rate_limiter = RedisRateLimiter()
-            if hasattr(rate_limiter, 'tenant_quotas') and rate_limiter.tenant_quotas:
+            if hasattr(rate_limiter, "tenant_quotas") and rate_limiter.tenant_quotas:
                 results["passed"].append("Tenant quotas configured")
             else:
                 results["failed"].append("Tenant quotas not configured")
@@ -90,6 +88,7 @@ async def validate_rate_limiting():
     except Exception as e:
         return {"passed": [], "failed": [f"Module import failed: {e}"]}
 
+
 async def validate_authentication():
     """Test authentication middleware"""
     try:
@@ -104,7 +103,7 @@ async def validate_authentication():
 
         # Test JWT validator
         try:
-            jwt_validator = JWTTokenValidator(secret_key="test-key-that-is-at-least-32-characters-long")
+            JWTTokenValidator(secret_key="test-key-that-is-at-least-32-characters-long")  # noqa: S106 - test value only
             results["passed"].append("JWT validator initialization working")
         except Exception as e:
             results["failed"].append(f"JWT validator failed: {e}")
@@ -128,7 +127,7 @@ async def validate_authentication():
                 roles=[UserRole.TENANT_ADMIN.value],
                 permissions=["tenant.admin"],
                 is_active=True,
-                is_verified=True
+                is_verified=True,
             )
 
             rbac = RoleBasedAccessControl()
@@ -144,10 +143,11 @@ async def validate_authentication():
     except Exception as e:
         return {"passed": [], "failed": [f"Module import failed: {e}"]}
 
+
 async def validate_threat_detection():
     """Test threat detection system"""
     try:
-        from api_threat_detector import APIThreatDetector, ThreatLevel, ThreatType
+        from api_threat_detector import APIThreatDetector
 
         results = {"passed": [], "failed": []}
 
@@ -168,7 +168,7 @@ async def validate_threat_detection():
             patterns = threat_detector._detect_malicious_patterns(
                 url="/api/users?id='; DROP TABLE users; --",
                 headers={"User-Agent": "sqlmap/1.0"},
-                user_agent="sqlmap/1.0"
+                user_agent="sqlmap/1.0",
             )
 
             if patterns:
@@ -182,6 +182,7 @@ async def validate_threat_detection():
 
     except Exception as e:
         return {"passed": [], "failed": [f"Module import failed: {e}"]}
+
 
 async def validate_security_headers():
     """Test security headers configuration"""
@@ -229,6 +230,7 @@ async def validate_security_headers():
     except Exception as e:
         return {"passed": [], "failed": [f"Module import failed: {e}"]}
 
+
 async def validate_integration():
     """Test security suite integration"""
     try:
@@ -240,8 +242,8 @@ async def validate_integration():
         try:
             security_suite = APISecuritySuite(
                 environment="development",
-                jwt_secret_key="test-key-that-is-at-least-32-characters-long",
-                redis_url="redis://localhost:6379"
+                jwt_secret_key="test-key-that-is-at-least-32-characters-long",  # noqa: S106 - test value only
+                redis_url="redis://localhost:6379",
             )
             results["passed"].append("Security suite initialization working")
         except Exception as e:
@@ -264,6 +266,7 @@ async def validate_integration():
     except Exception as e:
         return {"passed": [], "failed": [f"Module import failed: {e}"]}
 
+
 async def run_comprehensive_validation():
     """Run all security validation tests"""
 
@@ -278,11 +281,10 @@ async def run_comprehensive_validation():
         ("Authentication & Authorization", validate_authentication),
         ("Threat Detection", validate_threat_detection),
         ("Security Headers", validate_security_headers),
-        ("Integration Suite", validate_integration)
+        ("Integration Suite", validate_integration),
     ]
 
     for test_name, test_func in validation_tests:
-
         try:
             results = await test_func()
             all_results[test_name] = results
@@ -294,13 +296,16 @@ async def run_comprehensive_validation():
             total_failed += failed
 
             # Display results
-            for pass_msg in results.get("passed", []):
+            for _pass_msg in results.get("passed", []):
+                pass  # placeholder for logging/display
 
-            for fail_msg in results.get("failed", []):
+            for _fail_msg in results.get("failed", []):
+                pass  # placeholder for logging/display
 
             # Summary for this test
+            pass
 
-        except Exception as e:
+        except Exception:
             total_failed += 1
 
     # Overall summary
@@ -312,31 +317,26 @@ async def run_comprehensive_validation():
     # Determine overall status
     if security_score >= 90 and total_failed <= 2:
         status = "EXCELLENT"
-        emoji = "🏆"
     elif security_score >= 75 and total_failed <= 5:
         status = "GOOD"
-        emoji = "👍"
     elif security_score >= 60:
         status = "NEEDS_IMPROVEMENT"
-        emoji = "⚠️"
     else:
         status = "CRITICAL"
-        emoji = "🚨"
-
 
     # Recommendations
     if total_failed > 0:
-        if total_failed > 10:
-        if security_score < 80:
-
+        # placeholder for future recommendation aggregation
+        pass
 
     return {
         "overall_status": status,
         "security_score": security_score,
         "total_passed": total_passed,
         "total_failed": total_failed,
-        "detailed_results": all_results
+        "detailed_results": all_results,
     }
+
 
 if __name__ == "__main__":
     # Run the validation

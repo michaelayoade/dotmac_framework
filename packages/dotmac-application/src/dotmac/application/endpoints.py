@@ -3,7 +3,6 @@ Standard endpoints for all DotMac applications.
 """
 
 import logging
-from typing import Any, Dict, List, Optional
 
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
@@ -18,9 +17,9 @@ class StandardEndpoints:
 
     def __init__(self, platform_config: PlatformConfig):
         self.platform_config = platform_config
-        self.added_endpoints: List[str] = []
+        self.added_endpoints: list[str] = []
 
-    def add_to_app(self, app: FastAPI) -> List[str]:
+    def add_to_app(self, app: FastAPI) -> list[str]:
         """Add standard endpoints to FastAPI application."""
         logger.info(
             f"Adding standard endpoints for {self.platform_config.platform_name}"
@@ -77,7 +76,7 @@ class StandardEndpoints:
             if hasattr(app.state, "health_config"):
                 info["health"] = {
                     "enabled_checks": app.state.health_config.get("enabled_checks", []),
-                    "status": "ready"
+                    "status": "ready",
                 }
 
             return JSONResponse(content=info)
@@ -100,12 +99,14 @@ class StandardEndpoints:
         @app.get("/health", tags=["Health"])
         async def health():
             """Basic health check endpoint."""
-            return JSONResponse({
-                "status": "healthy",
-                "platform": self.platform_config.platform_name,
-                "version": self.platform_config.version,
-                "timestamp": getattr(app.state, "startup_time", "unknown")
-            })
+            return JSONResponse(
+                {
+                    "status": "healthy",
+                    "platform": self.platform_config.platform_name,
+                    "version": self.platform_config.version,
+                    "timestamp": getattr(app.state, "startup_time", "unknown"),
+                }
+            )
 
         @app.get("/health/live", tags=["Health"])
         async def health_live():
@@ -121,34 +122,38 @@ class StandardEndpoints:
 
             # Check if basic configuration is valid
             if hasattr(app.state, "config_validated"):
-                checks.append({
-                    "name": "configuration",
-                    "status": "healthy" if app.state.config_validated else "unhealthy"
-                })
+                checks.append(
+                    {
+                        "name": "configuration",
+                        "status": "healthy"
+                        if app.state.config_validated
+                        else "unhealthy",
+                    }
+                )
                 if not app.state.config_validated:
                     ready = False
             else:
                 checks.append({"name": "configuration", "status": "unknown"})
 
-            return JSONResponse({
-                "status": "ready" if ready else "not_ready",
-                "checks": checks
-            })
+            return JSONResponse(
+                {"status": "ready" if ready else "not_ready", "checks": checks}
+            )
 
         @app.get("/health/startup", tags=["Health"])
         async def health_startup():
             """Startup probe endpoint for Kubernetes."""
-            return JSONResponse({
-                "status": "started",
-                "platform": self.platform_config.platform_name
-            })
+            return JSONResponse(
+                {"status": "started", "platform": self.platform_config.platform_name}
+            )
 
-        self.added_endpoints.extend([
-            "GET /health", 
-            "GET /health/live", 
-            "GET /health/ready", 
-            "GET /health/startup"
-        ])
+        self.added_endpoints.extend(
+            [
+                "GET /health",
+                "GET /health/live",
+                "GET /health/ready",
+                "GET /health/startup",
+            ]
+        )
 
     def _add_tenant_endpoints(self, app: FastAPI):
         """Add tenant container specific endpoints."""
@@ -230,7 +235,9 @@ class StandardEndpoints:
                     routes.append(
                         {
                             "path": route.path,
-                            "methods": list(route.methods) if hasattr(route.methods, '__iter__') else [],
+                            "methods": list(route.methods)
+                            if hasattr(route.methods, "__iter__")
+                            else [],
                             "name": getattr(route, "name", None),
                         }
                     )
@@ -241,24 +248,23 @@ class StandardEndpoints:
         async def app_state():
             """Show current app state (development only)."""
             state_info = {}
-            
+
             # Safely extract app state information
             for attr_name in dir(app.state):
-                if not attr_name.startswith('_'):
+                if not attr_name.startswith("_"):
                     try:
                         value = getattr(app.state, attr_name)
                         # Only include simple types for JSON serialization
-                        if isinstance(value, (str, int, float, bool, list, dict)):
+                        if isinstance(value, str | int | float | bool | list | dict):
                             state_info[attr_name] = value
                         else:
                             state_info[attr_name] = str(type(value))
-                    except Exception:
+                    except (AttributeError, TypeError, ValueError):
                         state_info[attr_name] = "unavailable"
 
-            return JSONResponse({
-                "app_state": state_info,
-                "state_keys": list(state_info.keys())
-            })
+            return JSONResponse(
+                {"app_state": state_info, "state_keys": list(state_info.keys())}
+            )
 
         self.added_endpoints.extend(
             ["GET /dev/config", "GET /dev/routes", "GET /dev/app-state"]
@@ -266,7 +272,7 @@ class StandardEndpoints:
 
 
 # Convenience functions
-def add_standard_endpoints(app: FastAPI, config: PlatformConfig) -> List[str]:
+def add_standard_endpoints(app: FastAPI, config: PlatformConfig) -> list[str]:
     """Add standard endpoints to an app."""
     endpoints = StandardEndpoints(config)
     return endpoints.add_to_app(app)

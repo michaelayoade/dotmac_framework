@@ -10,7 +10,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { TenantManagement } from '@/components/tenant/TenantManagement';
-import { DashboardGrid, PackageDashboardWidgets } from '@dotmac/portal-components';
+import { DashboardGrid, PackageDashboardWidgets } from '@/components/adapters/DashboardComponents';
 import { tenantApi, monitoringApi } from '@/lib/api';
 import { useAppNavigation, routes } from '@/lib/navigation';
 import { useErrorHandler } from '@/lib/error-handling';

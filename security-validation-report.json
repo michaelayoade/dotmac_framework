@@ -1,0 +1,2411 @@
+{
+  "overall_status": "INSECURE",
+  "critical_failures": 315,
+  "warnings": 282,
+  "successes": 1,
+  "details": {
+    "critical": [
+      {
+        "check": "Environment Security",
+        "message": "SECRET_KEY is not set"
+      },
+      {
+        "check": "Environment Security",
+        "message": "JWT_SECRET is not set"
+      },
+      {
+        "check": "Environment Security",
+        "message": "ENCRYPTION_KEY is not set"
+      },
+      {
+        "check": "Environment Security",
+        "message": "OPENBAO_URL is not set"
+      },
+      {
+        "check": "Environment Security",
+        "message": "OPENBAO_TOKEN is not set"
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .dev-artifacts/router_migration_demo.py: key=\"demo_feature\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded API key in .dev-artifacts/analyze_identity_services.py: API_KEY = \"api_key\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/coverage/sqldata.py: key = 'has_arcs'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/starlette/datastructures.py: password=\"********\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded password in .venv/lib/python3.12/site-packages/starlette/datastructures.py: password=\"********\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/passlib/context.py: secret = \"too many secrets\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/pytoolconfig/fields.py: KEY = \"pytoolconfig\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/dns/tsig.py: secret='{base64.b64encode(self.secret).decode()}'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/mypy/semanal.py: key = 'some value'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/mypy/semanal.py: key = 'modified'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/networkx/convert_matrix.py: key=\"my_edge_key\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/aiohttp/connector.py: key: \"ConnectionKey\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/aiohttp/connector.py: key: \"ConnectionKey\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/aiohttp/connector.py: key: \"ConnectionKey\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/aiohttp/connector.py: key: \"ConnectionKey\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/aiohttp/connector.py: key: \"ConnectionKey\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/aiohttp/connector.py: key: \"ConnectionKey\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded password in .venv/lib/python3.12/site-packages/amqp/connection.py: password='guest'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded password in .venv/lib/python3.12/site-packages/pika/connection.py: PASSWORD = 'guest'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/pika/channel.py: KEY = '_on_channel_cleanup'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/grpc/_server.py: TOKEN = \"receive_close_on_server\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/grpc/_server.py: TOKEN = \"send_initial_metadata\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/grpc/_server.py: TOKEN = \"receive_message\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/grpc/_server.py: TOKEN = \"send_message\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/grpc/_server.py: TOKEN = \"send_status_from_server\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/grpc/_simple_stubs.py: KEY = \"GRPC_PYTHON_MANAGED_CHANNEL_EVICTION_SECOND..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/grpc/_simple_stubs.py: KEY = \"GRPC_PYTHON_MANAGED_CHANNEL_MAXIMUM\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/grpc/_simple_stubs.py: KEY = \"GRPC_PYTHON_DEFAULT_TIMEOUT_SECONDS\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/invoke/config.py: password: \",\n                \"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded password in .venv/lib/python3.12/site-packages/invoke/config.py: password: \",\n                \"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/cffi/api.py: key = 'function '..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/cffi/api.py: key = 'variable '..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/cffi/api.py: key = 'variable '..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/httpx/_urls.py: password=\"a secret\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded password in .venv/lib/python3.12/site-packages/httpx/_urls.py: password=\"a secret\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/jose/jws.py: token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJh..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/ptyprocess/ptyprocess.py: password:\" prompt you can wait for\n        the chi..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded password in .venv/lib/python3.12/site-packages/ptyprocess/ptyprocess.py: password:\" prompt you can wait for\n        the chi..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/pymdownx/twemoji_db.py: key:\": {\n        \"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/pymdownx/twemoji_db.py: key:\": {\n        \"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/pymdownx/twemoji_db.py: key:\": {\n        \"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/pymdownx/twemoji_db.py: key:\": {\n        \"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/pymdownx/twemoji_db.py: key:\": {\n        \"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/pymdownx/twemoji_db.py: key:\": {\n        \"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/pymdownx/twemoji_db.py: secret:\": {\n        \"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/pymdownx/twemoji_db.py: key:\": {\n        \"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/pymdownx/emoji1_db.py: key:\": {\n        \"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/pymdownx/emoji1_db.py: key:\": {\n        \"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/pymdownx/emoji1_db.py: key:\": {\n        \"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/pymdownx/emoji1_db.py: key:\": {\n        \"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/pymdownx/emoji1_db.py: key:\": {\n        \"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/pymdownx/emoji1_db.py: secret:\": {\n        \"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/pymdownx/emoji1_db.py: key:\": {\n        \"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/pymdownx/gemoji_db.py: key:\": {\n        \"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/pymdownx/gemoji_db.py: key:\": {\n        \"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/pymdownx/gemoji_db.py: key:\": {\n        \"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/pymdownx/gemoji_db.py: key:\": {\n        \"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/pymdownx/gemoji_db.py: key:\": {\n        \"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/pymdownx/gemoji_db.py: key:\": {\n        \"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/pymdownx/gemoji_db.py: key:\": {\n        \"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/pymdownx/gemoji_db.py: key:\": {\n        \"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/pymdownx/gemoji_db.py: secret:\": {\n        \"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/pymdownx/gemoji_db.py: key:\": {\n        \"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/pymdownx/critic.py: KEY = \"czjqqkd:%s\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/playhouse/shortcuts.py: key='_model_identifier'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/pydantic/mypy.py: KEY = 'pydantic-mypy'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/pydantic/mypy.py: KEY = 'pydantic-mypy-metadata'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/pydantic/types.py: password='password1'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/pydantic/types.py: password='IAmSensitive'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded password in .venv/lib/python3.12/site-packages/pydantic/types.py: password='password1'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded password in .venv/lib/python3.12/site-packages/pydantic/types.py: password='IAmSensitive'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/paramiko/transport.py: Password:', False)])``.\n\n        The handler shoul..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded password in .venv/lib/python3.12/site-packages/paramiko/transport.py: Password:', False)])``.\n\n        The handler shoul..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/paramiko/hostkeys.py: key = \"|1|{}|{}\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/paramiko/common.py: TOKEN: \"userauth-gssapi-token\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/distlib/locators.py: key = '%s_digest'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/distlib/wheel.py: key = '%s/PKG-INFO'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/botocore/args.py: key=\"request_checksum_calculation\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/botocore/args.py: key=\"response_checksum_validation\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/botocore/args.py: key = 'account_id_endpoint_mode'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/botocore/args.py: key = 'auth_scheme_preference'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/botocore/credentials.py: KEY = 'AWS_ACCESS_KEY_ID'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/botocore/credentials.py: KEY = 'AWS_SECRET_ACCESS_KEY'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/botocore/credentials.py: KEY = 'AWSAccessKeyId'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/botocore/credentials.py: KEY = 'AWSSecretKey'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/botocore/credentials.py: KEY = 'aws_access_key_id'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/botocore/credentials.py: KEY = 'aws_secret_access_key'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/botocore/credentials.py: KEY = 'aws_access_key_id'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/botocore/credentials.py: KEY = 'aws_secret_access_key'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/botocore/credentials.py: KEY = 'aws_access_key_id'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/botocore/credentials.py: KEY = 'aws_secret_access_key'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/botocore/credentials.py: TOKEN = 'AWS_CONTAINER_AUTHORIZATION_TOKEN'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/botocore/hooks.py: key='foo.bar.ANYTHING.baz'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/pexpect/pty_spawn.py: Password:\" prompt and then immediately call sendli..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/pexpect/pty_spawn.py: password:\" prompt you can wait for\n        the chi..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded password in .venv/lib/python3.12/site-packages/pexpect/pty_spawn.py: Password:\" prompt and then immediately call sendli..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded password in .venv/lib/python3.12/site-packages/pexpect/pty_spawn.py: password:\" prompt you can wait for\n        the chi..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/pexpect/__init__.py: Password:')\n    child.sendline(mypassword)\n\nContex..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded password in .venv/lib/python3.12/site-packages/pexpect/__init__.py: Password:')\n    child.sendline(mypassword)\n\nContex..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/pexpect/pxssh.py: password: ')\n            s.login(hostname, usernam..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded password in .venv/lib/python3.12/site-packages/pexpect/pxssh.py: password: ')\n            s.login(hostname, usernam..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/authlib/oauth1/rfc5849/signature.py: key=\"9djdj82h48djs9d2\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/authlib/oauth1/rfc5849/signature.py: token=\"kkk9d7dh3k39sjv7\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/authlib/oauth1/rfc5849/parameters.py: key=\"dpf43f3p2l4k3l03\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/authlib/oauth1/rfc5849/authorization_server.py: key=\"dpf43f3p2l4k3l03\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/authlib/oauth1/rfc5849/authorization_server.py: key=\"dpf43f3p2l4k3l03\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/authlib/oauth1/rfc5849/authorization_server.py: token=\"hh5s93j4hdidpola\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/authlib/oauth1/rfc5849/authorization_server.py: key = \"a-key-prefix:{}\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/authlib/oauth1/rfc5849/authorization_server.py: key = \"a-key-prefix:{}\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/authlib/oauth2/rfc7523/client.py: key = \"jti:{}-{}\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/setuptools/_vendor/jaraco/collections/__init__.py: key: 'missing item'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/numpy/f2py/crackfortran.py: key: ' +\n                            str(k))\n    r..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/dramatiq/results/backend.py: key = \"%(namespace)s:%(queue_name)s:%(actor_name)s..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded password in .venv/lib/python3.12/site-packages/dramatiq/brokers/redis.py: password=\"hunter2\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded API key in .venv/lib/python3.12/site-packages/safety_schemas/models/base.py: API_KEY = \"api_key\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded API key in .venv/lib/python3.12/site-packages/safety_schemas/report/schemas/v3_0/main.py: api_key = \"api_key\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/google/protobuf/service_reflection.py: KEY = 'DESCRIPTOR'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/google/protobuf/service_reflection.py: KEY = 'DESCRIPTOR'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/google/protobuf/internal/python_message.py: KEY = 'DESCRIPTOR'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/google/protobuf/pyext/cpp_message.py: KEY = 'DESCRIPTOR'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/networkx/algorithms/community/lukes.py: KEY = \"partitions\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/networkx/algorithms/approximation/traveling_salesman.py: key = \"spanning_tree_distribution'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/pika/adapters/blocking_connection.py: KEY = 'blocking_channel_consumer_cancelled'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/sql/type_api.py: key: \"some sql value\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/sql/base.py: key=\"columnone\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/orm/path_registry.py: TOKEN = \"_sa_default\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/ext/mutable.py: KEY = \"_ext_mutable_listener_applied\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/ext/automap.py: key = \"attr_<lower_case_name>\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/ext/associationproxy.py: key = \"_%s_%s_%s\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded password in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/pyodbc.py: password=\"tiger\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded password in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/pyodbc.py: password=\"tiger\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded password in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/pyodbc.py: password=\"tiger\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"catalog_name\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"schema_name\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"schema_owner\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"table_catalog\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"table_schema\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"table_name\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"table_type\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"table_schema\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"table_name\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"column_name\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"is_nullable\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"data_type\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"ordinal_position\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"character_maximum_length\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"numeric_precision\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"numeric_scale\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"column_default\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"collation_name\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"system_type_id\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"user_type_id\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"schema_id\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"max_length\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"precision\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"collation_name\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"is_nullable\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"is_user_defined\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"is_assembly_type\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"default_object_id\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"rule_object_id\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"is_table_type\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"table_schema\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"table_name\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"constraint_name\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"constraint_type\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"table_schema\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"table_name\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"column_name\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"constraint_name\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"table_schema\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"table_name\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"column_name\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"constraint_name\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"constraint_schema\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"ordinal_position\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"constraint_catalog\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"constraint_schema\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"constraint_name\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"unique_constraint_catalog\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"unique_constraint_schema\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"unique_constraint_name\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"match_option\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"update_rule\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"delete_rule\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"table_catalog\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"table_schema\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"table_name\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"view_definition\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"check_option\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"is_updatable\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"sequence_catalog\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"sequence_schema\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py: key=\"sequence_name\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded password in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/oracle/cx_oracle.py: password=\"tiger\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded password in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/oracle/cx_oracle.py: password=\"tiger\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded password in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/oracle/oracledb.py: password=\"tiger\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded password in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/oracle/oracledb.py: password=\"tiger\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded password in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/oracle/oracledb.py: password=\"tiger\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded password in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/oracle/provision.py: password=\"xe\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded password in .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mysql/mysqldb.py: password=\"passwd\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/IPython/core/interactiveshell.py: key = '%aimport'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/virtualenv/app_data/__init__.py: key = \"VIRTUALENV_OVERRIDE_APP_DATA\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/backrefs/uniprops/__init__.py: key = 'indicpositionalcategory'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/ldap3/protocol/rfc4512.py: key:' + key + '..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded password in .venv/lib/python3.12/site-packages/ldap3/core/connection.py: password='{0}'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded password in .venv/lib/python3.12/site-packages/ldap3/core/tls.py: password: ' + ('..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/opentelemetry/sdk/environment_variables.py: PASSWORD = \"OTEL_EXPORTER_JAEGER_PASSWORD\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/opentelemetry/sdk/environment_variables.py: KEY = \"OTEL_EXPORTER_OTLP_METRICS_CLIENT_KEY\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded password in .venv/lib/python3.12/site-packages/opentelemetry/sdk/environment_variables.py: PASSWORD = \"OTEL_EXPORTER_JAEGER_PASSWORD\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/opentelemetry/context/contextvars_context.py: KEY = \"current_context\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/opentelemetry/trace/propagation/__init__.py: KEY = \"current-span\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/opentelemetry/util/http/httplib.py: KEY = \"httpbase_instrumentation_state\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/opentelemetry/semconv/trace/__init__.py: KEY = \"feature_flag.key\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/opentelemetry/semconv/trace/__init__.py: KEY = \"aws.s3.key\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/opentelemetry/semconv/trace/__init__.py: KEY = \"messaging.kafka.message.key\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/opentelemetry/semconv/trace/__init__.py: KEY = \"messaging.rabbitmq.routing_key\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/opentelemetry/semconv/_incubating/attributes/aws_attributes.py: KEY = \"aws.s3.key\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/opentelemetry/semconv/_incubating/attributes/messaging_attributes.py: KEY = \"messaging.kafka.message.key\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/opentelemetry/semconv/_incubating/attributes/feature_flag_attributes.py: KEY = \"feature_flag.key\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/yapf/yapflib/style.py: key='dns.query_latency_tcp'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/yapf/yapflib/style.py: key='dns.query_latency_tcp'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded API key in .venv/lib/python3.12/site-packages/safety/scan/util.py: api_key = \"api_key\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/safety/scan/validators.py: KEY = \"project_slug\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/safety/scan/validators.py: KEY = \"project_slug_source\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/safety/scan/validators.py: KEY = \"git_origin\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/pylsp/config/pycodestyle_conf.py: KEY = \"pycodestyle\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/pydantic/v1/class_validators.py: KEY = '__validator_config__'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/pydantic/v1/class_validators.py: KEY = '__root_validator_config__'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/pydantic/v1/mypy.py: KEY = 'pydantic-mypy'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/pydantic/v1/mypy.py: KEY = 'pydantic-mypy-metadata'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/pydantic/v1/utils.py: KEY = '__root__'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/pydantic/_internal/_known_annotated_metadata.py: key = 'minItems'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/pydantic/_internal/_known_annotated_metadata.py: key = 'minLength'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/cryptography/hazmat/_oid.py: KEY: \"id-ecPublicKey\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/cryptography/hazmat/_oid.py: PASSWORD: \"challengePassword\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded password in .venv/lib/python3.12/site-packages/cryptography/hazmat/_oid.py: PASSWORD: \"challengePassword\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/kombu/transport/consul.py: key = '{}/msg/{}_{}'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/kombu/transport/redis.py: key = 'unacked_index'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/kombu/transport/redis.py: key = 'unacked_mutex'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/kombu/transport/gcpubsub.py: key=\"{routing_key}\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded password in .venv/lib/python3.12/site-packages/geopy/geocoders/dot_us.py: password = \":\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded API key in .venv/lib/python3.12/site-packages/geopy/extra/rate_limiter.py: api_key=\"...\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded API key in .venv/lib/python3.12/site-packages/geopy/extra/rate_limiter.py: api_key=\"...\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/alembic/script/write_hooks.py: TOKEN = \"REVISION_SCRIPT_FILENAME\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/alembic/templates/multidb/env.py: token=\"%s_upgrades\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/alembic/templates/multidb/env.py: token=\"%s_downgrades\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/mkdocs/config/defaults.py: key='mdx_configs'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded password in .venv/lib/python3.12/site-packages/bandit/plugins/general_hardcoded_password.py: password: '{value}'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded password in .venv/lib/python3.12/site-packages/bandit/plugins/general_hardcoded_password.py: password: 'blerg'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded password in .venv/lib/python3.12/site-packages/bandit/plugins/general_hardcoded_password.py: password=\"blerg\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded password in .venv/lib/python3.12/site-packages/bandit/plugins/general_hardcoded_password.py: password: 'Admin'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded password in .venv/lib/python3.12/site-packages/bandit/plugins/general_hardcoded_password.py: password=\"Admin\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded password in .venv/lib/python3.12/site-packages/pip/_internal/utils/misc.py: password = \":****\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/pip/_internal/locations/__init__.py: key=\"bin_prefix\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/celery/backends/azureblockblob.py: Key='\n        redacted_connection_string_parts = [..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/semdep/parsers/pnpm.py: key = \"@babel/core@7.21.0(eslint@8.57.0)\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in .venv/lib/python3.12/site-packages/semdep/parsers/pnpm.py: key = \"@babel/core@7.21.0\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in packages/dotmac-plugins/src/dotmac_plugins/loaders/yaml_loader.py: password: \"${SMTP_PASSWORD}\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded password in packages/dotmac-plugins/src/dotmac_plugins/loaders/yaml_loader.py: password: \"${SMTP_PASSWORD}\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in packages/dotmac-plugins/src/dotmac_plugins/adapters/authentication.py: PASSWORD = \"password\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded password in packages/dotmac-plugins/src/dotmac_plugins/adapters/authentication.py: PASSWORD = \"password\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in packages/dotmac-platform-services/src/dotmac/platform/observability/middleware.py: key: \"***REDACTED***\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in packages/dotmac-platform-services/src/dotmac/platform/observability/middleware.py: key: \"***REDACTED***\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded API key in packages/dotmac-platform-services/src/dotmac/platform/auth/rbac_engine.py: API_KEY = \"api_key\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in packages/dotmac-platform-services/src/dotmac/platform/auth/oauth_providers.py: TOKEN = \"refresh_token\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in packages/dotmac-platform-services/src/dotmac/platform/secrets/rotation.py: PASSWORD = \"database_password\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in packages/dotmac-platform-services/src/dotmac/platform/secrets/rotation.py: PASSWORD = \"service_password\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in packages/dotmac-platform-services/src/dotmac/platform/secrets/rotation.py: KEY = \"encryption_key\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded API key in packages/dotmac-platform-services/src/dotmac/platform/secrets/rotation.py: API_KEY = \"api_key\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded password in packages/dotmac-platform-services/src/dotmac/platform/secrets/rotation.py: PASSWORD = \"database_password\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded password in packages/dotmac-platform-services/src/dotmac/platform/secrets/rotation.py: PASSWORD = \"service_password\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in packages/dotmac-platform-services/src/dotmac/platform/secrets/encryption.py: SECRET = \"top_secret\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in packages/dotmac-platform-services/src/dotmac/platform/secrets/types.py: SECRET = \"symmetric_secret\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in packages/dotmac-platform-services/src/dotmac/platform/secrets/types.py: SECRET = \"service_signing_secret\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in packages/dotmac-platform-services/src/dotmac/platform/secrets/types.py: KEY = \"encryption_key\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in packages/dotmac-platform-services/src/dotmac/platform/secrets/types.py: SECRET = \"webhook_secret\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in packages/dotmac-platform-services/src/dotmac/platform/secrets/types.py: SECRET = \"custom_secret\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in venv/lib/python3.12/site-packages/distlib/locators.py: key = '%s_digest'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in venv/lib/python3.12/site-packages/distlib/wheel.py: key = '%s/PKG-INFO'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in venv/lib/python3.12/site-packages/virtualenv/app_data/__init__.py: key = \"VIRTUALENV_OVERRIDE_APP_DATA\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in venv/lib/python3.12/site-packages/pip/_vendor/distlib/locators.py: key = '%s_digest'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in venv/lib/python3.12/site-packages/pip/_vendor/distlib/wheel.py: key = '%s/PKG-INFO'..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded password in venv/lib/python3.12/site-packages/pip/_internal/utils/misc.py: password = \":****\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in venv/lib/python3.12/site-packages/pip/_internal/locations/__init__.py: key=\"bin_prefix\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in src/dotmac_isp/sdks/networking/netjson_support.py: key='{encryption['..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in src/dotmac_isp/sdks/networking/netjson_support.py: key='{encryption['..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded API key in src/dotmac_isp/sdks/contracts/auth.py: API_KEY = \"api_key\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded API key in src/dotmac_isp/sdks/contracts/auth.py: API_KEY = \"api_key\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded password in src/dotmac_isp/sdks/contracts/auth.py: PASSWORD = \"pwd\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in src/dotmac_isp/sdks/models/accounts.py: KEY = \"hardware_key\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in src/dotmac_management/services/enhanced_tenant_service.py: key=\"multi_app_config\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded API key in src/dotmac_management/user_management/schemas/auth_schemas.py: API_KEY = \"api_key\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in src/dotmac_shared/security/unified_csrf_strategy.py: key=\"csrf_token\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in src/dotmac_shared/monitoring/integrations.py: key=\"{error_key}\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded API key in src/dotmac_shared/services/unified_identity_service.py: API_KEY = \"api_key\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in src/dotmac_shared/container_config/core/validators.py: SECRET:\"):\n            result.add_info(\n          ..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in src/dotmac_shared/container_config/core/validators.py: SECRET:\" in value and not value.startswith(\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in src/dotmac_shared/container_config/core/validators.py: SECRET:\"):\n                    result.add_warning(..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in src/dotmac_shared/container_config/core/validators.py: SECRET:\") and len(config.password) < 8:\n          ..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in src/dotmac_shared/container_config/core/config_generator.py: password=\"${SECRET:database_password}\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in src/dotmac_shared/container_config/core/config_generator.py: password=\"${SECRET:redis_password}\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in src/dotmac_shared/container_config/core/config_generator.py: key=\"${SECRET:jwt_secret_key}\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Potential hardcoded credential in src/dotmac_shared/container_config/core/config_generator.py: key=\"${SECRET:encryption_key}\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded password in src/dotmac_shared/container_config/core/config_generator.py: password=\"${SECRET:database_password}\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Hardcoded password in src/dotmac_shared/container_config/core/config_generator.py: password=\"${SECRET:redis_password}\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Production config with hardcoded value in monitoring/prometheus/prometheus.yml: password: \"your-password\"..."
+      },
+      {
+        "check": "Hardcoded Secrets",
+        "message": "Production config with hardcoded value in monitoring/prometheus/prometheus.yml: password: \"your-password\"..."
+      },
+      {
+        "check": "Production Config",
+        "message": "STRICT_PROD_BASELINE must be 'true' for production"
+      },
+      {
+        "check": "Production Config",
+        "message": "APPLY_RLS_AFTER_MIGRATION must be 'true' for production"
+      }
+    ],
+    "warnings": [
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in scripts/security_validation.py:187"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in scripts/security_validation.py:188"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of os.system() in scripts/security_validation.py:190"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in scripts/module_scaffolding/validation.py:545"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in scripts/module_scaffolding/validation.py:546"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/typing_extensions.py:1485"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/typing_extensions.py:4029"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/typing_extensions.py:4034"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/typing_extensions.py:4081"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/typing_extensions.py:4093"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/typing_extensions.py:4116"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/typing_extensions.py:1485"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/decorator.py:161"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/peewee.py:174"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/six.py:740"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/coverage/parser.py:680"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/coverage/templite.py:73"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/coverage/execfile.py:213"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/coverage/patch.py:149"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/pydocstyle/parser.py:615"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/jinja2/debug.py:145"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/jinja2/nodes.py:581"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/jinja2/environment.py:1228"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/setuptools/build_meta.py:317"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/setuptools/launch.py:32"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/setuptools/wheel.py:190"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/setuptools/wheel.py:211"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/mako/template.py:680"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/mako/template.py:681"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/mako/codegen.py:117"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/mako/codegen.py:118"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/mako/codegen.py:131"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/mako/codegen.py:132"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/mako/codegen.py:441"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/mako/codegen.py:611"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/mako/codegen.py:612"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/mako/codegen.py:725"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/glom/cli.py:222"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/glom/cli.py:224"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/PIL/Image.py:3642"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/PIL/ImageMath.py:284"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/PIL/ImageMath.py:335"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/PIL/ImageMath.py:342"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of os.system() in .venv/lib/python3.12/site-packages/PIL/ImageShow.py:120"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/pkg_resources/__init__.py:1738"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/pkg_resources/__init__.py:1749"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/execnet/gateway_io.py:51"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/execnet/gateway_io.py:51"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/execnet/gateway_base.py:1291"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/typing_inspection/typing_objects.py:100"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/typing_inspection/typing_objects.py:132"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/cffi/setuptools_ext.py:25"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/cffi/recompiler.py:78"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/boltons/funcutils.py:1035"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/boltons/namedutils.py:64"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/boltons/namedutils.py:68"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of os.system() in .venv/lib/python3.12/site-packages/click_repl/utils.py:207"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/attr/_make.py:223"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/face/sinter.py:145"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/face/sinter.py:147"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/ptyprocess/ptyprocess.py:92"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/billiard/managers.py:889"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/billiard/sharedctypes.py:169"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/redis/cluster.py:2271"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/redis/cluster.py:2273"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/redis/cluster.py:2551"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/redis/cluster.py:2651"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/redis/cluster.py:2653"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/anyio/to_interpreter.py:116"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/wrapt/decorators.py:23"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/babel/plural.py:232"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/distlib/scripts.py:163"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of os.system() in .venv/lib/python3.12/site-packages/websockets/cli.py:167"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of os.system() in .venv/lib/python3.12/site-packages/pexpect/__init__.py:16"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/prometheus_client/decorator.py:195"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/dill/objtypes.py:18"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/dill/_dill.py:979"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/dill/_dill.py:1037"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/dill/_dill.py:276"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/dill/temp.py:72"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/dill/temp.py:221"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/dill/temp.py:71"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/dill/temp.py:88"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/dill/temp.py:220"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/dill/source.py:60"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/dill/source.py:82"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/dill/source.py:395"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/dill/source.py:540"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/dill/source.py:178"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/dill/source.py:541"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/dill/source.py:711"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/packaging/licenses/__init__.py:100"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/traitlets/config/loader.py:82"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/traitlets/config/loader.py:655"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/setuptools/_vendor/typing_extensions.py:1215"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/setuptools/_vendor/typing_extensions.py:1215"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/setuptools/_distutils/core.py:228"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/setuptools/_distutils/core.py:268"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/setuptools/_vendor/packaging/licenses/__init__.py:100"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/setuptools/_vendor/jaraco/functools/__init__.py:522"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/setuptools/_distutils/compilers/C/base.py:1120"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/passlib/crypto/digest.py:1000"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/numpy/f2py/capi_maps.py:159"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/numpy/f2py/capi_maps.py:296"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/numpy/f2py/capi_maps.py:449"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/numpy/f2py/auxfuncs.py:632"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/numpy/f2py/auxfuncs.py:640"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/numpy/f2py/auxfuncs.py:644"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/numpy/f2py/crackfortran.py:1329"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/numpy/f2py/crackfortran.py:2271"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/numpy/f2py/crackfortran.py:2559"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/numpy/f2py/crackfortran.py:2637"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/numpy/f2py/crackfortran.py:2646"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/numpy/f2py/crackfortran.py:2914"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/numpy/f2py/crackfortran.py:2985"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/numpy/f2py/crackfortran.py:3016"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/numpy/f2py/crackfortran.py:3468"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/numpy/_core/arrayprint.py:1564"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of os.system() in .venv/lib/python3.12/site-packages/mypy/dmypy/client.py:568"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/networkx/utils/decorators.py:912"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/pylint/config/config_initialization.py:57"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/pylint/config/utils.py:152"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/pylint/lint/pylinter.py:1137"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/pylint/reporters/json_reporter.py:184"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/rope/base/prefs.py:318"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/rope/base/oi/runmod.py:235"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/execnet/script/shell.py:70"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/execnet/script/socketserver.py:61"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/execnet/script/socketserver.py:45"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/execnet/script/socketserver.py:47"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/blib2to3/pgen2/literals.py:4"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/blib2to3/pgen2/pgen.py:111"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/blib2to3/pgen2/conv.py:186"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/blib2to3/pgen2/conv.py:212"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/pycparser/ply/cpp.py:600"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/pycparser/ply/yacc.py:1562"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/pycparser/ply/yacc.py:1982"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/pycparser/ply/yacc.py:3254"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/pycparser/ply/lex.py:215"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/pycparser/ply/lex.py:1039"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/sqlalchemy/sql/lambdas.py:1264"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/sqlalchemy/orm/clsregistry.py:533"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/sqlalchemy/orm/_orm_constructors.py:1142"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/sqlalchemy/orm/_orm_constructors.py:1379"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/sqlalchemy/orm/_orm_constructors.py:1581"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/sqlalchemy/orm/_orm_constructors.py:1678"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/sqlalchemy/orm/_orm_constructors.py:1697"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/sqlalchemy/orm/_orm_constructors.py:1739"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/sqlalchemy/orm/instrumentation.py:744"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py:419"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py:1053"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py:2044"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/sqlalchemy/util/typing.py:274"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/sqlalchemy/util/typing.py:276"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/sqlalchemy/util/typing.py:302"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/IPython/external/pickleshare.py:347"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/IPython/lib/backgroundjobs.py:111"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/IPython/lib/backgroundjobs.py:116"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/IPython/lib/backgroundjobs.py:120"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/IPython/lib/backgroundjobs.py:121"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/IPython/lib/backgroundjobs.py:449"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/IPython/lib/backgroundjobs.py:465"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/IPython/lib/demo.py:450"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of os.system() in .venv/lib/python3.12/site-packages/IPython/utils/_process_win32_controller.py:170"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of os.system() in .venv/lib/python3.12/site-packages/IPython/utils/_process_win32_controller.py:548"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of os.system() in .venv/lib/python3.12/site-packages/IPython/utils/_process_common.py:146"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of os.system() in .venv/lib/python3.12/site-packages/IPython/utils/_process_common.py:164"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of os.system() in .venv/lib/python3.12/site-packages/IPython/utils/terminal.py:27"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of os.system() in .venv/lib/python3.12/site-packages/IPython/utils/terminal.py:30"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/IPython/utils/frame.py:75"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/IPython/utils/frame.py:82"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/IPython/utils/py3compat.py:56"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of os.system() in .venv/lib/python3.12/site-packages/IPython/utils/_process_win32.py:43"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of os.system() in .venv/lib/python3.12/site-packages/IPython/utils/_process_win32.py:117"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of os.system() in .venv/lib/python3.12/site-packages/IPython/utils/_process_win32.py:147"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/IPython/utils/text.py:462"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/IPython/utils/text.py:517"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of os.system() in .venv/lib/python3.12/site-packages/IPython/terminal/magics.py:214"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/IPython/core/interactiveshell.py:1597"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/IPython/core/interactiveshell.py:1790"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/IPython/core/interactiveshell.py:2855"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/IPython/core/interactiveshell.py:2876"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/IPython/core/interactiveshell.py:3697"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/IPython/core/interactiveshell.py:4029"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/IPython/core/interactiveshell.py:2868"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/IPython/core/interactiveshell.py:3699"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Subprocess with shell=True in .venv/lib/python3.12/site-packages/IPython/core/interactiveshell.py:2694"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of os.system() in .venv/lib/python3.12/site-packages/IPython/core/interactiveshell.py:2636"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of os.system() in .venv/lib/python3.12/site-packages/IPython/core/interactiveshell.py:2677"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/IPython/core/debugger_backport.py:130"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/IPython/core/debugger_backport.py:138"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/IPython/core/debugger_backport.py:200"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/IPython/core/debugger.py:870"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of os.system() in .venv/lib/python3.12/site-packages/IPython/core/page.py:206"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of os.system() in .venv/lib/python3.12/site-packages/IPython/core/hooks.py:23"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/IPython/core/pylabtools.py:436"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/IPython/core/pylabtools.py:441"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/IPython/core/usage.py:308"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of os.system() in .venv/lib/python3.12/site-packages/IPython/core/usage.py:298"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/IPython/core/guarded_eval.py:420"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/IPython/core/completer.py:2815"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/IPython/extensions/deduperreload/deduperreload.py:459"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/IPython/extensions/deduperreload/deduperreload.py:491"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/IPython/extensions/deduperreload/deduperreload.py:508"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/IPython/terminal/pt_inputhooks/qt.py:16"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/IPython/core/magics/execution.py:1420"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/IPython/core/magics/execution.py:1439"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/IPython/core/magics/execution.py:1216"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/IPython/core/magics/execution.py:1434"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/IPython/core/magics/config.py:134"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/IPython/core/magics/code.py:458"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/IPython/core/magics/ast_mod.py:70"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/IPython/core/magics/history.py:274"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/virtualenv/discovery/py_info.py:154"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/virtualenv/discovery/py_info.py:158"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/virtualenv/discovery/py_info.py:168"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/redis/commands/core.py:5863"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/faker/sphinx/validator.py:13"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/faker/sphinx/validator.py:19"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/faker/sphinx/validator.py:20"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/faker/sphinx/validator.py:42"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/faker/sphinx/validator.py:43"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/faker/sphinx/docstring.py:199"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/pydantic/v1/utils.py:195"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/pydantic/_internal/_namespace_utils.py:37"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/pydantic/_internal/_typing_extra.py:623"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/pydantic/_internal/_typing_extra.py:656"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/pydantic/_internal/_typing_extra.py:623"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/botocore/vendored/six.py:735"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/yapf_third_party/_ylib2to3/pgen2/literals.py:3"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/yapf_third_party/_ylib2to3/pgen2/pgen.py:97"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/yapf_third_party/_ylib2to3/pgen2/conv.py:184"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/yapf_third_party/_ylib2to3/pgen2/conv.py:210"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/alembic/ddl/mssql.py:324"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/alembic/ddl/mssql.py:345"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/alembic/operations/base.py:191"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/alembic/util/langhelpers.py:220"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/bandit/plugins/logging_config_insecure_listen.py:13"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/bandit/plugins/exec.py:21"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of os.system() in .venv/lib/python3.12/site-packages/bandit/plugins/injection_shell.py:464"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/pip/_vendor/pkg_resources/__init__.py:1714"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/pip/_vendor/pkg_resources/__init__.py:1725"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/pip/_vendor/distlib/scripts.py:163"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/pip/_vendor/packaging/licenses/__init__.py:100"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/pip/_vendor/urllib3/packages/six.py:787"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/pip/_vendor/pygments/formatters/__init__.py:91"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/pip/_vendor/pygments/formatters/__init__.py:103"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/pip/_vendor/pygments/lexers/__init__.py:154"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/pip/_internal/utils/setuptools_build.py:12"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/pip/_internal/utils/setuptools_build.py:46"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/celery/utils/functional.py:339"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/celery/backends/base.py:395"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of os.system() in .venv/lib/python3.12/site-packages/celery/backends/base.py:377"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/pygments/formatters/__init__.py:91"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/pygments/formatters/__init__.py:103"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/pygments/lexers/installers.py:66"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/pygments/lexers/_julia_builtins.py:150"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/pygments/lexers/_julia_builtins.py:361"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in .venv/lib/python3.12/site-packages/pygments/lexers/__init__.py:154"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in .venv/lib/python3.12/site-packages/pygments/lexers/foxpro.py:70"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in venv/lib/python3.12/site-packages/distlib/scripts.py:163"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in venv/lib/python3.12/site-packages/virtualenv/discovery/py_info.py:154"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in venv/lib/python3.12/site-packages/virtualenv/discovery/py_info.py:158"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in venv/lib/python3.12/site-packages/virtualenv/discovery/py_info.py:168"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in venv/lib/python3.12/site-packages/pip/_vendor/typing_extensions.py:1251"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in venv/lib/python3.12/site-packages/pip/_vendor/typing_extensions.py:1251"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in venv/lib/python3.12/site-packages/pip/_vendor/six.py:735"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in venv/lib/python3.12/site-packages/pip/_vendor/pkg_resources/__init__.py:1561"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in venv/lib/python3.12/site-packages/pip/_vendor/pkg_resources/__init__.py:1572"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in venv/lib/python3.12/site-packages/pip/_vendor/pyparsing/results.py:57"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in venv/lib/python3.12/site-packages/pip/_vendor/urllib3/packages/six.py:787"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of eval() function in venv/lib/python3.12/site-packages/pip/_vendor/pygments/formatters/__init__.py:91"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in venv/lib/python3.12/site-packages/pip/_vendor/pygments/formatters/__init__.py:103"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in venv/lib/python3.12/site-packages/pip/_vendor/pygments/lexers/__init__.py:153"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in venv/lib/python3.12/site-packages/pip/_internal/utils/setuptools_build.py:10"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in venv/lib/python3.12/site-packages/pip/_internal/utils/setuptools_build.py:43"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in src/dotmac_shared/__init__.py:145"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in src/dotmac_shared/__init__.py:157"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in src/dotmac_isp/core/security/input_sanitizer.py:24"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in src/dotmac_shared/security/api_threat_detector.py:467"
+      },
+      {
+        "check": "Unsafe Functions",
+        "message": "Use of exec() function in src/dotmac_shared/security/request_validation.py:75"
+      },
+      {
+        "check": "Production Config",
+        "message": "ENVIRONMENT should be 'production', got 'None'"
+      }
+    ],
+    "successes": [
+      {
+        "check": "TLS Configuration",
+        "message": "TLS settings validated"
+      }
+    ]
+  },
+  "recommendations": [
+    "\u2757 Fix all critical security issues before production deployment",
+    "\ud83d\udd10 Implement proper secrets management with OpenBao/Vault",
+    "\u26a0\ufe0f Replace unsafe function usage with secure alternatives"
+  ]
+}

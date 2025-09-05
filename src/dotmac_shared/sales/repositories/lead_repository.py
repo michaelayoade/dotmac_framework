@@ -1,11 +1,11 @@
 """Lead repository for database operations."""
 
 import uuid
-from datetime import date, datetime
-from typing import Any, Dict, List, Optional, Tuple
+from datetime import date, datetime, timezone
+from typing import Any, Optional
 
 try:
-    from sqlalchemy import and_, desc, func, or_
+    from sqlalchemy import and_, desc, func
     from sqlalchemy.orm import Session
 
     from ..core.models import Lead, LeadStatus
@@ -27,9 +27,7 @@ class LeadRepository:
 
         self.db = db_session
 
-    async def create_lead(
-        self, lead_data: LeadCreate, tenant_id: str, lead_score: int = 0
-    ) -> Lead:
+    async def create_lead(self, lead_data: LeadCreate, tenant_id: str, lead_score: int = 0) -> Lead:
         """Create a new lead in the database."""
         # Generate unique lead ID
         lead_id = f"LEAD-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}-{str(uuid.uuid4())[:8].upper()}"
@@ -83,15 +81,13 @@ class LeadRepository:
                 and_(
                     Lead.lead_id == lead_id,
                     Lead.tenant_id == tenant_id,
-                    Lead.is_active == True,
+                    Lead.is_active is True,
                 )
             )
             .first()
         )
 
-    async def update_lead(
-        self, lead_id: str, lead_data: LeadUpdate, tenant_id: str
-    ) -> Lead:
+    async def update_lead(self, lead_id: str, lead_data: LeadUpdate, tenant_id: str) -> Lead:
         """Update an existing lead."""
         lead = await self.get_lead_by_id(lead_id, tenant_id)
         if not lead:
@@ -110,9 +106,7 @@ class LeadRepository:
 
         return lead
 
-    async def update_lead_score(
-        self, lead_id: str, new_score: int, tenant_id: str
-    ) -> Lead:
+    async def update_lead_score(self, lead_id: str, new_score: int, tenant_id: str) -> Lead:
         """Update lead score."""
         lead = await self.get_lead_by_id(lead_id, tenant_id)
         if not lead:
@@ -126,9 +120,7 @@ class LeadRepository:
 
         return lead
 
-    async def update_lead_status(
-        self, lead_id: str, tenant_id: str, new_status: LeadStatus
-    ) -> Lead:
+    async def update_lead_status(self, lead_id: str, tenant_id: str, new_status: LeadStatus) -> Lead:
         """Update lead status."""
         lead = await self.get_lead_by_id(lead_id, tenant_id)
         if not lead:
@@ -154,14 +146,12 @@ class LeadRepository:
     async def list_leads(
         self,
         tenant_id: str,
-        filters: Dict[str, Any] = None,
+        filters: Optional[dict[str, Any]] = None,
         page: int = 1,
         page_size: int = 50,
-    ) -> Tuple[List[Lead], int]:
+    ) -> tuple[list[Lead], int]:
         """List leads with filtering and pagination."""
-        query = self.db.query(Lead).filter(
-            and_(Lead.tenant_id == tenant_id, Lead.is_active == True)
-        )
+        query = self.db.query(Lead).filter(and_(Lead.tenant_id == tenant_id, Lead.is_active is True))
 
         # Apply filters
         if filters:
@@ -198,18 +188,11 @@ class LeadRepository:
         total_count = query.count()
 
         # Apply pagination and ordering
-        leads = (
-            query.order_by(desc(Lead.created_at))
-            .offset((page - 1) * page_size)
-            .limit(page_size)
-            .all()
-        )
+        leads = query.order_by(desc(Lead.created_at)).offset((page - 1) * page_size).limit(page_size).all()
 
         return leads, total_count
 
-    async def qualify_lead(
-        self, lead_id: str, tenant_id: str, qualification_data: Dict[str, Any]
-    ) -> Lead:
+    async def qualify_lead(self, lead_id: str, tenant_id: str, qualification_data: dict[str, Any]) -> Lead:
         """Qualify a lead with BANT criteria."""
         lead = await self.get_lead_by_id(lead_id, tenant_id)
         if not lead:
@@ -240,9 +223,7 @@ class LeadRepository:
 
         return lead
 
-    async def convert_lead(
-        self, lead_id: str, tenant_id: str, opportunity_id: str
-    ) -> Lead:
+    async def convert_lead(self, lead_id: str, tenant_id: str, opportunity_id: str) -> Lead:
         """Convert a lead to an opportunity."""
         lead = await self.get_lead_by_id(lead_id, tenant_id)
         if not lead:
@@ -258,14 +239,14 @@ class LeadRepository:
 
         return lead
 
-    async def get_overdue_leads(self, tenant_id: str) -> List[Lead]:
+    async def get_overdue_leads(self, tenant_id: str) -> list[Lead]:
         """Get leads that are overdue for follow-up."""
         return (
             self.db.query(Lead)
             .filter(
                 and_(
                     Lead.tenant_id == tenant_id,
-                    Lead.is_active == True,
+                    Lead.is_active is True,
                     Lead.lead_status.in_([LeadStatus.NEW, LeadStatus.CONTACTED]),
                     Lead.next_follow_up_date.isnot(None),
                     Lead.next_follow_up_date <= date.today(),
@@ -275,32 +256,32 @@ class LeadRepository:
             .all()
         )
 
-    async def get_all_leads_for_scoring(self, tenant_id: str) -> List[Lead]:
+    async def get_all_leads_for_scoring(self, tenant_id: str) -> list[Lead]:
         """Get all active leads for bulk score updates."""
         return (
             self.db.query(Lead)
             .filter(
                 and_(
                     Lead.tenant_id == tenant_id,
-                    Lead.is_active == True,
+                    Lead.is_active is True,
                     Lead.lead_status != LeadStatus.CONVERTED,
                 )
             )
             .all()
         )
 
-    async def get_lead_statistics(self, tenant_id: str) -> Dict[str, Any]:
+    async def get_lead_statistics(self, tenant_id: str) -> dict[str, Any]:
         """Get lead statistics for analytics."""
         total_leads = (
             self.db.query(func.count(Lead.id))
-            .filter(and_(Lead.tenant_id == tenant_id, Lead.is_active == True))
+            .filter(and_(Lead.tenant_id == tenant_id, Lead.is_active is True))
             .scalar()
         )
 
         # Count by status
         status_counts = (
             self.db.query(Lead.lead_status, func.count(Lead.id))
-            .filter(and_(Lead.tenant_id == tenant_id, Lead.is_active == True))
+            .filter(and_(Lead.tenant_id == tenant_id, Lead.is_active is True))
             .group_by(Lead.lead_status)
             .all()
         )
@@ -308,7 +289,7 @@ class LeadRepository:
         # Count by source
         source_counts = (
             self.db.query(Lead.lead_source, func.count(Lead.id))
-            .filter(and_(Lead.tenant_id == tenant_id, Lead.is_active == True))
+            .filter(and_(Lead.tenant_id == tenant_id, Lead.is_active is True))
             .group_by(Lead.lead_source)
             .all()
         )
@@ -316,24 +297,20 @@ class LeadRepository:
         # Average score
         avg_score = (
             self.db.query(func.avg(Lead.lead_score))
-            .filter(and_(Lead.tenant_id == tenant_id, Lead.is_active == True))
+            .filter(and_(Lead.tenant_id == tenant_id, Lead.is_active is True))
             .scalar()
         )
 
         return {
             "total_leads": total_leads or 0,
-            "status_breakdown": {
-                status.value: count for status, count in status_counts
-            },
-            "source_breakdown": {
-                source.value: count for source, count in source_counts
-            },
+            "status_breakdown": {status.value: count for status, count in status_counts},
+            "source_breakdown": {source.value: count for source, count in source_counts},
             "average_score": round(float(avg_score or 0), 2),
             "high_score_leads": self.db.query(func.count(Lead.id))
             .filter(
                 and_(
                     Lead.tenant_id == tenant_id,
-                    Lead.is_active == True,
+                    Lead.is_active is True,
                     Lead.lead_score >= 70,
                 )
             )

@@ -1,114 +1,88 @@
 """
-Shared schemas module for DotMac platform.
-Provides unified access to all schema definitions across the platform.
+Common schema patterns for DotMac Framework.
+
+This module provides consistent Pydantic models, validation patterns,
+and response schemas across all modules.
+
+Usage:
+    # Base schemas for common patterns
+    from dotmac_shared.schemas import (
+        BaseCreateSchema, BaseUpdateSchema, BaseResponseSchema,
+        BaseTenantCreateSchema, BaseTenantResponseSchema,
+        PaginatedResponseSchema
+    )
+
+    # Mixins for common fields
+    from dotmac_shared.schemas import (
+        TimestampMixin, AuditMixin, TenantMixin, SoftDeleteMixin
+    )
+
+    # Validation utilities
+    from dotmac_shared.schemas import CommonValidators, EntityStatus
 """
 
-# Import from base_schemas (core foundation schemas)
 from .base_schemas import (
-    # Base classes
-    BaseSchema,
-    BaseEntity,
-    NamedEntity,
-    ActiveEntity,
-    TenantEntity,
-    PersonEntity,
-    CompanyEntity,
-    
-    # CRUD operation schemas
-    BaseCreateSchema,
-    BaseUpdateSchema,
-    BaseResponseSchema,
-    
-    # Pagination and search
-    PaginationSchema,
-    PaginatedResponseSchema,
-    SearchSchema,
-    
-    # Mixins - commonly used across platform
-    TimestampMixin,
-    IdentifiedMixin,
-    NamedMixin,
-    DescriptionMixin,
-    StatusMixin,
-    TenantMixin,
-    EmailMixin,
-    PhoneMixin,
-    AddressMixin,
-    CurrencyMixin,
-    DateRangeMixin,
-    GeoLocationMixin,
-)
-
-# Import billing schemas
-from .billing import (
-    # Re-export key billing schemas
-    BillingBaseSchema,
-    CustomerSchema as BillingCustomerSchema,
-    CustomerCreateSchema as BillingCustomerCreateSchema,
-    BillingPlanResponse,
-    SubscriptionResponse,
-    InvoiceResponse,
-    PaymentResponse,
-)
-
-# Import ISP-specific DRY schemas
-from .isp_schemas import (
-    ISPBaseSchema,
-    ISPCreateSchema, 
-    ISPUpdateSchema,
-    ISPResponseSchema,
-    ISPListResponseSchema,
-)
-
-# Common schemas that were already defined (maintain compatibility)
-# Re-export everything that modules expect to find
-__all__ = [
-    # Base foundation schemas
-    'BaseSchema',
-    'BaseEntity', 
-    'NamedEntity',
-    'ActiveEntity',
-    'TenantEntity',
-    'PersonEntity',
-    'CompanyEntity',
-    
-    # CRUD schemas
-    'BaseCreateSchema',
-    'BaseUpdateSchema', 
-    'BaseResponseSchema',
-    
-    # Pagination
-    'PaginationSchema',
-    'PaginatedResponseSchema',
-    'SearchSchema',
-    
     # Mixins
-    'TimestampMixin',
-    'IdentifiedMixin',
-    'NamedMixin',
-    'DescriptionMixin',
-    'StatusMixin',
-    'TenantMixin',
-    'EmailMixin',
-    'PhoneMixin',
-    'AddressMixin',
-    'CurrencyMixin',
-    'DateRangeMixin',
-    'GeoLocationMixin',
-    
-    # Billing schemas
-    'BillingBaseSchema',
-    'BillingCustomerSchema',
-    'BillingCustomerCreateSchema',
-    'BillingPlanResponse',
-    'SubscriptionResponse',
-    'InvoiceResponse', 
-    'PaymentResponse',
-    
-    # ISP DRY schemas
-    'ISPBaseSchema',
-    'ISPCreateSchema',
-    'ISPUpdateSchema',
-    'ISPResponseSchema',
-    'ISPListResponseSchema',
+    AuditMixin,
+    # Base schemas
+    BaseCreateSchema,
+    BaseCreateWithAuditSchema,
+    BaseResponseSchema,
+    BaseResponseWithAuditSchema,
+    BaseSchema,
+    BaseTenantCreateSchema,
+    BaseTenantResponseSchema,
+    BaseTenantUpdateSchema,
+    BaseUpdateSchema,
+    BaseUpdateWithAuditSchema,
+    # Response schemas
+    BulkOperationResponseSchema,
+    BulkOperationSchema,
+    # Validators and utilities
+    CommonValidators,
+    EntityStatus,
+    ErrorResponseSchema,
+    # Pagination and filtering
+    FilterParams,
+    OperationStatus,
+    PaginatedResponseSchema,
+    PaginationParams,
+    SoftDeleteMixin,
+    SortParams,
+    SuccessResponseSchema,
+    TenantMixin,
+    TimestampMixin,
+)
+
+__all__ = [
+    # Base schemas
+    "BaseSchema",
+    "BaseCreateSchema",
+    "BaseUpdateSchema",
+    "BaseResponseSchema",
+    "BaseCreateWithAuditSchema",
+    "BaseUpdateWithAuditSchema",
+    "BaseResponseWithAuditSchema",
+    "BaseTenantCreateSchema",
+    "BaseTenantUpdateSchema",
+    "BaseTenantResponseSchema",
+    # Mixins
+    "TimestampMixin",
+    "AuditMixin",
+    "TenantMixin",
+    "SoftDeleteMixin",
+    # Pagination and filtering
+    "PaginationParams",
+    "SortParams",
+    "FilterParams",
+    "PaginatedResponseSchema",
+    # Response schemas
+    "ErrorResponseSchema",
+    "SuccessResponseSchema",
+    "BulkOperationSchema",
+    "BulkOperationResponseSchema",
+    # Validators and utilities
+    "CommonValidators",
+    "EntityStatus",
+    "OperationStatus",
 ]

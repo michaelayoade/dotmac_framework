@@ -2,9 +2,9 @@
 
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -19,7 +19,7 @@ class AuditEventType(Enum):
     DATA_MODIFICATION = "data_modification"
     SECURITY_VIOLATION = "security_violation"
     RATE_LIMIT_EXCEEDED = "rate_limit_exceeded"
-    PASSWORD_CHANGE = "password_change"
+    PASSWORD_CHANGE = "password_change"  # noqa: S105 - label string, not a secret
     ACCOUNT_LOCKED = "account_locked"
 
 
@@ -34,9 +34,7 @@ class AuditLogger:
         # Configure audit logger
         if not self.logger.handlers:
             handler = logging.StreamHandler()
-            formatter = logging.Formatter(
-                ".format(asctime)s - AUDIT - .format(levelname)s - .format(message)s"
-            )
+            formatter = logging.Formatter(".format(asctime)s - AUDIT - .format(levelname)s - .format(message)s")
             handler.setFormatter(formatter)
             self.logger.addHandler(handler)
             self.logger.setLevel(logging.INFO)
@@ -46,7 +44,7 @@ class AuditLogger:
         event_type: AuditEventType,
         user_id: Optional[str] = None,
         resource_id: Optional[str] = None,
-        details: Optional[Dict[str, Any]] = None,
+        details: Optional[dict[str, Any]] = None,
         ip_address: Optional[str] = None,
         user_agent: Optional[str] = None,
         success: bool = True,
@@ -64,9 +62,7 @@ class AuditLogger:
         }
 
         # Log to standard logger
-        log_message = (
-            f"AUDIT: {event_type.value} - User: {user_id} - Success: {success}"
-        )
+        log_message = f"AUDIT: {event_type.value} - User: {user_id} - Success: {success}"
         if details:
             log_message += f" - Details: {json.dumps(details)}"
 
@@ -79,7 +75,7 @@ class AuditLogger:
         if self.db_session:
             await self._store_to_database(audit_data)
 
-    async def _store_to_database(self, audit_data: Dict[str, Any]):
+    async def _store_to_database(self, audit_data: dict[str, Any]):
         """Store audit event to database."""
         # This would typically store to an audit_logs table
         # For now, just log that we would store it
@@ -117,7 +113,7 @@ class AuditLogger:
         self,
         user_id: Optional[str],
         violation_type: str,
-        details: Dict[str, Any],
+        details: dict[str, Any],
         ip_address: Optional[str] = None,
     ):
         """Log security violation."""

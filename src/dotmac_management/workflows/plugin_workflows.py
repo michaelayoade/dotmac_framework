@@ -5,23 +5,26 @@ Implements comprehensive plugin lifecycle workflows using DRY patterns.
 Integrates with existing workflow system for reliable plugin operations.
 """
 
-import asyncio
 import logging
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional
 from uuid import UUID
 
-from dotmac_shared.plugins.core.manager import PluginManager
-from dotmac_shared.plugins.isolation.tenant_plugin_manager import (
+from dotmac.security.sandbox import SecurityScanner
+from dotmac_plugins.isolation.tenant_plugin_manager import (
     get_tenant_plugin_manager,
 )
-from dotmac_shared.plugins.security.plugin_sandbox import PluginSecurityManager
-from dotmac_shared.workflows.base import BaseWorkflow, WorkflowResult, WorkflowStep
-from dotmac_shared.workflows.exceptions import WorkflowError, WorkflowValidationError
+from dotmac_shared.workflows.base import BaseWorkflow, WorkflowResult
+from dotmac_shared.workflows.exceptions import (
+    WorkflowError,
+    WorkflowTransientError,
+    WorkflowValidationError,
+)
 
 from ..core.notifications import NotificationService
-from ..models.plugin import LicenseStatus, LicenseTier, Plugin, PluginLicense
+from ..core.plugins.base import PluginError
+from ..models.plugin import LicenseStatus, Plugin, PluginLicense
 from ..schemas.plugin import PluginInstallationRequest
 from ..services.plugin_service import PluginService
 
@@ -69,7 +72,7 @@ class PluginInstallationWorkflow(BaseWorkflow):
         self.plugin: Optional[Plugin] = None
         self.plugin_license: Optional[PluginLicense] = None
         self.tenant_manager: Optional[Any] = None
-        self.security_manager = PluginSecurityManager()
+        self.security_manager = SecurityScanner()
 
         super().__init__(
             workflow_id=f"plugin_install_{tenant_id}_{request.plugin_id}",
@@ -77,9 +80,7 @@ class PluginInstallationWorkflow(BaseWorkflow):
             steps=[step.value for step in PluginInstallationStep],
         )
 
-        logger.info(
-            f"Initialized plugin installation workflow for plugin {request.plugin_id}"
-        )
+        logger.info(f"Initialized plugin installation workflow for plugin {request.plugin_id}")
 
     async def execute_step(self, step_name: str) -> WorkflowResult:
         """
@@ -88,53 +89,41 @@ class PluginInstallationWorkflow(BaseWorkflow):
         step_enum = PluginInstallationStep(step_name)
         logger.info(f"Executing step: {step_name}")
 
-        try:
-            # Route to appropriate step handler
-            step_handlers = {
-                PluginInstallationStep.VALIDATE_REQUEST: self._validate_request,
-                PluginInstallationStep.CHECK_DEPENDENCIES: self._check_dependencies,
-                PluginInstallationStep.VALIDATE_SECURITY: self._validate_security,
-                PluginInstallationStep.CREATE_LICENSE: self._create_license,
-                PluginInstallationStep.SETUP_TENANT_ENVIRONMENT: self._setup_tenant_environment,
-                PluginInstallationStep.LOAD_PLUGIN: self._load_plugin,
-                PluginInstallationStep.CONFIGURE_PLUGIN: self._configure_plugin,
-                PluginInstallationStep.ACTIVATE_PLUGIN: self._activate_plugin,
-                PluginInstallationStep.SEND_NOTIFICATIONS: self._send_notifications,
-                PluginInstallationStep.COMPLETE_INSTALLATION: self._complete_installation,
-            }
+        # Route to appropriate step handler
+        step_handlers = {
+            PluginInstallationStep.VALIDATE_REQUEST: self._validate_request,
+            PluginInstallationStep.CHECK_DEPENDENCIES: self._check_dependencies,
+            PluginInstallationStep.VALIDATE_SECURITY: self._validate_security,
+            PluginInstallationStep.CREATE_LICENSE: self._create_license,
+            PluginInstallationStep.SETUP_TENANT_ENVIRONMENT: self._setup_tenant_environment,
+            PluginInstallationStep.LOAD_PLUGIN: self._load_plugin,
+            PluginInstallationStep.CONFIGURE_PLUGIN: self._configure_plugin,
+            PluginInstallationStep.ACTIVATE_PLUGIN: self._activate_plugin,
+            PluginInstallationStep.SEND_NOTIFICATIONS: self._send_notifications,
+            PluginInstallationStep.COMPLETE_INSTALLATION: self._complete_installation,
+        }
 
-            handler = step_handlers.get(step_enum)
-            if not handler:
-                raise WorkflowError(f"Unknown workflow step: {step_name}")
+        handler = step_handlers.get(step_enum)
+        if not handler:
+            raise WorkflowError(f"Unknown workflow step: {step_name}")
 
-            result = await handler()
+        result = await handler()
 
-            logger.info(f"Step {step_name} completed successfully")
-            return WorkflowResult(
-                success=True,
-                step_name=step_name,
-                data=result,
-                message=f"Step {step_name} completed",
-            )
-
-        except Exception as e:
-            logger.error(f"Step {step_name} failed: {e}")
-            return WorkflowResult(
-                success=False,
-                step_name=step_name,
-                error=str(e),
-                message=f"Step {step_name} failed: {str(e)}",
-            )
+        logger.info(f"Step {step_name} completed successfully")
+        return WorkflowResult(
+            success=True,
+            step_name=step_name,
+            data=result,
+            message=f"Step {step_name} completed",
+        )
 
     # ============================================================================
     # Workflow Step Implementations
     # ============================================================================
 
-    async def _validate_request(self) -> Dict[str, Any]:
+    async def _validate_request(self) -> dict[str, Any]:
         """Validate plugin installation request."""
-        logger.info(
-            f"Validating installation request for plugin {self.request.plugin_id}"
-        )
+        logger.info(f"Validating installation request for plugin {self.request.plugin_id}")
 
         # Get and validate plugin
         self.plugin = await self.plugin_service.get_plugin(self.request.plugin_id)
@@ -142,27 +131,17 @@ class PluginInstallationWorkflow(BaseWorkflow):
             raise WorkflowValidationError(f"Plugin {self.request.plugin_id} not found")
 
         if self.plugin.status != "active":
-            raise WorkflowValidationError(
-                f"Plugin {self.plugin.name} is not available for installation"
-            )
+            raise WorkflowValidationError(f"Plugin {self.plugin.name} is not available for installation")
 
         # Validate license tier
-        if not self.plugin_service._is_license_tier_available(
-            self.plugin, self.request.license_tier
-        ):
-            raise WorkflowValidationError(
-                f"License tier {self.request.license_tier} not available"
-            )
+        if not self.plugin_service._is_license_tier_available(self.plugin, self.request.license_tier):
+            raise WorkflowValidationError(f"License tier {self.request.license_tier} not available")
 
         # Check if already installed
-        existing_license = await self.plugin_service.get_tenant_plugin_license(
-            self.tenant_id, self.request.plugin_id
-        )
+        existing_license = await self.plugin_service.get_tenant_plugin_license(self.tenant_id, self.request.plugin_id)
 
         if existing_license and existing_license.is_active:
-            raise WorkflowValidationError(
-                f"Plugin {self.plugin.name} is already installed"
-            )
+            raise WorkflowValidationError(f"Plugin {self.plugin.name} is already installed")
 
         return {
             "plugin_id": str(self.plugin.id),
@@ -171,7 +150,7 @@ class PluginInstallationWorkflow(BaseWorkflow):
             "license_tier": self.request.license_tier.value,
         }
 
-    async def _check_dependencies(self) -> Dict[str, Any]:
+    async def _check_dependencies(self) -> dict[str, Any]:
         """Check and validate plugin dependencies."""
         logger.info(f"Checking dependencies for plugin {self.plugin.name}")
 
@@ -199,9 +178,7 @@ class PluginInstallationWorkflow(BaseWorkflow):
                 missing_dependencies.append(dep_name)
 
         if missing_dependencies:
-            raise WorkflowValidationError(
-                f"Missing required dependencies: {', '.join(missing_dependencies)}"
-            )
+            raise WorkflowValidationError(f"Missing required dependencies: {', '.join(missing_dependencies)}")
 
         return {
             "dependencies_satisfied": True,
@@ -209,7 +186,7 @@ class PluginInstallationWorkflow(BaseWorkflow):
             "total_dependencies": len(self.plugin.dependencies),
         }
 
-    async def _validate_security(self) -> Dict[str, Any]:
+    async def _validate_security(self) -> dict[str, Any]:
         """Validate plugin security and perform code scanning."""
         logger.info(f"Validating security for plugin {self.plugin.name}")
 
@@ -245,13 +222,17 @@ class PluginInstallationWorkflow(BaseWorkflow):
             logger.info(f"Security validation passed for plugin {self.plugin.name}")
             return security_results
 
-        except Exception as e:
+        except (ValueError, OSError) as e:
             logger.error(f"Security validation failed: {e}")
-            raise WorkflowValidationError(
-                f"Plugin security validation failed: {str(e)}"
-            )
+            raise WorkflowValidationError(f"Plugin security validation failed: {str(e)}") from e
+        except (TimeoutError, ConnectionError) as e:
+            logger.error(f"Security validation transient failure: {e}")
+            raise WorkflowTransientError("Plugin security validation transient failure") from e
+        except PluginError as e:
+            logger.error(f"Security validation plugin error: {e}")
+            raise WorkflowError(str(e)) from e
 
-    async def _create_license(self) -> Dict[str, Any]:
+    async def _create_license(self) -> dict[str, Any]:
         """Create plugin license for tenant."""
         logger.info(f"Creating license for plugin {self.plugin.name}")
 
@@ -268,17 +249,21 @@ class PluginInstallationWorkflow(BaseWorkflow):
                 "license_tier": self.plugin_license.license_tier.value,
                 "license_status": self.plugin_license.status.value,
                 "trial_ends_at": (
-                    self.plugin_license.trial_ends_at.isoformat()
-                    if self.plugin_license.trial_ends_at
-                    else None
+                    self.plugin_license.trial_ends_at.isoformat() if self.plugin_license.trial_ends_at else None
                 ),
             }
 
-        except Exception as e:
-            logger.error(f"License creation failed: {e}")
-            raise WorkflowError(f"Failed to create plugin license: {str(e)}")
+        except (ValueError, KeyError) as e:
+            logger.error(f"License creation validation failed: {e}")
+            raise WorkflowValidationError(f"Failed to create plugin license: {str(e)}") from e
+        except (TimeoutError, ConnectionError) as e:
+            logger.error(f"License creation transient failure: {e}")
+            raise WorkflowTransientError("Failed to create plugin license (transient)") from e
+        except PluginError as e:
+            logger.error(f"License creation plugin error: {e}")
+            raise WorkflowError(f"Failed to create plugin license: {str(e)}") from e
 
-    async def _setup_tenant_environment(self) -> Dict[str, Any]:
+    async def _setup_tenant_environment(self) -> dict[str, Any]:
         """Setup tenant-specific plugin environment."""
         logger.info(f"Setting up tenant environment for plugin {self.plugin.name}")
 
@@ -293,10 +278,7 @@ class PluginInstallationWorkflow(BaseWorkflow):
             )
 
             # Ensure tenant manager is initialized
-            if (
-                not hasattr(self.tenant_manager, "_initialized")
-                or not self.tenant_manager._initialized
-            ):
+            if not hasattr(self.tenant_manager, "_initialized") or not self.tenant_manager._initialized:
                 await self.tenant_manager.initialize()
 
             return {
@@ -305,11 +287,17 @@ class PluginInstallationWorkflow(BaseWorkflow):
                 "resource_limits_applied": True,
             }
 
-        except Exception as e:
-            logger.error(f"Tenant environment setup failed: {e}")
-            raise WorkflowError(f"Failed to setup tenant environment: {str(e)}")
+        except (TimeoutError, ConnectionError) as e:
+            logger.error(f"Tenant environment setup transient failure: {e}")
+            raise WorkflowTransientError("Failed to setup tenant environment (transient)") from e
+        except (OSError, ValueError) as e:
+            logger.error(f"Tenant environment setup validation failed: {e}")
+            raise WorkflowValidationError(f"Failed to setup tenant environment: {str(e)}") from e
+        except PluginError as e:
+            logger.error(f"Tenant environment setup plugin error: {e}")
+            raise WorkflowError(f"Failed to setup tenant environment: {str(e)}") from e
 
-    async def _load_plugin(self) -> Dict[str, Any]:
+    async def _load_plugin(self) -> dict[str, Any]:
         """Load plugin into tenant environment."""
         logger.info(f"Loading plugin {self.plugin.name} into tenant environment")
 
@@ -332,11 +320,17 @@ class PluginInstallationWorkflow(BaseWorkflow):
 
             return plugin_load_result
 
-        except Exception as e:
-            logger.error(f"Plugin loading failed: {e}")
-            raise WorkflowError(f"Failed to load plugin: {str(e)}")
+        except (TimeoutError, ConnectionError) as e:
+            logger.error(f"Plugin loading transient failure: {e}")
+            raise WorkflowTransientError("Failed to load plugin (transient)") from e
+        except (OSError, ValueError, AttributeError) as e:
+            logger.error(f"Plugin loading validation failed: {e}")
+            raise WorkflowValidationError(f"Failed to load plugin: {str(e)}") from e
+        except PluginError as e:
+            logger.error(f"Plugin loading plugin error: {e}")
+            raise WorkflowError(f"Failed to load plugin: {str(e)}") from e
 
-    async def _configure_plugin(self) -> Dict[str, Any]:
+    async def _configure_plugin(self) -> dict[str, Any]:
         """Configure plugin with tenant-specific settings."""
         logger.info(f"Configuring plugin {self.plugin.name}")
 
@@ -354,9 +348,7 @@ class PluginInstallationWorkflow(BaseWorkflow):
             }
 
             # Update license with final configuration
-            await self.plugin_service.license_repo.update(
-                self.plugin_license.id, {"configuration": final_config}
-            )
+            await self.plugin_service.license_repo.update(self.plugin_license.id, {"configuration": final_config})
 
             return {
                 "plugin_configured": True,
@@ -364,11 +356,17 @@ class PluginInstallationWorkflow(BaseWorkflow):
                 "tenant_specific_config": True,
             }
 
-        except Exception as e:
-            logger.error(f"Plugin configuration failed: {e}")
-            raise WorkflowError(f"Failed to configure plugin: {str(e)}")
+        except (ValueError, KeyError, TypeError) as e:
+            logger.error(f"Plugin configuration validation failed: {e}")
+            raise WorkflowValidationError(f"Failed to configure plugin: {str(e)}") from e
+        except (TimeoutError, ConnectionError) as e:
+            logger.error(f"Plugin configuration transient failure: {e}")
+            raise WorkflowTransientError("Failed to configure plugin (transient)") from e
+        except PluginError as e:
+            logger.error(f"Plugin configuration plugin error: {e}")
+            raise WorkflowError(f"Failed to configure plugin: {str(e)}") from e
 
-    async def _activate_plugin(self) -> Dict[str, Any]:
+    async def _activate_plugin(self) -> dict[str, Any]:
         """Activate plugin and make it available for use."""
         logger.info(f"Activating plugin {self.plugin.name}")
 
@@ -392,12 +390,17 @@ class PluginInstallationWorkflow(BaseWorkflow):
                 "activation_time": datetime.now(timezone.utc).isoformat(),
                 "status": "active",
             }
+        except (TimeoutError, ConnectionError) as e:
+            logger.error(f"Plugin activation transient failure: {e}")
+            raise WorkflowTransientError("Failed to activate plugin (transient)") from e
+        except (ValueError, KeyError) as e:
+            logger.error(f"Plugin activation validation failed: {e}")
+            raise WorkflowValidationError(f"Failed to activate plugin: {str(e)}") from e
+        except PluginError as e:
+            logger.error(f"Plugin activation plugin error: {e}")
+            raise WorkflowError(f"Failed to activate plugin: {str(e)}") from e
 
-        except Exception as e:
-            logger.error(f"Plugin activation failed: {e}")
-            raise WorkflowError(f"Failed to activate plugin: {str(e)}")
-
-    async def _send_notifications(self) -> Dict[str, Any]:
+    async def _send_notifications(self) -> dict[str, Any]:
         """Send installation notifications to relevant parties."""
         logger.info(f"Sending installation notifications for plugin {self.plugin.name}")
 
@@ -441,12 +444,12 @@ class PluginInstallationWorkflow(BaseWorkflow):
                 "notification_count": len(notifications_sent),
             }
 
-        except Exception as e:
+        except (TimeoutError, ConnectionError, OSError, ValueError, PluginError) as e:
             logger.warning(f"Failed to send installation notifications: {e}")
             # Don't fail the workflow for notification errors
             return {"notifications_sent": [], "notification_error": str(e)}
 
-    async def _complete_installation(self) -> Dict[str, Any]:
+    async def _complete_installation(self) -> dict[str, Any]:
         """Complete the plugin installation process."""
         logger.info(f"Completing installation for plugin {self.plugin.name}")
 
@@ -472,14 +475,18 @@ class PluginInstallationWorkflow(BaseWorkflow):
                 "completion_time": datetime.now(timezone.utc).isoformat(),
             }
 
-            logger.info(
-                f"Plugin installation completed successfully: {self.plugin.name}"
-            )
+            logger.info(f"Plugin installation completed successfully: {self.plugin.name}")
             return installation_summary
 
-        except Exception as e:
+        except (TimeoutError, ConnectionError) as e:
+            logger.error(f"Installation completion transient failure: {e}")
+            raise WorkflowTransientError("Failed to complete installation (transient)") from e
+        except (ValueError, KeyError) as e:
+            logger.error(f"Installation completion validation failure: {e}")
+            raise WorkflowValidationError(f"Failed to complete installation: {str(e)}") from e
+        except (OSError, RuntimeError, PluginError) as e:
             logger.error(f"Installation completion failed: {e}")
-            raise WorkflowError(f"Failed to complete installation: {str(e)}")
+            raise WorkflowError(f"Failed to complete installation: {str(e)}") from e
 
     async def rollback_step(self, step_name: str) -> WorkflowResult:
         """
@@ -487,31 +494,21 @@ class PluginInstallationWorkflow(BaseWorkflow):
         """
         logger.warning(f"Rolling back step: {step_name}")
 
-        try:
-            rollback_handlers = {
-                PluginInstallationStep.CREATE_LICENSE.value: self._rollback_license_creation,
-                PluginInstallationStep.SETUP_TENANT_ENVIRONMENT.value: self._rollback_tenant_setup,
-                PluginInstallationStep.ACTIVATE_PLUGIN.value: self._rollback_plugin_activation,
-            }
+        rollback_handlers = {
+            PluginInstallationStep.CREATE_LICENSE.value: self._rollback_license_creation,
+            PluginInstallationStep.SETUP_TENANT_ENVIRONMENT.value: self._rollback_tenant_setup,
+            PluginInstallationStep.ACTIVATE_PLUGIN.value: self._rollback_plugin_activation,
+        }
 
-            handler = rollback_handlers.get(step_name)
-            if handler:
-                await handler()
+        handler = rollback_handlers.get(step_name)
+        if handler:
+            await handler()
 
-            return WorkflowResult(
-                success=True,
-                step_name=f"rollback_{step_name}",
-                message=f"Successfully rolled back step: {step_name}",
-            )
-
-        except Exception as e:
-            logger.error(f"Rollback failed for step {step_name}: {e}")
-            return WorkflowResult(
-                success=False,
-                step_name=f"rollback_{step_name}",
-                error=str(e),
-                message=f"Rollback failed for step: {step_name}",
-            )
+        return WorkflowResult(
+            success=True,
+            step_name=f"rollback_{step_name}",
+            message=f"Successfully rolled back step: {step_name}",
+        )
 
     # ============================================================================
     # Rollback Methods
@@ -520,26 +517,19 @@ class PluginInstallationWorkflow(BaseWorkflow):
     async def _rollback_license_creation(self) -> None:
         """Rollback license creation."""
         if self.plugin_license:
-            await self.plugin_service.license_repo.update(
-                self.plugin_license.id, {"status": LicenseStatus.CANCELLED}
-            )
+            await self.plugin_service.license_repo.update(self.plugin_license.id, {"status": LicenseStatus.CANCELLED})
             logger.info(f"Rolled back license creation for plugin {self.plugin.name}")
 
     async def _rollback_tenant_setup(self) -> None:
         """Rollback tenant environment setup."""
         if self.tenant_manager:
-            try:
-                await self.tenant_manager.shutdown()
-                logger.info(f"Rolled back tenant setup for plugin {self.plugin.name}")
-            except Exception as e:
-                logger.error(f"Error rolling back tenant setup: {e}")
+            await self.tenant_manager.shutdown()
+            logger.info(f"Rolled back tenant setup for plugin {self.plugin.name}")
 
     async def _rollback_plugin_activation(self) -> None:
         """Rollback plugin activation."""
         if self.plugin_license:
-            await self.plugin_service.license_repo.update(
-                self.plugin_license.id, {"status": LicenseStatus.SUSPENDED}
-            )
+            await self.plugin_service.license_repo.update(self.plugin_license.id, {"status": LicenseStatus.SUSPENDED})
             logger.info(f"Rolled back plugin activation for plugin {self.plugin.name}")
 
 
@@ -583,9 +573,7 @@ class PluginUninstallWorkflow(BaseWorkflow):
     Plugin uninstallation workflow with complete cleanup.
     """
 
-    def __init__(
-        self, installation_id: UUID, tenant_id: UUID, plugin_service: PluginService
-    ):
+    def __init__(self, installation_id: UUID, tenant_id: UUID, plugin_service: PluginService):
         self.installation_id = installation_id
         self.tenant_id = tenant_id
         self.plugin_service = plugin_service

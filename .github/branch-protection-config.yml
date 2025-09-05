@@ -1,0 +1,70 @@
+# GitHub Branch Protection Configuration Template
+# This would be applied via GitHub API or repository settings
+
+branch_protection_rules:
+  # Main branch protection (production)
+  - branch: "main"
+    protection:
+      required_status_checks:
+        strict: true
+        contexts:
+          - "Security Analysis"           # From security-consolidated.yml
+          - "Secret & Template Analysis"  # From security-consolidated.yml  
+          - "Security Summary & Policy Check" # From security-consolidated.yml
+          - "backend-tests"              # Backend testing workflow
+          - "frontend-tests"             # Frontend testing workflow  
+          - "integration-tests"          # Integration testing workflow
+          - "template-validation"        # Template validation workflow
+          - "syntax-validation"          # Syntax validation workflow
+      
+      enforce_admins: true
+      required_pull_request_reviews:
+        required_approving_review_count: 2
+        dismiss_stale_reviews: true
+        require_code_owner_reviews: true
+        require_last_push_approval: true
+        restrictions:
+          users: []
+          teams: ["platform-maintainers", "security-team"]
+      
+      restrictions:
+        users: []
+        teams: ["platform-maintainers"]
+        apps: ["dependabot"]
+      
+      required_linear_history: true
+      allow_force_pushes: false
+      allow_deletions: false
+
+  # Develop branch protection (staging)  
+  - branch: "develop"
+    protection:
+      required_status_checks:
+        strict: true
+        contexts:
+          - "Security Analysis"
+          - "Secret & Template Analysis"
+          - "backend-tests"
+          - "frontend-tests"
+          - "template-validation"
+          - "syntax-validation"
+      
+      enforce_admins: false
+      required_pull_request_reviews:
+        required_approving_review_count: 1
+        dismiss_stale_reviews: true
+        require_code_owner_reviews: true
+        require_last_push_approval: false
+      
+      restrictions:
+        users: []
+        teams: ["platform-maintainers", "developers"]
+        apps: ["dependabot"]
+      
+      required_linear_history: false
+      allow_force_pushes: false
+      allow_deletions: false
+
+# GitHub CLI commands to apply these settings:
+# gh api repos/:owner/:repo/branches/main/protection --method PUT --input branch-protection-main.json
+# gh api repos/:owner/:repo/branches/develop/protection --method PUT --input branch-protection-develop.json

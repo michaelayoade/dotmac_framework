@@ -2,7 +2,7 @@
 Common exceptions for all DotMac SDKs.
 """
 
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 
 class SDKError(Exception):
@@ -12,7 +12,7 @@ class SDKError(Exception):
         self,
         message: str,
         error_code: Optional[str] = None,
-        details: Optional[Dict[str, Any]] = None,
+        details: Optional[dict[str, Any]] = None,
     ):
         """Initialize SDK error."""
         super().__init__(message)
@@ -26,7 +26,7 @@ class SDKError(Exception):
             return f"[{self.error_code}] {self.message}"
         return self.message
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert exception to dictionary for API responses."""
         return {
             "error": self.__class__.__name__,

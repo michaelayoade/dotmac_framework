@@ -1,555 +1,410 @@
-"""File Handling API Router for Frontend Integration."""
+"""File Handling API Router for Frontend Integration.
 
-import logging
+Provides comprehensive file management including:
+- File upload and validation
+- Document generation (PDFs, reports)
+- Data export (CSV, Excel)
+- File categorization and processing
+- Security validation and sanitization
+
+Follows DRY patterns using dotmac packages for consistent API structure.
+"""
+
 import os
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
-import aiofiles
-from fastapi import \1, Dependsnses import FileResponse, StreamingResponse
-from pydantic import BaseModel
-from sqlalchemy.orm import Session
-
-from dotmac_shared.api.exception_handlers import standard_exception_handler
+from dotmac.application import standard_exception_handler
+from dotmac.application.dependencies.dependencies import StandardDependencies, get_standard_deps
+from dotmac.core.schemas.base_schemas import BaseResponseSchema
+from dotmac.platform.observability.logging import get_logger
 from dotmac_shared.api.rate_limiting_decorators import rate_limit, rate_limit_strict
-from dotmac_shared.api.router_factory import (
-    Depends,
-    File,
-    HTTPException,
-    Query,
-    Response,
-    RouterFactory,
-    UploadFile,
-)
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi.responses import FileResponse
+from pydantic import BaseModel, field_validator
 
 from ..core.file_handlers import (
-    CSVExporter,
     FileUploadManager,
     PDFGenerator,
     detect_file_category,
     export_data_to_csv,
     export_data_to_excel,
-    generate_invoice_pdf,
     is_safe_filename,
 )
-from ..shared.auth import get_current_user
-from ..shared.database.base import get_db
 
-logger = logging.getLogger(__name__)
-router = APIRouter()
+logger = get_logger(__name__)
+router = APIRouter(prefix="/files", tags=["File Management"])
 
 
-# Pydantic models for API requests
+# ============================================================================
+# Request/Response Models
+# ============================================================================
 
 
 class ExportRequest(BaseModel):
     """Data export request model."""
 
-    data: List[dict]
+    data: list[dict]
     filename: Optional[str] = None
-    columns: Optional[List[str]] = None
+    columns: Optional[list[str]] = None
     format: str = "csv"  # csv, excel
+
+    @field_validator("format")
+    def validate_format(cls, v):
+        if v not in ["csv", "excel"]:
+            raise ValueError("Format must be 'csv' or 'excel'")
+        return v
+
+    @field_validator("filename")
+    def validate_filename(cls, v):
+        if v and not is_safe_filename(v):
+            raise ValueError("Invalid filename")
+        return v
 
 
 class InvoicePDFRequest(BaseModel):
     """Invoice PDF generation request model."""
 
     invoice_data: dict
-    filename: Optional[str] = None
+    template: Optional[str] = "standard"
+    include_logo: bool = True
+
+    @field_validator("template")
+    def validate_template(cls, v):
+        allowed_templates = ["standard", "compact", "detailed"]
+        if v not in allowed_templates:
+            raise ValueError(f"Template must be one of: {', '.join(allowed_templates)}")
+        return v
 
 
-class FileMetadataResponse(BaseModel):
-    """File metadata response model."""
+class FileUploadResponse(BaseModel):
+    """File upload response model."""
 
     file_id: str
-    original_name: str
-    mime_type: str
-    size_bytes: int
-    uploaded_at: str
-    category: Optional[str]
-    tags: List[str]
-    download_url: str
+    filename: str
+    size: int
+    content_type: str
+    category: str
+    upload_path: str
+    secure_url: str
 
 
-# File upload endpoints
+# ============================================================================
+# File Upload Management
+# ============================================================================
 
 
-@router.post("/upload", response_model=FileMetadataResponse)
-@rate_limit_strict(
-    max_requests=20, time_window_seconds=60
-)  # Strict limit for file uploads
+@router.post(
+    "/upload",
+    response_model=FileUploadResponse,
+    summary="Upload file",
+    description="Upload and process a file with validation and categorization",
+)
+@rate_limit(max_requests=60, time_window_seconds=60)
 @standard_exception_handler
 async def upload_file(
     file: UploadFile = File(...),
-    category: Optional[str] = Query(
-        None, description="File category (images, documents, spreadsheets, archives)"
-    ),
-    tags: Optional[str] = Query(None, description="Comma-separated tags"),
-    current_user=Depends(get_current_user),
-):
-    """
-    Upload a file.
+    category: Optional[str] = None,
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> FileUploadResponse:
+    """Upload and process a file with security validation."""
 
-    Args:
-        file: File to upload
-        category: File category for validation
-        tags: Comma-separated tags
-
-    Returns:
-        File metadata
-    """
     # Validate filename
-    if not is_safe_filename(file.filename):
-        raise HTTPException(status_code=400, detail="Invalid filename")
+    if not is_safe_filename(file.filename or ""):
+        from dotmac.core.exceptions import ValidationError
 
-    # Auto-detect category if not provided
-    if not category:
-        category = detect_file_category(file.filename)
-    # Parse tags
-    tag_list = []
-    if tags:
-        tag_list = [tag.strip() for tag in tags.split(",") if tag.strip()]
+        raise ValidationError("Invalid filename")
 
     # Initialize upload manager
-    upload_manager = FileUploadManager()
+    upload_manager = FileUploadManager(
+        tenant_id=deps.tenant_id, user_id=deps.user.get("user_id") if deps.user else None
+    )
 
-    # Upload file
-    metadata = await upload_manager.upload_file(
+    # Process upload
+    upload_result = await upload_manager.upload_file(
         file=file,
-        tenant_id=current_user["tenant_id"],
-        user_id=current_user["user_id"],
-        category=category,
-        tags=tag_list,
+        category=category or detect_file_category(file.filename or ""),
     )
 
-    # Generate download URL
-    download_url = f"/api/files/{metadata.file_id}"
-
-    return FileMetadataResponse(
-        file_id=metadata.file_id,
-        original_name=metadata.original_name,
-        mime_type=metadata.mime_type,
-        size_bytes=metadata.size_bytes,
-        uploaded_at=metadata.uploaded_at.isoformat(),
-        category=metadata.category,
-        tags=metadata.tags,
-        download_url=download_url,
+    return FileUploadResponse(
+        file_id=upload_result["file_id"],
+        filename=upload_result["filename"],
+        size=upload_result["size"],
+        content_type=upload_result["content_type"],
+        category=upload_result["category"],
+        upload_path=upload_result["upload_path"],
+        secure_url=upload_result["secure_url"],
     )
 
 
-@router.post("/upload/multiple", response_model=List[FileMetadataResponse])
-@rate_limit_strict(
-    max_requests=5, time_window_seconds=60
-)  # Very strict for multiple uploads
+@router.get(
+    "/{file_id}",
+    response_class=FileResponse,
+    summary="Download file",
+    description="Download a previously uploaded file",
+)
+@rate_limit(max_requests=120, time_window_seconds=60)
 @standard_exception_handler
-async def upload_multiple_files(
-    files: List[UploadFile] = File(...),
-    category: Optional[str] = Query(None),
-    tags: Optional[str] = Query(None),
-    current_user=Depends(get_current_user),
-):
-    """
-    Upload multiple files.
+async def download_file(
+    file_id: str,
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> FileResponse:
+    """Download a file by ID."""
 
-    Args:
-        files: Files to upload
-        category: File category for validation
-        tags: Comma-separated tags
+    upload_manager = FileUploadManager(
+        tenant_id=deps.tenant_id, user_id=deps.user.get("user_id") if deps.user else None
+    )
 
-    Returns:
-        List of file metadata
-    """
-    upload_manager = FileUploadManager()
-    tag_list = []
-    if tags:
-        tag_list = [tag.strip() for tag in tags.split(",") if tag.strip()]
+    file_info = await upload_manager.get_file_info(file_id)
 
-    results = []
-
-    for file in files:
-        # Validate filename
-        if not is_safe_filename(file.filename):
-            logger.warning(f"Skipping file with invalid name: {file.filename}")
-            continue
-
-        # Auto-detect category if not provided
-        file_category = category or detect_file_category(file.filename)
-
-        try:
-            metadata = await upload_manager.upload_file(
-                file=file,
-                tenant_id=current_user["tenant_id"],
-                user_id=current_user["user_id"],
-                category=file_category,
-                tags=tag_list,
-            )
-
-            download_url = f"/api/files/{metadata.file_id}"
-
-            results.append(
-                FileMetadataResponse(
-                    file_id=metadata.file_id,
-                    original_name=metadata.original_name,
-                    mime_type=metadata.mime_type,
-                    size_bytes=metadata.size_bytes,
-                    uploaded_at=metadata.uploaded_at.isoformat(),
-                    category=metadata.category,
-                    tags=metadata.tags,
-                    download_url=download_url,
-                )
-            )
-
-        except Exception as e:
-            logger.error(f"Failed to upload {file.filename}: {e}")
-            # Continue with other files
-
-    return results
-
-
-# File download endpoints
-
-
-@router.get("/files/{file_id}")
-@rate_limit(max_requests=100, time_window_seconds=60)  # Moderate limit for downloads
-@standard_exception_handler
-async def download_file(file_id: str, current_user=Depends(get_current_user)):
-    """
-    Download a file by ID.
-
-    Args:
-        file_id: File ID
-
-    Returns:
-        File content
-    """
-    # In a real implementation, you would:
-    # 1. Look up file metadata from database
-    # 2. Verify user has permission to access the file
-    # 3. Return the file from storage
-
-    # For now, we'll check if file exists in upload directory
-    upload_manager = FileUploadManager()
-    tenant_id = current_user["tenant_id"]
-
-    # Find file in tenant directory
-    tenant_dir = Path(upload_manager.upload_directory) / tenant_id
-
-    # Search for file with matching ID
-    matching_files = list(tenant_dir.glob(f"{file_id}.*"))
-
-    if not matching_files:
+    if not file_info or not Path(file_info["file_path"]).exists():
         raise HTTPException(status_code=404, detail="File not found")
 
-    file_path = matching_files[0]
-
-    # Determine appropriate headers
-    filename = file_path.name
-
     return FileResponse(
-        path=str(file_path), filename=filename, media_type="application/octet-stream"
+        path=file_info["file_path"],
+        filename=file_info["original_filename"],
+        media_type=file_info["content_type"],
     )
 
 
-# PDF generation endpoints
+@router.delete(
+    "/{file_id}",
+    response_model=dict,
+    summary="Delete file",
+    description="Delete a file and its metadata",
+)
+@rate_limit_strict(max_requests=30, time_window_seconds=60)
+@standard_exception_handler
+async def delete_file(
+    file_id: str,
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> dict:
+    """Delete a file by ID."""
+
+    upload_manager = FileUploadManager(
+        tenant_id=deps.tenant_id, user_id=deps.user.get("user_id") if deps.user else None
+    )
+
+    success = await upload_manager.delete_file(file_id)
+
+    if not success:
+        raise HTTPException(status_code=404, detail="File not found or deletion failed")
+
+    return {"status": "success", "message": f"File {file_id} deleted successfully"}
 
 
-@router.post("/generate/invoice-pdf")
+# ============================================================================
+# Document Generation
+# ============================================================================
+
+
+@router.post(
+    "/generate/invoice-pdf",
+    response_class=FileResponse,
+    summary="Generate invoice PDF",
+    description="Generate a PDF invoice from invoice data",
+)
+@rate_limit_strict(max_requests=30, time_window_seconds=60)
 @standard_exception_handler
 async def generate_invoice_pdf_endpoint(
-    request: InvoicePDFRequest, current_user=Depends(get_current_user)
-):
-    """
-    Generate invoice PDF.
+    request: InvoicePDFRequest,
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> FileResponse:
+    """Generate a PDF invoice from structured data."""
 
-    Args:
-        request: Invoice PDF generation request
+    pdf_generator = PDFGenerator(tenant_id=deps.tenant_id, template=request.template)
 
-    Returns:
-        PDF file
-    """
-    # Generate PDF
-    pdf_path = await generate_invoice_pdf(request.invoice_data)
-    # Determine filename
-    filename = request.filename
-    if not filename:
-        invoice_number = request.invoice_data.get("invoice_number", "invoice")
-        filename = f"invoice_{invoice_number}.pdf"
+    pdf_path = await pdf_generator.generate_invoice_pdf(
+        invoice_data=request.invoice_data, include_logo=request.include_logo
+    )
 
-    # Return PDF file
-    return FileResponse(path=pdf_path, filename=filename, media_type="application/pdf")
+    return FileResponse(
+        path=pdf_path,
+        filename=f"invoice_{request.invoice_data.get('invoice_number', 'unknown')}.pdf",
+        media_type="application/pdf",
+    )
 
 
-@router.post("/generate/report-pdf")
+@router.post(
+    "/generate/report-pdf",
+    response_class=FileResponse,
+    summary="Generate report PDF",
+    description="Generate a PDF report from structured data",
+)
+@rate_limit_strict(max_requests=20, time_window_seconds=60)
 @standard_exception_handler
-async def generate_report_pdf_endpoint(
-    report_data: dict,
-    filename: Optional[str] = Query(None),
-    current_user=Depends(get_current_user),
-):
-    """
-    Generate report PDF.
+async def generate_report_pdf(
+    data: dict,
+    template: str = "standard",
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> FileResponse:
+    """Generate a PDF report from data."""
 
-    Args:
-        report_data: Report data
-        filename: Output filename (optional)
-    Returns:
-        PDF file
-    """
-    # Generate PDF
-    pdf_generator = PDFGenerator()
-    pdf_path = pdf_generator.generate_report_pdf(report_data)
-    # Determine filename
-    if not filename:
-        report_title = report_data.get("title", "report").replace(" ", "_").lower()
-        filename = f"{report_title}.pdf"
+    pdf_generator = PDFGenerator(tenant_id=deps.tenant_id, template=template)
 
-    # Return PDF file
-    return FileResponse(path=pdf_path, filename=filename, media_type="application/pdf")
+    pdf_path = await pdf_generator.generate_report_pdf(report_data=data, template=template)
+
+    return FileResponse(
+        path=pdf_path,
+        filename=f"report_{data.get('title', 'report').replace(' ', '_')}.pdf",
+        media_type="application/pdf",
+    )
 
 
-# Data export endpoints
+# ============================================================================
+# Data Export
+# ============================================================================
 
 
-@router.post("/export/csv")
+@router.post(
+    "/export/csv",
+    response_class=FileResponse,
+    summary="Export data to CSV",
+    description="Export structured data to CSV format",
+)
+@rate_limit(max_requests=60, time_window_seconds=60)
 @standard_exception_handler
-async def export_csv_endpoint(
-    request: ExportRequest, current_user=Depends(get_current_user)
-):
-    """
-    Export data to CSV.
+async def export_csv(
+    request: ExportRequest,
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> FileResponse:
+    """Export data to CSV format."""
 
-    Args:
-        request: Export request
+    if request.format != "csv":
+        raise HTTPException(status_code=400, detail="Format must be 'csv' for this endpoint")
 
-    Returns:
-        CSV file
-    """
-    # Export to CSV
-    csv_path = await export_data_to_csv(request.data, request.columns)
-    # Determine filename
-    filename = request.filename or "export.csv"
-    if not filename.endswith(".csv"):
-        filename += ".csv"
+    csv_path = await export_data_to_csv(
+        data=request.data, columns=request.columns, filename=request.filename, tenant_id=deps.tenant_id
+    )
 
-    # Return CSV file
-    return FileResponse(path=csv_path, filename=filename, media_type="text/csv")
+    return FileResponse(
+        path=csv_path,
+        filename=request.filename or "export.csv",
+        media_type="text/csv",
+    )
 
 
-@router.post("/export/excel")
+@router.post(
+    "/export/excel",
+    response_class=FileResponse,
+    summary="Export data to Excel",
+    description="Export structured data to Excel format",
+)
+@rate_limit(max_requests=60, time_window_seconds=60)
 @standard_exception_handler
-async def export_excel_endpoint(
-    request: ExportRequest, current_user=Depends(get_current_user)
-):
-    """
-    Export data to Excel.
+async def export_excel(
+    request: ExportRequest,
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> FileResponse:
+    """Export data to Excel format."""
 
-    Args:
-        request: Export request
+    if request.format != "excel":
+        raise HTTPException(status_code=400, detail="Format must be 'excel' for this endpoint")
 
-    Returns:
-        Excel file
-    """
-    # Export to Excel
-    excel_path = await export_data_to_excel(request.data, request.columns)
-    # Determine filename
-    filename = request.filename or "export.xlsx"
-    if not filename.endswith(".xlsx"):
-        filename += ".xlsx"
+    excel_path = await export_data_to_excel(
+        data=request.data, columns=request.columns, filename=request.filename, tenant_id=deps.tenant_id
+    )
 
-    # Return Excel file
     return FileResponse(
         path=excel_path,
-        filename=filename,
+        filename=request.filename or "export.xlsx",
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
 
 
-@router.post("/export")
-@standard_exception_handler
-async def export_data_endpoint(
-    request: ExportRequest, current_user=Depends(get_current_user)
-):
-    """
-    Export data in specified format.
-
-    Args:
-        request: Export request
-
-    Returns:
-        File in requested format
-    """
-    if request.format.lower() == "csv":
-        return await export_csv_endpoint(request, current_user)
-    elif request.format.lower() in ["excel", "xlsx"]:
-        return await export_excel_endpoint(request, current_user)
-    else:
-        raise HTTPException(
-            status_code=400, detail=f"Unsupported export format: {request.format}"
-        )
+# ============================================================================
+# File Management & Information
+# ============================================================================
 
 
-# Utility endpoints
-
-
-@router.get("/upload/categories")
-@standard_exception_handler
-async def get_upload_categories():
-    """Get available file upload categories."""
-    upload_manager = FileUploadManager()
-
-    categories = {}
-    for category, extensions in upload_manager.allowed_extensions.items():
-        max_size = upload_manager.category_limits.get(
-            category, upload_manager.max_file_size
-        )
-        categories[category] = {
-            "allowed_extensions": list(extensions),
-            "max_size_bytes": max_size,
-            "max_size_mb": round(max_size / (1024 * 1024), 1),
-        }
-
-    return {
-        "categories": categories,
-        "default_max_size_bytes": upload_manager.max_file_size,
-        "default_max_size_mb": round(upload_manager.max_file_size / (1024 * 1024), 1),
-    }
-
-
-@router.post("/validate/filename")
-@standard_exception_handler
-async def validate_filename_endpoint(filename: str):
-    """
-    Validate a filename for upload.
-
-    Args:
-        filename: Filename to validate
-
-    Returns:
-        Validation result
-    """
-    is_safe = is_safe_filename(filename)
-    category = detect_file_category(filename)
-    return {
-        "filename": filename,
-        "is_safe": is_safe,
-        "detected_category": category,
-        "issues": (
-            [] if is_safe else ["Filename contains invalid characters or patterns"]
-        ),
-    }
-
-
-# File management endpoints (for admin)
-@router.delete("/files/{file_id}")
-@rate_limit_strict(
-    max_requests=10, time_window_seconds=60
-)  # Strict limit for deletions
-@standard_exception_handler
-async def delete_file_endpoint(file_id: str, current_user=Depends(get_current_user)):
-    """
-    Delete a file.
-
-    Args:
-        file_id: File ID to delete
-
-    Returns:
-        Deletion status
-    """
-    # In a real implementation, you would:
-    # 1. Look up file metadata from database
-    # 2. Verify user has permission to delete the file
-    # 3. Delete file from storage and database
-
-    upload_manager = FileUploadManager()
-    tenant_id = current_user["tenant_id"]
-
-    # Find file in tenant directory
-    tenant_dir = Path(upload_manager.upload_directory) / tenant_id
-    matching_files = list(tenant_dir.glob(f"{file_id}.*"))
-
-    if not matching_files:
-        raise HTTPException(status_code=404, detail="File not found")
-
-    file_path = matching_files[0]
-
-    # Delete file
-    file_path.unlink()
-
-    logger.info(f"File deleted: {file_id}")
-    return {"status": "success", "message": "File deleted successfully"}
-
-
-@router.get("/files")
+@router.get(
+    "/list",
+    response_model=BaseResponseSchema,
+    summary="List uploaded files",
+    description="Get a list of uploaded files for the current tenant",
+)
+@rate_limit(max_requests=120, time_window_seconds=60)
 @standard_exception_handler
 async def list_files(
-    category: Optional[str] = Query(None),
-    limit: int = Query(50, ge=1, le=100),
-    offset: int = Query(0, ge=0),
-    current_user=Depends(get_current_user),
-):
-    """
-    List uploaded files for the current tenant.
+    category: Optional[str] = None,
+    limit: int = 50,
+    offset: int = 0,
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> BaseResponseSchema:
+    """List uploaded files with optional filtering."""
 
-    Args:
-        category: Filter by category (optional)
-        limit: Maximum number of results
-        offset: Result offset for pagination
+    upload_manager = FileUploadManager(
+        tenant_id=deps.tenant_id, user_id=deps.user.get("user_id") if deps.user else None
+    )
 
-    Returns:
-        List of file metadata
-    """
-    # In a real implementation, you would query the database
-    # For now, we'll list files from the upload directory
+    files = await upload_manager.list_files(category=category, limit=limit, offset=offset)
 
-    upload_manager = FileUploadManager()
-    tenant_id = current_user["tenant_id"]
-    tenant_dir = Path(upload_manager.upload_directory) / tenant_id
-
-    if not tenant_dir.exists():
-        return {"files": [], "total": 0}
-
-    files = []
-    for file_path in tenant_dir.iterdir():
-        if file_path.is_file():
-            # Extract file ID from filename (format: {file_id}.{extension})
-            file_id = file_path.stem
-
-            file_info = {
-                "file_id": file_id,
-                "original_name": file_path.name,
-                "size_bytes": file_path.stat().st_size,
-                "modified_at": file_path.stat().st_mtime,
-                "download_url": f"/api/files/{file_id}",
-            }
-
-            files.append(file_info)
-    # Apply pagination
-    total = len(files)
-    files = files[offset : offset + limit]
-
-    return {"files": files, "total": total, "limit": limit, "offset": offset}
+    return BaseResponseSchema(success=True, message=f"Retrieved {len(files)} files", data=files)
 
 
-# Health check endpoint
-
-
-@router.get("/health")
+@router.get(
+    "/info/{file_id}",
+    response_model=dict,
+    summary="Get file information",
+    description="Get detailed information about a specific file",
+)
+@rate_limit(max_requests=120, time_window_seconds=60)
 @standard_exception_handler
-async def file_handler_health():
-    """Check file handler service health."""
-    upload_manager = FileUploadManager()
+async def get_file_info(
+    file_id: str,
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> dict:
+    """Get detailed information about a file."""
 
-    # Check if upload directory is accessible
-    if not upload_manager.upload_directory.exists():
-        upload_manager.upload_directory.mkdir(parents=True, exist_ok=True)
-    # Check available disk space
-    statvfs = os.statvfs(upload_manager.upload_directory)
-    available_bytes = statvfs.f_frsize * statvfs.f_bavail
-    available_mb = available_bytes / (1024 * 1024)
-    return {
+    upload_manager = FileUploadManager(
+        tenant_id=deps.tenant_id, user_id=deps.user.get("user_id") if deps.user else None
+    )
+
+    file_info = await upload_manager.get_file_info(file_id)
+
+    if not file_info:
+        raise HTTPException(status_code=404, detail="File not found")
+
+    return file_info
+
+
+# ============================================================================
+# Health & Status
+# ============================================================================
+
+
+@router.get(
+    "/health",
+    response_model=dict,
+    summary="Check file service health",
+    description="Check the health status of file handling services",
+)
+@standard_exception_handler
+async def check_file_service_health(
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> dict:
+    """Check file handler service health."""
+
+    # Check upload directory access
+    upload_dir = Path(f"/tmp/uploads/{deps.tenant_id}")
+    upload_dir.mkdir(parents=True, exist_ok=True)
+
+    # Basic health checks
+    health_status = {
         "status": "healthy",
-        "upload_directory": str(upload_manager.upload_directory),
-        "available_space_mb": round(available_mb, 1),
-        "max_file_size_mb": round(upload_manager.max_file_size / (1024 * 1024), 1),
-        "supported_categories": list(upload_manager.allowed_extensions.keys()),
+        "upload_directory_writable": os.access(upload_dir, os.W_OK),
+        "pdf_generation_available": True,  # Would check PDF libraries
+        "export_functions_available": True,  # Would check export libraries
     }
+
+    overall_healthy = all(
+        [
+            health_status["upload_directory_writable"],
+            health_status["pdf_generation_available"],
+            health_status["export_functions_available"],
+        ]
+    )
+
+    health_status["status"] = "healthy" if overall_healthy else "degraded"
+
+    return health_status

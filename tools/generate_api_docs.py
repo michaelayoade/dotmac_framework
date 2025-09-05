@@ -11,14 +11,14 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 import requests
 
 
 class APIDocumentationGenerator:
     def __init__(self, output_dir: str = None):
-        self.project_root = Path(__file__).parent.parent
+        self.project_root = Path(__file__).parent.parent  # noqa: B008
         self.output_dir = (
             Path(output_dir) if output_dir else self.project_root / "docs" / "api"
         )
@@ -41,14 +41,15 @@ class APIDocumentationGenerator:
                 if response.status_code == 200:
                     self.logger.info(f"Service ready at {url}")
                     return True
-            except:
+            except Exception:
+
                 pass
             time.sleep(2)
 
         self.logger.error(f"Service not ready at {url} after {timeout}s")
         return False
 
-    def fetch_openapi_spec(self, service_url: str, service_name: str) -> Dict[str, Any]:
+    def fetch_openapi_spec(self, service_url: str, service_name: str) -> dict[str, Any]:
         """Fetch OpenAPI specification from running service"""
         self.logger.info(f"Fetching OpenAPI spec from {service_name}...")
 
@@ -69,7 +70,7 @@ class APIDocumentationGenerator:
             self.logger.error(f"Error fetching OpenAPI spec from {service_name}: {e}")
             return {}
 
-    def generate_markdown_docs(self, spec: Dict[str, Any], service_name: str) -> str:
+    def generate_markdown_docs(self, spec: dict[str, Any], service_name: str) -> str:
         """Generate Markdown documentation from OpenAPI spec"""
         self.logger.info(f"Generating Markdown documentation for {service_name}...")
 
@@ -245,7 +246,7 @@ Authorization: Bearer <your-jwt-token>
         return markdown
 
     def format_schema_example(
-        self, schema: Dict[str, Any], components: Dict[str, Any]
+        self, schema: dict[str, Any], components: dict[str, Any]
     ) -> str:
         """Generate example JSON from schema"""
         try:
@@ -303,8 +304,8 @@ Authorization: Bearer <your-jwt-token>
             return "{}"
 
     def generate_postman_collection(
-        self, spec: Dict[str, Any], service_name: str
-    ) -> Dict[str, Any]:
+        self, spec: dict[str, Any], service_name: str
+    ) -> dict[str, Any]:
         """Generate Postman collection from OpenAPI spec"""
         self.logger.info(f"Generating Postman collection for {service_name}...")
 
@@ -518,7 +519,7 @@ Authorization: Bearer <your-jwt-token>
         )
 
         if successful_generations > 0:
-            self.logger.info(f"\n🎉 API documentation generated successfully!")
+            self.logger.info("\n🎉 API documentation generated successfully!")
             self.logger.info(f"📁 Output directory: {self.output_dir}")
             self.logger.info("\nGenerated files:")
             for file in self.output_dir.glob("*"):
@@ -610,7 +611,6 @@ python3 scripts/generate_api_docs.py
 def main():
     import argparse
 
-    from dotmac_shared.api.exception_handlers import standard_exception_handler
 
     parser = argparse.ArgumentParser(
         description="Generate API documentation for DotMac Framework"

@@ -3,18 +3,9 @@ Test CRUD operations for the DotMac ISP Framework API.
 Comprehensive testing of Create, Read, Update, Delete operations across key entities.
 """
 
+from unittest.mock import AsyncMock, patch
+
 import pytest
-from datetime import datetime, date, timezone, timedelta
-from typing import Dict, Any, List
-from unittest.mock import AsyncMock, MagicMock, patch
-from uuid import UUID, uuid4
-
-from fastapi import HTTPException, status
-from fastapi.testclient import TestClient
-
-from dotmac_isp.modules.identity.router import identity_router
-from dotmac_isp.modules.services.router import services_router
-from dotmac_isp.modules.billing.router import billing_router
 
 
 class TestCustomerCRUD:
@@ -65,8 +56,8 @@ class TestCustomerCRUD:
     def test_create_customer_success(self, client, sample_customer_data, sample_customer_response):
         """Test successful customer creation."""
         with patch('dotmac_isp.modules.identity.router.CustomerService') as mock_service:
-            with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
-                with patch('dotmac_shared.auth.dependencies.require_permissions') as mock_perms:
+            with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
+                with patch('dotmac.auth.dependencies.require_permissions') as mock_perms:
                     # Setup mocks
                     mock_instance = AsyncMock()
                     mock_instance.create_customer.return_value = sample_customer_response
@@ -113,8 +104,8 @@ class TestCustomerCRUD:
     def test_get_customer_success(self, client, sample_customer_response):
         """Test successful customer retrieval."""
         with patch('dotmac_isp.modules.identity.router.CustomerService') as mock_service:
-            with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
-                with patch('dotmac_shared.auth.dependencies.require_permissions') as mock_perms:
+            with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
+                with patch('dotmac.auth.dependencies.require_permissions') as mock_perms:
                     # Setup mocks
                     mock_instance = AsyncMock()
                     mock_instance.get_customer_by_id.return_value = sample_customer_response
@@ -134,8 +125,8 @@ class TestCustomerCRUD:
     def test_get_customer_not_found(self, client):
         """Test customer retrieval when customer doesn't exist."""
         with patch('dotmac_isp.modules.identity.router.CustomerService') as mock_service:
-            with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
-                with patch('dotmac_shared.auth.dependencies.require_permissions') as mock_perms:
+            with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
+                with patch('dotmac.auth.dependencies.require_permissions') as mock_perms:
                     # Setup mocks
                     mock_instance = AsyncMock()
                     mock_instance.get_customer_by_id.return_value = None
@@ -161,8 +152,8 @@ class TestCustomerCRUD:
         }]
         
         with patch('dotmac_isp.modules.identity.router.CustomerService') as mock_service:
-            with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
-                with patch('dotmac_shared.auth.dependencies.require_permissions') as mock_perms:
+            with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
+                with patch('dotmac.auth.dependencies.require_permissions') as mock_perms:
                     # Setup mocks
                     mock_instance = AsyncMock()
                     mock_instance.get_customers_by_status.return_value = customers_list
@@ -190,8 +181,8 @@ class TestCustomerCRUD:
         }]
         
         with patch('dotmac_isp.modules.identity.router.CustomerService') as mock_service:
-            with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
-                with patch('dotmac_shared.auth.dependencies.require_permissions') as mock_perms:
+            with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
+                with patch('dotmac.auth.dependencies.require_permissions') as mock_perms:
                     # Setup mocks
                     mock_instance = AsyncMock()
                     mock_instance.search_customers.return_value = search_results
@@ -254,7 +245,7 @@ class TestServicePlansCRUD:
     def test_create_service_plan_success(self, client, sample_service_plan_data, sample_service_plan_response):
         """Test successful service plan creation."""
         with patch('dotmac_isp.modules.services.router.get_services_service') as mock_get_service:
-            with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
+            with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
                 # Setup mocks
                 mock_service = AsyncMock()
                 mock_service.create_service_plan.return_value = sample_service_plan_response
@@ -279,7 +270,7 @@ class TestServicePlansCRUD:
     def test_get_service_plan_success(self, client, sample_service_plan_response):
         """Test successful service plan retrieval."""
         with patch('dotmac_isp.modules.services.router.get_services_service') as mock_get_service:
-            with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
+            with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
                 # Setup mocks
                 mock_service = AsyncMock()
                 mock_service.get_service_plan.return_value = sample_service_plan_response
@@ -298,7 +289,7 @@ class TestServicePlansCRUD:
     def test_get_service_plan_not_found(self, client):
         """Test service plan retrieval when plan doesn't exist."""
         with patch('dotmac_isp.modules.services.router.get_services_service') as mock_get_service:
-            with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
+            with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
                 # Setup mocks
                 mock_service = AsyncMock()
                 mock_service.get_service_plan.return_value = None
@@ -326,7 +317,7 @@ class TestServicePlansCRUD:
         }]
         
         with patch('dotmac_isp.modules.services.router.get_services_service') as mock_get_service:
-            with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
+            with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
                 # Setup mocks
                 mock_service = AsyncMock()
                 mock_service.list_service_plans.return_value = plans_list
@@ -353,7 +344,7 @@ class TestServicePlansCRUD:
         }]
         
         with patch('dotmac_isp.modules.services.router.get_services_service') as mock_get_service:
-            with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
+            with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
                 # Setup mocks
                 mock_service = AsyncMock()
                 mock_service.list_service_plans.return_value = filtered_plans
@@ -416,7 +407,7 @@ class TestServiceInstancesCRUD:
     def test_activate_service_success(self, client, sample_activation_data, sample_service_instance_response):
         """Test successful service activation."""
         with patch('dotmac_isp.modules.services.router.get_services_service') as mock_get_service:
-            with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
+            with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
                 # Setup mocks
                 mock_service = AsyncMock()
                 activation_response = {
@@ -444,7 +435,7 @@ class TestServiceInstancesCRUD:
     def test_get_service_instance_success(self, client, sample_service_instance_response):
         """Test successful service instance retrieval."""
         with patch('dotmac_isp.modules.services.router.get_services_service') as mock_get_service:
-            with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
+            with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
                 # Setup mocks
                 mock_service = AsyncMock()
                 mock_service.get_service_instance.return_value = sample_service_instance_response
@@ -463,7 +454,7 @@ class TestServiceInstancesCRUD:
     def test_update_service_status_success(self, client, sample_service_instance_response):
         """Test successful service status update."""
         with patch('dotmac_isp.modules.services.router.get_services_service') as mock_get_service:
-            with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
+            with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
                 # Setup mocks
                 mock_service = AsyncMock()
                 updated_response = {**sample_service_instance_response, "status": "suspended"}
@@ -492,7 +483,7 @@ class TestServiceInstancesCRUD:
     def test_suspend_service_success(self, client, sample_service_instance_response):
         """Test successful service suspension."""
         with patch('dotmac_isp.modules.services.router.get_services_service') as mock_get_service:
-            with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
+            with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
                 # Setup mocks
                 mock_service = AsyncMock()
                 suspended_response = {**sample_service_instance_response, "status": "suspended"}
@@ -517,7 +508,7 @@ class TestServiceInstancesCRUD:
     def test_reactivate_service_success(self, client, sample_service_instance_response):
         """Test successful service reactivation."""
         with patch('dotmac_isp.modules.services.router.get_services_service') as mock_get_service:
-            with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
+            with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
                 # Setup mocks
                 mock_service = AsyncMock()
                 reactivated_response = {**sample_service_instance_response, "status": "active"}
@@ -539,7 +530,7 @@ class TestServiceInstancesCRUD:
     def test_cancel_service_success(self, client, sample_service_instance_response):
         """Test successful service cancellation."""
         with patch('dotmac_isp.modules.services.router.get_services_service') as mock_get_service:
-            with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
+            with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
                 # Setup mocks
                 mock_service = AsyncMock()
                 cancelled_response = {**sample_service_instance_response, "status": "cancelled"}
@@ -599,7 +590,7 @@ class TestUsageDataCRUD:
     def test_record_service_usage_success(self, client, sample_usage_data, sample_usage_response):
         """Test successful usage data recording."""
         with patch('dotmac_isp.modules.services.router.get_services_service') as mock_get_service:
-            with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
+            with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
                 # Setup mocks
                 mock_service = AsyncMock()
                 mock_service.record_service_usage.return_value = sample_usage_response
@@ -630,7 +621,7 @@ class TestUsageDataCRUD:
         }]
         
         with patch('dotmac_isp.modules.services.router.get_services_service') as mock_get_service:
-            with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
+            with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
                 # Setup mocks
                 mock_service = AsyncMock()
                 mock_service.get_service_usage.return_value = usage_list
@@ -676,7 +667,7 @@ class TestBulkOperations:
         }
         
         with patch('dotmac_isp.modules.services.router.get_services_service') as mock_get_service:
-            with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
+            with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
                 # Setup mocks
                 mock_service = AsyncMock()
                 
@@ -718,7 +709,7 @@ class TestBulkOperations:
         }
         
         with patch('dotmac_isp.modules.services.router.get_services_service') as mock_get_service:
-            with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
+            with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
                 # Setup mocks
                 mock_service = AsyncMock()
                 

@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Strategic DNS Deployment Guide - DotMac Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-800">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="../index.html" class="flex items-center">
+                        <div class="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
+                            <span class="text-white font-bold text-lg">D</span>
+                        </div>
+                        <span class="ml-2 text-xl font-bold text-gray-900">DotMac Platform</span>
+                    </a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="../index.html" class="text-gray-600 hover:text-purple-600">← Back to Home</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <!-- Header -->
+        <div class="mb-12">
+            <h1 class="text-4xl font-bold text-gray-900 mb-4">Strategic DNS Deployment Guide</h1>
+            <p class="text-xl text-gray-600">
+                Complete guide to deploying DotMac Platform using your existing infrastructure
+            </p>
+        </div>
+
+        <!-- Overview -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">🎯 Strategic Approach</h2>
+            <div class="bg-white rounded-lg p-6 shadow-md mb-6">
+                <p class="text-gray-700 mb-4">
+                    The DotMac platform uses a <strong>plugin-based DNS architecture</strong> that automatically detects 
+                    and leverages your existing infrastructure. No hardcoded integrations - fully extensible and strategic.
+                </p>
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-lg font-semibold text-red-600 mb-2">❌ What We Removed</h3>
+                        <ul class="text-sm text-gray-600 space-y-1">
+                            <li>• Hardcoded Cloudflare dependency</li>
+                            <li>• Proprietary service lock-in</li>
+                            <li>• Single-point-of-failure DNS</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-green-600 mb-2">✅ What We Added</h3>
+                        <ul class="text-sm text-gray-600 space-y-1">
+                            <li>• Plugin-based architecture</li>
+                            <li>• Auto-detection of existing systems</li>
+                            <li>• Multiple fallback options</li>
+                            <li>• Zero external dependencies</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Deployment Strategies -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">🏗️ Deployment Strategies</h2>
+            
+            <!-- Strategy 1: BIND9 -->
+            <div class="bg-white rounded-lg p-6 shadow-md mb-6 border-l-4 border-green-500">
+                <div class="flex items-center mb-3">
+                    <span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">Recommended</span>
+                    <h3 class="text-xl font-semibold ml-3">Strategy 1: Leverage Existing BIND9</h3>
+                </div>
+                <p class="text-gray-600 mb-4">
+                    If you have an existing BIND9 server (common in enterprise/ISP environments):
+                </p>
+                <pre class="bg-gray-900 text-green-400 p-4 rounded text-sm overflow-x-auto"><code class="language-bash"># The system will auto-detect BIND9 and use it
+DNS_STRATEGY=auto
+BIND9_ZONE_DIR=/etc/bind/zones
+BIND9_RELOAD_COMMAND="rndc reload"</code></pre>
+                
+                <div class="mt-4">
+                    <h4 class="font-semibold mb-2">Advantages:</h4>
+                    <ul class="text-sm text-gray-600 space-y-1">
+                        <li>• Uses your existing DNS infrastructure</li>
+                        <li>• Full control and customization</li>
+                        <li>• Production-ready scalability</li>
+                        <li>• Integration with existing network policies</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Strategy 2: Router DNS -->
+            <div class="bg-white rounded-lg p-6 shadow-md mb-6 border-l-4 border-blue-500">
+                <div class="flex items-center mb-3">
+                    <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">Enterprise</span>
+                    <h3 class="text-xl font-semibold ml-3">Strategy 2: Router/Firewall DNS Integration</h3>
+                </div>
+                <p class="text-gray-600 mb-4">
+                    Many routers (pfSense, OPNsense, enterprise firewalls) have built-in DNS:
+                </p>
+                <pre class="bg-gray-900 text-blue-400 p-4 rounded text-sm overflow-x-auto"><code class="language-bash">DNS_STRATEGY=auto
+ROUTER_DNS_ENABLED=true
+ROUTER_DNS_API_URL=https://your-router.local/api</code></pre>
+                
+                <div class="mt-4">
+                    <h4 class="font-semibold mb-2">Advantages:</h4>
+                    <ul class="text-sm text-gray-600 space-y-1">
+                        <li>• Leverages existing network equipment</li>
+                        <li>• No additional servers required</li>
+                        <li>• Integrated with firewall rules</li>
+                        <li>• Centralized network management</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Strategy 3: Docker -->
+            <div class="bg-white rounded-lg p-6 shadow-md mb-6 border-l-4 border-purple-500">
+                <div class="flex items-center mb-3">
+                    <span class="bg-purple-100 text-purple-800 text-xs font-medium px-2.5 py-0.5 rounded-full">Easiest</span>
+                    <h3 class="text-xl font-semibold ml-3">Strategy 3: Docker Internal DNS</h3>
+                </div>
+                <p class="text-gray-600 mb-4">
+                    For containerized deployments:
+                </p>
+                <pre class="bg-gray-900 text-purple-400 p-4 rounded text-sm overflow-x-auto"><code class="language-bash">DNS_STRATEGY=auto
+DOCKER_DNS_ENABLED=true
+DOCKER_DNS_BRIDGE_IP=172.20.0.1</code></pre>
+                
+                <div class="mt-4">
+                    <h4 class="font-semibold mb-2">Advantages:</h4>
+                    <ul class="text-sm text-gray-600 space-y-1">
+                        <li>• Zero configuration required</li>
+                        <li>• Works with existing Docker setup</li>
+                        <li>• Perfect for development and testing</li>
+                        <li>• Automatic container networking</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Strategy 4: System DNS -->
+            <div class="bg-white rounded-lg p-6 shadow-md mb-6 border-l-4 border-yellow-500">
+                <div class="flex items-center mb-3">
+                    <span class="bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full">Automatic</span>
+                    <h3 class="text-xl font-semibold ml-3">Strategy 4: System DNS Services</h3>
+                </div>
+                <p class="text-gray-600 mb-4">
+                    Uses whatever DNS service is running on your system:
+                </p>
+                <pre class="bg-gray-900 text-yellow-400 p-4 rounded text-sm overflow-x-auto"><code class="language-bash">DNS_STRATEGY=auto
+# Will detect: systemd-resolved, dnsmasq, etc.</code></pre>
+                
+                <div class="mt-4">
+                    <h4 class="font-semibold mb-2">Advantages:</h4>
+                    <ul class="text-sm text-gray-600 space-y-1">
+                        <li>• Uses built-in system services</li>
+                        <li>• No additional software needed</li>
+                        <li>• Works on most Linux distributions</li>
+                        <li>• Minimal resource usage</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Quick Setup -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">📋 Quick Setup</h2>
+            
+            <div class="space-y-6">
+                <!-- Step 1 -->
+                <div class="bg-white rounded-lg p-6 shadow-md">
+                    <div class="flex items-center mb-4">
+                        <div class="w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center font-bold">1</div>
+                        <h3 class="text-lg font-semibold ml-3">Choose Your Strategy</h3>
+                    </div>
+                    <pre class="bg-gray-900 text-green-400 p-4 rounded text-sm overflow-x-auto"><code class="language-bash"># Copy configuration template
+cp .env.example .env
+
+# Edit with your preferred strategy
+nano .env</code></pre>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="bg-white rounded-lg p-6 shadow-md">
+                    <div class="flex items-center mb-4">
+                        <div class="w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center font-bold">2</div>
+                        <h3 class="text-lg font-semibold ml-3">Set Your Domain</h3>
+                    </div>
+                    <pre class="bg-gray-900 text-green-400 p-4 rounded text-sm overflow-x-auto"><code class="language-bash"># Your main domain (tenants get subdomains)
+BASE_DOMAIN=yourdomain.com
+
+# Where your load balancer/server is
+LOAD_BALANCER_IP=your.server.ip</code></pre>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="bg-white rounded-lg p-6 shadow-md">
+                    <div class="flex items-center mb-4">
+                        <div class="w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center font-bold">3</div>
+                        <h3 class="text-lg font-semibold ml-3">Let the System Auto-Detect</h3>
+                    </div>
+                    <p class="text-gray-600 mb-4">The plugin will automatically:</p>
+                    <ul class="text-sm text-gray-600 space-y-2 mb-4">
+                        <li class="flex items-center">
+                            <span class="text-green-500 mr-2">✓</span>
+                            <strong>Scan for BIND9</strong> - checks for `named` command and zones directory
+                        </li>
+                        <li class="flex items-center">
+                            <span class="text-green-500 mr-2">✓</span>
+                            <strong>Detect dnsmasq</strong> - common on routers and embedded systems
+                        </li>
+                        <li class="flex items-center">
+                            <span class="text-green-500 mr-2">✓</span>
+                            <strong>Find systemd-resolved</strong> - default on Ubuntu/Debian
+                        </li>
+                        <li class="flex items-center">
+                            <span class="text-green-500 mr-2">✓</span>
+                            <strong>Check Docker DNS</strong> - if running in containers
+                        </li>
+                        <li class="flex items-center">
+                            <span class="text-green-500 mr-2">✓</span>
+                            <strong>Fall back to hosts file</strong> - always available for development
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Step 4 -->
+                <div class="bg-white rounded-lg p-6 shadow-md">
+                    <div class="flex items-center mb-4">
+                        <div class="w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center font-bold">4</div>
+                        <h3 class="text-lg font-semibold ml-3">Test the Setup</h3>
+                    </div>
+                    <pre class="bg-gray-900 text-green-400 p-4 rounded text-sm overflow-x-auto"><code class="language-bash"># Test DNS automation
+./scripts/test-domain-automation.sh test-dns
+
+# Deploy a test tenant
+./scripts/test-domain-automation.sh deploy test-tenant</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- Configuration Examples -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">🔧 Configuration Examples</h2>
+            
+            <div class="space-y-6">
+                <!-- Production BIND9 -->
+                <div class="bg-white rounded-lg p-6 shadow-md">
+                    <h3 class="text-lg font-semibold mb-4">Production BIND9 Setup</h3>
+                    <pre class="bg-gray-900 text-green-400 p-4 rounded text-sm overflow-x-auto"><code class="language-bash"># Production configuration
+DEPLOYMENT_MODE=production
+BASE_DOMAIN=yourisp.net
+LOAD_BALANCER_IP=10.0.1.100
+
+# BIND9 settings
+BIND9_ZONE_DIR=/etc/bind/zones
+BIND9_CONFIG_DIR=/etc/bind
+DNS_AUTO_BACKUP=true</code></pre>
+                </div>
+
+                <!-- Router Integration -->
+                <div class="bg-white rounded-lg p-6 shadow-md">
+                    <h3 class="text-lg font-semibold mb-4">Router Integration (pfSense)</h3>
+                    <pre class="bg-gray-900 text-blue-400 p-4 rounded text-sm overflow-x-auto"><code class="language-bash"># Router DNS integration
+DEPLOYMENT_MODE=production
+ROUTER_DNS_ENABLED=true
+ROUTER_DNS_API_URL=https://192.168.1.1/api
+ROUTER_DNS_API_KEY=your-pfsense-api-key</code></pre>
+                </div>
+
+                <!-- Docker Development -->
+                <div class="bg-white rounded-lg p-6 shadow-md">
+                    <h3 class="text-lg font-semibold mb-4">Docker Development</h3>
+                    <pre class="bg-gray-900 text-purple-400 p-4 rounded text-sm overflow-x-auto"><code class="language-bash"># Docker development
+DEPLOYMENT_MODE=development
+DOCKER_DNS_ENABLED=true
+BASE_DOMAIN=local.test
+LOAD_BALANCER_IP=127.0.0.1</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- Benefits -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">🎉 Benefits of This Approach</h2>
+            
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="bg-white rounded-lg p-6 shadow-md">
+                    <h3 class="text-lg font-semibold text-green-600 mb-3">For ISPs/Enterprises</h3>
+                    <ul class="text-sm text-gray-600 space-y-2">
+                        <li>• <strong>Leverages existing infrastructure</strong> - no new servers needed</li>
+                        <li>• <strong>Vendor-neutral</strong> - not locked into any specific service</li>
+                        <li>• <strong>Scalable</strong> - works with your existing DNS architecture</li>
+                        <li>• <strong>Secure</strong> - stays within your network perimeter</li>
+                    </ul>
+                </div>
+                
+                <div class="bg-white rounded-lg p-6 shadow-md">
+                    <h3 class="text-lg font-semibold text-blue-600 mb-3">For Developers</h3>
+                    <ul class="text-sm text-gray-600 space-y-2">
+                        <li>• <strong>No external dependencies</strong> - works offline</li>
+                        <li>• <strong>Multiple fallback options</strong> - always works somehow</li>
+                        <li>• <strong>Plugin extensible</strong> - add any DNS provider</li>
+                        <li>• <strong>Easy testing</strong> - dry-run and test modes</li>
+                    </ul>
+                </div>
+                
+                <div class="bg-white rounded-lg p-6 shadow-md">
+                    <h3 class="text-lg font-semibold text-purple-600 mb-3">For Operations</h3>
+                    <ul class="text-sm text-gray-600 space-y-2">
+                        <li>• <strong>Auto-detection</strong> - minimal configuration required</li>
+                        <li>• <strong>Health monitoring</strong> - built-in status checks</li>
+                        <li>• <strong>Backup and recovery</strong> - automatic DNS config backups</li>
+                        <li>• <strong>Multi-provider redundancy</strong> - fault tolerance</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Next Steps -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">🚀 Next Steps</h2>
+            
+            <div class="bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg p-6 text-white">
+                <ol class="space-y-3">
+                    <li class="flex items-start">
+                        <span class="bg-white text-purple-600 rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 mt-0.5">1</span>
+                        <div>
+                            <strong>Choose your deployment strategy</strong> based on existing infrastructure
+                        </div>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="bg-white text-purple-600 rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 mt-0.5">2</span>
+                        <div>
+                            <strong>Configure .env file</strong> with your domain and settings
+                        </div>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="bg-white text-purple-600 rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 mt-0.5">3</span>
+                        <div>
+                            <strong>Test with a development tenant</strong> using the test scripts
+                        </div>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="bg-white text-purple-600 rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 mt-0.5">4</span>
+                        <div>
+                            <strong>Deploy to production</strong> with monitoring enabled
+                        </div>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="bg-white text-purple-600 rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 mt-0.5">5</span>
+                        <div>
+                            <strong>Extend with custom plugins</strong> as needed
+                        </div>
+                    </li>
+                </ol>
+            </div>
+        </section>
+
+        <!-- Navigation -->
+        <div class="flex justify-between items-center pt-8 border-t border-gray-200">
+            <a href="../index.html" class="text-purple-600 hover:text-purple-800 flex items-center">
+                ← Back to Home
+            </a>
+            <div class="flex space-x-4">
+                <a href="api-reference.html" class="text-purple-600 hover:text-purple-800">API Reference →</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

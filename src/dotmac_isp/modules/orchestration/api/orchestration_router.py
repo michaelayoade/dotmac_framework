@@ -1,357 +1,315 @@
 """
-Network Orchestration API Router.
-
-REST API endpoints for network orchestration functionality including
-workflow execution, service provisioning, and automated operations.
+Network Orchestration API Router - DRY Migration
+REST API endpoints for network orchestration functionality using RouterFactory patterns.
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from dotmac.application import RouterFactory, standard_exception_handler
+from dotmac_shared.api.dependencies import (
+    PaginatedDependencies,
+    StandardDependencies,
+    get_paginated_deps,
+    get_standard_deps,
+)
+from fastapi import Body, Depends, Query
 from pydantic import BaseModel, Field
-from sqlalchemy.orm import Session
-
-from dotmac_isp.core.auth import require_permissions
-from dotmac_isp.core.database import get_db
-from dotmac_shared.api.router_factory import RouterFactory
-from dotmac_shared.api.exception_handlers import standard_exception_handler
 
 from ..services.network_orchestrator import NetworkOrchestrationService
 
-# Pydantic models for API requests/responses
+# === Request/Response Schemas ===
 
-class ServiceProvisioningRequest(BaseModel, timezone):
+
+class ServiceProvisioningRequest(BaseModel):
     """Request model for customer service provisioning."""
-    customer_id: str = Field(..., description="Customer ID")
+
+    customer_id: UUID = Field(..., description="Customer ID")
     service_plan_id: str = Field(..., description="Service plan ID")
     service_address: str = Field(..., description="Service installation address")
-    installation_options: Optional[Dict[str, Any]] = Field(None, description="Installation options")
-    scheduled_date: Optional[datetime] = Field(None, description="Preferred installation date")
-    priority: Optional[str] = Field("normal", description="Provisioning priority")
+    installation_options: dict[str, Any] | None = Field(None, description="Installation options")
+    scheduled_date: datetime | None = Field(None, description="Preferred installation date")
+    priority: str = Field("normal", description="Provisioning priority")
 
 
 class ServiceModificationRequest(BaseModel):
     """Request model for service modification."""
-    service_id: str = Field(..., description="Service ID to modify")
+
+    service_id: UUID = Field(..., description="Service ID to modify")
     new_bandwidth: str = Field(..., description="New bandwidth specification")
-    effective_date: Optional[datetime] = Field(None, description="When change becomes effective")
-    change_reason: Optional[str] = Field(None, description="Reason for change")
+    effective_date: datetime | None = Field(None, description="When change becomes effective")
+    change_reason: str | None = Field(None, description="Reason for change")
 
 
 class MaintenanceExecutionRequest(BaseModel):
     """Request model for maintenance execution."""
-    title: str = Field(..., description="Maintenance title")
-    description: str = Field(..., description="Maintenance description")
+
     maintenance_type: str = Field(..., description="Type of maintenance")
-    affected_devices: List[str] = Field(..., description="List of affected device IDs")
-    affected_services: Optional[List[str]] = Field(None, description="List of affected service IDs")
-    maintenance_tasks: List[Dict[str, Any]] = Field(..., description="List of maintenance tasks")
-    rollback_plan: Optional[Dict[str, Any]] = Field(None, description="Rollback plan")
-    estimated_duration_minutes: Optional[int] = Field(None, description="Estimated duration")
-    requires_outage: Optional[bool] = Field(False, description="Whether maintenance requires outage")
+    target_devices: list[str] = Field(..., description="Target device IDs")
+    execution_window: dict[str, datetime] = Field(..., description="Execution time window")
+    rollback_plan: dict[str, Any] | None = Field(None, description="Rollback plan")
 
 
-class WorkflowCreateRequest(BaseModel):
-    """Request model for creating workflow."""
-    workflow_type: str = Field(..., description="Type of workflow")
-    workflow_name: str = Field(..., description="Workflow name")
-    input_parameters: Dict[str, Any] = Field(..., description="Workflow input parameters")
-    customer_id: Optional[str] = Field(None, description="Associated customer ID")
-    service_id: Optional[str] = Field(None, description="Associated service ID")
-    device_id: Optional[str] = Field(None, description="Associated device ID")
-    scheduled_at: Optional[datetime] = Field(None, description="Scheduled execution time")
-    priority: Optional[str] = Field("normal", description="Execution priority")
+class WorkflowExecutionRequest(BaseModel):
+    """Request model for workflow execution."""
+
+    workflow_name: str = Field(..., description="Workflow to execute")
+    parameters: dict[str, Any] = Field(..., description="Workflow parameters")
+    priority: str = Field("normal", description="Execution priority")
+    auto_approve: bool = Field(False, description="Auto-approve workflow steps")
 
 
-class WorkflowStepRequest(BaseModel):
-    """Request model for adding workflow steps."""
-    step_name: str = Field(..., description="Step name")
-    step_type: str = Field(..., description="Step type")
-    step_order: int = Field(..., description="Step execution order")
-    service_method: str = Field(..., description="Service method to execute")
-    input_parameters: Optional[Dict[str, Any]] = Field(None, description="Step input parameters")
-    depends_on_steps: Optional[List[str]] = Field(None, description="Step dependencies")
-    timeout_seconds: Optional[int] = Field(300, description="Step timeout")
-    max_retries: Optional[int] = Field(2, description="Maximum retry attempts")
+# === Main Orchestration Router ===
+
+orchestration_router = RouterFactory.create_standard_router(
+    prefix="/orchestration",
+    tags=["network-orchestration"],
+)
 
 
-class OrchestrationRouterFactory(RouterFactory):
-    """Factory for creating Orchestration API router."""
-
-    @classmethod
-    def create_orchestration_router(cls) -> APIRouter:
-        """Create Orchestration API router with all endpoints."""
-        router = APIRouter(prefix="/api/orchestration", tags=["orchestration"])
-
-        # Service provisioning endpoints
-        @router.post("/provision/customer-service")
-        @require_permissions("orchestration:provision")
-        async def provision_customer_service(
-            request: ServiceProvisioningRequest,
-            db: Session = Depends(get_db),
-            tenant_id: str = Depends(cls.get_tenant_id)
-        ):
-            """Orchestrate end-to-end customer service provisioning."""
-            service = NetworkOrchestrationService(db, tenant_id)
-            return await service.provision_customer_service(
-                request.customer_id,
-                request.service_plan_id,
-                request.service_address,
-                request.installation_options
-            )
-
-        @router.post("/modify/service-bandwidth")
-        @require_permissions("orchestration:modify")
-        async def modify_service_bandwidth(
-            request: ServiceModificationRequest,
-            db: Session = Depends(get_db),
-            tenant_id: str = Depends(cls.get_tenant_id)
-        ):
-            """Orchestrate service bandwidth modification."""
-            service = NetworkOrchestrationService(db, tenant_id)
-            return await service.modify_service_bandwidth(
-                request.service_id,
-                request.new_bandwidth,
-                request.effective_date
-            )
-
-        @router.post("/execute/maintenance")
-        @require_permissions("orchestration:maintenance")
-        async def execute_maintenance_window(
-            request: MaintenanceExecutionRequest,
-            db: Session = Depends(get_db),
-            tenant_id: str = Depends(cls.get_tenant_id)
-        ):
-            """Orchestrate maintenance window execution."""
-            service = NetworkOrchestrationService(db, tenant_id)
-            maintenance_plan = request.dict()
-            return await service.execute_maintenance_window(maintenance_plan)
-
-        # Workflow management endpoints
-        @router.post("/workflows")
-        @require_permissions("orchestration:workflows")
-        async def create_workflow(
-            request: WorkflowCreateRequest,
-            db: Session = Depends(get_db),
-            tenant_id: str = Depends(cls.get_tenant_id)
-        ):
-            """Create new workflow execution."""
-            service = NetworkOrchestrationService(db, tenant_id)
-            return await service.create_workflow_execution(request.dict())
-
-        @router.post("/workflows/{workflow_id}/steps")
-        @require_permissions("orchestration:workflows")
-        async def add_workflow_steps(
-            workflow_id: str,
-            steps: List[WorkflowStepRequest],
-            db: Session = Depends(get_db),
-            tenant_id: str = Depends(cls.get_tenant_id)
-        ):
-            """Add steps to workflow."""
-            service = NetworkOrchestrationService(db, tenant_id)
-            steps_data = [step.dict() for step in steps]
-            return await service.add_workflow_steps(workflow_id, steps_data)
-
-        @router.post("/workflows/{workflow_id}/execute")
-        @require_permissions("orchestration:execute")
-        async def execute_workflow(
-            workflow_id: str,
-            db: Session = Depends(get_db),
-            tenant_id: str = Depends(cls.get_tenant_id)
-        ):
-            """Execute workflow steps."""
-            service = NetworkOrchestrationService(db, tenant_id)
-            return await service.execute_workflow(workflow_id)
-
-        @router.get("/workflows/{workflow_id}/status")
-        @require_permissions("orchestration:read")
-        async def get_workflow_status(
-            workflow_id: str,
-            db: Session = Depends(get_db),
-            tenant_id: str = Depends(cls.get_tenant_id)
-        ):
-            """Get workflow execution status."""
-            service = NetworkOrchestrationService(db, tenant_id)
-            return await service.get_workflow_status(workflow_id)
-
-        @router.get("/workflows")
-        @require_permissions("orchestration:read")
-        async def list_workflows(
-            workflow_type: Optional[str] = Query(None, description="Filter by workflow type"),
-            status: Optional[str] = Query(None, description="Filter by status"),
-            customer_id: Optional[str] = Query(None, description="Filter by customer"),
-            limit: int = Query(50, description="Maximum workflows to return"),
-            offset: int = Query(0, description="Pagination offset"),
-            db: Session = Depends(get_db),
-            tenant_id: str = Depends(cls.get_tenant_id)
-        ):
-            """List workflow executions with filtering."""
-            # This would be implemented in the service
-            # For now, returning placeholder response
-            return {
-                "workflows": [],
-                "total_count": 0,
-                "offset": offset,
-                "limit": limit
-            }
-
-        # Orchestration statistics and monitoring
-        @router.get("/stats/workflows")
-        @require_permissions("orchestration:read")
-        async def get_workflow_statistics(
-            time_period_hours: int = Query(24, description="Time period for statistics"),
-            db: Session = Depends(get_db),
-            tenant_id: str = Depends(cls.get_tenant_id)
-        ):
-            """Get workflow execution statistics."""
-            # Placeholder implementation
-            return {
-                "time_period_hours": time_period_hours,
-                "total_workflows": 0,
-                "successful_workflows": 0,
-                "failed_workflows": 0,
-                "running_workflows": 0,
-                "success_rate_percentage": 0.0,
-                "avg_execution_time_minutes": 0.0
-            }
-
-        @router.get("/stats/provisioning")
-        @require_permissions("orchestration:read")
-        async def get_provisioning_statistics(
-            time_period_hours: int = Query(168, description="Time period for statistics (default 7 days)"),
-            db: Session = Depends(get_db),
-            tenant_id: str = Depends(cls.get_tenant_id)
-        ):
-            """Get service provisioning statistics."""
-            # Placeholder implementation
-            return {
-                "time_period_hours": time_period_hours,
-                "total_provisioning_requests": 0,
-                "successful_provisions": 0,
-                "failed_provisions": 0,
-                "pending_provisions": 0,
-                "avg_provisioning_time_hours": 0.0,
-                "provisioning_success_rate": 0.0
-            }
-
-        # Service orchestration operations
-        @router.post("/services/{service_id}/suspend")
-        @require_permissions("orchestration:modify")
-        async def suspend_service(
-            service_id: str,
-            reason: str = Query(..., description="Reason for suspension"),
-            effective_date: Optional[datetime] = Query(None, description="When suspension becomes effective"),
-            db: Session = Depends(get_db),
-            tenant_id: str = Depends(cls.get_tenant_id)
-        ):
-            """Orchestrate service suspension."""
-            # This would create a workflow for service suspension
-            service = NetworkOrchestrationService(db, tenant_id)
-            workflow_data = {
-                "workflow_type": "service_suspension",
-                "workflow_name": f"Suspend Service {service_id}",
-                "service_id": service_id,
-                "input_parameters": {
-                    "service_id": service_id,
-                    "reason": reason,
-                    "effective_date": effective_date.isoformat() if effective_date else datetime.now(timezone.utc).isoformat()
-                }
-            }
-            return await service.create_workflow_execution(workflow_data)
-
-        @router.post("/services/{service_id}/reactivate")
-        @require_permissions("orchestration:modify")
-        async def reactivate_service(
-            service_id: str,
-            reason: str = Query(..., description="Reason for reactivation"),
-            db: Session = Depends(get_db),
-            tenant_id: str = Depends(cls.get_tenant_id)
-        ):
-            """Orchestrate service reactivation."""
-            service = NetworkOrchestrationService(db, tenant_id)
-            workflow_data = {
-                "workflow_type": "service_reactivation",
-                "workflow_name": f"Reactivate Service {service_id}",
-                "service_id": service_id,
-                "input_parameters": {
-                    "service_id": service_id,
-                    "reason": reason
-                }
-            }
-            return await service.create_workflow_execution(workflow_data)
-
-        @router.post("/services/{service_id}/cancel")
-        @require_permissions("orchestration:modify")
-        async def cancel_service(
-            service_id: str,
-            reason: str = Query(..., description="Reason for cancellation"),
-            effective_date: Optional[datetime] = Query(None, description="When cancellation becomes effective"),
-            db: Session = Depends(get_db),
-            tenant_id: str = Depends(cls.get_tenant_id)
-        ):
-            """Orchestrate service cancellation."""
-            service = NetworkOrchestrationService(db, tenant_id)
-            workflow_data = {
-                "workflow_type": "service_cancellation",
-                "workflow_name": f"Cancel Service {service_id}",
-                "service_id": service_id,
-                "input_parameters": {
-                    "service_id": service_id,
-                    "reason": reason,
-                    "effective_date": effective_date.isoformat() if effective_date else datetime.now(timezone.utc).isoformat()
-                }
-            }
-            return await service.create_workflow_execution(workflow_data)
-
-        # Network device orchestration
-        @router.post("/devices/{device_id}/configure")
-        @require_permissions("orchestration:configure")
-        async def configure_device(
-            device_id: str,
-            configuration_template: str = Query(..., description="Configuration template name"),
-            parameters: Dict[str, Any] = None,
-            db: Session = Depends(get_db),
-            tenant_id: str = Depends(cls.get_tenant_id)
-        ):
-            """Orchestrate device configuration."""
-            service = NetworkOrchestrationService(db, tenant_id)
-            workflow_data = {
-                "workflow_type": "device_configuration",
-                "workflow_name": f"Configure Device {device_id}",
-                "device_id": device_id,
-                "input_parameters": {
-                    "device_id": device_id,
-                    "configuration_template": configuration_template,
-                    "parameters": parameters or {}
-                }
-            }
-            return await service.create_workflow_execution(workflow_data)
-
-        @router.post("/devices/{device_id}/backup")
-        @require_permissions("orchestration:backup")
-        async def backup_device_configuration(
-            device_id: str,
-            backup_type: str = Query("full", description="Type of backup"),
-            db: Session = Depends(get_db),
-            tenant_id: str = Depends(cls.get_tenant_id)
-        ):
-            """Orchestrate device configuration backup."""
-            service = NetworkOrchestrationService(db, tenant_id)
-            workflow_data = {
-                "workflow_type": "device_backup",
-                "workflow_name": f"Backup Device {device_id}",
-                "device_id": device_id,
-                "input_parameters": {
-                    "device_id": device_id,
-                    "backup_type": backup_type
-                }
-            }
-            return await service.create_workflow_execution(workflow_data)
-
-        return router
+# === Service Provisioning Endpoints ===
 
 
-# Create the orchestration router instance
-orchestration_router = OrchestrationRouterFactory.create_orchestration_router()
+@orchestration_router.post("/provision-service", response_model=dict[str, Any])
+@standard_exception_handler
+async def provision_customer_service(
+    request: ServiceProvisioningRequest,
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> dict[str, Any]:
+    """Provision network service for a customer."""
+    service = NetworkOrchestrationService(deps.db, deps.tenant_id)
+
+    result = await service.provision_customer_service(
+        customer_id=request.customer_id,
+        service_plan_id=request.service_plan_id,
+        service_address=request.service_address,
+        installation_options=request.installation_options or {},
+        scheduled_date=request.scheduled_date,
+        priority=request.priority,
+        provisioned_by=deps.user_id,
+    )
+
+    return {
+        "provisioning_id": result["provisioning_id"],
+        "status": result["status"],
+        "estimated_completion": result.get("estimated_completion"),
+        "tracking_number": result.get("tracking_number"),
+        "message": "Service provisioning initiated successfully",
+    }
+
+
+@orchestration_router.get("/provisioning/{provisioning_id}", response_model=dict[str, Any])
+@standard_exception_handler
+async def get_provisioning_status(
+    provisioning_id: UUID,
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> dict[str, Any]:
+    """Get status of a service provisioning request."""
+    service = NetworkOrchestrationService(deps.db, deps.tenant_id)
+    return await service.get_provisioning_status(provisioning_id)
+
+
+@orchestration_router.post("/provisioning/{provisioning_id}/cancel", response_model=dict[str, Any])
+@standard_exception_handler
+async def cancel_provisioning(
+    provisioning_id: UUID,
+    cancellation_reason: str = Body(..., embed=True, description="Reason for cancellation"),
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> dict[str, Any]:
+    """Cancel a service provisioning request."""
+    service = NetworkOrchestrationService(deps.db, deps.tenant_id)
+
+    result = await service.cancel_provisioning(provisioning_id, cancellation_reason, deps.user_id)
+
+    return {
+        "provisioning_id": provisioning_id,
+        "status": "cancelled",
+        "message": result.get("message", "Provisioning cancelled successfully"),
+    }
+
+
+# === Service Modification Endpoints ===
+
+
+@orchestration_router.post("/modify-service", response_model=dict[str, Any])
+@standard_exception_handler
+async def modify_customer_service(
+    request: ServiceModificationRequest,
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> dict[str, Any]:
+    """Modify an existing customer service."""
+    service = NetworkOrchestrationService(deps.db, deps.tenant_id)
+
+    result = await service.modify_customer_service(
+        service_id=request.service_id,
+        new_bandwidth=request.new_bandwidth,
+        effective_date=request.effective_date,
+        change_reason=request.change_reason,
+        modified_by=deps.user_id,
+    )
+
+    return {
+        "modification_id": result["modification_id"],
+        "status": result["status"],
+        "effective_date": result.get("effective_date"),
+        "message": "Service modification initiated successfully",
+    }
+
+
+@orchestration_router.get("/modifications", response_model=list[dict[str, Any]])
+@standard_exception_handler
+async def list_service_modifications(
+    service_id: UUID | None = Query(None, description="Filter by service ID"),
+    status: str | None = Query(None, description="Filter by status"),
+    deps: PaginatedDependencies = Depends(get_paginated_deps),
+) -> list[dict[str, Any]]:
+    """List service modifications with optional filtering."""
+    service = NetworkOrchestrationService(deps.db, deps.tenant_id)
+
+    return await service.list_service_modifications(
+        service_id=service_id,
+        status=status,
+        offset=deps.pagination.offset,
+        limit=deps.pagination.size,
+    )
+
+
+# === Maintenance Orchestration ===
+
+
+@orchestration_router.post("/execute-maintenance", response_model=dict[str, Any])
+@standard_exception_handler
+async def execute_maintenance(
+    request: MaintenanceExecutionRequest,
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> dict[str, Any]:
+    """Execute scheduled maintenance operations."""
+    service = NetworkOrchestrationService(deps.db, deps.tenant_id)
+
+    result = await service.execute_maintenance(
+        maintenance_type=request.maintenance_type,
+        target_devices=request.target_devices,
+        execution_window=request.execution_window,
+        rollback_plan=request.rollback_plan,
+        executed_by=deps.user_id,
+    )
+
+    return {
+        "maintenance_id": result["maintenance_id"],
+        "status": result["status"],
+        "execution_start": result.get("execution_start"),
+        "estimated_duration": result.get("estimated_duration"),
+        "message": "Maintenance execution initiated successfully",
+    }
+
+
+@orchestration_router.get("/maintenance/{maintenance_id}", response_model=dict[str, Any])
+@standard_exception_handler
+async def get_maintenance_status(
+    maintenance_id: UUID,
+    include_logs: bool = Query(False, description="Include execution logs"),
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> dict[str, Any]:
+    """Get status of a maintenance execution."""
+    service = NetworkOrchestrationService(deps.db, deps.tenant_id)
+    return await service.get_maintenance_status(maintenance_id, include_logs)
+
+
+# === Workflow Execution ===
+
+
+@orchestration_router.post("/execute-workflow", response_model=dict[str, Any])
+@standard_exception_handler
+async def execute_workflow(
+    request: WorkflowExecutionRequest,
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> dict[str, Any]:
+    """Execute a predefined network orchestration workflow."""
+    service = NetworkOrchestrationService(deps.db, deps.tenant_id)
+
+    result = await service.execute_workflow(
+        workflow_name=request.workflow_name,
+        parameters=request.parameters,
+        priority=request.priority,
+        auto_approve=request.auto_approve,
+        executed_by=deps.user_id,
+    )
+
+    return {
+        "workflow_execution_id": result["execution_id"],
+        "status": result["status"],
+        "current_step": result.get("current_step"),
+        "estimated_completion": result.get("estimated_completion"),
+        "message": "Workflow execution started successfully",
+    }
+
+
+@orchestration_router.get("/workflows", response_model=list[dict[str, Any]])
+@standard_exception_handler
+async def list_available_workflows(
+    category: str | None = Query(None, description="Filter by workflow category"),
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> list[dict[str, Any]]:
+    """List available orchestration workflows."""
+    service = NetworkOrchestrationService(deps.db, deps.tenant_id)
+    return await service.get_available_workflows(category)
+
+
+@orchestration_router.get("/workflow-executions", response_model=list[dict[str, Any]])
+@standard_exception_handler
+async def list_workflow_executions(
+    workflow_name: str | None = Query(None, description="Filter by workflow name"),
+    status: str | None = Query(None, description="Filter by execution status"),
+    deps: PaginatedDependencies = Depends(get_paginated_deps),
+) -> list[dict[str, Any]]:
+    """List workflow executions with filtering."""
+    service = NetworkOrchestrationService(deps.db, deps.tenant_id)
+
+    return await service.list_workflow_executions(
+        workflow_name=workflow_name,
+        status=status,
+        offset=deps.pagination.offset,
+        limit=deps.pagination.size,
+    )
+
+
+@orchestration_router.get("/workflow-executions/{execution_id}", response_model=dict[str, Any])
+@standard_exception_handler
+async def get_workflow_execution_status(
+    execution_id: UUID,
+    include_step_details: bool = Query(False, description="Include detailed step information"),
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> dict[str, Any]:
+    """Get detailed status of a workflow execution."""
+    service = NetworkOrchestrationService(deps.db, deps.tenant_id)
+    return await service.get_workflow_execution_status(execution_id, include_step_details)
+
+
+# === Orchestration Analytics ===
+
+
+@orchestration_router.get("/analytics/summary", response_model=dict[str, Any])
+@standard_exception_handler
+async def get_orchestration_analytics(
+    period_days: int = Query(30, ge=1, le=365, description="Analysis period in days"),
+    include_trends: bool = Query(True, description="Include trend analysis"),
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> dict[str, Any]:
+    """Get orchestration analytics and metrics."""
+    service = NetworkOrchestrationService(deps.db, deps.tenant_id)
+    return await service.get_orchestration_analytics(period_days, include_trends)
+
+
+@orchestration_router.get("/health", response_model=dict[str, Any])
+@standard_exception_handler
+async def get_orchestration_health(
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> dict[str, Any]:
+    """Get orchestration service health status."""
+    service = NetworkOrchestrationService(deps.db, deps.tenant_id)
+    return await service.health_check()
+
+
+# Export the router
+__all__ = ["orchestration_router"]

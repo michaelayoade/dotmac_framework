@@ -2,13 +2,27 @@
 Root conftest.py - Shared test fixtures and configuration.
 
 Leverages existing DotMac infrastructure for clean testing.
+Also ensures local monorepo packages are importable in tests.
 """
 
 import asyncio
+import glob
 import os
+import sys
 from pathlib import Path
-from typing import AsyncGenerator, Generator
 from unittest.mock import AsyncMock, MagicMock
+
+# Ensure local packages/*/src are importable (provides top-level `dotmac` pkg)
+REPO_ROOT = Path(__file__).resolve().parents[1]  # noqa: B008
+for pattern in [REPO_ROOT / "packages" / "*" / "src", REPO_ROOT / "packages" / "*" / "*" / "src"]:
+    for path in glob.glob(str(pattern)):
+        if path not in sys.path:
+            sys.path.insert(0, path)
+
+# Prevent accidental import of heavy E2E conftest inside src during unit test collection
+import types
+
+sys.modules.setdefault("dotmac_management.tests.e2e.conftest", types.ModuleType("conftest"))
 
 import pytest
 
@@ -110,7 +124,6 @@ async def async_mock_client():
 def clean_environment():
     """Ensure clean environment for sensitive tests."""
     # Clean any global state that might interfere with tests
-    import importlib
     import sys
 
     # Clear any cached modules that might have global state

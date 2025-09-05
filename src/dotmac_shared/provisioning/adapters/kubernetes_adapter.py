@@ -3,20 +3,17 @@ Kubernetes deployment adapter for the DotMac Container Provisioning Service.
 """
 
 import asyncio
-import json
-from datetime import datetime
-from typing import Any, Dict, List, Optional
+from datetime import datetime, timezone
+from typing import Any, Optional
 from uuid import UUID
 
 import structlog
-import yaml
 from kubernetes import client, config
 from kubernetes.client.rest import ApiException
 
-from ..core.exceptions import ConfigurationError, DeploymentError, InfrastructureError
+from ..core.exceptions import DeploymentError, InfrastructureError
 from ..core.models import (
     DeploymentArtifacts,
-    InfrastructureType,
     ISPConfig,
     ResourceRequirements,
 )
@@ -153,13 +150,9 @@ class KubernetesAdapter:
         )
 
         try:
-            await asyncio.get_event_loop().run_in_executor(
-                None, self.core_v1.create_namespace, namespace_spec
-            )
+            await asyncio.get_event_loop().run_in_executor(None, self.core_v1.create_namespace, namespace_spec)
 
-            artifacts.created_resources.append(
-                {"kind": "Namespace", "name": namespace_name, "api_version": "v1"}
-            )
+            artifacts.created_resources.append({"kind": "Namespace", "name": namespace_name, "api_version": "v1"})
 
             logger.debug("Namespace created", namespace=namespace_name)
 
@@ -190,9 +183,7 @@ class KubernetesAdapter:
         # Add feature flags
         if config.feature_flags:
             feature_config = {
-                f"FEATURE_{feature.upper()}": (
-                    "true" if getattr(config.feature_flags, feature) else "false"
-                )
+                f"FEATURE_{feature.upper()}": ("true" if getattr(config.feature_flags, feature) else "false")
                 for feature in [
                     "customer_portal",
                     "technician_portal",
@@ -255,7 +246,7 @@ class KubernetesAdapter:
         # Generate database credentials
         db_secrets = {
             "DATABASE_URL": f"postgresql://tenant_{config.tenant_name}:generated_password@postgres:5432/tenant_{config.tenant_name}",
-            "REDIS_URL": f"redis://redis:6379/0",
+            "REDIS_URL": "redis://redis:6379/0",
             "JWT_SECRET_KEY": "generated-jwt-secret-key-32-chars-minimum",
             "ENCRYPTION_KEY": "generated-encryption-key-32-chars",
         }
@@ -264,9 +255,7 @@ class KubernetesAdapter:
         db_secrets.update(config.secrets)
 
         # Encode secrets as base64 (Kubernetes requirement)
-        encoded_secrets = {
-            key: value.encode().hex() for key, value in db_secrets.items()
-        }
+        {key: value.encode().hex() for key, value in db_secrets.items()}
 
         secret_spec = client.V1Secret(
             metadata=client.V1ObjectMeta(
@@ -307,14 +296,10 @@ class KubernetesAdapter:
         """Create Persistent Volume Claims for storage."""
 
         pvc_spec = client.V1PersistentVolumeClaim(
-            metadata=client.V1ObjectMeta(
-                name=f"tenant-storage-pvc", namespace=namespace_name
-            ),
+            metadata=client.V1ObjectMeta(name="tenant-storage-pvc", namespace=namespace_name),
             spec=client.V1PersistentVolumeClaimSpec(
                 access_modes=["ReadWriteOnce"],
-                resources=client.V1ResourceRequirements(
-                    requests={"storage": f"{int(resources.storage_gb)}Gi"}
-                ),
+                resources=client.V1ResourceRequirements(requests={"storage": f"{int(resources.storage_gb)}Gi"}),
                 storage_class_name="standard",
             ),
         )
@@ -349,21 +334,15 @@ class KubernetesAdapter:
 
         # Allow ingress from ingress controller
         ingress_policy = client.V1NetworkPolicy(
-            metadata=client.V1ObjectMeta(
-                name=f"{config.tenant_name}-ingress-policy", namespace=namespace_name
-            ),
+            metadata=client.V1ObjectMeta(name=f"{config.tenant_name}-ingress-policy", namespace=namespace_name),
             spec=client.V1NetworkPolicySpec(
-                pod_selector=client.V1LabelSelector(
-                    match_labels={"tenant": config.tenant_name}
-                ),
+                pod_selector=client.V1LabelSelector(match_labels={"tenant": config.tenant_name}),
                 policy_types=["Ingress"],
                 ingress=[
                     client.V1NetworkPolicyIngressRule(
                         from_=[
                             client.V1NetworkPolicyPeer(
-                                namespace_selector=client.V1LabelSelector(
-                                    match_labels={"name": "ingress-nginx"}
-                                )
+                                namespace_selector=client.V1LabelSelector(match_labels={"name": "ingress-nginx"})
                             )
                         ]
                     )
@@ -388,9 +367,7 @@ class KubernetesAdapter:
                 }
             )
 
-            logger.debug(
-                "Network policy created", name=f"{config.tenant_name}-ingress-policy"
-            )
+            logger.debug("Network policy created", name=f"{config.tenant_name}-ingress-policy")
 
         except ApiException as e:
             if e.status != 409:  # Ignore if already exists
@@ -398,10 +375,10 @@ class KubernetesAdapter:
 
     async def deploy_container(
         self,
-        template: Dict[str, Any],
+        template: dict[str, Any],
         artifacts: DeploymentArtifacts,
         timeout: int = 300,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Deploy ISP Framework container using rendered template."""
 
         logger.info("Deploying container to Kubernetes", namespace=artifacts.namespace)
@@ -411,17 +388,13 @@ class KubernetesAdapter:
             deployment_spec = self._parse_kubernetes_template(template)
 
             # Create Deployment
-            deployment_result = await self._create_deployment(
-                deployment_spec, artifacts
-            )
+            deployment_result = await self._create_deployment(deployment_spec, artifacts)
 
             # Create Service
             service_result = await self._create_service(deployment_spec, artifacts)
 
             # Wait for deployment to be ready
-            await self._wait_for_deployment_ready(
-                deployment_spec["metadata"]["name"], artifacts.namespace, timeout
-            )
+            await self._wait_for_deployment_ready(deployment_spec["metadata"]["name"], artifacts.namespace, timeout)
 
             # Generate URLs
             internal_url = f"http://{service_result['name']}.{artifacts.namespace}.svc.cluster.local:8000"
@@ -442,7 +415,7 @@ class KubernetesAdapter:
                 container_id=artifacts.container_id,
             ) from e
 
-    def _parse_kubernetes_template(self, template: Dict[str, Any]) -> Dict[str, Any]:
+    def _parse_kubernetes_template(self, template: dict[str, Any]) -> dict[str, Any]:
         """Parse and validate Kubernetes template."""
 
         # For now, return a basic deployment structure
@@ -482,16 +455,8 @@ class KubernetesAdapter:
                                     }
                                 },
                                 "envFrom": [
-                                    {
-                                        "configMapRef": {
-                                            "name": f"{template.get('tenant_name', 'default')}-config"
-                                        }
-                                    },
-                                    {
-                                        "secretRef": {
-                                            "name": f"{template.get('tenant_name', 'default')}-secrets"
-                                        }
-                                    },
+                                    {"configMapRef": {"name": f"{template.get('tenant_name', 'default')}-config"}},
+                                    {"secretRef": {"name": f"{template.get('tenant_name', 'default')}-secrets"}},
                                 ],
                             }
                         ]
@@ -501,8 +466,8 @@ class KubernetesAdapter:
         }
 
     async def _create_deployment(
-        self, deployment_spec: Dict[str, Any], artifacts: DeploymentArtifacts
-    ) -> Dict[str, str]:
+        self, deployment_spec: dict[str, Any], artifacts: DeploymentArtifacts
+    ) -> dict[str, str]:
         """Create Kubernetes Deployment."""
 
         # Convert dict to Kubernetes API object
@@ -512,27 +477,19 @@ class KubernetesAdapter:
             metadata=client.V1ObjectMeta(**deployment_spec["metadata"]),
             spec=client.V1DeploymentSpec(
                 replicas=deployment_spec["spec"]["replicas"],
-                selector=client.V1LabelSelector(
-                    match_labels=deployment_spec["spec"]["selector"]["matchLabels"]
-                ),
+                selector=client.V1LabelSelector(match_labels=deployment_spec["spec"]["selector"]["matchLabels"]),
                 template=client.V1PodTemplateSpec(
-                    metadata=client.V1ObjectMeta(
-                        labels=deployment_spec["spec"]["template"]["metadata"]["labels"]
-                    ),
+                    metadata=client.V1ObjectMeta(labels=deployment_spec["spec"]["template"]["metadata"]["labels"]),
                     spec=client.V1PodSpec(
                         containers=[
                             client.V1Container(
                                 name=container["name"],
                                 image=container["image"],
                                 ports=[
-                                    client.V1ContainerPort(
-                                        container_port=port["containerPort"]
-                                    )
+                                    client.V1ContainerPort(container_port=port["containerPort"])
                                     for port in container["ports"]
                                 ],
-                                resources=client.V1ResourceRequirements(
-                                    limits=container["resources"]["limits"]
-                                ),
+                                resources=client.V1ResourceRequirements(limits=container["resources"]["limits"]),
                                 env_from=[
                                     (
                                         client.V1EnvFromSource(
@@ -542,17 +499,13 @@ class KubernetesAdapter:
                                         )
                                         if "configMapRef" in env_from
                                         else client.V1EnvFromSource(
-                                            secret_ref=client.V1SecretEnvSource(
-                                                name=env_from["secretRef"]["name"]
-                                            )
+                                            secret_ref=client.V1SecretEnvSource(name=env_from["secretRef"]["name"])
                                         )
                                     )
                                     for env_from in container["envFrom"]
                                 ],
                             )
-                            for container in deployment_spec["spec"]["template"][
-                                "spec"
-                            ]["containers"]
+                            for container in deployment_spec["spec"]["template"]["spec"]["containers"]
                         ]
                     ),
                 ),
@@ -577,9 +530,7 @@ class KubernetesAdapter:
 
         return {"name": result.metadata.name}
 
-    async def _create_service(
-        self, deployment_spec: Dict[str, Any], artifacts: DeploymentArtifacts
-    ) -> Dict[str, str]:
+    async def _create_service(self, deployment_spec: dict[str, Any], artifacts: DeploymentArtifacts) -> dict[str, str]:
         """Create Kubernetes Service for the deployment."""
 
         service_name = f"{deployment_spec['metadata']['name']}-service"
@@ -613,9 +564,7 @@ class KubernetesAdapter:
 
         return {"name": result.metadata.name}
 
-    async def _wait_for_deployment_ready(
-        self, deployment_name: str, namespace: str, timeout: int
-    ) -> None:
+    async def _wait_for_deployment_ready(self, deployment_name: str, namespace: str, timeout: int) -> None:
         """Wait for deployment to be ready."""
 
         logger.info(
@@ -635,10 +584,7 @@ class KubernetesAdapter:
                     namespace,
                 )
 
-                if (
-                    deployment.status.ready_replicas
-                    and deployment.status.ready_replicas == deployment.spec.replicas
-                ):
+                if deployment.status.ready_replicas and deployment.status.ready_replicas == deployment.spec.replicas:
                     logger.info("Deployment is ready", deployment_name=deployment_name)
                     return
 
@@ -656,7 +602,7 @@ class KubernetesAdapter:
 
     async def configure_networking(
         self, isp_id: UUID, config: ISPConfig, artifacts: DeploymentArtifacts
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Configure ingress and external networking."""
 
         logger.info("Configuring networking", namespace=artifacts.namespace)
@@ -671,9 +617,7 @@ class KubernetesAdapter:
                 namespace=artifacts.namespace,
                 annotations={
                     "kubernetes.io/ingress.class": "nginx",
-                    "cert-manager.io/cluster-issuer": (
-                        "letsencrypt-prod" if config.network_config.ssl_enabled else ""
-                    ),
+                    "cert-manager.io/cluster-issuer": ("letsencrypt-prod" if config.network_config.ssl_enabled else ""),
                 },
             ),
             spec=client.V1IngressSpec(
@@ -697,11 +641,7 @@ class KubernetesAdapter:
                     )
                 ],
                 tls=(
-                    [
-                        client.V1IngressTLS(
-                            hosts=[host], secret_name=f"{config.tenant_name}-tls"
-                        )
-                    ]
+                    [client.V1IngressTLS(hosts=[host], secret_name=f"{config.tenant_name}-tls")]
                     if config.network_config.ssl_enabled
                     else []
                 ),
@@ -716,9 +656,7 @@ class KubernetesAdapter:
         )
 
         artifacts.ingress_name = result.metadata.name
-        artifacts.external_url = (
-            f"{'https' if config.network_config.ssl_enabled else 'http'}://{host}"
-        )
+        artifacts.external_url = f"{'https' if config.network_config.ssl_enabled else 'http'}://{host}"
 
         artifacts.created_resources.append(
             {
@@ -731,9 +669,7 @@ class KubernetesAdapter:
 
         return {"external_url": artifacts.external_url}
 
-    async def configure_ssl(
-        self, isp_id: UUID, config: ISPConfig, artifacts: DeploymentArtifacts
-    ) -> Dict[str, Any]:
+    async def configure_ssl(self, isp_id: UUID, config: ISPConfig, artifacts: DeploymentArtifacts) -> dict[str, Any]:
         """Configure SSL certificates using cert-manager."""
 
         logger.info("Configuring SSL", namespace=artifacts.namespace)
@@ -748,16 +684,14 @@ class KubernetesAdapter:
 
     async def configure_monitoring(
         self, isp_id: UUID, config: ISPConfig, artifacts: DeploymentArtifacts
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Configure monitoring and logging."""
 
         logger.info("Configuring monitoring", namespace=artifacts.namespace)
 
         # Add monitoring labels to namespace
         try:
-            namespace_patch = {
-                "metadata": {"labels": {"monitoring": "enabled", "logging": "enabled"}}
-            }
+            namespace_patch = {"metadata": {"labels": {"monitoring": "enabled", "logging": "enabled"}}}
 
             await asyncio.get_event_loop().run_in_executor(
                 None, self.core_v1.patch_namespace, artifacts.namespace, namespace_patch
@@ -780,9 +714,7 @@ class KubernetesAdapter:
 
         try:
             # Delete namespace and all resources within it
-            await asyncio.get_event_loop().run_in_executor(
-                None, self.core_v1.delete_namespace, artifacts.namespace
-            )
+            await asyncio.get_event_loop().run_in_executor(None, self.core_v1.delete_namespace, artifacts.namespace)
 
             logger.info("Rollback completed", namespace=artifacts.namespace)
             return True
@@ -800,8 +732,6 @@ class KubernetesAdapter:
         logger.info("Cleaning up infrastructure", namespace=artifacts.namespace)
 
         try:
-            await asyncio.get_event_loop().run_in_executor(
-                None, self.core_v1.delete_namespace, artifacts.namespace
-            )
+            await asyncio.get_event_loop().run_in_executor(None, self.core_v1.delete_namespace, artifacts.namespace)
         except Exception as e:
             logger.error("Failed to cleanup infrastructure", error=str(e))

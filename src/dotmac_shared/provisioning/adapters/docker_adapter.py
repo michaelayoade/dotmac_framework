@@ -4,11 +4,10 @@ Docker deployment adapter for the DotMac Container Provisioning Service.
 
 import asyncio
 import json
-import os
 import tempfile
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 from uuid import UUID
 
 import structlog
@@ -16,10 +15,9 @@ import yaml
 
 import docker
 
-from ..core.exceptions import ConfigurationError, DeploymentError, InfrastructureError
+from ..core.exceptions import DeploymentError, InfrastructureError
 from ..core.models import (
     DeploymentArtifacts,
-    InfrastructureType,
     ISPConfig,
     ResourceRequirements,
 )
@@ -44,17 +42,13 @@ class DockerAdapter:
             self.docker_client = docker.from_env()
 
             # Test connection
-            await asyncio.get_event_loop().run_in_executor(
-                None, self.docker_client.ping
-            )
+            await asyncio.get_event_loop().run_in_executor(None, self.docker_client.ping)
 
             self.initialized = True
             logger.info("Docker client initialized successfully")
 
         except Exception as e:
-            raise InfrastructureError(
-                f"Failed to initialize Docker client: {e}", infrastructure_type="docker"
-            ) from e
+            raise InfrastructureError(f"Failed to initialize Docker client: {e}", infrastructure_type="docker") from e
 
     async def provision_infrastructure(
         self,
@@ -123,9 +117,7 @@ class DockerAdapter:
         try:
             # Check if network already exists
             try:
-                existing_network = await asyncio.get_event_loop().run_in_executor(
-                    None, self.docker_client.networks.get, network_name
-                )
+                await asyncio.get_event_loop().run_in_executor(None, self.docker_client.networks.get, network_name)
                 logger.warning("Network already exists", network=network_name)
                 return
             except docker.errors.NotFound:
@@ -144,9 +136,7 @@ class DockerAdapter:
                 },
             )
 
-            artifacts.created_resources.append(
-                {"kind": "Network", "name": network_name, "id": network.id}
-            )
+            artifacts.created_resources.append({"kind": "Network", "name": network_name, "id": network.id})
 
             logger.debug("Docker network created", network=network_name, id=network.id)
 
@@ -157,9 +147,7 @@ class DockerAdapter:
                 resource_name=network_name,
             ) from e
 
-    async def _create_volumes(
-        self, tenant_name: str, artifacts: DeploymentArtifacts
-    ) -> None:
+    async def _create_volumes(self, tenant_name: str, artifacts: DeploymentArtifacts) -> None:
         """Create Docker volumes for persistent storage."""
 
         volume_names = [
@@ -172,9 +160,7 @@ class DockerAdapter:
             try:
                 # Check if volume already exists
                 try:
-                    existing_volume = await asyncio.get_event_loop().run_in_executor(
-                        None, self.docker_client.volumes.get, volume_name
-                    )
+                    await asyncio.get_event_loop().run_in_executor(None, self.docker_client.volumes.get, volume_name)
                     continue  # Volume exists, skip
                 except docker.errors.NotFound:
                     pass  # Volume doesn't exist, create it
@@ -186,16 +172,12 @@ class DockerAdapter:
                     labels={"tenant": tenant_name, "managed-by": "dotmac-provisioning"},
                 )
 
-                artifacts.created_resources.append(
-                    {"kind": "Volume", "name": volume_name, "id": volume.id}
-                )
+                artifacts.created_resources.append({"kind": "Volume", "name": volume_name, "id": volume.id})
 
                 logger.debug("Docker volume created", volume=volume_name, id=volume.id)
 
             except Exception as e:
-                logger.warning(
-                    "Failed to create volume", volume=volume_name, error=str(e)
-                )
+                logger.warning("Failed to create volume", volume=volume_name, error=str(e))
 
     async def _prepare_environment_config(
         self, isp_id: UUID, config: ISPConfig, artifacts: DeploymentArtifacts
@@ -218,9 +200,7 @@ class DockerAdapter:
         # Add feature flags
         if config.feature_flags:
             feature_config = {
-                f"FEATURE_{feature.upper()}": (
-                    "true" if getattr(config.feature_flags, feature) else "false"
-                )
+                f"FEATURE_{feature.upper()}": ("true" if getattr(config.feature_flags, feature) else "false")
                 for feature in [
                     "customer_portal",
                     "technician_portal",
@@ -259,15 +239,13 @@ class DockerAdapter:
 
     async def deploy_container(
         self,
-        template: Dict[str, Any],
+        template: dict[str, Any],
         artifacts: DeploymentArtifacts,
         timeout: int = 300,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Deploy ISP Framework container using Docker Compose template."""
 
-        logger.info(
-            "Deploying container using Docker", container=artifacts.container_id
-        )
+        logger.info("Deploying container using Docker", container=artifacts.container_id)
 
         try:
             # Parse Docker Compose template
@@ -277,12 +255,10 @@ class DockerAdapter:
             compose_file_path = await self._create_compose_file(compose_spec, artifacts)
 
             # Deploy using docker-compose
-            deployment_result = await self._deploy_with_compose(
-                compose_file_path, artifacts, timeout
-            )
+            await self._deploy_with_compose(compose_file_path, artifacts, timeout)
 
             # Generate URLs
-            internal_url = f"http://localhost:8000"
+            internal_url = "http://localhost:8000"
             external_url = f"http://localhost:{template.get('external_port', 8000)}"
 
             return {
@@ -299,9 +275,7 @@ class DockerAdapter:
                 container_id=artifacts.container_id,
             ) from e
 
-    def _parse_docker_compose_template(
-        self, template: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _parse_docker_compose_template(self, template: dict[str, Any]) -> dict[str, Any]:
         """Parse and enhance Docker Compose template."""
 
         # If template is already a compose spec, use it directly
@@ -345,17 +319,11 @@ class DockerAdapter:
                     "container_name": f"{container_name}-postgres",
                     "restart": "unless-stopped",
                     "environment": {
-                        "POSTGRES_DB": template.get(
-                            "database_name", f"tenant_{tenant_name}_db"
-                        ),
-                        "POSTGRES_USER": template.get(
-                            "database_user", f"tenant_{tenant_name}_user"
-                        ),
+                        "POSTGRES_DB": template.get("database_name", f"tenant_{tenant_name}_db"),
+                        "POSTGRES_USER": template.get("database_user", f"tenant_{tenant_name}_user"),
                         "POSTGRES_PASSWORD": "password",  # In production, use secrets
                     },
-                    "volumes": [
-                        f"tenant-{tenant_name}-postgres-data:/var/lib/postgresql/data"
-                    ],
+                    "volumes": [f"tenant-{tenant_name}-postgres-data:/var/lib/postgresql/data"],
                     "networks": [network_name],
                     "healthcheck": {
                         "test": [
@@ -388,9 +356,7 @@ class DockerAdapter:
             "networks": {network_name: {"external": True}},
         }
 
-    async def _create_compose_file(
-        self, compose_spec: Dict[str, Any], artifacts: DeploymentArtifacts
-    ) -> Path:
+    async def _create_compose_file(self, compose_spec: dict[str, Any], artifacts: DeploymentArtifacts) -> Path:
         """Create temporary Docker Compose file."""
 
         # Get environment config from artifacts
@@ -426,7 +392,7 @@ class DockerAdapter:
 
     async def _deploy_with_compose(
         self, compose_file_path: Path, artifacts: DeploymentArtifacts, timeout: int
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Deploy using docker-compose."""
 
         try:
@@ -442,9 +408,7 @@ class DockerAdapter:
                 stderr=asyncio.subprocess.PIPE,
             )
 
-            stdout, stderr = await asyncio.wait_for(
-                process.communicate(), timeout=timeout
-            )
+            stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=timeout)
 
             if process.returncode != 0:
                 raise DeploymentError(
@@ -453,21 +417,19 @@ class DockerAdapter:
                     container_id=artifacts.container_id,
                 )
 
-            logger.info(
-                "Docker Compose deployment completed", container=artifacts.container_id
-            )
+            logger.info("Docker Compose deployment completed", container=artifacts.container_id)
 
             # Wait for containers to be healthy
             await self._wait_for_containers_healthy(compose_file_path, timeout)
 
             return {"status": "deployed", "compose_output": stdout.decode()}
 
-        except asyncio.TimeoutError:
+        except asyncio.TimeoutError as e:
             raise DeploymentError(
                 f"Docker deployment timed out after {timeout} seconds",
                 deployment_phase="compose_up",
                 container_id=artifacts.container_id,
-            )
+            ) from e
         except Exception as e:
             raise DeploymentError(
                 f"Docker deployment failed: {e}",
@@ -475,9 +437,7 @@ class DockerAdapter:
                 container_id=artifacts.container_id,
             ) from e
 
-    async def _wait_for_containers_healthy(
-        self, compose_file_path: Path, timeout: int
-    ) -> None:
+    async def _wait_for_containers_healthy(self, compose_file_path: Path, timeout: int) -> None:
         """Wait for all containers to be healthy."""
 
         logger.info("Waiting for containers to be healthy")
@@ -517,9 +477,7 @@ class DockerAdapter:
                         status = container.get("State", "unknown")
                         health = container.get("Health", "unknown")
 
-                        if status != "running" or (
-                            health not in ["unknown", "healthy"]
-                        ):
+                        if status != "running" or (health not in ["unknown", "healthy"]):
                             all_healthy = False
                             break
 
@@ -540,7 +498,7 @@ class DockerAdapter:
 
     async def configure_networking(
         self, isp_id: UUID, config: ISPConfig, artifacts: DeploymentArtifacts
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Configure networking for Docker deployment."""
 
         logger.info("Configuring networking", container=artifacts.container_id)
@@ -559,9 +517,7 @@ class DockerAdapter:
 
         return {"external_url": external_url}
 
-    async def configure_ssl(
-        self, isp_id: UUID, config: ISPConfig, artifacts: DeploymentArtifacts
-    ) -> Dict[str, Any]:
+    async def configure_ssl(self, isp_id: UUID, config: ISPConfig, artifacts: DeploymentArtifacts) -> dict[str, Any]:
         """Configure SSL for Docker deployment."""
 
         logger.info("Configuring SSL", container=artifacts.container_id)
@@ -576,7 +532,7 @@ class DockerAdapter:
 
     async def configure_monitoring(
         self, isp_id: UUID, config: ISPConfig, artifacts: DeploymentArtifacts
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Configure monitoring for Docker deployment."""
 
         logger.info("Configuring monitoring", container=artifacts.container_id)
@@ -625,9 +581,7 @@ class DockerAdapter:
                 if process.returncode == 0:
                     logger.info("Docker containers stopped and removed")
                 else:
-                    logger.warning(
-                        "Failed to stop containers with compose", error=stderr.decode()
-                    )
+                    logger.warning("Failed to stop containers with compose", error=stderr.decode())
 
             # Clean up additional resources
             await self._cleanup_infrastructure(artifacts)
@@ -636,9 +590,7 @@ class DockerAdapter:
             return True
 
         except Exception as e:
-            logger.error(
-                "Rollback failed", container=artifacts.container_id, error=str(e)
-            )
+            logger.error("Rollback failed", container=artifacts.container_id, error=str(e))
             return False
 
     async def _cleanup_infrastructure(self, artifacts: DeploymentArtifacts) -> None:

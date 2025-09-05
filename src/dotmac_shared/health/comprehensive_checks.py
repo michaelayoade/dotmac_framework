@@ -7,7 +7,7 @@ import logging
 import time
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 import asyncpg
 import httpx
@@ -20,10 +20,10 @@ logger = logging.getLogger(__name__)
 class HealthChecker:
     """Main health checker for all system components."""
 
-    def __init__(self, config: Dict[str, Any] = None):
+    def __init__(self, config: Optional[dict[str, Any]] = None):
         self.config = config or {}
 
-    async def check_all(self) -> Dict[str, Any]:
+    async def check_all(self) -> dict[str, Any]:
         """Check health of all system components."""
         results = {"timestamp": datetime.now().isoformat(), "overall_status": "unknown"}
 
@@ -37,25 +37,19 @@ class HealthChecker:
 
         # Process results
         results["database"] = (
-            checks[0]
-            if not isinstance(checks[0], Exception)
-            else {"status": "error", "error": str(checks[0])}
+            checks[0] if not isinstance(checks[0], Exception) else {"status": "error", "error": str(checks[0])}
         )
         results["redis"] = (
-            checks[1]
-            if not isinstance(checks[1], Exception)
-            else {"status": "error", "error": str(checks[1])}
+            checks[1] if not isinstance(checks[1], Exception) else {"status": "error", "error": str(checks[1])}
         )
-        results["external_services"] = (
-            checks[2] if not isinstance(checks[2], Exception) else []
-        )
+        results["external_services"] = checks[2] if not isinstance(checks[2], Exception) else []
 
         # Determine overall status
         results["overall_status"] = self._determine_overall_status(results)
 
         return results
 
-    async def check_database(self) -> Dict[str, Any]:
+    async def check_database(self) -> dict[str, Any]:
         """Check database health."""
         start_time = time.time()
 
@@ -82,7 +76,7 @@ class HealthChecker:
                 "response_time": time.time() - start_time,
             }
 
-    async def check_redis(self) -> Dict[str, Any]:
+    async def check_redis(self) -> dict[str, Any]:
         """Check Redis health."""
         start_time = time.time()
 
@@ -105,15 +99,13 @@ class HealthChecker:
                 "response_time": time.time() - start_time,
             }
 
-    async def check_external_services(self) -> List[Dict[str, Any]]:
+    async def check_external_services(self) -> list[dict[str, Any]]:
         """Check external service health."""
         external_services = self.config.get("external_services", [])
         if not external_services:
             return []
 
-        tasks = [
-            self.check_external_service(service["url"]) for service in external_services
-        ]
+        tasks = [self.check_external_service(service["url"]) for service in external_services]
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -133,7 +125,7 @@ class HealthChecker:
 
         return service_results
 
-    async def check_external_service(self, url: str) -> Dict[str, Any]:
+    async def check_external_service(self, url: str) -> dict[str, Any]:
         """Check a single external service."""
         start_time = time.time()
 
@@ -179,7 +171,7 @@ class HealthChecker:
         redis_url = self.config.get("redis_url", "redis://localhost:6379/1")
         return redis.from_url(redis_url)
 
-    def _determine_overall_status(self, results: Dict[str, Any]) -> str:
+    def _determine_overall_status(self, results: dict[str, Any]) -> str:
         """Determine overall system status."""
         critical_services = ["database", "redis"]
 
@@ -190,9 +182,7 @@ class HealthChecker:
 
         # Check external services
         external_services = results.get("external_services", [])
-        unhealthy_external = sum(
-            1 for svc in external_services if svc.get("status") == "unhealthy"
-        )
+        unhealthy_external = sum(1 for svc in external_services if svc.get("status") == "unhealthy")
 
         if unhealthy_external > len(external_services) / 2:  # More than half unhealthy
             return "degraded"
@@ -208,7 +198,7 @@ class DatabaseHealthCheck:
     def __init__(self, connection_string: str):
         self.connection_string = connection_string
 
-    async def check_pool_health(self) -> Dict[str, Any]:
+    async def check_pool_health(self) -> dict[str, Any]:
         """Check connection pool health."""
         if not hasattr(self, "_pool"):
             return {"error": "Pool not initialized"}
@@ -219,16 +209,14 @@ class DatabaseHealthCheck:
             "active_connections": self._pool.get_size() - self._pool.get_idle_size(),
         }
 
-    async def check_query_performance(self) -> Dict[str, Any]:
+    async def check_query_performance(self) -> dict[str, Any]:
         """Check database query performance."""
         start_time = time.time()
 
         try:
             async with self._get_connection() as conn:
                 # Test query performance
-                result = await conn.fetchval(
-                    "SELECT COUNT(*) FROM information_schema.tables"
-                )
+                result = await conn.fetchval("SELECT COUNT(*) FROM information_schema.tables")
 
                 query_time = time.time() - start_time
                 return {"query_time": round(query_time, 3), "row_count": result}
@@ -236,7 +224,7 @@ class DatabaseHealthCheck:
         except Exception as e:
             return {"error": str(e), "query_time": time.time() - start_time}
 
-    async def check_disk_space(self) -> Dict[str, Any]:
+    async def check_disk_space(self) -> dict[str, Any]:
         """Check database disk space usage."""
         try:
             async with self._get_connection() as conn:
@@ -286,7 +274,7 @@ class RedisHealthCheck:
     def __init__(self, redis_url: str):
         self.redis_url = redis_url
 
-    async def check_memory_usage(self) -> Dict[str, Any]:
+    async def check_memory_usage(self) -> dict[str, Any]:
         """Check Redis memory usage."""
         try:
             info = await self._redis_client.info("memory")
@@ -298,18 +286,14 @@ class RedisHealthCheck:
             return {
                 "used_memory_mb": round(used_memory / (1024 * 1024), 2),
                 "peak_memory_mb": round(used_memory_peak / (1024 * 1024), 2),
-                "max_memory_mb": (
-                    round(maxmemory / (1024 * 1024), 2) if maxmemory else None
-                ),
-                "memory_usage_percentage": (
-                    round((used_memory / maxmemory) * 100, 2) if maxmemory else None
-                ),
+                "max_memory_mb": (round(maxmemory / (1024 * 1024), 2) if maxmemory else None),
+                "memory_usage_percentage": (round((used_memory / maxmemory) * 100, 2) if maxmemory else None),
             }
 
         except Exception as e:
             return {"error": str(e)}
 
-    async def check_connected_clients(self) -> Dict[str, Any]:
+    async def check_connected_clients(self) -> dict[str, Any]:
         """Check Redis connected clients."""
         try:
             info = await self._redis_client.info("clients")
@@ -323,7 +307,7 @@ class RedisHealthCheck:
         except Exception as e:
             return {"error": str(e)}
 
-    async def check_key_statistics(self) -> Dict[str, Any]:
+    async def check_key_statistics(self) -> dict[str, Any]:
         """Check Redis key statistics."""
         try:
             info = await self._redis_client.info("keyspace")
@@ -344,7 +328,7 @@ class RedisHealthCheck:
         except Exception as e:
             return {"error": str(e)}
 
-    async def check_performance_metrics(self) -> Dict[str, Any]:
+    async def check_performance_metrics(self) -> dict[str, Any]:
         """Check Redis performance metrics."""
         try:
             start_time = time.time()
@@ -373,10 +357,10 @@ class RedisHealthCheck:
 class ExternalServiceHealthCheck:
     """Health checks for external services."""
 
-    def __init__(self, services: List[Dict[str, Any]]):
+    def __init__(self, services: list[dict[str, Any]]):
         self.services = services
 
-    async def check_all_services(self) -> List[Dict[str, Any]]:
+    async def check_all_services(self) -> list[dict[str, Any]]:
         """Check all external services."""
         tasks = [self.check_service(service) for service in self.services]
         results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -396,7 +380,7 @@ class ExternalServiceHealthCheck:
 
         return service_results
 
-    async def check_service(self, service_config: Dict[str, Any]) -> Dict[str, Any]:
+    async def check_service(self, service_config: dict[str, Any]) -> dict[str, Any]:
         """Check a single external service."""
         name = service_config.get("name", "unknown")
         url = service_config["url"]
@@ -443,7 +427,7 @@ class ExternalServiceHealthCheck:
             }
 
 
-async def perform_health_check(config: Dict[str, Any] = None) -> Dict[str, Any]:
+async def perform_health_check(config: Optional[dict[str, Any]] = None) -> dict[str, Any]:
     """Perform comprehensive health check."""
     try:
         health_checker = HealthChecker(config)

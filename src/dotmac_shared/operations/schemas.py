@@ -7,16 +7,15 @@ Follows existing DRY patterns and base schema inheritance.
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field
-
-from dotmac_shared.schemas.base_schemas import (
+from dotmac.core.schemas.base_schemas import (
     BaseCreateSchema,
     BaseResponseSchema,
     BaseUpdateSchema,
 )
+from pydantic import BaseModel, Field
 
 
 # Enums for operations
@@ -60,7 +59,7 @@ class MaintenanceStatus(str, Enum):
 # Network Health Monitoring Schemas
 class NetworkEndpointCreate(BaseCreateSchema):
     """Schema for creating network endpoint monitoring"""
-    
+
     name: str = Field(..., description="Endpoint name")
     host: str = Field(..., description="Endpoint host")
     port: int = Field(..., ge=1, le=65535, description="Endpoint port")
@@ -74,7 +73,7 @@ class NetworkEndpointCreate(BaseCreateSchema):
 
 class NetworkEndpointUpdate(BaseUpdateSchema):
     """Schema for updating network endpoint monitoring"""
-    
+
     name: Optional[str] = Field(None, description="Endpoint name")
     host: Optional[str] = Field(None, description="Endpoint host")
     port: Optional[int] = Field(None, ge=1, le=65535, description="Endpoint port")
@@ -87,7 +86,7 @@ class NetworkEndpointUpdate(BaseUpdateSchema):
 
 class NetworkEndpointResponse(BaseResponseSchema):
     """Schema for network endpoint response"""
-    
+
     name: str
     host: str
     port: int
@@ -103,18 +102,18 @@ class NetworkEndpointResponse(BaseResponseSchema):
 
 class HealthCheckResult(BaseModel):
     """Health check result schema"""
-    
+
     endpoint_id: UUID
     status: NetworkHealthStatus
     response_time: float
     message: str
     timestamp: datetime
-    details: Dict[str, Any]
+    details: dict[str, Any]
 
 
 class NetworkHealthSummary(BaseModel):
     """Network health summary schema"""
-    
+
     overall_status: NetworkHealthStatus
     total_endpoints: int
     healthy_count: int
@@ -123,13 +122,13 @@ class NetworkHealthSummary(BaseModel):
     offline_count: int
     average_response_time: float
     timestamp: str
-    details: List[Dict[str, Any]]
+    details: list[dict[str, Any]]
 
 
 # Customer Lifecycle Management Schemas
 class CustomerRegistrationRequest(BaseCreateSchema):
     """Schema for customer registration request"""
-    
+
     username: str = Field(..., min_length=3, max_length=50, description="Username")
     email: str = Field(..., description="Email address")
     first_name: str = Field(..., min_length=1, max_length=100, description="First name")
@@ -146,42 +145,42 @@ class CustomerRegistrationRequest(BaseCreateSchema):
 
 class CustomerVerificationRequest(BaseModel):
     """Schema for customer verification request"""
-    
+
     verification_token: str = Field(..., description="Verification token")
     verification_type: str = Field("email", description="Verification type")
-    additional_data: Optional[Dict[str, Any]] = Field(None, description="Additional verification data")
+    additional_data: Optional[dict[str, Any]] = Field(None, description="Additional verification data")
 
 
 class CustomerLifecycleAction(BaseModel):
     """Schema for customer lifecycle action"""
-    
+
     action_type: str = Field(..., description="Action type")
-    parameters: Dict[str, Any] = Field(default_factory=dict, description="Action parameters")
+    parameters: dict[str, Any] = Field(default_factory=dict, description="Action parameters")
     reason: Optional[str] = Field(None, description="Action reason")
 
 
 class CustomerLifecycleResponse(BaseResponseSchema):
     """Schema for customer lifecycle response"""
-    
+
     user_id: UUID
     status: str
     lifecycle_stage: CustomerLifecycleStage
-    next_actions: List[Dict[str, str]]
+    next_actions: list[dict[str, str]]
     timestamp: str
 
 
 # Service Provisioning Schemas
 class ServiceProvisioningRequest(BaseCreateSchema):
     """Schema for service provisioning request"""
-    
+
     customer_id: UUID = Field(..., description="Customer ID")
     service_name: str = Field(..., description="Service name")
-    custom_config: Optional[Dict[str, Any]] = Field(None, description="Custom configuration")
+    custom_config: Optional[dict[str, Any]] = Field(None, description="Custom configuration")
 
 
 class ServiceProvisioningResponse(BaseResponseSchema):
     """Schema for service provisioning response"""
-    
+
     request_id: UUID
     customer_id: UUID
     service_name: str
@@ -194,37 +193,37 @@ class ServiceProvisioningResponse(BaseResponseSchema):
 # Infrastructure Maintenance Schemas
 class MaintenanceTaskCreate(BaseCreateSchema):
     """Schema for creating maintenance task"""
-    
+
     task_name: str = Field(..., description="Task name")
     maintenance_type: MaintenanceType = Field(..., description="Maintenance type")
     schedule_cron: str = Field(..., description="Cron schedule")
     enabled: bool = Field(True, description="Task enabled")
     timeout_minutes: int = Field(60, ge=1, le=1440, description="Timeout in minutes")
     retry_count: int = Field(3, ge=1, le=10, description="Retry count")
-    parameters: Optional[Dict[str, Any]] = Field(None, description="Task parameters")
+    parameters: Optional[dict[str, Any]] = Field(None, description="Task parameters")
 
 
 class MaintenanceTaskUpdate(BaseUpdateSchema):
     """Schema for updating maintenance task"""
-    
+
     task_name: Optional[str] = Field(None, description="Task name")
     schedule_cron: Optional[str] = Field(None, description="Cron schedule")
     enabled: Optional[bool] = Field(None, description="Task enabled")
     timeout_minutes: Optional[int] = Field(None, ge=1, le=1440, description="Timeout in minutes")
     retry_count: Optional[int] = Field(None, ge=1, le=10, description="Retry count")
-    parameters: Optional[Dict[str, Any]] = Field(None, description="Task parameters")
+    parameters: Optional[dict[str, Any]] = Field(None, description="Task parameters")
 
 
 class MaintenanceTaskResponse(BaseResponseSchema):
     """Schema for maintenance task response"""
-    
+
     task_name: str
     maintenance_type: MaintenanceType
     schedule_cron: str
     enabled: bool
     timeout_minutes: int
     retry_count: int
-    parameters: Optional[Dict[str, Any]]
+    parameters: Optional[dict[str, Any]]
     last_run: Optional[datetime]
     last_status: Optional[MaintenanceStatus]
     next_run: Optional[datetime]
@@ -232,7 +231,7 @@ class MaintenanceTaskResponse(BaseResponseSchema):
 
 class MaintenanceResult(BaseModel):
     """Schema for maintenance result"""
-    
+
     task_id: UUID
     task_name: str
     status: MaintenanceStatus
@@ -243,31 +242,31 @@ class MaintenanceResult(BaseModel):
     items_cleaned: int = 0
     space_freed_mb: float = 0.0
     error_message: Optional[str] = None
-    details: Optional[Dict[str, Any]] = None
+    details: Optional[dict[str, Any]] = None
 
 
 class MaintenanceExecutionRequest(BaseModel):
     """Schema for manual maintenance execution request"""
-    
+
     maintenance_type: MaintenanceType = Field(..., description="Maintenance type")
-    parameters: Optional[Dict[str, Any]] = Field(None, description="Execution parameters")
+    parameters: Optional[dict[str, Any]] = Field(None, description="Execution parameters")
 
 
 # Operations Status Schemas
 class OperationsStatus(BaseModel):
     """Schema for operations status"""
-    
+
     scheduler_running: bool
     active_tasks: int
-    recent_results: List[Dict[str, Any]]
-    maintenance_tasks: List[Dict[str, Any]]
+    recent_results: list[dict[str, Any]]
+    maintenance_tasks: list[dict[str, Any]]
     timestamp: str
 
 
 # Service Health Check Schemas
 class ServiceHealthCheckRequest(BaseModel):
     """Schema for service health check request"""
-    
+
     service_type: str = Field(..., description="Service type (database, redis, container)")
     connection_string: Optional[str] = Field(None, description="Connection string")
     container_id: Optional[str] = Field(None, description="Container ID")
@@ -276,22 +275,22 @@ class ServiceHealthCheckRequest(BaseModel):
 
 class ServiceHealthCheckResponse(BaseModel):
     """Schema for service health check response"""
-    
+
     status: NetworkHealthStatus
     response_time: float
     message: str
-    details: Dict[str, Any]
+    details: dict[str, Any]
 
 
 # Endpoint Trends Schema
 class EndpointTrendsResponse(BaseModel):
     """Schema for endpoint trends response"""
-    
+
     endpoint_id: UUID
     endpoint_name: Optional[str]
     period_hours: int
     total_checks: int
     availability_percentage: float
     average_response_time: float
-    status_distribution: Dict[str, Dict[str, Any]]
-    recent_issues: List[Dict[str, Any]]
+    status_distribution: dict[str, dict[str, Any]]
+    recent_issues: list[dict[str, Any]]

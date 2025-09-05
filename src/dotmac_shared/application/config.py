@@ -3,10 +3,10 @@ Configuration system for deployment-aware application factory.
 """
 
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -40,9 +40,7 @@ class ResourceLimits:
     max_concurrent_requests: int = 50
 
     @classmethod
-    def from_plan_type(
-        cls, plan_type: str, custom_limits: Optional[Dict[str, Any]] = None
-    ) -> "ResourceLimits":
+    def from_plan_type(cls, plan_type: str, custom_limits: Optional[dict[str, Any]] = None) -> "ResourceLimits":
         """Create resource limits based on plan type with optional customization."""
         # Default plan configurations
         plan_defaults = {
@@ -103,8 +101,8 @@ class RouterConfig:
     prefix: str = ""
     auto_discover: bool = False
     required: bool = False
-    tags: List[str] = field(default_factory=list)
-    dependencies: List[str] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)
+    dependencies: list[str] = field(default_factory=list)
 
     def __post_init__(self):
         if self.auto_discover and not self.tags:
@@ -116,22 +114,18 @@ class RouterConfig:
 class HealthCheckConfig:
     """Health check configuration."""
 
-    enabled_checks: List[str] = field(
-        default_factory=lambda: ["database", "cache", "observability"]
-    )
-    additional_filesystem_paths: List[str] = field(
-        default_factory=lambda: ["logs", "uploads", "static"]
-    )
-    custom_checks: Dict[str, Callable] = field(default_factory=dict)
+    enabled_checks: list[str] = field(default_factory=lambda: ["database", "cache", "observability"])
+    additional_filesystem_paths: list[str] = field(default_factory=lambda: ["logs", "uploads", "static"])
+    custom_checks: dict[str, Callable] = field(default_factory=dict)
 
 
 @dataclass
 class FeatureConfig:
     """Feature flag configuration."""
 
-    enabled_features: List[str] = field(default_factory=list)
-    disabled_features: List[str] = field(default_factory=list)
-    plan_based_features: Dict[str, List[str]] = field(
+    enabled_features: list[str] = field(default_factory=list)
+    disabled_features: list[str] = field(default_factory=list)
+    plan_based_features: dict[str, list[str]] = field(
         default_factory=lambda: {
             "standard": [
                 "customer_portal",
@@ -161,14 +155,10 @@ class FeatureConfig:
         }
     )
 
-    def get_features_for_plan(
-        self, plan_type: str, tenant_id: Optional[str] = None
-    ) -> List[str]:
+    def get_features_for_plan(self, plan_type: str, tenant_id: Optional[str] = None) -> list[str]:
         """Get enabled features for a specific plan type and tenant."""
         # Start with plan-based features
-        features = self.plan_based_features.get(
-            plan_type.lower(), self.plan_based_features["standard"]
-        ).copy()
+        features = self.plan_based_features.get(plan_type.lower(), self.plan_based_features["standard"]).copy()
 
         # Add any additional enabled features
         features.extend(self.enabled_features)
@@ -181,9 +171,7 @@ class FeatureConfig:
         # Remove duplicates while preserving order
         return list(dict.fromkeys(features))
 
-    def is_feature_enabled(
-        self, feature: str, plan_type: str, tenant_id: Optional[str] = None
-    ) -> bool:
+    def is_feature_enabled(self, feature: str, plan_type: str, tenant_id: Optional[str] = None) -> bool:
         """Check if a specific feature is enabled."""
         return feature in self.get_features_for_plan(plan_type, tenant_id)
 
@@ -197,7 +185,7 @@ class ObservabilityConfig:
     metrics_enabled: bool = True
     tracing_enabled: bool = True
     logging_level: str = "INFO"
-    custom_metrics: List[str] = field(default_factory=list)
+    custom_metrics: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -209,7 +197,7 @@ class KubernetesConfig:
     service_pattern: str = "{tenant_id}-service"
     ingress_pattern: str = "{tenant_id}.dotmac.app"
 
-    def get_names(self, tenant_id: str) -> Dict[str, str]:
+    def get_names(self, tenant_id: str) -> dict[str, str]:
         """Generate Kubernetes resource names for a tenant."""
         # Clean tenant ID for Kubernetes naming
         clean_tenant_id = tenant_id.lower().replace("_", "-").replace(".", "-")
@@ -248,26 +236,24 @@ class PlatformConfig:
     deployment_context: Optional[DeploymentContext] = None
 
     # FastAPI configuration
-    fastapi_kwargs: Dict[str, Any] = field(default_factory=dict)
+    fastapi_kwargs: dict[str, Any] = field(default_factory=dict)
 
     # Router configuration
-    routers: List[RouterConfig] = field(default_factory=list)
+    routers: list[RouterConfig] = field(default_factory=list)
 
     # Feature configurations
     health_config: HealthCheckConfig = field(default_factory=HealthCheckConfig)
-    observability_config: ObservabilityConfig = field(
-        default_factory=ObservabilityConfig
-    )
+    observability_config: ObservabilityConfig = field(default_factory=ObservabilityConfig)
     security_config: SecurityConfig = field(default_factory=SecurityConfig)
     feature_config: FeatureConfig = field(default_factory=FeatureConfig)
     kubernetes_config: KubernetesConfig = field(default_factory=KubernetesConfig)
 
     # Startup tasks
-    startup_tasks: List[str] = field(default_factory=list)
-    shutdown_tasks: List[str] = field(default_factory=list)
+    startup_tasks: list[str] = field(default_factory=list)
+    shutdown_tasks: list[str] = field(default_factory=list)
 
     # Custom settings
-    custom_settings: Dict[str, Any] = field(default_factory=dict)
+    custom_settings: dict[str, Any] = field(default_factory=dict)
 
     def customize_for_deployment(self, context: DeploymentContext) -> "PlatformConfig":
         """Create a deployment-specific configuration."""
@@ -332,14 +318,14 @@ class TenantConfig:
     deployment_context: DeploymentContext
 
     # Tenant-specific isolation settings
-    database_config: Dict[str, Any] = field(default_factory=dict)
-    redis_config: Dict[str, Any] = field(default_factory=dict)
-    networking_config: Dict[str, Any] = field(default_factory=dict)
-    storage_config: Dict[str, Any] = field(default_factory=dict)
+    database_config: dict[str, Any] = field(default_factory=dict)
+    redis_config: dict[str, Any] = field(default_factory=dict)
+    networking_config: dict[str, Any] = field(default_factory=dict)
+    storage_config: dict[str, Any] = field(default_factory=dict)
 
     # Feature flags for tenant
-    enabled_features: List[str] = field(default_factory=list)
-    disabled_features: List[str] = field(default_factory=list)
+    enabled_features: list[str] = field(default_factory=list)
+    disabled_features: list[str] = field(default_factory=list)
     plan_type: str = "standard"  # standard, premium, enterprise
 
     def __post_init__(self):
@@ -429,29 +415,27 @@ def create_isp_platform_config() -> PlatformConfig:
         routers=[
             # User Management System - Authentication and RBAC
             RouterConfig(
-                "dotmac_management.user_management.api.auth_router", 
-                "/api/v1/auth", 
+                "dotmac_management.user_management.api.auth_router",
+                "/api/v1/auth",
                 required=True,
-                tags=["authentication", "auth"]
+                tags=["authentication", "auth"],
             ),
             RouterConfig(
-                "dotmac_management.user_management.api.user_router", 
-                "/api/v1/users", 
+                "dotmac_management.user_management.api.user_router",
+                "/api/v1/users",
                 required=True,
-                tags=["users", "user-management"]
+                tags=["users", "user-management"],
             ),
             RouterConfig(
-                "dotmac_management.user_management.api.tenant_admin_router", 
-                "/api/v1/tenant-admin", 
+                "dotmac_management.user_management.api.tenant_admin_router",
+                "/api/v1/tenant-admin",
                 required=True,
-                tags=["tenant-admin", "multi-app"]
+                tags=["tenant-admin", "multi-app"],
             ),
             # Existing ISP-specific routers
             RouterConfig("dotmac_isp.modules", "/api/v1", auto_discover=True),
             RouterConfig("dotmac_isp.portals", "/api/v1", auto_discover=True),
-            RouterConfig(
-                "dotmac_isp.api.security_endpoints", "/api/v1/security", required=False
-            ),
+            RouterConfig("dotmac_isp.api.security_endpoints", "/api/v1/security", required=False),
             RouterConfig("dotmac_isp.api.websocket_router", "/api/ws", required=False),
             RouterConfig("dotmac_isp.api.file_router", "/api/files", required=False),
         ],
@@ -460,9 +444,7 @@ def create_isp_platform_config() -> PlatformConfig:
             "start_celery_monitoring",
             "configure_tenant_isolation",
         ],
-        health_config=HealthCheckConfig(
-            enabled_checks=["database", "cache", "celery", "ssl_certificates"]
-        ),
+        health_config=HealthCheckConfig(enabled_checks=["database", "cache", "celery", "ssl_certificates"]),
     )
 
 
@@ -475,45 +457,35 @@ def create_management_platform_config() -> PlatformConfig:
         routers=[
             # User Management System - Authentication and RBAC
             RouterConfig(
-                "dotmac_management.user_management.api.auth_router", 
-                "/api/v1/auth", 
+                "dotmac_management.user_management.api.auth_router",
+                "/api/v1/auth",
                 required=True,
-                tags=["authentication", "auth"]
+                tags=["authentication", "auth"],
             ),
             RouterConfig(
-                "dotmac_management.user_management.api.user_router", 
-                "/api/v1/users", 
+                "dotmac_management.user_management.api.user_router",
+                "/api/v1/users",
                 required=True,
-                tags=["users", "user-management"]
+                tags=["users", "user-management"],
             ),
             RouterConfig(
-                "dotmac_management.user_management.api.tenant_admin_router", 
-                "/api/v1/tenant-admin", 
+                "dotmac_management.user_management.api.tenant_admin_router",
+                "/api/v1/tenant-admin",
                 required=True,
-                tags=["tenant-admin", "multi-app", "super-admin"]
+                tags=["tenant-admin", "multi-app", "super-admin"],
             ),
             # Existing Management Platform routers
             RouterConfig("dotmac_management.modules", "/api/v1", auto_discover=True),
-            RouterConfig(
-                "dotmac_management.api_new.websocket", "/api/ws", required=False
-            ),
-            RouterConfig(
-                "dotmac_management.api_new.files", "/api/files", required=False
-            ),
-            RouterConfig(
-                "dotmac_management.api_new.security", "/api/security", required=False
-            ),
-            RouterConfig(
-                "dotmac_management.api.v1.bgops", "/", required=False
-            ),
+            RouterConfig("dotmac_management.api_new.websocket", "/api/ws", required=False),
+            RouterConfig("dotmac_management.api_new.files", "/api/files", required=False),
+            RouterConfig("dotmac_management.api_new.security", "/api/security", required=False),
+            RouterConfig("dotmac_management.api.v1.bgops", "/", required=False),
             RouterConfig(
                 "dotmac_management.modules.partners",
                 "/api/v1/partners",
                 auto_discover=True,
             ),
-            RouterConfig(
-                "dotmac_management.modules.test_module", "/api/v1/test", required=False
-            ),
+            RouterConfig("dotmac_management.modules.test_module", "/api/v1/test", required=False),
             RouterConfig(
                 "dotmac_management.modules.simple_working",
                 "/api/v1/working",

@@ -11,9 +11,7 @@ def main():
     """Run tests with various options."""
     parser = argparse.ArgumentParser(description="DotMac Framework Test Runner")
     parser.add_argument("--unit", action="store_true", help="Run unit tests only")
-    parser.add_argument(
-        "--integration", action="store_true", help="Run integration tests only"
-    )
+    parser.add_argument("--integration", action="store_true", help="Run integration tests only")
     parser.add_argument("--cov", action="store_true", help="Run with coverage")
     parser.add_argument("--fast", action="store_true", help="Run tests in parallel")
 

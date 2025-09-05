@@ -13,12 +13,10 @@ Usage:
 """
 
 import json
-import os
 import sys
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Set, Tuple
 
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
@@ -55,21 +53,21 @@ class ModuleAnalysis:
     name: str
     path: str
     platform: str  # 'isp' or 'management'
-    existing_components: Set[ComponentType] = field(default_factory=set)
-    missing_components: Set[ComponentType] = field(default_factory=set)
-    additional_files: List[str] = field(default_factory=list)
+    existing_components: set[ComponentType] = field(default_factory=set)
+    missing_components: set[ComponentType] = field(default_factory=set)
+    additional_files: list[str] = field(default_factory=list)
     completeness_level: CompletenessLevel = CompletenessLevel.EMPTY
     priority: str = "low"  # low, medium, high, critical
-    notes: List[str] = field(default_factory=list)
+    notes: list[str] = field(default_factory=list)
 
 
 class ModuleAuditor:
     """Module audit system."""
 
     def __init__(self):
-        self.framework_root = Path(__file__).parent.parent
+        self.framework_root = Path(__file__).parent.parent  # noqa: B008
         self.src_root = self.framework_root / "src"
-        self.modules: List[ModuleAnalysis] = []
+        self.modules: list[ModuleAnalysis] = []
 
         # Required components for different completeness levels
         self.REQUIRED_CORE = {
@@ -87,7 +85,7 @@ class ModuleAuditor:
             ComponentType.SCHEMAS,
         }
 
-    def scan_modules(self) -> List[ModuleAnalysis]:
+    def scan_modules(self) -> list[ModuleAnalysis]:
         """Scan all modules in the framework."""
         print("🔍 Scanning modules...")
 
@@ -247,7 +245,7 @@ class ModuleAuditor:
                 "Has services subdirectory - may use different organization pattern"
             )
 
-    def categorize_modules(self) -> Dict[CompletenessLevel, List[ModuleAnalysis]]:
+    def categorize_modules(self) -> dict[CompletenessLevel, list[ModuleAnalysis]]:
         """Categorize modules by completeness level."""
         categories = {level: [] for level in CompletenessLevel}
         for module in self.modules:
@@ -428,7 +426,7 @@ def main():
     report = auditor.generate_report()
 
     # Save reports
-    output_dir = Path(__file__).parent.parent / "reports"
+    output_dir = Path(__file__).parent.parent / "reports"  # noqa: B008
     output_dir.mkdir(exist_ok=True)
 
     # Text report
@@ -440,12 +438,12 @@ def main():
     json_path = output_dir / "module_audit_data.json"
     auditor.save_json_report(json_path)
 
-    print(f"\n✅ Audit complete!")
+    print("\n✅ Audit complete!")
     print(f"📄 Report saved to: {report_path}")
     print(f"📊 JSON data saved to: {json_path}")
 
     # Print summary
-    print(f"\n📈 Quick Summary:")
+    print("\n📈 Quick Summary:")
     print(f"- Total modules: {len(modules)}")
     print(f"- Complete: {len(categories[CompletenessLevel.COMPLETE])}")
     print(f"- Functional: {len(categories[CompletenessLevel.FUNCTIONAL])}")

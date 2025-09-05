@@ -4,10 +4,8 @@ import calendar
 import logging
 from datetime import date, timedelta
 from decimal import ROUND_HALF_UP, Decimal
-from typing import Any, Dict
 
-from dotmac_isp.shared.exceptions import ValidationError
-from dotmac_shared.api.exception_handlers import standard_exception_handler
+from dotmac.core import ValidationError
 
 from ..models import BillingCycle
 from .interfaces import IBillingCalculationService
@@ -33,9 +31,7 @@ class BillingCalculationService(IBillingCalculationService):
             tax_rate = Decimal(str(tax_rate))
 
         if tax_rate < Decimal("0.00") or tax_rate > Decimal("1.00"):
-            raise ValidationError(
-                f"Tax rate must be between 0.00 and 1.00, got: {tax_rate}"
-            )
+            raise ValidationError(f"Tax rate must be between 0.00 and 1.00, got: {tax_rate}")
         tax_amount = subtotal * tax_rate
         return tax_amount.quantize(self.decimal_places, rounding=ROUND_HALF_UP)
 
@@ -47,15 +43,11 @@ class BillingCalculationService(IBillingCalculationService):
             discount_rate = Decimal(str(discount_rate))
 
         if discount_rate < Decimal("0.00") or discount_rate > Decimal("1.00"):
-            raise ValidationError(
-                f"Discount rate must be between 0.00 and 1.00, got: {discount_rate}"
-            )
+            raise ValidationError(f"Discount rate must be between 0.00 and 1.00, got: {discount_rate}")
         discount_amount = subtotal * discount_rate
         return discount_amount.quantize(self.decimal_places, rounding=ROUND_HALF_UP)
 
-    def calculate_line_item_total(
-        self, quantity: Decimal, unit_price: Decimal
-    ) -> Decimal:
+    def calculate_line_item_total(self, quantity: Decimal, unit_price: Decimal) -> Decimal:
         """Calculate line item total with proper rounding."""
         if not isinstance(quantity, Decimal):
             quantity = Decimal(str(quantity))
@@ -70,9 +62,7 @@ class BillingCalculationService(IBillingCalculationService):
         total = quantity * unit_price
         return total.quantize(self.decimal_places, rounding=ROUND_HALF_UP)
 
-    def calculate_invoice_total(
-        self, subtotal: Decimal, tax_amount: Decimal, discount_amount: Decimal
-    ) -> Decimal:
+    def calculate_invoice_total(self, subtotal: Decimal, tax_amount: Decimal, discount_amount: Decimal) -> Decimal:
         """Calculate final invoice total."""
         if not isinstance(subtotal, Decimal):
             subtotal = Decimal(str(subtotal))
@@ -119,9 +109,7 @@ class BillingCalculationService(IBillingCalculationService):
 
         return prorated_amount.quantize(self.decimal_places, rounding=ROUND_HALF_UP)
 
-    def calculate_late_fee(
-        self, overdue_amount: Decimal, days_overdue: int, late_fee_rate: Decimal
-    ) -> Decimal:
+    def calculate_late_fee(self, overdue_amount: Decimal, days_overdue: int, late_fee_rate: Decimal) -> Decimal:
         """Calculate late fee based on overdue amount and days."""
         if not isinstance(overdue_amount, Decimal):
             overdue_amount = Decimal(str(overdue_amount))
@@ -132,9 +120,7 @@ class BillingCalculationService(IBillingCalculationService):
             return Decimal("0.00")
 
         if late_fee_rate < Decimal("0.00") or late_fee_rate > Decimal("1.00"):
-            raise ValidationError(
-                f"Late fee rate must be between 0.00 and 1.00, got: {late_fee_rate}"
-            )
+            raise ValidationError(f"Late fee rate must be between 0.00 and 1.00, got: {late_fee_rate}")
         # Calculate daily late fee rate
         daily_rate = late_fee_rate / Decimal("365")  # Annual rate to daily rate
 
@@ -143,9 +129,7 @@ class BillingCalculationService(IBillingCalculationService):
 
         return late_fee.quantize(self.decimal_places, rounding=ROUND_HALF_UP)
 
-    def calculate_compound_tax(
-        self, base_amount: Decimal, tax_rates: Dict[str, Decimal]
-    ) -> Dict[str, Decimal]:
+    def calculate_compound_tax(self, base_amount: Decimal, tax_rates: dict[str, Decimal]) -> dict[str, Decimal]:
         """Calculate multiple taxes that may be compounded."""
         if not isinstance(base_amount, Decimal):
             base_amount = Decimal(str(base_amount))
@@ -181,9 +165,7 @@ class BillingCalculationService(IBillingCalculationService):
             raise ValidationError("Number of periods must be greater than 0")
 
         # Calculate installment amount
-        installment_amount = (total_amount / Decimal(periods)).quantize(
-            self.decimal_places, rounding=ROUND_HALF_UP
-        )
+        installment_amount = (total_amount / Decimal(periods)).quantize(self.decimal_places, rounding=ROUND_HALF_UP)
         # Handle remainder from rounding
         remainder = total_amount - (installment_amount * periods)
 
@@ -197,17 +179,13 @@ class BillingCalculationService(IBillingCalculationService):
             if period == periods - 1:
                 amount += remainder
 
-            schedule.append(
-                {"period": period + 1, "due_date": current_date, "amount": amount}
-            )
+            schedule.append({"period": period + 1, "due_date": current_date, "amount": amount})
             # Calculate next due date based on billing cycle
             current_date = self._get_next_billing_date(current_date, billing_cycle)
 
         return schedule
 
-    def _get_billing_cycle_days(
-        self, billing_cycle: BillingCycle, reference_date: date
-    ) -> int:
+    def _get_billing_cycle_days(self, billing_cycle: BillingCycle, reference_date: date) -> int:
         """Get the number of days in a billing cycle."""
         if billing_cycle == BillingCycle.MONTHLY:
             # Get days in the month of the reference date
@@ -219,9 +197,7 @@ class BillingCalculationService(IBillingCalculationService):
         else:
             return 30  # Default for one-time or unknown cycles
 
-    def _get_next_billing_date(
-        self, current_date: date, billing_cycle: BillingCycle
-    ) -> date:
+    def _get_next_billing_date(self, current_date: date, billing_cycle: BillingCycle) -> date:
         """Calculate the next billing date based on cycle."""
         if billing_cycle == BillingCycle.MONTHLY:
             # Add one month
@@ -242,12 +218,8 @@ class BillingCalculationService(IBillingCalculationService):
             if isinstance(value, (int, float)):
                 kwargs[key] = Decimal(str(value))
             elif not isinstance(value, Decimal):
-                raise ValidationError(
-                    f"Invalid type for {key}: expected Decimal, got {type(value)}"
-                )
-            if key.endswith("_rate") and (
-                value < Decimal("0.00") or value > Decimal("1.00")
-            ):
+                raise ValidationError(f"Invalid type for {key}: expected Decimal, got {type(value)}")
+            if key.endswith("_rate") and (value < Decimal("0.00") or value > Decimal("1.00")):
                 raise ValidationError(f"{key} must be between 0.00 and 1.00")
 
             if key.endswith("_amount") and value < Decimal("0.00"):

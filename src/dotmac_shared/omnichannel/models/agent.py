@@ -4,10 +4,15 @@ Agent management models.
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field, field_validator, ConfigDict
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    field_validator,
+)
 
 
 class AgentStatus(str, Enum):
@@ -34,9 +39,7 @@ class AgentAvailability(BaseModel):
 
     agent_id: UUID
     day_of_week: int = Field(..., ge=0, le=6)  # 0=Monday, 6=Sunday
-    start_time: str = Field(
-        ..., pattern=r"^([01][0-9]|2[0-3]):[0-5][0-9]$"
-    )  # HH:MM format
+    start_time: str = Field(..., pattern=r"^([01][0-9]|2[0-3]):[0-5][0-9]$")  # HH:MM format
     end_time: str = Field(..., pattern=r"^([01][0-9]|2[0-3]):[0-5][0-9]$")
     timezone: str = "UTC"
     is_available: bool = True
@@ -87,14 +90,14 @@ class AgentModel(BaseModel):
     status: AgentStatus = AgentStatus.OFFLINE
 
     # Skills and capabilities
-    skills: List[AgentSkill] = Field(default_factory=list)
-    languages: List[str] = Field(default_factory=list)
-    channels: List[str] = Field(default_factory=list)
+    skills: list[AgentSkill] = Field(default_factory=list)
+    languages: list[str] = Field(default_factory=list)
+    channels: list[str] = Field(default_factory=list)
 
     # Capacity management
     max_concurrent_interactions: int = Field(default=5, ge=1, le=20)
     current_interaction_count: int = Field(default=0, ge=0)
-    active_interactions: List[UUID] = Field(default_factory=list)
+    active_interactions: list[UUID] = Field(default_factory=list)
 
     # Organization
     team: Optional[str] = None
@@ -106,7 +109,7 @@ class AgentModel(BaseModel):
     timezone: str = "UTC"
 
     # Availability
-    availability_schedule: List[AgentAvailability] = Field(default_factory=list)
+    availability_schedule: list[AgentAvailability] = Field(default_factory=list)
 
     # Timestamps
     created_at: datetime = Field(default_factory=datetime.utcnow)
@@ -114,11 +117,9 @@ class AgentModel(BaseModel):
     last_active_at: Optional[datetime] = None
 
     # Additional data
-    extra_data: Dict[str, Any] = Field(default_factory=dict, alias="metadata")
+    extra_data: dict[str, Any] = Field(default_factory=dict, alias="metadata")
 
-    model_config = ConfigDict(
-        populate_by_name=True
-    )
+    model_config = ConfigDict(populate_by_name=True)
 
     @field_validator("current_interaction_count")
     @classmethod
@@ -126,9 +127,7 @@ class AgentModel(BaseModel):
         """Ensure current count doesn't exceed maximum."""
         max_concurrent = values.get("max_concurrent_interactions", 5)
         if v > max_concurrent:
-            raise ValueError(
-                f"Current interaction count ({v}) cannot exceed maximum ({max_concurrent})"
-            )
+            raise ValueError(f"Current interaction count ({v}) cannot exceed maximum ({max_concurrent})")
         return v
 
 
@@ -140,9 +139,9 @@ class CreateAgentRequest(BaseModel):
     email: str = Field(..., pattern=r"^[^@]+@[^@]+\.[^@]+$")
     phone: Optional[str] = None
 
-    skills: List[AgentSkill] = Field(default_factory=list)
-    languages: List[str] = Field(default_factory=list)
-    channels: List[str] = Field(default_factory=list)
+    skills: list[AgentSkill] = Field(default_factory=list)
+    languages: list[str] = Field(default_factory=list)
+    channels: list[str] = Field(default_factory=list)
 
     max_concurrent_interactions: int = Field(default=5, ge=1, le=20)
     team: Optional[str] = None
@@ -150,11 +149,9 @@ class CreateAgentRequest(BaseModel):
     location: Optional[str] = None
     timezone: str = "UTC"
 
-    extra_data: Dict[str, Any] = Field(default_factory=dict, alias="metadata")
+    extra_data: dict[str, Any] = Field(default_factory=dict, alias="metadata")
 
-    model_config = ConfigDict(
-        populate_by_name=True
-    )
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class UpdateAgentRequest(BaseModel):
@@ -165,9 +162,9 @@ class UpdateAgentRequest(BaseModel):
     phone: Optional[str] = None
 
     status: Optional[AgentStatus] = None
-    skills: Optional[List[AgentSkill]] = None
-    languages: Optional[List[str]] = None
-    channels: Optional[List[str]] = None
+    skills: Optional[list[AgentSkill]] = None
+    languages: Optional[list[str]] = None
+    channels: Optional[list[str]] = None
 
     max_concurrent_interactions: Optional[int] = Field(None, ge=1, le=20)
     team: Optional[str] = None
@@ -175,8 +172,6 @@ class UpdateAgentRequest(BaseModel):
     location: Optional[str] = None
     timezone: Optional[str] = None
 
-    extra_data: Optional[Dict[str, Any]] = Field(None, alias="metadata")
+    extra_data: Optional[dict[str, Any]] = Field(None, alias="metadata")
 
-    model_config = ConfigDict(
-        populate_by_name=True
-    )
+    model_config = ConfigDict(populate_by_name=True)

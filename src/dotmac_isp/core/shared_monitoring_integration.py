@@ -4,16 +4,16 @@ Provides unified monitoring across all ISP services using dotmac_shared.monitori
 """
 
 import logging
-from datetime import datetime
-from typing import Any, Dict, List, Optional
+from datetime import datetime, timezone
+from typing import Any, Optional
 
-from dotmac_shared.events import EventBus
+from dotmac.communications.events import EventBus
+from dotmac.communications.notifications import NotificationService as UnifiedNotificationService
 from dotmac_shared.monitoring.integrations import (
     AlertConfig,
     IntegratedMonitoringService,
     create_integrated_monitoring_service,
 )
-from dotmac_shared.notifications.service import UnifiedNotificationService
 from dotmac_shared.services_framework.services.analytics_service import AnalyticsService
 
 logger = logging.getLogger(__name__)
@@ -38,7 +38,7 @@ class ISPMonitoringManager:
         self.event_bus = event_bus
 
         # ISP-specific monitoring services for each module
-        self._module_monitors: Dict[str, IntegratedMonitoringService] = {}
+        self._module_monitors: dict[str, IntegratedMonitoringService] = {}
         self._initialized = False
 
     async def initialize(self) -> bool:
@@ -48,9 +48,7 @@ class ISPMonitoringManager:
             await self._initialize_module_monitoring()
 
             self._initialized = True
-            logger.info(
-                f"✅ ISP Monitoring Manager initialized for tenant {self.tenant_id}"
-            )
+            logger.info(f"✅ ISP Monitoring Manager initialized for tenant {self.tenant_id}")
             return True
 
         except Exception as e:
@@ -94,9 +92,7 @@ class ISPMonitoringManager:
                 logger.info(f"✅ Initialized monitoring for ISP module: {module}")
 
             except Exception as e:
-                logger.error(
-                    f"❌ Failed to initialize monitoring for module {module}: {e}"
-                )
+                logger.error(f"❌ Failed to initialize monitoring for module {module}: {e}")
 
     def get_module_monitor(self, module: str) -> Optional[IntegratedMonitoringService]:
         """Get monitoring service for a specific ISP module."""
@@ -161,7 +157,7 @@ class ISPMonitoringManager:
         check_type: str,
         duration: float,
         success: bool,
-        metrics: Optional[Dict[str, Any]] = None,
+        metrics: Optional[dict[str, Any]] = None,
     ):
         """Record network monitoring check."""
         monitor = self.get_module_monitor("network_monitoring")
@@ -244,9 +240,7 @@ class ISPMonitoringManager:
         """Record error from any ISP module."""
         monitor = self.get_module_monitor(module)
         if monitor:
-            monitor.record_error(
-                error_type=error_type, service=f"isp_{module}", tenant_id=self.tenant_id
-            )
+            monitor.record_error(error_type=error_type, service=f"isp_{module}", tenant_id=self.tenant_id)
             # Log for troubleshooting
             logger.error(f"ISP {module} error: {error_type} - {error_details}")
 
@@ -265,7 +259,7 @@ class ISPMonitoringManager:
                 )
 
     # Health checks
-    async def get_all_health_checks(self) -> Dict[str, Any]:
+    async def get_all_health_checks(self) -> dict[str, Any]:
         """Get health checks from all monitored ISP modules."""
         health_checks = {
             "monitoring_manager": {
@@ -281,11 +275,7 @@ class ISPMonitoringManager:
             try:
                 module_health = monitor.perform_health_check()
                 health_checks[f"isp_{module}"] = {
-                    "status": (
-                        "healthy"
-                        if all(hc.status.value == "healthy" for hc in module_health)
-                        else "degraded"
-                    ),
+                    "status": ("healthy" if all(hc.status.value == "healthy" for hc in module_health) else "degraded"),
                     "checks": [
                         {
                             "name": hc.name,
@@ -303,7 +293,7 @@ class ISPMonitoringManager:
 
         return health_checks
 
-    async def get_performance_metrics(self) -> Dict[str, Any]:
+    async def get_performance_metrics(self) -> dict[str, Any]:
         """Get aggregated performance metrics from all ISP modules."""
         try:
             metrics = {
@@ -333,7 +323,7 @@ class ISPMonitoringManager:
 
 
 # Global monitoring managers per tenant (will be managed by application factory)
-_monitoring_managers: Dict[str, ISPMonitoringManager] = {}
+_monitoring_managers: dict[str, ISPMonitoringManager] = {}
 
 
 def get_isp_monitoring_manager(tenant_id: str) -> ISPMonitoringManager:

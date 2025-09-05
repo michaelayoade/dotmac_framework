@@ -4,10 +4,9 @@ Device Monitoring Management for DotMac Device Management Framework.
 Provides SNMP monitoring, telemetry collection, and device health tracking.
 """
 
-import json
 import uuid
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from datetime import datetime, timedelta, timezone
+from typing import Any, Optional
 
 from sqlalchemy import and_, desc
 from sqlalchemy.orm import Session
@@ -28,7 +27,7 @@ class DeviceMonitoringManager:
         device_id: str,
         monitor_id: str,
         monitor_type: str,
-        metrics: Dict[str, Any],
+        metrics: dict[str, Any],
         collection_status: str = "success",
         **kwargs,
     ) -> MonitoringRecord:
@@ -36,9 +35,7 @@ class DeviceMonitoringManager:
         # Verify device exists
         device = (
             self.session.query(Device)
-            .filter(
-                and_(Device.device_id == device_id, Device.tenant_id == self.tenant_id)
-            )
+            .filter(and_(Device.device_id == device_id, Device.tenant_id == self.tenant_id))
             .first()
         )
 
@@ -64,9 +61,7 @@ class DeviceMonitoringManager:
         self.session.commit()
         return record
 
-    async def get_latest_metrics(
-        self, device_id: str, monitor_type: Optional[str] = None
-    ) -> List[MonitoringRecord]:
+    async def get_latest_metrics(self, device_id: str, monitor_type: Optional[str] = None) -> list[MonitoringRecord]:
         """Get latest monitoring records for device."""
         query = self.session.query(MonitoringRecord).filter(
             and_(
@@ -78,9 +73,7 @@ class DeviceMonitoringManager:
         if monitor_type:
             query = query.filter(MonitoringRecord.monitor_type == monitor_type)
 
-        return (
-            query.order_by(desc(MonitoringRecord.collection_timestamp)).limit(10).all()
-        )
+        return query.order_by(desc(MonitoringRecord.collection_timestamp)).limit(10).all()
 
     async def get_metrics_history(
         self,
@@ -88,7 +81,7 @@ class DeviceMonitoringManager:
         monitor_type: Optional[str] = None,
         hours: int = 24,
         limit: int = 100,
-    ) -> List[MonitoringRecord]:
+    ) -> list[MonitoringRecord]:
         """Get historical monitoring records."""
         since = datetime.now(timezone.utc) - timedelta(hours=hours)
 
@@ -103,13 +96,9 @@ class DeviceMonitoringManager:
         if monitor_type:
             query = query.filter(MonitoringRecord.monitor_type == monitor_type)
 
-        return (
-            query.order_by(desc(MonitoringRecord.collection_timestamp))
-            .limit(limit)
-            .all()
-        )
+        return query.order_by(desc(MonitoringRecord.collection_timestamp)).limit(limit).all()
 
-    async def get_device_health_status(self, device_id: str) -> Dict[str, Any]:
+    async def get_device_health_status(self, device_id: str) -> dict[str, Any]:
         """Get current device health status from latest metrics."""
         # Get latest SNMP metrics
         latest_records = await self.get_latest_metrics(device_id, MonitorType.SNMP)
@@ -186,9 +175,7 @@ class DeviceMonitoringManager:
             },
         }
 
-    async def get_monitoring_statistics(
-        self, device_id: str, metric_name: str, hours: int = 24
-    ) -> Dict[str, Any]:
+    async def get_monitoring_statistics(self, device_id: str, metric_name: str, hours: int = 24) -> dict[str, Any]:
         """Get statistics for a specific metric."""
         records = await self.get_metrics_history(device_id, hours=hours)
 
@@ -245,11 +232,11 @@ class DeviceMonitoringService:
     async def create_snmp_monitor(
         self,
         device_id: str,
-        metrics: List[str],
+        metrics: list[str],
         collection_interval: int = 60,
         snmp_community: str = "public",
         snmp_version: str = "2c",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Create SNMP monitoring configuration for device."""
         monitor_id = f"snmp_{device_id}_{uuid.uuid4().hex[:8]}"
 
@@ -282,8 +269,8 @@ class DeviceMonitoringService:
         }
 
     async def collect_snmp_metrics(
-        self, device_id: str, monitor_id: str, metrics_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, device_id: str, monitor_id: str, metrics_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Store collected SNMP metrics."""
         start_time = datetime.now(timezone.utc)
 
@@ -330,8 +317,8 @@ class DeviceMonitoringService:
             }
 
     async def create_telemetry_monitor(
-        self, device_id: str, telemetry_paths: List[str], collection_interval: int = 30
-    ) -> Dict[str, Any]:
+        self, device_id: str, telemetry_paths: list[str], collection_interval: int = 30
+    ) -> dict[str, Any]:
         """Create telemetry monitoring configuration."""
         monitor_id = f"telemetry_{device_id}_{uuid.uuid4().hex[:8]}"
 
@@ -359,7 +346,7 @@ class DeviceMonitoringService:
             "configured_at": record.collection_timestamp.isoformat(),
         }
 
-    async def get_device_monitoring_overview(self, device_id: str) -> Dict[str, Any]:
+    async def get_device_monitoring_overview(self, device_id: str) -> dict[str, Any]:
         """Get comprehensive monitoring overview for device."""
         health_status = await self.manager.get_device_health_status(device_id)
         latest_records = await self.manager.get_latest_metrics(device_id)
@@ -387,7 +374,7 @@ class DeviceMonitoringService:
 
     async def create_health_check(
         self, device_id: str, check_type: str = "ping", target: Optional[str] = None
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Create basic health check monitor."""
         monitor_id = f"health_{check_type}_{device_id}_{uuid.uuid4().hex[:8]}"
 
@@ -401,9 +388,7 @@ class DeviceMonitoringService:
         record = await self.manager.create_monitoring_record(
             device_id=device_id,
             monitor_id=monitor_id,
-            monitor_type=(
-                MonitorType.PING if check_type == "ping" else MonitorType.CUSTOM
-            ),
+            monitor_type=(MonitorType.PING if check_type == "ping" else MonitorType.CUSTOM),
             metrics=config_metrics,
             collection_status="configured",
         )
@@ -416,16 +401,12 @@ class DeviceMonitoringService:
             "configured_at": record.collection_timestamp.isoformat(),
         }
 
-    async def get_trending_metrics(
-        self, device_id: str, metric_names: List[str], hours: int = 24
-    ) -> Dict[str, Any]:
+    async def get_trending_metrics(self, device_id: str, metric_names: list[str], hours: int = 24) -> dict[str, Any]:
         """Get trending data for specific metrics."""
         trending_data = {}
 
         for metric_name in metric_names:
-            stats = await self.manager.get_monitoring_statistics(
-                device_id, metric_name, hours
-            )
+            stats = await self.manager.get_monitoring_statistics(device_id, metric_name, hours)
             trending_data[metric_name] = stats
 
         return {

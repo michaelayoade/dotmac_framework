@@ -6,33 +6,27 @@ and cross-platform integrations.
 """
 
 import logging
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
-from typing import Any, Dict, List, Optional, Tuple
-from uuid import UUID
+from typing import Any, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..core.models import (
     MilestoneCreate,
-    MilestoneResponse,
     MilestoneType,
-    PhaseCreate,
     PhaseResponse,
     PhaseStatus,
     PhaseUpdate,
     Project,
     ProjectCreate,
-    ProjectMilestone,
-    ProjectPhase,
     ProjectPriority,
     ProjectResponse,
     ProjectStatus,
     ProjectType,
+    UpdateCreate,
 )
-from ..core.models import ProjectUpdate
 from ..core.models import ProjectUpdate as ProjectUpdateSchema
-from ..core.models import UpdateCreate, UpdateResponse
 from ..core.project_manager import ProjectManager
 
 logger = logging.getLogger(__name__)
@@ -52,14 +46,14 @@ class ProjectService:
         customer_id: str,
         project_name: str,
         project_type: ProjectType,
-        description: str = None,
+        description: Optional[str] = None,
         priority: ProjectPriority = ProjectPriority.NORMAL,
-        project_manager: str = None,
-        planned_start_date: date = None,
-        planned_end_date: date = None,
-        estimated_cost: Decimal = None,
-        requirements: Dict[str, Any] = None,
-        metadata: Dict[str, Any] = None,
+        project_manager: Optional[str] = None,
+        planned_start_date: Optional[date] = None,
+        planned_end_date: Optional[date] = None,
+        estimated_cost: Optional[Decimal] = None,
+        requirements: Optional[dict[str, Any]] = None,
+        metadata: Optional[dict[str, Any]] = None,
     ) -> ProjectResponse:
         """Create a project for a customer with business logic."""
 
@@ -98,9 +92,7 @@ class ProjectService:
         """Assign project manager with notification."""
 
         update_data = ProjectUpdateSchema(project_manager=manager_name)
-        project = await self.project_manager.update_project(
-            db, tenant_id, project_id, update_data
-        )
+        project = await self.project_manager.update_project(db, tenant_id, project_id, update_data)
 
         if project:
             # Add assignment update
@@ -127,21 +119,15 @@ class ProjectService:
         """Start a project and trigger first phase."""
 
         # Update project status
-        update_data = ProjectUpdateSchema(
-            project_status=ProjectStatus.IN_PROGRESS, actual_start_date=date.today()
-        )
+        update_data = ProjectUpdateSchema(project_status=ProjectStatus.IN_PROGRESS, actual_start_date=date.today())
 
-        project = await self.project_manager.update_project(
-            db, tenant_id, project_id, update_data, started_by
-        )
+        project = await self.project_manager.update_project(db, tenant_id, project_id, update_data, started_by)
 
         if project:
             # Start first phase if exists
             if project.phases:
                 first_phase = min(project.phases, key=lambda p: p.phase_order)
-                await self.start_project_phase(
-                    db, tenant_id, project_id, str(first_phase.id), started_by
-                )
+                await self.start_project_phase(db, tenant_id, project_id, str(first_phase.id), started_by)
 
             # Add start notification
             await self.project_manager.add_project_update(
@@ -168,7 +154,7 @@ class ProjectService:
         project_id: str,
         completion_notes: str,
         completed_by: str,
-        client_satisfaction: int = None,
+        client_satisfaction: Optional[int] = None,
     ) -> Optional[ProjectResponse]:
         """Complete a project with final updates."""
 
@@ -181,9 +167,7 @@ class ProjectService:
             client_satisfaction_score=client_satisfaction,
         )
 
-        project = await self.project_manager.update_project(
-            db, tenant_id, project_id, update_data, completed_by
-        )
+        project = await self.project_manager.update_project(db, tenant_id, project_id, update_data, completed_by)
 
         if project:
             # Complete all remaining phases
@@ -230,13 +214,9 @@ class ProjectService:
     ) -> Optional[PhaseResponse]:
         """Start a project phase."""
 
-        update_data = PhaseUpdate(
-            phase_status=PhaseStatus.IN_PROGRESS, actual_start_date=date.today()
-        )
+        update_data = PhaseUpdate(phase_status=PhaseStatus.IN_PROGRESS, actual_start_date=date.today())
 
-        phase = await self.project_manager.update_project_phase(
-            db, tenant_id, project_id, phase_id, update_data
-        )
+        phase = await self.project_manager.update_project_phase(db, tenant_id, project_id, phase_id, update_data)
 
         if phase:
             # Add phase start update
@@ -275,9 +255,7 @@ class ProjectService:
             completion_notes=completion_notes,
         )
 
-        phase = await self.project_manager.update_project_phase(
-            db, tenant_id, project_id, phase_id, update_data
-        )
+        phase = await self.project_manager.update_project_phase(db, tenant_id, project_id, phase_id, update_data)
 
         if phase:
             # Add phase completion update
@@ -296,9 +274,7 @@ class ProjectService:
             )
 
             # Check if we should start next phase
-            await self._check_next_phase_start(
-                db, tenant_id, project_id, phase.phase_order
-            )
+            await self._check_next_phase_start(db, tenant_id, project_id, phase.phase_order)
 
             return PhaseResponse.model_validate(phase)
         return None
@@ -328,9 +304,7 @@ class ProjectService:
                 ProjectPriority.URGENT: ProjectPriority.CRITICAL,
                 ProjectPriority.CRITICAL: ProjectPriority.CRITICAL,
             }
-            new_priority = priority_escalation.get(
-                project.priority, ProjectPriority.HIGH
-            )
+            new_priority = priority_escalation.get(project.priority, ProjectPriority.HIGH)
 
         # Update project
         update_data = ProjectUpdateSchema(priority=new_priority)
@@ -362,23 +336,19 @@ class ProjectService:
         db: AsyncSession,
         tenant_id: str,
         customer_id: str,
-        status_filter: List[ProjectStatus] = None,
+        status_filter: Optional[list[ProjectStatus]] = None,
         page: int = 1,
         page_size: int = 20,
-    ) -> Tuple[List[ProjectResponse], int]:
+    ) -> tuple[list[ProjectResponse], int]:
         """Get all projects for a customer."""
 
         filters = {"customer_id": customer_id}
         if status_filter:
             filters["project_status"] = status_filter
 
-        projects, total = await self.project_manager.list_projects(
-            db, tenant_id, filters, page, page_size
-        )
+        projects, total = await self.project_manager.list_projects(db, tenant_id, filters, page, page_size)
 
-        project_responses = [
-            ProjectResponse.model_validate(project) for project in projects
-        ]
+        project_responses = [ProjectResponse.model_validate(project) for project in projects]
         return project_responses, total
 
     async def get_team_projects(
@@ -386,28 +356,22 @@ class ProjectService:
         db: AsyncSession,
         tenant_id: str,
         team_name: str,
-        status_filter: List[ProjectStatus] = None,
+        status_filter: Optional[list[ProjectStatus]] = None,
         page: int = 1,
         page_size: int = 50,
-    ) -> Tuple[List[ProjectResponse], int]:
+    ) -> tuple[list[ProjectResponse], int]:
         """Get all projects assigned to a team."""
 
         filters = {"assigned_team": team_name}
         if status_filter:
             filters["project_status"] = status_filter
 
-        projects, total = await self.project_manager.list_projects(
-            db, tenant_id, filters, page, page_size
-        )
+        projects, total = await self.project_manager.list_projects(db, tenant_id, filters, page, page_size)
 
-        project_responses = [
-            ProjectResponse.model_validate(project) for project in projects
-        ]
+        project_responses = [ProjectResponse.model_validate(project) for project in projects]
         return project_responses, total
 
-    async def get_overdue_projects(
-        self, db: AsyncSession, tenant_id: str
-    ) -> List[ProjectResponse]:
+    async def get_overdue_projects(self, db: AsyncSession, tenant_id: str) -> list[ProjectResponse]:
         """Get all overdue projects."""
 
         filters = {"overdue_only": True}
@@ -419,9 +383,9 @@ class ProjectService:
         self,
         db: AsyncSession,
         tenant_id: str,
-        start_date: datetime = None,
-        end_date: datetime = None,
-    ) -> Dict[str, Any]:
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None,
+    ) -> dict[str, Any]:
         """Get project dashboard metrics."""
 
         date_range = None
@@ -436,21 +400,15 @@ class ProjectService:
         if date_range:
             filters["date_range"] = date_range
 
-        analytics = await self.project_manager.get_project_analytics(
-            db, tenant_id, filters
-        )
+        analytics = await self.project_manager.get_project_analytics(db, tenant_id, filters)
 
         # Add additional dashboard metrics
         overdue_projects = await self.get_overdue_projects(db, tenant_id)
         analytics["overdue_projects"] = len(overdue_projects)
 
         # Get active projects
-        active_filters = {
-            "project_status": [ProjectStatus.IN_PROGRESS, ProjectStatus.SCHEDULED]
-        }
-        active_projects, _ = await self.project_manager.list_projects(
-            db, tenant_id, active_filters
-        )
+        active_filters = {"project_status": [ProjectStatus.IN_PROGRESS, ProjectStatus.SCHEDULED]}
+        active_projects, _ = await self.project_manager.list_projects(db, tenant_id, active_filters)
         analytics["active_projects"] = len(active_projects)
 
         return analytics
@@ -489,9 +447,7 @@ class ProjectService:
         ]
 
         for milestone_data in milestones:
-            planned_date = (project.planned_start_date or date.today()) + timedelta(
-                days=milestone_data["days_offset"]
-            )
+            planned_date = (project.planned_start_date or date.today()) + timedelta(days=milestone_data["days_offset"])
 
             milestone_create = MilestoneCreate(
                 milestone_name=milestone_data["name"],
@@ -529,9 +485,7 @@ class ProjectService:
         ]
 
         for milestone_data in milestones:
-            planned_date = (project.planned_start_date or date.today()) + timedelta(
-                days=milestone_data["days_offset"]
-            )
+            planned_date = (project.planned_start_date or date.today()) + timedelta(days=milestone_data["days_offset"])
 
             milestone_create = MilestoneCreate(
                 milestone_name=milestone_data["name"],
@@ -560,10 +514,7 @@ class ProjectService:
         # Find next phase in sequence
         next_phase = None
         for phase in project.phases:
-            if (
-                phase.phase_order == completed_phase_order + 1
-                and phase.phase_status == PhaseStatus.PENDING
-            ):
+            if phase.phase_order == completed_phase_order + 1 and phase.phase_status == PhaseStatus.PENDING:
                 next_phase = phase
                 break
 
@@ -572,14 +523,10 @@ class ProjectService:
             can_start = True
             if next_phase.depends_on_phases:
                 for dep_id in next_phase.depends_on_phases:
-                    dep_phase = next(
-                        (p for p in project.phases if str(p.id) == dep_id), None
-                    )
+                    dep_phase = next((p for p in project.phases if str(p.id) == dep_id), None)
                     if dep_phase and dep_phase.phase_status != PhaseStatus.COMPLETED:
                         can_start = False
                         break
 
             if can_start:
-                await self.start_project_phase(
-                    db, tenant_id, project_id, str(next_phase.id), "System Auto-Start"
-                )
+                await self.start_project_phase(db, tenant_id, project_id, str(next_phase.id), "System Auto-Start")

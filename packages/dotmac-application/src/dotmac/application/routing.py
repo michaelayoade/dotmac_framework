@@ -4,7 +4,7 @@ Safe router registry system for deployment-aware applications.
 
 import importlib
 import logging
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from fastapi import APIRouter, FastAPI
 
@@ -18,10 +18,12 @@ class SafeRouterLoader:
 
     def __init__(self, platform_config: PlatformConfig):
         self.platform_config = platform_config
-        self.loaded_routers: Dict[str, APIRouter] = {}
-        self.failed_routers: List[str] = []
+        self.loaded_routers: dict[str, APIRouter] = {}
+        self.failed_routers: list[str] = []
 
-    def load_router(self, router_config: RouterConfig) -> Optional[Union[APIRouter, List[APIRouter]]]:
+    def load_router(
+        self, router_config: RouterConfig
+    ) -> APIRouter | list[APIRouter] | None:
         """Safely load a router with validation."""
         try:
             # Security validation
@@ -80,7 +82,7 @@ class SafeRouterLoader:
 
         return True
 
-    def _load_single_router(self, router_config: RouterConfig) -> Optional[APIRouter]:
+    def _load_single_router(self, router_config: RouterConfig) -> APIRouter | None:
         """Load a single router from module path."""
         try:
             module = importlib.import_module(router_config.module_path)
@@ -103,12 +105,14 @@ class SafeRouterLoader:
             return None
 
         except Exception as e:
-            logger.error(f"Error loading single router {router_config.module_path}: {e}")
+            logger.error(
+                f"Error loading single router {router_config.module_path}: {e}"
+            )
             raise
 
     def _auto_discover_router(
         self, router_config: RouterConfig
-    ) -> Optional[List[APIRouter]]:
+    ) -> list[APIRouter] | None:
         """Auto-discover routers in a module namespace."""
         try:
             base_module = importlib.import_module(router_config.module_path)
@@ -123,7 +127,10 @@ class SafeRouterLoader:
                         full_module_path = f"{router_config.module_path}.{module_name}"
 
                         # Skip private modules and common non-router modules
-                        if module_name.startswith("_") or module_name in ["__pycache__", "tests"]:
+                        if module_name.startswith("_") or module_name in [
+                            "__pycache__",
+                            "tests",
+                        ]:
                             continue
 
                         sub_router_config = RouterConfig(
@@ -155,9 +162,9 @@ class RouterRegistry:
     def __init__(self, platform_config: PlatformConfig):
         self.platform_config = platform_config
         self.loader = SafeRouterLoader(platform_config)
-        self.registered_routers: Dict[str, APIRouter] = {}
+        self.registered_routers: dict[str, APIRouter] = {}
 
-    def register_all_routers(self, app: FastAPI) -> Dict[str, Any]:
+    def register_all_routers(self, app: FastAPI) -> dict[str, Any]:
         """Register all configured routers with the FastAPI app."""
         stats = {
             "total_attempted": len(self.platform_config.routers),
@@ -172,7 +179,7 @@ class RouterRegistry:
         for router_config in self.platform_config.routers:
             try:
                 result = self.loader.load_router(router_config)
-                
+
                 if result is None:
                     if router_config.required:
                         stats["failed_to_load"] += 1
@@ -194,7 +201,9 @@ class RouterRegistry:
                     stats["successfully_registered"] += len(result)
 
             except Exception as e:
-                logger.error(f"Failed to register router {router_config.module_path}: {e}")
+                logger.error(
+                    f"Failed to register router {router_config.module_path}: {e}"
+                )
                 stats["failed_to_load"] += 1
                 if router_config.required:
                     raise
@@ -228,12 +237,10 @@ class RouterRegistry:
             )
 
         except Exception as e:
-            logger.error(
-                f"Failed to include router {config.module_path}: {e}"
-            )
+            logger.error(f"Failed to include router {config.module_path}: {e}")
             raise
 
-    def _log_registration_stats(self, stats: Dict[str, Any]):
+    def _log_registration_stats(self, stats: dict[str, Any]):
         """Log router registration statistics."""
         logger.info("Router registration complete:")
         logger.info(f"  ✅ Successfully registered: {stats['successfully_registered']}")
@@ -244,11 +251,11 @@ class RouterRegistry:
         if stats["failed_to_load"] > 0:
             logger.warning(f"  ❌ Failed to load: {stats['failed_to_load']}")
 
-    def get_registered_routers(self) -> Dict[str, APIRouter]:
+    def get_registered_routers(self) -> dict[str, APIRouter]:
         """Get all registered routers."""
         return self.registered_routers.copy()
 
-    def get_registration_summary(self) -> Dict[str, Any]:
+    def get_registration_summary(self) -> dict[str, Any]:
         """Get summary of router registration."""
         return {
             "total_registered": len(self.registered_routers),
@@ -258,7 +265,7 @@ class RouterRegistry:
 
 
 # Convenience functions
-def register_routers(app: FastAPI, config: PlatformConfig) -> Dict[str, Any]:
+def register_routers(app: FastAPI, config: PlatformConfig) -> dict[str, Any]:
     """Register routers from configuration."""
     registry = RouterRegistry(config)
     return registry.register_all_routers(app)

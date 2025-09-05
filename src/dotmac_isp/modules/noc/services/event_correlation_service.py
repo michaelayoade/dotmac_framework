@@ -6,18 +6,16 @@ incident grouping for network operations center.
 """
 
 import logging
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Set
+from datetime import datetime, timedelta, timezone
+from typing import Any, Optional
 from uuid import uuid4
 
-from sqlalchemy import and_, desc, func
+from dotmac.application import standard_exception_handler
+from dotmac_shared.services.base import BaseTenantService
+from sqlalchemy import and_
 from sqlalchemy.orm import Session
 
-from dotmac_isp.shared.base_service import BaseTenantService
-from dotmac_shared.api.exception_handlers import standard_exception_handler
-
-from ..models.events import NetworkEvent, EventRule, EventType, EventSeverity
-from ..models.alarms import Alarm, AlarmStatus
+from ..models.events import EventRule, EventSeverity, EventType, NetworkEvent
 
 logger = logging.getLogger(__name__)
 
@@ -32,14 +30,14 @@ class EventCorrelationService(BaseTenantService):
             create_schema=None,
             update_schema=None,
             response_schema=None,
-            tenant_id=tenant_id
+            tenant_id=tenant_id,
         )
 
     @standard_exception_handler
-    async def process_incoming_event(self, event_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def process_incoming_event(self, event_data: dict[str, Any]) -> dict[str, Any]:
         """Process incoming network event with correlation analysis."""
         event_id = event_data.get("event_id") or str(uuid4())
-        
+
         # Create base event
         event = NetworkEvent(
             event_id=event_id,
@@ -60,12 +58,12 @@ class EventCorrelationService(BaseTenantService):
             tags=event_data.get("tags", []),
             custom_fields=event_data.get("custom_fields", {}),
             event_timestamp=datetime.now(timezone.utc),
-            processed_at=datetime.now(timezone.utc)
+            processed_at=datetime.now(timezone.utc),
         )
 
         # Perform correlation analysis
         correlation_results = await self._perform_event_correlation(event)
-        
+
         if correlation_results["correlation_id"]:
             event.correlation_id = correlation_results["correlation_id"]
         if correlation_results["parent_event_id"]:
@@ -86,32 +84,27 @@ class EventCorrelationService(BaseTenantService):
             "event_id": event.event_id,
             "correlation_results": correlation_results,
             "rule_actions": rule_actions,
-            "event_data": event.to_dict()
+            "event_data": event.to_dict(),
         }
 
     @standard_exception_handler
-    async def analyze_event_patterns(
-        self,
-        time_window_hours: int = 24,
-        min_event_count: int = 5
-    ) -> Dict[str, Any]:
+    async def analyze_event_patterns(self, time_window_hours: int = 24, min_event_count: int = 5) -> dict[str, Any]:
         """Analyze recent events for patterns and anomalies."""
         since = datetime.now(timezone.utc) - timedelta(hours=time_window_hours)
-        
+
         # Get events within time window
-        events = self.db.query(NetworkEvent).filter(
-            and_(
-                NetworkEvent.tenant_id == self.tenant_id,
-                NetworkEvent.event_timestamp >= since
-            )
-        ).all()
+        events = (
+            self.db.query(NetworkEvent)
+            .filter(and_(NetworkEvent.tenant_id == self.tenant_id, NetworkEvent.event_timestamp >= since))
+            .all()
+        )
 
         if len(events) < min_event_count:
             return {
                 "total_events": len(events),
                 "analysis": "Insufficient events for pattern analysis",
                 "patterns": [],
-                "anomalies": []
+                "anomalies": [],
             }
 
         # Analyze patterns
@@ -125,21 +118,14 @@ class EventCorrelationService(BaseTenantService):
             "patterns": patterns,
             "anomalies": anomalies,
             "correlations": correlations,
-            "analysis_timestamp": datetime.now(timezone.utc).isoformat()
+            "analysis_timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     @standard_exception_handler
-    async def get_correlated_events(
-        self,
-        correlation_id: str,
-        include_children: bool = True
-    ) -> Dict[str, Any]:
+    async def get_correlated_events(self, correlation_id: str, include_children: bool = True) -> dict[str, Any]:
         """Get all events in a correlation group."""
         query = self.db.query(NetworkEvent).filter(
-            and_(
-                NetworkEvent.tenant_id == self.tenant_id,
-                NetworkEvent.correlation_id == correlation_id
-            )
+            and_(NetworkEvent.tenant_id == self.tenant_id, NetworkEvent.correlation_id == correlation_id)
         )
 
         events = query.order_by(NetworkEvent.event_timestamp).all()
@@ -148,12 +134,13 @@ class EventCorrelationService(BaseTenantService):
         child_events = []
         if include_children:
             for event in events:
-                children = self.db.query(NetworkEvent).filter(
-                    and_(
-                        NetworkEvent.tenant_id == self.tenant_id,
-                        NetworkEvent.parent_event_id == event.event_id
+                children = (
+                    self.db.query(NetworkEvent)
+                    .filter(
+                        and_(NetworkEvent.tenant_id == self.tenant_id, NetworkEvent.parent_event_id == event.event_id)
                     )
-                ).all()
+                    .all()
+                )
                 child_events.extend(children)
 
         # Build event hierarchy
@@ -165,24 +152,20 @@ class EventCorrelationService(BaseTenantService):
             "child_events": len(child_events),
             "events": [event.to_dict() for event in events],
             "child_events_data": [event.to_dict() for event in child_events],
-            "event_hierarchy": event_tree
+            "event_hierarchy": event_tree,
         }
 
     @standard_exception_handler
     async def create_incident_from_correlation(
-        self,
-        correlation_id: str,
-        incident_title: str,
-        incident_description: str,
-        assigned_to: Optional[str] = None
-    ) -> Dict[str, Any]:
+        self, correlation_id: str, incident_title: str, incident_description: str, assigned_to: Optional[str] = None
+    ) -> dict[str, Any]:
         """Create incident from correlated events (integration point)."""
         # Get correlated events
         correlation_data = await self.get_correlated_events(correlation_id)
-        
+
         # This would integrate with incident management system
         # For now, we'll create a high-level alarm representing the incident
-        incident_data = {
+        {
             "alarm_type": "incident",
             "severity": "major",
             "title": incident_title,
@@ -193,9 +176,9 @@ class EventCorrelationService(BaseTenantService):
                 "incident_type": "correlated_events",
                 "related_events_count": correlation_data["total_events"],
                 "assigned_to": assigned_to,
-                "created_from_correlation": True
+                "created_from_correlation": True,
             },
-            "tags": ["incident", "auto_created", f"correlation:{correlation_id}"]
+            "tags": ["incident", "auto_created", f"correlation:{correlation_id}"],
         }
 
         # This would call the alarm management service
@@ -210,25 +193,25 @@ class EventCorrelationService(BaseTenantService):
             "correlation_id": correlation_id,
             "title": incident_title,
             "related_events": correlation_data["total_events"],
-            "created_at": datetime.now(timezone.utc).isoformat()
+            "created_at": datetime.now(timezone.utc).isoformat(),
         }
 
     # Private helper methods
 
-    async def _perform_event_correlation(self, event: NetworkEvent) -> Dict[str, Any]:
+    async def _perform_event_correlation(self, event: NetworkEvent) -> dict[str, Any]:
         """Perform correlation analysis for an event."""
         correlation_window = timedelta(minutes=30)
         since = datetime.now(timezone.utc) - correlation_window
 
         # Find related events
         related_events = await self._find_related_events(event, since)
-        
+
         correlation_results = {
             "correlation_id": None,
             "parent_event_id": None,
             "root_cause_event_id": None,
             "related_events_count": len(related_events),
-            "correlation_strength": 0.0
+            "correlation_strength": 0.0,
         }
 
         if not related_events:
@@ -248,63 +231,66 @@ class EventCorrelationService(BaseTenantService):
             correlation_results["correlation_id"] = f"CORR-{uuid4().hex[:8]}"
 
         # Determine parent-child relationships
-        correlation_results["parent_event_id"] = await self._determine_parent_event(
-            event, related_events
-        )
+        correlation_results["parent_event_id"] = await self._determine_parent_event(event, related_events)
 
         # Identify potential root cause
-        correlation_results["root_cause_event_id"] = await self._identify_root_cause(
-            event, related_events
-        )
+        correlation_results["root_cause_event_id"] = await self._identify_root_cause(event, related_events)
 
         # Calculate correlation strength
-        correlation_results["correlation_strength"] = await self._calculate_correlation_strength(
-            event, related_events
-        )
+        correlation_results["correlation_strength"] = await self._calculate_correlation_strength(event, related_events)
 
         return correlation_results
 
-    async def _find_related_events(
-        self, 
-        event: NetworkEvent, 
-        since: datetime
-    ) -> List[NetworkEvent]:
+    async def _find_related_events(self, event: NetworkEvent, since: datetime) -> list[NetworkEvent]:
         """Find events related to the given event."""
         related_events = []
 
         # Find events from same device
         if event.device_id:
-            device_events = self.db.query(NetworkEvent).filter(
-                and_(
-                    NetworkEvent.tenant_id == self.tenant_id,
-                    NetworkEvent.device_id == event.device_id,
-                    NetworkEvent.event_timestamp >= since,
-                    NetworkEvent.event_id != event.event_id
+            device_events = (
+                self.db.query(NetworkEvent)
+                .filter(
+                    and_(
+                        NetworkEvent.tenant_id == self.tenant_id,
+                        NetworkEvent.device_id == event.device_id,
+                        NetworkEvent.event_timestamp >= since,
+                        NetworkEvent.event_id != event.event_id,
+                    )
                 )
-            ).all()
+                .all()
+            )
             related_events.extend(device_events)
 
         # Find events from same service
         if event.service_id:
-            service_events = self.db.query(NetworkEvent).filter(
-                and_(
-                    NetworkEvent.tenant_id == self.tenant_id,
-                    NetworkEvent.service_id == event.service_id,
-                    NetworkEvent.event_timestamp >= since,
-                    NetworkEvent.event_id != event.event_id
+            service_events = (
+                self.db.query(NetworkEvent)
+                .filter(
+                    and_(
+                        NetworkEvent.tenant_id == self.tenant_id,
+                        NetworkEvent.service_id == event.service_id,
+                        NetworkEvent.event_timestamp >= since,
+                        NetworkEvent.event_id != event.event_id,
+                    )
                 )
-            ).all()
+                .all()
+            )
             related_events.extend(service_events)
 
         # Find events of same type from different sources
-        type_events = self.db.query(NetworkEvent).filter(
-            and_(
-                NetworkEvent.tenant_id == self.tenant_id,
-                NetworkEvent.event_type == event.event_type,
-                NetworkEvent.event_timestamp >= since,
-                NetworkEvent.event_id != event.event_id
+        type_events = (
+            self.db.query(NetworkEvent)
+            .filter(
+                and_(
+                    NetworkEvent.tenant_id == self.tenant_id,
+                    NetworkEvent.event_type == event.event_type,
+                    NetworkEvent.event_timestamp >= since,
+                    NetworkEvent.event_id != event.event_id,
+                )
             )
-        ).limit(10).all()
+            .limit(10)
+            .all()
+        )
         related_events.extend(type_events)
 
         # Remove duplicates
@@ -317,11 +303,7 @@ class EventCorrelationService(BaseTenantService):
 
         return unique_events
 
-    async def _determine_parent_event(
-        self, 
-        event: NetworkEvent, 
-        related_events: List[NetworkEvent]
-    ) -> Optional[str]:
+    async def _determine_parent_event(self, event: NetworkEvent, related_events: list[NetworkEvent]) -> Optional[str]:
         """Determine if this event should be a child of another event."""
         # Look for earlier events that could be parents
         for related_event in related_events:
@@ -331,15 +313,12 @@ class EventCorrelationService(BaseTenantService):
                     return related_event.event_id
         return None
 
-    async def _identify_root_cause(
-        self, 
-        event: NetworkEvent, 
-        related_events: List[NetworkEvent]
-    ) -> Optional[str]:
+    async def _identify_root_cause(self, event: NetworkEvent, related_events: list[NetworkEvent]) -> Optional[str]:
         """Identify potential root cause event."""
         # Find the earliest device-down or critical event
         root_cause_events = [
-            evt for evt in related_events
+            evt
+            for evt in related_events
             if evt.event_type in [EventType.DEVICE_STATE_CHANGE, EventType.INTERFACE_STATE_CHANGE]
             and evt.severity in [EventSeverity.CRITICAL, EventSeverity.HIGH]
         ]
@@ -351,11 +330,7 @@ class EventCorrelationService(BaseTenantService):
 
         return None
 
-    async def _calculate_correlation_strength(
-        self, 
-        event: NetworkEvent, 
-        related_events: List[NetworkEvent]
-    ) -> float:
+    async def _calculate_correlation_strength(self, event: NetworkEvent, related_events: list[NetworkEvent]) -> float:
         """Calculate correlation strength (0.0 - 1.0)."""
         if not related_events:
             return 0.0
@@ -364,23 +339,17 @@ class EventCorrelationService(BaseTenantService):
         max_strength = 1.0
 
         # Same device increases correlation
-        same_device_count = sum(
-            1 for evt in related_events if evt.device_id == event.device_id
-        )
+        same_device_count = sum(1 for evt in related_events if evt.device_id == event.device_id)
         if same_device_count > 0:
             strength += 0.3
 
         # Same service increases correlation
-        same_service_count = sum(
-            1 for evt in related_events if evt.service_id == event.service_id
-        )
+        same_service_count = sum(1 for evt in related_events if evt.service_id == event.service_id)
         if same_service_count > 0:
             strength += 0.2
 
         # Same customer increases correlation
-        same_customer_count = sum(
-            1 for evt in related_events if evt.customer_id == event.customer_id
-        )
+        same_customer_count = sum(1 for evt in related_events if evt.customer_id == event.customer_id)
         if same_customer_count > 0:
             strength += 0.2
 
@@ -390,35 +359,34 @@ class EventCorrelationService(BaseTenantService):
 
         return min(strength, max_strength)
 
-    async def _is_likely_parent_child(
-        self, 
-        potential_parent: NetworkEvent, 
-        potential_child: NetworkEvent
-    ) -> bool:
+    async def _is_likely_parent_child(self, potential_parent: NetworkEvent, potential_child: NetworkEvent) -> bool:
         """Determine if two events have a parent-child relationship."""
         # Device down -> Interface down
-        if (potential_parent.event_type == EventType.DEVICE_STATE_CHANGE and
-            potential_parent.current_state == "down" and
-            potential_child.event_type == EventType.INTERFACE_STATE_CHANGE and
-            potential_child.device_id == potential_parent.device_id):
+        if (
+            potential_parent.event_type == EventType.DEVICE_STATE_CHANGE
+            and potential_parent.current_state == "down"
+            and potential_child.event_type == EventType.INTERFACE_STATE_CHANGE
+            and potential_child.device_id == potential_parent.device_id
+        ):
             return True
 
         # Interface down -> Service down
-        if (potential_parent.event_type == EventType.INTERFACE_STATE_CHANGE and
-            potential_parent.current_state == "down" and
-            potential_child.event_type == EventType.SERVICE_STATE_CHANGE):
+        if (
+            potential_parent.event_type == EventType.INTERFACE_STATE_CHANGE
+            and potential_parent.current_state == "down"
+            and potential_child.event_type == EventType.SERVICE_STATE_CHANGE
+        ):
             return True
 
         return False
 
-    async def _apply_event_rules(self, event: NetworkEvent) -> List[Dict[str, Any]]:
+    async def _apply_event_rules(self, event: NetworkEvent) -> list[dict[str, Any]]:
         """Apply event processing rules."""
-        rules = self.db.query(EventRule).filter(
-            and_(
-                EventRule.tenant_id == self.tenant_id,
-                EventRule.is_enabled == "true"
-            )
-        ).all()
+        rules = (
+            self.db.query(EventRule)
+            .filter(and_(EventRule.tenant_id == self.tenant_id, EventRule.is_enabled == "true"))
+            .all()
+        )
 
         applied_actions = []
 
@@ -451,7 +419,7 @@ class EventCorrelationService(BaseTenantService):
 
         return True
 
-    async def _execute_rule_action(self, event: NetworkEvent, rule: EventRule) -> Dict[str, Any]:
+    async def _execute_rule_action(self, event: NetworkEvent, rule: EventRule) -> dict[str, Any]:
         """Execute rule action."""
         action_result = {
             "rule_id": rule.rule_id,
@@ -459,25 +427,25 @@ class EventCorrelationService(BaseTenantService):
             "action_type": rule.action_type,
             "executed_at": datetime.now(timezone.utc).isoformat(),
             "success": True,
-            "details": {}
+            "details": {},
         }
 
         try:
             if rule.action_type == "suppress":
                 # Suppress similar events
                 action_result["details"]["suppressed_similar_events"] = True
-                
+
             elif rule.action_type == "escalate":
                 # Escalate event severity
                 original_severity = event.severity
                 event.severity = rule.action_config.get("target_severity", "high")
                 action_result["details"]["escalated_from"] = original_severity
                 action_result["details"]["escalated_to"] = event.severity
-                
+
             elif rule.action_type == "correlate":
                 # Force correlation with specific pattern
                 action_result["details"]["forced_correlation"] = True
-                
+
             elif rule.action_type == "notify":
                 # Send notification (placeholder)
                 action_result["details"]["notification_sent"] = True
@@ -489,7 +457,7 @@ class EventCorrelationService(BaseTenantService):
 
         return action_result
 
-    async def _identify_event_patterns(self, events: List[NetworkEvent]) -> List[Dict[str, Any]]:
+    async def _identify_event_patterns(self, events: list[NetworkEvent]) -> list[dict[str, Any]]:
         """Identify patterns in event data."""
         patterns = []
 
@@ -501,12 +469,14 @@ class EventCorrelationService(BaseTenantService):
 
         for device_id, count in device_counts.items():
             if count >= 10:  # Threshold for pattern detection
-                patterns.append({
-                    "pattern_type": "repeated_device_events",
-                    "device_id": device_id,
-                    "event_count": count,
-                    "severity": "high" if count >= 20 else "medium"
-                })
+                patterns.append(
+                    {
+                        "pattern_type": "repeated_device_events",
+                        "device_id": device_id,
+                        "event_count": count,
+                        "severity": "high" if count >= 20 else "medium",
+                    }
+                )
 
         # Pattern: Event type frequency
         type_counts = {}
@@ -515,16 +485,18 @@ class EventCorrelationService(BaseTenantService):
 
         for event_type, count in type_counts.items():
             if count >= 15:
-                patterns.append({
-                    "pattern_type": "high_frequency_event_type",
-                    "event_type": event_type,
-                    "event_count": count,
-                    "severity": "medium"
-                })
+                patterns.append(
+                    {
+                        "pattern_type": "high_frequency_event_type",
+                        "event_type": event_type,
+                        "event_count": count,
+                        "severity": "medium",
+                    }
+                )
 
         return patterns
 
-    async def _detect_event_anomalies(self, events: List[NetworkEvent]) -> List[Dict[str, Any]]:
+    async def _detect_event_anomalies(self, events: list[NetworkEvent]) -> list[dict[str, Any]]:
         """Detect anomalies in event patterns."""
         anomalies = []
 
@@ -538,29 +510,27 @@ class EventCorrelationService(BaseTenantService):
             avg_per_hour = sum(hourly_counts.values()) / len(hourly_counts)
             for hour, count in hourly_counts.items():
                 if count > avg_per_hour * 3:  # 3x average is anomaly
-                    anomalies.append({
-                        "anomaly_type": "event_spike",
-                        "time_period": hour,
-                        "event_count": count,
-                        "average_count": round(avg_per_hour, 2),
-                        "severity": "high"
-                    })
+                    anomalies.append(
+                        {
+                            "anomaly_type": "event_spike",
+                            "time_period": hour,
+                            "event_count": count,
+                            "average_count": round(avg_per_hour, 2),
+                            "severity": "high",
+                        }
+                    )
 
         return anomalies
 
-    async def _analyze_event_correlations(self, events: List[NetworkEvent]) -> Dict[str, Any]:
+    async def _analyze_event_correlations(self, events: list[NetworkEvent]) -> dict[str, Any]:
         """Analyze correlation statistics."""
-        correlations = {
-            "total_correlated_events": 0,
-            "unique_correlations": set(),
-            "correlation_groups": {}
-        }
+        correlations = {"total_correlated_events": 0, "unique_correlations": set(), "correlation_groups": {}}
 
         for event in events:
             if event.correlation_id:
                 correlations["total_correlated_events"] += 1
                 correlations["unique_correlations"].add(event.correlation_id)
-                
+
                 if event.correlation_id not in correlations["correlation_groups"]:
                     correlations["correlation_groups"][event.correlation_id] = []
                 correlations["correlation_groups"][event.correlation_id].append(event.event_id)
@@ -570,13 +540,9 @@ class EventCorrelationService(BaseTenantService):
 
         return correlations
 
-    async def _build_event_hierarchy(self, events: List[NetworkEvent]) -> Dict[str, Any]:
+    async def _build_event_hierarchy(self, events: list[NetworkEvent]) -> dict[str, Any]:
         """Build hierarchical representation of events."""
-        hierarchy = {
-            "root_events": [],
-            "parent_child_relationships": {},
-            "orphaned_events": []
-        }
+        hierarchy = {"root_events": [], "parent_child_relationships": {}, "orphaned_events": []}
 
         event_dict = {event.event_id: event for event in events}
 

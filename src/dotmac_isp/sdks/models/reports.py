@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 from uuid import UUID
 
 from .enums import ReportType
@@ -26,8 +26,8 @@ class Report:
     report_id: UUID
     report_name: str
     report_type: ReportType
-    query_config: Dict[str, Any]
-    schedule_config: Optional[Dict[str, Any]] = None
+    query_config: dict[str, Any]
+    schedule_config: Optional[dict[str, Any]] = None
     created_by: Optional[str] = None
     is_active: bool = True
     created_at: Optional[datetime] = None
@@ -43,7 +43,7 @@ class ReportExecution:
     status: ReportStatus
     started_at: datetime
     completed_at: Optional[datetime] = None
-    result_data: Optional[Dict[str, Any]] = None
+    result_data: Optional[dict[str, Any]] = None
     error_message: Optional[str] = None
 
 
@@ -55,6 +55,6 @@ class ReportSubscription:
     report_id: UUID
     user_id: str
     email: str
-    delivery_config: Dict[str, Any]
+    delivery_config: dict[str, Any]
     is_active: bool = True
     created_at: Optional[datetime] = None

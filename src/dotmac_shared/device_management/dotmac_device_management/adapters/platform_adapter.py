@@ -5,7 +5,7 @@ Provides adapters to integrate device management with different DotMac platform 
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from sqlalchemy.orm import Session
 
@@ -23,18 +23,16 @@ class BaseDeviceAdapter(ABC):
         self.device_service = DeviceService(session, tenant_id)
 
     @abstractmethod
-    async def adapt_device_data(self, platform_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def adapt_device_data(self, platform_data: dict[str, Any]) -> dict[str, Any]:
         """Adapt platform-specific device data to standard format."""
         pass
 
     @abstractmethod
-    async def export_device_data(self, device_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def export_device_data(self, device_data: dict[str, Any]) -> dict[str, Any]:
         """Export device data to platform-specific format."""
         pass
 
-    async def create_device_from_platform(
-        self, platform_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def create_device_from_platform(self, platform_data: dict[str, Any]) -> dict[str, Any]:
         """Create device from platform-specific data."""
         try:
             # Adapt platform data to standard format
@@ -45,13 +43,11 @@ class BaseDeviceAdapter(ABC):
 
             return result
         except Exception as e:
-            raise DeviceManagementError(
-                f"Failed to create device from platform data: {str(e)}"
-            )
+            raise DeviceManagementError(f"Failed to create device from platform data: {str(e)}") from e
 
     async def sync_device_to_platform(
-        self, device_id: str, platform_config: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        self, device_id: str, platform_config: Optional[dict[str, Any]] = None
+    ) -> dict[str, Any]:
         """Sync device data to platform."""
         try:
             # Get device overview
@@ -69,21 +65,19 @@ class BaseDeviceAdapter(ABC):
                 "platform_data": platform_data,
             }
         except Exception as e:
-            raise DeviceManagementError(f"Failed to sync device to platform: {str(e)}")
+            raise DeviceManagementError(f"Failed to sync device to platform: {str(e)}") from e
 
 
 class ISPDeviceAdapter(BaseDeviceAdapter):
     """Adapter for ISP Framework integration."""
 
-    async def adapt_device_data(self, platform_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def adapt_device_data(self, platform_data: dict[str, Any]) -> dict[str, Any]:
         """Adapt ISP platform device data to standard format."""
         # Map ISP framework fields to device management fields
         adapted_data = {
             "device_id": platform_data.get("device_id"),
             "hostname": platform_data.get("hostname") or platform_data.get("name"),
-            "device_type": self._map_isp_device_type(
-                platform_data.get("device_type", "unknown")
-            ),
+            "device_type": self._map_isp_device_type(platform_data.get("device_type", "unknown")),
             "vendor": platform_data.get("vendor"),
             "model": platform_data.get("model"),
             "serial_number": platform_data.get("serial_number"),
@@ -124,7 +118,7 @@ class ISPDeviceAdapter(BaseDeviceAdapter):
 
         return adapted_data
 
-    async def export_device_data(self, device_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def export_device_data(self, device_data: dict[str, Any]) -> dict[str, Any]:
         """Export device data to ISP framework format."""
         device_info = device_data.get("device_info", {})
         health_status = device_data.get("health_status", {})
@@ -240,25 +234,19 @@ class ISPDeviceAdapter(BaseDeviceAdapter):
 class ManagementDeviceAdapter(BaseDeviceAdapter):
     """Adapter for Management Platform integration."""
 
-    async def adapt_device_data(self, platform_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def adapt_device_data(self, platform_data: dict[str, Any]) -> dict[str, Any]:
         """Adapt Management platform device data to standard format."""
         adapted_data = {
-            "device_id": platform_data.get("device_id")
-            or platform_data.get("asset_id"),
-            "hostname": platform_data.get("hostname")
-            or platform_data.get("asset_name"),
-            "device_type": self._map_management_device_type(
-                platform_data.get("asset_type", "unknown")
-            ),
+            "device_id": platform_data.get("device_id") or platform_data.get("asset_id"),
+            "hostname": platform_data.get("hostname") or platform_data.get("asset_name"),
+            "device_type": self._map_management_device_type(platform_data.get("asset_type", "unknown")),
             "vendor": platform_data.get("vendor") or platform_data.get("manufacturer"),
             "model": platform_data.get("model"),
             "serial_number": platform_data.get("serial_number"),
             "site_id": platform_data.get("location_id") or platform_data.get("site_id"),
             "rack_id": platform_data.get("rack_id"),
             "rack_unit": platform_data.get("rack_unit"),
-            "status": self._map_management_status(
-                platform_data.get("status", "unknown")
-            ),
+            "status": self._map_management_status(platform_data.get("status", "unknown")),
             "install_date": platform_data.get("install_date"),
             "warranty_end": platform_data.get("warranty_expiry"),
             "metadata": {
@@ -282,7 +270,7 @@ class ManagementDeviceAdapter(BaseDeviceAdapter):
 
         return adapted_data
 
-    async def export_device_data(self, device_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def export_device_data(self, device_data: dict[str, Any]) -> dict[str, Any]:
         """Export device data to Management platform format."""
         device_info = device_data.get("device_info", {})
         health_status = device_data.get("health_status", {})
@@ -291,9 +279,7 @@ class ManagementDeviceAdapter(BaseDeviceAdapter):
         exported_data = {
             "asset_id": device_info.get("device_id"),
             "asset_name": device_info.get("hostname"),
-            "asset_type": self._map_to_management_device_type(
-                device_info.get("device_type")
-            ),
+            "asset_type": self._map_to_management_device_type(device_info.get("device_type")),
             "manufacturer": device_info.get("vendor"),
             "model": device_info.get("model"),
             "serial_number": device_info.get("serial_number"),

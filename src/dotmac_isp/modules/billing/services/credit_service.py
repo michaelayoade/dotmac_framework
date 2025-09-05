@@ -2,12 +2,11 @@
 
 from datetime import date
 from decimal import Decimal
-from typing import List, Optional
-
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Optional
 
 from dotmac_isp.modules.billing.models import CreditNote, Invoice
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class CreditService:
@@ -62,25 +61,21 @@ class CreditService:
 
     async def get_credit_notes_by_customer(
         self, customer_id: str, tenant_id: str, unapplied_only: bool = False
-    ) -> List[CreditNote]:
+    ) -> list[CreditNote]:
         """Get all credit notes for a customer."""
-        query = select(CreditNote).where(
-            CreditNote.customer_id == customer_id, CreditNote.tenant_id == tenant_id
-        )
+        query = select(CreditNote).where(CreditNote.customer_id == customer_id, CreditNote.tenant_id == tenant_id)
         if unapplied_only:
-            query = query.where(CreditNote.is_applied == False)
+            query = query.where(CreditNote.is_applied is False)
 
         result = await self.db_session.execute(query)
         return result.scalars().all()
 
-    async def get_customer_credit_balance(
-        self, customer_id: str, tenant_id: str
-    ) -> Decimal:
+    async def get_customer_credit_balance(self, customer_id: str, tenant_id: str) -> Decimal:
         """Get total available credit balance for a customer."""
         query = select(CreditNote).where(
             CreditNote.customer_id == customer_id,
             CreditNote.tenant_id == tenant_id,
-            CreditNote.is_applied == False,
+            CreditNote.is_applied is False,
         )
         result = await self.db_session.execute(query)
         credit_notes = result.scalars().all()

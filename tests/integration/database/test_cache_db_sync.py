@@ -2,9 +2,7 @@
 Integration tests - Test component interactions.
 """
 
-from unittest.mock import patch
 
-import pytest
 
 from tests.utilities.test_helpers import MockDatabaseSession, MockRedisManager
 

@@ -2,20 +2,19 @@
 API v1 routes.
 """
 
-from dotmac_shared.api.exception_handlers import standard_exception_handler
-
-from typing import Dict
 import os
 
+from dotmac.application import standard_exception_handler
 from fastapi import APIRouter, Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
-# from config import settings  # TODO: Fix config import
+
 class MockSettings:
     app_version = "1.0.0"
     environment = "development"
+
+
 settings = MockSettings()
-from dotmac_shared.api.router_factory import RouterFactory
 
 # Import existing routers (gracefully handle missing ones)
 try:
@@ -49,6 +48,11 @@ except ImportError:
     partners_router = None
 
 try:
+    from .saas_automation import router as saas_automation_router
+except ImportError:
+    saas_automation_router = None
+
+try:
     from .vps_customers import router as vps_customers_router
 except ImportError:
     vps_customers_router = None
@@ -74,32 +78,32 @@ api_router = APIRouter()
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     """Add security headers to all API responses"""
-    
+
     def __init__(self, app):
         super().__init__(app)
         self.environment = os.getenv("ENVIRONMENT", "development")
-    
+
     async def dispatch(self, request: Request, call_next) -> Response:
         response = await call_next(request)
-        
+
         # Add security headers based on environment
         security_headers = {
             "X-Content-Type-Options": "nosniff",
-            "X-Frame-Options": "DENY", 
+            "X-Frame-Options": "DENY",
             "X-XSS-Protection": "1; mode=block",
             "Referrer-Policy": "strict-origin-when-cross-origin",
             "X-API-Version": "v1",
-            "X-Service": "dotmac-management-api"
+            "X-Service": "dotmac-management-api",
         }
-        
+
         # Add HSTS in production
         if self.environment == "production":
             security_headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
-        
+
         # Apply headers
         for header, value in security_headers.items():
             response.headers[header] = value
-        
+
         return response
 
 
@@ -108,24 +112,24 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 # Standardized health endpoints for API v1
 @api_router.get("/health")
-async def health_check() -> Dict[str, str]:
+async def health_check() -> dict[str, str]:
     """Health check endpoint for API v1."""
-    from datetime import datetime
+    from datetime import datetime, timezone
 
     return {
         "status": "healthy",
         "service": "management-platform",
         "version": settings.app_version,
         "environment": settings.environment,
-        "timestamp": datetime.utcnow(, timezone).isoformat(),
+        "timestamp": datetime.utcnow().isoformat(),
     }
 
 
 @api_router.get("/health/database")
 @standard_exception_handler
-async def database_health_check() -> Dict[str, str]:
+async def database_health_check() -> dict[str, str]:
     """Database health check endpoint for API v1."""
-    from datetime import datetime
+    from datetime import datetime, timezone
 
     from database import engine
     from sqlalchemy import text
@@ -163,6 +167,9 @@ if onboarding_router:
 if monitoring_router:
     api_router.include_router(monitoring_router, prefix="/monitoring", tags=["Monitoring"])
 
+if saas_automation_router:
+    api_router.include_router(saas_automation_router, tags=["SaaS Automation"])
+
 if partners_router:
     api_router.include_router(partners_router, prefix="/partners", tags=["Partners"])
 
@@ -180,8 +187,6 @@ if partner_branding_router:
 
 # Include tenant admin portal API (if available)
 if tenant_admin_api_router:
-    api_router.include_router(
-        tenant_admin_api_router, prefix="/tenant-admin", tags=["Tenant Admin Portal"]
-    )
+    api_router.include_router(tenant_admin_api_router, prefix="/tenant-admin", tags=["Tenant Admin Portal"])
 
 __all__ = ["api_router"]

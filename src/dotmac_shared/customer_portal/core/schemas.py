@@ -7,7 +7,7 @@ Unified data models for customer portal functionality across platforms.
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -59,17 +59,17 @@ class CustomerDashboardData(BaseModel):
     # Services summary
     active_services: int = 0
     total_services: int = 0
-    services: List["ServiceSummary"] = Field(default_factory=list)
+    services: list["ServiceSummary"] = Field(default_factory=list)
 
     # Support summary
     open_tickets: int = 0
-    recent_tickets: List["TicketSummary"] = Field(default_factory=list)
+    recent_tickets: list["TicketSummary"] = Field(default_factory=list)
 
     # Usage summary (for ISP customers)
     usage_summary: Optional["UsageSummary"] = None
 
     # Platform-specific data
-    platform_data: Dict[str, Any] = Field(default_factory=dict)
+    platform_data: dict[str, Any] = Field(default_factory=dict)
 
 
 class ServiceSummary(BaseModel):
@@ -107,7 +107,7 @@ class UsageSummary(BaseModel):
     data_allowance_gb: Optional[Decimal] = None
     voice_minutes: Optional[int] = None
     voice_allowance: Optional[int] = None
-    additional_charges: List["UsageCharge"] = Field(default_factory=list)
+    additional_charges: list["UsageCharge"] = Field(default_factory=list)
 
 
 class UsageCharge(BaseModel):
@@ -135,13 +135,13 @@ class CustomerPortalConfig(BaseModel):
     payment_management_enabled: bool = True
 
     # UI customization
-    branding: Dict[str, Any] = Field(default_factory=dict)
-    custom_fields: List[Dict[str, Any]] = Field(default_factory=list)
+    branding: dict[str, Any] = Field(default_factory=dict)
+    custom_fields: list[dict[str, Any]] = Field(default_factory=list)
 
     # Business rules
     auto_suspend_days: int = 30
     payment_grace_period_days: int = 5
-    service_change_restrictions: List[str] = Field(default_factory=list)
+    service_change_restrictions: list[str] = Field(default_factory=list)
 
 
 class PortalSessionData(BaseModel):
@@ -155,9 +155,9 @@ class PortalSessionData(BaseModel):
     expires_at: datetime
 
     # Session state
-    permissions: List[str] = Field(default_factory=list)
-    preferences: Dict[str, Any] = Field(default_factory=dict)
-    context: Dict[str, Any] = Field(default_factory=dict)
+    permissions: list[str] = Field(default_factory=list)
+    preferences: dict[str, Any] = Field(default_factory=dict)
+    context: dict[str, Any] = Field(default_factory=dict)
 
 
 class CustomerProfileUpdate(BaseModel):
@@ -182,7 +182,7 @@ class CustomerProfileUpdate(BaseModel):
     marketing_communications: Optional[bool] = None
 
     # Platform-specific fields
-    custom_fields: Dict[str, Any] = Field(default_factory=dict)
+    custom_fields: dict[str, Any] = Field(default_factory=dict)
 
 
 class ServiceUsageData(BaseModel):
@@ -194,12 +194,12 @@ class ServiceUsageData(BaseModel):
     billing_period_end: datetime
 
     # Usage metrics
-    usage_data: Dict[str, Decimal] = Field(default_factory=dict)
-    allowances: Dict[str, Decimal] = Field(default_factory=dict)
-    overage_charges: List[UsageCharge] = Field(default_factory=list)
+    usage_data: dict[str, Decimal] = Field(default_factory=dict)
+    allowances: dict[str, Decimal] = Field(default_factory=dict)
+    overage_charges: list[UsageCharge] = Field(default_factory=list)
 
     # Historical data
-    usage_history: List[Dict[str, Any]] = Field(default_factory=list)
+    usage_history: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class BillingSummary(BaseModel):
@@ -213,11 +213,11 @@ class BillingSummary(BaseModel):
     estimated_amount: Optional[Decimal] = None
 
     # Recent activity
-    recent_invoices: List["InvoiceSummary"] = Field(default_factory=list)
-    recent_payments: List["PaymentSummary"] = Field(default_factory=list)
+    recent_invoices: list["InvoiceSummary"] = Field(default_factory=list)
+    recent_payments: list["PaymentSummary"] = Field(default_factory=list)
 
     # Payment methods
-    payment_methods: List["PaymentMethodSummary"] = Field(default_factory=list)
+    payment_methods: list["PaymentMethodSummary"] = Field(default_factory=list)
     default_payment_method: Optional[UUID] = None
 
 

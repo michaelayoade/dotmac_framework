@@ -1,20 +1,28 @@
-"""File Management API Router for the Management Platform."""
+"""File Management API Router for the Management Platform.
 
-import logging
-from typing import List, Optional
+Provides comprehensive file management for the management platform including:
+- Secure file upload and validation
+- File metadata management
+- Access control and permissions
+- Search and filtering capabilities
+- Tenant-isolated file storage
 
-from fastapi import Depends, File, Query, UploadFile
-from fastapi.responses import StreamingResponse
+Follows DRY patterns using dotmac packages for consistent API structure.
+"""
 
-from dotmac_shared.api.exception_handlers import standard_exception_handler
+from typing import Optional
+from uuid import UUID
+
+from dotmac.application import standard_exception_handler
+from dotmac.application.api.router_factory import RouterFactory
+from dotmac.application.dependencies.dependencies import StandardDependencies, get_standard_deps
+from dotmac.core.schemas.base_schemas import PaginatedResponseSchema
+from dotmac.platform.observability.logging import get_logger
 from dotmac_shared.api.rate_limiting_decorators import rate_limit, rate_limit_strict
-from dotmac_shared.api.router_factory import RouterFactory
 from dotmac_shared.file_management.schemas import (
-    FileListResponse,
     FileMetadataCreate,
     FileMetadataResponse,
     FileMetadataUpdate,
-    FilePermissionCreate,
     FileSearchFilters,
     FileSearchRequest,
     FileUploadSessionCreate,
@@ -22,24 +30,29 @@ from dotmac_shared.file_management.schemas import (
     FileValidationResponse,
     TenantFileStatsResponse,
 )
+from fastapi import APIRouter, Depends, File, Path, Query, UploadFile
+from fastapi.responses import FileResponse
 
-from ...dependencies import get_current_user, get_file_service
 from ...services.file_service import FileService
-from datetime import timezone
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
-# Create router using RouterFactory
-router = RouterFactory.create_router(
-    prefix="/files",
-    tags=["File Management"],
-    dependencies=[Depends(get_current_user)]
+# Create router using DRY RouterFactory pattern
+router_factory = RouterFactory("File Management")
+router = APIRouter(prefix="/files", tags=["File Management"])
+
+
+# ============================================================================
+# File Upload Management
+# ============================================================================
+
+
+@router.post(
+    "/upload",
+    response_model=FileMetadataResponse,
+    summary="Upload file",
+    description="Upload a new file with metadata and validation",
 )
-
-
-# File Upload Endpoints
-
-@router.post("/upload", response_model=FileMetadataResponse)
 @rate_limit_strict(max_requests=20, time_window_seconds=60)
 @standard_exception_handler
 async def upload_file(
@@ -47,271 +60,315 @@ async def upload_file(
     category: Optional[str] = Query(None, description="File category"),
     description: Optional[str] = Query(None, description="File description"),
     tags: Optional[str] = Query(None, description="Comma-separated tags"),
-    access_level: Optional[str] = Query("tenant_only", description="Access level"),
-    expiration_days: Optional[int] = Query(None, description="Expiration in days"),
+    access_level: Optional[str] = Query("private", description="Access level (private, shared, public)"),
+    expiration_days: Optional[int] = Query(None, description="Days until expiration"),
     related_entity_type: Optional[str] = Query(None, description="Related entity type"),
     related_entity_id: Optional[str] = Query(None, description="Related entity ID"),
-    current_user: dict = Depends(get_current_user),
-    file_service: FileService = Depends(get_file_service)
-):
-    """Upload a new file."""
-    # Read file content
-    file_content = await file.read()
-    
-    # Parse tags
-    tag_list = []
-    if tags:
-        tag_list = [tag.strip() for tag in tags.split(",") if tag.strip()]
-    
-    # Create file metadata request
-    file_data = FileMetadataCreate(
-        tenant_id=current_user["tenant_id"],
-        owner_user_id=current_user["user_id"],
-        original_filename=file.filename,
-        file_category=category or "other",
-        access_level=access_level,
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> FileMetadataResponse:
+    """Upload a new file with comprehensive metadata and validation."""
+
+    file_service = FileService(deps.db, deps.tenant_id)
+
+    # Create upload request
+    upload_request = FileMetadataCreate(
+        filename=file.filename,
+        content_type=file.content_type,
+        category=category,
         description=description,
-        tags=tag_list,
+        tags=tags.split(",") if tags else [],
+        access_level=access_level,
         expiration_days=expiration_days,
         related_entity_type=related_entity_type,
-        related_entity_id=related_entity_id
-    )
-    
-    return await file_service.create_file(
-        tenant_id=current_user["tenant_id"],
-        user_id=current_user["user_id"],
-        file_data=file_data,
-        file_content=file_content
+        related_entity_id=related_entity_id,
     )
 
+    # Process upload
+    file_content = await file.read()
+    uploaded_file = await file_service.upload_file(
+        file_content=file_content,
+        metadata=upload_request,
+        user_id=deps.user.get("user_id") if deps.user else None,
+    )
 
-@router.post("/upload/session", response_model=dict)
+    return uploaded_file
+
+
+@router.post(
+    "/upload/session",
+    response_model=dict,
+    summary="Create upload session",
+    description="Create a secure upload session for large files",
+)
 @rate_limit_strict(max_requests=10, time_window_seconds=60)
 @standard_exception_handler
 async def create_upload_session(
-    session_data: FileUploadSessionCreate,
-    current_user: dict = Depends(get_current_user),
-    file_service: FileService = Depends(get_file_service)
-):
-    """Create upload session for large files."""
+    request: FileUploadSessionCreate,
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> dict:
+    """Create a secure upload session for large files."""
+
+    file_service = FileService(deps.db, deps.tenant_id)
+
     session = await file_service.create_upload_session(
-        tenant_id=current_user["tenant_id"],
-        user_id=current_user["user_id"],
-        session_data=session_data
+        request=request,
+        user_id=deps.user.get("user_id") if deps.user else None,
     )
-    
+
     return {
-        "upload_session_id": session.upload_session_id,
-        "expires_at": session.expires_at,
-        "chunk_size": session.chunk_size,
-        "max_chunks": session.max_chunks
+        "success": True,
+        "message": "Upload session created",
+        "data": session,
     }
 
 
-# File Access Endpoints
-
-@router.get("/{file_id}", response_model=FileMetadataResponse)
-@rate_limit(max_requests=100, time_window_seconds=60)
-@standard_exception_handler
-async def get_file(
-    file_id: str,
-    current_user: dict = Depends(get_current_user),
-    file_service: FileService = Depends(get_file_service)
-):
-    """Get file metadata by ID."""
-    return await file_service.get_file(
-        file_id=file_id,
-        tenant_id=current_user["tenant_id"],
-        user_id=current_user["user_id"]
-    )
+# ============================================================================
+# File Access & Download
+# ============================================================================
 
 
-@router.get("/{file_id}/download")
-@rate_limit(max_requests=50, time_window_seconds=60)
+@router.get(
+    "/{file_id}",
+    response_class=FileResponse,
+    summary="Download file",
+    description="Download a file by ID",
+)
+@rate_limit(max_requests=120, time_window_seconds=60)
 @standard_exception_handler
 async def download_file(
-    file_id: str,
-    current_user: dict = Depends(get_current_user),
-    file_service: FileService = Depends(get_file_service)
-):
-    """Download file content."""
-    content, filename, mime_type = await file_service.get_file_content(
+    file_id: UUID = Path(..., description="File ID"),
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> FileResponse:
+    """Download a file by ID."""
+
+    file_service = FileService(deps.db, deps.tenant_id)
+
+    file_info = await file_service.get_file_for_download(
         file_id=file_id,
-        tenant_id=current_user["tenant_id"],
-        user_id=current_user["user_id"]
+        user_id=deps.user.get("user_id") if deps.user else None,
     )
-    
-    def generate_file_stream():
-        yield content
-    
-    return StreamingResponse(
-        generate_file_stream(),
-        media_type=mime_type,
-        headers={
-            "Content-Disposition": f"attachment; filename={filename}",
-            "Content-Length": str(len(content))
-        }
+
+    return FileResponse(
+        path=file_info["file_path"],
+        filename=file_info["filename"],
+        media_type=file_info["content_type"],
     )
 
 
-@router.put("/{file_id}", response_model=FileMetadataResponse)
-@rate_limit(max_requests=50, time_window_seconds=60)
+@router.get(
+    "/{file_id}/metadata",
+    response_model=FileMetadataResponse,
+    summary="Get file metadata",
+    description="Get metadata for a specific file",
+)
+@rate_limit(max_requests=180, time_window_seconds=60)
 @standard_exception_handler
-async def update_file(
-    file_id: str,
-    updates: FileMetadataUpdate,
-    current_user: dict = Depends(get_current_user),
-    file_service: FileService = Depends(get_file_service)
-):
-    """Update file metadata."""
-    return await file_service.update_file(
+async def get_file_metadata(
+    file_id: UUID = Path(..., description="File ID"),
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> FileMetadataResponse:
+    """Get metadata for a specific file."""
+
+    file_service = FileService(deps.db, deps.tenant_id)
+
+    metadata = await file_service.get_file_metadata(
         file_id=file_id,
-        tenant_id=current_user["tenant_id"],
-        user_id=current_user["user_id"],
-        updates=updates
+        user_id=deps.user.get("user_id") if deps.user else None,
     )
 
+    return metadata
 
-@router.delete("/{file_id}")
-@rate_limit_strict(max_requests=20, time_window_seconds=60)
+
+# ============================================================================
+# File Management Operations
+# ============================================================================
+
+
+@router.put(
+    "/{file_id}/metadata",
+    response_model=FileMetadataResponse,
+    summary="Update file metadata",
+    description="Update metadata for a specific file",
+)
+@rate_limit_strict(max_requests=60, time_window_seconds=60)
 @standard_exception_handler
-async def delete_file(
-    file_id: str,
-    permanent: bool = Query(False, description="Permanent deletion"),
-    current_user: dict = Depends(get_current_user),
-    file_service: FileService = Depends(get_file_service)
-):
-    """Delete file."""
-    success = await file_service.delete_file(
+async def update_file_metadata(
+    request: FileMetadataUpdate,
+    file_id: UUID = Path(..., description="File ID"),
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> FileMetadataResponse:
+    """Update metadata for a specific file."""
+
+    file_service = FileService(deps.db, deps.tenant_id)
+
+    updated_file = await file_service.update_file_metadata(
         file_id=file_id,
-        tenant_id=current_user["tenant_id"],
-        user_id=current_user["user_id"],
-        permanent=permanent
-    )
-    
-    return {"success": success, "message": "File deleted successfully"}
-
-
-# File Search and Listing
-
-@router.post("/search", response_model=FileListResponse)
-@rate_limit(max_requests=100, time_window_seconds=60)
-@standard_exception_handler
-async def search_files(
-    search_request: FileSearchRequest,
-    current_user: dict = Depends(get_current_user),
-    file_service: FileService = Depends(get_file_service)
-):
-    """Search files with advanced filters."""
-    files, total = await file_service.search_files(
-        tenant_id=current_user["tenant_id"],
-        user_id=current_user["user_id"],
-        search_filters=search_request.filters or FileSearchFilters(),
-        page=search_request.page,
-        size=search_request.size
-    )
-    
-    return FileListResponse(
-        items=files,
-        total=total,
-        page=search_request.page,
-        size=search_request.size,
-        pages=(total + search_request.size - 1) // search_request.size
+        updates=request,
+        user_id=deps.user.get("user_id") if deps.user else None,
     )
 
-
-@router.get("/", response_model=FileListResponse)
-@rate_limit(max_requests=100, time_window_seconds=60)
-@standard_exception_handler
-async def list_user_files(
-    page: int = Query(1, ge=1, description="Page number"),
-    size: int = Query(50, ge=1, le=100, description="Page size"),
-    current_user: dict = Depends(get_current_user),
-    file_service: FileService = Depends(get_file_service)
-):
-    """List current user's files."""
-    files, total = await file_service.get_user_files(
-        tenant_id=current_user["tenant_id"],
-        user_id=current_user["user_id"],
-        page=page,
-        size=size
-    )
-    
-    return FileListResponse(
-        items=files,
-        total=total,
-        page=page,
-        size=size,
-        pages=(total + size - 1) // size
-    )
+    return updated_file
 
 
-# File Permissions
-
-@router.post("/{file_id}/permissions")
+@router.delete(
+    "/{file_id}",
+    response_model=dict,
+    summary="Delete file",
+    description="Delete a file and its metadata",
+)
 @rate_limit_strict(max_requests=30, time_window_seconds=60)
 @standard_exception_handler
-async def grant_file_permission(
-    file_id: str,
-    permission_data: FilePermissionCreate,
-    current_user: dict = Depends(get_current_user),
-    file_service: FileService = Depends(get_file_service)
-):
-    """Grant file permission to another user."""
-    success = await file_service.grant_file_permission(
+async def delete_file(
+    file_id: UUID = Path(..., description="File ID"),
+    force: bool = Query(False, description="Force delete even if referenced"),
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> dict:
+    """Delete a file and its metadata."""
+
+    file_service = FileService(deps.db, deps.tenant_id)
+
+    success = await file_service.delete_file(
         file_id=file_id,
-        tenant_id=current_user["tenant_id"],
-        granter_user_id=current_user["user_id"],
-        permission_data=permission_data
+        user_id=deps.user.get("user_id") if deps.user else None,
+        force=force,
     )
-    
-    return {"success": success, "message": "Permission granted successfully"}
+
+    if not success:
+        from dotmac.core.exceptions import BusinessRuleError
+
+        raise BusinessRuleError("File cannot be deleted (may be referenced by other entities)")
+
+    return {
+        "success": True,
+        "message": f"File {file_id} deleted successfully",
+    }
 
 
-# File Validation
+# ============================================================================
+# File Search & Listing
+# ============================================================================
 
-@router.post("/validate", response_model=FileValidationResponse)
-@rate_limit(max_requests=100, time_window_seconds=60)
+
+@router.get(
+    "",
+    response_model=PaginatedResponseSchema[FileMetadataResponse],
+    summary="List files",
+    description="List files with filtering and pagination",
+)
+@rate_limit(max_requests=120, time_window_seconds=60)
+@standard_exception_handler
+async def list_files(
+    category: Optional[str] = Query(None, description="Filter by category"),
+    access_level: Optional[str] = Query(None, description="Filter by access level"),
+    tags: Optional[str] = Query(None, description="Filter by comma-separated tags"),
+    search: Optional[str] = Query(None, description="Search term"),
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> PaginatedResponseSchema[FileMetadataResponse]:
+    """List files with filtering and pagination."""
+
+    file_service = FileService(deps.db, deps.tenant_id)
+
+    # Build search filters
+    filters = FileSearchFilters(
+        category=category,
+        access_level=access_level,
+        tags=tags.split(",") if tags else None,
+        search_term=search,
+    )
+
+    files = await file_service.list_files(
+        filters=filters,
+        user_id=deps.user.get("user_id") if deps.user else None,
+        limit=50,  # Default pagination
+        offset=0,
+    )
+
+    return PaginatedResponseSchema[FileMetadataResponse](
+        items=files,
+        total=len(files),
+        page=1,
+        per_page=50,
+    )
+
+
+@router.post(
+    "/search",
+    response_model=PaginatedResponseSchema[FileMetadataResponse],
+    summary="Advanced file search",
+    description="Perform advanced search with complex filters",
+)
+@rate_limit(max_requests=60, time_window_seconds=60)
+@standard_exception_handler
+async def search_files(
+    request: FileSearchRequest,
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> PaginatedResponseSchema[FileMetadataResponse]:
+    """Perform advanced search with complex filters."""
+
+    file_service = FileService(deps.db, deps.tenant_id)
+
+    results = await file_service.advanced_search(
+        search_request=request,
+        user_id=deps.user.get("user_id") if deps.user else None,
+    )
+
+    return PaginatedResponseSchema[FileMetadataResponse](
+        items=results["items"],
+        total=results["total"],
+        page=request.page,
+        per_page=request.per_page,
+    )
+
+
+# ============================================================================
+# File Validation & Security
+# ============================================================================
+
+
+@router.post(
+    "/validate",
+    response_model=FileValidationResponse,
+    summary="Validate file",
+    description="Validate file content and security",
+)
+@rate_limit_strict(max_requests=30, time_window_seconds=60)
 @standard_exception_handler
 async def validate_file(
-    validation_request: FileValidationRequest,
-    file_service: FileService = Depends(get_file_service)
-):
-    """Validate file before upload."""
-    return await file_service.validate_file(
-        filename=validation_request.filename,
-        file_size=validation_request.file_size,
-        content_type=validation_request.content_type,
-        category=validation_request.category
+    request: FileValidationRequest,
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> FileValidationResponse:
+    """Validate file content and security."""
+
+    file_service = FileService(deps.db, deps.tenant_id)
+
+    validation_result = await file_service.validate_file(
+        validation_request=request,
+        user_id=deps.user.get("user_id") if deps.user else None,
     )
 
+    return validation_result
 
-# Statistics and Analytics
 
-@router.get("/stats/tenant", response_model=TenantFileStatsResponse)
-@rate_limit(max_requests=20, time_window_seconds=60)
+# ============================================================================
+# Tenant File Statistics
+# ============================================================================
+
+
+@router.get(
+    "/stats/tenant",
+    response_model=TenantFileStatsResponse,
+    summary="Get tenant file statistics",
+    description="Get file usage statistics for the current tenant",
+)
+@rate_limit(max_requests=60, time_window_seconds=60)
 @standard_exception_handler
 async def get_tenant_file_stats(
-    current_user: dict = Depends(get_current_user),
-    file_service: FileService = Depends(get_file_service)
-):
-    """Get file statistics for current tenant."""
-    stats = await file_service.get_tenant_file_stats(current_user["tenant_id"])
-    
-    return TenantFileStatsResponse(
-        tenant_id=current_user["tenant_id"],
-        **stats
-    )
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> TenantFileStatsResponse:
+    """Get file usage statistics for the current tenant."""
 
+    file_service = FileService(deps.db, deps.tenant_id)
 
-# Health Check
+    stats = await file_service.get_tenant_file_stats(deps.tenant_id)
 
-@router.get("/health")
-@standard_exception_handler
-async def file_service_health():
-    """Check file service health."""
-    return {
-        "status": "healthy",
-        "service": "file_management",
-        "timestamp": datetime.now(timezone.utc).isoformat()
-    }
+    return stats

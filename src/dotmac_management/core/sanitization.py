@@ -8,8 +8,8 @@ and other security vulnerabilities.
 import html
 import logging
 import re
-from typing import Any, Dict, List, Optional, Set, Union
-from urllib.parse import quote, unquote
+from typing import Any, Optional
+from urllib.parse import unquote
 
 import bleach
 from pydantic import field_validator
@@ -19,9 +19,9 @@ from .exceptions import SecurityValidationError
 logger = logging.getLogger(__name__)
 
 # Configuration for HTML sanitization
-ALLOWED_HTML_TAGS: Set[str] = {"b", "i", "u", "em", "strong", "p", "br", "span"}
+ALLOWED_HTML_TAGS: set[str] = {"b", "i", "u", "em", "strong", "p", "br", "span"}
 
-ALLOWED_HTML_ATTRIBUTES: Dict[str, List[str]] = {"*": ["class"], "span": ["style"]}
+ALLOWED_HTML_ATTRIBUTES: dict[str, list[str]] = {"*": ["class"], "span": ["style"]}
 
 # Dangerous patterns to detect and block
 DANGEROUS_PATTERNS = [
@@ -47,16 +47,14 @@ DANGEROUS_PATTERNS = [
     r"<!doctype.*?\[",
 ]
 
-COMPILED_DANGEROUS_PATTERNS = [
-    re.compile(pattern, re.IGNORECASE | re.DOTALL) for pattern in DANGEROUS_PATTERNS
-]
+COMPILED_DANGEROUS_PATTERNS = [re.compile(pattern, re.IGNORECASE | re.DOTALL) for pattern in DANGEROUS_PATTERNS]
 
 
 class InputSanitizer:
     """Comprehensive input sanitization utility."""
 
     @staticmethod
-    def sanitize_html(text: str, allowed_tags: Optional[Set[str]] = None) -> str:
+    def sanitize_html(text: str, allowed_tags: Optional[set[str]] = None) -> str:
         """
         Sanitize HTML input to prevent XSS attacks.
 
@@ -130,9 +128,7 @@ class InputSanitizer:
         # Check for dangerous SQL patterns
         for pattern in COMPILED_DANGEROUS_PATTERNS[1:5]:  # SQL-related patterns
             if pattern.search(text):
-                logger.warning(
-                    f"Dangerous SQL pattern detected in input: {text[:100]}..."
-                )
+                logger.warning(f"Dangerous SQL pattern detected in input: {text[:100]}...")
                 raise SecurityValidationError(
                     field="sql_input",
                     reason="Potentially malicious SQL pattern detected",
@@ -164,9 +160,7 @@ class InputSanitizer:
         for i, pattern in enumerate(COMPILED_DANGEROUS_PATTERNS):
             match = pattern.search(text)
             if match:
-                logger.warning(
-                    f"Dangerous pattern {i} detected in {field_name}: {match.group()[:50]}..."
-                )
+                logger.warning(f"Dangerous pattern {i} detected in {field_name}: {match.group()[:50]}...")
                 raise SecurityValidationError(
                     field=field_name,
                     reason=f"Potentially malicious content detected: {match.group()[:50]}...",
@@ -174,19 +168,15 @@ class InputSanitizer:
         # Basic sanitization
         sanitized = text.strip()
 
-        # URL decode to catch encoded attacks
-        try:
-            decoded = unquote(sanitized)
-            # Check decoded content for patterns too
-            for pattern in COMPILED_DANGEROUS_PATTERNS:
-                if pattern.search(decoded):
-                    raise SecurityValidationError(
-                        field=field_name,
-                        reason="Potentially malicious encoded content detected",
-                    )
-        except Exception:
-            # If URL decoding fails, continue with original
-            pass
+        # URL decode to catch encoded attacks (unquote is safe for arbitrary strings)
+        decoded = unquote(sanitized)
+        # Check decoded content for patterns too
+        for pattern in COMPILED_DANGEROUS_PATTERNS:
+            if pattern.search(decoded):
+                raise SecurityValidationError(
+                    field=field_name,
+                    reason="Potentially malicious encoded content detected",
+                )
 
         return sanitized
 
@@ -244,13 +234,11 @@ class InputSanitizer:
         # Check for dangerous patterns in email
         for pattern in COMPILED_DANGEROUS_PATTERNS:
             if pattern.search(email):
-                raise SecurityValidationError(
-                    field="email", reason="Potentially malicious email content"
-                )
+                raise SecurityValidationError(field="email", reason="Potentially malicious email content")
         return email.lower().strip()
 
     @staticmethod
-    def sanitize_json_input(data: Dict[str, Any]) -> Dict[str, Any]:
+    def sanitize_json_input(data: dict[str, Any]) -> dict[str, Any]:
         """
         Recursively sanitize JSON input data.
 
@@ -279,11 +267,7 @@ class InputSanitizer:
                     (
                         InputSanitizer.sanitize_html(item)
                         if isinstance(item, str)
-                        else (
-                            InputSanitizer.sanitize_json_input(item)
-                            if isinstance(item, dict)
-                            else item
-                        )
+                        else (InputSanitizer.sanitize_json_input(item) if isinstance(item, dict) else item)
                     )
                     for item in value
                 ]

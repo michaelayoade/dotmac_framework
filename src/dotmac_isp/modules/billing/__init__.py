@@ -1,33 +1,29 @@
 """Billing module - Invoices, payments, and subscription management."""
 
+import asyncio
+
+from .csv_exporter import export_invoices_csv, export_payments_csv
+from .pdf_generator import generate_invoice_pdf, generate_receipt_pdf
 from .router import billing_router
 from .shared_event_adapter import create_shared_billing_event_publisher
 from .websocket_manager import initialize_websocket_manager, websocket_manager
 from .websocket_router import billing_websocket_notifier, websocket_router
 
-# Initialize shared event publisher (will be properly injected by application factory)
 try:
-    from dotmac_shared.events import EventBus
+    from dotmac.communications.events import EventBus
 
     _event_bus = EventBus()
     # For backward compatibility, we'll create the shared event publisher
     # In production, the system will be properly dependency-injected
-    import asyncio
-
     try:
         loop = asyncio.get_event_loop()
-        event_publisher = loop.run_until_complete(
-            create_shared_billing_event_publisher(_event_bus, websocket_manager)
-        )
+        event_publisher = loop.run_until_complete(create_shared_billing_event_publisher(_event_bus, websocket_manager))
     except RuntimeError:
         # No event loop, will be initialized later
         event_publisher = None
 except ImportError:
     # Fallback to original event publisher if shared services not available
     from .websocket_manager import event_publisher
-
-from .csv_exporter import export_invoices_csv, export_payments_csv
-from .pdf_generator import generate_invoice_pdf, generate_receipt_pdf
 
 # Optional file handler (requires aiofiles)
 try:

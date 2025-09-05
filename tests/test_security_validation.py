@@ -8,9 +8,8 @@ are properly implemented and maintained.
 
 import os
 import re
-import subprocess
 from pathlib import Path
-from typing import List, Dict
+
 import pytest
 import requests
 from requests.adapters import HTTPAdapter
@@ -23,7 +22,7 @@ class TestSecurityConfiguration:
     @pytest.fixture(autouse=True)
     def setup(self):
         """Setup test environment."""
-        self.project_root = Path(__file__).parent.parent
+        self.project_root = Path(__file__).parent.parent  # noqa: B008
         self.config_dir = self.project_root / "config"
         self.k8s_dir = self.project_root / "k8s"
         
@@ -395,7 +394,7 @@ class TestProductionEndpointSecurity:
                     if response.status_code == 429:
                         assert 'Retry-After' in response.headers or \
                                'X-RateLimit-Limit' in response.headers, \
-                            f"Rate limit response should include rate limit headers"
+                            "Rate limit response should include rate limit headers"
                         break
                 else:
                     # If no rate limiting triggered, check if rate limit headers exist

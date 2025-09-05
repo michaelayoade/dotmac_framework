@@ -3,9 +3,9 @@ Portal-related models for SDKs.
 """
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
-from typing import List, Optional
+from typing import Optional
 from uuid import UUID, uuid4
 
 
@@ -87,7 +87,7 @@ class PortalSettings:
     session_timeout_minutes: int = 30
     max_login_attempts: int = 5
     require_mfa: bool = False
-    allowed_domains: Optional[List[str]] = None
+    allowed_domains: Optional[list[str]] = None
     maintenance_message: Optional[str] = None
     custom_footer: Optional[str] = None
 

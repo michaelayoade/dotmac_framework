@@ -1,17 +1,14 @@
+
 """
 Test configuration and fixtures for omnichannel service tests.
 """
 
 import asyncio
-from datetime import datetime
-from typing import Any, AsyncGenerator, Dict
 from unittest.mock import AsyncMock, Mock
 from uuid import UUID, uuid4
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
-
+from dotmac_plugins import PluginManager, PluginRegistry
 from dotmac_shared.omnichannel.core.agent_manager import AgentManager
 from dotmac_shared.omnichannel.core.channel_orchestrator import ChannelOrchestrator
 from dotmac_shared.omnichannel.core.interaction_manager import InteractionManager
@@ -22,8 +19,7 @@ from dotmac_shared.omnichannel.models.interaction import (
     InteractionPriority,
     InteractionStatus,
 )
-from dotmac_shared.omnichannel.models.routing import RoutingResult, RoutingStrategy
-from dotmac_shared.plugins import PluginManager, PluginRegistry
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.fixture(scope="session")

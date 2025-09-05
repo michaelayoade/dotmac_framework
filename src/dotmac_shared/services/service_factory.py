@@ -1,9 +1,10 @@
 """
+from __future__ import annotations
 Deployment-aware service factory for DotMac platforms.
 """
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +14,7 @@ class DeploymentAwareServiceFactory:
 
     def __init__(self, deployment_context: Optional[Any] = None):
         """__init__ service method."""
-        self._services: Dict[str, Any] = {}
+        self._services: dict[str, Any] = {}
         self._deployment_context = deployment_context
 
     def register_service(self, name: str, service: Any) -> None:
@@ -25,7 +26,7 @@ class DeploymentAwareServiceFactory:
         """Get a registered service."""
         return self._services.get(name)
 
-    def list_services(self) -> Dict[str, Any]:
+    def list_services(self) -> dict[str, Any]:
         """List all registered services."""
         return self._services.copy()
 
@@ -43,9 +44,7 @@ class DeploymentAwareServiceFactory:
 
         # Register any existing services with the registry
         for name, service in self._services.items():
-            registry.register(
-                name, service, "factory_service", f"Service from factory: {name}"
-            )
+            registry.register(name, service, "factory_service", f"Service from factory: {name}")
 
         logger.info("Created service registry from factory")
         return registry

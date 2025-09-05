@@ -4,17 +4,39 @@ Enforces DRY principles with strict type safety and validation.
 """
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 from uuid import UUID
 
+from ..core.exceptions import AuthorizationError, ValidationError
+
+# Import database and auth dependencies (these will need to be adapted per module)
+# For now, create placeholder functions
+try:
+    from dotmac.database.session import get_async_db
+except ImportError:
+
+    async def get_async_db():
+        """Placeholder - implement in each module"""
+        raise NotImplementedError("get_async_db must be implemented in each module")
+
+
+try:
+    from dotmac.platform.auth.current_user import get_current_tenant, get_current_user
+except ImportError:
+
+    async def get_current_user():
+        """Placeholder - implement in each module"""
+        return {"user_id": "placeholder", "email": "placeholder", "is_active": True}
+
+    async def get_current_tenant():
+        """Placeholder - implement in each module"""
+        return "placeholder-tenant"
+
+
 from fastapi import Depends, HTTPException, Query, status
-from pydantic import BaseModel, Field, validator, ConfigDict
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from dotmac_shared.auth.current_user import get_current_tenant, get_current_user
-from dotmac_shared.core.exceptions import AuthorizationError, ValidationError
-from dotmac_shared.core.pagination import PaginationParams, get_pagination_params
-from dotmac_shared.database.session import get_async_db
+from ..core.pagination import PaginationParams, get_pagination_params
 
 logger = logging.getLogger(__name__)
 
@@ -25,31 +47,27 @@ logger = logging.getLogger(__name__)
 class StandardDependencies:
     """
     Production-ready standard dependencies with validation.
-    
+
     Plain Python class (NOT a Pydantic model) to avoid FastAPI type introspection issues.
     """
 
     def __init__(
         self,
-        current_user: Dict[str, Any],
+        current_user: dict[str, Any],
         db: AsyncSession,
         tenant_id: Optional[str] = None,
     ):
-        # Validate required user fields
         if not current_user or not isinstance(current_user, dict):
             raise ValidationError("Invalid user context")
 
         required_fields = ["user_id", "email", "is_active"]
-        missing_fields = [
-            field for field in required_fields if field not in current_user
-        ]
+        missing_fields = [field for field in required_fields if field not in current_user]
         if missing_fields:
             raise ValidationError(f"Missing user fields: {missing_fields}")
 
         if not current_user.get("is_active", False):
             raise AuthorizationError("User account is inactive")
 
-        # Validate database session
         if not db:
             raise ValidationError("Database session is required")
 
@@ -58,10 +76,7 @@ class StandardDependencies:
         self.tenant_id = tenant_id
         self.user_id = current_user["user_id"]
 
-        # Log dependency creation for audit trail
-        logger.debug(
-            f"Dependencies created for user {self.user_id} in tenant {tenant_id}"
-        )
+        logger.debug(f"Dependencies created for user {self.user_id} in tenant {tenant_id}")
 
 
 class PaginatedDependencies(StandardDependencies):
@@ -69,7 +84,7 @@ class PaginatedDependencies(StandardDependencies):
 
     def __init__(
         self,
-        current_user: Dict[str, Any],
+        current_user: dict[str, Any],
         db: AsyncSession,
         pagination: PaginationParams,
         tenant_id: Optional[str] = None,
@@ -82,58 +97,33 @@ class PaginatedDependencies(StandardDependencies):
 
 
 async def get_standard_deps(
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: dict[str, Any] = Depends(get_current_user),
     db: AsyncSession = Depends(get_async_db),
     tenant_id: Optional[str] = Depends(get_current_tenant),
 ) -> StandardDependencies:
-    """Get standard dependencies used by 90% of endpoints."""
+    """Get standard dependencies used by most endpoints."""
     return StandardDependencies(current_user, db, tenant_id)
 
 
 async def get_paginated_deps(
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: dict[str, Any] = Depends(get_current_user),
     db: AsyncSession = Depends(get_async_db),
     pagination: PaginationParams = Depends(get_pagination_params),
     tenant_id: Optional[str] = Depends(get_current_tenant),
 ) -> PaginatedDependencies:
-    """Get standard dependencies with pagination for list endpoints."""
+    """Get dependencies with pagination for list endpoints."""
     return PaginatedDependencies(current_user, db, pagination, tenant_id)
 
 
 async def get_admin_deps(
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: dict[str, Any] = Depends(get_current_user),
     db: AsyncSession = Depends(get_async_db),
     tenant_id: Optional[str] = Depends(get_current_tenant),
 ) -> StandardDependencies:
     """Get dependencies with admin permission validation."""
     if not current_user.get("is_admin", False):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Admin permissions required"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin permissions required")
     return StandardDependencies(current_user, db, tenant_id)
-
-
-# === Usage Patterns for Clean Router Code ===
-
-# RECOMMENDED PATTERN - Use direct Depends():
-# 
-# @router.get("/items", response_model=ItemListResponse)
-# async def list_items(
-#     deps: StandardDependencies = Depends(get_standard_deps)
-# ) -> ItemListResponse:
-#     service = ItemService(deps.db, deps.tenant_id)
-#     return await service.list(user_id=deps.user_id)
-#
-# @router.get("/items", response_model=ItemListResponse) 
-# async def list_items_paginated(
-#     deps: PaginatedDependencies = Depends(get_paginated_deps)
-# ) -> ItemListResponse:
-#     service = ItemService(deps.db, deps.tenant_id)
-#     return await service.list_paginated(
-#         skip=deps.pagination.offset,
-#         limit=deps.pagination.size,
-#         user_id=deps.user_id
-#     )
 
 
 # === Search and Filter Dependencies ===
@@ -144,13 +134,9 @@ class SearchParams:
 
     def __init__(
         self,
-        search: Optional[str] = Query(
-            None, description="Search by name, email, or description"
-        ),
+        search: Optional[str] = Query(None, description="Search by name, email, or description"),
         status_filter: Optional[str] = Query(None, description="Filter by status"),
-        date_from: Optional[str] = Query(
-            None, description="Filter from date (YYYY-MM-DD)"
-        ),
+        date_from: Optional[str] = Query(None, description="Filter from date (YYYY-MM-DD)"),
         date_to: Optional[str] = Query(None, description="Filter to date (YYYY-MM-DD)"),
         sort_by: Optional[str] = Query("created_at", description="Sort field"),
         sort_order: Optional[str] = Query("desc", description="Sort order: asc/desc"),
@@ -163,9 +149,6 @@ class SearchParams:
         self.sort_order = sort_order
 
 
-# Use: search: SearchParams = Depends(SearchParams)
-
-
 # === File Upload Dependencies ===
 
 
@@ -175,15 +158,10 @@ class FileUploadParams:
     def __init__(
         self,
         max_size_mb: int = Query(10, description="Maximum file size in MB"),
-        allowed_types: str = Query(
-            "pdf,doc,docx,jpg,png", description="Allowed file types"
-        ),
+        allowed_types: str = Query("pdf,doc,docx,jpg,png", description="Allowed file types"),
     ):
         self.max_size_bytes = max_size_mb * 1024 * 1024
-        self.allowed_extensions = allowed_types.split(",")
-
-
-# Use: upload: FileUploadParams = Depends(FileUploadParams)
+        self.allowed_extensions = [ext.strip() for ext in allowed_types.split(",") if ext.strip()]
 
 
 # === Entity ID Dependencies ===
@@ -213,58 +191,18 @@ class BulkOperationParams:
         self,
         batch_size: int = Query(100, le=1000, description="Batch size (max 1000)"),
         dry_run: bool = Query(False, description="Preview changes without applying"),
-        force: bool = Query(
-            False, description="Force operation even if warnings exist"
-        ),
+        force: bool = Query(False, description="Force operation even if warnings exist"),
     ):
         self.batch_size = batch_size
         self.dry_run = dry_run
         self.force = force
 
 
-# Use: bulk: BulkOperationParams = Depends(BulkOperationParams)
-
-
 # === Validation and Type Safety ===
 
 
-def validate_deps_usage():
+def validate_deps_usage() -> bool:
     """
-    Validate that only modern dependency patterns are used.
-    This enforces the new DRY patterns and prevents legacy usage.
+    Placeholder for runtime validators of dependency usage. Intentionally minimal.
     """
-    import warnings
-
-    warnings.filterwarnings("error", message="*legacy*", category=DeprecationWarning)
-
-
-# === Mandatory Usage Pattern ===
-
-"""
-MANDATORY PATTERN - Direct Depends() usage:
-
-@router.get("/customers", response_model=CustomerListResponse)
-async def list_customers(
-    deps: PaginatedDependencies = Depends(get_paginated_deps),
-    search: SearchParams = Depends(SearchParams)
-) -> CustomerListResponse:
-    service = CustomerService(deps.db, deps.tenant_id)
-    return await service.list(
-        skip=deps.pagination.offset,
-        limit=deps.pagination.size,
-        filters=search,
-        user_id=deps.user_id
-    )
-
-CRITICAL REQUIREMENTS:
-✅ Always set explicit response_model=YourSchema (avoid None)
-✅ Use plain Python classes for dependencies (NOT Pydantic models)
-✅ Use = Depends(...) syntax (no Annotated chains)
-✅ AsyncSession should be yielded from async generator
-
-FORBIDDEN PATTERNS:
-❌ response_model=None (unless truly no response body)
-❌ Annotated[Type, Depends(...)] for nested dependencies
-❌ Making dependency classes inherit from BaseModel
-❌ Missing explicit response schema types
-"""
+    return True

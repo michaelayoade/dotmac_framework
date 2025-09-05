@@ -3,14 +3,12 @@ Test suite for DotMac observability integration.
 Validates OpenTelemetry setup, tracing, and metrics collection.
 """
 
-import pytest
 import asyncio
 from unittest.mock import Mock, patch
+
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from opentelemetry import trace, metrics
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.metrics import MeterProvider
 
 
 class TestObservabilitySetup:
@@ -18,14 +16,13 @@ class TestObservabilitySetup:
     
     def test_imports_successful(self):
         """Test that all observability components import successfully."""
-        from dotmac_shared.observability import (
-            setup_observability,
-            get_tracer,
-            get_meter,
+        from dotmac.observability import (
             OTelConfig,
-            setup_logging,
             TenantContextMiddleware,
-            business_metrics
+            business_metrics,
+            get_meter,
+            get_tracer,
+            setup_observability,
         )
         
         assert setup_observability is not None
@@ -37,7 +34,7 @@ class TestObservabilitySetup:
 
     def test_otel_config_creation(self):
         """Test OTelConfig creation and environment handling."""
-        from dotmac_shared.observability.otel import OTelConfig
+        from dotmac.observability.otel import OTelConfig
         
         config = OTelConfig()
         
@@ -49,7 +46,7 @@ class TestObservabilitySetup:
 
     def test_tracer_creation(self):
         """Test tracer creation and span functionality."""
-        from dotmac_shared.observability import get_tracer
+        from dotmac.observability import get_tracer
         
         tracer = get_tracer("test-service")
         assert tracer is not None
@@ -62,7 +59,7 @@ class TestObservabilitySetup:
 
     def test_meter_creation(self):
         """Test meter creation and metrics functionality."""
-        from dotmac_shared.observability import get_meter
+        from dotmac.observability import get_meter
         
         meter = get_meter("test-service")
         assert meter is not None
@@ -80,7 +77,7 @@ class TestBusinessMetrics:
     
     def test_business_metrics_creation(self):
         """Test business metrics instance creation."""
-        from dotmac_shared.observability.business_metrics import DotMacBusinessMetrics
+        from dotmac.observability.business_metrics import DotMacBusinessMetrics
         
         metrics = DotMacBusinessMetrics()
         assert metrics is not None
@@ -88,7 +85,7 @@ class TestBusinessMetrics:
 
     def test_partner_signup_recording(self):
         """Test partner signup event recording."""
-        from dotmac_shared.observability.business_metrics import business_metrics
+        from dotmac.observability.business_metrics import business_metrics
         
         # This should not raise any exceptions
         business_metrics.record_partner_signup(
@@ -99,7 +96,7 @@ class TestBusinessMetrics:
 
     def test_customer_acquisition_recording(self):
         """Test customer acquisition event recording."""
-        from dotmac_shared.observability.business_metrics import business_metrics
+        from dotmac.observability.business_metrics import business_metrics
         
         business_metrics.record_customer_acquisition(
             partner_id="partner_123",
@@ -109,7 +106,7 @@ class TestBusinessMetrics:
 
     def test_commission_calculation_recording(self):
         """Test commission calculation event recording."""
-        from dotmac_shared.observability.business_metrics import business_metrics
+        from dotmac.observability.business_metrics import business_metrics
         
         business_metrics.record_commission_calculation(
             partner_id="partner_123",
@@ -124,7 +121,7 @@ class TestMiddleware:
     
     def test_tenant_context_middleware_creation(self):
         """Test tenant context middleware creation."""
-        from dotmac_shared.observability.middleware import TenantContextMiddleware
+        from dotmac.observability.middleware import TenantContextMiddleware
         
         app = FastAPI()
         middleware = TenantContextMiddleware(app)
@@ -132,7 +129,7 @@ class TestMiddleware:
 
     def test_metrics_middleware_creation(self):
         """Test metrics middleware creation."""
-        from dotmac_shared.observability.middleware import MetricsMiddleware
+        from dotmac.observability.middleware import MetricsMiddleware
         
         app = FastAPI()
         middleware = MetricsMiddleware(app)
@@ -144,7 +141,7 @@ class TestDatabaseObservability:
     
     def test_traced_db_operation_decorator(self):
         """Test database operation tracing decorator."""
-        from dotmac_shared.observability.database import traced_db_operation
+        from dotmac.observability.database import traced_db_operation
         
         @traced_db_operation("test_operation")
         async def test_async_db_op():
@@ -164,7 +161,7 @@ class TestDatabaseObservability:
 
     def test_query_monitor_creation(self):
         """Test query monitor initialization."""
-        from dotmac_shared.observability.database import QueryMonitor
+        from dotmac.observability.database import QueryMonitor
         
         monitor = QueryMonitor(slow_query_threshold=100.0)
         assert monitor is not None
@@ -176,8 +173,9 @@ class TestLoggingIntegration:
     
     def test_otel_trace_context_filter(self):
         """Test OpenTelemetry trace context filter."""
-        from dotmac_shared.observability.logging import OTelTraceContextFilter
         import logging
+
+        from dotmac.observability.logging import OTelTraceContextFilter
         
         filter_obj = OTelTraceContextFilter()
         record = logging.LogRecord(
@@ -198,9 +196,10 @@ class TestLoggingIntegration:
 
     def test_structured_formatter(self):
         """Test structured JSON formatter."""
-        from dotmac_shared.observability.logging import StructuredFormatter
-        import logging
         import json
+        import logging
+
+        from dotmac.observability.logging import StructuredFormatter
         
         formatter = StructuredFormatter(include_trace=True)
         record = logging.LogRecord(
@@ -227,7 +226,7 @@ class TestLoggingIntegration:
 
     def test_dotmac_logger_creation(self):
         """Test DotMac enhanced logger creation."""
-        from dotmac_shared.observability.logging import get_logger
+        from dotmac.observability.logging import get_logger
         
         logger = get_logger("test.component")
         assert logger is not None
@@ -244,7 +243,7 @@ class TestEndToEndIntegration:
     
     def test_full_observability_setup(self):
         """Test complete observability setup with FastAPI app."""
-        from dotmac_shared.observability import setup_observability
+        from dotmac.observability import setup_observability
         
         app = FastAPI(title="Test App")
         
@@ -265,7 +264,7 @@ class TestEndToEndIntegration:
 
     def test_fastapi_integration_with_client(self):
         """Test FastAPI integration using TestClient."""
-        from dotmac_shared.observability import setup_observability
+        from dotmac.observability import setup_observability
         
         app = FastAPI()
         
@@ -308,7 +307,7 @@ class TestEnvironmentConfiguration:
             'OTEL_TRACES_SAMPLING_RATIO': '0.05',
             'SLOW_QUERY_THRESHOLD_MS': '200.0'
         }):
-            from dotmac_shared.observability.otel import OTelConfig
+            from dotmac.observability.otel import OTelConfig
             
             config = OTelConfig()
             assert config.service_name == 'dotmac-production'
@@ -322,7 +321,7 @@ class TestEnvironmentConfiguration:
             'ENVIRONMENT': 'development',
             'OTEL_TRACES_SAMPLING_RATIO': '1.0'
         }):
-            from dotmac_shared.observability.otel import OTelConfig
+            from dotmac.observability.otel import OTelConfig
             
             config = OTelConfig()
             assert config.service_name == 'dotmac-dev'
@@ -336,7 +335,7 @@ class TestMiddlewareIntegration:
     
     def test_tenant_context_middleware_integration(self):
         """Test tenant context middleware with FastAPI."""
-        from dotmac_shared.observability.middleware import TenantContextMiddleware
+        from dotmac.observability.middleware import TenantContextMiddleware
         
         app = FastAPI()
         app.add_middleware(TenantContextMiddleware)

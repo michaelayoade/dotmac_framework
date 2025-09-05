@@ -1,8 +1,6 @@
 """
 Core sales components.
 """
-
-# Handle optional dependencies gracefully
 try:
     from .models import (
         ActivityStatus,

@@ -1,19 +1,15 @@
 """Service provisioning background tasks."""
 
 import logging
-from datetime import datetime
-from typing import Any, Dict
+from datetime import datetime, timezone
 
 from dotmac_isp.core.celery_app import celery_app
-from dotmac_shared.api.exception_handlers import standard_exception_handler
 
 logger = logging.getLogger(__name__)
 
 
 @celery_app.task(bind=True)
-def provision_internet_service(
-    self, customer_id: str, service_plan_id: str, installation_date: str
-):
+def provision_internet_service(self, customer_id: str, service_plan_id: str, installation_date: str):
     """Provision internet service for a customer."""
     try:
         logger.info(f"Provisioning internet service for customer {customer_id}")

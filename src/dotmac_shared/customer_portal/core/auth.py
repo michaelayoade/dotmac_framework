@@ -3,13 +3,12 @@ Portal Authentication Manager
 
 Handles authentication for customer portals using existing auth services.
 """
-
 import logging
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 from uuid import UUID
 
-from dotmac_shared.auth import AuthService
+from dotmac_shared.auth.services import AuthService
 from dotmac_shared.monitoring import get_monitoring
 
 from .schemas import PortalSessionData, PortalType
@@ -32,8 +31,8 @@ class PortalAuthenticationManager:
 
     async def authenticate_customer(
         self,
-        credentials: Dict[str, Any],
-        portal_context: Dict[str, Any],
+        credentials: dict[str, Any],
+        portal_context: dict[str, Any],
         tenant_id: UUID,
     ) -> PortalSessionData:
         """
@@ -119,15 +118,11 @@ class PortalAuthenticationManager:
             logger.error(f"Session validation failed: {e}")
             return None
 
-    async def refresh_session(
-        self, session_id: UUID, tenant_id: UUID
-    ) -> Optional[PortalSessionData]:
+    async def refresh_session(self, session_id: UUID, tenant_id: UUID) -> Optional[PortalSessionData]:
         """Refresh portal session using existing auth service."""
         try:
             # Refresh through auth service
-            refreshed = await self.auth_service.refresh_session(
-                session_id=str(session_id), tenant_id=str(tenant_id)
-            )
+            refreshed = await self.auth_service.refresh_session(session_id=str(session_id), tenant_id=str(tenant_id))
 
             if not refreshed:
                 return None
@@ -142,9 +137,7 @@ class PortalAuthenticationManager:
     async def logout(self, session_id: UUID, tenant_id: UUID) -> bool:
         """Logout customer using existing auth service."""
         try:
-            return await self.auth_service.logout_session(
-                session_id=str(session_id), tenant_id=str(tenant_id)
-            )
+            return await self.auth_service.logout_session(session_id=str(session_id), tenant_id=str(tenant_id))
         except Exception as e:
             logger.error(f"Logout failed: {e}")
             return False

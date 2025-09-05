@@ -3,20 +3,20 @@ Extended conftest.py for API testing.
 Additional fixtures and configuration specifically for API test suites.
 """
 
-import pytest
-from typing import Generator, Dict, Any
-from unittest.mock import patch, MagicMock
+from typing import Any
+from unittest.mock import MagicMock, patch
 
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from tests.utils.api_test_helpers import (
+    APITestClient,
+    DatabaseTestHelper,
     MockAuthService,
     MockCustomerService,
     MockServicesService,
     TestDataFactory,
-    APITestClient,
-    DatabaseTestHelper
 )
 
 
@@ -78,19 +78,19 @@ def test_data_factory() -> TestDataFactory:
 
 
 @pytest.fixture
-def sample_customer_data(test_data_factory: TestDataFactory) -> Dict[str, Any]:
+def sample_customer_data(test_data_factory: TestDataFactory) -> dict[str, Any]:
     """Sample customer data for testing."""
     return test_data_factory.create_customer_data()
 
 
 @pytest.fixture
-def sample_service_plan_data(test_data_factory: TestDataFactory) -> Dict[str, Any]:
+def sample_service_plan_data(test_data_factory: TestDataFactory) -> dict[str, Any]:
     """Sample service plan data for testing."""
     return test_data_factory.create_service_plan_data()
 
 
 @pytest.fixture
-def sample_user_data(test_data_factory: TestDataFactory) -> Dict[str, Any]:
+def sample_user_data(test_data_factory: TestDataFactory) -> dict[str, Any]:
     """Sample user data for testing."""
     return test_data_factory.create_user_data()
 
@@ -115,7 +115,7 @@ def expired_jwt_token(test_tenant_id: str, test_data_factory: TestDataFactory) -
 
 
 @pytest.fixture
-def auth_headers(valid_jwt_token: str, test_tenant_id: str) -> Dict[str, str]:
+def auth_headers(valid_jwt_token: str, test_tenant_id: str) -> dict[str, str]:
     """Authentication headers for API requests."""
     return {
         "Authorization": f"Bearer {valid_jwt_token}",
@@ -126,9 +126,9 @@ def auth_headers(valid_jwt_token: str, test_tenant_id: str) -> Dict[str, str]:
 @pytest.fixture(autouse=True)
 def mock_dependencies():
     """Auto-mock FastAPI dependencies for all API tests."""
-    with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
-        with patch('dotmac_shared.auth.dependencies.get_current_tenant') as mock_get_tenant:
-            with patch('dotmac_shared.auth.dependencies.require_permissions') as mock_perms:
+    with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
+        with patch('dotmac.auth.dependencies.get_current_tenant') as mock_get_tenant:
+            with patch('dotmac.auth.dependencies.require_permissions') as mock_perms:
                 # Default user
                 mock_get_user.return_value = {
                     "id": "test-user-123",
@@ -248,13 +248,13 @@ def performance_benchmarks():
 
 
 # Custom assertions for API testing
-def assert_api_response_structure(response_data: Dict[str, Any], required_fields: list):
+def assert_api_response_structure(response_data: dict[str, Any], required_fields: list):
     """Assert API response has required structure."""
     for field in required_fields:
         assert field in response_data, f"Required field '{field}' missing from response"
 
 
-def assert_pagination_response(response_data: Dict[str, Any]):
+def assert_pagination_response(response_data: dict[str, Any]):
     """Assert response follows pagination format."""
     pagination_fields = ["total", "page", "limit", "pages"]
     for field in pagination_fields:
@@ -263,7 +263,7 @@ def assert_pagination_response(response_data: Dict[str, Any]):
             assert response_data[field] >= 0
 
 
-def assert_error_response_format(response_data: Dict[str, Any]):
+def assert_error_response_format(response_data: dict[str, Any]):
     """Assert error response follows standard format."""
     assert "detail" in response_data
     assert isinstance(response_data["detail"], (str, list))

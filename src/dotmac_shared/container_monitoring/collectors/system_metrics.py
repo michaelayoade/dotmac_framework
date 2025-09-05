@@ -12,13 +12,11 @@ import asyncio
 import logging
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
-
-import psutil
-from docker.models.containers import Container
+from datetime import datetime, timezone
+from typing import Any, Optional
 
 import docker
+from docker.models.containers import Container
 
 
 @dataclass
@@ -31,7 +29,7 @@ class SystemMetricsSnapshot:
     cpu_load_1m: float = 0.0
     cpu_load_5m: float = 0.0
     cpu_load_15m: float = 0.0
-    cpu_per_core: List[float] = field(default_factory=list)
+    cpu_per_core: list[float] = field(default_factory=list)
     cpu_context_switches: int = 0
     cpu_interrupts: int = 0
 
@@ -77,7 +75,7 @@ class SystemMetricsSnapshot:
 
     timestamp: datetime = field(default_factory=datetime.utcnow)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary representation"""
         return {
             "cpu": {
@@ -162,8 +160,8 @@ class SystemMetricsCollector:
         self.logger = logging.getLogger(__name__)
 
         # Cache for delta calculations
-        self._previous_stats: Dict[str, Dict] = {}
-        self._collection_timestamps: Dict[str, float] = {}
+        self._previous_stats: dict[str, dict] = {}
+        self._collection_timestamps: dict[str, float] = {}
 
     async def collect_system_metrics(self, container_id: str) -> SystemMetricsSnapshot:
         """
@@ -196,15 +194,11 @@ class SystemMetricsCollector:
 
             # Collect disk metrics
             if self.enable_disk_io_metrics:
-                await self._collect_disk_metrics(
-                    container, stats, snapshot, current_time
-                )
+                await self._collect_disk_metrics(container, stats, snapshot, current_time)
 
             # Collect network metrics
             if self.enable_network_details:
-                await self._collect_network_metrics(
-                    container, stats, snapshot, current_time
-                )
+                await self._collect_network_metrics(container, stats, snapshot, current_time)
 
             # Collect process metrics
             await self._collect_process_metrics(container, stats, snapshot)
@@ -216,16 +210,14 @@ class SystemMetricsCollector:
         except docker.errors.NotFound:
             self.logger.error(f"Container {container_id} not found")
         except Exception as e:
-            self.logger.error(
-                f"System metrics collection failed for {container_id}: {e}"
-            )
+            self.logger.error(f"System metrics collection failed for {container_id}: {e}")
 
         return snapshot
 
     async def _collect_cpu_metrics(
         self,
         container: Container,
-        stats: Dict,
+        stats: dict,
         snapshot: SystemMetricsSnapshot,
         current_time: float,
     ) -> None:
@@ -253,9 +245,7 @@ class SystemMetricsCollector:
                     )
 
                     if len(prev_percpu) == len(percpu_usage):
-                        time_delta = current_time - self._collection_timestamps.get(
-                            container.id, current_time
-                        )
+                        time_delta = current_time - self._collection_timestamps.get(container.id, current_time)
                         if time_delta > 0:
                             snapshot.cpu_per_core = [
                                 ((current - prev) / (time_delta * 1e9)) * 100
@@ -266,40 +256,28 @@ class SystemMetricsCollector:
             # Note: These are rough estimates as true load averages require host-level access
             system_cpu = cpu_stats.get("system_cpu_usage", 0)
             if system_cpu > 0 and container.id in self._previous_stats:
-                prev_system_cpu = (
-                    self._previous_stats[container.id]
-                    .get("cpu_stats", {})
-                    .get("system_cpu_usage", 0)
-                )
+                prev_system_cpu = self._previous_stats[container.id].get("cpu_stats", {}).get("system_cpu_usage", 0)
 
                 if prev_system_cpu > 0:
-                    time_delta = current_time - self._collection_timestamps.get(
-                        container.id, current_time
-                    )
+                    time_delta = current_time - self._collection_timestamps.get(container.id, current_time)
                     if time_delta > 0:
                         # Rough approximation of load based on CPU usage trend
                         cpu_delta_percent = snapshot.cpu_percent / 100.0
                         snapshot.cpu_load_1m = cpu_delta_percent * snapshot.cpu_count
                         snapshot.cpu_load_5m = snapshot.cpu_load_1m * 0.8  # Smoothed
-                        snapshot.cpu_load_15m = (
-                            snapshot.cpu_load_1m * 0.6
-                        )  # More smoothed
+                        snapshot.cpu_load_15m = snapshot.cpu_load_1m * 0.6  # More smoothed
 
             # Context switches and interrupts (if available in stats)
             cpu_stats_detail = cpu_stats.get("cpu_usage", {})
             if "total_usage" in cpu_stats_detail:
                 # These are rough estimates based on CPU activity
-                snapshot.cpu_context_switches = int(
-                    cpu_stats_detail.get("total_usage", 0) / 1000000
-                )
+                snapshot.cpu_context_switches = int(cpu_stats_detail.get("total_usage", 0) / 1000000)
                 snapshot.cpu_interrupts = int(snapshot.cpu_context_switches * 0.1)
 
         except Exception as e:
             self.logger.error(f"Failed to collect CPU metrics: {e}")
 
-    async def _collect_memory_metrics(
-        self, container: Container, stats: Dict, snapshot: SystemMetricsSnapshot
-    ) -> None:
+    async def _collect_memory_metrics(self, container: Container, stats: dict, snapshot: SystemMetricsSnapshot) -> None:
         """Collect detailed memory metrics"""
         try:
             memory_stats = stats.get("memory_stats", {})
@@ -309,9 +287,7 @@ class SystemMetricsCollector:
             snapshot.memory_limit_bytes = memory_stats.get("limit", 0)
 
             if snapshot.memory_limit_bytes > 0:
-                snapshot.memory_percent = (
-                    snapshot.memory_usage_bytes / snapshot.memory_limit_bytes * 100
-                )
+                snapshot.memory_percent = snapshot.memory_usage_bytes / snapshot.memory_limit_bytes * 100
 
             # Detailed memory breakdown
             memory_detail = memory_stats.get("stats", {})
@@ -321,15 +297,11 @@ class SystemMetricsCollector:
                 snapshot.memory_swap_bytes = memory_detail.get("swap", 0)
 
                 # Calculate available memory
-                snapshot.memory_available_bytes = max(
-                    0, snapshot.memory_limit_bytes - snapshot.memory_usage_bytes
-                )
+                snapshot.memory_available_bytes = max(0, snapshot.memory_limit_bytes - snapshot.memory_usage_bytes)
             else:
                 # Fallback calculations
                 snapshot.memory_rss_bytes = snapshot.memory_usage_bytes
-                snapshot.memory_available_bytes = max(
-                    0, snapshot.memory_limit_bytes - snapshot.memory_usage_bytes
-                )
+                snapshot.memory_available_bytes = max(0, snapshot.memory_limit_bytes - snapshot.memory_usage_bytes)
 
         except Exception as e:
             self.logger.error(f"Failed to collect memory metrics: {e}")
@@ -337,7 +309,7 @@ class SystemMetricsCollector:
     async def _collect_disk_metrics(
         self,
         container: Container,
-        stats: Dict,
+        stats: dict,
         snapshot: SystemMetricsSnapshot,
         current_time: float,
     ) -> None:
@@ -365,16 +337,12 @@ class SystemMetricsCollector:
 
                 # Calculate I/O time (rough approximation)
                 if container.id in self._previous_stats:
-                    time_delta = current_time - self._collection_timestamps.get(
-                        container.id, current_time
-                    )
+                    time_delta = current_time - self._collection_timestamps.get(container.id, current_time)
                     if time_delta > 0:
                         prev_read_ops = 0
                         prev_write_ops = 0
 
-                        prev_blkio = self._previous_stats[container.id].get(
-                            "blkio_stats", {}
-                        )
+                        prev_blkio = self._previous_stats[container.id].get("blkio_stats", {})
                         prev_serviced = prev_blkio.get("io_serviced_recursive", [])
 
                         for entry in prev_serviced:
@@ -385,9 +353,7 @@ class SystemMetricsCollector:
 
                         # Rough I/O time estimation
                         read_ops_delta = max(0, snapshot.disk_read_ops - prev_read_ops)
-                        write_ops_delta = max(
-                            0, snapshot.disk_write_ops - prev_write_ops
-                        )
+                        write_ops_delta = max(0, snapshot.disk_write_ops - prev_write_ops)
 
                         # Assume average 5ms per operation
                         snapshot.disk_read_time = read_ops_delta * 0.005
@@ -396,18 +362,10 @@ class SystemMetricsCollector:
             # Container filesystem usage (approximation)
             try:
                 # This is a rough estimation - actual implementation would need host filesystem access
-                snapshot.disk_total_bytes = (
-                    10 * 1024 * 1024 * 1024
-                )  # Assume 10GB default
-                snapshot.disk_usage_bytes = int(
-                    snapshot.disk_total_bytes * 0.3
-                )  # Rough estimate
-                snapshot.disk_available_bytes = (
-                    snapshot.disk_total_bytes - snapshot.disk_usage_bytes
-                )
-                snapshot.disk_percent = (
-                    snapshot.disk_usage_bytes / snapshot.disk_total_bytes
-                ) * 100
+                snapshot.disk_total_bytes = 10 * 1024 * 1024 * 1024  # Assume 10GB default
+                snapshot.disk_usage_bytes = int(snapshot.disk_total_bytes * 0.3)  # Rough estimate
+                snapshot.disk_available_bytes = snapshot.disk_total_bytes - snapshot.disk_usage_bytes
+                snapshot.disk_percent = (snapshot.disk_usage_bytes / snapshot.disk_total_bytes) * 100
 
             except Exception:
                 pass  # Disk usage approximation is optional
@@ -418,7 +376,7 @@ class SystemMetricsCollector:
     async def _collect_network_metrics(
         self,
         container: Container,
-        stats: Dict,
+        stats: dict,
         snapshot: SystemMetricsSnapshot,
         current_time: float,
     ) -> None:
@@ -427,7 +385,7 @@ class SystemMetricsCollector:
             networks = stats.get("networks", {})
 
             # Aggregate network statistics across all interfaces
-            for interface, net_stats in networks.items():
+            for _interface, net_stats in networks.items():
                 snapshot.network_rx_bytes += net_stats.get("rx_bytes", 0)
                 snapshot.network_tx_bytes += net_stats.get("tx_bytes", 0)
                 snapshot.network_rx_packets += net_stats.get("rx_packets", 0)
@@ -441,7 +399,7 @@ class SystemMetricsCollector:
             self.logger.error(f"Failed to collect network metrics: {e}")
 
     async def _collect_process_metrics(
-        self, container: Container, stats: Dict, snapshot: SystemMetricsSnapshot
+        self, container: Container, stats: dict, snapshot: SystemMetricsSnapshot
     ) -> None:
         """Collect process and thread metrics"""
         try:
@@ -458,22 +416,18 @@ class SystemMetricsCollector:
             # File descriptor count estimation
             # Another rough approximation based on process count
             if snapshot.process_count > 0:
-                snapshot.file_descriptor_count = (
-                    snapshot.process_count * 10
-                )  # Rough estimate
+                snapshot.file_descriptor_count = snapshot.process_count * 10  # Rough estimate
 
         except Exception as e:
             self.logger.error(f"Failed to collect process metrics: {e}")
 
-    def _calculate_cpu_usage(self, cpu_stats: Dict, precpu_stats: Dict) -> float:
+    def _calculate_cpu_usage(self, cpu_stats: dict, precpu_stats: dict) -> float:
         """Calculate CPU usage percentage"""
         try:
-            cpu_delta = cpu_stats.get("cpu_usage", {}).get(
+            cpu_delta = cpu_stats.get("cpu_usage", {}).get("total_usage", 0) - precpu_stats.get("cpu_usage", {}).get(
                 "total_usage", 0
-            ) - precpu_stats.get("cpu_usage", {}).get("total_usage", 0)
-            system_delta = cpu_stats.get("system_cpu_usage", 0) - precpu_stats.get(
-                "system_cpu_usage", 0
             )
+            system_delta = cpu_stats.get("system_cpu_usage", 0) - precpu_stats.get("system_cpu_usage", 0)
 
             if system_delta > 0 and cpu_delta > 0:
                 cpu_count = len(cpu_stats.get("cpu_usage", {}).get("percpu_usage", [1]))
@@ -500,9 +454,7 @@ class SystemMetricsCollector:
         except KeyError:
             return 0
 
-    async def start_continuous_collection(
-        self, container_id: str, callback: Optional[callable] = None
-    ) -> None:
+    async def start_continuous_collection(self, container_id: str, callback: Optional[callable] = None) -> None:
         """
         Start continuous metrics collection
 
@@ -525,14 +477,10 @@ class SystemMetricsCollector:
                 await asyncio.sleep(self.collection_interval)
 
             except docker.errors.NotFound:
-                self.logger.warning(
-                    f"Container {container_id} no longer exists, stopping collection"
-                )
+                self.logger.warning(f"Container {container_id} no longer exists, stopping collection")
                 break
             except Exception as e:
-                self.logger.error(
-                    f"Error in continuous collection for {container_id}: {e}"
-                )
+                self.logger.error(f"Error in continuous collection for {container_id}: {e}")
                 await asyncio.sleep(self.collection_interval)
 
     def clear_cache(self, container_id: Optional[str] = None) -> None:

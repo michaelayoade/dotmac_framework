@@ -9,19 +9,18 @@ Tests cover:
 - Security validation and input sanitization
 """
 
-import pytest
 import asyncio
-from typing import Dict, Any
+from typing import Any
+from unittest.mock import AsyncMock, patch
+
+import pytest
+from dotmac.auth.models import User
+from dotmac_isp.api.auth_router import auth_router
+from dotmac_shared.database.base import get_db
+from fastapi import FastAPI
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import FastAPI
-from unittest.mock import patch, Mock, AsyncMock
 
-from dotmac_isp.api.auth_router import auth_router, AdminCreateRequest, AdminCreateResponse
-from dotmac_shared.auth.models import User
-from dotmac_shared.database.base import get_db
-from tests.fixtures.database import async_db_session, test_app
-from tests.fixtures.auth import mock_auth_service
 from tests.utilities.api_test_client import APITestClient
 
 
@@ -52,7 +51,7 @@ class TestAuthRouterIntegration:
     
     @pytest.mark.asyncio
     async def test_create_tenant_admin_success(
-        self, authenticated_client: APITestClient, test_admin_data: Dict[str, Any]
+        self, authenticated_client: APITestClient, test_admin_data: dict[str, Any]
     ):
         """Test successful tenant admin creation."""
         # Mock the user creation dependencies
@@ -126,7 +125,7 @@ class TestAuthRouterIntegration:
     
     @pytest.mark.asyncio
     async def test_create_tenant_admin_weak_password(
-        self, authenticated_client: APITestClient, test_admin_data: Dict[str, Any]
+        self, authenticated_client: APITestClient, test_admin_data: dict[str, Any]
     ):
         """Test tenant admin creation with weak password."""
         weak_password_data = test_admin_data.copy()
@@ -145,7 +144,7 @@ class TestAuthRouterIntegration:
     
     @pytest.mark.asyncio
     async def test_create_tenant_admin_duplicate_email(
-        self, authenticated_client: APITestClient, test_admin_data: Dict[str, Any]
+        self, authenticated_client: APITestClient, test_admin_data: dict[str, Any]
     ):
         """Test tenant admin creation with duplicate email."""
         with patch('dotmac_management.user_management.adapters.isp_user_adapter.ISPUserAdapter') as mock_adapter:
@@ -161,7 +160,7 @@ class TestAuthRouterIntegration:
     
     @pytest.mark.asyncio
     async def test_create_tenant_admin_database_error(
-        self, authenticated_client: APITestClient, test_admin_data: Dict[str, Any]
+        self, authenticated_client: APITestClient, test_admin_data: dict[str, Any]
     ):
         """Test tenant admin creation with database error."""
         with patch('dotmac_management.user_management.adapters.isp_user_adapter.ISPUserAdapter') as mock_adapter:
@@ -209,7 +208,7 @@ class TestAuthRouterIntegration:
     
     @pytest.mark.asyncio
     async def test_auth_router_cors_headers(
-        self, authenticated_client: APITestClient, test_admin_data: Dict[str, Any]
+        self, authenticated_client: APITestClient, test_admin_data: dict[str, Any]
     ):
         """Test CORS headers are properly set."""
         with patch('dotmac_management.user_management.adapters.isp_user_adapter.ISPUserAdapter') as mock_adapter:
@@ -224,7 +223,7 @@ class TestAuthRouterIntegration:
     
     @pytest.mark.asyncio
     async def test_auth_router_rate_limiting(
-        self, authenticated_client: APITestClient, test_admin_data: Dict[str, Any]
+        self, authenticated_client: APITestClient, test_admin_data: dict[str, Any]
     ):
         """Test rate limiting on auth endpoints."""
         with patch('dotmac_management.user_management.adapters.isp_user_adapter.ISPUserAdapter') as mock_adapter:
@@ -249,7 +248,7 @@ class TestAuthRouterIntegration:
     
     @pytest.mark.asyncio
     async def test_auth_router_content_type_validation(
-        self, authenticated_client: APITestClient, test_admin_data: Dict[str, Any]
+        self, authenticated_client: APITestClient, test_admin_data: dict[str, Any]
     ):
         """Test content type validation."""
         # Test with wrong content type
@@ -263,7 +262,7 @@ class TestAuthRouterIntegration:
     
     @pytest.mark.asyncio
     async def test_auth_router_response_model_validation(
-        self, authenticated_client: APITestClient, test_admin_data: Dict[str, Any]
+        self, authenticated_client: APITestClient, test_admin_data: dict[str, Any]
     ):
         """Test response model validation and structure."""
         with patch('dotmac_management.user_management.adapters.isp_user_adapter.ISPUserAdapter') as mock_adapter:
@@ -298,7 +297,7 @@ class TestAuthRouterDatabaseIntegration:
     
     @pytest.mark.asyncio
     async def test_database_transaction_rollback_on_error(
-        self, authenticated_client: APITestClient, test_admin_data: Dict[str, Any]
+        self, authenticated_client: APITestClient, test_admin_data: dict[str, Any]
     ):
         """Test database transaction rollback on error."""
         with patch('dotmac_management.user_management.adapters.isp_user_adapter.ISPUserAdapter') as mock_adapter:
@@ -315,7 +314,7 @@ class TestAuthRouterDatabaseIntegration:
     
     @pytest.mark.asyncio
     async def test_concurrent_admin_creation(
-        self, authenticated_client: APITestClient, test_admin_data: Dict[str, Any]
+        self, authenticated_client: APITestClient, test_admin_data: dict[str, Any]
     ):
         """Test concurrent admin creation requests."""
         with patch('dotmac_management.user_management.adapters.isp_user_adapter.ISPUserAdapter') as mock_adapter:
@@ -349,7 +348,7 @@ class TestAuthRouterDatabaseIntegration:
     
     @pytest.mark.asyncio
     async def test_database_connection_pool_handling(
-        self, authenticated_client: APITestClient, test_admin_data: Dict[str, Any]
+        self, authenticated_client: APITestClient, test_admin_data: dict[str, Any]
     ):
         """Test database connection pool handling under load."""
         with patch('dotmac_management.user_management.adapters.isp_user_adapter.ISPUserAdapter') as mock_adapter:
@@ -377,7 +376,7 @@ class TestAuthRouterSecurityIntegration:
     
     @pytest.mark.asyncio
     async def test_csrf_protection_integration(
-        self, authenticated_client: APITestClient, test_admin_data: Dict[str, Any]
+        self, authenticated_client: APITestClient, test_admin_data: dict[str, Any]
     ):
         """Test CSRF protection integration."""
         # First request without CSRF token should potentially fail
@@ -392,7 +391,7 @@ class TestAuthRouterSecurityIntegration:
     
     @pytest.mark.asyncio
     async def test_authentication_middleware_integration(
-        self, test_app: FastAPI, async_db_session: AsyncSession, test_admin_data: Dict[str, Any]
+        self, test_app: FastAPI, async_db_session: AsyncSession, test_admin_data: dict[str, Any]
     ):
         """Test integration with authentication middleware."""
         # Create client without authentication
@@ -454,7 +453,7 @@ class TestAuthRouterSecurityIntegration:
     
     @pytest.mark.asyncio
     async def test_response_header_security(
-        self, authenticated_client: APITestClient, test_admin_data: Dict[str, Any]
+        self, authenticated_client: APITestClient, test_admin_data: dict[str, Any]
     ):
         """Test security headers in API responses."""
         with patch('dotmac_management.user_management.adapters.isp_user_adapter.ISPUserAdapter') as mock_adapter:

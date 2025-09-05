@@ -11,11 +11,12 @@ This module provides comprehensive audit trail functionality including:
 
 import json
 import uuid
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
-from .utils import ValidationError, get_current_timestamp, get_logger, sanitize_dict
+from .utils import get_current_timestamp, get_logger
 
 logger = get_logger(__name__)
 
@@ -27,8 +28,8 @@ class AuditEventType(Enum):
     AUTH_LOGIN = "auth.login"
     AUTH_LOGOUT = "auth.logout"
     AUTH_FAILED = "auth.failed"
-    AUTH_TOKEN_REFRESH = "auth.token_refresh"
-    AUTH_PASSWORD_CHANGE = "auth.password_change"
+    AUTH_TOKEN_REFRESH = "auth.token_refresh"  # noqa: S105 - label string
+    AUTH_PASSWORD_CHANGE = "auth.password_change"  # noqa: S105 - label string
     AUTH_MFA_ENABLED = "auth.mfa_enabled"
     AUTH_MFA_DISABLED = "auth.mfa_disabled"
 
@@ -122,7 +123,7 @@ class AuditActor:
     # User-specific information
     username: Optional[str] = None
     email: Optional[str] = None
-    roles: List[str] = field(default_factory=list)
+    roles: list[str] = field(default_factory=list)
 
     # Session information
     session_id: Optional[str] = None
@@ -144,7 +145,7 @@ class AuditResource:
 
     # Resource metadata
     parent_resource_id: Optional[str] = None
-    resource_attributes: Dict[str, Any] = field(default_factory=dict)
+    resource_attributes: dict[str, Any] = field(default_factory=dict)
 
     # Data sensitivity
     classification: Optional[str] = None  # public, internal, confidential, restricted
@@ -176,33 +177,29 @@ class AuditEvent:
     context: Optional[AuditContext] = None
 
     # Event data
-    before_state: Optional[Dict[str, Any]] = None
-    after_state: Optional[Dict[str, Any]] = None
-    changes: Optional[Dict[str, Any]] = None
+    before_state: Optional[dict[str, Any]] = None
+    after_state: Optional[dict[str, Any]] = None
+    changes: Optional[dict[str, Any]] = None
 
     # Additional metadata
-    tags: Dict[str, str] = field(default_factory=dict)
-    custom_attributes: Dict[str, Any] = field(default_factory=dict)
+    tags: dict[str, str] = field(default_factory=dict)
+    custom_attributes: dict[str, Any] = field(default_factory=dict)
 
     # Risk and compliance
     risk_score: Optional[int] = None  # 0-100
-    compliance_frameworks: List[str] = field(default_factory=list)
+    compliance_frameworks: list[str] = field(default_factory=list)
 
     def __post_init__(self):
         """Post-initialization processing."""
         if not self.event_name:
             self.event_name = self.event_type.value
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert audit event to dictionary for storage/transmission."""
 
         def serialize_dataclass(obj):
             if hasattr(obj, "__dataclass_fields__"):
-                return {
-                    k: serialize_dataclass(v)
-                    for k, v in obj.__dict__.items()
-                    if v is not None
-                }
+                return {k: serialize_dataclass(v) for k, v in obj.__dict__.items() if v is not None}
             elif isinstance(obj, Enum):
                 return obj.value
             elif isinstance(obj, list):
@@ -219,8 +216,6 @@ class AuditEvent:
         return json.dumps(self.to_dict(), default=str, separators=(",", ":"))
 
 
-from abc import ABC, abstractmethod
-
 class AuditStore(ABC):
     """Abstract base class for audit event storage backends."""
 
@@ -230,7 +225,7 @@ class AuditStore(ABC):
         pass
 
     @abstractmethod
-    def store_events(self, events: List[AuditEvent]) -> int:
+    def store_events(self, events: list[AuditEvent]) -> int:
         """Store multiple audit events. Returns number of events successfully stored."""
         pass
 
@@ -239,13 +234,13 @@ class AuditStore(ABC):
         self,
         start_time: Optional[float] = None,
         end_time: Optional[float] = None,
-        event_types: Optional[List[AuditEventType]] = None,
-        actor_ids: Optional[List[str]] = None,
-        resource_types: Optional[List[str]] = None,
+        event_types: Optional[list[AuditEventType]] = None,
+        actor_ids: Optional[list[str]] = None,
+        resource_types: Optional[list[str]] = None,
         tenant_id: Optional[str] = None,
         limit: int = 100,
         offset: int = 0,
-    ) -> List[AuditEvent]:
+    ) -> list[AuditEvent]:
         """Query stored audit events."""
         pass
 
@@ -254,7 +249,7 @@ class InMemoryAuditStore(AuditStore):
     """In-memory audit store for testing and development."""
 
     def __init__(self, max_events: int = 10000):
-        self.events: List[AuditEvent] = []
+        self.events: list[AuditEvent] = []
         self.max_events = max_events
 
     def store_event(self, event: AuditEvent) -> bool:
@@ -269,7 +264,7 @@ class InMemoryAuditStore(AuditStore):
             logger.error(f"Failed to store audit event: {e}")
             return False
 
-    def store_events(self, events: List[AuditEvent]) -> int:
+    def store_events(self, events: list[AuditEvent]) -> int:
         """Store multiple audit events in memory."""
         stored = 0
         for event in events:
@@ -281,13 +276,13 @@ class InMemoryAuditStore(AuditStore):
         self,
         start_time: Optional[float] = None,
         end_time: Optional[float] = None,
-        event_types: Optional[List[AuditEventType]] = None,
-        actor_ids: Optional[List[str]] = None,
-        resource_types: Optional[List[str]] = None,
+        event_types: Optional[list[AuditEventType]] = None,
+        actor_ids: Optional[list[str]] = None,
+        resource_types: Optional[list[str]] = None,
         tenant_id: Optional[str] = None,
         limit: int = 100,
         offset: int = 0,
-    ) -> List[AuditEvent]:
+    ) -> list[AuditEvent]:
         """Query audit events from memory."""
         filtered_events = self.events
 
@@ -297,23 +292,13 @@ class InMemoryAuditStore(AuditStore):
         if end_time:
             filtered_events = [e for e in filtered_events if e.timestamp <= end_time]
         if event_types:
-            filtered_events = [
-                e for e in filtered_events if e.event_type in event_types
-            ]
+            filtered_events = [e for e in filtered_events if e.event_type in event_types]
         if actor_ids and any(e.actor for e in filtered_events):
-            filtered_events = [
-                e for e in filtered_events if e.actor and e.actor.actor_id in actor_ids
-            ]
+            filtered_events = [e for e in filtered_events if e.actor and e.actor.actor_id in actor_ids]
         if resource_types and any(e.resource for e in filtered_events):
-            filtered_events = [
-                e
-                for e in filtered_events
-                if e.resource and e.resource.resource_type in resource_types
-            ]
+            filtered_events = [e for e in filtered_events if e.resource and e.resource.resource_type in resource_types]
         if tenant_id and any(e.actor for e in filtered_events):
-            filtered_events = [
-                e for e in filtered_events if e.actor and e.actor.tenant_id == tenant_id
-            ]
+            filtered_events = [e for e in filtered_events if e.actor and e.actor.tenant_id == tenant_id]
 
         # Sort by timestamp (newest first)
         filtered_events.sort(key=lambda x: x.timestamp, reverse=True)
@@ -388,19 +373,11 @@ class AuditLogger:
     ) -> AuditEvent:
         """Log authentication-related audit event."""
 
-        actor = AuditActor(
-            actor_id=actor_id, actor_type="user", tenant_id=self.tenant_id
-        )
+        actor = AuditActor(actor_id=actor_id, actor_type="user", tenant_id=self.tenant_id)
 
-        context = AuditContext(
-            client_ip=client_ip, user_agent=user_agent, service_name=self.service_name
-        )
+        context = AuditContext(client_ip=client_ip, user_agent=user_agent, service_name=self.service_name)
 
-        severity = (
-            AuditSeverity.HIGH
-            if outcome == AuditOutcome.FAILURE
-            else AuditSeverity.MEDIUM
-        )
+        severity = AuditSeverity.HIGH if outcome == AuditOutcome.FAILURE else AuditSeverity.MEDIUM
 
         return self.log_event(
             event_type=event_type,
@@ -419,8 +396,8 @@ class AuditLogger:
         resource_id: str,
         actor_id: str,
         outcome: AuditOutcome = AuditOutcome.SUCCESS,
-        before_state: Optional[Dict] = None,
-        after_state: Optional[Dict] = None,
+        before_state: Optional[dict] = None,
+        after_state: Optional[dict] = None,
         **kwargs,
     ) -> AuditEvent:
         """Log data access audit event."""
@@ -434,18 +411,12 @@ class AuditLogger:
         }
         event_type = event_type_map.get(operation.lower(), AuditEventType.DATA_READ)
 
-        actor = AuditActor(
-            actor_id=actor_id, actor_type="user", tenant_id=self.tenant_id
-        )
+        actor = AuditActor(actor_id=actor_id, actor_type="user", tenant_id=self.tenant_id)
 
         resource = AuditResource(resource_id=resource_id, resource_type=resource_type)
 
         message = f"{operation.title()} {resource_type} {resource_id}"
-        severity = (
-            AuditSeverity.HIGH
-            if operation.lower() == "delete"
-            else AuditSeverity.MEDIUM
-        )
+        severity = AuditSeverity.HIGH if operation.lower() == "delete" else AuditSeverity.MEDIUM
 
         return self.log_event(
             event_type=event_type,
@@ -483,17 +454,13 @@ class AuditLogger:
             **kwargs,
         )
 
-    def query_events(self, **kwargs) -> List[AuditEvent]:
+    def query_events(self, **kwargs) -> list[AuditEvent]:
         """Query audit events from the store."""
         return self.store.query_events(**kwargs)
 
-    def get_event_stats(
-        self, start_time: Optional[float] = None, end_time: Optional[float] = None
-    ) -> Dict[str, Any]:
+    def get_event_stats(self, start_time: Optional[float] = None, end_time: Optional[float] = None) -> dict[str, Any]:
         """Get audit event statistics."""
-        events = self.query_events(
-            start_time=start_time, end_time=end_time, limit=10000
-        )
+        events = self.query_events(start_time=start_time, end_time=end_time, limit=10000)
 
         stats = {
             "total_events": len(events),
@@ -507,29 +474,21 @@ class AuditLogger:
         for event in events:
             # Count by type
             event_type = event.event_type.value
-            stats["events_by_type"][event_type] = (
-                stats["events_by_type"].get(event_type, 0) + 1
-            )
+            stats["events_by_type"][event_type] = stats["events_by_type"].get(event_type, 0) + 1
 
             # Count by severity
             severity = event.severity.value
-            stats["events_by_severity"][severity] = (
-                stats["events_by_severity"].get(severity, 0) + 1
-            )
+            stats["events_by_severity"][severity] = stats["events_by_severity"].get(severity, 0) + 1
 
             # Count by outcome
             outcome = event.outcome.value
-            stats["events_by_outcome"][outcome] = (
-                stats["events_by_outcome"].get(outcome, 0) + 1
-            )
+            stats["events_by_outcome"][outcome] = stats["events_by_outcome"].get(outcome, 0) + 1
 
             # Track unique actors and resources
             if event.actor:
                 stats["unique_actors"].add(event.actor.actor_id)
             if event.resource:
-                stats["unique_resources"].add(
-                    f"{event.resource.resource_type}:{event.resource.resource_id}"
-                )
+                stats["unique_resources"].add(f"{event.resource.resource_type}:{event.resource.resource_id}")
 
         # Convert sets to counts
         stats["unique_actors"] = len(stats["unique_actors"])
@@ -579,9 +538,7 @@ def create_audit_event(
     if resource_type:
         resource = AuditResource(resource_type=resource_type, resource_id=resource_id)
 
-    return AuditEvent(
-        event_type=event_type, message=message, actor=actor, resource=resource, **kwargs
-    )
+    return AuditEvent(event_type=event_type, message=message, actor=actor, resource=resource, **kwargs)
 
 
 # Global audit logger instance

@@ -7,23 +7,22 @@ with consistent error handling, validation, and transaction management.
 """
 
 import logging
-from abc import ABC, abstractmethod
-from datetime import datetime
-from typing import Any, Dict, Generic, List, Optional, Type, TypeVar
+from abc import ABC
+from typing import TYPE_CHECKING, Any, Generic, Optional, TypeVar
+
+if TYPE_CHECKING:
+    pass
 from uuid import UUID
 
 from pydantic import BaseModel
-from pydantic import ValidationError as PydanticValidationError
 from sqlalchemy.orm import Session
 
-from .base_repository import BaseRepository, BaseTenantRepository, create_repository
+from .base_repository import BaseTenantRepository, create_repository
+from .database.base import Base
 from .exceptions import (
-    BusinessRuleError,
     EntityNotFoundError,
-    ServiceError,
     ValidationError,
 )
-from .database.base import Base, BaseModel as ISPBaseModel
 
 logger = logging.getLogger(__name__)
 
@@ -34,9 +33,7 @@ UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
 ResponseSchemaType = TypeVar("ResponseSchemaType", bound=BaseModel)
 
 
-class BaseService(
-    Generic[ModelType, CreateSchemaType, UpdateSchemaType, ResponseSchemaType], ABC
-):
+class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType, ResponseSchemaType], ABC):
     """Service layer - exceptions bubble up to router @standard_exception_handler."""
 
     """
@@ -60,10 +57,10 @@ class BaseService(
     def __init__(
         self,
         db: Session,
-        model_class: Type[ModelType],
-        create_schema: Type[CreateSchemaType],
-        update_schema: Type[UpdateSchemaType],
-        response_schema: Type[ResponseSchemaType],
+        model_class: type[ModelType],
+        create_schema: type[CreateSchemaType],
+        update_schema: type[UpdateSchemaType],
+        response_schema: type[ResponseSchemaType],
         tenant_id: Optional[str] = None,
     ):
         """
@@ -90,9 +87,7 @@ class BaseService(
         # Set up logging
         self._logger = logging.getLogger(f"{__name__}.{model_class.__name__}Service")
 
-    async def create(
-        self, data: CreateSchemaType, commit: bool = True
-    ) -> ResponseSchemaType:
+    async def create(self, data: CreateSchemaType, commit: bool = True) -> ResponseSchemaType:
         """
         Create new entity with business logic validation.
 
@@ -120,9 +115,7 @@ class BaseService(
 
         # Convert to dict for repository
         create_data = (
-            data.model_dump()
-            if hasattr(data, "model_dump")
-            else (data.model_dump() if hasattr(data, "dict") else data)
+            data.model_dump() if hasattr(data, "model_dump") else (data.model_dump() if hasattr(data, "dict") else data)
         )
 
         # Create entity via repository
@@ -167,14 +160,10 @@ class BaseService(
         """
         entity = await self.get_by_id(entity_id)
         if not entity:
-            raise EntityNotFoundError(
-                f"{self.model_class.__name__} not found with ID: {entity_id}"
-            )
+            raise EntityNotFoundError(f"{self.model_class.__name__} not found with ID: {entity_id}")
         return entity
 
-    async def update(
-        self, entity_id: UUID, data: UpdateSchemaType, commit: bool = True
-    ) -> ResponseSchemaType:
+    async def update(self, entity_id: UUID, data: UpdateSchemaType, commit: bool = True) -> ResponseSchemaType:
         """
         Update entity with business logic validation.
 
@@ -260,12 +249,12 @@ class BaseService(
 
     async def list(
         self,
-        filters: Optional[Dict[str, Any]] = None,
+        filters: Optional[dict[str, Any]] = None,
         sort_by: Optional[str] = None,
         sort_order: str = "asc",
         limit: Optional[int] = None,
         offset: Optional[int] = None,
-    ) -> List[ResponseSchemaType]:
+    ) -> list[ResponseSchemaType]:
         """
         List entities with filtering, sorting, and pagination.
 
@@ -293,7 +282,7 @@ class BaseService(
         # Convert to response schemas
         return [self._to_response_schema(entity) for entity in entities]
 
-    async def count(self, filters: Optional[Dict[str, Any]] = None) -> int:
+    async def count(self, filters: Optional[dict[str, Any]] = None) -> int:
         """
         Count entities with optional filtering.
 
@@ -334,9 +323,7 @@ class BaseService(
         """Hook called before entity creation."""
         pass
 
-    async def _post_create_hook(
-        self, entity: ModelType, data: CreateSchemaType
-    ) -> None:
+    async def _post_create_hook(self, entity: ModelType, data: CreateSchemaType) -> None:
         """Hook called after entity creation."""
         pass
 
@@ -344,9 +331,7 @@ class BaseService(
         """Hook called before entity update."""
         pass
 
-    async def _post_update_hook(
-        self, entity: ModelType, data: UpdateSchemaType
-    ) -> None:
+    async def _post_update_hook(self, entity: ModelType, data: UpdateSchemaType) -> None:
         """Hook called after entity update."""
         pass
 
@@ -362,9 +347,7 @@ class BaseService(
         """Validate business rules for creation. Override in subclasses."""
         pass
 
-    async def _validate_update_rules(
-        self, entity: ModelType, data: UpdateSchemaType
-    ) -> None:
+    async def _validate_update_rules(self, entity: ModelType, data: UpdateSchemaType) -> None:
         """Validate business rules for updates. Override in subclasses."""
         pass
 
@@ -372,22 +355,16 @@ class BaseService(
         """Validate business rules for deletion. Override in subclasses."""
         pass
 
-    async def _apply_access_control_filters(
-        self, filters: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def _apply_access_control_filters(self, filters: dict[str, Any]) -> dict[str, Any]:
         """Apply access control filters. Override in subclasses."""
         return filters
 
-    def _add_relationship_data(
-        self, entity: ModelType, entity_dict: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _add_relationship_data(self, entity: ModelType, entity_dict: dict[str, Any]) -> dict[str, Any]:
         """Add relationship data to entity dict. Override in subclasses."""
         return entity_dict
 
 
-class BaseTenantService(
-    BaseService[ModelType, CreateSchemaType, UpdateSchemaType, ResponseSchemaType]
-):
+class BaseTenantService(BaseService[ModelType, CreateSchemaType, UpdateSchemaType, ResponseSchemaType]):
     """
     Base service for tenant-aware entities.
 
@@ -397,10 +374,10 @@ class BaseTenantService(
     def __init__(
         self,
         db: Session,
-        model_class: Type[ModelType],
-        create_schema: Type[CreateSchemaType],
-        update_schema: Type[UpdateSchemaType],
-        response_schema: Type[ResponseSchemaType],
+        model_class: type[ModelType],
+        create_schema: type[CreateSchemaType],
+        update_schema: type[UpdateSchemaType],
+        response_schema: type[ResponseSchemaType],
         tenant_id: str,
     ):
         """
@@ -417,16 +394,12 @@ class BaseTenantService(
         if not tenant_id:
             raise ValidationError("tenant_id is required for tenant services")
 
-        if not issubclass(model_class, TenantMixin):
-            raise ValidationError(
-                f"Model {model_class.__name__} must inherit from TenantMixin"
-            )
+        if not hasattr(model_class, "tenant_id"):
+            raise ValidationError(f"Model {model_class.__name__} must inherit from TenantMixin")
 
-        super().__init__(
-            db, model_class, create_schema, update_schema, response_schema, tenant_id
-        )
+        super().__init__(db, model_class, create_schema, update_schema, response_schema, tenant_id)
 
-    async def get_tenant_stats(self) -> Dict[str, Any]:
+    async def get_tenant_stats(self) -> dict[str, Any]:
         """
         Get statistics for current tenant.
 
@@ -443,9 +416,7 @@ class BaseTenantService(
                 "total_entities": await self.count(),
             }
 
-    async def _apply_access_control_filters(
-        self, filters: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def _apply_access_control_filters(self, filters: dict[str, Any]) -> dict[str, Any]:
         """Apply tenant isolation filters."""
         # Tenant filtering is handled by the repository, but we can add additional filters here
         return filters
@@ -461,8 +432,8 @@ class BaseReadOnlyService(Generic[ModelType, ResponseSchemaType], ABC):
     def __init__(
         self,
         db: Session,
-        model_class: Type[ModelType],
-        response_schema: Type[ResponseSchemaType],
+        model_class: type[ModelType],
+        response_schema: type[ResponseSchemaType],
         tenant_id: Optional[str] = None,
     ):
         """
@@ -483,9 +454,7 @@ class BaseReadOnlyService(Generic[ModelType, ResponseSchemaType], ABC):
         self.repository = create_repository(db, model_class, tenant_id)
 
         # Set up logging
-        self._logger = logging.getLogger(
-            f"{__name__}.{model_class.__name__}ReadOnlyService"
-        )
+        self._logger = logging.getLogger(f"{__name__}.{model_class.__name__}ReadOnlyService")
 
     async def get_by_id(self, entity_id: UUID) -> Optional[ResponseSchemaType]:
         """Get entity by ID."""
@@ -496,12 +465,12 @@ class BaseReadOnlyService(Generic[ModelType, ResponseSchemaType], ABC):
 
     async def list(
         self,
-        filters: Optional[Dict[str, Any]] = None,
+        filters: Optional[dict[str, Any]] = None,
         sort_by: Optional[str] = None,
         sort_order: str = "asc",
         limit: Optional[int] = None,
         offset: Optional[int] = None,
-    ) -> List[ResponseSchemaType]:
+    ) -> list[ResponseSchemaType]:
         """List entities with filtering, sorting, and pagination."""
         entities = self.repository.list(
             filters=filters,
@@ -512,7 +481,7 @@ class BaseReadOnlyService(Generic[ModelType, ResponseSchemaType], ABC):
         )
         return [self._to_response_schema(entity) for entity in entities]
 
-    async def count(self, filters: Optional[Dict[str, Any]] = None) -> int:
+    async def count(self, filters: Optional[dict[str, Any]] = None) -> int:
         """Count entities with optional filtering."""
         return self.repository.count(filters)
 

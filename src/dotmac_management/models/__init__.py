@@ -2,7 +2,6 @@
 SQLAlchemy models for the DotMac Management Platform.
 """
 
-# Import database Base first to ensure proper inheritance 
 from ..database import Base
 from .base import BaseModel
 from .billing import (
@@ -13,6 +12,7 @@ from .billing import (
     Subscription,
     UsageRecord,
 )
+from .commission_config import CommissionConfig, RevenueModel
 from .deployment import (
     Deployment,
     DeploymentEvent,
@@ -20,11 +20,10 @@ from .deployment import (
     InfrastructureTemplate,
 )
 from .monitoring import Alert, HealthCheck, Metric, SLARecord
+from .partner_branding import PartnerBrandConfig
 from .plugin import Plugin, PluginCategory, PluginLicense, PluginUsage
 from .tenant import CustomerTenant
 from .user import User
-from .commission_config import CommissionConfig, RevenueModel
-from .partner_branding import PartnerBrandConfig
 
 __all__ = [
     "Base",
@@ -50,6 +49,6 @@ __all__ = [
     "Alert",
     "SLARecord",
     "CommissionConfig",
-    "RevenueModel", 
+    "RevenueModel",
     "PartnerBrandConfig",
 ]

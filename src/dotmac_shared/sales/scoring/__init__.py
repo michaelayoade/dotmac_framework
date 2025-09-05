@@ -1,8 +1,6 @@
 """
 Sales scoring components.
 """
-
-# Handle optional dependencies gracefully
 try:
     from .engine import (
         LeadScoringEngine,

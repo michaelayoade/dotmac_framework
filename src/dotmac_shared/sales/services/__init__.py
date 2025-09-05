@@ -1,7 +1,6 @@
 """
 Sales service components.
 """
-
 try:
     from .lead_service import LeadService
 except ImportError as e:

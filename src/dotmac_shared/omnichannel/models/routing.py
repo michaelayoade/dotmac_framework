@@ -4,10 +4,10 @@ Routing and assignment models.
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class RoutingStrategy(str, Enum):
@@ -50,11 +50,9 @@ class RoutingResult(BaseModel):
     rules_evaluated: int = 0
 
     # Additional data
-    extra_data: Dict[str, Any] = Field(default_factory=dict, alias="metadata")
+    extra_data: dict[str, Any] = Field(default_factory=dict, alias="metadata")
 
-    model_config = ConfigDict(
-        populate_by_name=True
-    )
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class RoutingRule(BaseModel):
@@ -70,13 +68,13 @@ class RoutingRule(BaseModel):
     active: bool = True
 
     # Conditions (all must match)
-    conditions: Dict[str, Any] = Field(default_factory=dict)
+    conditions: dict[str, Any] = Field(default_factory=dict)
 
     # Actions to take when conditions match
-    actions: List["RoutingAction"] = Field(default_factory=list)
+    actions: list["RoutingAction"] = Field(default_factory=list)
 
     # Schedule (when rule is active)
-    schedule: Optional[Dict[str, Any]] = None
+    schedule: Optional[dict[str, Any]] = None
 
     # Timestamps
     created_at: datetime = Field(default_factory=datetime.utcnow)
@@ -87,20 +85,16 @@ class RoutingRule(BaseModel):
     last_triggered: Optional[datetime] = None
 
     # Additional data
-    extra_data: Dict[str, Any] = Field(default_factory=dict, alias="metadata")
+    extra_data: dict[str, Any] = Field(default_factory=dict, alias="metadata")
 
-    model_config = ConfigDict(
-        populate_by_name=True
-    )
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class RoutingAction(BaseModel):
     """Action to take when routing rule matches."""
 
-    type: str = Field(
-        ..., min_length=1
-    )  # assign_to_team, assign_to_agent, escalate, etc.
-    parameters: Dict[str, Any] = Field(default_factory=dict)
+    type: str = Field(..., min_length=1)  # assign_to_team, assign_to_agent, escalate, etc.
+    parameters: dict[str, Any] = Field(default_factory=dict)
 
     # Conditional execution
     condition: Optional[str] = None
@@ -128,19 +122,17 @@ class RoutingConfiguration(BaseModel):
     max_routing_attempts: int = Field(default=3, ge=1, le=10)
 
     # Business hours and overflow
-    business_hours: Optional[Dict[str, Any]] = None
+    business_hours: Optional[dict[str, Any]] = None
     overflow_strategy: Optional[RoutingStrategy] = None
     overflow_team: Optional[str] = None
 
     # Rules
-    routing_rules: List[RoutingRule] = Field(default_factory=list)
+    routing_rules: list[RoutingRule] = Field(default_factory=list)
 
     # Updated timestamp
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
-    model_config = ConfigDict(
-        populate_by_name=True
-    )
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class SkillRequirement(BaseModel):
@@ -163,13 +155,13 @@ class RoutingContext(BaseModel):
     channel: str
     priority: str
     category: Optional[str] = None
-    tags: List[str] = Field(default_factory=list)
+    tags: list[str] = Field(default_factory=list)
 
     # Skill requirements
-    required_skills: List[SkillRequirement] = Field(default_factory=list)
+    required_skills: list[SkillRequirement] = Field(default_factory=list)
 
     # Customer preferences
-    customer_preferences: Dict[str, Any] = Field(default_factory=dict)
+    customer_preferences: dict[str, Any] = Field(default_factory=dict)
 
     # Historical context
     previous_interactions: int = 0
@@ -181,15 +173,13 @@ class RoutingContext(BaseModel):
     escalation_deadline: Optional[datetime] = None
 
     # Geographic information
-    customer_location: Optional[Dict[str, str]] = None
+    customer_location: Optional[dict[str, str]] = None
     customer_timezone: Optional[str] = None
 
     # Additional context
-    extra_data: Dict[str, Any] = Field(default_factory=dict, alias="metadata")
+    extra_data: dict[str, Any] = Field(default_factory=dict, alias="metadata")
 
-    model_config = ConfigDict(
-        populate_by_name=True
-    )
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class RoutingMetrics(BaseModel):
@@ -210,16 +200,16 @@ class RoutingMetrics(BaseModel):
     max_routing_time_ms: Optional[int] = None
 
     # Strategy breakdown
-    strategy_usage: Dict[str, int] = Field(default_factory=dict)
-    strategy_success_rates: Dict[str, float] = Field(default_factory=dict)
+    strategy_usage: dict[str, int] = Field(default_factory=dict)
+    strategy_success_rates: dict[str, float] = Field(default_factory=dict)
 
     # Rule effectiveness
-    rule_trigger_counts: Dict[str, int] = Field(default_factory=dict)
-    rule_success_rates: Dict[str, float] = Field(default_factory=dict)
+    rule_trigger_counts: dict[str, int] = Field(default_factory=dict)
+    rule_success_rates: dict[str, float] = Field(default_factory=dict)
 
     # Agent metrics
     avg_workload_at_assignment: Optional[float] = None
-    workload_distribution: Dict[str, int] = Field(default_factory=dict)
+    workload_distribution: dict[str, int] = Field(default_factory=dict)
 
     # Quality metrics
     customer_satisfaction_score: Optional[float] = None

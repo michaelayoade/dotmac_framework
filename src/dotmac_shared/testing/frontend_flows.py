@@ -13,7 +13,7 @@ import time
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 import pytest
 from playwright.async_api import Browser, BrowserContext, Page, async_playwright
@@ -47,10 +47,10 @@ class FrontendFlowResult:
 
     timestamp: str
     total_duration: float
-    applications_tested: List[str]
-    test_results: List[UITestResult]
-    success_metrics: Dict[str, Any]
-    integration_status: Dict[str, Any]
+    applications_tested: list[str]
+    test_results: list[UITestResult]
+    success_metrics: dict[str, Any]
+    integration_status: dict[str, Any]
 
     @property
     def total_tests(self) -> int:
@@ -119,14 +119,12 @@ class DRYFrontendFlowTester(BaseTestSuite):
             "isp_framework": "http://localhost:8000",
         }
 
-        self.test_results: List[UITestResult] = []
+        self.test_results: list[UITestResult] = []
 
-    async def setup_browser_context(self) -> Tuple[Browser, BrowserContext]:
+    async def setup_browser_context(self) -> tuple[Browser, BrowserContext]:
         """Set up browser context with consistent configuration."""
         playwright = await async_playwright().start()
-        browser = await playwright.chromium.launch(
-            headless=True, args=["--no-sandbox", "--disable-setuid-sandbox"]
-        )
+        browser = await playwright.chromium.launch(headless=True, args=["--no-sandbox", "--disable-setuid-sandbox"])
 
         context = await browser.new_context(
             viewport={"width": 1920, "height": 1080},
@@ -173,9 +171,7 @@ class DRYFrontendFlowTester(BaseTestSuite):
                 tags={"test_name": test_name, "status": status},
             )
 
-    async def test_application_connectivity(
-        self, page: Page, app_key: str, app_config: Dict[str, Any]
-    ) -> bool:
+    async def test_application_connectivity(self, page: Page, app_key: str, app_config: dict[str, Any]) -> bool:
         """Test basic application connectivity and loading."""
         start_time = time.time()
 
@@ -220,9 +216,7 @@ class DRYFrontendFlowTester(BaseTestSuite):
             )
             return False
 
-    async def test_login_form_presence(
-        self, page: Page, app_key: str, app_config: Dict[str, Any]
-    ) -> bool:
+    async def test_login_form_presence(self, page: Page, app_key: str, app_config: dict[str, Any]) -> bool:
         """Test login form detection and basic interaction."""
         start_time = time.time()
 
@@ -251,7 +245,8 @@ class DRYFrontendFlowTester(BaseTestSuite):
                     element = await page.query_selector(selector)
                     if element and await element.is_visible():
                         found_elements.append(selector)
-                except:
+                except Exception:
+                    # Element not found or not accessible - skip and continue
                     continue
 
             # Screenshot for analysis
@@ -261,10 +256,7 @@ class DRYFrontendFlowTester(BaseTestSuite):
             # Determine if login form is present (need email + password + submit)
             has_email = any("email" in sel for sel in found_elements)
             has_password = any("password" in sel for sel in found_elements)
-            has_submit = any(
-                "submit" in sel or "Login" in sel or "Sign In" in sel
-                for sel in found_elements
-            )
+            has_submit = any("submit" in sel or "Login" in sel or "Sign In" in sel for sel in found_elements)
 
             success = has_email and has_password
 
@@ -287,9 +279,7 @@ class DRYFrontendFlowTester(BaseTestSuite):
             )
             return False
 
-    async def test_responsive_behavior(
-        self, page: Page, app_key: str, app_config: Dict[str, Any]
-    ) -> bool:
+    async def test_responsive_behavior(self, page: Page, app_key: str, app_config: dict[str, Any]) -> bool:
         """Test responsive design across viewports."""
         start_time = time.time()
 
@@ -311,9 +301,7 @@ class DRYFrontendFlowTester(BaseTestSuite):
                 await page.wait_for_load_state("networkidle")
 
                 # Screenshot for each viewport
-                screenshot_path = (
-                    self.screenshots_dir / f"{app_key}_{viewport['name']}.png"
-                )
+                screenshot_path = self.screenshots_dir / f"{app_key}_{viewport['name']}.png"
                 await page.screenshot(path=str(screenshot_path))
 
                 # Basic responsiveness check
@@ -395,11 +383,7 @@ class DRYFrontendFlowTester(BaseTestSuite):
                 "total_tests": len(self.test_results),
                 "passed_tests": sum(1 for r in self.test_results if r.success),
                 "success_rate": (
-                    (
-                        sum(1 for r in self.test_results if r.success)
-                        / len(self.test_results)
-                        * 100
-                    )
+                    (sum(1 for r in self.test_results if r.success) / len(self.test_results) * 100)
                     if self.test_results
                     else 0
                 ),
@@ -407,9 +391,7 @@ class DRYFrontendFlowTester(BaseTestSuite):
             integration_status={
                 "dry_compliance": True,
                 "monitoring_integrated": self.monitoring is not None,
-                "screenshot_count": len(
-                    [r for r in self.test_results if r.screenshot_path]
-                ),
+                "screenshot_count": len([r for r in self.test_results if r.screenshot_path]),
             },
         )
 
@@ -417,7 +399,7 @@ class DRYFrontendFlowTester(BaseTestSuite):
 
 
 # Integration function for DRY test orchestration
-async def run_frontend_flows(framework_root: Path) -> Dict[str, Any]:
+async def run_frontend_flows(framework_root: Path) -> dict[str, Any]:
     """
     Main entry point for DRY test orchestration integration.
 
@@ -461,18 +443,18 @@ if __name__ == "__main__":
         framework_root = Path(__file__).parent.parent.parent.parent
         result = await run_frontend_flows(framework_root)
 
-        print(f"\n{'='*70}")
-        print("🎭 DRY Frontend Flow Test Results")
-        print(f"{'='*70}")
-        print(f"Applications tested: {len(result['applications'])}")
-        print(f"Total tests: {result['metrics']['total_tests']}")
-        print(f"Success rate: {result['metrics']['success_rate']:.1f}%")
-        print(f"Duration: {result['duration']:.2f}s")
+        logger.info(f"\n{'='*70}")
+        logger.info("🎭 DRY Frontend Flow Test Results")
+        logger.info(f"{'='*70}")
+        logger.info(f"Applications tested: {len(result['applications'])}")
+        logger.info(f"Total tests: {result['metrics']['total_tests']}")
+        logger.info(f"Success rate: {result['metrics']['success_rate']:.1f}%")
+        logger.info(f"Duration: {result['duration']:.2f}s")
 
         if result["success"]:
-            print("🎉 Frontend flows PASSED")
+            logger.info("🎉 Frontend flows PASSED")
         else:
-            print("⚠️ Frontend flows FAILED")
+            logger.info("⚠️ Frontend flows FAILED")
 
         # Save results (DRY pattern - consistent with other test outputs)
         results_file = framework_root / "test-results" / "frontend_flows.json"
@@ -481,7 +463,7 @@ if __name__ == "__main__":
         with open(results_file, "w") as f:
             json.dump(result, f, indent=2, default=str)
 
-        print(f"\nResults saved to: {results_file}")
+        logger.info(f"\nResults saved to: {results_file}")
 
         return result["success"]
 

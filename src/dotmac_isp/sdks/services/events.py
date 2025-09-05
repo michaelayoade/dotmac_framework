@@ -1,9 +1,10 @@
 """Events handling for services SDK."""
 
 import asyncio
+from collections.abc import Callable
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Optional
 
 
 class EventType(Enum):
@@ -26,8 +27,8 @@ class Event:
         self,
         event_type: EventType,
         tenant_id: str,
-        data: Dict[str, Any],
-        metadata: Optional[Dict[str, Any]] = None,
+        data: dict[str, Any],
+        metadata: Optional[dict[str, Any]] = None,
     ):
         """Initialize event."""
         self.event_type = event_type
@@ -35,11 +36,9 @@ class Event:
         self.data = data
         self.metadata = metadata or {}
         self.timestamp = datetime.now(timezone.utc)
-        self.event_id = (
-            f"{event_type.value}_{tenant_id}_{int(self.timestamp.timestamp())}"
-        )
+        self.event_id = f"{event_type.value}_{tenant_id}_{int(self.timestamp.timestamp())}"
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert event to dictionary."""
         return {
             "event_id": self.event_id,
@@ -56,7 +55,7 @@ class EventBus:
 
     def __init__(self):
         """Init   operation."""
-        self._handlers: Dict[EventType, List[Callable]] = {}
+        self._handlers: dict[EventType, list[Callable]] = {}
 
     def subscribe(self, event_type: EventType, handler: Callable):
         """Subscribe to an event type."""
@@ -75,9 +74,7 @@ class EventBus:
             handlers = self._handlers[event.event_type]
             await asyncio.gather(*[handler(event) for handler in handlers])
 
-    async def publish_service_created(
-        self, tenant_id: str, service_id: str, service_data: Dict[str, Any]
-    ):
+    async def publish_service_created(self, tenant_id: str, service_id: str, service_data: dict[str, Any]):
         """Publish service created event."""
         event = Event(
             EventType.SERVICE_CREATED,
@@ -86,9 +83,7 @@ class EventBus:
         )
         await self.publish(event)
 
-    async def publish_service_provisioned(
-        self, tenant_id: str, service_id: str, provisioning_data: Dict[str, Any]
-    ):
+    async def publish_service_provisioned(self, tenant_id: str, service_id: str, provisioning_data: dict[str, Any]):
         """Publish service provisioned event."""
         event = Event(
             EventType.SERVICE_PROVISIONED,
@@ -149,8 +144,8 @@ class EventService:
         self,
         event_type: EventType,
         tenant_id: str,
-        data: Dict[str, Any],
-        metadata: Optional[Dict[str, Any]] = None,
+        data: dict[str, Any],
+        metadata: Optional[dict[str, Any]] = None,
     ):
         """Publish an event through the event bus."""
         event = Event(event_type, tenant_id, data, metadata)
@@ -160,7 +155,7 @@ class EventService:
         """Register an event handler."""
         self.handlers.append(handler)
 
-    async def process_events(self, events: List[Event]):
+    async def process_events(self, events: list[Event]):
         """Process a batch of events."""
         for event in events:
             await self.event_bus.publish(event)

@@ -1,7 +1,6 @@
 """
 Sales platform adapters.
 """
-
 try:
     from .isp_adapter import ISPSalesAdapter
 except ImportError:

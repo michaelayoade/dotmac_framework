@@ -3,16 +3,9 @@ Test error handling for the DotMac ISP Framework API.
 Comprehensive testing of HTTP error codes, validation errors, and exception handling.
 """
 
-import pytest
-import json
-from datetime import datetime, timezone
-from typing import Dict, Any
-from unittest.mock import AsyncMock, MagicMock, patch
-from uuid import UUID, uuid4
+from unittest.mock import AsyncMock, patch
 
-from fastapi import HTTPException, status
-from fastapi.testclient import TestClient
-from pydantic import ValidationError
+from fastapi import HTTPException
 from sqlalchemy.exc import IntegrityError, OperationalError
 
 
@@ -53,8 +46,8 @@ class TestHTTPErrorCodes:
 
     def test_403_forbidden(self, client):
         """Test 403 Forbidden responses."""
-        with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
-            with patch('dotmac_shared.auth.dependencies.require_permissions') as mock_perms:
+        with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
+            with patch('dotmac.auth.dependencies.require_permissions') as mock_perms:
                 # User authenticated but lacks permissions
                 mock_get_user.return_value = {"id": "user-123", "role": "limited"}
                 mock_perms.side_effect = HTTPException(
@@ -71,8 +64,8 @@ class TestHTTPErrorCodes:
     def test_404_not_found(self, client):
         """Test 404 Not Found responses."""
         with patch('dotmac_isp.modules.identity.router.CustomerService') as mock_service:
-            with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
-                with patch('dotmac_shared.auth.dependencies.require_permissions') as mock_perms:
+            with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
+                with patch('dotmac.auth.dependencies.require_permissions') as mock_perms:
                     # Setup mocks
                     mock_instance = AsyncMock()
                     mock_instance.get_customer_by_id.return_value = None
@@ -244,8 +237,8 @@ class TestValidationErrors:
 
     def test_uuid_validation_errors(self, client):
         """Test UUID field validation."""
-        with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
-            with patch('dotmac_shared.auth.dependencies.require_permissions') as mock_perms:
+        with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
+            with patch('dotmac.auth.dependencies.require_permissions') as mock_perms:
                 mock_get_user.return_value = {"id": "user-123"}
                 mock_perms.return_value = lambda: None
                 
@@ -266,7 +259,7 @@ class TestValidationErrors:
     def test_date_validation_errors(self, client):
         """Test date field validation."""
         with patch('dotmac_isp.modules.services.router.get_services_service') as mock_get_service:
-            with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
+            with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
                 mock_get_user.return_value = {"id": "user-123"}
                 mock_service = AsyncMock()
                 mock_get_service.return_value = mock_service
@@ -295,8 +288,8 @@ class TestDatabaseErrors:
     def test_integrity_constraint_violations(self, client):
         """Test handling of database integrity constraint violations."""
         with patch('dotmac_isp.modules.identity.router.CustomerService') as mock_service:
-            with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
-                with patch('dotmac_shared.auth.dependencies.require_permissions') as mock_perms:
+            with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
+                with patch('dotmac.auth.dependencies.require_permissions') as mock_perms:
                     # Simulate unique constraint violation
                     mock_instance = AsyncMock()
                     mock_instance.create_customer.side_effect = IntegrityError(
@@ -324,8 +317,8 @@ class TestDatabaseErrors:
     def test_database_connection_errors(self, client):
         """Test handling of database connection errors."""
         with patch('dotmac_isp.modules.identity.router.CustomerService') as mock_service:
-            with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
-                with patch('dotmac_shared.auth.dependencies.require_permissions') as mock_perms:
+            with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
+                with patch('dotmac.auth.dependencies.require_permissions') as mock_perms:
                     # Simulate database connection error
                     mock_instance = AsyncMock()
                     mock_instance.get_customer_by_id.side_effect = OperationalError(
@@ -347,7 +340,7 @@ class TestDatabaseErrors:
     def test_transaction_rollback_scenarios(self, client):
         """Test transaction rollback scenarios."""
         with patch('dotmac_isp.modules.services.router.get_services_service') as mock_get_service:
-            with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
+            with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
                 # Simulate transaction that needs rollback
                 mock_service = AsyncMock()
                 mock_service.activate_service.side_effect = Exception("Transaction failed during provisioning")
@@ -377,8 +370,8 @@ class TestBusinessLogicErrors:
 
     def test_insufficient_permissions_error(self, client):
         """Test insufficient permissions for operations."""
-        with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
-            with patch('dotmac_shared.auth.dependencies.require_permissions') as mock_perms:
+        with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
+            with patch('dotmac.auth.dependencies.require_permissions') as mock_perms:
                 # User without admin permissions trying to create user
                 mock_get_user.return_value = {
                     "id": "user-123",
@@ -407,7 +400,7 @@ class TestBusinessLogicErrors:
 
     def test_tenant_isolation_violations(self, client):
         """Test tenant isolation enforcement."""
-        with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
+        with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
             with patch('dotmac_isp.modules.identity.router.CustomerService') as mock_service:
                 # User from tenant A trying to access tenant B's customer
                 mock_get_user.return_value = {
@@ -434,7 +427,7 @@ class TestBusinessLogicErrors:
     def test_service_state_transition_errors(self, client):
         """Test invalid service state transitions."""
         with patch('dotmac_isp.modules.services.router.get_services_service') as mock_get_service:
-            with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
+            with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
                 # Try to reactivate already active service
                 mock_service = AsyncMock()
                 mock_service.reactivate_service.side_effect = HTTPException(
@@ -458,7 +451,7 @@ class TestBusinessLogicErrors:
         """Test billing-related validation errors."""
         # This would test billing module endpoints
         # For now, simulate common billing errors
-        with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
+        with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
             mock_get_user.return_value = {"id": "user-123"}
             
             # Simulate payment method validation error
@@ -483,7 +476,7 @@ class TestConcurrencyErrors:
     def test_optimistic_locking_conflicts(self, client):
         """Test optimistic locking conflict handling."""
         with patch('dotmac_isp.modules.services.router.get_services_service') as mock_get_service:
-            with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
+            with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
                 # Simulate version conflict (optimistic locking)
                 mock_service = AsyncMock()
                 mock_service.update_service_status.side_effect = HTTPException(
@@ -512,7 +505,7 @@ class TestConcurrencyErrors:
     def test_resource_locking_timeouts(self, client):
         """Test resource locking timeout scenarios."""
         with patch('dotmac_isp.modules.services.router.get_services_service') as mock_get_service:
-            with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
+            with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
                 # Simulate lock timeout
                 mock_service = AsyncMock()
                 mock_service.bulk_service_operation.side_effect = HTTPException(
@@ -541,8 +534,8 @@ class TestSecurityErrors:
 
     def test_sql_injection_prevention(self, client):
         """Test SQL injection attempt handling."""
-        with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
-            with patch('dotmac_shared.auth.dependencies.require_permissions') as mock_perms:
+        with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
+            with patch('dotmac.auth.dependencies.require_permissions') as mock_perms:
                 mock_get_user.return_value = {"id": "user-123"}
                 mock_perms.return_value = lambda: None
                 
@@ -561,8 +554,8 @@ class TestSecurityErrors:
     def test_xss_prevention(self, client):
         """Test XSS attempt prevention."""
         with patch('dotmac_isp.modules.identity.router.CustomerService') as mock_service:
-            with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
-                with patch('dotmac_shared.auth.dependencies.require_permissions') as mock_perms:
+            with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
+                with patch('dotmac.auth.dependencies.require_permissions') as mock_perms:
                     mock_instance = AsyncMock()
                     mock_service.return_value = mock_instance
                     mock_get_user.return_value = {"id": "user-123"}

@@ -7,14 +7,11 @@ Integrates the unified customer portal service with ISP-specific functionality.
 import logging
 from datetime import datetime, timedelta
 from decimal import Decimal
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 from uuid import UUID
 
 from dotmac_isp.core.database import get_db
 from dotmac_isp.modules.analytics.service import AnalyticsService
-from dotmac_isp.modules.billing.service import BillingService as ISPBillingService
-
-# Import ISP Framework services
 from dotmac_isp.modules.identity.service import CustomerService
 from dotmac_isp.modules.services.service import ServiceProvisioningService
 
@@ -49,7 +46,7 @@ class ISPPortalAdapter(CustomerPortalAdapter):
         self.service_provisioning = None
         self.analytics_service = None
 
-    async def get_customer_info(self, customer_id: UUID) -> Dict[str, Any]:
+    async def get_customer_info(self, customer_id: UUID) -> dict[str, Any]:
         """Get ISP customer information."""
         try:
             # Get database session
@@ -90,7 +87,7 @@ class ISPPortalAdapter(CustomerPortalAdapter):
             logger.error(f"Failed to get ISP customer info for {customer_id}: {e}")
             raise
 
-    async def get_customer_services(self, customer_id: UUID) -> List[ServiceSummary]:
+    async def get_customer_services(self, customer_id: UUID) -> list[ServiceSummary]:
         """Get ISP customer services."""
         try:
             # Get database session
@@ -100,9 +97,7 @@ class ISPPortalAdapter(CustomerPortalAdapter):
             service_provisioning = ServiceProvisioningService(db, str(self.tenant_id))
 
             # Get services from ISP framework
-            services = await service_provisioning.get_customer_services(
-                str(customer_id)
-            )
+            services = await service_provisioning.get_customer_services(str(customer_id))
 
             # Convert to standardized format
             service_summaries = []
@@ -115,11 +110,7 @@ class ISPPortalAdapter(CustomerPortalAdapter):
                     monthly_cost=Decimal(str(service.monthly_rate)),
                     installation_date=service.installation_date,
                     next_renewal=service.next_billing_date,
-                    usage_allowance=(
-                        f"{service.data_allowance_gb}GB"
-                        if service.data_allowance_gb
-                        else None
-                    ),
+                    usage_allowance=(f"{service.data_allowance_gb}GB" if service.data_allowance_gb else None),
                     current_usage=None,  # Will be populated by usage query
                 )
 
@@ -130,9 +121,7 @@ class ISPPortalAdapter(CustomerPortalAdapter):
                         if usage:
                             summary.current_usage = f"{usage:.2f}GB"
                     except Exception as usage_e:
-                        logger.warning(
-                            f"Failed to get usage for service {service.id}: {usage_e}"
-                        )
+                        logger.warning(f"Failed to get usage for service {service.id}: {usage_e}")
 
                 service_summaries.append(summary)
 
@@ -194,11 +183,11 @@ class ISPPortalAdapter(CustomerPortalAdapter):
             logger.error(f"Failed to get usage summary for {customer_id}: {e}")
             return None
 
-    async def get_platform_data(self, customer_id: UUID) -> Dict[str, Any]:
+    async def get_platform_data(self, customer_id: UUID) -> dict[str, Any]:
         """Get ISP-specific platform data."""
         try:
             # Get database session
-            db = next(get_db())
+            next(get_db())
 
             # Get ISP-specific data
             platform_data = {
@@ -231,9 +220,7 @@ class ISPPortalAdapter(CustomerPortalAdapter):
             logger.error(f"Failed to get ISP platform data for {customer_id}: {e}")
             return {"platform_type": "isp_framework"}
 
-    async def update_customer_custom_fields(
-        self, customer_id: UUID, custom_fields: Dict[str, Any]
-    ) -> bool:
+    async def update_customer_custom_fields(self, customer_id: UUID, custom_fields: dict[str, Any]) -> bool:
         """Update ISP customer custom fields."""
         try:
             # Get database session
@@ -243,9 +230,7 @@ class ISPPortalAdapter(CustomerPortalAdapter):
             customer_service = CustomerService(db, str(self.tenant_id))
 
             # Update custom fields (this would be ISP-specific fields)
-            await customer_service.update_customer_metadata(
-                customer_id=str(customer_id), metadata=custom_fields
-            )
+            await customer_service.update_customer_metadata(customer_id=str(customer_id), metadata=custom_fields)
 
             return True
 
@@ -324,7 +309,7 @@ class ISPPortalAdapter(CustomerPortalAdapter):
             logger.error(f"Failed to get service usage for {service_id}: {e}")
             raise
 
-    async def get_available_actions(self, customer_id: UUID) -> List[str]:
+    async def get_available_actions(self, customer_id: UUID) -> list[str]:
         """Get ISP-specific available actions."""
         base_actions = await super().get_available_actions(customer_id)
 
@@ -351,9 +336,7 @@ class ISPPortalAdapter(CustomerPortalAdapter):
 
             # Get current month usage
             now = datetime.now()
-            start_of_month = now.replace(
-                day=1, hour=0, minute=0, second=0, microsecond=0
-            )
+            start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
             usage_data = await analytics_service.get_service_usage(
                 service_id=str(service_id), start_date=start_of_month, end_date=now

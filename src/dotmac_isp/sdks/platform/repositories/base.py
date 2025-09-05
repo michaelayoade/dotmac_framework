@@ -1,9 +1,7 @@
 """Platform SDK repositories for data access."""
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
-
-from dotmac_isp.sdks.core.exceptions import RepositoryError
+from typing import Any, Optional
 
 
 class BaseRepository(ABC):
@@ -33,17 +31,17 @@ class BaseRepository(ABC):
 class ConfigurationRepository(BaseRepository):
     """Repository for configuration management."""
 
-    async def find_by_id(self, id: str) -> Optional[Dict[str, Any]]:
+    async def find_by_id(self, id: str) -> Optional[dict[str, Any]]:
         """Find configuration by ID."""
         # Implementation would connect to actual data store
         return None
 
-    async def create(self, config: Dict[str, Any]) -> Dict[str, Any]:
+    async def create(self, config: dict[str, Any]) -> dict[str, Any]:
         """Create new configuration."""
         # Implementation would persist to data store
         return config
 
-    async def update(self, config: Dict[str, Any]) -> Dict[str, Any]:
+    async def update(self, config: dict[str, Any]) -> dict[str, Any]:
         """Update existing configuration."""
         # Implementation would update in data store
         return config
@@ -53,7 +51,7 @@ class ConfigurationRepository(BaseRepository):
         # Implementation would remove from data store
         return True
 
-    async def find_by_tenant(self, tenant_id: str) -> List[Dict[str, Any]]:
+    async def find_by_tenant(self, tenant_id: str) -> list[dict[str, Any]]:
         """Find configurations by tenant."""
         # Implementation would query by tenant
         return []
@@ -62,15 +60,15 @@ class ConfigurationRepository(BaseRepository):
 class FeatureFlagsRepository(BaseRepository):
     """Repository for feature flags management."""
 
-    async def find_by_id(self, id: str) -> Optional[Dict[str, Any]]:
+    async def find_by_id(self, id: str) -> Optional[dict[str, Any]]:
         """Find feature flag by ID."""
         return None
 
-    async def create(self, flag: Dict[str, Any]) -> Dict[str, Any]:
+    async def create(self, flag: dict[str, Any]) -> dict[str, Any]:
         """Create new feature flag."""
         return flag
 
-    async def update(self, flag: Dict[str, Any]) -> Dict[str, Any]:
+    async def update(self, flag: dict[str, Any]) -> dict[str, Any]:
         """Update existing feature flag."""
         return flag
 
@@ -78,7 +76,7 @@ class FeatureFlagsRepository(BaseRepository):
         """Delete feature flag by ID."""
         return True
 
-    async def find_active_flags(self, tenant_id: str) -> List[Dict[str, Any]]:
+    async def find_active_flags(self, tenant_id: str) -> list[dict[str, Any]]:
         """Find active feature flags for tenant."""
         return []
 
@@ -86,15 +84,15 @@ class FeatureFlagsRepository(BaseRepository):
 class MetricsRepository(BaseRepository):
     """Repository for metrics data."""
 
-    async def find_by_id(self, id: str) -> Optional[Dict[str, Any]]:
+    async def find_by_id(self, id: str) -> Optional[dict[str, Any]]:
         """Find metric by ID."""
         return None
 
-    async def create(self, metric: Dict[str, Any]) -> Dict[str, Any]:
+    async def create(self, metric: dict[str, Any]) -> dict[str, Any]:
         """Create new metric."""
         return metric
 
-    async def update(self, metric: Dict[str, Any]) -> Dict[str, Any]:
+    async def update(self, metric: dict[str, Any]) -> dict[str, Any]:
         """Update existing metric."""
         return metric
 
@@ -102,8 +100,6 @@ class MetricsRepository(BaseRepository):
         """Delete metric by ID."""
         return True
 
-    async def find_metrics_by_timerange(
-        self, tenant_id: str, start_time: str, end_time: str
-    ) -> List[Dict[str, Any]]:
+    async def find_metrics_by_timerange(self, tenant_id: str, start_time: str, end_time: str) -> list[dict[str, Any]]:
         """Find metrics by time range."""
         return []

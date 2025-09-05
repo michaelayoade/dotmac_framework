@@ -7,19 +7,20 @@ rate limiting middleware for individual router endpoints.
 
 import functools
 import logging
-from typing import Any, Callable, List, Optional
+from collections.abc import Callable
+from datetime import datetime
+from enum import Enum
+from typing import Optional
 
+from dotmac_shared.monitoring.base import get_monitoring
 from fastapi import HTTPException, Request
 from fastapi.security.utils import get_authorization_scheme_param
 
-from dotmac_shared.auth.middleware.rate_limiting import (
-    InMemoryRateLimitStore,
-    RateLimiter,
-    RateLimitRule,
-    RateLimitType,
-    RedisRateLimitStore,
-)
-from dotmac_shared.monitoring.base import BaseMonitoringService, get_monitoring
+
+class RateLimitType(Enum):
+    IP_BASED = "ip_based"
+    USER_BASED = "user_based"
+
 
 logger = logging.getLogger(__name__)
 
@@ -47,68 +48,69 @@ class RateLimitDecorators:
 
     def _initialize_rate_limiter(self):
         """Initialize the rate limiter with appropriate storage backend."""
-        try:
-            # Try to use Redis first (for production/distributed)
-            from dotmac_shared.core.redis import get_redis_client
+        logger.warning("Rate limiting components not available - rate limiting disabled")
+        self._rate_limiter = None
+        return
 
-            redis_client = get_redis_client()
-            if redis_client:
-                store = RedisRateLimitStore(redis_client)
-                logger.info("Rate limiting using Redis backend")
-            else:
-                store = InMemoryRateLimitStore()
-                logger.info("Rate limiting using in-memory backend")
-        except ImportError:
-            # Fallback to in-memory
-            store = InMemoryRateLimitStore()
-            logger.info("Rate limiting using in-memory backend (no Redis available)")
+        # TODO: Re-enable when rate limiting components are available in dotmac.auth
+        # try:
+        #     # Try to use Redis first (for production/distributed)
+        #     from dotmac_shared.core.redis import get_redis_client
 
-        # Default rate limiting rules
-        default_rules = [
-            # Auth endpoints - strict limits
-            RateLimitRule(
-                rule_id="auth_endpoints",
-                limit_type=RateLimitType.IP_BASED,
-                max_requests=10,
-                time_window_seconds=60,
-                endpoints=["/auth/login", "/auth/register", "/auth/reset-password"],
-                methods=["POST"],
-            ),
-            # API endpoints - moderate limits
-            RateLimitRule(
-                rule_id="api_endpoints",
-                limit_type=RateLimitType.IP_BASED,
-                max_requests=100,
-                time_window_seconds=60,
-                endpoints=None,  # Apply to all
-                methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
-            ),
-            # User-specific limits for authenticated users
-            RateLimitRule(
-                rule_id="user_specific",
-                limit_type=RateLimitType.USER_BASED,
-                max_requests=200,
-                time_window_seconds=60,
-            ),
-        ]
+        #     redis_client = get_redis_client()
+        #     if redis_client:
+        #         store = RedisRateLimitStore(redis_client)
+        #         logger.info("Rate limiting using Redis backend")
+        #     else:
+        #         store = InMemoryRateLimitStore()
+        #         logger.info("Rate limiting using in-memory backend")
+        # except ImportError:
+        #     # Fallback to in-memory
+        #     store = InMemoryRateLimitStore()
+        #     logger.info("Rate limiting using in-memory backend (no Redis available)")
 
-        self._rate_limiter = RateLimiter(
-            store=store,
-            default_rules=default_rules,
-            lockout_threshold=5,
-            lockout_duration_minutes=15,
-            enable_lockout=True,
-            suspicious_activity_threshold=50,
-            log_violations=True,
-        )
+        # # Default rate limiting rules
+        # default_rules = [
+        #     # Auth endpoints - strict limits
+        #     RateLimitRule(
+        #         rule_id="auth_endpoints",
+        #         limit_type=RateLimitType.IP_BASED,
+        #         max_requests=10,
+        #         time_window_seconds=60,
+        #         endpoints=["/auth/login", "/auth/register", "/auth/reset-password"],
+        #         methods=["POST"],
+        #     ),
+        #     # API endpoints - moderate limits
+        #     RateLimitRule(
+        #         rule_id="api_endpoints",
+        #         limit_type=RateLimitType.IP_BASED,
+        #         max_requests=100,
+        #         time_window_seconds=60,
+        #         endpoints=None,  # Apply to all
+        #         methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
+        #     ),
+        #     # User-specific limits for authenticated users
+        #     RateLimitRule(
+        #         rule_id="user_specific",
+        #         limit_type=RateLimitType.USER_BASED,
+        #         max_requests=200,
+        #         time_window_seconds=60,
+        #     ),
+        # ]
+
+        # self._rate_limiter = RateLimiter(
+        #     store=store,
+        #     default_rules=default_rules,
+        #     lockout_threshold=5,
+        #     lockout_duration_minutes=15,
+        #     enable_lockout=True,
+        #     suspicious_activity_threshold=50,
+        #     log_violations=True,
+        # )
 
     def _init_rate_limiting_metrics(self):
         """Initialize rate limiting specific metrics."""
-        if (
-            not self._monitoring
-            or not hasattr(self._monitoring, "meter")
-            or not self._monitoring.meter
-        ):
+        if not self._monitoring or not hasattr(self._monitoring, "meter") or not self._monitoring.meter:
             logger.warning("Monitoring service not available for rate limiting metrics")
             return
 
@@ -132,12 +134,10 @@ class RateLimitDecorators:
                 unit="1",
             )
 
-            self.rate_limit_remaining_gauge = (
-                self._monitoring.meter.create_up_down_counter(
-                    name="rate_limit_remaining_requests",
-                    description="Remaining requests for current window",
-                    unit="1",
-                )
+            self.rate_limit_remaining_gauge = self._monitoring.meter.create_up_down_counter(
+                name="rate_limit_remaining_requests",
+                description="Remaining requests for current window",
+                unit="1",
             )
 
             logger.info("Rate limiting metrics initialized successfully")
@@ -158,7 +158,7 @@ class RateLimitDecorators:
                 scheme, token = get_authorization_scheme_param(authorization)
                 if scheme.lower() == "bearer" and token:
                     # Import JWT handling locally to avoid circular imports
-                    from dotmac_shared.auth.jwt_handler import decode_token
+                    from dotmac.platform.auth.jwt_handler import decode_token
 
                     payload = decode_token(token)
                     return payload.get("sub")
@@ -183,9 +183,7 @@ class RateLimitDecorators:
             labels = {
                 "endpoint": endpoint,
                 "method": method,
-                "client_ip": (
-                    client_ip[:8] + "..." if len(client_ip) > 8 else client_ip
-                ),  # Truncate IP for privacy
+                "client_ip": (client_ip[:8] + "..." if len(client_ip) > 8 else client_ip),  # Truncate IP for privacy
                 "has_user_id": str(bool(user_id)),
             }
 
@@ -206,16 +204,12 @@ class RateLimitDecorators:
         except Exception as e:
             logger.error(f"Failed to record rate limiting metrics: {e}")
 
-    def _record_lockout_metric(
-        self, client_ip: str, user_id: Optional[str], reason: str
-    ):
+    def _record_lockout_metric(self, client_ip: str, user_id: Optional[str], reason: str):
         """Record account lockout metrics."""
         try:
             if self.rate_limit_lockouts_counter:
                 labels = {
-                    "client_ip": (
-                        client_ip[:8] + "..." if len(client_ip) > 8 else client_ip
-                    ),
+                    "client_ip": (client_ip[:8] + "..." if len(client_ip) > 8 else client_ip),
                     "has_user_id": str(bool(user_id)),
                     "reason": reason,
                 }
@@ -263,9 +257,7 @@ class RateLimitDecorators:
                     request = kwargs.get("request")
 
                 if not request:
-                    logger.warning(
-                        f"No request object found for rate limiting in {func.__name__}"
-                    )
+                    logger.warning(f"No request object found for rate limiting in {func.__name__}")
                     return await func(*args, **kwargs)
 
                 # Get client IP
@@ -278,13 +270,11 @@ class RateLimitDecorators:
 
                 # Check rate limit
                 try:
-                    is_allowed, remaining, reset_time = (
-                        await self._rate_limiter.is_request_allowed(
-                            ip_address=client_ip,
-                            user_id=user_id,
-                            endpoint=str(request.url.path),
-                            method=request.method,
-                        )
+                    is_allowed, remaining, reset_time = await self._rate_limiter.is_request_allowed(
+                        ip_address=client_ip,
+                        user_id=user_id,
+                        endpoint=str(request.url.path),
+                        method=request.method,
                     )
 
                     # Record metrics
@@ -298,18 +288,13 @@ class RateLimitDecorators:
                     )
 
                     if not is_allowed:
-                        message = (
-                            custom_message
-                            or "Rate limit exceeded. Please try again later."
-                        )
+                        message = custom_message or "Rate limit exceeded. Please try again later."
 
                         # Add rate limit headers
                         headers = {
                             "X-RateLimit-Limit": str(max_requests or 100),
                             "X-RateLimit-Remaining": str(remaining),
-                            "Retry-After": str(
-                                int((reset_time - datetime.now()).total_seconds())
-                            ),
+                            "Retry-After": str(int((reset_time - datetime.now()).total_seconds())),
                         }
 
                         raise HTTPException(
@@ -317,9 +302,7 @@ class RateLimitDecorators:
                             detail={
                                 "error": "RATE_LIMIT_EXCEEDED",
                                 "message": message,
-                                "retry_after": int(
-                                    (reset_time - datetime.now()).total_seconds()
-                                ),
+                                "retry_after": int((reset_time - datetime.now()).total_seconds()),
                             },
                             headers=headers,
                         )
@@ -351,9 +334,7 @@ def rate_limit(
     custom_message: Optional[str] = None,
 ):
     """Standard rate limiting decorator."""
-    return _decorators.rate_limit(
-        max_requests, time_window_seconds, rule_type, custom_message
-    )
+    return _decorators.rate_limit(max_requests, time_window_seconds, rule_type, custom_message)
 
 
 def rate_limit_strict(max_requests: int = 10, time_window_seconds: int = 60):

@@ -3,7 +3,7 @@ import { defineConfig } from 'tsup';
 export default defineConfig({
   entry: ['src/index.ts'],
   format: ['cjs', 'esm'],
-  dts: true,
+  dts: false, // Disable DTS generation to avoid tsconfig conflicts
   clean: true,
   external: [
     'react',

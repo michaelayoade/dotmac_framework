@@ -8,12 +8,12 @@ import os
 import sys
 
 import click
-
-from dotmac_shared.core.logging import get_logger
 from dotmac_management.core.bootstrap import (
     bootstrap_manager,
     run_bootstrap_if_needed,
 )
+from dotmac_shared.core.logging import get_logger
+from sqlalchemy.exc import SQLAlchemyError
 
 logger = get_logger(__name__)
 
@@ -91,8 +91,8 @@ def bootstrap(check_only: bool, force: bool) -> None:
         else:
             click.echo("ℹ️ Security bootstrap skipped (already completed)")
 
-    except Exception as exc:  # pragma: no cover - CLI top-level error
-        logger.error(f"Bootstrap failed: {exc}")
+    except (ValueError, RuntimeError, SQLAlchemyError):  # pragma: no cover - CLI top-level error
+        logger.exception("Bootstrap failed")
         click.echo("💥 Bootstrap failed", err=True)
         sys.exit(1)
 

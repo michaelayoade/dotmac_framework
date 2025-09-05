@@ -3,10 +3,9 @@ Standard lifecycle management for DotMac applications.
 Simplified version without platform-specific imports.
 """
 
-import asyncio
 import logging
+from collections.abc import Callable
 from contextlib import asynccontextmanager
-from typing import Any, Callable, Dict, List, Optional
 
 from fastapi import FastAPI
 
@@ -21,8 +20,8 @@ class StandardLifecycleManager:
     def __init__(self, platform_config: PlatformConfig):
         self.platform_config = platform_config
         self.config = platform_config  # Alias for backward compatibility with tests
-        self.startup_tasks: Dict[str, Callable] = {}
-        self.shutdown_tasks: Dict[str, Callable] = {}
+        self.startup_tasks: dict[str, Callable] = {}
+        self.shutdown_tasks: dict[str, Callable] = {}
         self.startup_complete = False
         self.shutdown_complete = False
         self._register_standard_tasks()
@@ -68,7 +67,7 @@ class StandardLifecycleManager:
 
     async def _execute_startup_sequence(self, app: FastAPI):
         """Execute the standard startup sequence."""
-        
+
         # Phase 1: Initialize basic infrastructure
         for task_name in [
             "initialize_basic_logging",
@@ -89,7 +88,9 @@ class StandardLifecycleManager:
     async def _execute_startup_task(self, app: FastAPI, task_name: str):
         """Execute a single startup task with error handling."""
         if task_name not in self.startup_tasks:
-            logger.warning(f"Startup task '{task_name}' not found - expected to be handled by providers")
+            logger.warning(
+                f"Startup task '{task_name}' not found - expected to be handled by providers"
+            )
             return
 
         try:
@@ -119,7 +120,9 @@ class StandardLifecycleManager:
     async def _execute_shutdown_task(self, app: FastAPI, task_name: str):
         """Execute a single shutdown task with error handling."""
         if task_name not in self.shutdown_tasks:
-            logger.warning(f"Shutdown task '{task_name}' not found - expected to be handled by providers")
+            logger.warning(
+                f"Shutdown task '{task_name}' not found - expected to be handled by providers"
+            )
             return
 
         try:
@@ -136,10 +139,10 @@ class StandardLifecycleManager:
             # Set logging level from config
             log_level = self.platform_config.observability_config.logging_level
             logging.getLogger().setLevel(getattr(logging, log_level, logging.INFO))
-            
+
             # Store logging config in app state
             app.state.logging_level = log_level
-            
+
             logger.info(f"Basic logging initialized at level: {log_level}")
 
         except Exception as e:
@@ -152,15 +155,20 @@ class StandardLifecycleManager:
             # Basic validation
             if not self.platform_config.platform_name:
                 raise ValueError("Platform name is required")
-            
+
             if not self.platform_config.title:
                 raise ValueError("Platform title is required")
 
             # Validate deployment context if present
             if self.platform_config.deployment_context:
                 context = self.platform_config.deployment_context
-                if context.mode == DeploymentMode.TENANT_CONTAINER and not context.tenant_id:
-                    raise ValueError("Tenant ID is required for tenant container deployment")
+                if (
+                    context.mode == DeploymentMode.TENANT_CONTAINER
+                    and not context.tenant_id
+                ):
+                    raise ValueError(
+                        "Tenant ID is required for tenant container deployment"
+                    )
 
             # Store validation status
             app.state.config_validated = True
@@ -204,13 +212,13 @@ class StandardLifecycleManager:
             # Clear app state
             state_keys = list(app.state.__dict__.keys())
             for key in state_keys:
-                if key.startswith('_'):  # Skip private attributes
+                if key.startswith("_"):  # Skip private attributes
                     continue
                 try:
                     delattr(app.state, key)
-                except:
+                except Exception:
                     pass
-            
+
             logger.info("Application resources cleaned up")
 
         except Exception as e:
@@ -219,7 +227,9 @@ class StandardLifecycleManager:
     async def _log_shutdown_complete(self, app: FastAPI):
         """Log shutdown completion."""
         try:
-            platform_name = getattr(app.state, 'platform_name', self.platform_config.platform_name)
+            platform_name = getattr(
+                app.state, "platform_name", self.platform_config.platform_name
+            )
             logger.info(f"Shutdown sequence complete for {platform_name}")
 
         except Exception as e:
@@ -232,7 +242,7 @@ class StandardLifecycleManager:
         self.startup_complete = True
 
     async def shutdown(self, app: FastAPI):
-        """Shutdown the application lifecycle.""" 
+        """Shutdown the application lifecycle."""
         await self._execute_shutdown_tasks(app)
         self.shutdown_complete = True
 

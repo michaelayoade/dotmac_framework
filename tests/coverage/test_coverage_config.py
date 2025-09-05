@@ -9,18 +9,13 @@ This module configures advanced coverage reporting with:
 - Automated coverage reports and alerts
 """
 
-import os
 import json
-import subprocess
-from pathlib import Path
-from typing import Dict, List, Any, Optional
+import os
+from dataclasses import asdict, dataclass
 from datetime import datetime
-from dataclasses import dataclass, asdict
-from decimal import Decimal
+from typing import Optional
 
-import pytest
 import coverage
-from coverage.results import Numbers
 
 
 @dataclass
@@ -28,7 +23,7 @@ class ModuleCoverageTarget:
     """Coverage target for a specific module."""
     module_path: str
     target_percentage: int
-    critical_functions: List[str]
+    critical_functions: list[str]
     current_coverage: Optional[float] = None
     trend: Optional[str] = None  # "improving", "declining", "stable"
 
@@ -38,15 +33,15 @@ class CoverageReport:
     """Comprehensive coverage report."""
     timestamp: str
     total_coverage: float
-    module_coverage: Dict[str, float]
+    module_coverage: dict[str, float]
     critical_path_coverage: float
     uncovered_lines: int
     branch_coverage: float
     test_count: int
     execution_time: float
-    targets_met: List[str]
-    targets_missed: List[str]
-    recommendations: List[str]
+    targets_met: list[str]
+    targets_missed: list[str]
+    recommendations: list[str]
 
 
 class CoverageConfigManager:
@@ -56,7 +51,7 @@ class CoverageConfigManager:
         self.config_path = config_path or "tests/coverage/coverage_targets.json"
         self.coverage_targets = self.load_coverage_targets()
         
-    def load_coverage_targets(self) -> Dict[str, ModuleCoverageTarget]:
+    def load_coverage_targets(self) -> dict[str, ModuleCoverageTarget]:
         """Load coverage targets from configuration."""
         targets = {
             # Core Security Modules (Highest Priority)
@@ -222,7 +217,7 @@ class CoverageAnalyzer:
             recommendations=recommendations
         )
     
-    def _analyze_module_coverage(self) -> Dict[str, float]:
+    def _analyze_module_coverage(self) -> dict[str, float]:
         """Analyze coverage for each configured module."""
         module_coverage = {}
         
@@ -308,7 +303,7 @@ class CoverageAnalyzer:
         except Exception:
             return 0
     
-    def _generate_recommendations(self, module_coverage: Dict[str, float]) -> List[str]:
+    def _generate_recommendations(self, module_coverage: dict[str, float]) -> list[str]:
         """Generate coverage improvement recommendations."""
         recommendations = []
         
@@ -329,7 +324,7 @@ class CoverageAnalyzer:
         
         return recommendations
     
-    def _evaluate_targets(self, module_coverage: Dict[str, float]) -> tuple[List[str], List[str]]:
+    def _evaluate_targets(self, module_coverage: dict[str, float]) -> tuple[list[str], list[str]]:
         """Evaluate which coverage targets were met or missed."""
         targets_met = []
         targets_missed = []
@@ -417,7 +412,7 @@ Generated: {report.timestamp}
         for target in report.targets_missed:
             markdown_content += f"- ❌ {target}\n"
         
-        markdown_content += f"""
+        markdown_content += """
 ## Recommendations
 """
         for rec in report.recommendations:
@@ -551,7 +546,7 @@ class CoverageIntegration:
             regression_threshold = 2.0  # 2% regression threshold
             
             if current_report.total_coverage < baseline_coverage - regression_threshold:
-                print(f"❌ COVERAGE REGRESSION DETECTED")
+                print("❌ COVERAGE REGRESSION DETECTED")
                 print(f"Current: {current_report.total_coverage:.1f}%")
                 print(f"Baseline: {baseline_coverage:.1f}%")
                 print(f"Regression: {baseline_coverage - current_report.total_coverage:.1f}%")

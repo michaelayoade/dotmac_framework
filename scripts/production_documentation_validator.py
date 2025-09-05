@@ -2,7 +2,7 @@
 """
 import sys
 from pathlib import Path
-project_root = Path(__file__).parent.parent
+project_root = Path(__file__).parent.parent  # noqa: B008
 sys.path.insert(0, str(project_root / "src"))
 
 Production-Ready Documentation Validator
@@ -10,20 +10,13 @@ Ensures zero tolerance for code-documentation mismatches
 """
 
 import ast
-import importlib
-import inspect
 import json
 import logging
-import os
-import re
 import subprocess
 import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
-from urllib.parse import urlparse
-
-import yaml
+from typing import Any, Optional
 
 
 @dataclass
@@ -49,13 +42,13 @@ class APIEndpointValidation:
     path: str
     method: str
     function_name: str
-    parameters: List[str]
+    parameters: list[str]
     response_schema: Optional[str]
     docstring: Optional[str]
     is_documented: bool
     documentation_matches: bool
-    missing_from_docs: List[str]
-    incorrect_in_docs: List[str]
+    missing_from_docs: list[str]
+    incorrect_in_docs: list[str]
 
 
 class ProductionCodeValidator:
@@ -63,14 +56,14 @@ class ProductionCodeValidator:
 
     def __init__(self, source_root: str):
         self.source_root = Path(source_root)
-        self.issues: List[CriticalDocumentationIssue] = []
-        self.api_endpoints: List[APIEndpointValidation] = []
-        self.readme_claims: Dict[str, bool] = {}
+        self.issues: list[CriticalDocumentationIssue] = []
+        self.api_endpoints: list[APIEndpointValidation] = []
+        self.readme_claims: dict[str, bool] = {}
 
     def validate_readme_claims(self, readme_path: str) -> None:
         """Validate README.md claims against actual codebase"""
         try:
-            with open(readme_path, "r", encoding="utf-8") as f:
+            with open(readme_path, encoding="utf-8") as f:
                 readme_content = f.read()
 
             # Extract claims from README
@@ -98,15 +91,13 @@ class ProductionCodeValidator:
         except Exception as e:
             logging.error(f"Failed to validate README: {e}")
 
-    def _extract_readme_claims(self, content: str) -> Dict[str, str]:
+    def _extract_readme_claims(self, content: str) -> dict[str, str]:
         """Extract verifiable claims from README"""
         claims = {}
 
         # Container health probes claim
         if "/health/live" in content:
-            claims["health_probes"] = (
-                "Has Kubernetes health probes at /health/live, /health/ready, /health/startup"
-            )
+            claims["health_probes"] = "Has Kubernetes health probes at /health/live, /health/ready, /health/startup"
 
         # API framework claim
         if "FastAPI" in content:
@@ -118,9 +109,7 @@ class ProductionCodeValidator:
 
         # Container deployment claim
         if "container-per-tenant" in content.lower():
-            claims["container_per_tenant"] = (
-                "Supports container-per-tenant architecture"
-            )
+            claims["container_per_tenant"] = "Supports container-per-tenant architecture"
 
         # Production ready claim
         if "production-ready" in content.lower():
@@ -150,12 +139,12 @@ class ProductionCodeValidator:
 
         for file_path in self.source_root.rglob("*.py"):
             try:
-                with open(file_path, "r", encoding="utf-8") as f:
+                with open(file_path, encoding="utf-8") as f:
                     content = f.read()
                     for pattern in health_patterns:
                         if pattern in content:
                             found_patterns.append(pattern)
-            except:
+            except Exception:
                 continue
 
         return len(set(found_patterns)) >= 3  # All three health endpoints
@@ -166,11 +155,11 @@ class ProductionCodeValidator:
 
         for file_path in self.source_root.rglob("*.py"):
             try:
-                with open(file_path, "r", encoding="utf-8") as f:
+                with open(file_path, encoding="utf-8") as f:
                     content = f.read()
                     if "from fastapi import" in content or "import fastapi" in content:
                         fastapi_imports += 1
-            except:
+            except Exception:
                 continue
 
         return fastapi_imports > 0
@@ -182,7 +171,7 @@ class ProductionCodeValidator:
         # Check for SQLAlchemy PostgreSQL connections
         for file_path in self.source_root.rglob("*.py"):
             try:
-                with open(file_path, "r", encoding="utf-8") as f:
+                with open(file_path, encoding="utf-8") as f:
                     content = f.read()
                     if any(
                         pattern in content
@@ -196,7 +185,7 @@ class ProductionCodeValidator:
                     ):
                         postgres_evidence = True
                         break
-            except:
+            except Exception:
                 continue
 
         return postgres_evidence
@@ -205,9 +194,7 @@ class ProductionCodeValidator:
         """Validate container-per-tenant architecture exists"""
         # Look for Dockerfile and Kubernetes configs
         dockerfile_exists = (self.source_root.parent / "Dockerfile").exists()
-        k8s_configs = list(self.source_root.parent.rglob("*.yaml")) + list(
-            self.source_root.parent.rglob("*.yml")
-        )
+        k8s_configs = list(self.source_root.parent.rglob("*.yaml")) + list(self.source_root.parent.rglob("*.yml"))
 
         return dockerfile_exists and len(k8s_configs) > 0
 
@@ -228,7 +215,7 @@ class ProductionCodeValidator:
         """Check for proper logging setup"""
         for file_path in self.source_root.rglob("*.py"):
             try:
-                with open(file_path, "r", encoding="utf-8") as f:
+                with open(file_path, encoding="utf-8") as f:
                     content = f.read()
                     if any(
                         pattern in content
@@ -239,7 +226,7 @@ class ProductionCodeValidator:
                         ]
                     ):
                         return True
-            except:
+            except Exception:
                 continue
         return False
 
@@ -249,11 +236,11 @@ class ProductionCodeValidator:
 
         for file_path in self.source_root.rglob("*.py"):
             try:
-                with open(file_path, "r", encoding="utf-8") as f:
+                with open(file_path, encoding="utf-8") as f:
                     content = f.read().lower()
                     if any(pattern in content for pattern in security_patterns):
                         return True
-            except:
+            except Exception:
                 continue
         return False
 
@@ -263,11 +250,11 @@ class ProductionCodeValidator:
             # Find health probe implementations
             for file_path in self.source_root.rglob("*.py"):
                 try:
-                    with open(file_path, "r", encoding="utf-8") as f:
+                    with open(file_path, encoding="utf-8") as f:
                         content = f.read()
                         if "/health" in content:
                             return f"Found health endpoints in {file_path}"
-                except:
+                except Exception:
                     continue
 
         return "Implementation not found or differs from documentation"
@@ -291,14 +278,12 @@ class ProductionCodeValidator:
         # Validate endpoints against documentation
         self._cross_reference_api_documentation()
 
-    def _extract_fastapi_endpoints(
-        self, file_path: Path
-    ) -> List[APIEndpointValidation]:
+    def _extract_fastapi_endpoints(self, file_path: Path) -> list[APIEndpointValidation]:
         """Extract FastAPI endpoints from a router file"""
         endpoints = []
 
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
 
             # Parse AST to find route decorators
@@ -323,9 +308,7 @@ class ProductionCodeValidator:
             if self._is_route_decorator(decorator):
                 method, path = self._extract_route_info(decorator, func_node.name)
 
-                parameters = [
-                    arg.arg for arg in func_node.args.args if arg.arg != "self"
-                ]
+                parameters = [arg.arg for arg in func_node.args.args if arg.arg != "self"]
                 docstring = ast.get_docstring(func_node)
 
                 # Extract response schema from type hints
@@ -372,9 +355,7 @@ class ProductionCodeValidator:
 
         return False
 
-    def _extract_route_info(
-        self, decorator: ast.Call, func_name: str
-    ) -> Tuple[str, str]:
+    def _extract_route_info(self, decorator: ast.Call, func_name: str) -> tuple[str, str]:
         """Extract HTTP method and path from route decorator"""
         method = "GET"  # Default
         path = f"/{func_name}"  # Default
@@ -388,7 +369,7 @@ class ProductionCodeValidator:
         if decorator.args:
             try:
                 path = ast.literal_eval(decorator.args[0])
-            except:
+            except Exception:
                 pass
 
         return method, path
@@ -589,15 +570,13 @@ export DATABASE_URL="postgresql://user:pass@host:5432/db"
             "troubleshooting.md.j2",
             {
                 "critical_issues": [
-                    issue
-                    for issue in self.validator.issues
-                    if issue.severity in ["BLOCKING", "CRITICAL"]
+                    issue for issue in self.validator.issues if issue.severity in ["BLOCKING", "CRITICAL"]
                 ],
                 "generation_date": generation_date,
             },
         )
 
-    def _render_template(self, template_name: str, context: Dict[str, Any]) -> None:
+    def _render_template(self, template_name: str, context: dict[str, Any]) -> None:
         """Render a template with context"""
         try:
             from jinja2 import Template
@@ -605,7 +584,7 @@ export DATABASE_URL="postgresql://user:pass@host:5432/db"
             template_path = self.templates_dir / template_name
             output_path = self.output_dir / template_name.replace(".j2", "")
 
-            with open(template_path, "r") as f:
+            with open(template_path) as f:
                 template = Template(f.read())
 
             rendered = template.render(**context)
@@ -617,14 +596,12 @@ export DATABASE_URL="postgresql://user:pass@host:5432/db"
             # Fallback to simple string replacement if Jinja2 not available
             self._simple_template_render(template_name, context)
 
-    def _simple_template_render(
-        self, template_name: str, context: Dict[str, Any]
-    ) -> None:
+    def _simple_template_render(self, template_name: str, context: dict[str, Any]) -> None:
         """Simple template rendering without Jinja2"""
         template_path = self.templates_dir / template_name
         output_path = self.output_dir / template_name.replace(".j2", "")
 
-        with open(template_path, "r") as f:
+        with open(template_path) as f:
             content = f.read()
 
         # Simple replacements
@@ -638,7 +615,7 @@ export DATABASE_URL="postgresql://user:pass@host:5432/db"
         with open(output_path, "w") as f:
             f.write(content)
 
-    def _handle_simple_loops(self, content: str, context: Dict[str, Any]) -> str:
+    def _handle_simple_loops(self, content: str, context: dict[str, Any]) -> str:
         """Handle simple loop constructs"""
         # This is a simplified implementation
         # In production, you'd use a proper template engine
@@ -696,11 +673,7 @@ def main():
     reports_dir.mkdir(exist_ok=True)
 
     # Critical issues report
-    critical_issues = [
-        issue
-        for issue in validator.issues
-        if issue.severity in ["BLOCKING", "CRITICAL"]
-    ]
+    critical_issues = [issue for issue in validator.issues if issue.severity in ["BLOCKING", "CRITICAL"]]
 
     validation_report = {
         "timestamp": subprocess.check_output(["date"]).decode().strip(),
@@ -710,9 +683,7 @@ def main():
         "readme_claims_validated": len(validator.readme_claims),
         "readme_claims_valid": sum(validator.readme_claims.values()),
         "critical_issues_details": [asdict(issue) for issue in critical_issues],
-        "api_endpoints_details": [
-            asdict(ep) for ep in validator.api_endpoints[:10]
-        ],  # Sample
+        "api_endpoints_details": [asdict(ep) for ep in validator.api_endpoints[:10]],  # Sample
         "readme_validation": validator.readme_claims,
     }
 
@@ -727,9 +698,7 @@ def main():
         f.write("## Executive Summary\n\n")
 
         if critical_issues:
-            f.write(
-                f"🚨 **{len(critical_issues)} CRITICAL ISSUES BLOCK PRODUCTION DEPLOYMENT**\n\n"
-            )
+            f.write(f"🚨 **{len(critical_issues)} CRITICAL ISSUES BLOCK PRODUCTION DEPLOYMENT**\n\n")
         else:
             f.write("✅ **No critical issues found - Ready for production**\n\n")
 
@@ -757,9 +726,7 @@ def main():
                 f.write(f"**Business Impact**: {issue.business_impact}\n")
                 f.write(f"**Fix**: {issue.fix_suggestion}\n\n")
                 if issue.actual_code:
-                    f.write(
-                        f"**Current Code**:\n```\n{issue.actual_code[:200]}...\n```\n\n"
-                    )
+                    f.write(f"**Current Code**:\n```\n{issue.actual_code[:200]}...\n```\n\n")
                 f.write("---\n\n")
 
     # Setup and generate DRY documentation
@@ -776,7 +743,7 @@ def main():
     print(f"🔌 Discovered {len(validator.api_endpoints)} API endpoints")
     print(f"📋 Validated {len(validator.readme_claims)} README claims")
     print(f"📁 Reports saved to: {reports_dir}/")
-    print(f"📚 DRY documentation generated: docs/generated/")
+    print("📚 DRY documentation generated: docs/generated/")
 
     if critical_issues:
         print("\n❌ PRODUCTION DEPLOYMENT BLOCKED")

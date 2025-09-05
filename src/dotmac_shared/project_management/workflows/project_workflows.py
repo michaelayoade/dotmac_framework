@@ -7,21 +7,19 @@ and cross-system integrations.
 
 import asyncio
 import logging
-from datetime import date, datetime, timedelta
+from collections.abc import Callable
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..core.models import (
-    PhaseStatus,
     Project,
     ProjectMilestone,
     ProjectPhase,
     ProjectPriority,
     ProjectStatus,
     ProjectType,
-    ProjectUpdate,
 )
 from ..core.project_manager import ProjectManager
 from ..services.project_service import ProjectService
@@ -65,8 +63,8 @@ class WorkflowRule:
         self,
         name: str,
         trigger: WorkflowTrigger,
-        conditions: Dict[str, Any] = None,
-        actions: List[Dict[str, Any]] = None,
+        conditions: Optional[dict[str, Any]] = None,
+        actions: Optional[list[dict[str, Any]]] = None,
         enabled: bool = True,
     ):
         self.name = name
@@ -75,7 +73,7 @@ class WorkflowRule:
         self.actions = actions or []
         self.enabled = enabled
 
-    def matches(self, context: Dict[str, Any]) -> bool:
+    def matches(self, context: dict[str, Any]) -> bool:
         """Check if this rule matches the given context."""
         if not self.enabled:
             return False
@@ -95,13 +93,11 @@ class WorkflowRule:
 class ProjectWorkflowManager:
     """Manages automated project workflows and business rules."""
 
-    def __init__(
-        self, project_manager: ProjectManager, project_service: ProjectService
-    ):
+    def __init__(self, project_manager: ProjectManager, project_service: ProjectService):
         self.project_manager = project_manager
         self.project_service = project_service
-        self.workflow_rules: List[WorkflowRule] = []
-        self.action_handlers: Dict[WorkflowAction, Callable] = {}
+        self.workflow_rules: list[WorkflowRule] = []
+        self.action_handlers: dict[WorkflowAction, Callable] = {}
 
         # Register default action handlers
         self._register_default_handlers()
@@ -118,22 +114,16 @@ class ProjectWorkflowManager:
         """Register a custom action handler."""
         self.action_handlers[action] = handler
 
-    async def trigger_workflow(self, trigger: WorkflowTrigger, context: Dict[str, Any]):
+    async def trigger_workflow(self, trigger: WorkflowTrigger, context: dict[str, Any]):
         """Trigger workflows based on an event."""
         try:
             # Find matching rules
-            matching_rules = [
-                rule
-                for rule in self.workflow_rules
-                if rule.trigger == trigger and rule.matches(context)
-            ]
+            matching_rules = [rule for rule in self.workflow_rules if rule.trigger == trigger and rule.matches(context)]
 
             if not matching_rules:
                 return
 
-            logger.info(
-                f"Triggering {len(matching_rules)} workflow rules for {trigger}"
-            )
+            logger.info(f"Triggering {len(matching_rules)} workflow rules for {trigger}")
 
             # Execute actions for matching rules
             for rule in matching_rules:
@@ -155,9 +145,7 @@ class ProjectWorkflowManager:
 
         await self.trigger_workflow(WorkflowTrigger.PROJECT_CREATED, context)
 
-    async def process_project_status_change(
-        self, db: AsyncSession, project: Project, old_status: ProjectStatus
-    ):
+    async def process_project_status_change(self, db: AsyncSession, project: Project, old_status: ProjectStatus):
         """Process project status change workflows."""
         context = {
             "project_id": str(project.id),
@@ -176,9 +164,7 @@ class ProjectWorkflowManager:
         elif project.project_status == ProjectStatus.COMPLETED:
             await self.trigger_workflow(WorkflowTrigger.PROJECT_COMPLETED, context)
 
-    async def process_phase_completion(
-        self, db: AsyncSession, project: Project, phase: ProjectPhase
-    ):
+    async def process_phase_completion(self, db: AsyncSession, project: Project, phase: ProjectPhase):
         """Process phase completion workflows."""
         context = {
             "project_id": str(project.id),
@@ -194,9 +180,7 @@ class ProjectWorkflowManager:
 
         await self.trigger_workflow(WorkflowTrigger.PHASE_COMPLETED, context)
 
-    async def process_milestone_reached(
-        self, db: AsyncSession, project: Project, milestone: ProjectMilestone
-    ):
+    async def process_milestone_reached(self, db: AsyncSession, project: Project, milestone: ProjectMilestone):
         """Process milestone reached workflows."""
         context = {
             "project_id": str(project.id),
@@ -215,12 +199,8 @@ class ProjectWorkflowManager:
         """Check for overdue projects, phases, and milestones."""
         try:
             # Get active projects
-            filters = {
-                "project_status": [ProjectStatus.IN_PROGRESS, ProjectStatus.SCHEDULED]
-            }
-            projects, _ = await self.project_manager.list_projects(
-                db, tenant_id, filters
-            )
+            filters = {"project_status": [ProjectStatus.IN_PROGRESS, ProjectStatus.SCHEDULED]}
+            projects, _ = await self.project_manager.list_projects(db, tenant_id, filters)
 
             for project in projects:
                 # Check overdue project
@@ -228,15 +208,11 @@ class ProjectWorkflowManager:
                     context = {
                         "project_id": str(project.id),
                         "project_type": project.project_type,
-                        "days_overdue": (
-                            abs(project.days_remaining) if project.days_remaining else 0
-                        ),
+                        "days_overdue": (abs(project.days_remaining) if project.days_remaining else 0),
                         "tenant_id": tenant_id,
                         "project": project,
                     }
-                    await self.trigger_workflow(
-                        WorkflowTrigger.PROJECT_OVERDUE, context
-                    )
+                    await self.trigger_workflow(WorkflowTrigger.PROJECT_OVERDUE, context)
 
                 # Check overdue phases
                 for phase in project.phases:
@@ -251,9 +227,7 @@ class ProjectWorkflowManager:
                             "project": project,
                             "phase": phase,
                         }
-                        await self.trigger_workflow(
-                            WorkflowTrigger.PHASE_OVERDUE, context
-                        )
+                        await self.trigger_workflow(WorkflowTrigger.PHASE_OVERDUE, context)
 
                 # Check overdue milestones
                 for milestone in project.milestones:
@@ -268,9 +242,7 @@ class ProjectWorkflowManager:
                             "project": project,
                             "milestone": milestone,
                         }
-                        await self.trigger_workflow(
-                            WorkflowTrigger.MILESTONE_OVERDUE, context
-                        )
+                        await self.trigger_workflow(WorkflowTrigger.MILESTONE_OVERDUE, context)
 
         except Exception as e:
             logger.error(f"Error checking overdue items for tenant {tenant_id}: {e}")
@@ -403,7 +375,7 @@ class ProjectWorkflowManager:
             ]
         )
 
-    async def _execute_rule_actions(self, rule: WorkflowRule, context: Dict[str, Any]):
+    async def _execute_rule_actions(self, rule: WorkflowRule, context: dict[str, Any]):
         """Execute all actions for a workflow rule."""
         for action_config in rule.actions:
             try:
@@ -416,13 +388,9 @@ class ProjectWorkflowManager:
                     logger.warning(f"No handler found for action: {action_type}")
 
             except Exception as e:
-                logger.error(
-                    f"Error executing action {action_config} for rule {rule.name}: {e}"
-                )
+                logger.error(f"Error executing action {action_config} for rule {rule.name}: {e}")
 
-    async def _handle_send_notification(
-        self, action_config: Dict[str, Any], context: Dict[str, Any]
-    ):
+    async def _handle_send_notification(self, action_config: dict[str, Any], context: dict[str, Any]):
         """Handle send notification action."""
         recipient_type = action_config.get("recipient_type", "customer")
         template = action_config.get("template", "generic_notification")
@@ -435,9 +403,7 @@ class ProjectWorkflowManager:
             logger.info(f"Sending {template} notification to {recipient_type}")
             # Would integrate with notification system
 
-    async def _handle_create_calendar_event(
-        self, action_config: Dict[str, Any], context: Dict[str, Any]
-    ):
+    async def _handle_create_calendar_event(self, action_config: dict[str, Any], context: dict[str, Any]):
         """Handle create calendar event action."""
         event_type = action_config.get("event_type", "project_event")
         duration_days = action_config.get("duration_days", 1)
@@ -445,9 +411,7 @@ class ProjectWorkflowManager:
         logger.info(f"Creating calendar event: {event_type} for {duration_days} days")
         # Would integrate with calendar system
 
-    async def _handle_assign_team(
-        self, action_config: Dict[str, Any], context: Dict[str, Any]
-    ):
+    async def _handle_assign_team(self, action_config: dict[str, Any], context: dict[str, Any]):
         """Handle assign team action."""
         team_name = action_config.get("team_name")
         project_id = context.get("project_id")
@@ -456,9 +420,7 @@ class ProjectWorkflowManager:
             logger.info(f"Assigning team {team_name} to project {project_id}")
             # Would call project service to assign team
 
-    async def _handle_update_status(
-        self, action_config: Dict[str, Any], context: Dict[str, Any]
-    ):
+    async def _handle_update_status(self, action_config: dict[str, Any], context: dict[str, Any]):
         """Handle update status action."""
         new_status = action_config.get("new_status")
         project_id = context.get("project_id")
@@ -467,9 +429,7 @@ class ProjectWorkflowManager:
             logger.info(f"Updating project {project_id} status to {new_status}")
             # Would call project service to update status
 
-    async def _handle_escalate_priority(
-        self, action_config: Dict[str, Any], context: Dict[str, Any]
-    ):
+    async def _handle_escalate_priority(self, action_config: dict[str, Any], context: dict[str, Any]):
         """Handle escalate priority action."""
         new_priority = action_config.get("new_priority")
         project_id = context.get("project_id")
@@ -478,9 +438,7 @@ class ProjectWorkflowManager:
             logger.info(f"Escalating project {project_id} to {new_priority} priority")
             # Would call project service to escalate
 
-    async def _handle_send_client_update(
-        self, action_config: Dict[str, Any], context: Dict[str, Any]
-    ):
+    async def _handle_send_client_update(self, action_config: dict[str, Any], context: dict[str, Any]):
         """Handle send client update action."""
         update_type = action_config.get("update_type", "progress_update")
         project_id = context.get("project_id")
@@ -493,7 +451,7 @@ class ProjectWorkflowManager:
 async def setup_project_workflows(
     project_manager: ProjectManager,
     project_service: ProjectService,
-    custom_rules: List[WorkflowRule] = None,
+    custom_rules: Optional[list[WorkflowRule]] = None,
 ) -> ProjectWorkflowManager:
     """Setup and configure project workflow manager."""
 
@@ -510,7 +468,7 @@ async def setup_project_workflows(
 async def run_workflow_scheduler(
     workflow_manager: ProjectWorkflowManager,
     db_session_factory,
-    tenant_ids: List[str],
+    tenant_ids: list[str],
     check_interval_minutes: int = 60,
 ):
     """Run periodic workflow scheduler for overdue checks."""

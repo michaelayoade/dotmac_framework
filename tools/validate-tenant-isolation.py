@@ -13,18 +13,11 @@ This script validates that:
 import asyncio
 import json
 import logging
-import os
-import tempfile
 import time
 import uuid
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
-
-import psycopg2
-import requests
+from typing import Any
 
 import docker
-import redis
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -38,7 +31,7 @@ class TenantIsolationValidator:
         self.test_tenants = []
         self.created_resources = []
 
-    async def create_test_tenant(self, tenant_id: str) -> Dict[str, Any]:
+    async def create_test_tenant(self, tenant_id: str) -> dict[str, Any]:
         """Create a test tenant with isolated containers."""
         logger.info(f"Creating test tenant: {tenant_id}")
 
@@ -192,7 +185,7 @@ class TenantIsolationValidator:
 
         raise Exception(f"PostgreSQL failed to start for tenant {tenant_id}")
 
-    async def validate_network_isolation(self) -> Dict[str, Any]:
+    async def validate_network_isolation(self) -> dict[str, Any]:
         """Validate that tenants cannot access each other's networks."""
         logger.info("Validating network isolation...")
 
@@ -257,7 +250,7 @@ class TenantIsolationValidator:
         logger.info(f"Network isolation validation: {results['status']}")
         return results
 
-    async def validate_data_isolation(self) -> Dict[str, Any]:
+    async def validate_data_isolation(self) -> dict[str, Any]:
         """Validate that tenant data is isolated."""
         logger.info("Validating data isolation...")
 
@@ -278,9 +271,9 @@ class TenantIsolationValidator:
                 result = postgres_container.exec_run(
                     [
                         "psql",
-                        f"-U",
+                        "-U",
                         f"tenant_{tenant_id}",
-                        f"-d",
+                        "-d",
                         f"dotmac_{tenant_id}",
                         "-c",
                         f"CREATE TABLE test_isolation (data TEXT); INSERT INTO test_isolation VALUES ('{test_data}');",
@@ -296,9 +289,9 @@ class TenantIsolationValidator:
                     result = postgres_container.exec_run(
                         [
                             "psql",
-                            f"-U",
+                            "-U",
                             f"tenant_{tenant_id}",
-                            f"-d",
+                            "-d",
                             f"dotmac_{tenant_id}",
                             "-t",
                             "-c",
@@ -375,7 +368,7 @@ class TenantIsolationValidator:
         logger.info(f"Data isolation validation: {results['status']}")
         return results
 
-    async def validate_resource_limits(self) -> Dict[str, Any]:
+    async def validate_resource_limits(self) -> dict[str, Any]:
         """Validate that resource limits are enforced."""
         logger.info("Validating resource limits...")
 
@@ -431,7 +424,7 @@ class TenantIsolationValidator:
         logger.info(f"Resource limits validation: {results['status']}")
         return results
 
-    async def validate_container_security(self) -> Dict[str, Any]:
+    async def validate_container_security(self) -> dict[str, Any]:
         """Validate container security configurations."""
         logger.info("Validating container security...")
 
@@ -517,7 +510,7 @@ class TenantIsolationValidator:
         self.test_tenants.clear()
         logger.info("Cleanup completed")
 
-    async def run_full_validation(self, num_tenants: int = 2) -> Dict[str, Any]:
+    async def run_full_validation(self, num_tenants: int = 2) -> dict[str, Any]:
         """Run complete tenant isolation validation."""
         logger.info(
             f"Starting tenant isolation validation with {num_tenants} test tenants"
@@ -608,7 +601,6 @@ async def main():
     """Main entry point."""
     import argparse
 
-    from dotmac_shared.api.exception_handlers import standard_exception_handler
 
     parser = argparse.ArgumentParser(description="DotMac Tenant Isolation Validator")
     parser.add_argument(

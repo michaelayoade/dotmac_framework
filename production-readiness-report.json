@@ -1,66 +1,70 @@
 {
   "overall_status": "NOT_READY",
-  "critical_failures": 2,
+  "critical_failures": 13,
   "warnings": 1,
-  "successes": 14,
+  "successes": 3,
   "details": {
     "critical": [
       {
-        "check": "Database Connectivity",
-        "message": "Failed to connect: [Errno -3] Temporary failure in name resolution"
+        "check": "Environment Variables",
+        "message": "ENVIRONMENT is not set"
       },
       {
-        "check": "Redis Connectivity",
-        "message": "Failed to connect: Error -3 connecting to redis:6379. -3."
+        "check": "Environment Variables",
+        "message": "STRICT_PROD_BASELINE is not set"
+      },
+      {
+        "check": "Environment Variables",
+        "message": "DATABASE_URL is not set"
+      },
+      {
+        "check": "Environment Variables",
+        "message": "REDIS_URL is not set"
+      },
+      {
+        "check": "Environment Variables",
+        "message": "OPENBAO_URL is not set"
+      },
+      {
+        "check": "Environment Variables",
+        "message": "OPENBAO_TOKEN is not set"
+      },
+      {
+        "check": "Environment Variables",
+        "message": "APPLY_RLS_AFTER_MIGRATION is not set"
+      },
+      {
+        "check": "Environment Variables",
+        "message": "SECRET_KEY is not set"
+      },
+      {
+        "check": "Environment Variables",
+        "message": "JWT_SECRET is not set"
+      },
+      {
+        "check": "Environment Variables",
+        "message": "ENCRYPTION_KEY is not set"
+      },
+      {
+        "check": "Database",
+        "message": "DATABASE_URL not configured"
+      },
+      {
+        "check": "Redis",
+        "message": "REDIS_URL not configured"
+      },
+      {
+        "check": "Secrets Provider",
+        "message": "OPENBAO_URL not configured"
       }
     ],
     "warnings": [
       {
-        "check": "Secrets Provider",
-        "message": "Failed to connect to OpenBao: Cannot connect to host vault.example.com:443 ssl:default [Name or service not known]"
+        "check": "Environment",
+        "message": "ENVIRONMENT not set to 'production'"
       }
     ],
     "successes": [
-      {
-        "check": "Environment Variables",
-        "message": "ENVIRONMENT properly configured"
-      },
-      {
-        "check": "Environment Variables",
-        "message": "STRICT_PROD_BASELINE properly configured"
-      },
-      {
-        "check": "Environment Variables",
-        "message": "DATABASE_URL properly configured"
-      },
-      {
-        "check": "Environment Variables",
-        "message": "REDIS_URL properly configured"
-      },
-      {
-        "check": "Environment Variables",
-        "message": "OPENBAO_URL properly configured"
-      },
-      {
-        "check": "Environment Variables",
-        "message": "OPENBAO_TOKEN properly configured"
-      },
-      {
-        "check": "Environment Variables",
-        "message": "APPLY_RLS_AFTER_MIGRATION properly configured"
-      },
-      {
-        "check": "Environment Variables",
-        "message": "SECRET_KEY properly configured"
-      },
-      {
-        "check": "Environment Variables",
-        "message": "JWT_SECRET properly configured"
-      },
-      {
-        "check": "Environment Variables",
-        "message": "ENCRYPTION_KEY properly configured"
-      },
       {
         "check": "Package Constraints",
         "message": "All 10 dotmac packages properly pinned"
@@ -72,10 +76,6 @@
       {
         "check": "Alerting",
         "message": "Critical alerts configured"
-      },
-      {
-        "check": "Strict Baseline",
-        "message": "All baseline requirements met"
       }
     ]
   }

@@ -3,20 +3,19 @@ Clean, optimal cache system for dotMAC Framework.
 Zero legacy code, 100% production-ready implementation.
 """
 
-import asyncio
 import hashlib
 import json
 import logging
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Set
-
-from fastapi import Request, Response
-from starlette.middleware.base import BaseHTTPMiddleware
+from typing import Any, Optional
 
 from dotmac_isp.shared.cache import get_cache_manager
+from fastapi import Request, Response
+from starlette.middleware.base import BaseHTTPMiddleware
 
 logger = logging.getLogger(__name__)
 
@@ -37,9 +36,9 @@ class CacheConfig:
     strategy: CacheStrategy
     base_ttl: int
     max_ttl: int
-    tags: List[str]
-    invalidation_events: List[str]
-    vary_headers: List[str]
+    tags: list[str]
+    invalidation_events: list[str]
+    vary_headers: list[str]
 
 
 class OptimalCacheKeyGenerator:
@@ -284,7 +283,7 @@ class SmartCacheMiddleware(BaseHTTPMiddleware):
 
         return True
 
-    async def _get_cached_response(self, cache_key: str) -> Optional[Dict[str, Any]]:
+    async def _get_cached_response(self, cache_key: str) -> Optional[dict[str, Any]]:
         """Get response from cache with error handling."""
         try:
             return self.cache_manager.get(cache_key, namespace="responses")
@@ -293,9 +292,7 @@ class SmartCacheMiddleware(BaseHTTPMiddleware):
             logger.error(f"Cache get error: {e}")
             return None
 
-    async def _cache_response(
-        self, cache_key: str, response: Response, config: CacheConfig
-    ) -> None:
+    async def _cache_response(self, cache_key: str, response: Response, config: CacheConfig) -> None:
         """Cache response with optimal configuration."""
         try:
             # Read response body
@@ -314,9 +311,7 @@ class SmartCacheMiddleware(BaseHTTPMiddleware):
                 "content": content,
                 "status_code": response.status_code,
                 "headers": {
-                    k: v
-                    for k, v in response.headers.items()
-                    if k.lower() not in ["set-cookie", "authorization"]
+                    k: v for k, v in response.headers.items() if k.lower() not in ["set-cookie", "authorization"]
                 },
                 "cached_at": datetime.now(timezone.utc).isoformat(),
                 "strategy": config.strategy.value,
@@ -335,9 +330,7 @@ class SmartCacheMiddleware(BaseHTTPMiddleware):
             self.error_count += 1
             logger.error(f"Cache set error: {e}")
 
-    def _create_cached_response(
-        self, cached_data: Dict[str, Any], cache_key: str
-    ) -> Response:
+    def _create_cached_response(self, cached_data: dict[str, Any], cache_key: str) -> Response:
         """Create response from cached data."""
         from fastapi.responses import JSONResponse
 
@@ -347,12 +340,7 @@ class SmartCacheMiddleware(BaseHTTPMiddleware):
                 "X-Cache-Status": "HIT",
                 "X-Cache-Strategy": cached_data.get("strategy", "unknown"),
                 "X-Cache-Age": str(
-                    int(
-                        time.time()
-                        - time.mktime(
-                            datetime.fromisoformat(cached_data["cached_at"]).timetuple()
-                        )
-                    )
+                    int(time.time() - time.mktime(datetime.fromisoformat(cached_data["cached_at"]).timetuple()))
                 ),
             }
         )
@@ -363,7 +351,7 @@ class SmartCacheMiddleware(BaseHTTPMiddleware):
             headers=headers,
         )
 
-    def get_metrics(self) -> Dict[str, Any]:
+    def get_metrics(self) -> dict[str, Any]:
         """Get cache performance metrics."""
         total = self.hit_count + self.miss_count
         hit_rate = (self.hit_count / total) if total > 0 else 0
@@ -384,16 +372,14 @@ class CacheInvalidationManager:
         self.cache_manager = get_cache_manager()
         self.key_generator = OptimalCacheKeyGenerator()
 
-    async def invalidate_by_event(
-        self, event: str, context: Dict[str, Any] = None
-    ) -> int:
+    async def invalidate_by_event(self, event: str, context: Optional[dict[str, Any]] = None) -> int:
         """Invalidate cache entries based on business events."""
         context = context or {}
         invalidated = 0
 
         try:
             # Find all cache configs that respond to this event
-            for path, config in self.key_generator.cache_configs.items():
+            for _path, config in self.key_generator.cache_configs.items():
                 if event in config.invalidation_events:
                     # Invalidate by tags
                     for tag in config.tags:
@@ -404,16 +390,12 @@ class CacheInvalidationManager:
             if event == "customer_updated" and "customer_id" in context:
                 # Invalidate specific customer data
                 customer_tag = f"customer:{context['customer_id']}"
-                invalidated += self.cache_manager.invalidate_by_tag(
-                    customer_tag, "responses"
-                )
+                invalidated += self.cache_manager.invalidate_by_tag(customer_tag, "responses")
 
             elif event == "tenant_config_changed" and "tenant_id" in context:
                 # Invalidate all tenant data
                 tenant_tag = f"tenant:{context['tenant_id']}"
-                invalidated += self.cache_manager.invalidate_by_tag(
-                    tenant_tag, "responses"
-                )
+                invalidated += self.cache_manager.invalidate_by_tag(tenant_tag, "responses")
 
             logger.info(f"Cache invalidation: {event} -> {invalidated} entries")
             return invalidated
@@ -422,9 +404,7 @@ class CacheInvalidationManager:
             logger.error(f"Cache invalidation error for event {event}: {e}")
             return 0
 
-    async def smart_warm_cache(
-        self, endpoints: List[str], tenant_id: str = None
-    ) -> None:
+    async def smart_warm_cache(self, endpoints: list[str], tenant_id: Optional[str] = None) -> None:
         """Intelligently warm cache for critical endpoints."""
         # Implementation would make requests to warm cache
         # This is a placeholder for the warming logic

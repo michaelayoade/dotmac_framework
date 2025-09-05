@@ -1,371 +1,262 @@
 """
-Production-ready schema base classes with strict validation enforcement.
-Mandatory inheritance for all schemas - no custom BaseModel usage allowed.
+Common base schemas for DotMac Framework.
+Provides consistent Pydantic models across all modules.
 """
 
-import logging
-import re
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from enum import Enum
+from typing import Any, Generic, Optional, TypeVar
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
-from pydantic.config import ConfigDict
-
-logger = logging.getLogger(__name__)
-
-
-class SchemaValidationError(Exception):
-    """Raised when schemas don't follow DRY patterns."""
-
-    pass
-
-
-# === Core Base Schemas ===
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class BaseSchema(BaseModel):
-    """Production-ready root base schema with strict validation."""
+    """Base schema with common configuration."""
 
     model_config = ConfigDict(
-        # Strict validation - no extra fields allowed
-        extra="forbid",
-        # Validate on assignment
-        validate_assignment=True,
-        # Use enum values
-        use_enum_values=True,
-        # Populate by name and alias
-        populate_by_name=True,
-        # Enable ORM mode for database integration
         from_attributes=True,
-        # Strict validation for production
+        validate_assignment=True,
         str_strip_whitespace=True,
-        json_schema_extra={"examples": []},
-    )
-
-    def __init_subclass__(cls, **kwargs):
-        """Enforce schema inheritance patterns."""
-        super().__init_subclass__(**kwargs)
-
-        # Ensure all schemas inherit from our base classes
-        if cls.__name__ != "BaseSchema" and not any(
-            base.__name__.endswith(("Entity", "Schema", "Mixin"))
-            for base in cls.__mro__[1:]
-        ):
-            logger.warning(
-                f"Schema {cls.__name__} should inherit from standard base classes"
-            )
-
-        # Log schema registration for audit
-        logger.debug(f"Registered schema: {cls.__name__}")
-
-
-class TimestampMixin(BaseModel):
-    """Mixin for entities with timestamps - used in 80% of schemas."""
-
-    created_at: Optional[datetime] = Field(
-        None, description="When the entity was created"
-    )
-    updated_at: Optional[datetime] = Field(
-        None, description="When the entity was last updated"
-    )
-
-    @field_validator("created_at", "updated_at", mode="before")
-    @classmethod
-    def parse_datetime(cls, v):
-        """Parse datetime strings to datetime objects with strict validation."""
-        if v is None:
-            return v
-        if isinstance(v, str):
-            try:
-                return datetime.fromisoformat(v.replace("Z", "+00:00"))
-            except ValueError as e:
-                raise ValueError(f"Invalid datetime format: {v}") from e
-        if isinstance(v, datetime):
-            return v
-        raise ValueError(f"Datetime must be string or datetime object, got {type(v)}")
-
-
-class IdentifiedMixin(BaseModel):
-    """Mixin for entities with UUID identification."""
-
-    id: UUID = Field(description="Unique identifier for the entity")
-
-
-class NamedMixin(BaseModel):
-    """Mixin for entities with name fields."""
-
-    name: str = Field(
-        ..., min_length=1, max_length=200, description="Name of the entity"
-    )
-
-    @field_validator("name")
-    def validate_name(cls, v):
-        """Validate name contains valid characters."""
-        if not re.match(r"^[a-zA-Z0-9\s\-_\.]+$", v):
-            raise ValueError("Name contains invalid characters")
-        return v.strip()
-
-
-class DescriptionMixin(BaseModel):
-    """Mixin for entities with description fields."""
-
-    description: Optional[str] = Field(
-        None, max_length=1000, description="Optional description"
+        use_enum_values=True,
+        arbitrary_types_allowed=True,
     )
 
 
-class StatusMixin(BaseModel):
-    """Mixin for entities with status tracking."""
+class TimestampMixin(BaseSchema):
+    """Mixin for entities with timestamp fields."""
 
-    is_active: bool = Field(True, description="Whether the entity is active")
-
-    status: Optional[str] = Field("active", description="Current status of the entity")
-
-
-class TenantMixin(BaseModel):
-    """Mixin for multi-tenant entities."""
-
-    tenant_id: Optional[UUID] = Field(None, description="Tenant this entity belongs to")
+    created_at: Optional[datetime] = Field(None, description="Creation timestamp")
+    updated_at: Optional[datetime] = Field(None, description="Last update timestamp")
+    deleted_at: Optional[datetime] = Field(None, description="Deletion timestamp")
 
 
-# === Contact Information Mixins ===
+class AuditMixin(BaseSchema):
+    """Mixin for entities with audit fields."""
+
+    created_by: Optional[str] = Field(None, description="User who created the entity")
+    updated_by: Optional[str] = Field(None, description="User who last updated the entity")
 
 
-class EmailMixin(BaseModel):
-    """Mixin for entities with email fields."""
+class TenantMixin(BaseSchema):
+    """Mixin for tenant-aware entities."""
 
-    email: EmailStr = Field(description="Email address")
-
-    @field_validator("email")
-    def validate_email(cls, v):
-        """Additional email validation."""
-        return v.lower().strip()
+    tenant_id: Optional[str] = Field(None, description="Tenant identifier")
 
 
-class PhoneMixin(BaseModel):
-    """Mixin for entities with phone fields."""
+class SoftDeleteMixin(BaseSchema):
+    """Mixin for entities supporting soft delete."""
 
-    phone: Optional[str] = Field(
-        None, description="Phone number", pattern=r"^\+?[\d\s\-\(\)]{10,}$"
-    )
-
-    @field_validator("phone")
-    def validate_phone(cls, v):
-        """Clean and validate phone number."""
-        if v:
-            # Remove non-digit characters except +
-            cleaned = re.sub(r"[^\d+]", "", v)
-            if len(cleaned) < 10:
-                raise ValueError("Phone number too short")
-            return cleaned
-        return v
-
-
-class AddressMixin(BaseModel):
-    """Mixin for entities with address fields."""
-
-    address: Optional[Dict[str, Any]] = Field(None, description="Address information")
-
-    @field_validator("address")
-    def validate_address(cls, v):
-        """Validate address structure."""
-        if v:
-            required_fields = ["street", "city"]
-            for field in required_fields:
-                if not v.get(field):
-                    raise ValueError(f"Address must include {field}")
-        return v
-
-
-# === Standard Entity Base Classes ===
-
-
-class BaseEntity(BaseSchema, IdentifiedMixin, TimestampMixin):
-    """Base class for all entities with ID and timestamps."""
-
-    pass
-
-
-class NamedEntity(BaseEntity, NamedMixin, DescriptionMixin):
-    """Base class for named entities with descriptions."""
-
-    pass
-
-
-class ActiveEntity(NamedEntity, StatusMixin):
-    """Base class for entities with status tracking."""
-
-    pass
-
-
-class TenantEntity(ActiveEntity, TenantMixin):
-    """Base class for multi-tenant entities."""
-
-    pass
-
-
-class PersonEntity(BaseEntity, StatusMixin, TenantMixin):
-    """Base class for person-related entities."""
-
-    first_name: str = Field(..., min_length=1, max_length=100, description="First name")
-    last_name: str = Field(..., min_length=1, max_length=100, description="Last name")
-    email: Optional[EmailStr] = None
-    phone: Optional[str] = Field(None, pattern=r"^\+?[\d\s\-\(\)]{10,}$")
-
-    @property
-    def full_name(self) -> str:
-        """Get full name."""
-        return f"{self.first_name} {self.last_name}"
-
-
-class CompanyEntity(TenantEntity):
-    """Base class for company/organization entities."""
-
-    company_name: Optional[str] = Field(
-        None, max_length=200, description="Company name"
-    )
-    tax_id: Optional[str] = Field(
-        None, max_length=50, description="Tax identification number"
-    )
-
-
-# === CRUD Operation Schemas ===
+    is_deleted: bool = Field(False, description="Soft delete flag")
+    deleted_at: Optional[datetime] = Field(None, description="Deletion timestamp")
 
 
 class BaseCreateSchema(BaseSchema):
-    """Base schema for create operations."""
+    """Base schema for entity creation requests."""
 
-    model_config = ConfigDict(
-        exclude_none=True
-    )
+    pass
+
 
 class BaseUpdateSchema(BaseSchema):
-    """Base schema for update operations - all fields optional."""
+    """Base schema for entity update requests."""
 
-    model_config = ConfigDict(
-        exclude_none=True
-    )
-
-class BaseResponseSchema(BaseEntity):
-    """Base schema for API responses."""
-
-    model_config = ConfigDict(
-        exclude_none=False,
-        from_attributes=True
-    )
-
-# === Pagination and Search Schemas ===
+    pass
 
 
-class PaginationSchema(BaseSchema):
-    """Standard pagination parameters."""
+class BaseResponseSchema(BaseSchema):
+    """Base schema for entity responses with common fields."""
 
-    page: int = Field(1, ge=1, description="Page number")
+    id: UUID = Field(..., description="Entity unique identifier")
+
+    # Include timestamp fields in responses
+    created_at: Optional[datetime] = Field(None, description="Creation timestamp")
+    updated_at: Optional[datetime] = Field(None, description="Last update timestamp")
+
+
+class BaseCreateWithAuditSchema(BaseCreateSchema, AuditMixin, TimestampMixin):
+    """Base creation schema with audit fields."""
+
+    pass
+
+
+class BaseUpdateWithAuditSchema(BaseUpdateSchema, AuditMixin):
+    """Base update schema with audit fields."""
+
+    pass
+
+
+class BaseResponseWithAuditSchema(BaseResponseSchema, AuditMixin, SoftDeleteMixin):
+    """Base response schema with audit and soft delete fields."""
+
+    pass
+
+
+class BaseTenantCreateSchema(BaseCreateSchema, TenantMixin):
+    """Base creation schema for tenant-aware entities."""
+
+    pass
+
+
+class BaseTenantUpdateSchema(BaseUpdateSchema):
+    """Base update schema for tenant-aware entities."""
+
+    pass
+
+
+class BaseTenantResponseSchema(BaseResponseSchema, TenantMixin, AuditMixin, SoftDeleteMixin):
+    """Base response schema for tenant-aware entities with full audit trail."""
+
+    pass
+
+
+# Generic type variables for pagination
+T = TypeVar("T")
+
+
+class PaginationParams(BaseSchema):
+    """Schema for pagination parameters."""
+
+    page: int = Field(1, ge=1, description="Page number (1-based)")
     size: int = Field(20, ge=1, le=100, description="Items per page")
 
     @property
     def offset(self) -> int:
-        """Calculate offset for database queries."""
+        """Calculate offset from page and size."""
         return (self.page - 1) * self.size
 
 
-class PaginatedResponseSchema(BaseSchema):
-    """Standard paginated response format."""
+class SortParams(BaseSchema):
+    """Schema for sorting parameters."""
 
-    items: List[Any] = Field(description="List of items")
-    total: int = Field(description="Total number of items")
-    page: int = Field(description="Current page number")
-    size: int = Field(description="Items per page")
-    pages: int = Field(description="Total number of pages")
+    sort_by: Optional[str] = Field(None, description="Field to sort by")
+    sort_order: str = Field("asc", pattern=r"^(asc|desc)$", description="Sort order")
 
-    @model_validator(mode="before")
+
+class FilterParams(BaseSchema):
+    """Schema for common filter parameters."""
+
+    search: Optional[str] = Field(None, description="Search term")
+    status: Optional[str] = Field(None, description="Status filter")
+    date_from: Optional[datetime] = Field(None, description="Filter from date")
+    date_to: Optional[datetime] = Field(None, description="Filter to date")
+
+    @field_validator("search")
     @classmethod
-    def calculate_pages(cls, values):
-        """Calculate total pages."""
-        total = values.get("total", 0)
-        size = values.get("size", 20)
-        values["pages"] = (total + size - 1) // size if total > 0 else 0
-        return values
+    def validate_search(cls, v: Optional[str]) -> Optional[str]:
+        if v and len(v.strip()) < 2:
+            raise ValueError("Search term must be at least 2 characters")
+        return v.strip() if v else None
 
 
-class SearchSchema(BaseSchema):
-    """Standard search parameters."""
+class PaginatedResponseSchema(BaseSchema, Generic[T]):
+    """Generic schema for paginated responses."""
 
-    query: Optional[str] = Field(None, max_length=500, description="Search query")
-    filters: Optional[Dict[str, Any]] = Field(None, description="Additional filters")
-    sort_by: Optional[str] = Field("created_at", description="Field to sort by")
-    sort_order: Optional[str] = Field(
-        "desc", pattern="^(asc|desc)$", description="Sort order"
-    )
+    items: list[T] = Field(..., description="List of items")
+    total: int = Field(..., ge=0, description="Total number of items")
+    page: int = Field(..., ge=1, description="Current page number")
+    size: int = Field(..., ge=1, description="Items per page")
+    pages: Optional[int] = Field(None, description="Total number of pages")
 
-
-# === Specialized Validation Mixins ===
-
-
-class CurrencyMixin(BaseModel):
-    """Mixin for entities with currency fields."""
-
-    amount: float = Field(..., ge=0, description="Amount in the specified currency")
-    currency: str = Field(
-        "USD", pattern="^[A-Z]{3}$", description="Currency code (ISO 4217)"
-    )
+    def model_post_init(self, __context: Any) -> None:
+        """Calculate total pages after initialization."""
+        if self.total and self.size:
+            self.pages = (self.total + self.size - 1) // self.size
+        else:
+            self.pages = 0
 
 
-class DateRangeMixin(BaseModel):
-    """Mixin for entities with date ranges."""
+class ErrorResponseSchema(BaseSchema):
+    """Schema for error responses."""
 
-    start_date: Optional[datetime] = Field(None, description="Start date")
-    end_date: Optional[datetime] = Field(None, description="End date")
-
-    @model_validator(mode="after")
-    def validate_date_range(self):
-        """Ensure end_date is after start_date."""
-        start = self.start_date
-        end = self.end_date
-
-        if start and end and end <= start:
-            raise ValueError("End date must be after start date")
-
-        return self
+    error: bool = Field(True, description="Error flag")
+    message: str = Field(..., description="Error message")
+    error_code: str = Field(..., description="Error code")
+    details: Optional[dict[str, Any]] = Field(None, description="Additional error details")
+    field_errors: Optional[dict[str, str]] = Field(None, description="Field validation errors")
+    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Error timestamp")
+    request_id: Optional[str] = Field(None, description="Request identifier")
 
 
-class GeoLocationMixin(BaseModel):
-    """Mixin for entities with geographic coordinates."""
+class SuccessResponseSchema(BaseSchema):
+    """Schema for success responses."""
 
-    latitude: Optional[float] = Field(
-        None, ge=-90, le=90, description="Latitude coordinate"
-    )
-    longitude: Optional[float] = Field(
-        None, ge=-180, le=180, description="Longitude coordinate"
-    )
+    success: bool = Field(True, description="Success flag")
+    message: str = Field(..., description="Success message")
+    data: Optional[Any] = Field(None, description="Response data")
 
 
-# === Usage Examples and Migration Guide ===
+class BulkOperationSchema(BaseSchema):
+    """Schema for bulk operation requests."""
 
-"""
-BEFORE (repeated across multiple schema files):
-class CustomerResponse(BaseModel):
-    id: UUID
-    first_name: str = Field(..., min_length=1, max_length=100)
-    last_name: str = Field(..., min_length=1, max_length=100)
-    email: EmailStr
-    phone: Optional[str] = Field(None, pattern=r'^\\+?[\\d\\s\\-\\(\\)]{10,}$')
-    is_active: bool = True
-    created_at: datetime
-    updated_at: datetime
-    tenant_id: UUID
+    items: list[Any] = Field(..., min_length=1, max_length=1000, description="Items to process")
+    dry_run: bool = Field(False, description="Preview operation without executing")
+    force: bool = Field(False, description="Force operation even with warnings")
 
-AFTER (DRY approach):
-class CustomerResponse(PersonEntity):
-    # Inherits all common fields automatically
-    # Add only customer-specific fields
-    account_balance: float = Field(0.0, description="Account balance")
-    subscription_tier: str = Field("basic", description="Subscription tier")
 
-MIGRATION STEPS:
-1. Import: from dotmac_shared.schemas.base_schemas import PersonEntity
-2. Change: class CustomerResponse(BaseModel) -> class CustomerResponse(PersonEntity)
-3. Remove: All duplicate field definitions that are in PersonEntity
-4. Keep: Only customer-specific fields
-"""
+class BulkOperationResponseSchema(BaseSchema):
+    """Schema for bulk operation responses."""
+
+    total_items: int = Field(..., description="Total items processed")
+    successful: int = Field(..., description="Successfully processed items")
+    failed: int = Field(..., description="Failed items")
+    errors: list[dict[str, Any]] = Field(default_factory=list, description="Error details")
+    warnings: list[str] = Field(default_factory=list, description="Warning messages")
+
+
+# Common field validators
+class CommonValidators:
+    """Common field validators for reuse across schemas."""
+
+    @staticmethod
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, v: str) -> str:
+        """Validate email format."""
+        if not v or "@" not in v:
+            raise ValueError("Invalid email format")
+        return v.lower().strip()
+
+    @staticmethod
+    @field_validator("phone")
+    @classmethod
+    def validate_phone(cls, v: Optional[str]) -> Optional[str]:
+        """Validate phone number format."""
+        if not v:
+            return None
+        # Remove non-digits
+        digits_only = "".join(filter(str.isdigit, v))
+        if len(digits_only) < 10 or len(digits_only) > 15:
+            raise ValueError("Phone number must be between 10-15 digits")
+        return digits_only
+
+    @staticmethod
+    @field_validator("name")
+    @classmethod
+    def validate_name(cls, v: str) -> str:
+        """Validate name fields."""
+        if not v or len(v.strip()) < 2:
+            raise ValueError("Name must be at least 2 characters")
+        if len(v.strip()) > 100:
+            raise ValueError("Name must be less than 100 characters")
+        return v.strip().title()
+
+
+# Status enums commonly used across modules
+class EntityStatus(str, Enum):
+    """Common entity status values."""
+
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+    PENDING = "pending"
+    SUSPENDED = "suspended"
+    DELETED = "deleted"
+
+
+class OperationStatus(str, Enum):
+    """Common operation status values."""
+
+    SUCCESS = "success"
+    FAILED = "failed"
+    PENDING = "pending"
+    IN_PROGRESS = "in_progress"
+    CANCELLED = "cancelled"

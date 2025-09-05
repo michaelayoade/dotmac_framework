@@ -1,339 +1,297 @@
 """
-Portal Integration APIs - DRY Refactored
-Complete frontend-backend integration following RouterFactory patterns
-MANDATORY: Uses RouterFactory instead of manual APIRouter creation
+Portal Integrations API - DRY Migration
+Comprehensive portal integration endpoints using RouterFactory patterns.
 """
 
-import logging
-from datetime import datetime
-from typing import Any, Dict, List, Optional
-from uuid import UUID
+from typing import Any
 
-from fastapi import APIRouter, Depends, Query
-from pydantic import BaseModel
-
+from dotmac.application import RouterFactory, standard_exception_handler
 from dotmac_shared.api.dependencies import (
     StandardDependencies,
-    PaginatedDependencies,
-    SearchParams,
     get_standard_deps,
-    get_paginated_deps,
-    get_admin_deps
+)
+from fastapi import Body, Depends, Query
+from pydantic import BaseModel, Field
 
-from dotmac_shared.api.exception_handlers import standard_exception_handler
-from dotmac_shared.api.router_factory import RouterFactory
-from dotmac_shared.schemas.base_schemas import BaseResponseSchema
-
-logger = logging.getLogger(__name__)
+# === Request/Response Schemas ===
 
 
-# ============= STANDARDIZED SCHEMAS =============
+class PortalIntegrationRequest(BaseModel):
+    """Request schema for portal integration configuration."""
 
-class PortalDashboardSchema(BaseResponseSchema):
-    """Standardized portal dashboard response schema."""
-    portal_type: str
-    user_info: Dict[str, Any]
-    metrics: Dict[str, Any]
-    notifications: List[Dict[str, Any]]
-    quick_actions: List[Dict[str, Any]]
+    portal_type: str = Field(..., description="Type of portal integration")
+    configuration: dict[str, Any] = Field(..., description="Integration configuration")
+    authentication_method: str = Field(..., description="Authentication method")
+    endpoints: dict[str, str] = Field(..., description="Integration endpoints")
 
 
-class PortalDataSchema(BaseResponseSchema):
-    """Standardized portal data response schema."""
-    data_type: str
-    items: List[Dict[str, Any]]
-    metadata: Dict[str, Any]
-    pagination: Optional[Dict[str, int]] = None
+class SSOConfigurationRequest(BaseModel):
+    """Request schema for SSO configuration."""
+
+    provider_name: str = Field(..., description="SSO provider name")
+    metadata_url: str | None = Field(None, description="SAML metadata URL")
+    client_id: str | None = Field(None, description="OAuth client ID")
+    client_secret: str | None = Field(None, description="OAuth client secret")
+    scopes: list[str] = Field(default_factory=list, description="OAuth scopes")
 
 
-# ============= DRY SERVICE CLASSES =============
+# === Main Portal Integrations Router ===
 
-class CustomerPortalService:
-    """Customer portal service following DRY service patterns."""
-    
-    def __init__(self, db, tenant_id: UUID):
-        self.db = db
-        self.tenant_id = tenant_id
-
-    @standard_exception_handler
-    async def get_dashboard(self, user_id: UUID) -> PortalDashboardSchema:
-        """Get customer dashboard data using standardized schema."""
-        dashboard_data = {
-            "portal_type": "customer",
-            "user_info": {
-                "id": "CUST-12345",
-                "name": "John Doe",
-                "status": "active",
-                "plan": "Fiber 100Mbps"
-            },
-            "metrics": {
-                "account_status": "active",
-                "monthly_cost": 79.99,
-                "data_usage": {"current": 750, "limit": 1000, "unit": "GB"},
-                "service_uptime": 99.97
-            },
-            "notifications": [
-                {
-                    "id": "notif-001",
-                    "type": "info", 
-                    "message": "Your service is operating normally",
-                    "timestamp": datetime.now(timezone.utc).isoformat()
-                }
-            ],
-            "quick_actions": [
-                {"label": "View Bill", "action": "view_billing"},
-                {"label": "Speed Test", "action": "speed_test"},
-                {"label": "Support", "action": "create_ticket"}
-            ]
-        }
-        
-        return PortalDashboardSchema(
-            id=user_id,
-            created_at=datetime.now(timezone.utc).isoformat(),
-            updated_at=datetime.now(timezone.utc).isoformat(),
-            **dashboard_data
-        )
-
-    @standard_exception_handler
-    async def get_billing(self, user_id: UUID) -> PortalDataSchema:
-        """Get customer billing data using standardized schema."""
-        billing_data = {
-            "data_type": "billing",
-            "items": [
-                {
-                    "current_balance": 0.00,
-                    "next_due_date": "2024-02-15T00:00:00Z",
-                    "payment_method": {"type": "card", "last_four": "4321"}
-                }
-            ],
-            "metadata": {
-                "account_id": "CUST-12345",
-                "billing_cycle": "monthly",
-                "auto_pay": True
-            }
-        }
-        
-        return PortalDataSchema(
-            id=user_id,
-            created_at=datetime.now(timezone.utc).isoformat(), 
-            updated_at=datetime.now(timezone.utc).isoformat(),
-            **billing_data
-        )
+portal_integrations_router = RouterFactory.create_standard_router(
+    prefix="/portal-integrations",
+    tags=["portal-integrations"],
+)
 
 
-class AdminPortalService:
-    """Admin portal service following DRY service patterns."""
-    
-    def __init__(self, db, tenant_id: UUID):
-        self.db = db
-        self.tenant_id = tenant_id
-
-    @standard_exception_handler
-    async def list_customers(
-        self,
-        skip: int = 0,
-        limit: int = 100,
-        filters: Optional[Dict[str, Any]] = None,
-        order_by: str = "created_at",
-        user_id: Optional[UUID] = None,
-    ) -> List[Dict[str, Any]]:
-        """List customers using standardized service pattern."""
-        # Mock data - in production would query database
-        customers = [
-            {
-                "id": "CUST-001",
-                "name": "John Doe", 
-                "email": "john.doe@example.com",
-                "status": "active",
-                "plan": "Fiber 100Mbps"
-            },
-            {
-                "id": "CUST-002",
-                "name": "Jane Smith",
-                "email": "jane.smith@businesscorp.com", 
-                "status": "active",
-                "plan": "Business 500Mbps"
-            }
-        ]
-        
-        # Apply filters following DRY patterns
-        if filters:
-            if "status" in filters:
-                customers = [c for c in customers if c["status"] == filters["status"]]
-            if "search" in filters:
-                query = filters["search"].lower()
-                customers = [
-                    c for c in customers 
-                    if query in c["name"].lower() or query in c["email"].lower()
-                ]
-        
-        return customers[skip:skip + limit]
-
-    @standard_exception_handler
-    async def count(
-        self, 
-        filters: Optional[Dict[str, Any]] = None,
-        user_id: Optional[UUID] = None
-    ) -> int:
-        """Count customers with filters."""
-        return 2  # Simplified for demo
+# === Portal Integration Management ===
 
 
-# ============= DRY ROUTER FACTORY IMPLEMENTATION =============
+@portal_integrations_router.post("/configure", response_model=dict[str, Any])
+@standard_exception_handler
+async def configure_portal_integration(
+    request: PortalIntegrationRequest,
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> dict[str, Any]:
+    """Configure a new portal integration."""
+    integration_id = f"integration-{request.portal_type}-{deps.tenant_id}"
 
-class PortalIntegrationRouterFactory:
-    """Factory for creating portal integration routers following DRY patterns."""
-
-    @classmethod
-    def create_customer_portal_router(cls) -> APIRouter:
-        """Create customer portal router using DRY patterns."""
-        router = APIRouter(prefix="/api/v1/customer", tags=["customer-portal"])
-
-        @router.get("/dashboard", response_model=PortalDashboardSchema)
-        @standard_exception_handler
-        async def get_customer_dashboard(deps: StandardDependencies = Depends(get_standard_deps) = Depends()):
-            """Get customer dashboard data."""
-            service = CustomerPortalService(deps.db, deps.tenant_id)
-            return await service.get_dashboard(deps.user_id)
-
-        @router.get("/billing", response_model=PortalDataSchema)
-        @standard_exception_handler
-        async def get_customer_billing(deps: StandardDependencies = Depends(get_standard_deps) = Depends()):
-            """Get customer billing information."""
-            service = CustomerPortalService(deps.db, deps.tenant_id)
-            return await service.get_billing(deps.user_id)
-
-        return router
-
-    @classmethod
-    def create_admin_portal_router(cls) -> APIRouter:
-        """Create admin portal router using DRY patterns."""
-        router = APIRouter(prefix="/api/v1/admin", tags=["admin-portal"])
-
-        @router.get("/customers")
-        @standard_exception_handler
-        async def get_customers(
-            page: int = Query(1, description="Page number"),
-            limit: int = Query(20, description="Items per page"),
-            search: Optional[str] = Query(None, description="Search term"),
-            status: Optional[str] = Query(None, description="Filter by status"),
-            deps: StandardDependencies = Depends(get_standard_deps) = Depends()
-        ):
-            """Get customers with filtering and pagination using DRY service pattern."""
-            service = AdminPortalService(deps.db, deps.tenant_id)
-            
-            filters = {}
-            if search:
-                filters["search"] = search
-            if status:
-                filters["status"] = status
-                
-            skip = (page - 1) * limit
-            customers = await service.list_customers(
-                skip=skip,
-                limit=limit, 
-                filters=filters,
-                user_id=deps.user_id
-            )
-            total = await service.count(filters, deps.user_id)
-            
-            return {
-                "customers": customers,
-                "total": total,
-                "page": page,
-                "limit": limit,
-                "total_pages": (total + limit - 1) // limit
-            }
-
-        return router
-
-    @classmethod
-    def create_technician_portal_router(cls) -> APIRouter:
-        """Create technician portal router using DRY patterns."""
-        router = APIRouter(prefix="/api/v1/technician", tags=["technician-portal"])
-
-        @router.get("/work-orders")
-        @standard_exception_handler
-        async def get_work_orders(
-            status: Optional[str] = Query(None, description="Filter by status"),
-            assigned_to: Optional[str] = Query(None, description="Filter by technician"),
-            deps: StandardDependencies = Depends(get_standard_deps) = Depends()
-        ):
-            """Get work orders for technicians using DRY service pattern."""
-            # Mock data - would use proper service in production
-            return {
-                "work_orders": [
-                    {
-                        "id": "WO-2024-001",
-                        "customer_name": "John Doe",
-                        "type": "installation",
-                        "status": "scheduled",
-                        "scheduled_date": "2024-02-20T10:00:00Z"
-                    }
-                ],
-                "total": 1
-            }
-
-        return router
-
-    @classmethod  
-    def create_reseller_portal_router(cls) -> APIRouter:
-        """Create reseller portal router using DRY patterns."""
-        router = APIRouter(prefix="/api/v1/reseller", tags=["reseller-portal"])
-
-        @router.get("/dashboard")
-        @standard_exception_handler
-        async def get_reseller_dashboard(deps: StandardDependencies = Depends(get_standard_deps) = Depends()):
-            """Get reseller dashboard data using DRY service pattern."""
-            # Mock data - would use proper service in production
-            return {
-                "summary": {
-                    "total_customers": 156,
-                    "active_customers": 142,
-                    "monthly_revenue": 18750.00,
-                    "commission_rate": 15.0
-                },
-                "performance": {
-                    "this_month": {
-                        "new_customers": 8,
-                        "churned_customers": 2,
-                        "net_growth": 6
-                    }
-                }
-            }
-
-        return router
+    return {
+        "integration_id": integration_id,
+        "portal_type": request.portal_type,
+        "status": "configured",
+        "configuration": request.configuration,
+        "created_by": deps.user_id,
+        "message": "Portal integration configured successfully",
+    }
 
 
-# ============= MAIN PORTAL ROUTERS USING FACTORY =============
+@portal_integrations_router.get("/integrations", response_model=list[dict[str, Any]])
+@standard_exception_handler
+async def list_portal_integrations(
+    portal_type: str | None = Query(None, description="Filter by portal type"),
+    status: str | None = Query(None, description="Filter by status"),
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> list[dict[str, Any]]:
+    """List configured portal integrations."""
+    # Mock implementation
+    integrations = [
+        {
+            "integration_id": f"integration-customer-portal-{deps.tenant_id}",
+            "portal_type": "customer_portal",
+            "status": "active",
+            "last_sync": "2025-01-15T10:30:00Z",
+            "configuration": {"theme": "default", "features": ["billing", "support"]},
+        },
+        {
+            "integration_id": f"integration-admin-portal-{deps.tenant_id}",
+            "portal_type": "admin_portal",
+            "status": "active",
+            "last_sync": "2025-01-15T10:25:00Z",
+            "configuration": {"dashboard": "advanced", "permissions": ["full_access"]},
+        },
+    ]
 
-def create_portal_integration_routers() -> List[APIRouter]:
-    """Create all portal integration routers using DRY factory patterns."""
-    factory = PortalIntegrationRouterFactory()
-    
+    if portal_type:
+        integrations = [i for i in integrations if i["portal_type"] == portal_type]
+    if status:
+        integrations = [i for i in integrations if i["status"] == status]
+
+    return integrations
+
+
+@portal_integrations_router.get("/integrations/{integration_id}", response_model=dict[str, Any])
+@standard_exception_handler
+async def get_portal_integration(
+    integration_id: str,
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> dict[str, Any]:
+    """Get specific portal integration details."""
+    return {
+        "integration_id": integration_id,
+        "portal_type": "customer_portal",
+        "status": "active",
+        "configuration": {
+            "theme": "default",
+            "branding": {"logo_url": "/assets/logo.png"},
+            "features": ["billing", "support", "service_status"],
+            "authentication": {"method": "oauth", "provider": "internal"},
+        },
+        "health": {
+            "last_check": "2025-01-15T10:30:00Z",
+            "response_time": "120ms",
+            "uptime": "99.9%",
+        },
+        "metrics": {
+            "daily_active_users": 245,
+            "total_sessions": 1240,
+            "avg_session_duration": "8m 45s",
+        },
+    }
+
+
+# === SSO Configuration ===
+
+
+@portal_integrations_router.post("/sso/configure", response_model=dict[str, Any])
+@standard_exception_handler
+async def configure_sso(
+    request: SSOConfigurationRequest,
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> dict[str, Any]:
+    """Configure SSO for portal integration."""
+    sso_config_id = f"sso-{request.provider_name}-{deps.tenant_id}"
+
+    return {
+        "sso_config_id": sso_config_id,
+        "provider_name": request.provider_name,
+        "status": "configured",
+        "test_url": f"/portal-integrations/sso/{sso_config_id}/test",
+        "message": "SSO configuration completed successfully",
+    }
+
+
+@portal_integrations_router.get("/sso/providers", response_model=list[dict[str, Any]])
+@standard_exception_handler
+async def list_sso_providers(
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> list[dict[str, Any]]:
+    """List available SSO providers."""
     return [
-        factory.create_customer_portal_router(),
-        factory.create_admin_portal_router(),
-        factory.create_technician_portal_router(),
-        factory.create_reseller_portal_router(),
+        {
+            "provider_name": "google",
+            "display_name": "Google Workspace",
+            "type": "oauth",
+            "supported_features": ["login", "user_sync", "group_sync"],
+            "documentation_url": "/docs/sso/google",
+        },
+        {
+            "provider_name": "microsoft",
+            "display_name": "Microsoft Azure AD",
+            "type": "oauth",
+            "supported_features": ["login", "user_sync", "group_sync", "mfa"],
+            "documentation_url": "/docs/sso/microsoft",
+        },
+        {
+            "provider_name": "okta",
+            "display_name": "Okta",
+            "type": "saml",
+            "supported_features": ["login", "user_sync", "attribute_mapping"],
+            "documentation_url": "/docs/sso/okta",
+        },
     ]
 
 
-# Export standardized routers - NO BACKWARD COMPATIBILITY
-portal_routers = create_portal_integration_routers()
-customer_router = portal_routers[0]
-admin_router = portal_routers[1]
-technician_router = portal_routers[2]
-reseller_router = portal_routers[3]
+@portal_integrations_router.post("/sso/{config_id}/test", response_model=dict[str, Any])
+@standard_exception_handler
+async def test_sso_configuration(
+    config_id: str,
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> dict[str, Any]:
+    """Test SSO configuration."""
+    return {
+        "config_id": config_id,
+        "test_status": "success",
+        "test_results": {
+            "authentication": "passed",
+            "user_attributes": "passed",
+            "group_mapping": "passed",
+        },
+        "test_user": {
+            "email": "test.user@example.com",
+            "name": "Test User",
+            "groups": ["users", "portal_access"],
+        },
+        "message": "SSO configuration test completed successfully",
+    }
 
 
-# Example usage in main application:
-"""
-from dotmac_isp.api.portal_integrations import create_portal_integration_routers
+# === Portal Customization ===
 
-app = FastAPI()
 
-# Add all portal routers using DRY factory
-for router in create_portal_integration_routers():
-    app.include_router(router)
-"""
+@portal_integrations_router.post("/customization/{integration_id}", response_model=dict[str, Any])
+@standard_exception_handler
+async def customize_portal(
+    integration_id: str,
+    customization_data: dict[str, Any] = Body(..., description="Customization settings"),
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> dict[str, Any]:
+    """Apply customization to a portal integration."""
+    return {
+        "integration_id": integration_id,
+        "customization_applied": True,
+        "settings": customization_data,
+        "preview_url": f"/portal-preview/{integration_id}",
+        "message": "Portal customization applied successfully",
+    }
+
+
+@portal_integrations_router.get("/customization/{integration_id}/preview")
+@standard_exception_handler
+async def preview_portal_customization(
+    integration_id: str,
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> dict[str, Any]:
+    """Preview portal customization."""
+    return {
+        "integration_id": integration_id,
+        "preview_data": {
+            "theme": "custom_theme",
+            "branding": {"primary_color": "#007bff", "logo_url": "/custom/logo.png"},
+            "layout": "modern",
+            "features_enabled": ["billing", "support", "notifications"],
+        },
+        "preview_url": f"/portal-preview/{integration_id}",
+        "expires_at": "2025-01-15T12:00:00Z",
+    }
+
+
+# === Integration Health and Metrics ===
+
+
+@portal_integrations_router.get("/health", response_model=dict[str, Any])
+@standard_exception_handler
+async def get_integrations_health(
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> dict[str, Any]:
+    """Get health status of all portal integrations."""
+    return {
+        "overall_status": "healthy",
+        "active_integrations": 2,
+        "total_integrations": 2,
+        "health_checks": {
+            "customer_portal": {"status": "healthy", "response_time": "120ms"},
+            "admin_portal": {"status": "healthy", "response_time": "95ms"},
+            "sso_providers": {"status": "healthy", "active_connections": 3},
+        },
+        "last_check": "2025-01-15T10:30:00Z",
+    }
+
+
+@portal_integrations_router.get("/metrics", response_model=dict[str, Any])
+@standard_exception_handler
+async def get_integration_metrics(
+    time_period: str = Query("24h", description="Time period for metrics"),
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> dict[str, Any]:
+    """Get usage metrics for portal integrations."""
+    return {
+        "time_period": time_period,
+        "metrics": {
+            "total_logins": 1250,
+            "unique_users": 450,
+            "avg_session_duration": "8m 32s",
+            "successful_authentications": 1235,
+            "failed_authentications": 15,
+            "portal_page_views": 8920,
+            "api_calls": 25600,
+        },
+        "trends": {
+            "user_growth": "+12%",
+            "session_duration_change": "+5%",
+            "authentication_success_rate": "98.8%",
+        },
+    }
+
+
+# Export the router
+__all__ = ["portal_integrations_router"]

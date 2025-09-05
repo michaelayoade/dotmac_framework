@@ -19,13 +19,11 @@ Use Cases:
 - Management Platform: Infrastructure deployments, system upgrades
 - General: Any multi-phase project with stakeholders and deadlines
 """
+from typing import Any, Optional
 
 __version__ = "1.0.0"
 
 # Core project management components
-from .core.models import (
-    ProjectUpdate,  # Main entities; Enums and types; Pydantic schemas
-)
 from .core.models import (
     MilestoneCreate,
     MilestoneResponse,
@@ -44,6 +42,7 @@ from .core.models import (
     ProjectResponse,
     ProjectStatus,
     ProjectType,
+    ProjectUpdate,  # Main entities; Enums and types; Pydantic schemas
     ResourceType,
     UpdateCreate,
     UpdateResponse,
@@ -67,7 +66,7 @@ except ImportError:
 
 
 # Initialization functions
-def initialize_project_management(config: dict = None):
+def initialize_project_management(config: Optional[dict] = None):
     """Initialize the project management system."""
     from .core.project_manager import ProjectManager
 

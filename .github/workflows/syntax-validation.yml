@@ -1,0 +1,217 @@
+name: Syntax and Import Validation
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  syntax-validation:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11"]
+      fail-fast: false
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install ast-tools
+        # Install minimal dependencies for import validation
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+    - name: Run Syntax Validation - Core Modules
+      run: |
+        python .dev-artifacts/scripts/syntax_validator.py src/ \
+          --format json \
+          --output syntax-report-core.json \
+          --fail-on-templates false
+      continue-on-error: false
+
+    - name: Run Syntax Validation - Packages
+      run: |
+        python .dev-artifacts/scripts/syntax_validator.py packages/ \
+          --format json \
+          --output syntax-report-packages.json \
+          --fail-on-templates false
+      continue-on-error: false
+
+    - name: Run Syntax Validation - Templates (Non-blocking)
+      run: |
+        python .dev-artifacts/scripts/syntax_validator.py templates/ \
+          --format json \
+          --output syntax-report-templates.json \
+          --fail-on-templates false
+      continue-on-error: true
+
+    - name: Upload Syntax Reports
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: syntax-reports-${{ matrix.python-version }}
+        path: |
+          syntax-report-*.json
+
+    - name: Generate Summary Report
+      if: always()
+      run: |
+        python -c "
+        import json
+        import glob
+        
+        reports = []
+        for report_file in glob.glob('syntax-report-*.json'):
+            try:
+                with open(report_file, 'r') as f:
+                    reports.append((report_file, json.load(f)))
+            except:
+                pass
+        
+        total_files = sum(r[1]['summary']['total_files'] for r in reports)
+        total_errors = sum(r[1]['summary']['syntax_errors'] + r[1]['summary']['import_violations'] for r in reports)
+        total_warnings = sum(r[1]['summary']['warnings'] for r in reports)
+        
+        print(f'## Syntax Validation Summary (Python ${{ matrix.python-version }})')
+        print(f'- **Files processed:** {total_files}')
+        print(f'- **Syntax errors:** {total_errors}')
+        print(f'- **Import violations:** {sum(r[1][\"summary\"][\"import_violations\"] for r in reports)}')
+        print(f'- **Warnings:** {total_warnings}')
+        
+        if total_errors > 0:
+            print(f'- **Status:** ❌ FAILED')
+            exit(1 if any('core' in r[0] or 'packages' in r[0] for r in reports if r[1]['summary']['syntax_errors'] > 0) else 0)
+        else:
+            print(f'- **Status:** ✅ PASSED')
+        "
+
+  import-analysis:
+    runs-on: ubuntu-latest
+    needs: syntax-validation
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+
+    - name: Run Import Analysis
+      run: |
+        python .dev-artifacts/scripts/import_scanner.py . > import-analysis.txt
+        
+        # Check for critical import issues
+        python -c "
+        import sys
+        
+        with open('import-analysis.txt', 'r') as f:
+            content = f.read()
+        
+        # Extract key metrics
+        lines = content.split('\n')
+        
+        circular_imports = 0
+        star_imports = 0
+        parse_errors = 0
+        
+        for line in lines:
+            if 'Circular import cycles:' in line:
+                circular_imports = int(line.split(':')[1].strip())
+            elif 'Files with star imports:' in line:
+                star_imports = int(line.split(':')[1].strip())
+            elif 'Files with parse errors:' in line:
+                parse_errors = int(line.split(':')[1].strip())
+        
+        print(f'## Import Analysis Results')
+        print(f'- **Circular imports:** {circular_imports}')
+        print(f'- **Star imports:** {star_imports}')
+        print(f'- **Parse errors:** {parse_errors}')
+        
+        # Fail if critical issues found
+        if circular_imports > 0:
+            print('❌ **CRITICAL**: Circular imports detected!')
+            sys.exit(1)
+        elif parse_errors > 50:  # Allow some parse errors for templates
+            print('❌ **HIGH**: Too many parse errors!')
+            sys.exit(1)
+        elif star_imports > 20:
+            print('⚠️  **WARNING**: High number of star imports')
+        else:
+            print('✅ **Import analysis passed**')
+        "
+
+    - name: Upload Import Analysis
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: import-analysis
+        path: import-analysis.txt
+
+  pre-commit-hooks:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+    
+    - name: Install pre-commit
+      run: |
+        python -m pip install --upgrade pip
+        pip install pre-commit
+    
+    - name: Create pre-commit config
+      run: |
+        cat > .pre-commit-config.yaml << EOF
+        repos:
+        - repo: local
+          hooks:
+          - id: syntax-validation
+            name: Python Syntax Validation
+            entry: python .dev-artifacts/scripts/syntax_validator.py
+            language: system
+            files: \.py$
+            exclude: ^(templates/|tools/|docs/)
+            pass_filenames: false
+            args: [--fail-on-templates, false]
+          
+          - id: python-ast
+            name: Python AST Check
+            entry: python -m py_compile
+            language: system
+            files: \.py$
+            exclude: ^(templates/|tools/|docs/)
+        
+        - repo: https://github.com/psf/black
+          rev: 23.3.0
+          hooks:
+          - id: black
+            files: ^src/
+            exclude: ^(templates/|tools/|docs/)
+        
+        - repo: https://github.com/pycqa/isort
+          rev: 5.12.0
+          hooks:
+          - id: isort
+            files: ^src/
+            exclude: ^(templates/|tools/|docs/)
+            args: [--profile=black]
+        EOF
+    
+    - name: Run pre-commit
+      run: |
+        pre-commit run --all-files || true
+        echo "Pre-commit hooks validation completed"

@@ -4,7 +4,6 @@ Thin adapter layer that provides CSRF protection.
 """
 
 import logging
-from typing import Optional
 
 from fastapi import FastAPI
 

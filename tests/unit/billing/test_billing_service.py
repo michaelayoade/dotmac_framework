@@ -10,22 +10,30 @@ Tests cover:
 - Error handling and edge cases
 """
 
-import pytest
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
 from datetime import datetime, timedelta
 from decimal import Decimal
+from unittest.mock import AsyncMock, Mock
 from uuid import uuid4
-from typing import Dict, Any, List
 
-from dotmac_isp.modules.billing.service import BillingService
+import pytest
 from dotmac_isp.modules.billing.models import (
-    Invoice, Payment, BillingCustomer, Subscription, UsageRecord,
-    InvoiceStatus, PaymentStatus, SubscriptionStatus, BillingCycle
+    BillingCycle,
+    Invoice,
+    InvoiceStatus,
+    Payment,
+    PaymentStatus,
+    Subscription,
+    SubscriptionStatus,
+    UsageRecord,
 )
 from dotmac_isp.modules.billing.repository import (
-    BillingCustomerRepository, InvoiceRepository, PaymentRepository,
-    SubscriptionRepository, UsageRecordRepository
+    BillingCustomerRepository,
+    InvoiceRepository,
+    PaymentRepository,
+    SubscriptionRepository,
+    UsageRecordRepository,
 )
+from dotmac_isp.modules.billing.service import BillingService
 
 
 class TestBillingServiceInitialization:

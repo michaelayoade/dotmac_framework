@@ -148,7 +148,7 @@ class UserStatus(str, Enum):
     PENDING_VERIFICATION = "pending_verification"
     SUSPENDED = "suspended"
     LOCKED = "locked"
-    PASSWORD_RESET_REQUIRED = "password_reset_required"
+    PASSWORD_RESET_REQUIRED = "password_reset_required"  # noqa: S105 - status label
     DELETED = "deleted"
 
 

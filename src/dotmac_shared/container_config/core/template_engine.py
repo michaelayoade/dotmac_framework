@@ -5,14 +5,14 @@ import logging
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional, Union
 
 import jinja2
 import yaml
 from jinja2 import BaseLoader, Environment, FileSystemLoader, Template
 from jinja2.sandbox import SandboxedEnvironment
 
-from ..schemas.tenant_schemas import SubscriptionPlan, TenantInfo
+from ..schemas.tenant_schemas import TenantInfo
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 class SecureTemplateLoader(BaseLoader):
     """Secure template loader with path validation."""
 
-    def __init__(self, template_dirs: List[str]):
+    def __init__(self, template_dirs: list[str]):
         self.template_dirs = [Path(d).resolve() for d in template_dirs]
 
     def get_source(self, environment: Environment, template: str) -> tuple:
@@ -39,7 +39,7 @@ class SecureTemplateLoader(BaseLoader):
                 continue
 
             if template_path.exists() and template_path.is_file():
-                with open(template_path, "r", encoding="utf-8") as f:
+                with open(template_path, encoding="utf-8") as f:
                     source = f.read()
 
                 mtime = template_path.stat().st_mtime
@@ -62,7 +62,7 @@ class TemplateEngine:
 
     def __init__(
         self,
-        template_dirs: Optional[List[str]] = None,
+        template_dirs: Optional[list[str]] = None,
         enable_caching: bool = True,
         cache_size: int = 100,
         enable_sandbox: bool = True,
@@ -93,6 +93,7 @@ class TemplateEngine:
             self.env = SandboxedEnvironment(
                 loader=SecureTemplateLoader(self.template_dirs),
                 auto_reload=auto_reload,
+                autoescape=False,  # Rendering config files (YAML/JSON), not HTML
                 cache_size=cache_size if enable_caching else 0,
                 trim_blocks=True,
                 lstrip_blocks=True,
@@ -101,6 +102,7 @@ class TemplateEngine:
             self.env = Environment(
                 loader=FileSystemLoader(self.template_dirs),
                 auto_reload=auto_reload,
+                autoescape=False,  # Rendering config files (YAML/JSON), not HTML
                 cache_size=cache_size if enable_caching else 0,
                 trim_blocks=True,
                 lstrip_blocks=True,
@@ -110,9 +112,7 @@ class TemplateEngine:
         self._setup_custom_filters()
         self._setup_custom_functions()
 
-        logger.info(
-            f"Template engine initialized with directories: {self.template_dirs}"
-        )
+        logger.info(f"Template engine initialized with directories: {self.template_dirs}")
 
     def _setup_custom_filters(self):
         """Setup custom Jinja2 filters for configuration processing."""
@@ -125,15 +125,13 @@ class TemplateEngine:
             """Convert string to environment variable format."""
             return str(value).upper().replace("-", "_").replace(" ", "_")
 
-        def plan_feature_enabled(
-            plan: str, feature: str, plan_features: Dict[str, List[str]] = None
-        ):
+        def plan_feature_enabled(plan: str, feature: str, plan_features: Optional[dict[str, list[str]]] = None):
             """Check if a feature is enabled for a subscription plan."""
             if not plan_features:
                 return False
             return feature in plan_features.get(plan, [])
 
-        def format_database_url(config: Dict[str, Any]):
+        def format_database_url(config: dict[str, Any]):
             """Format database URL from configuration."""
             db_type = config.get("type", "postgresql")
             username = config.get("username", "user")
@@ -144,7 +142,7 @@ class TemplateEngine:
 
             return f"{db_type}://{username}:{password}@{host}:{port}/{name}"
 
-        def format_redis_url(config: Dict[str, Any]):
+        def format_redis_url(config: dict[str, Any]):
             """Format Redis URL from configuration."""
             host = config.get("host", "localhost")
             port = config.get("port", 6379)
@@ -158,7 +156,7 @@ class TemplateEngine:
         def scale_by_plan(
             base_value: Union[int, float],
             plan: str,
-            multipliers: Dict[str, float] = None,
+            multipliers: Optional[dict[str, float]] = None,
         ):
             """Scale a value based on subscription plan."""
             if not multipliers:
@@ -169,9 +167,7 @@ class TemplateEngine:
                 return int(base_value * multiplier)
             return base_value * multiplier
 
-        def resource_limit(
-            plan: str, resource: str, limits: Dict[str, Dict[str, Any]] = None
-        ):
+        def resource_limit(plan: str, resource: str, limits: Optional[dict[str, dict[str, Any]]] = None):
             """Get resource limit for a plan."""
             if not limits:
                 limits = {
@@ -206,9 +202,7 @@ class TemplateEngine:
             """Generate placeholder for secret injection."""
             return f"${{SECRET:{secret_name}}}"
 
-        def conditional_config(
-            condition: bool, true_config: Any, false_config: Any = None
-        ):
+        def conditional_config(condition: bool, true_config: Any, false_config: Any = None):
             """Conditionally include configuration."""
             return true_config if condition else (false_config or {})
 
@@ -227,9 +221,7 @@ class TemplateEngine:
         self.env.globals["conditional_config"] = conditional_config
         self.env.globals["merge_configs"] = merge_configs
 
-    async def render_template(
-        self, template_name: str, context: Dict[str, Any], output_format: str = "yaml"
-    ) -> str:
+    async def render_template(self, template_name: str, context: dict[str, Any], output_format: str = "yaml") -> str:
         """
         Render a template with the given context.
 
@@ -248,9 +240,7 @@ class TemplateEngine:
             context["output_format"] = output_format
 
             # Render template
-            result = await asyncio.get_event_loop().run_in_executor(
-                None, template.render, context
-            )
+            result = await asyncio.get_event_loop().run_in_executor(None, template.render, context)
 
             logger.debug(f"Successfully rendered template {template_name}")
             return result
@@ -268,7 +258,7 @@ class TemplateEngine:
     async def render_string(
         self,
         template_string: str,
-        context: Dict[str, Any],
+        context: dict[str, Any],
         template_name: str = "inline",
     ) -> str:
         """
@@ -285,9 +275,7 @@ class TemplateEngine:
         try:
             template = self.env.from_string(template_string, template_class=Template)
 
-            result = await asyncio.get_event_loop().run_in_executor(
-                None, template.render, context
-            )
+            result = await asyncio.get_event_loop().run_in_executor(None, template.render, context)
 
             logger.debug(f"Successfully rendered inline template {template_name}")
             return result
@@ -303,7 +291,7 @@ class TemplateEngine:
         self,
         tenant_info: TenantInfo,
         environment: str,
-        custom_context: Optional[Dict[str, Any]] = None,
+        custom_context: Optional[dict[str, Any]] = None,
     ) -> str:
         """
         Render ISP configuration using the default template.
@@ -332,7 +320,7 @@ class TemplateEngine:
         self,
         tenant_info: TenantInfo,
         environment: str,
-        database_overrides: Optional[Dict[str, Any]] = None,
+        database_overrides: Optional[dict[str, Any]] = None,
     ) -> str:
         """
         Render database configuration template.
@@ -356,8 +344,8 @@ class TemplateEngine:
     async def render_feature_config(
         self,
         tenant_info: TenantInfo,
-        enabled_features: List[str],
-        feature_configs: Optional[Dict[str, Any]] = None,
+        enabled_features: list[str],
+        feature_configs: Optional[dict[str, Any]] = None,
     ) -> str:
         """
         Render feature configuration template.
@@ -379,7 +367,7 @@ class TemplateEngine:
 
         return await self.render_template("feature_config.j2", context)
 
-    async def validate_template(self, template_name: str) -> Dict[str, Any]:
+    async def validate_template(self, template_name: str) -> dict[str, Any]:
         """
         Validate a template for syntax errors.
 
@@ -416,7 +404,7 @@ class TemplateEngine:
                 "errors": [f"Validation error: {str(e)}"],
             }
 
-    async def list_templates(self) -> List[str]:
+    async def list_templates(self) -> list[str]:
         """
         List all available templates.
 
@@ -427,17 +415,15 @@ class TemplateEngine:
 
         for template_dir in self.template_dirs:
             if os.path.exists(template_dir):
-                for root, dirs, files in os.walk(template_dir):
+                for root, _dirs, files in os.walk(template_dir):
                     for file in files:
                         if file.endswith((".j2", ".jinja", ".jinja2")):
-                            rel_path = os.path.relpath(
-                                os.path.join(root, file), template_dir
-                            )
+                            rel_path = os.path.relpath(os.path.join(root, file), template_dir)
                             templates.append(rel_path)
 
-        return sorted(list(set(templates)))
+        return sorted(set(templates))
 
-    def _get_plan_features(self) -> Dict[str, List[str]]:
+    def _get_plan_features(self) -> dict[str, list[str]]:
         """Get feature mappings for subscription plans."""
         return {
             "basic": [
@@ -509,7 +495,7 @@ class TemplateEngine:
             logger.error(f"Failed to create template {template_name}: {e}")
             return False
 
-    def get_template_info(self, template_name: str) -> Optional[Dict[str, Any]]:
+    def get_template_info(self, template_name: str) -> Optional[dict[str, Any]]:
         """
         Get information about a template.
 
@@ -520,7 +506,7 @@ class TemplateEngine:
             Template information or None if not found
         """
         try:
-            template = self.env.get_template(template_name)
+            self.env.get_template(template_name)
 
             # Get template file info
             for template_dir in self.template_dirs:

@@ -1,8 +1,29 @@
 'use client';
 
-import { PortalProviderFactory } from '@dotmac/portal-components';
-import { PackageIntegrations } from '@dotmac/portal-components';
-import { ManagementProvider } from '@dotmac/headless/management';
+// Smart component loading with graceful fallbacks
+import { createAdaptiveComponent } from '@/components/adapters/ComponentLoader';
+import { PortalProviderFactory as FallbackPortalProviderFactory } from '@/components/temp/PortalProviderFactory';
+import { PackageIntegrations as FallbackPackageIntegrations } from '@/components/temp/PackageIntegrations';
+import { ManagementProvider as FallbackManagementProvider } from '@/components/temp/ManagementProvider';
+
+// Create adaptive components that try real packages first, fallback to stubs
+const PortalProviderFactory = createAdaptiveComponent(
+  '@dotmac/portal-components',
+  'PortalProviderFactory',
+  FallbackPortalProviderFactory
+);
+
+const PackageIntegrations = createAdaptiveComponent(
+  '@dotmac/portal-components',
+  'PackageIntegrations',
+  FallbackPackageIntegrations
+);
+
+const ManagementProvider = createAdaptiveComponent(
+  '@dotmac/headless',
+  'ManagementProvider',
+  FallbackManagementProvider
+);
 import { useState, useEffect } from 'react';
 import { createProductionQueryClient } from '@/lib/production-init';
 

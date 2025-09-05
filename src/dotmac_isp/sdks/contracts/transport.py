@@ -1,9 +1,9 @@
 """Transport layer contracts for SDK communication."""
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 
 class RequestMethod(str, Enum):
@@ -42,8 +42,8 @@ class RequestContext:
     user_agent: Optional[str] = None
     trace_id: Optional[str] = None
     span_id: Optional[str] = None
-    headers: Optional[Dict[str, str]] = None
-    metadata: Optional[Dict[str, Any]] = None
+    headers: Optional[dict[str, str]] = None
+    metadata: Optional[dict[str, Any]] = None
     timestamp: Optional[datetime] = None
 
     def __post_init__(self):
@@ -68,7 +68,7 @@ class TransportConfig:
     max_retries: int = 3
     retry_delay: float = 1.0
     verify_ssl: bool = True
-    headers: Optional[Dict[str, str]] = None
+    headers: Optional[dict[str, str]] = None
     auth_token: Optional[str] = None
 
     def __post_init__(self):
@@ -83,9 +83,9 @@ class RequestMessage:
 
     method: RequestMethod
     endpoint: str
-    headers: Optional[Dict[str, str]] = None
-    query_params: Optional[Dict[str, Any]] = None
-    body: Optional[Dict[str, Any]] = None
+    headers: Optional[dict[str, str]] = None
+    query_params: Optional[dict[str, Any]] = None
+    body: Optional[dict[str, Any]] = None
     context: Optional[RequestContext] = None
     timeout: Optional[float] = None
 
@@ -102,8 +102,8 @@ class ResponseMessage:
     """Response message structure."""
 
     status_code: int
-    headers: Dict[str, str]
-    body: Optional[Dict[str, Any]] = None
+    headers: dict[str, str]
+    body: Optional[dict[str, Any]] = None
     raw_body: Optional[str] = None
     error: Optional[str] = None
     timestamp: Optional[datetime] = None
@@ -134,7 +134,7 @@ class EventMessage:
     """Event message for asynchronous communication."""
 
     event_type: str
-    payload: Dict[str, Any]
+    payload: dict[str, Any]
     context: Optional[RequestContext] = None
     timestamp: Optional[datetime] = None
     event_id: Optional[str] = None
@@ -150,7 +150,7 @@ class EventMessage:
 class BatchRequest:
     """Batch request for multiple operations."""
 
-    requests: List[RequestMessage]
+    requests: list[RequestMessage]
     context: Optional[RequestContext] = None
     timeout: Optional[float] = None
     fail_fast: bool = True
@@ -165,7 +165,7 @@ class BatchRequest:
 class BatchResponse:
     """Batch response for multiple operations."""
 
-    responses: List[ResponseMessage]
+    responses: list[ResponseMessage]
     context: Optional[RequestContext] = None
     timestamp: Optional[datetime] = None
     success_count: int = 0

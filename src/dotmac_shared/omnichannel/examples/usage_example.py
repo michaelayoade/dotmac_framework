@@ -7,13 +7,11 @@ for managing customer interactions across multiple communication channels.
 Author: DotMac Framework Team
 License: MIT
 """
-
 import asyncio
-from datetime import datetime
+import logging
 from uuid import uuid4
 
-# Note: This example shows the intended usage pattern
-# Actual imports would work when the full DotMac environment is available
+logger = logging.getLogger(__name__)
 
 
 async def omnichannel_usage_example():
@@ -31,7 +29,7 @@ async def omnichannel_usage_example():
         # from dotmac_shared.omnichannel.plugins import create_twilio_sms_plugin
 
         # 1. Initialize core components
-        tenant_id = uuid4()
+        uuid4()
 
         # Initialize components (pseudo-code)
         # channel_orchestrator = ChannelOrchestrator(tenant_id)
@@ -40,29 +38,13 @@ async def omnichannel_usage_example():
         # agent_manager = AgentManager(tenant_id)
 
         # 2. Configure communication channels via plugin system
-        twilio_config = {
-            "account_sid": "AC1234567890abcdef",
-            "auth_token": "your_auth_token_here",
-            "from_number": "+1234567890",
-            "webhook_url": "https://your-app.com/webhooks/twilio",
-            "max_concurrent_messages": 100,
-            "rate_limit_per_minute": 60,
-        }
 
         # Create and register Twilio SMS plugin
         # twilio_plugin = create_twilio_sms_plugin(twilio_config)
         # await channel_orchestrator.initialize()
 
         # 3. Create customer interaction
-        customer_id = uuid4()
-        interaction_data = {
-            "customer_id": customer_id,
-            "channel": "email",  # ChannelType.EMAIL
-            "subject": "Service Inquiry",
-            "content": "I need help with my internet service setup",
-            "priority": "high",
-            "source": "customer_portal",
-        }
+        uuid4()
 
         # Create interaction
         # interaction = await interaction_manager.create_interaction(**interaction_data)
@@ -79,10 +61,10 @@ async def omnichannel_usage_example():
         #         interaction.id,
         #         agent.id
         #     )
-        #     print(f"👨‍💼 Routed interaction to agent {agent.full_name}")
+        #     logger.info(f"👨‍💼 Routed interaction to agent {agent.full_name}")
 
         # 5. Send response via appropriate channel
-        response_data = {
+        {
             "interaction_id": uuid4(),  # interaction.id
             "channel": "email",  # ChannelType.EMAIL
             "recipient": "customer@example.com",
@@ -95,21 +77,21 @@ async def omnichannel_usage_example():
         # Send response
         # message_result = await channel_orchestrator.send_message(**response_data)
         # if message_result.success:
-        #     print(f"📧 Response sent successfully: {message_result.message_id}")
+        #     logger.info(f"📧 Response sent successfully: {message_result.message_id}")
         # else:
-        #     print(f"❌ Failed to send response: {message_result.failure_reason}")
+        #     logger.info(f"❌ Failed to send response: {message_result.failure_reason}")
 
         # 6. Monitor plugin status
         # plugin_status = await channel_orchestrator.get_plugin_status()
         # for plugin_id, status in plugin_status.items():
-        #     print(f"🔌 Plugin {plugin_id}: {status['health_status']['status']}")
+        #     logger.info(f"🔌 Plugin {plugin_id}: {status['health_status']['status']}")
 
         # 7. Get channel statistics
         # stats = await channel_orchestrator.get_channel_statistics()
         # for channel_type, channel_stats in stats.items():
-        #     print(f"📊 {channel_type}: {channel_stats['success_rate']:.1f}% success rate")
+        #     logger.info(f"📊 {channel_type}: {channel_stats['success_rate']:.1f}% success rate")
 
-    except Exception as e:
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -117,7 +99,7 @@ async def omnichannel_usage_example():
 
 def show_architecture_overview():
     """Display architecture overview"""
-    print(
+    logger.info(
         """
     Plugin System Integration:
     ┌─────────────────────────────────────────┐

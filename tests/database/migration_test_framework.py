@@ -9,19 +9,19 @@ import asyncio
 import json
 import logging
 import os
-import tempfile
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 from uuid import uuid4
 
 import asyncpg
 import pytest
+from sqlalchemy.ext.asyncio import create_async_engine
+
 from alembic import command
 from alembic.config import Config
 from alembic.runtime.migration import MigrationContext
 from alembic.script import ScriptDirectory
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +31,7 @@ class MigrationTestFramework:
 
     def __init__(self, database_url: str, migration_path: str = "migrations"):
         self.database_url = database_url
-        self.migration_path = Path(migration_path)
+        self.migration_path = Path(migration_path)  # noqa: B008
         self.test_database_url = None
         self.engine = None
         self.alembic_cfg = None
@@ -157,18 +157,18 @@ datefmt = %H:%M:%S
         self.alembic_cfg = Config(str(alembic_cfg_path))
         self.alembic_cfg.set_main_option("sqlalchemy.url", self.test_database_url)
 
-    async def get_migration_history(self) -> List[str]:
+    async def get_migration_history(self) -> list[str]:
         """Get current migration history."""
         async with self.engine.connect() as conn:
             context = MigrationContext.configure(conn.sync_connection)
             return context.get_current_heads()
 
-    async def get_available_migrations(self) -> List[str]:
+    async def get_available_migrations(self) -> list[str]:
         """Get all available migrations."""
         script_dir = ScriptDirectory.from_config(self.alembic_cfg)
         return [revision.revision for revision in script_dir.walk_revisions()]
 
-    async def test_clean_migration_to_head(self) -> Dict[str, Any]:
+    async def test_clean_migration_to_head(self) -> dict[str, Any]:
         """Test migrating from clean database to HEAD."""
         result = {
             "test_name": "clean_migration_to_head",
@@ -204,7 +204,7 @@ datefmt = %H:%M:%S
         
         return result
 
-    async def test_incremental_migrations(self) -> Dict[str, Any]:
+    async def test_incremental_migrations(self) -> dict[str, Any]:
         """Test applying migrations one by one."""
         result = {
             "test_name": "incremental_migrations",
@@ -267,7 +267,7 @@ datefmt = %H:%M:%S
         
         return result
 
-    async def test_rollback_migrations(self) -> Dict[str, Any]:
+    async def test_rollback_migrations(self) -> dict[str, Any]:
         """Test rolling back migrations."""
         result = {
             "test_name": "rollback_migrations",
@@ -334,7 +334,7 @@ datefmt = %H:%M:%S
         
         return result
 
-    async def test_data_integrity_during_migration(self) -> Dict[str, Any]:
+    async def test_data_integrity_during_migration(self) -> dict[str, Any]:
         """Test that data is preserved during migrations."""
         result = {
             "test_name": "data_integrity_migration",
@@ -386,7 +386,7 @@ datefmt = %H:%M:%S
         
         return result
 
-    async def test_migration_performance(self) -> Dict[str, Any]:
+    async def test_migration_performance(self) -> dict[str, Any]:
         """Test migration performance with larger datasets."""
         result = {
             "test_name": "migration_performance",
@@ -448,7 +448,7 @@ datefmt = %H:%M:%S
         
         return result
 
-    async def _get_database_structure(self) -> Dict[str, Any]:
+    async def _get_database_structure(self) -> dict[str, Any]:
         """Get current database structure."""
         async with self.engine.connect() as conn:
             # Get tables
@@ -479,7 +479,7 @@ datefmt = %H:%M:%S
             
             return {"tables": tables}
 
-    async def _insert_test_data(self) -> List[Dict[str, Any]]:
+    async def _insert_test_data(self) -> list[dict[str, Any]]:
         """Insert test data for integrity testing."""
         test_data = []
         
@@ -519,7 +519,7 @@ datefmt = %H:%M:%S
         
         return test_data
 
-    async def _verify_test_data(self, original_data: List[Dict[str, Any]]) -> Dict[str, Any]:
+    async def _verify_test_data(self, original_data: list[dict[str, Any]]) -> dict[str, Any]:
         """Verify that test data is still intact."""
         verification = {
             "all_data_preserved": True,
@@ -551,7 +551,7 @@ datefmt = %H:%M:%S
         
         return verification
 
-    async def _insert_large_test_dataset(self) -> List[Dict[str, Any]]:
+    async def _insert_large_test_dataset(self) -> list[dict[str, Any]]:
         """Insert a larger dataset for performance testing."""
         dataset = []
         
@@ -577,7 +577,7 @@ datefmt = %H:%M:%S
         
         return dataset
 
-    async def run_all_tests(self) -> Dict[str, Any]:
+    async def run_all_tests(self) -> dict[str, Any]:
         """Run all migration tests."""
         test_suite_start = datetime.now()
         
@@ -648,7 +648,7 @@ class MigrationTestRunner:
         self.config = self._load_config(config_path)
         self.framework = None
     
-    def _load_config(self, config_path: Optional[str]) -> Dict[str, Any]:
+    def _load_config(self, config_path: Optional[str]) -> dict[str, Any]:
         """Load test configuration."""
         default_config = {
             "database_url": os.getenv("DATABASE_URL", "postgresql+asyncpg://localhost:5432/dotmac_test"),
@@ -696,9 +696,9 @@ class MigrationTestRunner:
             if self.framework:
                 await self.framework.teardown()
     
-    async def _save_results(self, results: Dict[str, Any]):
+    async def _save_results(self, results: dict[str, Any]):
         """Save test results to files."""
-        output_dir = Path(self.config["output_dir"])
+        output_dir = Path(self.config["output_dir"])  # noqa: B008
         output_dir.mkdir(parents=True, exist_ok=True)
         
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -710,7 +710,7 @@ class MigrationTestRunner:
         
         print(f"📄 Results saved to: {json_file}")
     
-    def _print_summary(self, results: Dict[str, Any]):
+    def _print_summary(self, results: dict[str, Any]):
         """Print test summary."""
         print("\n" + "="*60)
         print("🔄 DATABASE MIGRATION TEST SUMMARY")

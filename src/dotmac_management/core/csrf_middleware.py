@@ -4,7 +4,6 @@ Thin adapter layer that provides CSRF protection.
 """
 
 import logging
-from typing import Optional
 
 from fastapi import FastAPI
 
@@ -40,6 +39,6 @@ def add_csrf_protection(app: FastAPI):
 
         logger.info("Management CSRF protection middleware added")
 
-    except Exception as e:
-        logger.error(f"Failed to add Management CSRF protection middleware: {e}")
+    except Exception:  # noqa: BLE001 - wrap and re-raise with context
+        logger.exception("Failed to add Management CSRF protection middleware")
         raise

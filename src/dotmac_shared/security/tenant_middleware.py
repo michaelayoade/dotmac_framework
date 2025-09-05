@@ -7,8 +7,9 @@ and integrates with Row Level Security policies
 """
 
 import logging
+from collections.abc import Callable
 from contextlib import asynccontextmanager
-from typing import Any, Callable, Dict, Optional
+from typing import Optional
 
 from fastapi import HTTPException, Request, status
 from fastapi.responses import JSONResponse
@@ -39,19 +40,13 @@ class TenantContextManager:
         """Set tenant context for database session"""
         try:
             # Set tenant context
-            await session.execute(
-                f"SELECT set_config('app.current_tenant_id', '{tenant_id}', false);"
-            )
+            await session.execute(f"SELECT set_config('app.current_tenant_id', '{tenant_id}', false);")
 
             if user_id:
-                await session.execute(
-                    f"SELECT set_config('app.current_user_id', '{user_id}', false);"
-                )
+                await session.execute(f"SELECT set_config('app.current_user_id', '{user_id}', false);")
 
             if client_ip:
-                await session.execute(
-                    f"SELECT set_config('app.client_ip', '{client_ip}', false);"
-                )
+                await session.execute(f"SELECT set_config('app.client_ip', '{client_ip}', false);")
 
             self.current_tenant_id = tenant_id
             self.current_user_id = user_id
@@ -67,12 +62,8 @@ class TenantContextManager:
     async def clear_context(self, session: Session) -> bool:
         """Clear tenant context"""
         try:
-            await session.execute(
-                "SELECT set_config('app.current_tenant_id', '', false);"
-            )
-            await session.execute(
-                "SELECT set_config('app.current_user_id', '', false);"
-            )
+            await session.execute("SELECT set_config('app.current_tenant_id', '', false);")
+            await session.execute("SELECT set_config('app.current_user_id', '', false);")
             await session.execute("SELECT set_config('app.client_ip', '', false);")
 
             self.current_tenant_id = None
@@ -116,7 +107,7 @@ class TenantIsolationMiddleware:
         """Check if path is exempt from tenant isolation"""
         return any(path.startswith(exempt_path) for exempt_path in self.exempt_paths)
 
-    async def extract_tenant_info(self, request: Request) -> Dict[str, Optional[str]]:
+    async def extract_tenant_info(self, request: Request) -> dict[str, Optional[str]]:
         """Extract tenant and user information from request"""
         try:
             tenant_id = self.get_tenant_from_request(request)
@@ -159,16 +150,12 @@ class TenantIsolationMiddleware:
             # Validate tenant access
             if not tenant_id:
                 if self.strict_mode:
-                    error_response = JSONResponse(
-                        status_code=400, content={"detail": "Tenant context required"}
-                    )
+                    error_response = JSONResponse(status_code=400, content={"detail": "Tenant context required"})
                     await error_response(scope, receive, send)
                     return
 
             if tenant_id and not await self.validate_tenant_access(tenant_id, request):
-                error_response = JSONResponse(
-                    status_code=403, content={"detail": "Invalid tenant access"}
-                )
+                error_response = JSONResponse(status_code=403, content={"detail": "Invalid tenant access"})
                 await error_response(scope, receive, send)
                 return
 
@@ -205,14 +192,10 @@ class DatabaseTenantMiddleware:
             await self.rls_manager.set_tenant_context(session, tenant_id)
 
             if user_id:
-                session.execute(
-                    f"SELECT set_config('app.current_user_id', '{user_id}', false);"
-                )
+                session.execute(f"SELECT set_config('app.current_user_id', '{user_id}', false);")
 
             if client_ip:
-                session.execute(
-                    f"SELECT set_config('app.client_ip', '{client_ip}', false);"
-                )
+                session.execute(f"SELECT set_config('app.client_ip', '{client_ip}', false);")
 
             logger.debug(f"Database session configured for tenant: {tenant_id}")
             yield session
@@ -222,7 +205,7 @@ class DatabaseTenantMiddleware:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Database tenant context failed",
-            )
+            ) from e
         finally:
             # Always clear context
             try:
@@ -249,10 +232,7 @@ def get_tenant_from_subdomain(request: Request) -> Optional[str]:
         if "." in host:
             subdomain = host.split(".")[0]
             # Validate subdomain format
-            if (
-                len(subdomain) > 3
-                and subdomain.replace("-", "").replace("_", "").isalnum()
-            ):
+            if len(subdomain) > 3 and subdomain.replace("-", "").replace("_", "").isalnum():
                 return subdomain
     except Exception:
         pass

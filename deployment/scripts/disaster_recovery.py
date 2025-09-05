@@ -16,7 +16,7 @@ import time
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 
 class RecoveryType(Enum):
@@ -26,6 +26,7 @@ class RecoveryType(Enum):
     APPLICATION_DATA = "application_data"
     EMERGENCY = "emergency"
 
+
 class RecoveryStatus(Enum):
     PLANNING = "planning"
     IN_PROGRESS = "in_progress"
@@ -33,15 +34,17 @@ class RecoveryStatus(Enum):
     FAILED = "failed"
     ROLLED_BACK = "rolled_back"
 
+
 @dataclass
 class RecoveryPlan:
     recovery_type: RecoveryType
     backup_path: str
     target_timestamp: str
-    components: List[str]
+    components: list[str]
     estimated_duration: int  # minutes
     risk_level: str  # low, medium, high
     rollback_strategy: str
+
 
 class DisasterRecovery:
     def __init__(self, dry_run: bool = False, verbose: bool = False):
@@ -73,11 +76,8 @@ class DisasterRecovery:
 
         logging.basicConfig(
             level=logging.DEBUG if self.verbose else logging.INFO,
-            format='%(asctime)s - %(levelname)s - %(message)s',
-            handlers=[
-                logging.FileHandler(log_file),
-                logging.StreamHandler(sys.stdout)
-            ]
+            format="%(asctime)s - %(levelname)s - %(message)s",
+            handlers=[logging.FileHandler(log_file), logging.StreamHandler(sys.stdout)],
         )
 
         self.logger = logging.getLogger(__name__)
@@ -92,14 +92,7 @@ class DisasterRecovery:
         self.logger.info(f"Executing: {description or command}")
 
         try:
-            result = subprocess.run(
-                command,
-                shell=True,
-                capture_output=True,
-                text=True,
-                timeout=300,
-                check=check
-            )
+            result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=300, check=check)
 
             if result.stdout and self.verbose:
                 self.logger.debug(f"STDOUT: {result.stdout}")
@@ -117,7 +110,7 @@ class DisasterRecovery:
             self.logger.error(f"Error output: {e.stderr}")
             raise
 
-    def discover_backups(self) -> List[Dict[str, Any]]:
+    def discover_backups(self) -> list[dict[str, Any]]:
         """Discover available backups"""
         self.logger.info("Discovering available backups...")
 
@@ -136,10 +129,10 @@ class DisasterRecovery:
                 info_file = item / "backup_info.json"
                 if info_file.exists():
                     try:
-                        with open(info_file, 'r') as f:
+                        with open(info_file) as f:
                             backup_info = json.load(f)
-                        backup_info['path'] = str(item)
-                        backup_info['format'] = 'directory'
+                        backup_info["path"] = str(item)
+                        backup_info["format"] = "directory"
                     except Exception as e:
                         self.logger.warning(f"Could not read backup info: {info_file}: {e}")
 
@@ -150,22 +143,22 @@ class DisasterRecovery:
 
                 if info_file.exists():
                     try:
-                        with open(info_file, 'r') as f:
+                        with open(info_file) as f:
                             backup_info = json.load(f)
-                        backup_info['path'] = str(item)
-                        backup_info['format'] = 'compressed'
-                        backup_info['timestamp'] = timestamp
+                        backup_info["path"] = str(item)
+                        backup_info["format"] = "compressed"
+                        backup_info["timestamp"] = timestamp
                     except Exception as e:
                         self.logger.warning(f"Could not read backup info: {info_file}: {e}")
 
             if backup_info:
                 # Add computed fields
-                backup_info['size'] = self.get_path_size(item)
-                backup_info['age_hours'] = self.get_backup_age_hours(backup_info.get('timestamp', '')
+                backup_info["size"] = self.get_path_size(item)
+                backup_info["age_hours"] = self.get_backup_age_hours(backup_info.get("timestamp", ""))
                 backups.append(backup_info)
 
         # Sort by timestamp (newest first)
-        backups.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
+        backups.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
 
         self.logger.info(f"Found {len(backups)} available backups")
         return backups
@@ -175,8 +168,8 @@ class DisasterRecovery:
         try:
             result = self.run_command(f"du -sh '{path}'", check=False)
             if result.returncode == 0:
-                return result.stdout.split('\t')[0]
-        except:
+                return result.stdout.split("\t")[0]
+        except Exception:
             pass
         return "unknown"
 
@@ -187,32 +180,32 @@ class DisasterRecovery:
             backup_seconds = time.mktime(backup_time)
             current_seconds = time.time()
             return (current_seconds - backup_seconds) / 3600
-        except:
+        except Exception:
             return 0
 
-    def analyze_backup(self, backup_path: str) -> Dict[str, Any]:
+    def analyze_backup(self, backup_path: str) -> dict[str, Any]:
         """Analyze backup contents and create recovery plan"""
         self.logger.info(f"Analyzing backup: {backup_path}")
 
         backup = Path(backup_path)
         analysis = {
-            'path': backup_path,
-            'components': [],
-            'size': self.get_path_size(backup),
-            'format': 'directory' if backup.is_dir() else 'compressed',
-            'extractable': True,
-            'integrity_ok': True
+            "path": backup_path,
+            "components": [],
+            "size": self.get_path_size(backup),
+            "format": "directory" if backup.is_dir() else "compressed",
+            "extractable": True,
+            "integrity_ok": True,
         }
 
         # Extract or access backup contents
-        if backup.name.endswith('.tar.gz'):
+        if backup.name.endswith(".tar.gz"):
             # Test compressed backup integrity
             try:
                 self.run_command(f"tar -tzf '{backup}' > /dev/null", "Test archive integrity")
-                analysis['integrity_ok'] = True
-            except:
-                analysis['integrity_ok'] = False
-                analysis['extractable'] = False
+                analysis["integrity_ok"] = True
+            except Exception:
+                analysis["integrity_ok"] = False
+                analysis["extractable"] = False
                 return analysis
 
         # Analyze components (for directory backups or after extraction)
@@ -228,50 +221,51 @@ class DisasterRecovery:
             # Check for database backups
             db_dir = content_dir / "databases"
             if db_dir.exists():
-                db_files = list(db_dir.glob("*.sql") + list(db_dir.glob("*.rdb")
+                db_files = list(db_dir.glob("*.sql")) + list(db_dir.glob("*.rdb"))
                 if db_files:
                     components.append("databases")
 
             # Check for configuration backups
             config_dir = content_dir / "configs"
-            if config_dir.exists() and list(config_dir.iterdir():
+            if config_dir.exists() and list(config_dir.iterdir()):
                 components.append("configurations")
 
             # Check for application data
             data_dir = content_dir / "data"
-            if data_dir.exists() and list(data_dir.iterdir():
+            if data_dir.exists() and list(data_dir.iterdir()):
                 components.append("application_data")
 
             # Check for logs
             logs_dir = content_dir / "logs"
-            if logs_dir.exists() and list(logs_dir.iterdir():
+            if logs_dir.exists() and list(logs_dir.iterdir()):
                 components.append("logs")
 
-            analysis['components'] = components
+            analysis["components"] = components
 
         self.logger.info(f"Backup analysis complete: {len(analysis['components'])} components found")
         return analysis
 
-    def create_recovery_plan(self, backup_path: str, recovery_type: RecoveryType,
-                           components: List[str] = None) -> RecoveryPlan:
+    def create_recovery_plan(
+        self, backup_path: str, recovery_type: RecoveryType, components: Optional[list[str]] = None
+    ) -> RecoveryPlan:
         """Create detailed recovery plan"""
         self.logger.info(f"Creating recovery plan for {recovery_type.value}")
 
         backup_analysis = self.analyze_backup(backup_path)
-        available_components = backup_analysis['components']
+        available_components = backup_analysis["components"]
 
         # Determine components to recover
         if components is None:
             if recovery_type == RecoveryType.FULL_SYSTEM:
                 components = available_components
             elif recovery_type == RecoveryType.DATABASE_ONLY:
-                components = ['databases']
+                components = ["databases"]
             elif recovery_type == RecoveryType.CONFIGURATION:
-                components = ['configurations']
+                components = ["configurations"]
             elif recovery_type == RecoveryType.APPLICATION_DATA:
-                components = ['application_data']
+                components = ["application_data"]
             elif recovery_type == RecoveryType.EMERGENCY:
-                components = ['databases', 'configurations']
+                components = ["databases", "configurations"]
 
         # Validate requested components are available
         missing_components = set(components) - set(available_components)
@@ -280,19 +274,14 @@ class DisasterRecovery:
             components = [c for c in components if c in available_components]
 
         # Estimate duration and risk
-        duration_map = {
-            'databases': 30,
-            'configurations': 5,
-            'application_data': 15,
-            'logs': 5
-        }
+        duration_map = {"databases": 30, "configurations": 5, "application_data": 15, "logs": 5}
 
         estimated_duration = sum(duration_map.get(c, 10) for c in components)
 
         # Determine risk level
-        if 'databases' in components and len(components) > 1:
+        if "databases" in components and len(components) > 1:
             risk_level = "high"
-        elif 'databases' in components:
+        elif "databases" in components:
             risk_level = "medium"
         else:
             risk_level = "low"
@@ -300,15 +289,17 @@ class DisasterRecovery:
         plan = RecoveryPlan(
             recovery_type=recovery_type,
             backup_path=backup_path,
-            target_timestamp=backup_analysis.get('timestamp', 'unknown'),
+            target_timestamp=backup_analysis.get("timestamp", "unknown"),
             components=components,
             estimated_duration=estimated_duration,
             risk_level=risk_level,
-            rollback_strategy="emergency_backup" if risk_level == "high" else "configuration_restore"
+            rollback_strategy="emergency_backup" if risk_level == "high" else "configuration_restore",
         )
 
-        self.logger.info(f"Recovery plan created: {len(components)} components, "
-                        f"{estimated_duration} min estimated duration, {risk_level} risk")
+        self.logger.info(
+            f"Recovery plan created: {len(components)} components, "
+            f"{estimated_duration} min estimated duration, {risk_level} risk"
+        )
 
         return plan
 
@@ -323,10 +314,7 @@ class DisasterRecovery:
             # Run emergency backup
             backup_script = self.project_root / "deployment" / "scripts" / "backup.sh"
             if backup_script.exists():
-                result = self.run_command(
-                    f"bash '{backup_script}' --type emergency",
-                    "Create emergency backup"
-                )
+                result = self.run_command(f"bash '{backup_script}' --type emergency", "Create emergency backup")
 
                 # Find the created backup
                 for item in self.backup_base_dir.iterdir():
@@ -341,38 +329,38 @@ class DisasterRecovery:
             self.logger.error(f"Failed to create emergency backup: {e}")
             return None
 
-    def stop_services(self, services: List[str] = None):
+    def stop_services(self, services: Optional[list[str]] = None):
         """Stop application services gracefully"""
         self.logger.info("Stopping application services...")
 
         if services is None:
-            services = [
-                "nginx", "isp-framework", "management-platform",
-                "mgmt-celery-worker", "mgmt-celery-beat"
-            ]
+            services = ["nginx", "isp-framework", "management-platform", "mgmt-celery-worker", "mgmt-celery-beat"]
 
         os.chdir(self.production_dir)
 
         for service in services:
             try:
                 self.run_command(
-                    f"docker-compose -f docker-compose.prod.yml stop {service}",
-                    f"Stop {service} service",
-                    check=False
+                    f"docker-compose -f docker-compose.prod.yml stop {service}", f"Stop {service} service", check=False
                 )
                 self.rollback_commands.append(f"docker-compose -f docker-compose.prod.yml start {service}")
             except Exception as e:
                 self.logger.warning(f"Failed to stop {service}: {e}")
 
-    def start_services(self, services: List[str] = None):
+    def start_services(self, services: Optional[list[str]] = None):
         """Start application services"""
         self.logger.info("Starting application services...")
 
         if services is None:
             services = [
-                "postgres-shared", "redis-shared", "openbao-shared",
-                "isp-framework", "management-platform",
-                "mgmt-celery-worker", "mgmt-celery-beat", "nginx"
+                "postgres-shared",
+                "redis-shared",
+                "openbao-shared",
+                "isp-framework",
+                "management-platform",
+                "mgmt-celery-worker",
+                "mgmt-celery-beat",
+                "nginx",
             ]
 
         os.chdir(self.production_dir)
@@ -380,8 +368,7 @@ class DisasterRecovery:
         for service in services:
             try:
                 self.run_command(
-                    f"docker-compose -f docker-compose.prod.yml start {service}",
-                    f"Start {service} service"
+                    f"docker-compose -f docker-compose.prod.yml start {service}", f"Start {service} service"
                 )
             except Exception as e:
                 self.logger.error(f"Failed to start {service}: {e}")
@@ -394,7 +381,7 @@ class DisasterRecovery:
         if backup.is_dir():
             return backup_path
 
-        if not backup.name.endswith('.tar.gz'):
+        if not backup.name.endswith(".tar.gz"):
             raise ValueError(f"Unsupported backup format: {backup}")
 
         self.logger.info(f"Extracting compressed backup: {backup}")
@@ -403,13 +390,10 @@ class DisasterRecovery:
         temp_dir = tempfile.mkdtemp(prefix="dotmac_recovery_")
 
         try:
-            self.run_command(
-                f"tar -xzf '{backup}' -C '{temp_dir}'",
-                "Extract backup archive"
-            )
+            self.run_command(f"tar -xzf '{backup}' -C '{temp_dir}'", "Extract backup archive")
 
             # Find extracted directory
-            extracted_items = list(Path(temp_dir).iterdir()
+            extracted_items = list(Path(temp_dir).iterdir())
             if len(extracted_items) == 1 and extracted_items[0].is_dir():
                 extracted_path = str(extracted_items[0])
             else:
@@ -418,7 +402,7 @@ class DisasterRecovery:
             self.logger.info(f"Backup extracted to: {extracted_path}")
             return extracted_path
 
-        except Exception as e:
+        except Exception:
             shutil.rmtree(temp_dir, ignore_errors=True)
             raise
 
@@ -439,7 +423,7 @@ class DisasterRecovery:
         try:
             self.run_command(
                 "docker-compose -f docker-compose.prod.yml up -d postgres-shared redis-shared",
-                "Start database services"
+                "Start database services",
             )
             time.sleep(10)  # Wait for services to be ready
         except Exception as e:
@@ -454,7 +438,7 @@ class DisasterRecovery:
                 self.run_command(
                     f"docker-compose -f docker-compose.prod.yml exec -T postgres-shared "
                     f"psql -U dotmac_admin < '{postgres_backup}'",
-                    "Restore PostgreSQL backup"
+                    "Restore PostgreSQL backup",
                 )
                 self.logger.info("PostgreSQL restoration completed")
             except Exception as e:
@@ -468,12 +452,10 @@ class DisasterRecovery:
             try:
                 container_name = "dotmac-redis-prod"
                 self.run_command(
-                    f"docker cp '{redis_backup}' {container_name}:/data/dump.rdb",
-                    "Copy Redis backup to container"
+                    f"docker cp '{redis_backup}' {container_name}:/data/dump.rdb", "Copy Redis backup to container"
                 )
                 self.run_command(
-                    "docker-compose -f docker-compose.prod.yml restart redis-shared",
-                    "Restart Redis to load backup"
+                    "docker-compose -f docker-compose.prod.yml restart redis-shared", "Restart Redis to load backup"
                 )
                 self.logger.info("Redis restoration completed")
             except Exception as e:
@@ -487,12 +469,10 @@ class DisasterRecovery:
             try:
                 container_name = "dotmac-openbao-prod"
                 self.run_command(
-                    f"docker cp '{openbao_backup}' {container_name}:/openbao/data",
-                    "Copy OpenBao backup to container"
+                    f"docker cp '{openbao_backup}' {container_name}:/openbao/data", "Copy OpenBao backup to container"
                 )
                 self.run_command(
-                    "docker-compose -f docker-compose.prod.yml restart openbao-shared",
-                    "Restart OpenBao to load backup"
+                    "docker-compose -f docker-compose.prod.yml restart openbao-shared", "Restart OpenBao to load backup"
                 )
                 self.logger.info("OpenBao restoration completed")
             except Exception as e:
@@ -515,7 +495,7 @@ class DisasterRecovery:
             env_target = self.production_dir / ".env.production"
             if env_target.exists():
                 # Create backup of current config
-                backup_current = f"{env_target}.pre_recovery_{int(time.time()}"
+                backup_current = f"{env_target}.pre_recovery_{int(time.time())}"
                 shutil.copy(env_target, backup_current)
                 self.rollback_commands.append(f"cp '{backup_current}' '{env_target}'")
 
@@ -527,7 +507,7 @@ class DisasterRecovery:
         if compose_backup.exists():
             compose_target = self.production_dir / "docker-compose.prod.yml"
             if compose_target.exists():
-                backup_current = f"{compose_target}.pre_recovery_{int(time.time()}"
+                backup_current = f"{compose_target}.pre_recovery_{int(time.time())}"
                 shutil.copy(compose_target, backup_current)
                 self.rollback_commands.append(f"cp '{backup_current}' '{compose_target}'")
 
@@ -539,9 +519,11 @@ class DisasterRecovery:
         if nginx_backup_dir.exists():
             nginx_target_dir = self.production_dir / "nginx"
             if nginx_target_dir.exists():
-                backup_current = f"{nginx_target_dir}.pre_recovery_{int(time.time()}"
+                backup_current = f"{nginx_target_dir}.pre_recovery_{int(time.time())}"
                 shutil.copytree(nginx_target_dir, backup_current)
-                self.rollback_commands.append(f"rm -rf '{nginx_target_dir}' && mv '{backup_current}' '{nginx_target_dir}'")
+                self.rollback_commands.append(
+                    f"rm -rf '{nginx_target_dir}' && mv '{backup_current}' '{nginx_target_dir}'"
+                )
                 shutil.rmtree(nginx_target_dir)
 
             shutil.copytree(nginx_backup_dir, nginx_target_dir)
@@ -552,7 +534,7 @@ class DisasterRecovery:
         if ssl_backup_dir.exists():
             ssl_target_dir = Path("/opt/dotmac/ssl")
             if ssl_target_dir.exists():
-                backup_current = f"{ssl_target_dir}.pre_recovery_{int(time.time()}"
+                backup_current = f"{ssl_target_dir}.pre_recovery_{int(time.time())}"
                 shutil.copytree(ssl_target_dir, backup_current)
                 self.rollback_commands.append(f"rm -rf '{ssl_target_dir}' && mv '{backup_current}' '{ssl_target_dir}'")
                 shutil.rmtree(ssl_target_dir)
@@ -575,7 +557,7 @@ class DisasterRecovery:
         data_mappings = {
             "uploads_data": "/opt/dotmac/data/isp/uploads",
             "mgmt_data": "/opt/dotmac/data/mgmt/uploads",
-            "shared_data": "/opt/dotmac/data/shared"
+            "shared_data": "/opt/dotmac/data/shared",
         }
 
         for backup_name, target_path in data_mappings.items():
@@ -584,7 +566,7 @@ class DisasterRecovery:
                 target = Path(target_path)
 
                 if target.exists():
-                    backup_current = f"{target}.pre_recovery_{int(time.time()}"
+                    backup_current = f"{target}.pre_recovery_{int(time.time())}"
                     shutil.copytree(target, backup_current)
                     self.rollback_commands.append(f"rm -rf '{target}' && mv '{backup_current}' '{target}'")
                     shutil.rmtree(target)
@@ -597,10 +579,10 @@ class DisasterRecovery:
         self.logger.info("Verifying recovery...")
 
         verification_results = {
-            'services_running': False,
-            'databases_accessible': False,
-            'configurations_valid': False,
-            'endpoints_responding': False
+            "services_running": False,
+            "databases_accessible": False,
+            "configurations_valid": False,
+            "endpoints_responding": False,
         }
 
         # Check services are running
@@ -609,14 +591,14 @@ class DisasterRecovery:
             result = self.run_command(
                 "docker-compose -f docker-compose.prod.yml ps --services --filter status=running",
                 "Check running services",
-                check=False
+                check=False,
             )
 
-            running_services = result.stdout.strip().split('\n') if result.stdout.strip() else []
+            running_services = result.stdout.strip().split("\n") if result.stdout.strip() else []
             essential_services = ["postgres-shared", "redis-shared", "isp-framework", "management-platform"]
 
             if all(service in running_services for service in essential_services):
-                verification_results['services_running'] = True
+                verification_results["services_running"] = True
                 self.logger.info("✓ Essential services are running")
             else:
                 self.logger.error("✗ Not all essential services are running")
@@ -629,16 +611,16 @@ class DisasterRecovery:
             self.run_command(
                 "docker-compose -f docker-compose.prod.yml exec -T postgres-shared pg_isready -U dotmac_admin",
                 "Check PostgreSQL connectivity",
-                check=False
+                check=False,
             )
 
             self.run_command(
                 "docker-compose -f docker-compose.prod.yml exec -T redis-shared redis-cli ping",
                 "Check Redis connectivity",
-                check=False
+                check=False,
             )
 
-            verification_results['databases_accessible'] = True
+            verification_results["databases_accessible"] = True
             self.logger.info("✓ Databases are accessible")
 
         except Exception as e:
@@ -648,7 +630,7 @@ class DisasterRecovery:
         try:
             env_file = self.production_dir / ".env.production"
             if env_file.exists():
-                verification_results['configurations_valid'] = True
+                verification_results["configurations_valid"] = True
                 self.logger.info("✓ Configuration files are present")
             else:
                 self.logger.error("✗ Configuration files are missing")
@@ -660,30 +642,23 @@ class DisasterRecovery:
         try:
             import time
 
-from dotmac_shared.api.exception_handlers import standard_exception_handler
-
             time.sleep(30)  # Wait for services to fully start
 
-            endpoints = [
-                "http://localhost:8000/health",
-                "http://localhost:8001/health"
-            ]
+            endpoints = ["http://localhost:8000/health", "http://localhost:8001/health"]
 
             for endpoint in endpoints:
                 try:
                     result = self.run_command(
-                        f"curl -f -s --connect-timeout 10 '{endpoint}'",
-                        f"Check endpoint {endpoint}",
-                        check=False
+                        f"curl -f -s --connect-timeout 10 '{endpoint}'", f"Check endpoint {endpoint}", check=False
                     )
                     if result.returncode == 0:
                         self.logger.info(f"✓ Endpoint responding: {endpoint}")
                     else:
                         self.logger.warning(f"⚠ Endpoint not responding: {endpoint}")
-                except:
+                except Exception:
                     self.logger.warning(f"⚠ Could not check endpoint: {endpoint}")
 
-            verification_results['endpoints_responding'] = True
+            verification_results["endpoints_responding"] = True
 
         except Exception as e:
             self.logger.error(f"Endpoint verification failed: {e}")
@@ -713,19 +688,19 @@ from dotmac_shared.api.exception_handlers import standard_exception_handler
             working_backup_dir = self.extract_backup(plan.backup_path)
 
             # Stop services for safe recovery
-            if 'databases' in plan.components or 'configurations' in plan.components:
+            if "databases" in plan.components or "configurations" in plan.components:
                 self.stop_services()
 
             # Execute recovery components
-            if 'databases' in plan.components:
+            if "databases" in plan.components:
                 self.restore_databases(working_backup_dir)
                 self.recovery_steps.append("databases")
 
-            if 'configurations' in plan.components:
+            if "configurations" in plan.components:
                 self.restore_configurations(working_backup_dir)
                 self.recovery_steps.append("configurations")
 
-            if 'application_data' in plan.components:
+            if "application_data" in plan.components:
                 self.restore_application_data(working_backup_dir)
                 self.recovery_steps.append("application_data")
 
@@ -740,7 +715,7 @@ from dotmac_shared.api.exception_handlers import standard_exception_handler
             self.logger.info("✅ Disaster recovery completed successfully!")
 
             # Cleanup temporary extraction directory if created
-            if working_backup_dir != plan.backup_path and working_backup_dir.startswith('/tmp'):
+            if working_backup_dir != plan.backup_path and working_backup_dir.startswith("/tmp"):
                 shutil.rmtree(working_backup_dir, ignore_errors=True)
 
             return True
@@ -779,26 +754,45 @@ from dotmac_shared.api.exception_handlers import standard_exception_handler
 
         self.logger.info("Rollback completed")
 
+
 def main():
     parser = argparse.ArgumentParser(description="DotMac Framework Disaster Recovery")
     parser.add_argument("--list-backups", action="store_true", help="List available backups")
     parser.add_argument("--backup", help="Backup path to recover from")
-    parser.add_argument("--type", choices=["full", "database", "config", "data", "emergency"],
-                       default="full", help="Recovery type")
-    parser.add_argument("--components", nargs="+",
-                       choices=["databases", "configurations", "application_data", "logs"],
-                       help="Specific components to recover")
+    parser.add_argument(
+        "--type", choices=["full", "database", "config", "data", "emergency"], default="full", help="Recovery type"
+    )
+    parser.add_argument(
+        "--components",
+        nargs="+",
+        choices=["databases", "configurations", "application_data", "logs"],
+        help="Specific components to recover",
+    )
     parser.add_argument("--dry-run", action="store_true", help="Show what would be done")
     parser.add_argument("--verbose", action="store_true", help="Verbose logging")
     parser.add_argument("--force", action="store_true", help="Skip confirmations")
 
     args = parser.parse_args()
 
+    # Configure logging for CLI output
+    log_level = logging.DEBUG if args.verbose else logging.INFO
+    logging.basicConfig(
+        level=log_level,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.StreamHandler(sys.stderr),
+            logging.FileHandler('disaster_recovery.log', mode='a')
+        ]
+    )
+    
+    logger = logging.getLogger(__name__)
+    
     # Initialize disaster recovery
     dr = DisasterRecovery(dry_run=args.dry_run, verbose=args.verbose)
 
     try:
         if args.list_backups:
+            logger.info("Discovering available backups")
             backups = dr.discover_backups()
 
             print("\n🔍 Available Backups:")
@@ -806,21 +800,25 @@ def main():
 
             if not backups:
                 print("No backups found.")
+                logger.warning("No backups discovered")
                 sys.exit(0)
 
+            logger.info(f"Found {len(backups)} available backups")
             for i, backup in enumerate(backups, 1):
                 print(f"\n{i}. Timestamp: {backup.get('timestamp', 'unknown')}")
                 print(f"   Path: {backup['path']}")
                 print(f"   Size: {backup['size']}")
                 print(f"   Age: {backup['age_hours']:.1f} hours")
-                print(f"   Components: {', '.join(backup.get('components', [])}")
+                print(f"   Components: {', '.join(backup.get('components', []))}")
                 print(f"   Format: {backup.get('format', 'unknown')}")
 
             print()
             sys.exit(0)
 
         if not args.backup:
-            print("Error: --backup is required for recovery operations")
+            error_msg = "--backup is required for recovery operations"
+            print(f"Error: {error_msg}")
+            logger.error(error_msg)
             sys.exit(1)
 
         # Map recovery types
@@ -829,7 +827,7 @@ def main():
             "database": RecoveryType.DATABASE_ONLY,
             "config": RecoveryType.CONFIGURATION,
             "data": RecoveryType.APPLICATION_DATA,
-            "emergency": RecoveryType.EMERGENCY
+            "emergency": RecoveryType.EMERGENCY,
         }
 
         recovery_type = type_mapping[args.type]
@@ -886,6 +884,7 @@ def main():
     except Exception as e:
         dr.logger.error(f"Unexpected error: {e}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

@@ -3,11 +3,11 @@ Main application factory for DotMac platforms.
 """
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Optional
 
 from fastapi import FastAPI
 
-from ..services import DeploymentAwareServiceFactory, ServiceRegistry
+from ..services import DeploymentAwareServiceFactory
 from .config import DeploymentContext, DeploymentMode, PlatformConfig, TenantConfig
 from .endpoints import StandardEndpoints
 from .lifecycle import StandardLifecycleManager
@@ -21,7 +21,7 @@ class DotMacApplicationFactory:
     """Unified application factory for all DotMac platforms."""
 
     def __init__(self):
-        self.created_apps: Dict[str, FastAPI] = {}
+        self.created_apps: dict[str, FastAPI] = {}
 
     async def create_app(self, config: PlatformConfig) -> FastAPI:
         """Create a FastAPI application with standard DotMac configuration."""
@@ -64,11 +64,9 @@ class DotMacApplicationFactory:
         logger.info(
             f"   Routers: {registration_stats['successfully_registered']}/{registration_stats['total_attempted']}"
         )
-        logger.info(f"   Middleware: Applied standard stack")
-        logger.info(
-            f"   Services: {len(service_registry.get_ready_services())} services ready"
-        )
-        logger.info(f"   Health checks: Enabled")
+        logger.info("   Middleware: Applied standard stack")
+        logger.info(f"   Services: {len(service_registry.get_ready_services())} services ready")
+        logger.info("   Health checks: Enabled")
 
         return app
 
@@ -86,9 +84,7 @@ class DotMacApplicationFactory:
         if config.deployment_context:
             if config.deployment_context.mode == DeploymentMode.TENANT_CONTAINER:
                 # Disable docs in tenant containers for security
-                fastapi_kwargs.update(
-                    {"docs_url": None, "redoc_url": None, "openapi_url": None}
-                )
+                fastapi_kwargs.update({"docs_url": None, "redoc_url": None, "openapi_url": None})
             elif config.deployment_context.mode == DeploymentMode.DEVELOPMENT:
                 # Enable docs in development
                 fastapi_kwargs.update(
@@ -105,7 +101,7 @@ class DotMacApplicationFactory:
         """Get a previously created app by platform name."""
         return self.created_apps.get(platform_name)
 
-    def list_created_apps(self) -> Dict[str, str]:
+    def list_created_apps(self) -> dict[str, str]:
         """List all created applications."""
         return {name: app.title for name, app in self.created_apps.items()}
 
@@ -113,13 +109,9 @@ class DotMacApplicationFactory:
 class DeploymentAwareApplicationFactory(DotMacApplicationFactory):
     """Enhanced factory with deployment-specific optimizations."""
 
-    async def create_tenant_container_app(
-        self, tenant_config: TenantConfig, base_config: PlatformConfig
-    ) -> FastAPI:
+    async def create_tenant_container_app(self, tenant_config: TenantConfig, base_config: PlatformConfig) -> FastAPI:
         """Create ISP Framework instance optimized for tenant container deployment."""
-        logger.info(
-            f"Creating tenant container app for tenant: {tenant_config.tenant_id}"
-        )
+        logger.info(f"Creating tenant container app for tenant: {tenant_config.tenant_id}")
 
         # Create deployment-aware configuration
         deployment_context = tenant_config.deployment_context
@@ -166,9 +158,7 @@ class DeploymentAwareApplicationFactory(DotMacApplicationFactory):
 
         return app
 
-    def _apply_container_optimizations(
-        self, platform_config: PlatformConfig, tenant_config: TenantConfig
-    ):
+    def _apply_container_optimizations(self, platform_config: PlatformConfig, tenant_config: TenantConfig):
         """Apply optimizations for container deployment."""
         # Resource-aware configurations
         if tenant_config.deployment_context.resource_limits:
@@ -183,9 +173,7 @@ class DeploymentAwareApplicationFactory(DotMacApplicationFactory):
 
             # Adjust connection limits
             platform_config.custom_settings["max_connections"] = limits.max_connections
-            platform_config.custom_settings["max_concurrent_requests"] = (
-                limits.max_concurrent_requests
-            )
+            platform_config.custom_settings["max_concurrent_requests"] = limits.max_concurrent_requests
 
         # Security optimizations for tenant containers
         platform_config.security_config.tenant_isolation = True
@@ -221,9 +209,7 @@ class DeploymentAwareApplicationFactory(DotMacApplicationFactory):
         """Create application optimized for development."""
         logger.info("Creating development application")
 
-        deployment_context = DeploymentContext(
-            mode=DeploymentMode.DEVELOPMENT, isolation_level="none"
-        )
+        deployment_context = DeploymentContext(mode=DeploymentMode.DEVELOPMENT, isolation_level="none")
 
         platform_config = config.customize_for_deployment(deployment_context)
 
@@ -260,9 +246,7 @@ async def create_isp_framework_app(
     base_config = create_isp_platform_config()
 
     if tenant_config:
-        return await deployment_aware_factory.create_tenant_container_app(
-            tenant_config, base_config
-        )
+        return await deployment_aware_factory.create_tenant_container_app(tenant_config, base_config)
     else:
         return await deployment_aware_factory.create_development_app(base_config)
 

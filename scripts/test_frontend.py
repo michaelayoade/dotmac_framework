@@ -2,7 +2,7 @@
 """
 import sys
 from pathlib import Path
-project_root = Path(__file__).parent.parent
+project_root = Path(__file__).parent.parent  # noqa: B008
 sys.path.insert(0, str(project_root / "src"))
 
 DRY Frontend Testing Script - Integrates with Poetry workflow
@@ -10,19 +10,16 @@ Runs frontend tests as part of unified testing strategy
 """
 
 import json
-import os
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Optional
 
 
-def run_command(cmd: List[str], cwd: str = None) -> Dict[str, Any]:
+def run_command(cmd: list[str], cwd: Optional[str] = None) -> dict[str, Any]:
     """Run command and return result."""
     try:
-        result = subprocess.run(
-            cmd, cwd=cwd, capture_output=True, text=True, check=True
-        )
+        result = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, check=True)
         return {
             "success": True,
             "stdout": result.stdout,
@@ -67,7 +64,7 @@ def install_frontend_dependencies(frontend_dir: Path) -> bool:
         return False
 
 
-def run_frontend_tests(app_path: Path, test_type: str = "unit") -> Dict[str, Any]:
+def run_frontend_tests(app_path: Path, test_type: str = "unit") -> dict[str, Any]:
     """Run frontend tests for specific app."""
     print(f"🧪 Running {test_type} tests for {app_path.name}...")
 
@@ -90,7 +87,7 @@ def run_frontend_tests(app_path: Path, test_type: str = "unit") -> Dict[str, Any
     return result
 
 
-def collect_coverage_report(app_path: Path) -> Dict[str, Any]:
+def collect_coverage_report(app_path: Path) -> dict[str, Any]:
     """Collect coverage report from app."""
     coverage_file = app_path / "coverage" / "coverage-summary.json"
 
@@ -120,9 +117,7 @@ def collect_coverage_report(app_path: Path) -> Dict[str, Any]:
     }
 
 
-def generate_frontend_test_report(
-    results: List[Dict[str, Any]], coverage_data: List[Dict[str, Any]]
-) -> None:
+def generate_frontend_test_report(results: list[dict[str, Any]], coverage_data: list[dict[str, Any]]) -> None:
     """Generate comprehensive frontend test report."""
     print("\n" + "=" * 60)
     print("🎯 FRONTEND TESTING SUMMARY")
@@ -133,7 +128,7 @@ def generate_frontend_test_report(
     passed_apps = sum(1 for r in results if r.get("success", False))
     failed_apps = total_apps - passed_apps
 
-    print(f"📊 Test Results:")
+    print("📊 Test Results:")
     print(f"   • Total Apps: {total_apps}")
     print(f"   • Passed: {passed_apps}")
     print(f"   • Failed: {failed_apps}")
@@ -144,28 +139,24 @@ def generate_frontend_test_report(
         avg_lines = sum(c["lines"] for c in coverage_data) / len(coverage_data)
         avg_functions = sum(c["functions"] for c in coverage_data) / len(coverage_data)
         avg_branches = sum(c["branches"] for c in coverage_data) / len(coverage_data)
-        avg_statements = sum(c["statements"] for c in coverage_data) / len(
-            coverage_data
-        )
+        avg_statements = sum(c["statements"] for c in coverage_data) / len(coverage_data)
 
-        print(f"\n📈 Coverage Summary:")
+        print("\n📈 Coverage Summary:")
         print(f"   • Lines: {avg_lines:.1f}%")
         print(f"   • Functions: {avg_functions:.1f}%")
         print(f"   • Branches: {avg_branches:.1f}%")
         print(f"   • Statements: {avg_statements:.1f}%")
 
-        print(f"\n📱 Per-App Coverage:")
+        print("\n📱 Per-App Coverage:")
         for cov in coverage_data:
-            print(
-                f"   • {cov['app']}: {cov['lines']:.1f}% lines, {cov['functions']:.1f}% functions"
-            )
+            print(f"   • {cov['app']}: {cov['lines']:.1f}% lines, {cov['functions']:.1f}% functions")
 
     # DRY architecture benefits
-    print(f"\n🏗️ DRY Architecture Benefits:")
+    print("\n🏗️ DRY Architecture Benefits:")
     print(f"   • Shared test utilities across {total_apps} apps")
-    print(f"   • Consistent testing patterns")
-    print(f"   • Reduced code duplication")
-    print(f"   • Unified reporting")
+    print("   • Consistent testing patterns")
+    print("   • Reduced code duplication")
+    print("   • Unified reporting")
 
     print("=" * 60)
 
@@ -191,9 +182,7 @@ def main():
 
     # Find all apps
     apps_dir = frontend_dir / "apps"
-    frontend_apps = [
-        d for d in apps_dir.iterdir() if d.is_dir() and (d / "package.json").exists()
-    ]
+    frontend_apps = [d for d in apps_dir.iterdir() if d.is_dir() and (d / "package.json").exists()]
 
     print(f"📱 Found {len(frontend_apps)} frontend apps:")
     for app in frontend_apps:

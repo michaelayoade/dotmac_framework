@@ -1,8 +1,7 @@
 """Monitoring database models for system health, metrics and alerts."""
 
-from datetime import datetime
-from typing import Any, Dict, List, Optional
-
+from dotmac_shared.db.mixins import AuditMixin, TenantMixin
+from dotmac_shared.db.models import Base
 from sqlalchemy import (
     JSON,
     Boolean,
@@ -21,12 +20,10 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
-from dotmac_shared.db.mixins import AuditMixin, TenantMixin
-from dotmac_shared.db.models import Base
-
 
 class HealthCheckStatus(str, Enum):
     """Health check status enumeration."""
+
     HEALTHY = "healthy"
     DEGRADED = "degraded"
     UNHEALTHY = "unhealthy"
@@ -35,6 +32,7 @@ class HealthCheckStatus(str, Enum):
 
 class AlertSeverity(str, Enum):
     """Monitoring alert severity levels."""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -315,7 +313,9 @@ class MonitoringReport(Base, TenantMixin, AuditMixin):
     )
 
     def __repr__(self):
-        return f"<MonitoringReport(id={self.id}, name={self.report_name}, type={self.report_type}, status={self.status})>"
+        return (
+            f"<MonitoringReport(id={self.id}, name={self.report_name}, type={self.report_type}, status={self.status})>"
+        )
 
 
 class MetricThreshold(Base, TenantMixin, AuditMixin):

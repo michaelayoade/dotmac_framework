@@ -2,9 +2,6 @@
 Deployment repository implementations.
 """
 
-from typing import List, Optional
-from uuid import UUID
-
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models.deployment import Deployment, InfrastructureTemplate

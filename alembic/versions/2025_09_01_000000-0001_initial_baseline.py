@@ -5,7 +5,6 @@ This creates an empty baseline so that Alembic can stamp the database and
 subsequent migrations can be applied safely via the migration job.
 """
 
-from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "0001_initial_baseline"

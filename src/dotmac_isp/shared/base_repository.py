@@ -7,22 +7,22 @@ with consistent error handling and tenant isolation.
 """
 
 import logging
-from abc import ABC, abstractmethod
+from abc import ABC
 from datetime import datetime, timezone
-from typing import Any, Dict, Generic, List, Optional, Type, TypeVar
+from typing import Any, Generic, Optional, TypeVar
 from uuid import UUID
 
-from sqlalchemy import and_, asc, desc, func, or_, text
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from sqlalchemy import asc, desc
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Query, Session
 
+from .database.base import Base, BaseModel
 from .exceptions import (
     DatabaseError,
     DuplicateEntityError,
     EntityNotFoundError,
     ValidationError,
 )
-from .database.base import Base, BaseModel
 
 logger = logging.getLogger(__name__)
 
@@ -49,9 +49,7 @@ class BaseRepository(Generic[ModelType], ABC):
     - Audit trail support
     """
 
-    def __init__(
-        self, db: Session, model_class: Type[ModelType], tenant_id: Optional[str] = None
-    ):
+    def __init__(self, db: Session, model_class: type[ModelType], tenant_id: Optional[str] = None):
         """
         Initialize repository.
 
@@ -65,7 +63,7 @@ class BaseRepository(Generic[ModelType], ABC):
         self.tenant_id = tenant_id
         self._logger = logging.getLogger(f"{__name__}.{model_class.__name__}")
 
-    def create(self, data: Dict[str, Any], commit: bool = True) -> ModelType:
+    def create(self, data: dict[str, Any], commit: bool = True) -> ModelType:
         """
         Create a new entity.
 
@@ -94,21 +92,17 @@ class BaseRepository(Generic[ModelType], ABC):
                 self.db.commit()
                 self.db.refresh(entity)
 
-            self._logger.info(
-                f"Created {self.model_class.__name__} with ID: {entity.id}"
-            )
+            self._logger.info(f"Created {self.model_class.__name__} with ID: {entity.id}")
             return entity
 
         except IntegrityError as e:
             self.db.rollback()
-            self._logger.error(
-                f"Integrity error creating {self.model_class.__name__}: {e}"
-            )
-            raise DuplicateEntityError(f"Entity already exists: {e.orig}")
+            self._logger.error(f"Integrity error creating {self.model_class.__name__}: {e}")
+            raise DuplicateEntityError(f"Entity already exists: {e.orig}") from e
         except Exception as e:
             self.db.rollback()
             self._logger.error(f"Error creating {self.model_class.__name__}: {e}")
-            raise DatabaseError(f"Failed to create entity: {e}")
+            raise DatabaseError(f"Failed to create entity: {e}") from e
 
     def get_by_id(self, entity_id: UUID) -> Optional[ModelType]:
         """
@@ -124,10 +118,8 @@ class BaseRepository(Generic[ModelType], ABC):
             query = self._build_base_query().filter(self.model_class.id == entity_id)
             return query.first()
         except Exception as e:
-            self._logger.error(
-                f"Error getting {self.model_class.__name__} by ID {entity_id}: {e}"
-            )
-            raise DatabaseError(f"Failed to retrieve entity: {e}")
+            self._logger.error(f"Error getting {self.model_class.__name__} by ID {entity_id}: {e}")
+            raise DatabaseError(f"Failed to retrieve entity: {e}") from e
 
     def get_by_id_or_raise(self, entity_id: UUID) -> ModelType:
         """
@@ -144,14 +136,10 @@ class BaseRepository(Generic[ModelType], ABC):
         """
         entity = self.get_by_id(entity_id)
         if not entity:
-            raise EntityNotFoundError(
-                f"{self.model_class.__name__} not found with ID: {entity_id}"
-            )
+            raise EntityNotFoundError(f"{self.model_class.__name__} not found with ID: {entity_id}")
         return entity
 
-    def update(
-        self, entity_id: UUID, data: Dict[str, Any], commit: bool = True
-    ) -> ModelType:
+    def update(self, entity_id: UUID, data: dict[str, Any], commit: bool = True) -> ModelType:
         """
         Update entity.
 
@@ -184,19 +172,15 @@ class BaseRepository(Generic[ModelType], ABC):
                 self.db.commit()
                 self.db.refresh(entity)
 
-            self._logger.info(
-                f"Updated {self.model_class.__name__} with ID: {entity_id}"
-            )
+            self._logger.info(f"Updated {self.model_class.__name__} with ID: {entity_id}")
             return entity
 
         except EntityNotFoundError:
             raise
         except Exception as e:
             self.db.rollback()
-            self._logger.error(
-                f"Error updating {self.model_class.__name__} {entity_id}: {e}"
-            )
-            raise DatabaseError(f"Failed to update entity: {e}")
+            self._logger.error(f"Error updating {self.model_class.__name__} {entity_id}: {e}")
+            raise DatabaseError(f"Failed to update entity: {e}") from e
 
     def delete(self, entity_id: UUID, commit: bool = True) -> bool:
         """
@@ -228,28 +212,24 @@ class BaseRepository(Generic[ModelType], ABC):
             if commit:
                 self.db.commit()
 
-            self._logger.info(
-                f"Deleted {self.model_class.__name__} with ID: {entity_id}"
-            )
+            self._logger.info(f"Deleted {self.model_class.__name__} with ID: {entity_id}")
             return True
 
         except EntityNotFoundError:
             raise
         except Exception as e:
             self.db.rollback()
-            self._logger.error(
-                f"Error deleting {self.model_class.__name__} {entity_id}: {e}"
-            )
-            raise DatabaseError(f"Failed to delete entity: {e}")
+            self._logger.error(f"Error deleting {self.model_class.__name__} {entity_id}: {e}")
+            raise DatabaseError(f"Failed to delete entity: {e}") from e
 
     def list(
         self,
-        filters: Optional[Dict[str, Any]] = None,
+        filters: Optional[dict[str, Any]] = None,
         sort_by: Optional[str] = None,
         sort_order: str = "asc",
         limit: Optional[int] = None,
         offset: Optional[int] = None,
-    ) -> List[ModelType]:
+    ) -> list[ModelType]:
         """
         List entities with filtering, sorting, and pagination.
 
@@ -289,9 +269,9 @@ class BaseRepository(Generic[ModelType], ABC):
 
         except Exception as e:
             self._logger.error(f"Error listing {self.model_class.__name__}: {e}")
-            raise DatabaseError(f"Failed to list entities: {e}")
+            raise DatabaseError(f"Failed to list entities: {e}") from e
 
-    def count(self, filters: Optional[Dict[str, Any]] = None) -> int:
+    def count(self, filters: Optional[dict[str, Any]] = None) -> int:
         """
         Count entities with optional filtering.
 
@@ -311,11 +291,9 @@ class BaseRepository(Generic[ModelType], ABC):
 
         except Exception as e:
             self._logger.error(f"Error counting {self.model_class.__name__}: {e}")
-            raise DatabaseError(f"Failed to count entities: {e}")
+            raise DatabaseError(f"Failed to count entities: {e}") from e
 
-    def bulk_create(
-        self, data_list: List[Dict[str, Any]], commit: bool = True
-    ) -> List[ModelType]:
+    def bulk_create(self, data_list: list[dict[str, Any]], commit: bool = True) -> list[ModelType]:
         """
         Create multiple entities in bulk.
 
@@ -342,17 +320,15 @@ class BaseRepository(Generic[ModelType], ABC):
                 for entity in entities:
                     self.db.refresh(entity)
 
-            self._logger.info(
-                f"Bulk created {len(entities)} {self.model_class.__name__} entities"
-            )
+            self._logger.info(f"Bulk created {len(entities)} {self.model_class.__name__} entities")
             return entities
 
         except Exception as e:
             self.db.rollback()
             self._logger.error(f"Error bulk creating {self.model_class.__name__}: {e}")
-            raise DatabaseError(f"Failed to bulk create entities: {e}")
+            raise DatabaseError(f"Failed to bulk create entities: {e}") from e
 
-    def bulk_update(self, updates: List[Dict[str, Any]], commit: bool = True) -> int:
+    def bulk_update(self, updates: list[dict[str, Any]], commit: bool = True) -> int:
         """
         Update multiple entities in bulk.
 
@@ -383,17 +359,15 @@ class BaseRepository(Generic[ModelType], ABC):
             if commit:
                 self.db.commit()
 
-            self._logger.info(
-                f"Bulk updated {updated_count} {self.model_class.__name__} entities"
-            )
+            self._logger.info(f"Bulk updated {updated_count} {self.model_class.__name__} entities")
             return updated_count
 
         except Exception as e:
             self.db.rollback()
             self._logger.error(f"Error bulk updating {self.model_class.__name__}: {e}")
-            raise DatabaseError(f"Failed to bulk update entities: {e}")
+            raise DatabaseError(f"Failed to bulk update entities: {e}") from e
 
-    def exists(self, filters: Dict[str, Any]) -> bool:
+    def exists(self, filters: dict[str, Any]) -> bool:
         """
         Check if entity exists with given filters.
 
@@ -409,10 +383,8 @@ class BaseRepository(Generic[ModelType], ABC):
             return query.first() is not None
 
         except Exception as e:
-            self._logger.error(
-                f"Error checking existence of {self.model_class.__name__}: {e}"
-            )
-            raise DatabaseError(f"Failed to check entity existence: {e}")
+            self._logger.error(f"Error checking existence of {self.model_class.__name__}: {e}")
+            raise DatabaseError(f"Failed to check entity existence: {e}") from e
 
     def _build_base_query(self) -> Query:
         """
@@ -429,11 +401,11 @@ class BaseRepository(Generic[ModelType], ABC):
 
         # Filter out soft-deleted entities if supported
         if hasattr(self.model_class, "is_deleted"):
-            query = query.filter(self.model_class.is_deleted == False)
+            query = query.filter(self.model_class.is_deleted is False)
 
         return query
 
-    def _apply_filters(self, query: Query, filters: Dict[str, Any]) -> Query:
+    def _apply_filters(self, query: Query, filters: dict[str, Any]) -> Query:
         """
         Apply filters to query.
 
@@ -492,7 +464,7 @@ class BaseTenantRepository(BaseRepository[ModelType]):
     Extends BaseRepository with additional tenant-specific functionality.
     """
 
-    def __init__(self, db: Session, model_class: Type[ModelType], tenant_id: str):
+    def __init__(self, db: Session, model_class: type[ModelType], tenant_id: str):
         """
         Initialize tenant repository.
 
@@ -505,13 +477,11 @@ class BaseTenantRepository(BaseRepository[ModelType]):
             raise ValidationError("tenant_id is required for tenant repositories")
 
         if not issubclass(model_class, BaseModel):
-            raise ValidationError(
-                f"Model {model_class.__name__} must inherit from BaseModel"
-            )
+            raise ValidationError(f"Model {model_class.__name__} must inherit from BaseModel")
 
         super().__init__(db, model_class, tenant_id)
 
-    def get_tenant_stats(self) -> Dict[str, Any]:
+    def get_tenant_stats(self) -> dict[str, Any]:
         """
         Get statistics for current tenant.
 
@@ -532,32 +502,24 @@ class BaseTenantRepository(BaseRepository[ModelType]):
             # Add timestamp-based stats if supported
             if hasattr(self.model_class, "created_at"):
                 # Entities created today
-                today_start = datetime.now(timezone.utc).replace(
-                    hour=0, minute=0, second=0, microsecond=0
-                )
-                today_count = query.filter(
-                    self.model_class.created_at >= today_start
-                ).count()
+                today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+                today_count = query.filter(self.model_class.created_at >= today_start).count()
                 stats["created_today"] = today_count
 
                 # Entities created this month
                 month_start = today_start.replace(day=1)
-                month_count = query.filter(
-                    self.model_class.created_at >= month_start
-                ).count()
+                month_count = query.filter(self.model_class.created_at >= month_start).count()
                 stats["created_this_month"] = month_count
 
             return stats
 
         except Exception as e:
-            self._logger.error(
-                f"Error getting tenant stats for {self.model_class.__name__}: {e}"
-            )
-            raise DatabaseError(f"Failed to get tenant statistics: {e}")
+            self._logger.error(f"Error getting tenant stats for {self.model_class.__name__}: {e}")
+            raise DatabaseError(f"Failed to get tenant statistics: {e}") from e
 
 
 def create_repository(
-    db: Session, model_class: Type[ModelType], tenant_id: Optional[str] = None
+    db: Session, model_class: type[ModelType], tenant_id: Optional[str] = None
 ) -> BaseRepository[ModelType]:
     """
     Factory function to create appropriate repository.

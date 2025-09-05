@@ -3,7 +3,7 @@ Core exceptions for DotMac Framework.
 Provides consistent exception handling across all platforms.
 """
 
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 from fastapi import HTTPException, status
 
@@ -16,7 +16,7 @@ class DotMacException(Exception):
         message: str,
         error_code: Optional[str] = None,
         status_code: int = 500,
-        details: Optional[Dict[str, Any]] = None,
+        details: Optional[dict[str, Any]] = None,
     ):
         self.message = message
         self.error_code = error_code or "INTERNAL_ERROR"
@@ -24,7 +24,7 @@ class DotMacException(Exception):
         self.details = details or {}
         super().__init__(message)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert exception to dictionary format."""
         return {
             "error": True,
@@ -53,7 +53,7 @@ class ValidationError(DotMacException):
         self,
         message: str,
         field: Optional[str] = None,
-        details: Optional[Dict[str, Any]] = None,
+        details: Optional[dict[str, Any]] = None,
     ):
         super().__init__(
             message=message,
@@ -111,6 +111,28 @@ class BusinessRuleError(DotMacException):
         )
 
 
+class DuplicateEntityError(DotMacException):
+    """Exception raised when trying to create a duplicate entity."""
+
+    def __init__(self, message: str = "Entity already exists"):
+        super().__init__(
+            message=message,
+            error_code="DUPLICATE_ENTITY",
+            status_code=status.HTTP_409_CONFLICT,
+        )
+
+
+class DatabaseError(DotMacException):
+    """Exception raised for database operation errors."""
+
+    def __init__(self, message: str = "Database operation failed"):
+        super().__init__(
+            message=message,
+            error_code="DATABASE_ERROR",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
 class ServiceError(DotMacException):
     """Exception raised for service-level errors."""
 
@@ -118,7 +140,7 @@ class ServiceError(DotMacException):
         self,
         message: str,
         service_name: Optional[str] = None,
-        details: Optional[Dict[str, Any]] = None,
+        details: Optional[dict[str, Any]] = None,
     ):
         super().__init__(
             message=message,
@@ -169,7 +191,7 @@ class ExternalServiceError(DotMacException):
         message: str,
         service_name: Optional[str] = None,
         error_code: Optional[str] = None,
-        details: Optional[Dict[str, Any]] = None,
+        details: Optional[dict[str, Any]] = None,
     ):
         super().__init__(
             message=message,
@@ -179,3 +201,8 @@ class ExternalServiceError(DotMacException):
         )
         if service_name:
             self.details["service"] = service_name
+
+
+# Legacy exception aliases for backward compatibility
+NotFoundError = EntityNotFoundError
+BusinessLogicError = BusinessRuleError

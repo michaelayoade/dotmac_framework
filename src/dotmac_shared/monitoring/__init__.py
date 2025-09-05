@@ -11,7 +11,8 @@ Main Components:
 - ContainerHealthMonitor: Comprehensive container health monitoring
 """
 
-# Import audit functionality
+from dotmac.core import ConfigurationError, StorageError, ValidationError, get_logger
+
 from .audit import (
     AuditActor,
     AuditContext,
@@ -63,9 +64,6 @@ from .integrations import (
     IntegratedMonitoringService,
     create_integrated_monitoring_service,
 )
-
-# Import utilities and configuration
-from .utils import ConfigurationError, StorageError, ValidationError, get_logger
 
 try:
     from .audit_api import FASTAPI_AVAILABLE as AUDIT_API_AVAILABLE

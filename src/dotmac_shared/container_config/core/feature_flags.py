@@ -1,22 +1,18 @@
 """Feature flag management for premium feature control."""
 
-import asyncio
 import hashlib
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Optional
 from uuid import UUID
 
 from ..schemas.config_schemas import FeatureFlagConfig, ISPConfiguration
 from ..schemas.feature_schemas import (
     DEFAULT_PLAN_FEATURES,
     FeatureCategory,
-    FeatureConfiguration,
     FeatureDefinition,
     FeatureFlag,
-    FeatureStatus,
     PlanFeatures,
-    RolloutStrategy,
 )
 from ..schemas.tenant_schemas import SubscriptionPlan, TenantInfo
 
@@ -27,8 +23,8 @@ class FeatureRegistry:
     """Registry for feature definitions and plan configurations."""
 
     def __init__(self):
-        self.features: Dict[str, FeatureDefinition] = {}
-        self.plan_features: Dict[str, PlanFeatures] = DEFAULT_PLAN_FEATURES.copy()
+        self.features: dict[str, FeatureDefinition] = {}
+        self.plan_features: dict[str, PlanFeatures] = DEFAULT_PLAN_FEATURES.copy()
 
         # Load default features
         self._load_default_features()
@@ -197,7 +193,7 @@ class FeatureRegistry:
 
     def list_features(
         self, category: Optional[FeatureCategory] = None, plan: Optional[str] = None
-    ) -> List[FeatureDefinition]:
+    ) -> list[FeatureDefinition]:
         """List features, optionally filtered by category or plan."""
         features = list(self.features.values())
 
@@ -218,14 +214,14 @@ class FeatureFlagEvaluator:
     """Evaluates feature flags based on conditions and rollout strategies."""
 
     def __init__(self):
-        self.evaluation_cache: Dict[str, Any] = {}
+        self.evaluation_cache: dict[str, Any] = {}
 
     def evaluate_flag(
         self,
         flag: FeatureFlag,
-        context: Dict[str, Any],
+        context: dict[str, Any],
         user_id: Optional[str] = None,
-        user_groups: Optional[List[str]] = None,
+        user_groups: Optional[list[str]] = None,
     ) -> bool:
         """
         Evaluate whether a feature flag should be enabled.
@@ -255,17 +251,13 @@ class FeatureFlagEvaluator:
             # Check exclusions first
             if user_id in flag.exclude_user_ids:
                 return False
-            if user_groups and any(
-                group in flag.exclude_groups for group in user_groups
-            ):
+            if user_groups and any(group in flag.exclude_groups for group in user_groups):
                 return False
 
             # Check explicit inclusions
             if user_id in flag.target_user_ids:
                 return True
-            if user_groups and any(
-                group in flag.target_groups for group in user_groups
-            ):
+            if user_groups and any(group in flag.target_groups for group in user_groups):
                 return True
 
         # Evaluate conditions
@@ -283,22 +275,20 @@ class FeatureFlagEvaluator:
             if user_id:
                 rollout_key += f":{user_id}"
 
-            hash_value = int(hashlib.md5(rollout_key.encode()).hexdigest(), 16)
+            hash_value = int(hashlib.sha256(rollout_key.encode()).hexdigest(), 16)
             return (hash_value % 100) < flag.rollout_percentage
 
     def batch_evaluate(
         self,
-        flags: List[FeatureFlag],
-        context: Dict[str, Any],
+        flags: list[FeatureFlag],
+        context: dict[str, Any],
         user_id: Optional[str] = None,
-        user_groups: Optional[List[str]] = None,
-    ) -> Dict[str, bool]:
+        user_groups: Optional[list[str]] = None,
+    ) -> dict[str, bool]:
         """Evaluate multiple feature flags at once."""
         results = {}
         for flag in flags:
-            results[flag.feature_name] = self.evaluate_flag(
-                flag, context, user_id, user_groups
-            )
+            results[flag.feature_name] = self.evaluate_flag(flag, context, user_id, user_groups)
         return results
 
 
@@ -321,13 +311,13 @@ class FeatureFlagManager:
 
         # In-memory storage for tenant feature flags
         # In production, this would be backed by a database
-        self.tenant_flags: Dict[UUID, Dict[str, FeatureFlag]] = {}
+        self.tenant_flags: dict[UUID, dict[str, FeatureFlag]] = {}
 
     async def apply_feature_flags(
         self,
         config: ISPConfiguration,
         tenant_info: TenantInfo,
-        user_context: Optional[Dict[str, Any]] = None,
+        user_context: Optional[dict[str, Any]] = None,
     ) -> ISPConfiguration:
         """
         Apply feature flags to configuration based on tenant information.
@@ -344,9 +334,7 @@ class FeatureFlagManager:
 
         try:
             # Get or create feature flags for tenant
-            tenant_flags = await self._get_tenant_flags(
-                tenant_info.tenant_id, tenant_info.subscription_plan
-            )
+            tenant_flags = await self._get_tenant_flags(tenant_info.tenant_id, tenant_info.subscription_plan)
 
             # Evaluate flags
             evaluation_context = {
@@ -359,9 +347,7 @@ class FeatureFlagManager:
 
             enabled_flags = {}
             for flag in tenant_flags.values():
-                enabled_flags[flag.feature_name] = self.evaluator.evaluate_flag(
-                    flag, evaluation_context
-                )
+                enabled_flags[flag.feature_name] = self.evaluator.evaluate_flag(flag, evaluation_context)
 
             # Convert to FeatureFlagConfig objects
             feature_flag_configs = []
@@ -374,43 +360,27 @@ class FeatureFlagManager:
                         enabled=enabled,
                         rollout_percentage=flag.rollout_percentage,
                         config=self._merge_feature_config(
-                            (
-                                feature_definition.default_config
-                                if feature_definition
-                                else {}
-                            ),
+                            (feature_definition.default_config if feature_definition else {}),
                             flag.config,
                         ),
-                        description=(
-                            feature_definition.description
-                            if feature_definition
-                            else None
-                        ),
+                        description=(feature_definition.description if feature_definition else None),
                     )
                     feature_flag_configs.append(feature_config)
 
             # Apply feature-specific configuration changes
-            config = await self._apply_feature_configurations(
-                config, enabled_flags, tenant_info
-            )
+            config = await self._apply_feature_configurations(config, enabled_flags, tenant_info)
 
             # Update config with feature flags
             config.feature_flags = feature_flag_configs
 
-            logger.info(
-                f"Applied {len(feature_flag_configs)} feature flags for tenant {tenant_info.tenant_id}"
-            )
+            logger.info(f"Applied {len(feature_flag_configs)} feature flags for tenant {tenant_info.tenant_id}")
             return config
 
         except Exception as e:
-            logger.error(
-                f"Failed to apply feature flags for tenant {tenant_info.tenant_id}: {e}"
-            )
+            logger.error(f"Failed to apply feature flags for tenant {tenant_info.tenant_id}: {e}")
             raise
 
-    async def _get_tenant_flags(
-        self, tenant_id: UUID, plan: SubscriptionPlan
-    ) -> Dict[str, FeatureFlag]:
+    async def _get_tenant_flags(self, tenant_id: UUID, plan: SubscriptionPlan) -> dict[str, FeatureFlag]:
         """Get or create feature flags for a tenant."""
         if tenant_id not in self.tenant_flags:
             self.tenant_flags[tenant_id] = {}
@@ -434,7 +404,7 @@ class FeatureFlagManager:
     async def _apply_feature_configurations(
         self,
         config: ISPConfiguration,
-        enabled_flags: Dict[str, bool],
+        enabled_flags: dict[str, bool],
         tenant_info: TenantInfo,
     ) -> ISPConfiguration:
         """Apply feature-specific configuration changes."""
@@ -446,9 +416,7 @@ class FeatureFlagManager:
             config.monitoring.grafana_dashboard_enabled = True
 
             # Add analytics service
-            analytics_service_exists = any(
-                s.name == "analytics" for s in config.services
-            )
+            analytics_service_exists = any(s.name == "analytics" for s in config.services)
             if not analytics_service_exists:
                 from ..schemas.config_schemas import ServiceConfig, ServiceStatus
 
@@ -465,17 +433,11 @@ class FeatureFlagManager:
 
         # Premium API Configuration
         if enabled_flags.get("premium_api") or enabled_flags.get("enterprise_api"):
-            feature_name = (
-                "enterprise_api"
-                if enabled_flags.get("enterprise_api")
-                else "premium_api"
-            )
+            feature_name = "enterprise_api" if enabled_flags.get("enterprise_api") else "premium_api"
             feature_def = self.registry.get_feature(feature_name)
             if feature_def:
                 rate_limit = feature_def.resource_limits.get("requests_per_hour", 1000)
-                config.security.rate_limit_requests_per_minute = min(
-                    rate_limit // 60, 10000
-                )
+                config.security.rate_limit_requests_per_minute = min(rate_limit // 60, 10000)
 
         # SSO Configuration
         if enabled_flags.get("sso"):
@@ -501,9 +463,7 @@ class FeatureFlagManager:
             # Update network configuration for custom domains
             if enabled_flags.get("white_label") and tenant_info.primary_domain:
                 if tenant_info.primary_domain not in config.security.cors_origins:
-                    config.security.cors_origins.append(
-                        f"https://{tenant_info.primary_domain}"
-                    )
+                    config.security.cors_origins.append(f"https://{tenant_info.primary_domain}")
 
         # Enterprise Integration Configuration
         if enabled_flags.get("enterprise_integration"):
@@ -525,17 +485,13 @@ class FeatureFlagManager:
 
         return config
 
-    def _merge_feature_config(
-        self, default_config: Dict[str, Any], override_config: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _merge_feature_config(self, default_config: dict[str, Any], override_config: dict[str, Any]) -> dict[str, Any]:
         """Merge default feature config with overrides."""
         merged = default_config.copy()
         merged.update(override_config)
         return merged
 
-    async def generate_plan_features(
-        self, tenant_id: UUID, plan: SubscriptionPlan
-    ) -> List[FeatureFlagConfig]:
+    async def generate_plan_features(self, tenant_id: UUID, plan: SubscriptionPlan) -> list[FeatureFlagConfig]:
         """Generate feature flags based on subscription plan."""
         plan_features = self.registry.get_plan_features(plan)
         if not plan_features:
@@ -562,9 +518,9 @@ class FeatureFlagManager:
         feature_name: str,
         enabled: bool = False,
         rollout_percentage: float = 0.0,
-        target_users: Optional[List[str]] = None,
-        conditions: Optional[Dict[str, Any]] = None,
-        config: Optional[Dict[str, Any]] = None,
+        target_users: Optional[list[str]] = None,
+        conditions: Optional[dict[str, Any]] = None,
+        config: Optional[dict[str, Any]] = None,
     ) -> FeatureFlag:
         """Create a new feature flag for a tenant."""
         flag = FeatureFlag(
@@ -591,7 +547,7 @@ class FeatureFlagManager:
         feature_name: str,
         enabled: Optional[bool] = None,
         rollout_percentage: Optional[float] = None,
-        config: Optional[Dict[str, Any]] = None,
+        config: Optional[dict[str, Any]] = None,
     ) -> bool:
         """Update an existing feature flag."""
         if tenant_id not in self.tenant_flags:
@@ -625,14 +581,14 @@ class FeatureFlagManager:
 
         return False
 
-    async def list_tenant_flags(self, tenant_id: UUID) -> List[FeatureFlag]:
+    async def list_tenant_flags(self, tenant_id: UUID) -> list[FeatureFlag]:
         """List all feature flags for a tenant."""
         if tenant_id not in self.tenant_flags:
             return []
 
         return list(self.tenant_flags[tenant_id].values())
 
-    async def get_feature_usage_stats(self, tenant_id: UUID) -> Dict[str, Any]:
+    async def get_feature_usage_stats(self, tenant_id: UUID) -> dict[str, Any]:
         """Get feature usage statistics for a tenant."""
         if tenant_id not in self.tenant_flags:
             return {}
@@ -649,9 +605,7 @@ class FeatureFlagManager:
             feature_def = self.registry.get_feature(flag.feature_name)
             if feature_def:
                 category = feature_def.category.value
-                stats["features_by_category"][category] = (
-                    stats["features_by_category"].get(category, 0) + 1
-                )
+                stats["features_by_category"][category] = stats["features_by_category"].get(category, 0) + 1
 
             if not flag.enabled:
                 stats["rollout_summary"]["disabled"] += 1

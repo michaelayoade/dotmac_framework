@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Reference - DotMac Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-800">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="../index.html" class="flex items-center">
+                        <div class="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
+                            <span class="text-white font-bold text-lg">D</span>
+                        </div>
+                        <span class="ml-2 text-xl font-bold text-gray-900">DotMac Platform</span>
+                    </a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="../index.html" class="text-gray-600 hover:text-purple-600">← Back to Home</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <!-- Header -->
+        <div class="mb-12">
+            <h1 class="text-4xl font-bold text-gray-900 mb-4">API Reference</h1>
+            <p class="text-xl text-gray-600">
+                Complete REST API documentation for DotMac Platform
+            </p>
+        </div>
+
+        <!-- Quick Start -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">🚀 Quick Start</h2>
+            
+            <div class="bg-white rounded-lg p-6 shadow-md mb-6">
+                <h3 class="text-lg font-semibold mb-4">Base URL</h3>
+                <pre class="bg-gray-900 text-green-400 p-4 rounded text-sm overflow-x-auto"><code class="language-bash"># Production
+https://api.yourdomain.com/api/v1
+
+# Tenant-specific API
+https://api.tenant-name.yourdomain.com/api/v1
+
+# Development
+http://localhost:8001/api/v1</code></pre>
+            </div>
+
+            <div class="bg-white rounded-lg p-6 shadow-md">
+                <h3 class="text-lg font-semibold mb-4">Authentication</h3>
+                <pre class="bg-gray-900 text-blue-400 p-4 rounded text-sm overflow-x-auto"><code class="language-bash"># Get access token
+curl -X POST https://api.yourdomain.com/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "admin@yourdomain.com",
+    "password": "your-password"
+  }'
+
+# Use token in requests
+curl -H "Authorization: Bearer YOUR_TOKEN" \
+  https://api.yourdomain.com/api/v1/tenants</code></pre>
+            </div>
+        </section>
+
+        <!-- DNS Management API -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">🌐 DNS Management API</h2>
+            
+            <!-- DNS Status -->
+            <div class="bg-white rounded-lg p-6 shadow-md mb-6">
+                <div class="flex items-center mb-4">
+                    <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded">GET</span>
+                    <h3 class="text-lg font-semibold ml-3">/api/v1/dns/status</h3>
+                </div>
+                <p class="text-gray-600 mb-4">Get DNS system status and plugin information</p>
+                
+                <div class="space-y-4">
+                    <div>
+                        <h4 class="font-semibold mb-2">Response:</h4>
+                        <pre class="bg-gray-900 text-green-400 p-4 rounded text-sm overflow-x-auto"><code class="language-json">{
+  "plugin_loaded": true,
+  "plugin_name": "Local DNS Manager",
+  "plugin_version": "1.0.0",
+  "status": "active",
+  "healthy": true,
+  "base_domain": "yourdomain.com",
+  "load_balancer_ip": "10.0.1.100",
+  "dns_method": "bind9"
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Create Tenant DNS -->
+            <div class="bg-white rounded-lg p-6 shadow-md mb-6">
+                <div class="flex items-center mb-4">
+                    <span class="bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded">POST</span>
+                    <h3 class="text-lg font-semibold ml-3">/api/v1/dns/tenant/{tenant_id}</h3>
+                </div>
+                <p class="text-gray-600 mb-4">Create DNS records for a tenant</p>
+                
+                <div class="space-y-4">
+                    <div>
+                        <h4 class="font-semibold mb-2">Request Body:</h4>
+                        <pre class="bg-gray-900 text-yellow-400 p-4 rounded text-sm overflow-x-auto"><code class="language-json">{
+  "custom_domain": "portal.acme-isp.com"  // optional
+}</code></pre>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-semibold mb-2">Response:</h4>
+                        <pre class="bg-gray-900 text-green-400 p-4 rounded text-sm overflow-x-auto"><code class="language-json">{
+  "tenant_id": "acme-isp",
+  "subdomains_created": {
+    "acme-isp.yourdomain.com": true,
+    "api.acme-isp.yourdomain.com": true,
+    "customer.acme-isp.yourdomain.com": true,
+    "billing.acme-isp.yourdomain.com": true
+  },
+  "custom_domain_setup": {
+    "success": true,
+    "custom_domain": "portal.acme-isp.com",
+    "target_domain": "acme-isp.yourdomain.com",
+    "required_records": [...]
+  },
+  "plugin_info": {
+    "plugin_name": "Local DNS Manager",
+    "dns_method": "bind9"
+  }
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Verify Domain -->
+            <div class="bg-white rounded-lg p-6 shadow-md mb-6">
+                <div class="flex items-center mb-4">
+                    <span class="bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded">POST</span>
+                    <h3 class="text-lg font-semibold ml-3">/api/v1/dns/verify</h3>
+                </div>
+                <p class="text-gray-600 mb-4">Verify domain ownership using DNS TXT record</p>
+                
+                <div class="space-y-4">
+                    <div>
+                        <h4 class="font-semibold mb-2">Request Body:</h4>
+                        <pre class="bg-gray-900 text-yellow-400 p-4 rounded text-sm overflow-x-auto"><code class="language-json">{
+  "domain": "portal.acme-isp.com"
+}</code></pre>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-semibold mb-2">Response:</h4>
+                        <pre class="bg-gray-900 text-green-400 p-4 rounded text-sm overflow-x-auto"><code class="language-json">{
+  "success": true,
+  "message": "Domain ownership verified for portal.acme-isp.com",
+  "records_found": [
+    "dotmac-domain-verification"
+  ],
+  "records_missing": []
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Health Check -->
+            <div class="bg-white rounded-lg p-6 shadow-md mb-6">
+                <div class="flex items-center mb-4">
+                    <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded">GET</span>
+                    <h3 class="text-lg font-semibold ml-3">/api/v1/dns/health/{tenant_id}</h3>
+                </div>
+                <p class="text-gray-600 mb-4">Check health of all tenant subdomains</p>
+                
+                <div class="space-y-4">
+                    <div>
+                        <h4 class="font-semibold mb-2">Response:</h4>
+                        <pre class="bg-gray-900 text-green-400 p-4 rounded text-sm overflow-x-auto"><code class="language-json">{
+  "acme-isp.yourdomain.com": true,
+  "api.acme-isp.yourdomain.com": true,
+  "customer.acme-isp.yourdomain.com": true,
+  "billing.acme-isp.yourdomain.com": false
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tenant Management API -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">🏢 Tenant Management API</h2>
+            
+            <!-- List Tenants -->
+            <div class="bg-white rounded-lg p-6 shadow-md mb-6">
+                <div class="flex items-center mb-4">
+                    <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded">GET</span>
+                    <h3 class="text-lg font-semibold ml-3">/api/v1/tenants</h3>
+                </div>
+                <p class="text-gray-600 mb-4">List all tenants with pagination</p>
+                
+                <div class="space-y-4">
+                    <div>
+                        <h4 class="font-semibold mb-2">Query Parameters:</h4>
+                        <ul class="text-sm text-gray-600 space-y-1">
+                            <li><code>page</code> - Page number (default: 1)</li>
+                            <li><code>per_page</code> - Items per page (default: 20)</li>
+                            <li><code>status</code> - Filter by status (active, inactive, suspended)</li>
+                            <li><code>search</code> - Search by tenant name or domain</li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-semibold mb-2">Response:</h4>
+                        <pre class="bg-gray-900 text-green-400 p-4 rounded text-sm overflow-x-auto"><code class="language-json">{
+  "tenants": [
+    {
+      "id": "acme-isp",
+      "name": "ACME Internet Service Provider",
+      "domain": "acme-isp.yourdomain.com",
+      "status": "active",
+      "created_at": "2024-01-15T10:30:00Z",
+      "customers_count": 1250,
+      "monthly_revenue": 48500.00
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "per_page": 20,
+    "total": 45,
+    "pages": 3
+  }
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Create Tenant -->
+            <div class="bg-white rounded-lg p-6 shadow-md mb-6">
+                <div class="flex items-center mb-4">
+                    <span class="bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded">POST</span>
+                    <h3 class="text-lg font-semibold ml-3">/api/v1/tenants</h3>
+                </div>
+                <p class="text-gray-600 mb-4">Create a new tenant with automatic DNS setup</p>
+                
+                <div class="space-y-4">
+                    <div>
+                        <h4 class="font-semibold mb-2">Request Body:</h4>
+                        <pre class="bg-gray-900 text-yellow-400 p-4 rounded text-sm overflow-x-auto"><code class="language-json">{
+  "id": "rural-connect",
+  "name": "Rural Connect ISP",
+  "email": "admin@ruralconnect.com",
+  "custom_domain": "portal.ruralconnect.com",
+  "tier": "standard",
+  "settings": {
+    "max_customers": 5000,
+    "features": ["billing", "support", "analytics"]
+  }
+}</code></pre>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-semibold mb-2">Response:</h4>
+                        <pre class="bg-gray-900 text-green-400 p-4 rounded text-sm overflow-x-auto"><code class="language-json">{
+  "tenant": {
+    "id": "rural-connect",
+    "name": "Rural Connect ISP",
+    "domain": "rural-connect.yourdomain.com",
+    "status": "active",
+    "created_at": "2024-08-25T14:30:00Z"
+  },
+  "dns_setup": {
+    "subdomains_created": {
+      "rural-connect.yourdomain.com": true,
+      "api.rural-connect.yourdomain.com": true,
+      "customer.rural-connect.yourdomain.com": true
+    },
+    "custom_domain_setup": {
+      "required_records": [...]
+    }
+  },
+  "access": {
+    "admin_portal": "https://rural-connect.yourdomain.com",
+    "customer_portal": "https://customer.rural-connect.yourdomain.com",
+    "api_base": "https://api.rural-connect.yourdomain.com/api/v1"
+  }
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Customer Management API -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">👥 Customer Management API</h2>
+            
+            <!-- List Customers -->
+            <div class="bg-white rounded-lg p-6 shadow-md mb-6">
+                <div class="flex items-center mb-4">
+                    <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded">GET</span>
+                    <h3 class="text-lg font-semibold ml-3">/api/v1/customers</h3>
+                </div>
+                <p class="text-gray-600 mb-4">List customers for the current tenant</p>
+                
+                <div class="space-y-4">
+                    <div>
+                        <h4 class="font-semibold mb-2">Response:</h4>
+                        <pre class="bg-gray-900 text-green-400 p-4 rounded text-sm overflow-x-auto"><code class="language-json">{
+  "customers": [
+    {
+      "id": "cust_123456",
+      "name": "John Smith",
+      "email": "john@example.com",
+      "status": "active",
+      "service_plan": "fiber_100mbps",
+      "monthly_bill": 79.99,
+      "created_at": "2024-01-10T09:15:00Z",
+      "location": {
+        "address": "123 Main St, Anytown, ST 12345",
+        "coordinates": [40.7128, -74.0060]
+      }
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "per_page": 50,
+    "total": 1250
+  }
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Create Customer -->
+            <div class="bg-white rounded-lg p-6 shadow-md mb-6">
+                <div class="flex items-center mb-4">
+                    <span class="bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded">POST</span>
+                    <h3 class="text-lg font-semibold ml-3">/api/v1/customers</h3>
+                </div>
+                <p class="text-gray-600 mb-4">Create a new customer account</p>
+                
+                <div class="space-y-4">
+                    <div>
+                        <h4 class="font-semibold mb-2">Request Body:</h4>
+                        <pre class="bg-gray-900 text-yellow-400 p-4 rounded text-sm overflow-x-auto"><code class="language-json">{
+  "name": "Jane Doe",
+  "email": "jane@example.com",
+  "phone": "+1-555-0123",
+  "service_plan": "fiber_100mbps",
+  "installation_address": {
+    "street": "456 Oak Ave",
+    "city": "Anytown",
+    "state": "ST",
+    "zip": "12345",
+    "coordinates": [40.7580, -73.9855]
+  },
+  "billing_info": {
+    "payment_method": "auto_charge",
+    "billing_address": "same"
+  }
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Network Management API -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">🌐 Network Management API</h2>
+            
+            <!-- Network Topology -->
+            <div class="bg-white rounded-lg p-6 shadow-md mb-6">
+                <div class="flex items-center mb-4">
+                    <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded">GET</span>
+                    <h3 class="text-lg font-semibold ml-3">/api/v1/network/topology</h3>
+                </div>
+                <p class="text-gray-600 mb-4">Get network topology and device status</p>
+                
+                <div class="space-y-4">
+                    <div>
+                        <h4 class="font-semibold mb-2">Response:</h4>
+                        <pre class="bg-gray-900 text-green-400 p-4 rounded text-sm overflow-x-auto"><code class="language-json">{
+  "nodes": [
+    {
+      "id": "core-switch-01",
+      "name": "Core Switch #1",
+      "type": "switch",
+      "status": "online",
+      "ip_address": "10.0.1.10",
+      "location": "Main POP",
+      "uptime": 2592000,
+      "interfaces": [
+        {
+          "name": "gi0/1",
+          "status": "up",
+          "bandwidth_utilization": 65.2
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "core-switch-01",
+      "target": "access-switch-01",
+      "type": "fiber",
+      "capacity": "10Gbps"
+    }
+  ]
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Device Management -->
+            <div class="bg-white rounded-lg p-6 shadow-md mb-6">
+                <div class="flex items-center mb-4">
+                    <span class="bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded">POST</span>
+                    <h3 class="text-lg font-semibold ml-3">/api/v1/network/devices/{device_id}/configure</h3>
+                </div>
+                <p class="text-gray-600 mb-4">Configure network device via SNMP or SSH</p>
+                
+                <div class="space-y-4">
+                    <div>
+                        <h4 class="font-semibold mb-2">Request Body:</h4>
+                        <pre class="bg-gray-900 text-yellow-400 p-4 rounded text-sm overflow-x-auto"><code class="language-json">{
+  "action": "provision_customer",
+  "customer_id": "cust_123456",
+  "vlan": 100,
+  "bandwidth_limit": "100Mbps",
+  "port": "gi0/24"
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Billing API -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">💳 Billing & Payments API</h2>
+            
+            <!-- Generate Invoice -->
+            <div class="bg-white rounded-lg p-6 shadow-md mb-6">
+                <div class="flex items-center mb-4">
+                    <span class="bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded">POST</span>
+                    <h3 class="text-lg font-semibold ml-3">/api/v1/billing/invoices</h3>
+                </div>
+                <p class="text-gray-600 mb-4">Generate invoice for customer or billing cycle</p>
+                
+                <div class="space-y-4">
+                    <div>
+                        <h4 class="font-semibold mb-2">Request Body:</h4>
+                        <pre class="bg-gray-900 text-yellow-400 p-4 rounded text-sm overflow-x-auto"><code class="language-json">{
+  "customer_id": "cust_123456",
+  "billing_period": {
+    "start": "2024-08-01",
+    "end": "2024-08-31"
+  },
+  "items": [
+    {
+      "description": "Fiber Internet - 100 Mbps",
+      "amount": 79.99,
+      "quantity": 1
+    },
+    {
+      "description": "Equipment Rental - Modem",
+      "amount": 9.99,
+      "quantity": 1
+    }
+  ]
+}</code></pre>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-semibold mb-2">Response:</h4>
+                        <pre class="bg-gray-900 text-green-400 p-4 rounded text-sm overflow-x-auto"><code class="language-json">{
+  "invoice": {
+    "id": "inv_789012",
+    "customer_id": "cust_123456",
+    "amount": 89.98,
+    "status": "pending",
+    "due_date": "2024-09-15",
+    "pdf_url": "https://api.tenant.yourdomain.com/invoices/inv_789012.pdf"
+  }
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Analytics API -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">📊 Analytics & Reporting API</h2>
+            
+            <!-- Dashboard Metrics -->
+            <div class="bg-white rounded-lg p-6 shadow-md mb-6">
+                <div class="flex items-center mb-4">
+                    <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded">GET</span>
+                    <h3 class="text-lg font-semibold ml-3">/api/v1/analytics/dashboard</h3>
+                </div>
+                <p class="text-gray-600 mb-4">Get key metrics for dashboard display</p>
+                
+                <div class="space-y-4">
+                    <div>
+                        <h4 class="font-semibold mb-2">Response:</h4>
+                        <pre class="bg-gray-900 text-green-400 p-4 rounded text-sm overflow-x-auto"><code class="language-json">{
+  "metrics": {
+    "total_customers": 1250,
+    "active_customers": 1180,
+    "monthly_revenue": 98750.00,
+    "network_uptime": 99.97,
+    "average_bandwidth_usage": 67.3,
+    "support_tickets_open": 12,
+    "customer_satisfaction": 4.7
+  },
+  "trends": {
+    "customer_growth": "+5.2%",
+    "revenue_growth": "+8.1%",
+    "churn_rate": "1.2%"
+  },
+  "alerts": [
+    {
+      "type": "warning",
+      "message": "High bandwidth usage detected on Core Switch #2",
+      "timestamp": "2024-08-25T10:30:00Z"
+    }
+  ]
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Error Handling -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">⚠️ Error Handling</h2>
+            
+            <div class="bg-white rounded-lg p-6 shadow-md">
+                <p class="text-gray-600 mb-4">The API uses standard HTTP status codes and returns JSON error responses:</p>
+                
+                <div class="space-y-4">
+                    <div>
+                        <h4 class="font-semibold mb-2">Error Response Format:</h4>
+                        <pre class="bg-gray-900 text-red-400 p-4 rounded text-sm overflow-x-auto"><code class="language-json">{
+  "error": {
+    "code": "TENANT_NOT_FOUND",
+    "message": "Tenant 'invalid-tenant' not found",
+    "details": {
+      "tenant_id": "invalid-tenant",
+      "suggestion": "Check tenant ID or create tenant first"
+    }
+  },
+  "request_id": "req_abc123xyz"
+}</code></pre>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-semibold mb-2">Common HTTP Status Codes:</h4>
+                        <ul class="text-sm text-gray-600 space-y-2">
+                            <li><code>200 OK</code> - Request successful</li>
+                            <li><code>201 Created</code> - Resource created successfully</li>
+                            <li><code>400 Bad Request</code> - Invalid request data</li>
+                            <li><code>401 Unauthorized</code> - Authentication required</li>
+                            <li><code>403 Forbidden</code> - Insufficient permissions</li>
+                            <li><code>404 Not Found</code> - Resource not found</li>
+                            <li><code>422 Unprocessable Entity</code> - Validation errors</li>
+                            <li><code>500 Internal Server Error</code> - Server error</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Rate Limiting -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">🚦 Rate Limiting</h2>
+            
+            <div class="bg-white rounded-lg p-6 shadow-md">
+                <p class="text-gray-600 mb-4">API requests are rate limited to ensure fair usage:</p>
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="font-semibold mb-2">Rate Limits:</h4>
+                        <ul class="text-sm text-gray-600 space-y-2">
+                            <li><strong>General API:</strong> 1000 requests/hour</li>
+                            <li><strong>Auth endpoints:</strong> 10 requests/minute</li>
+                            <li><strong>DNS operations:</strong> 100 requests/hour</li>
+                            <li><strong>Bulk operations:</strong> 50 requests/hour</li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-semibold mb-2">Rate Limit Headers:</h4>
+                        <pre class="bg-gray-900 text-blue-400 p-3 rounded text-xs overflow-x-auto"><code>X-RateLimit-Limit: 1000
+X-RateLimit-Remaining: 999
+X-RateLimit-Reset: 1629876543</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Navigation -->
+        <div class="flex justify-between items-center pt-8 border-t border-gray-200">
+            <a href="../index.html" class="text-purple-600 hover:text-purple-800 flex items-center">
+                ← Back to Home
+            </a>
+            <div class="flex space-x-4">
+                <a href="plugin-development.html" class="text-purple-600 hover:text-purple-800">Plugin Development →</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

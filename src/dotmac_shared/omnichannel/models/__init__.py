@@ -21,7 +21,7 @@ from .interaction import (
     InteractionStatus,
     UpdateInteractionRequest,
 )
-from .message import Message, MessageResult, MessageStatus
+from .message import Message, MessageResult
 from .routing import RoutingAction, RoutingResult, RoutingRule, RoutingStrategy
 
 __all__ = [
@@ -43,7 +43,6 @@ __all__ = [
     # Message models
     "Message",
     "MessageResult",
-    "MessageStatus",
     # Routing models
     "RoutingResult",
     "RoutingStrategy",

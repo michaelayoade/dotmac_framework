@@ -1,7 +1,6 @@
 """
 Sales repository components.
 """
-
 try:
     from .lead_repository import LeadRepository
 except ImportError as e:

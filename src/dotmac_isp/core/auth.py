@@ -2,14 +2,21 @@
 Centralized authentication utilities for API endpoints.
 """
 
-from typing import Any, Dict, Optional
+from typing import Any
 from uuid import UUID
 
+from dotmac_isp.core.database import get_async_db
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from dotmac_isp.core.database import get_async_db
-from dotmac_isp.core.settings import get_settings
+try:
+    from dotmac.platform.auth.jwt_service import JWTService
+except ImportError:
+    # Fallback stub if platform services not available
+    class JWTService:
+        def __init__(self, *args, **kwargs):
+            pass
+
 
 # Security scheme
 security = HTTPBearer()
@@ -49,7 +56,7 @@ async def authenticate_user(
         # 4. Return user information
 
         # Placeholder implementation
-        token = credentials.credentials
+        token = credentials.credentials  # noqa: S105 - variable name only, not a hardcoded secret
         if not token:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -77,7 +84,7 @@ async def authenticate_user(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Authentication error: {str(e)}",
-        )
+        ) from e
 
 
 async def get_current_user(
@@ -125,7 +132,7 @@ def require_roles(*required_roles: str):
 
 async def get_tenant_context(
     current_user: CurrentUser = Depends(authenticate_user),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Get tenant context for multi-tenant operations."""
     return {
         "tenant_id": current_user.tenant_id,

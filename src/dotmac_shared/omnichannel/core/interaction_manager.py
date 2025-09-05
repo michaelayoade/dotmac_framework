@@ -8,10 +8,15 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
-from uuid import UUID, uuid4
+from typing import Any, Optional, Union
+from uuid import uuid4
 
-from pydantic import BaseModel, Field, field_validator, ConfigDict
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    field_validator,
+)
 
 from ..models.enums import ChannelType
 
@@ -49,9 +54,9 @@ class InteractionContext:
     customer_id: str
     tenant_id: str
     channel: ChannelType
-    source_metadata: Dict[str, Any] = field(default_factory=dict)
-    customer_metadata: Dict[str, Any] = field(default_factory=dict)
-    session_data: Dict[str, Any] = field(default_factory=dict)
+    source_metadata: dict[str, Any] = field(default_factory=dict)
+    customer_metadata: dict[str, Any] = field(default_factory=dict)
+    session_data: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -61,7 +66,7 @@ class InteractionSLA:
     first_response_minutes: int = 120  # 2 hours
     resolution_hours: int = 24
     escalation_minutes: int = 240  # 4 hours
-    priority_multiplier: Dict[InteractionPriority, float] = field(
+    priority_multiplier: dict[InteractionPriority, float] = field(
         default_factory=lambda: {
             InteractionPriority.LOW: 2.0,
             InteractionPriority.NORMAL: 1.0,
@@ -88,7 +93,7 @@ class InteractionModel(BaseModel):
     subject: Optional[str] = None
     content: str
     content_type: str = "text"
-    attachments: List[Dict[str, Any]] = Field(default_factory=list)
+    attachments: list[dict[str, Any]] = Field(default_factory=list)
 
     # Status and routing
     status: InteractionStatus = InteractionStatus.PENDING
@@ -107,24 +112,22 @@ class InteractionModel(BaseModel):
     sla_first_response_due: Optional[datetime] = None
     sla_resolution_due: Optional[datetime] = None
     sla_escalation_due: Optional[datetime] = None
-    sla_breach_flags: List[str] = Field(default_factory=list)
+    sla_breach_flags: list[str] = Field(default_factory=list)
 
     # Customer satisfaction
     customer_satisfaction_rating: Optional[int] = None
     customer_satisfaction_comment: Optional[str] = None
 
     # Metadata
-    tags: List[str] = Field(default_factory=list)
-    custom_fields: Dict[str, Any] = Field(default_factory=dict)
-    context: Dict[str, Any] = Field(default_factory=dict)
+    tags: list[str] = Field(default_factory=list)
+    custom_fields: dict[str, Any] = Field(default_factory=dict)
+    context: dict[str, Any] = Field(default_factory=dict)
 
     # Conversation threading
     conversation_id: Optional[str] = None
     parent_interaction_id: Optional[str] = None
 
-    model_config = ConfigDict(
-        use_enum_values=True
-    )
+    model_config = ConfigDict(use_enum_values=True)
 
     @field_validator("priority")
     @classmethod
@@ -186,7 +189,7 @@ class InteractionResponse(BaseModel):
     agent_id: Optional[str] = None
     content: str
     content_type: str = "text"
-    attachments: List[Dict[str, Any]] = Field(default_factory=list)
+    attachments: list[dict[str, Any]] = Field(default_factory=list)
 
     # Channel information
     channel: ChannelType
@@ -209,7 +212,7 @@ class InteractionResponse(BaseModel):
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     # Metadata
-    extra_data: Dict[str, Any] = Field(default_factory=dict, alias="metadata")
+    extra_data: dict[str, Any] = Field(default_factory=dict, alias="metadata")
 
 
 class InteractionManager:
@@ -248,10 +251,10 @@ class InteractionManager:
 
         # SLA configuration
         self.default_sla = InteractionSLA()
-        self.tenant_slas: Dict[str, InteractionSLA] = {}
+        self.tenant_slas: dict[str, InteractionSLA] = {}
 
         # Active interaction tracking
-        self.active_interactions: Dict[str, InteractionModel] = {}
+        self.active_interactions: dict[str, InteractionModel] = {}
 
         logger.info("Interaction Manager initialized")
 
@@ -263,7 +266,7 @@ class InteractionManager:
         content: str,
         subject: Optional[str] = None,
         priority: Union[InteractionPriority, str] = InteractionPriority.NORMAL,
-        attachments: Optional[List[Dict[str, Any]]] = None,
+        attachments: Optional[list[dict[str, Any]]] = None,
         context: Optional[InteractionContext] = None,
         external_id: Optional[str] = None,
         conversation_id: Optional[str] = None,
@@ -318,9 +321,7 @@ class InteractionManager:
         # Route interaction
         if self.routing_engine:
             try:
-                routing_result = await self.routing_engine.route_interaction(
-                    interaction
-                )
+                routing_result = await self.routing_engine.route_interaction(interaction)
                 if routing_result.agent_id:
                     interaction.assigned_agent_id = routing_result.agent_id
                     interaction.status = InteractionStatus.OPEN
@@ -347,8 +348,8 @@ class InteractionManager:
         assigned_agent_id: Optional[str] = None,
         assigned_team_id: Optional[str] = None,
         priority: Optional[Union[InteractionPriority, str]] = None,
-        tags: Optional[List[str]] = None,
-        custom_fields: Optional[Dict[str, Any]] = None,
+        tags: Optional[list[str]] = None,
+        custom_fields: Optional[dict[str, Any]] = None,
     ) -> InteractionModel:
         """Update interaction properties.
 
@@ -396,10 +397,7 @@ class InteractionManager:
         interaction.updated_at = datetime.now(timezone.utc)
 
         # Handle status transitions
-        if (
-            status == InteractionStatus.IN_PROGRESS
-            and not interaction.first_response_at
-        ):
+        if status == InteractionStatus.IN_PROGRESS and not interaction.first_response_at:
             interaction.first_response_at = datetime.now(timezone.utc)
 
         elif status == InteractionStatus.RESOLVED and not interaction.resolved_at:
@@ -430,7 +428,7 @@ class InteractionManager:
         channel: Optional[Union[ChannelType, str]] = None,
         response_type: str = "reply",
         is_public: bool = True,
-        attachments: Optional[List[Dict[str, Any]]] = None,
+        attachments: Optional[list[dict[str, Any]]] = None,
     ) -> InteractionResponse:
         """Add response to interaction.
 
@@ -484,9 +482,7 @@ class InteractionManager:
 
         # Update interaction status and first response time
         if response_type == "reply" and not interaction.first_response_at:
-            await self.update_interaction(
-                interaction_id, status=InteractionStatus.IN_PROGRESS
-            )
+            await self.update_interaction(interaction_id, status=InteractionStatus.IN_PROGRESS)
 
         # Track analytics
         if self.analytics_service:
@@ -513,9 +509,7 @@ class InteractionManager:
         Returns:
             Closed interaction model
         """
-        interaction = await self.update_interaction(
-            interaction_id, status=InteractionStatus.CLOSED
-        )
+        interaction = await self.update_interaction(interaction_id, status=InteractionStatus.CLOSED)
 
         # Add resolution details
         if resolution:
@@ -567,7 +561,7 @@ class InteractionManager:
         channel: Optional[ChannelType] = None,
         limit: int = 50,
         offset: int = 0,
-    ) -> List[InteractionModel]:
+    ) -> list[InteractionModel]:
         """Get interactions for a customer.
 
         Args:
@@ -600,7 +594,7 @@ class InteractionManager:
         status: Optional[InteractionStatus] = None,
         limit: int = 50,
         offset: int = 0,
-    ) -> List[InteractionModel]:
+    ) -> list[InteractionModel]:
         """Get interactions assigned to an agent.
 
         Args:
@@ -624,7 +618,7 @@ class InteractionManager:
             offset=offset,
         )
 
-    async def check_sla_breaches(self) -> List[InteractionModel]:
+    async def check_sla_breaches(self) -> list[InteractionModel]:
         """Check for SLA breaches across active interactions.
 
         Returns:
@@ -645,11 +639,7 @@ class InteractionManager:
                 breaches.append("first_response")
 
             # Check resolution SLA
-            if (
-                interaction.sla_resolution_due
-                and now > interaction.sla_resolution_due
-                and not interaction.resolved_at
-            ):
+            if interaction.sla_resolution_due and now > interaction.sla_resolution_due and not interaction.resolved_at:
                 breaches.append("resolution")
 
             # Check escalation SLA
@@ -673,21 +663,15 @@ class InteractionManager:
 
         # First response deadline
         first_response_minutes = int(sla.first_response_minutes * multiplier)
-        interaction.sla_first_response_due = interaction.created_at + timedelta(
-            minutes=first_response_minutes
-        )
+        interaction.sla_first_response_due = interaction.created_at + timedelta(minutes=first_response_minutes)
 
         # Resolution deadline
         resolution_hours = int(sla.resolution_hours * multiplier)
-        interaction.sla_resolution_due = interaction.created_at + timedelta(
-            hours=resolution_hours
-        )
+        interaction.sla_resolution_due = interaction.created_at + timedelta(hours=resolution_hours)
 
         # Escalation deadline
         escalation_minutes = int(sla.escalation_minutes * multiplier)
-        interaction.sla_escalation_due = interaction.created_at + timedelta(
-            minutes=escalation_minutes
-        )
+        interaction.sla_escalation_due = interaction.created_at + timedelta(minutes=escalation_minutes)
 
     async def _notify_interaction_created(self, interaction: InteractionModel):
         """Send notifications for new interaction."""
@@ -704,7 +688,7 @@ class InteractionManager:
         self.tenant_slas[tenant_id] = sla_config
         logger.info(f"Configured SLA for tenant {tenant_id}")
 
-    async def get_interaction_stats(self, tenant_id: str) -> Dict[str, Any]:
+    async def get_interaction_stats(self, tenant_id: str) -> dict[str, Any]:
         """Get interaction statistics for tenant.
 
         Args:

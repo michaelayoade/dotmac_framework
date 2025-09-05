@@ -1,0 +1,81 @@
+# Security Scanner Configuration for DotMac Framework
+# This file configures security tools to recognize legitimate secret templates
+
+# =============================================================================
+# SECRET TEMPLATE PATTERNS - WHITELIST
+# =============================================================================
+
+# These patterns are SAFE and should NOT trigger security alerts
+whitelist_patterns:
+  # Secret management templates (industry standard)
+  - pattern: '\$\{SECRET:[^}]+\}'
+    description: "Secret injection templates (e.g., ${SECRET:database_password})"
+    reason: "Standard secret management placeholder - replaced at deployment time"
+    
+  # Configuration validation code
+  - pattern: '\.startswith\("SECRET:"\)'
+    description: "Secret placeholder validation code"
+    reason: "Legitimate validation logic for secret templates"
+    
+  - pattern: '"SECRET:" in [^"]*'
+    description: "Secret placeholder detection logic"
+    reason: "Code that checks for proper secret template format"
+
+# =============================================================================
+# HIGH-RISK PATTERNS - ALWAYS ALERT
+# =============================================================================
+
+# These patterns should ALWAYS trigger alerts
+alert_patterns:
+  # Actual hardcoded credentials
+  - pattern: 'password\s*[:=]\s*[\'"][^${][^\'"]{6,}[\'"]'
+    severity: "HIGH"
+    description: "Potential hardcoded password (not template)"
+    
+  - pattern: 'api_key\s*[:=]\s*[\'"](?!\$\{SECRET:)[^\'"]{20,}[\'"]'
+    severity: "CRITICAL"
+    description: "Potential hardcoded API key (not template)"
+    
+  - pattern: 'secret\s*[:=]\s*[\'"](?!\$\{SECRET:)[^\'"]{10,}[\'"]'
+    severity: "CRITICAL"
+    description: "Potential hardcoded secret (not template)"
+
+# =============================================================================
+# CONTEXT-AWARE RULES
+# =============================================================================
+
+# Special handling for specific file types
+file_rules:
+  - path_pattern: "*/config_generator.py"
+    allow_patterns: ["password=.*SECRET:", "api_key=.*SECRET:"]
+    reason: "Configuration template generator - templates expected"
+    
+  - path_pattern: "*/validators.py"
+    allow_patterns: ["SECRET:"]
+    reason: "Validation logic for secret templates"
+    
+  - path_pattern: "*/test_*.py"
+    allow_patterns: ["password.*test", "secret.*example"]
+    reason: "Test files may contain example/mock credentials"
+
+# =============================================================================
+# COMMENTS AND ANNOTATIONS
+# =============================================================================
+
+# Inline comment patterns that indicate safe usage
+safe_comment_indicators:
+  - "# Template - replaced at deployment"
+  - "# Will be replaced by secret manager"
+  - "# Safe: secret injection placeholder"
+  - "# nosec: template"
+
+# =============================================================================
+# CI/CD INTEGRATION
+# =============================================================================
+
+ci_config:
+  fail_on_critical: true
+  fail_on_high: true
+  ignore_medium_in_templates: true
+  report_format: ["json", "sarif"]
+  output_file: "security-scan-results.json"

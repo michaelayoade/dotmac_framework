@@ -13,18 +13,14 @@ Author: DotMac Framework Team
 License: MIT
 """
 
-import asyncio
-import json
 import logging
-from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Union
+from typing import Any, Optional
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field, ConfigDict
-from sqlalchemy import and_, delete, func, or_, select, update
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
@@ -91,7 +87,7 @@ class TeamConfiguration:
     auto_assignment: bool = True
     escalation_enabled: bool = True
     escalation_timeout: int = 15  # minutes
-    required_skills: List[str] = field(default_factory=list)
+    required_skills: list[str] = field(default_factory=list)
     priority_multiplier: float = 1.0
 
 
@@ -115,12 +111,12 @@ class AgentModel(BaseModel):
     capacity_utilization: float = 0.0
 
     # Skills and capabilities
-    skills: List[Dict[str, Any]] = Field(default_factory=list)
-    languages: List[str] = Field(default_factory=list)
-    channels: List[str] = Field(default_factory=list)
+    skills: list[dict[str, Any]] = Field(default_factory=list)
+    languages: list[str] = Field(default_factory=list)
+    channels: list[str] = Field(default_factory=list)
 
     # Team and hierarchy
-    team_ids: List[UUID] = Field(default_factory=list)
+    team_ids: list[UUID] = Field(default_factory=list)
     supervisor_id: Optional[UUID] = None
     role: str = "agent"
 
@@ -138,11 +134,9 @@ class AgentModel(BaseModel):
     # Metadata
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
-    extra_data: Dict[str, Any] = Field(default_factory=dict, alias="metadata")
+    extra_data: dict[str, Any] = Field(default_factory=dict, alias="metadata")
 
-    model_config = ConfigDict(
-        use_enum_values=True
-    )
+    model_config = ConfigDict(use_enum_values=True)
 
 
 class TeamModel(BaseModel):
@@ -160,9 +154,9 @@ class TeamModel(BaseModel):
     escalation_timeout: int = 15
 
     # Skills and requirements
-    required_skills: List[str] = Field(default_factory=list)
-    supported_channels: List[str] = Field(default_factory=list)
-    languages: List[str] = Field(default_factory=list)
+    required_skills: list[str] = Field(default_factory=list)
+    supported_channels: list[str] = Field(default_factory=list)
+    languages: list[str] = Field(default_factory=list)
 
     # Performance settings
     priority_multiplier: float = 1.0
@@ -170,13 +164,13 @@ class TeamModel(BaseModel):
     sla_target_resolution: int = 3600  # seconds
 
     # Agent management
-    agent_ids: List[UUID] = Field(default_factory=list)
-    supervisor_ids: List[UUID] = Field(default_factory=list)
+    agent_ids: list[UUID] = Field(default_factory=list)
+    supervisor_ids: list[UUID] = Field(default_factory=list)
 
     # Metadata
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
-    extra_data: Dict[str, Any] = Field(default_factory=dict, alias="metadata")
+    extra_data: dict[str, Any] = Field(default_factory=dict, alias="metadata")
 
 
 class AgentManager:
@@ -190,9 +184,9 @@ class AgentManager:
     def __init__(self, db_session: AsyncSession, tenant_id: UUID):
         self.db = db_session
         self.tenant_id = tenant_id
-        self.agent_cache: Dict[UUID, AgentModel] = {}
-        self.team_cache: Dict[UUID, TeamModel] = {}
-        self.metrics_cache: Dict[UUID, AgentMetrics] = {}
+        self.agent_cache: dict[UUID, AgentModel] = {}
+        self.team_cache: dict[UUID, TeamModel] = {}
+        self.metrics_cache: dict[UUID, AgentMetrics] = {}
 
         # Performance tracking
         self.performance_window = timedelta(hours=1)
@@ -206,7 +200,7 @@ class AgentManager:
             SkillLevel.BEGINNER: 1.0,
         }
 
-    async def create_agent(self, agent_data: Dict[str, Any]) -> AgentModel:
+    async def create_agent(self, agent_data: dict[str, Any]) -> AgentModel:
         """Create a new agent"""
         try:
             agent = AgentModel(tenant_id=self.tenant_id, **agent_data)
@@ -254,9 +248,7 @@ class AgentManager:
                 agent.current_interaction_count = 0
                 agent.capacity_utilization = 0.0
             else:
-                agent.capacity_utilization = (
-                    agent.current_interaction_count / agent.max_concurrent_interactions
-                )
+                agent.capacity_utilization = agent.current_interaction_count / agent.max_concurrent_interactions
 
             # Track status change metrics
             await self._track_status_change(agent, old_status, status)
@@ -295,10 +287,10 @@ class AgentManager:
     async def get_available_agents(
         self,
         channel: Optional[str] = None,
-        skills: Optional[List[str]] = None,
+        skills: Optional[list[str]] = None,
         team_id: Optional[UUID] = None,
         min_capacity: float = 0.1,
-    ) -> List[AgentModel]:
+    ) -> list[AgentModel]:
         """Get available agents matching criteria"""
         try:
             available_agents = []
@@ -322,9 +314,7 @@ class AgentManager:
                 available_agents.append(agent)
 
             # Sort by availability score
-            available_agents.sort(
-                key=lambda a: self._calculate_availability_score(a), reverse=True
-            )
+            available_agents.sort(key=lambda a: self._calculate_availability_score(a), reverse=True)
 
             return available_agents
 
@@ -346,9 +336,7 @@ class AgentManager:
 
             # Update interaction count
             agent.current_interaction_count += 1
-            agent.capacity_utilization = (
-                agent.current_interaction_count / agent.max_concurrent_interactions
-            )
+            agent.capacity_utilization = agent.current_interaction_count / agent.max_concurrent_interactions
 
             # Update status if needed
             if agent.status == AgentStatus.ONLINE and agent.capacity_utilization > 0.8:
@@ -382,9 +370,7 @@ class AgentManager:
             if agent.current_interaction_count > 0:
                 agent.current_interaction_count -= 1
 
-            agent.capacity_utilization = (
-                agent.current_interaction_count / agent.max_concurrent_interactions
-            )
+            agent.capacity_utilization = agent.current_interaction_count / agent.max_concurrent_interactions
 
             # Update status if needed
             if agent.status == AgentStatus.BUSY and agent.capacity_utilization < 0.8:
@@ -408,7 +394,7 @@ class AgentManager:
             logger.error(f"Failed to complete interaction: {e}")
             return False
 
-    async def create_team(self, team_data: Dict[str, Any]) -> TeamModel:
+    async def create_team(self, team_data: dict[str, Any]) -> TeamModel:
         """Create a new team"""
         try:
             team = TeamModel(tenant_id=self.tenant_id, **team_data)
@@ -459,7 +445,7 @@ class AgentManager:
 
     async def get_team_performance(
         self, team_id: UUID, date_range: Optional[tuple[datetime, datetime]] = None
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Get team performance metrics"""
         try:
             team = self.team_cache.get(team_id)
@@ -520,23 +506,15 @@ class AgentManager:
 
             # Calculate averages
             if response_times:
-                team_metrics["avg_response_time"] = sum(response_times) / len(
-                    response_times
-                )
+                team_metrics["avg_response_time"] = sum(response_times) / len(response_times)
             if resolution_times:
-                team_metrics["avg_resolution_time"] = sum(resolution_times) / len(
-                    resolution_times
-                )
+                team_metrics["avg_resolution_time"] = sum(resolution_times) / len(resolution_times)
             if satisfaction_scores:
-                team_metrics["customer_satisfaction"] = sum(satisfaction_scores) / len(
-                    satisfaction_scores
-                )
+                team_metrics["customer_satisfaction"] = sum(satisfaction_scores) / len(satisfaction_scores)
 
             # Calculate utilization rate
             if team_metrics["total_capacity"] > 0:
-                team_metrics["utilization_rate"] = (
-                    team_metrics["used_capacity"] / team_metrics["total_capacity"]
-                )
+                team_metrics["utilization_rate"] = team_metrics["used_capacity"] / team_metrics["total_capacity"]
             else:
                 team_metrics["utilization_rate"] = 0.0
 
@@ -546,15 +524,13 @@ class AgentManager:
             logger.error(f"Failed to get team performance: {e}")
             return {}
 
-    async def find_best_agent_for_interaction(
-        self, interaction_data: Dict[str, Any]
-    ) -> Optional[UUID]:
+    async def find_best_agent_for_interaction(self, interaction_data: dict[str, Any]) -> Optional[UUID]:
         """Find the best available agent for an interaction"""
         try:
             channel = interaction_data.get("channel")
             required_skills = interaction_data.get("skills", [])
             priority = interaction_data.get("priority", "medium")
-            customer_language = interaction_data.get("customer_language")
+            interaction_data.get("customer_language")
 
             # Get available agents
             candidates = await self.get_available_agents(
@@ -580,9 +556,7 @@ class AgentManager:
             logger.error(f"Failed to find best agent: {e}")
             return None
 
-    async def get_agent_performance(
-        self, agent_id: UUID, period: str = "today"
-    ) -> Dict[str, Any]:
+    async def get_agent_performance(self, agent_id: UUID, period: str = "today") -> dict[str, Any]:
         """Get detailed agent performance metrics"""
         try:
             agent = await self.get_agent(agent_id)
@@ -628,7 +602,7 @@ class AgentManager:
 
         return (1.0 - agent.capacity_utilization) >= min_capacity
 
-    def _agent_has_skills(self, agent: AgentModel, required_skills: List[str]) -> bool:
+    def _agent_has_skills(self, agent: AgentModel, required_skills: list[str]) -> bool:
         """Check if agent has required skills"""
         agent_skills = [skill.get("skill_name", "") for skill in agent.skills]
         return all(skill in agent_skills for skill in required_skills)
@@ -645,9 +619,7 @@ class AgentManager:
 
         return max(0.0, base_score + performance_bonus - status_penalty)
 
-    async def _calculate_agent_score(
-        self, agent: AgentModel, interaction_data: Dict[str, Any]
-    ) -> float:
+    async def _calculate_agent_score(self, agent: AgentModel, interaction_data: dict[str, Any]) -> float:
         """Calculate agent suitability score for interaction"""
         try:
             score = 0.0
@@ -680,9 +652,7 @@ class AgentManager:
             logger.error(f"Failed to calculate agent score: {e}")
             return 0.0
 
-    def _calculate_skill_match_score(
-        self, agent: AgentModel, required_skills: List[str]
-    ) -> float:
+    def _calculate_skill_match_score(self, agent: AgentModel, required_skills: list[str]) -> float:
         """Calculate skill matching score"""
         if not required_skills:
             return 0.0
@@ -694,11 +664,7 @@ class AgentManager:
             for skill_data in agent.skills:
                 if skill_data.get("skill_name") == required_skill:
                     level = skill_data.get("level", "beginner")
-                    skill_level = (
-                        SkillLevel(level)
-                        if level in SkillLevel
-                        else SkillLevel.BEGINNER
-                    )
+                    skill_level = SkillLevel(level) if level in SkillLevel else SkillLevel.BEGINNER
                     total_score += self.skill_weights.get(skill_level, 1.0)
                     matched_skills += 1
                     break
@@ -710,15 +676,13 @@ class AgentManager:
         max_possible = len(required_skills) * self.skill_weights[SkillLevel.EXPERT]
         return min(2.0, (total_score / max_possible) * 2.0)
 
-    async def _track_status_change(
-        self, agent: AgentModel, old_status: AgentStatus, new_status: AgentStatus
-    ):
+    async def _track_status_change(self, agent: AgentModel, old_status: AgentStatus, new_status: AgentStatus):
         """Track agent status change for metrics"""
         try:
             metrics = self.metrics_cache.get(agent.id, AgentMetrics())
 
             # Update time tracking based on status
-            now = datetime.now(timezone.utc)
+            datetime.now(timezone.utc)
 
             # This is a simplified implementation
             # In production, you'd track actual time differences

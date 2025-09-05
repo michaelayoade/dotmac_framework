@@ -8,7 +8,6 @@ import argparse
 import asyncio
 import json
 import sys
-from typing import Optional
 from uuid import UUID, uuid4
 
 import structlog
@@ -70,10 +69,8 @@ async def create_database_command(args) -> int:
             "created_at": db_instance.created_at.isoformat(),
         }
 
-        print(json.dumps(result, indent=2))
-        logger.info(
-            "Database created successfully", database_name=db_instance.database_name
-        )
+        logger.info(json.dumps(result, indent=2))
+        logger.info("Database created successfully", database_name=db_instance.database_name)
 
         return 0
 
@@ -83,7 +80,7 @@ async def create_database_command(args) -> int:
             "error": str(e),
             "error_type": type(e).__name__,
         }
-        print(json.dumps(error_result, indent=2))
+        logger.info(json.dumps(error_result, indent=2))
         logger.error("Failed to create database", error=str(e), exc_info=True)
         return 1
 
@@ -117,7 +114,7 @@ async def initialize_schema_command(args) -> int:
 
         result = {"success": success, "schema_info": schema_info}
 
-        print(json.dumps(result, indent=2))
+        logger.info(json.dumps(result, indent=2))
 
         if success:
             logger.info("Schema initialized successfully")
@@ -132,7 +129,7 @@ async def initialize_schema_command(args) -> int:
             "error": str(e),
             "error_type": type(e).__name__,
         }
-        print(json.dumps(error_result, indent=2))
+        logger.info(json.dumps(error_result, indent=2))
         logger.error("Failed to initialize schema", error=str(e), exc_info=True)
         return 1
 
@@ -160,7 +157,7 @@ async def seed_data_command(args) -> int:
         # Load custom data if provided
         custom_data = None
         if args.custom_data:
-            with open(args.custom_data, "r") as f:
+            with open(args.custom_data) as f:
                 custom_data = json.load(f)
 
         logger.info("Seeding initial data", database_name=args.database_name)
@@ -172,7 +169,7 @@ async def seed_data_command(args) -> int:
 
         result = {"success": success, "seed_status": seed_status}
 
-        print(json.dumps(result, indent=2))
+        logger.info(json.dumps(result, indent=2))
 
         if success:
             logger.info("Data seeded successfully")
@@ -187,7 +184,7 @@ async def seed_data_command(args) -> int:
             "error": str(e),
             "error_type": type(e).__name__,
         }
-        print(json.dumps(error_result, indent=2))
+        logger.info(json.dumps(error_result, indent=2))
         logger.error("Failed to seed data", error=str(e), exc_info=True)
         return 1
 
@@ -224,15 +221,13 @@ async def validate_health_command(args) -> int:
             "error": health_result.error,
         }
 
-        print(json.dumps(result, indent=2))
+        logger.info(json.dumps(result, indent=2))
 
         # Clean up resources
         await validator.cleanup()
 
         if health_result.status in [HealthStatus.HEALTHY, HealthStatus.DEGRADED]:
-            logger.info(
-                "Health validation completed", status=health_result.status.value
-            )
+            logger.info("Health validation completed", status=health_result.status.value)
             return 0
         else:
             logger.error("Database is unhealthy", status=health_result.status.value)
@@ -244,7 +239,7 @@ async def validate_health_command(args) -> int:
             "error": str(e),
             "error_type": type(e).__name__,
         }
-        print(json.dumps(error_result, indent=2))
+        logger.info(json.dumps(error_result, indent=2))
         logger.error("Failed to validate health", error=str(e), exc_info=True)
         return 1
 
@@ -280,7 +275,7 @@ async def full_initialization_command(args) -> int:
 
         custom_data = None
         if args.custom_data:
-            with open(args.custom_data, "r") as f:
+            with open(args.custom_data) as f:
                 custom_data = json.load(f)
 
         seed_success = await seed_manager.seed_initial_data(custom_data)
@@ -307,7 +302,7 @@ async def full_initialization_command(args) -> int:
             "health_details": health_result.details,
         }
 
-        print(json.dumps(result, indent=2))
+        logger.info(json.dumps(result, indent=2))
 
         # Clean up resources
         await validator.cleanup()
@@ -321,7 +316,7 @@ async def full_initialization_command(args) -> int:
             "error": str(e),
             "error_type": type(e).__name__,
         }
-        print(json.dumps(error_result, indent=2))
+        logger.info(json.dumps(error_result, indent=2))
         logger.error("Full initialization failed", error=str(e), exc_info=True)
         return 1
 
@@ -359,19 +354,13 @@ Examples:
 
     # Create database command
     create_parser = subparsers.add_parser("create", help="Create a new ISP database")
-    create_parser.add_argument(
-        "--admin-username", default="postgres", help="Database admin username"
-    )
-    create_parser.add_argument(
-        "--admin-password", required=True, help="Database admin password"
-    )
+    create_parser.add_argument("--admin-username", default="postgres", help="Database admin username")
+    create_parser.add_argument("--admin-password", required=True, help="Database admin password")
     create_parser.add_argument("--isp-id", help="ISP UUID (generated if not provided)")
     create_parser.set_defaults(func=create_database_command)
 
     # Initialize schema command
-    schema_parser = subparsers.add_parser(
-        "init-schema", help="Initialize database schema"
-    )
+    schema_parser = subparsers.add_parser("init-schema", help="Initialize database schema")
     schema_parser.add_argument("--database-name", required=True, help="Database name")
     schema_parser.add_argument("--username", required=True, help="Database username")
     schema_parser.add_argument("--password", required=True, help="Database password")
@@ -396,15 +385,9 @@ Examples:
     health_parser.set_defaults(func=validate_health_command)
 
     # Full initialization command
-    full_parser = subparsers.add_parser(
-        "full-init", help="Perform full database initialization"
-    )
-    full_parser.add_argument(
-        "--admin-username", default="postgres", help="Database admin username"
-    )
-    full_parser.add_argument(
-        "--admin-password", required=True, help="Database admin password"
-    )
+    full_parser = subparsers.add_parser("full-init", help="Perform full database initialization")
+    full_parser.add_argument("--admin-username", default="postgres", help="Database admin username")
+    full_parser.add_argument("--admin-password", required=True, help="Database admin password")
     full_parser.add_argument("--isp-id", help="ISP UUID (generated if not provided)")
     full_parser.add_argument("--custom-data", help="Path to custom seed data JSON file")
     full_parser.set_defaults(func=full_initialization_command)

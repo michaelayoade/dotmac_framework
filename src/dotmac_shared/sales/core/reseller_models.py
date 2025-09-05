@@ -3,15 +3,26 @@ Reseller-specific models extending the shared sales service.
 Supports both ISP Framework and Management Platform reseller operations.
 """
 
-from datetime import date, datetime
-from decimal import Decimal
+from datetime import date
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Optional
 
 try:
-    from sqlalchemy import JSON, Boolean, Column, Date, DateTime
+    from sqlalchemy import (
+        JSON,
+        Boolean,
+        Column,
+        Date,
+        DateTime,
+        Float,
+        ForeignKey,
+        Index,
+        Integer,
+        Numeric,
+        String,
+        Text,
+    )
     from sqlalchemy import Enum as SQLEnum
-    from sqlalchemy import Float, ForeignKey, Index, Integer, Numeric, String, Text
     from sqlalchemy.dialects.postgresql import UUID
     from sqlalchemy.ext.hybrid import hybrid_property
     from sqlalchemy.orm import relationship
@@ -229,9 +240,7 @@ if SQLALCHEMY_AVAILABLE:
             back_populates="reseller",
             cascade="all, delete-orphan",
         )
-        customers = relationship(
-            "ResellerCustomer", back_populates="reseller", cascade="all, delete-orphan"
-        )
+        customers = relationship("ResellerCustomer", back_populates="reseller", cascade="all, delete-orphan")
         commissions = relationship(
             "ResellerCommission",
             back_populates="reseller",
@@ -255,9 +264,7 @@ if SQLALCHEMY_AVAILABLE:
         @hybrid_property
         def is_certification_expired(self) -> bool:
             """Check if certification is expired."""
-            return (
-                self.certification_expiry and date.today() > self.certification_expiry
-            )
+            return self.certification_expiry and date.today() > self.certification_expiry
 
         @hybrid_property
         def days_until_agreement_expiry(self) -> Optional[int]:
@@ -267,7 +274,9 @@ if SQLALCHEMY_AVAILABLE:
             return None
 
         def __repr__(self):
-            return f"<Reseller(id='{self.reseller_id}', company='{self.company_name}', status='{self.reseller_status}')>"
+            return (
+                f"<Reseller(id='{self.reseller_id}', company='{self.company_name}', status='{self.reseller_status}')>"
+            )
 
     class ResellerOpportunity(TenantModel, AuditMixin):
         """Opportunities managed by resellers."""
@@ -382,9 +391,7 @@ if SQLALCHEMY_AVAILABLE:
 
         # Commission details
         commission_id = Column(String(100), nullable=False, unique=True, index=True)
-        commission_type = Column(
-            String(50), nullable=False
-        )  # new_sale, renewal, upsell, etc.
+        commission_type = Column(String(50), nullable=False)  # new_sale, renewal, upsell, etc.
         commission_period = Column(String(50), nullable=False)  # Q1-2024, etc.
 
         # Financial information
@@ -393,9 +400,7 @@ if SQLALCHEMY_AVAILABLE:
         commission_amount = Column(Numeric(10, 2), nullable=False)
 
         # Payment information
-        payment_status = Column(
-            String(50), default="pending", nullable=False, index=True
-        )
+        payment_status = Column(String(50), default="pending", nullable=False, index=True)
         payment_date = Column(Date, nullable=True)
         payment_method = Column(String(50), nullable=True)
         payment_reference = Column(String(200), nullable=True)
@@ -442,9 +447,7 @@ if SQLALCHEMY_AVAILABLE:
         # Training details
         training_id = Column(String(100), nullable=False, index=True)
         training_name = Column(String(300), nullable=False)
-        training_type = Column(
-            String(100), nullable=False
-        )  # certification, product, sales, technical
+        training_type = Column(String(100), nullable=False)  # certification, product, sales, technical
 
         # Participants
         participant_name = Column(String(200), nullable=False)

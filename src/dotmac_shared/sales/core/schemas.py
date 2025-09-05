@@ -2,7 +2,7 @@
 
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 from uuid import UUID
 
 try:
@@ -22,7 +22,7 @@ except ImportError:
 
 # Create independent schema base class
 try:
-    from dotmac_shared.schemas import TenantModelSchema
+    from dotmac.core.schemas import TenantModelSchema
 
     SHARED_SCHEMAS_AVAILABLE = True
 except ImportError:
@@ -52,11 +52,9 @@ from .models import (
     LeadStatus,
     OpportunityStage,
     OpportunityStatus,
-    QuoteStatus,
 )
 
 if PYDANTIC_AVAILABLE:
-
     # Lead Schemas
     class LeadBase(BaseModel):
         """Base lead schema."""
@@ -196,7 +194,7 @@ if PYDANTIC_AVAILABLE:
         sales_owner: str
         sales_team: Optional[str] = None
         close_reason: Optional[str] = None
-        stage_history: Optional[List[Dict[str, Any]]] = Field(default_factory=list)
+        stage_history: Optional[list[dict[str, Any]]] = Field(default_factory=list)
 
     # Sales Activity Schemas
     class SalesActivityBase(BaseModel):
@@ -248,12 +246,12 @@ if PYDANTIC_AVAILABLE:
     class SalesDashboard(BaseModel):
         """Sales dashboard data."""
 
-        current_month: Dict[str, Any] = Field(default_factory=dict)
-        current_quarter: Dict[str, Any] = Field(default_factory=dict)
-        current_year: Dict[str, Any] = Field(default_factory=dict)
-        pipeline: Dict[str, Any] = Field(default_factory=dict)
-        activities: Dict[str, Any] = Field(default_factory=dict)
-        leads: Dict[str, Any] = Field(default_factory=dict)
+        current_month: dict[str, Any] = Field(default_factory=dict)
+        current_quarter: dict[str, Any] = Field(default_factory=dict)
+        current_year: dict[str, Any] = Field(default_factory=dict)
+        pipeline: dict[str, Any] = Field(default_factory=dict)
+        activities: dict[str, Any] = Field(default_factory=dict)
+        leads: dict[str, Any] = Field(default_factory=dict)
         last_updated: str
 
     class SalesMetrics(BaseModel):
@@ -272,8 +270,8 @@ if PYDANTIC_AVAILABLE:
         """Lead conversion funnel analysis."""
 
         total_leads: int
-        status_breakdown: Dict[str, int] = Field(default_factory=dict)
-        conversion_rates: Dict[str, float] = Field(default_factory=dict)
+        status_breakdown: dict[str, int] = Field(default_factory=dict)
+        conversion_rates: dict[str, float] = Field(default_factory=dict)
 
     class PipelineSummary(BaseModel):
         """Sales pipeline summary."""
@@ -281,24 +279,24 @@ if PYDANTIC_AVAILABLE:
         total_opportunities: int = 0
         total_value: Decimal = Field(default=Decimal("0.00"))
         weighted_value: Decimal = Field(default=Decimal("0.00"))
-        by_stage: Dict[str, Dict[str, Any]] = Field(default_factory=dict)
-        by_owner: Dict[str, Dict[str, Any]] = Field(default_factory=dict)
-        closing_this_month: Dict[str, Any] = Field(default_factory=dict)
-        closing_this_quarter: Dict[str, Any] = Field(default_factory=dict)
+        by_stage: dict[str, dict[str, Any]] = Field(default_factory=dict)
+        by_owner: dict[str, dict[str, Any]] = Field(default_factory=dict)
+        closing_this_month: dict[str, Any] = Field(default_factory=dict)
+        closing_this_quarter: dict[str, Any] = Field(default_factory=dict)
 
     class SalesForecast(BaseModel):
         """Sales forecast data."""
 
         quarter: str
-        pipeline: Dict[str, Any] = Field(default_factory=dict)
-        best_case: Dict[str, Any] = Field(default_factory=dict)
-        commit: Dict[str, Any] = Field(default_factory=dict)
+        pipeline: dict[str, Any] = Field(default_factory=dict)
+        best_case: dict[str, Any] = Field(default_factory=dict)
+        commit: dict[str, Any] = Field(default_factory=dict)
 
     # List Response Schemas
     class LeadListResponse(BaseModel):
         """Lead list response."""
 
-        leads: List[LeadResponse]
+        leads: list[LeadResponse]
         total_count: int
         new_leads: int
         qualified_leads: int
@@ -307,7 +305,7 @@ if PYDANTIC_AVAILABLE:
     class OpportunityListResponse(BaseModel):
         """Opportunity list response."""
 
-        opportunities: List[OpportunityResponse]
+        opportunities: list[OpportunityResponse]
         total_count: int
         active_opportunities: int
         won_opportunities: int
@@ -317,7 +315,7 @@ if PYDANTIC_AVAILABLE:
     class SalesActivityListResponse(BaseModel):
         """Sales activity list response."""
 
-        activities: List[SalesActivityResponse]
+        activities: list[SalesActivityResponse]
         total_count: int
         completed_activities: int
         overdue_activities: int
@@ -366,9 +364,7 @@ else:
     # Create stub classes when Pydantic is not available
     LeadBase = LeadCreate = LeadUpdate = LeadResponse = None
     OpportunityBase = OpportunityCreate = OpportunityUpdate = OpportunityResponse = None
-    SalesActivityBase = SalesActivityCreate = SalesActivityUpdate = (
-        SalesActivityResponse
-    ) = None
+    SalesActivityBase = SalesActivityCreate = SalesActivityUpdate = SalesActivityResponse = None
     SalesDashboard = SalesMetrics = PipelineSummary = None
     LeadListResponse = OpportunityListResponse = SalesActivityListResponse = None
     LeadFilters = OpportunityFilters = ActivityFilters = None

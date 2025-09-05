@@ -3,22 +3,21 @@ Essential plugins initialization for the management platform.
 """
 
 import logging
-from typing import Any, Dict
+from typing import Any
 
+from config import settings
 from plugins.deployment.aws_plugin import AWSDeploymentPlugin
 from plugins.monitoring.prometheus_plugin import PrometheusMonitoringPlugin
 from plugins.notifications.email_plugin import EmailNotificationPlugin
 from plugins.notifications.slack_plugin import SlackNotificationPlugin
 from plugins.notifications.webhook_plugin import WebhookNotificationPlugin
 
-from config import settings
-
 from .registry import plugin_registry
 
 logger = logging.getLogger(__name__)
 
 
-async def initialize_essential_plugins() -> Dict[str, bool]:
+async def initialize_essential_plugins() -> dict[str, bool]:
     """Initialize the 5 implemented plugins for platform functionality."""
 
     results = {}
@@ -47,9 +46,7 @@ async def initialize_essential_plugins() -> Dict[str, bool]:
 
         # 2. Initialize Webhook Notification Plugin
         webhook_config = {
-            "webhook_url": getattr(
-                settings, "DEFAULT_WEBHOOK_URL", "http://localhost:3000/webhooks"
-            ),
+            "webhook_url": getattr(settings, "DEFAULT_WEBHOOK_URL", "http://localhost:3000/webhooks"),
             "http_method": "POST",
             "headers": {"Content-Type": "application/json"},
             "timeout": 30,
@@ -124,9 +121,7 @@ async def initialize_essential_plugins() -> Dict[str, bool]:
         prometheus_config = {
             "prometheus_url": getattr(settings, "PROMETHEUS_URL", ""),
             "alertmanager_url": getattr(settings, "PROMETHEUS_ALERTMANAGER_URL", ""),
-            "default_scrape_interval": getattr(
-                settings, "PROMETHEUS_SCRAPE_INTERVAL", "15s"
-            ),
+            "default_scrape_interval": getattr(settings, "PROMETHEUS_SCRAPE_INTERVAL", "15s"),
             "query_timeout": getattr(settings, "PROMETHEUS_QUERY_TIMEOUT", 30),
             "basic_auth_username": getattr(settings, "PROMETHEUS_AUTH_USERNAME", ""),
             "basic_auth_password": getattr(settings, "PROMETHEUS_AUTH_PASSWORD", ""),
@@ -145,22 +140,18 @@ async def initialize_essential_plugins() -> Dict[str, bool]:
                 logger.error("❌ Failed to register PrometheusMonitoringPlugin")
         else:
             results["prometheus_monitoring"] = False
-            logger.info(
-                "⚠️ PrometheusMonitoringPlugin skipped - no Prometheus URL configured"
-            )
+            logger.info("⚠️ PrometheusMonitoringPlugin skipped - no Prometheus URL configured")
 
         # Log summary
         successful_plugins = sum(1 for success in results.values() if success)
         total_plugins = len(results)
 
-        logger.info(
-            f"Plugin initialization complete: {successful_plugins}/{total_plugins} successful"
-        )
+        logger.info(f"Plugin initialization complete: {successful_plugins}/{total_plugins} successful")
 
         return results
 
-    except Exception as e:
-        logger.error(f"Failed to initialize essential plugins: {e}")
+    except (ImportError, OSError, RuntimeError):
+        logger.exception("Failed to initialize essential plugins")
         return results
 
 
@@ -177,16 +168,16 @@ async def shutdown_essential_plugins() -> None:
             try:
                 await plugin_registry.unregister_plugin(plugin_name)
                 logger.info(f"✅ Plugin {plugin_name} shutdown successfully")
-            except Exception as e:
-                logger.error(f"❌ Failed to shutdown plugin {plugin_name}: {e}")
+            except (OSError, RuntimeError):
+                logger.exception("❌ Failed to shutdown plugin %s", plugin_name)
 
         logger.info("Essential plugins shutdown complete")
 
-    except Exception as e:
-        logger.error(f"Error during essential plugins shutdown: {e}")
+    except (OSError, RuntimeError):
+        logger.exception("Error during essential plugins shutdown")
 
 
-def get_essential_plugin_status() -> Dict[str, Dict[str, Any]]:
+def get_essential_plugin_status() -> dict[str, dict[str, Any]]:
     """Get status of essential plugins."""
     essential_plugin_names = [
         "email_notification",

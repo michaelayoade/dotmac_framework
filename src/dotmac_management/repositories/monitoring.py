@@ -2,13 +2,12 @@
 Monitoring repository for health checks, alerts, and SLA tracking.
 """
 
-from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional
+from datetime import datetime, timezone
+from typing import Any, Optional
 from uuid import UUID
 
-from sqlalchemy import and_, asc, desc, func, or_, select
+from sqlalchemy import and_, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload, selectinload
 
 from ..models.monitoring import (
     Alert,
@@ -31,7 +30,7 @@ class MonitoringRepository(BaseRepository[HealthCheck]):
 
     async def get_tenant_health_checks(
         self, tenant_id: UUID, limit: int = 10, check_type: Optional[str] = None
-    ) -> List[HealthCheck]:
+    ) -> list[HealthCheck]:
         """Get recent health checks for a tenant."""
         query = (
             select(HealthCheck)
@@ -46,13 +45,11 @@ class MonitoringRepository(BaseRepository[HealthCheck]):
         result = await self.db.execute(query)
         return result.scalars().all()
 
-    async def get_active_alerts(self, tenant_id: UUID) -> List[Alert]:
+    async def get_active_alerts(self, tenant_id: UUID) -> list[Alert]:
         """Get active alerts for a tenant."""
         query = (
             select(Alert)
-            .where(
-                and_(Alert.tenant_id == tenant_id, Alert.status == AlertStatus.ACTIVE)
-            )
+            .where(and_(Alert.tenant_id == tenant_id, Alert.status == AlertStatus.ACTIVE))
             .order_by(desc(Alert.severity), desc(Alert.first_triggered_at))
         )
 
@@ -61,12 +58,7 @@ class MonitoringRepository(BaseRepository[HealthCheck]):
 
     async def get_latest_sla_record(self, tenant_id: UUID) -> Optional[SLARecord]:
         """Get the latest SLA record for a tenant."""
-        query = (
-            select(SLARecord)
-            .where(SLARecord.tenant_id == tenant_id)
-            .order_by(desc(SLARecord.period_end))
-            .limit(1)
-        )
+        query = select(SLARecord).where(SLARecord.tenant_id == tenant_id).order_by(desc(SLARecord.period_end)).limit(1)
 
         result = await self.db.execute(query)
         return result.scalars().first()
@@ -74,11 +66,11 @@ class MonitoringRepository(BaseRepository[HealthCheck]):
     async def get_tenant_metrics(
         self,
         tenant_id: UUID,
-        metric_names: List[str],
+        metric_names: list[str],
         start_time: datetime,
         end_time: datetime,
         limit: int = 1000,
-    ) -> List[Metric]:
+    ) -> list[Metric]:
         """Get metrics for a tenant within a time range."""
         query = (
             select(Metric)
@@ -106,7 +98,7 @@ class MonitoringRepository(BaseRepository[HealthCheck]):
         success: bool,
         response_time_ms: Optional[int] = None,
         error_message: Optional[str] = None,
-        response_data: Optional[Dict[str, Any]] = None,
+        response_data: Optional[dict[str, Any]] = None,
         endpoint_url: Optional[str] = None,
     ) -> HealthCheck:
         """Record a new health check result."""
@@ -131,7 +123,7 @@ class MonitoringRepository(BaseRepository[HealthCheck]):
         metric_type: MetricType,
         value: float,
         unit: Optional[str] = None,
-        labels: Optional[Dict[str, Any]] = None,
+        labels: Optional[dict[str, Any]] = None,
         source: Optional[str] = None,
         host: Optional[str] = None,
     ) -> Metric:
@@ -166,7 +158,7 @@ class MonitoringRepository(BaseRepository[HealthCheck]):
         metric_name: Optional[str] = None,
         threshold_value: Optional[float] = None,
         current_value: Optional[float] = None,
-        labels: Optional[Dict[str, Any]] = None,
+        labels: Optional[dict[str, Any]] = None,
     ) -> Alert:
         """Create a new alert."""
         alert_data = {
@@ -188,9 +180,7 @@ class MonitoringRepository(BaseRepository[HealthCheck]):
         await self.db.refresh(alert)
         return alert
 
-    async def resolve_alert(
-        self, alert_id: UUID, user_id: Optional[UUID] = None
-    ) -> bool:
+    async def resolve_alert(self, alert_id: UUID, user_id: Optional[UUID] = None) -> bool:
         """Resolve an active alert."""
         query = select(Alert).where(Alert.id == alert_id)
         result = await self.db.execute(query)
@@ -202,7 +192,7 @@ class MonitoringRepository(BaseRepository[HealthCheck]):
             return True
         return False
 
-    async def get_tenant_alert_summary(self, tenant_id: UUID) -> Dict[str, Any]:
+    async def get_tenant_alert_summary(self, tenant_id: UUID) -> dict[str, Any]:
         """Get alert summary for a tenant."""
         query = (
             select(Alert.severity, Alert.status, func.count(Alert.id).label("count"))
@@ -214,14 +204,8 @@ class MonitoringRepository(BaseRepository[HealthCheck]):
         summary = {}
 
         for row in result:
-            severity_key = (
-                row.severity.value
-                if hasattr(row.severity, "value")
-                else str(row.severity)
-            )
-            status_key = (
-                row.status.value if hasattr(row.status, "value") else str(row.status)
-            )
+            severity_key = row.severity.value if hasattr(row.severity, "value") else str(row.severity)
+            status_key = row.status.value if hasattr(row.status, "value") else str(row.status)
 
             if severity_key not in summary:
                 summary[severity_key] = {}
@@ -285,7 +269,7 @@ class AlertRepository(BaseRepository[Alert]):
         start_date: datetime,
         end_date: datetime,
         severity: Optional[AlertSeverity] = None,
-    ) -> List[Alert]:
+    ) -> list[Alert]:
         """Get alert history for a date range."""
         query = (
             select(Alert)
@@ -312,9 +296,7 @@ class SLARecordRepository(BaseRepository[SLARecord]):
     def __init__(self, db: AsyncSession):
         super().__init__(db, SLARecord)
 
-    async def get_sla_history(
-        self, tenant_id: UUID, period_type: str = "monthly", limit: int = 12
-    ) -> List[SLARecord]:
+    async def get_sla_history(self, tenant_id: UUID, period_type: str = "monthly", limit: int = 12) -> list[SLARecord]:
         """Get SLA history for a tenant."""
         query = (
             select(SLARecord)
@@ -331,7 +313,7 @@ class SLARecordRepository(BaseRepository[SLARecord]):
         result = await self.db.execute(query)
         return result.scalars().all()
 
-    async def get_sla_compliance_summary(self, tenant_id: UUID) -> Dict[str, Any]:
+    async def get_sla_compliance_summary(self, tenant_id: UUID) -> dict[str, Any]:
         """Get SLA compliance summary for a tenant."""
         # Get last 12 monthly records
         sla_records = await self.get_sla_history(tenant_id, "monthly", 12)
@@ -348,12 +330,8 @@ class SLARecordRepository(BaseRepository[SLARecord]):
         total_records = len(sla_records)
         compliant_records = len([r for r in sla_records if r.overall_sla_met])
 
-        avg_uptime = (
-            sum(float(r.uptime_percentage) for r in sla_records) / total_records
-        )
-        avg_response_time = (
-            sum(r.response_time_avg_ms for r in sla_records) / total_records
-        )
+        avg_uptime = sum(float(r.uptime_percentage) for r in sla_records) / total_records
+        avg_response_time = sum(r.response_time_avg_ms for r in sla_records) / total_records
         total_incidents = sum(r.incident_count for r in sla_records)
         total_downtime = sum(r.total_downtime_minutes for r in sla_records)
 

@@ -3,33 +3,105 @@ Production-ready SQLAlchemy models for user management.
 All models follow DRY patterns and production best practices.
 """
 
-from .user_models import *
-from .auth_models import *
-from .rbac_models import *
+from .auth_models import (
+    AuthAuditModel,
+    PasswordHistoryModel,
+    UserActivationModel,
+    UserApiKeyModel,
+    UserInvitationModel,
+    UserMFAModel,
+    UserPasswordModel,
+    UserSessionModel,
+)
+from .rbac_models import (
+    ADMIN,
+    API,
+    BILLING,
+    DELETE,
+    NETWORK,
+    READ,
+    SUPPORT,
+    SYSTEM,
+    USER,
+    WRITE,
+    PermissionGroupItemModel,
+    PermissionGroupModel,
+    PermissionModel,
+    PermissionScope,
+    PermissionType,
+    RoleModel,
+    RolePermissionModel,
+    UserRoleModel,
+    app_scope,
+    assigned_at,
+    assigned_by,
+    assigned_by_user,
+    assignment_reason,
+    category,
+    child_permissions,
+    child_roles,
+    conditions,
+    cross_app_permissions,
+    custom_metadata,
+    description,
+    display_name,
+    expires_at,
+    granted_at,
+    granted_by,
+    granted_by_user,
+    group,
+    group_id,
+    is_active,
+    is_default,
+    is_granted,
+    is_required,
+    is_system_permission,
+    is_system_role,
+    name,
+    order_index,
+    parent_permission,
+    parent_permission_id,
+    parent_role,
+    parent_role_id,
+    permission,
+    permission_id,
+    permission_type,
+    permissions,
+    priority,
+    resource,
+    role,
+    role_category,
+    role_id,
+    role_permissions,
+    scope,
+    scope_context,
+    tenant_id,
+    user,
+    user_id,
+    user_roles,
+)
+from .user_models import UserContactInfoModel, UserModel, UserPreferencesModel, UserProfileModel
 
 __all__ = [
     # Core user models
     "UserModel",
-    "UserProfileModel", 
+    "UserProfileModel",
     "UserPreferencesModel",
     "UserContactInfoModel",
-    
     # Authentication models
     "UserPasswordModel",
     "UserSessionModel",
     "UserMFAModel",
     "UserApiKeyModel",
     "AuthAuditModel",
-    
     # Role and permission models
     "RoleModel",
     "PermissionModel",
     "UserRoleModel",
     "RolePermissionModel",
-    
     # Lifecycle and audit models
     "UserInvitationModel",
     "UserActivationModel",
-    "UserAuditModel",
+    "AuthAuditModel",
     "PasswordHistoryModel",
 ]

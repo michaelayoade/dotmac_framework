@@ -7,8 +7,8 @@ import logging
 import os
 import time
 from dataclasses import dataclass
-from datetime import datetime, timedelta
-from typing import Any, Dict, Optional
+from datetime import datetime, timedelta, timezone
+from typing import Any, Optional
 
 import jwt
 
@@ -45,9 +45,7 @@ class AuthServiceConfig:
                 and self.deployment_context.mode == DeploymentMode.TENANT_CONTAINER
                 and self.deployment_context.tenant_id
             ):
-                tenant_secret = os.getenv(
-                    f"TENANT_{self.deployment_context.tenant_id.upper()}_JWT_SECRET"
-                )
+                tenant_secret = os.getenv(f"TENANT_{self.deployment_context.tenant_id.upper()}_JWT_SECRET")
                 if tenant_secret:
                     self.jwt_secret = tenant_secret
 
@@ -68,7 +66,7 @@ class AuthService(StatefulService):
             required_config=["jwt_secret", "issuer", "algorithm"],
         )
         self.auth_config = config
-        self.active_tokens: Dict[str, float] = {}  # token_hash -> expiry_timestamp
+        self.active_tokens: dict[str, float] = {}  # token_hash -> expiry_timestamp
         self.priority = 100  # High priority - other services depend on auth
         self.last_cleanup = 0
 
@@ -114,9 +112,7 @@ class AuthService(StatefulService):
 
     async def shutdown(self) -> bool:
         """Shutdown authentication service."""
-        await self._set_status(
-            ServiceStatus.SHUTTING_DOWN, "Shutting down auth service"
-        )
+        await self._set_status(ServiceStatus.SHUTTING_DOWN, "Shutting down auth service")
 
         # Clear active tokens
         self.active_tokens.clear()
@@ -175,9 +171,7 @@ class AuthService(StatefulService):
             },
         )
 
-    def create_token(
-        self, payload: Dict[str, Any], user_id: Optional[str] = None
-    ) -> str:
+    def create_token(self, payload: dict[str, Any], user_id: Optional[str] = None) -> str:
         """Create JWT token."""
         if not self.is_ready():
             raise RuntimeError("Auth service not ready")
@@ -204,10 +198,7 @@ class AuthService(StatefulService):
             token_payload["sub"] = user_id
 
         # Add tenant context if available
-        if (
-            self.auth_config.deployment_context
-            and self.auth_config.deployment_context.tenant_id
-        ):
+        if self.auth_config.deployment_context and self.auth_config.deployment_context.tenant_id:
             token_payload["tenant_id"] = self.auth_config.deployment_context.tenant_id
 
         token = jwt.encode(
@@ -226,7 +217,7 @@ class AuthService(StatefulService):
 
         return token
 
-    def verify_token(self, token: str) -> Dict[str, Any]:
+    def verify_token(self, token: str) -> dict[str, Any]:
         """Verify JWT token."""
         if not self.is_ready():
             raise RuntimeError("Auth service not ready")
@@ -284,18 +275,12 @@ class AuthService(StatefulService):
         current_time = time.time()
 
         # Only run cleanup at configured intervals
-        if current_time - self.last_cleanup < (
-            self.auth_config.token_cleanup_interval_minutes * 60
-        ):
+        if current_time - self.last_cleanup < (self.auth_config.token_cleanup_interval_minutes * 60):
             return
 
         self.last_cleanup = current_time
 
-        expired_tokens = [
-            token_hash
-            for token_hash, expiry in self.active_tokens.items()
-            if expiry <= current_time
-        ]
+        expired_tokens = [token_hash for token_hash, expiry in self.active_tokens.items() if expiry <= current_time]
 
         for token_hash in expired_tokens:
             del self.active_tokens[token_hash]
@@ -316,7 +301,7 @@ class AuthService(StatefulService):
         """Get configured issuer."""
         return self.auth_config.issuer
 
-    def get_auth_stats(self) -> Dict[str, Any]:
+    def get_auth_stats(self) -> dict[str, Any]:
         """Get authentication service statistics."""
         return {
             "active_tokens": len(self.active_tokens),

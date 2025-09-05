@@ -7,12 +7,13 @@ Provides the foundation for all workflow implementations in the DotMac platform.
 import asyncio
 import uuid
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Optional
 
-from .exceptions import WorkflowError, WorkflowExecutionError, WorkflowValidationError
+from .exceptions import WorkflowError, WorkflowTimeoutError, WorkflowTransientError, WorkflowValidationError
 
 
 class WorkflowStatus(str, Enum):
@@ -32,10 +33,11 @@ class WorkflowResult:
 
     success: bool
     step_name: str
-    data: Dict[str, Any] = field(default_factory=dict)
+    data: dict[str, Any] = field(default_factory=dict)
     error: Optional[str] = None
     message: Optional[str] = None
     execution_time: Optional[float] = None
+    code: Optional[str] = None
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
@@ -48,8 +50,8 @@ class WorkflowStep:
     timeout_seconds: Optional[int] = None
     retry_count: int = 0
     rollback_enabled: bool = True
-    prerequisites: List[str] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    prerequisites: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class BaseWorkflow(ABC):
@@ -67,8 +69,8 @@ class BaseWorkflow(ABC):
         self,
         workflow_id: str,
         workflow_type: str,
-        steps: List[str],
-        metadata: Optional[Dict[str, Any]] = None,
+        steps: list[str],
+        metadata: Optional[dict[str, Any]] = None,
     ):
         self.workflow_id = workflow_id or str(uuid.uuid4())
         self.workflow_type = workflow_type
@@ -78,7 +80,7 @@ class BaseWorkflow(ABC):
         # Execution state
         self.current_step_index = 0
         self.status = WorkflowStatus.PENDING
-        self.results: List[WorkflowResult] = []
+        self.results: list[WorkflowResult] = []
         self.start_time: Optional[datetime] = None
         self.end_time: Optional[datetime] = None
         self.created_at = datetime.now(timezone.utc)
@@ -105,7 +107,7 @@ class BaseWorkflow(ABC):
         """
         pass
 
-    async def execute(self) -> List[WorkflowResult]:
+    async def execute(self) -> list[WorkflowResult]:
         """
         Execute the complete workflow.
 
@@ -169,7 +171,21 @@ class BaseWorkflow(ABC):
             if self.on_step_started:
                 await self.on_step_started(step_name, self)
 
-            result = await self.execute_step(step_name)
+            # Optional per-step timeout via metadata timeouts dict
+            timeout: Optional[float] = None
+            timeouts = self.metadata.get("timeouts") if isinstance(self.metadata, dict) else None
+            if isinstance(timeouts, dict):
+                maybe = timeouts.get(step_name)
+                if isinstance(maybe, (int, float)) and maybe > 0:
+                    timeout = float(maybe)
+
+            if timeout:
+                try:
+                    result = await asyncio.wait_for(self.execute_step(step_name), timeout=timeout)
+                except asyncio.TimeoutError as e:
+                    raise WorkflowTimeoutError(f"Step timed out after {timeout}s") from e
+            else:
+                result = await self.execute_step(step_name)
 
             # Calculate execution time
             execution_time = (datetime.now(timezone.utc) - start_time).total_seconds()
@@ -180,6 +196,49 @@ class BaseWorkflow(ABC):
 
             return result
 
+        except WorkflowValidationError as e:
+            execution_time = (datetime.now(timezone.utc) - start_time).total_seconds()
+            return WorkflowResult(
+                success=False,
+                step_name=step_name,
+                error=str(e),
+                message=f"Step validation failed: {str(e)}",
+                execution_time=execution_time,
+                code="validation_error",
+            )
+        except WorkflowTimeoutError as e:
+            execution_time = (datetime.now(timezone.utc) - start_time).total_seconds()
+            return WorkflowResult(
+                success=False,
+                step_name=step_name,
+                error=str(e),
+                message=f"Step execution timed out: {str(e)}",
+                execution_time=execution_time,
+                code="timeout",
+            )
+        except WorkflowTransientError as e:
+            execution_time = (datetime.now(timezone.utc) - start_time).total_seconds()
+            return WorkflowResult(
+                success=False,
+                step_name=step_name,
+                error=str(e),
+                message=f"Step transient failure: {str(e)}",
+                execution_time=execution_time,
+                code="transient_error",
+            )
+        except WorkflowError as e:
+            execution_time = (datetime.now(timezone.utc) - start_time).total_seconds()
+            return WorkflowResult(
+                success=False,
+                step_name=step_name,
+                error=str(e),
+                message=f"Step execution failed: {str(e)}",
+                execution_time=execution_time,
+                code="workflow_error",
+            )
+        except asyncio.CancelledError:
+            # Bubble up cancellations
+            raise
         except Exception as e:
             execution_time = (datetime.now(timezone.utc) - start_time).total_seconds()
 
@@ -189,6 +248,7 @@ class BaseWorkflow(ABC):
                 error=str(e),
                 message=f"Step execution failed: {str(e)}",
                 execution_time=execution_time,
+                code="unexpected_error",
             )
 
     async def _rollback_executed_steps(self):
@@ -288,11 +348,11 @@ class BaseWorkflow(ABC):
                 return result
         return None
 
-    def get_failed_steps(self) -> List[WorkflowResult]:
+    def get_failed_steps(self) -> list[WorkflowResult]:
         """Get all failed step results."""
         return [result for result in self.results if not result.success]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert workflow to dictionary representation."""
         return {
             "workflow_id": self.workflow_id,

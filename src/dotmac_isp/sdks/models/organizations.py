@@ -5,7 +5,7 @@ Organization-related models for SDKs.
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 from uuid import UUID, uuid4
 
 
@@ -58,16 +58,14 @@ class Organization:
     founded_date: Optional[datetime]
     created_at: datetime
     updated_at: datetime
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: Optional[dict[str, Any]] = None
 
     def __init__(self, **kwargs):
         """Init   operation."""
         self.id = kwargs.get("id", uuid4())
         self.name = kwargs.get("name")
         self.display_name = kwargs.get("display_name") or self.name
-        self.organization_type = kwargs.get(
-            "organization_type", OrganizationType.COMPANY
-        )
+        self.organization_type = kwargs.get("organization_type", OrganizationType.COMPANY)
         self.status = kwargs.get("status", OrganizationStatus.ACTIVE)
         self.description = kwargs.get("description")
         self.website = kwargs.get("website")
@@ -107,7 +105,7 @@ class OrganizationMember:
     invited_by: Optional[UUID]
     title: Optional[str]
     department: Optional[str]
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: Optional[dict[str, Any]] = None
 
     def __init__(self, **kwargs):
         """Init   operation."""

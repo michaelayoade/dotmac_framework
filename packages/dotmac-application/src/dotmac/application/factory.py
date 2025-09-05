@@ -4,11 +4,17 @@ Provider-based composition for decoupled architecture.
 """
 
 import logging
-from typing import Any, Dict, Optional
 
 from fastapi import FastAPI
 
-from .config import DeploymentContext, DeploymentMode, PlatformConfig, Providers, TenantConfig
+from .config import (
+    DeploymentContext,
+    DeploymentMode,
+    IsolationLevel,
+    PlatformConfig,
+    Providers,
+    TenantConfig,
+)
 from .endpoints import StandardEndpoints
 from .lifecycle import StandardLifecycleManager
 from .middleware import apply_standard_middleware
@@ -21,13 +27,10 @@ class DotMacApplicationFactory:
     """Unified application factory for all DotMac platforms."""
 
     def __init__(self):
-        self.created_apps: Dict[str, FastAPI] = {}
+        self.created_apps: dict[str, FastAPI] = {}
 
     def create_app(
-        self, 
-        config: PlatformConfig, 
-        *, 
-        providers: Optional[Providers] = None
+        self, config: PlatformConfig, *, providers: Providers | None = None
     ) -> FastAPI:
         """Create a FastAPI application with standard DotMac configuration."""
         logger.info(f"Creating application: {config.title}")
@@ -37,9 +40,7 @@ class DotMacApplicationFactory:
 
         # Apply standard middleware stack with providers
         applied_middleware = apply_standard_middleware(
-            app, 
-            config=config, 
-            providers=providers or config.middleware_providers
+            app, config=config, providers=providers or config.middleware_providers
         )
 
         # Set up lifecycle management
@@ -67,7 +68,7 @@ class DotMacApplicationFactory:
             f"   Routers: {registration_stats['successfully_registered']}/{registration_stats['total_attempted']}"
         )
         logger.info(f"   Middleware: {len(applied_middleware)} components applied")
-        logger.info(f"   Health checks: Enabled")
+        logger.info("   Health checks: Enabled")
 
         return app
 
@@ -100,11 +101,11 @@ class DotMacApplicationFactory:
 
         return FastAPI(**fastapi_kwargs)
 
-    def get_app(self, platform_name: str) -> Optional[FastAPI]:
+    def get_app(self, platform_name: str) -> FastAPI | None:
         """Get a previously created app by platform name."""
         return self.created_apps.get(platform_name)
 
-    def list_created_apps(self) -> Dict[str, str]:
+    def list_created_apps(self) -> dict[str, str]:
         """List all created applications."""
         return {name: app.title for name, app in self.created_apps.items()}
 
@@ -113,11 +114,11 @@ class DeploymentAwareApplicationFactory(DotMacApplicationFactory):
     """Enhanced factory with deployment-specific optimizations."""
 
     def create_tenant_container_app(
-        self, 
-        tenant_config: TenantConfig, 
+        self,
+        tenant_config: TenantConfig,
         base_config: PlatformConfig,
         *,
-        providers: Optional[Providers] = None
+        providers: Providers | None = None,
     ) -> FastAPI:
         """Create ISP Framework instance optimized for tenant container deployment."""
         logger.info(
@@ -144,10 +145,7 @@ class DeploymentAwareApplicationFactory(DotMacApplicationFactory):
         return app
 
     def create_management_platform_app(
-        self, 
-        config: PlatformConfig,
-        *,
-        providers: Optional[Providers] = None
+        self, config: PlatformConfig, *, providers: Providers | None = None
     ) -> FastAPI:
         """Create Management Platform optimized for tenant orchestration."""
         logger.info("Creating Management Platform application")
@@ -191,9 +189,9 @@ class DeploymentAwareApplicationFactory(DotMacApplicationFactory):
 
             # Adjust connection limits
             platform_config.custom_settings["max_connections"] = limits.max_connections
-            platform_config.custom_settings["max_concurrent_requests"] = (
-                limits.max_concurrent_requests
-            )
+            platform_config.custom_settings[
+                "max_concurrent_requests"
+            ] = limits.max_concurrent_requests
 
         # Security optimizations for tenant containers
         platform_config.security_config.tenant_isolation = True
@@ -224,37 +222,37 @@ class DeploymentAwareApplicationFactory(DotMacApplicationFactory):
 
 
 # Convenience functions for common app creation patterns
-def create_app(config: PlatformConfig, *, providers: Optional[Providers] = None) -> FastAPI:
+def create_app(
+    config: PlatformConfig, *, providers: Providers | None = None
+) -> FastAPI:
     """Create a standard DotMac application."""
     factory = DotMacApplicationFactory()
     return factory.create_app(config, providers=providers)
 
 
 def create_management_platform_app(
-    config: Optional[PlatformConfig] = None, 
-    *, 
-    providers: Optional[Providers] = None
+    config: PlatformConfig | None = None, *, providers: Providers | None = None
 ) -> FastAPI:
     """Create a management platform application with defaults."""
     if config is None:
         config = _create_default_management_config()
-    
+
     factory = DeploymentAwareApplicationFactory()
     return factory.create_management_platform_app(config, providers=providers)
 
 
 def create_isp_framework_app(
-    tenant_config: Optional[TenantConfig] = None,
-    base_config: Optional[PlatformConfig] = None,
+    tenant_config: TenantConfig | None = None,
+    base_config: PlatformConfig | None = None,
     *,
-    providers: Optional[Providers] = None
+    providers: Providers | None = None,
 ) -> FastAPI:
     """Create an ISP framework application."""
     if base_config is None:
         base_config = _create_default_isp_config()
-    
+
     factory = DeploymentAwareApplicationFactory()
-    
+
     if tenant_config is not None:
         return factory.create_tenant_container_app(
             tenant_config, base_config, providers=providers
@@ -262,8 +260,7 @@ def create_isp_framework_app(
     else:
         # Create standalone ISP framework app
         deployment_context = DeploymentContext(
-            mode=DeploymentMode.STANDALONE,
-            isolation_level=IsolationLevel.NONE
+            mode=DeploymentMode.STANDALONE, isolation_level=IsolationLevel.NONE
         )
         config = base_config.customize_for_deployment(deployment_context)
         return factory.create_app(config, providers=providers)
@@ -271,17 +268,23 @@ def create_isp_framework_app(
 
 def _create_default_management_config() -> PlatformConfig:
     """Create default Management Platform configuration."""
-    from .config import RouterConfig, HealthCheckConfig, ObservabilityConfig
-    
+    from .config import HealthCheckConfig, ObservabilityConfig, RouterConfig
+
     return PlatformConfig(
         platform_name="management_platform",
         title="DotMac Multi-App Management Platform",
         description="Multi-app SaaS platform for managing tenant organizations with multiple applications",
         routers=[
             RouterConfig("dotmac_management.modules", "/api/v1", auto_discover=True),
-            RouterConfig("dotmac_management.api_new.websocket", "/api/ws", required=False),
-            RouterConfig("dotmac_management.api_new.files", "/api/files", required=False),
-            RouterConfig("dotmac_management.api_new.security", "/api/security", required=False),
+            RouterConfig(
+                "dotmac_management.api_new.websocket", "/api/ws", required=False
+            ),
+            RouterConfig(
+                "dotmac_management.api_new.files", "/api/files", required=False
+            ),
+            RouterConfig(
+                "dotmac_management.api_new.security", "/api/security", required=False
+            ),
         ],
         startup_tasks=[
             "initialize_plugin_system",
@@ -291,7 +294,7 @@ def _create_default_management_config() -> PlatformConfig:
         health_config=HealthCheckConfig(
             enabled_checks=[
                 "database",
-                "cache", 
+                "cache",
                 "kubernetes_connectivity",
                 "tenant_containers",
                 "websocket_connections",
@@ -310,8 +313,8 @@ def _create_default_management_config() -> PlatformConfig:
 
 def _create_default_isp_config() -> PlatformConfig:
     """Create default ISP Framework configuration."""
-    from .config import RouterConfig, HealthCheckConfig
-    
+    from .config import HealthCheckConfig, RouterConfig
+
     return PlatformConfig(
         platform_name="isp_framework",
         title="DotMac ISP Framework",
@@ -319,7 +322,9 @@ def _create_default_isp_config() -> PlatformConfig:
         routers=[
             RouterConfig("dotmac_isp.modules", "/api/v1", auto_discover=True),
             RouterConfig("dotmac_isp.portals", "/api/v1", auto_discover=True),
-            RouterConfig("dotmac_isp.api.security_endpoints", "/api/v1/security", required=False),
+            RouterConfig(
+                "dotmac_isp.api.security_endpoints", "/api/v1/security", required=False
+            ),
             RouterConfig("dotmac_isp.api.websocket_router", "/api/ws", required=False),
             RouterConfig("dotmac_isp.api.file_router", "/api/files", required=False),
         ],

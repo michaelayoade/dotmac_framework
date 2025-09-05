@@ -46,7 +46,7 @@ else:
 
 try:
     # Open the Excel xlsm file as a zip file.
-    xlsm_zip = ZipFile(xlsm_file, "r")
+    xlsm_zip = ZipFile(xlsm_file, "r")  # noqa: B008
 
     # Read the xl/vbaProject.bin file.
     extract_file(xlsm_zip, vba_filename)

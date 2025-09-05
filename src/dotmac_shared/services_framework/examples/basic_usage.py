@@ -6,7 +6,7 @@ This demonstrates how to create and use the service registry with common busines
 
 import asyncio
 import logging
-from typing import Any, Dict
+from typing import Any
 
 from dotmac_shared.application.config import DeploymentContext, DeploymentMode
 from dotmac_shared.services_framework import (
@@ -14,7 +14,6 @@ from dotmac_shared.services_framework import (
     HealthMonitor,
     HealthMonitorConfig,
     ServiceDiscovery,
-    ServiceRegistry,
 )
 
 # Set up logging
@@ -51,16 +50,12 @@ async def basic_service_registry_example():
     # Check overall registry status
     registry_status = registry.get_registry_status()
     logger.info(f"Registry Status: {registry_status['all_ready']}")
-    logger.info(
-        f"Ready Services: {registry_status['ready_services']}/{registry_status['total_services']}"
-    )
+    logger.info(f"Ready Services: {registry_status['ready_services']}/{registry_status['total_services']}")
 
     # Use individual services if they're ready
     if registry.auth and registry.auth.is_ready():
         logger.info("Creating JWT token...")
-        token = registry.auth.create_token(
-            payload={"user": "demo_user", "role": "admin"}, user_id="demo_user"
-        )
+        token = registry.auth.create_token(payload={"user": "demo_user", "role": "admin"}, user_id="demo_user")
         logger.info(f"Token created: {token[:50]}...")
 
         # Verify the token
@@ -90,9 +85,7 @@ async def basic_service_registry_example():
 
     if registry.analytics and registry.analytics.is_ready():
         logger.info("Recording analytics metrics...")
-        await registry.analytics.record_metric(
-            "demo_metric", 42.0, {"source": "example"}
-        )
+        await registry.analytics.record_metric("demo_metric", 42.0, {"source": "example"})
         await registry.analytics.record_event("demo_event", {"action": "test"})
         logger.info("Analytics metrics recorded")
 
@@ -152,9 +145,7 @@ async def service_discovery_example():
 
     # Get service topology
     topology = discovery.get_service_topology()
-    logger.info(
-        f"Service topology: {topology['total_services']} total, {topology['ready_services']} ready"
-    )
+    logger.info(f"Service topology: {topology['total_services']} total, {topology['ready_services']} ready")
 
     # Cleanup
     await registry.shutdown_all()
@@ -195,9 +186,7 @@ async def health_monitoring_example():
 
     # Get monitoring stats
     stats = monitor.get_monitoring_stats()
-    logger.info(
-        f"Monitoring stats: {stats['statistics']['total_health_records']} records collected"
-    )
+    logger.info(f"Monitoring stats: {stats['statistics']['total_health_records']} records collected")
 
     # Get overall health status
     overall_health = monitor.get_overall_health_status()
@@ -237,9 +226,7 @@ async def custom_service_example():
             self.data_processed = 0
 
         async def initialize(self) -> bool:
-            await self._set_status(
-                ServiceStatus.INITIALIZING, "Starting custom business service"
-            )
+            await self._set_status(ServiceStatus.INITIALIZING, "Starting custom business service")
 
             # Simulate initialization work
             await asyncio.sleep(0.1)
@@ -248,9 +235,7 @@ async def custom_service_example():
             return True
 
         async def shutdown(self) -> bool:
-            await self._set_status(
-                ServiceStatus.SHUTTING_DOWN, "Shutting down custom service"
-            )
+            await self._set_status(ServiceStatus.SHUTTING_DOWN, "Shutting down custom service")
             await self._set_status(ServiceStatus.SHUTDOWN, "Custom service stopped")
             return True
 
@@ -264,7 +249,7 @@ async def custom_service_example():
                 },
             )
 
-        async def process_data(self, data: Any) -> Dict[str, Any]:
+        async def process_data(self, data: Any) -> dict[str, Any]:
             """Custom business logic."""
             self.data_processed += 1
             return {
@@ -282,9 +267,7 @@ async def custom_service_example():
     custom_services = {"custom_business": custom_service}
 
     # Create registry with additional custom services
-    registry = await factory.create_service_registry(
-        additional_services=custom_services
-    )
+    registry = await factory.create_service_registry(additional_services=custom_services)
 
     # Initialize all services (including custom)
     await registry.initialize_all()
@@ -295,7 +278,7 @@ async def custom_service_example():
 
         logger.info("Using custom business service...")
         result1 = await custom_svc.process_data({"item": "test1", "value": 100})
-        result2 = await custom_svc.process_data({"item": "test2", "value": 200})
+        await custom_svc.process_data({"item": "test2", "value": 200})
 
         logger.info(f"Processed data: {result1['total_processed']} total items")
 

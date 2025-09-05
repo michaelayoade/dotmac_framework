@@ -8,20 +8,18 @@ Author: DotMac Framework Team
 License: MIT
 """
 
-import asyncio
 import logging
-from datetime import datetime
-from typing import Any, Dict, List, Optional
+from datetime import datetime, timezone
+from typing import Any, Optional
 
 import httpx
-
-from dotmac_shared.plugins.adapters.communication import (
+from dotmac_plugins.adapters.communication import (
     BulkMessageResult,
     Message,
     MessageResult,
     MessageStatus,
 )
-from dotmac_shared.plugins.core.plugin_base import PluginMetadata
+from dotmac_plugins.core.plugin_base import PluginMetadata
 
 from ..integrations.plugin_system_integration import OmnichannelCommunicationPlugin
 from ..models.enums import ChannelType
@@ -37,7 +35,7 @@ class TwilioSMSPlugin(OmnichannelCommunicationPlugin):
     with proper plugin system integration.
     """
 
-    def __init__(self, metadata: PluginMetadata, config: Dict[str, Any]):
+    def __init__(self, metadata: PluginMetadata, config: dict[str, Any]):
         """Initialize Twilio SMS plugin"""
         super().__init__(metadata, config)
 
@@ -59,9 +57,7 @@ class TwilioSMSPlugin(OmnichannelCommunicationPlugin):
 
         # Validation
         if not all([self.account_sid, self.auth_token, self.from_number]):
-            raise ValueError(
-                "Missing required Twilio configuration: account_sid, auth_token, from_number"
-            )
+            raise ValueError("Missing required Twilio configuration: account_sid, auth_token, from_number")
 
     async def initialize(self) -> bool:
         """Initialize Twilio SMS plugin"""
@@ -69,12 +65,10 @@ class TwilioSMSPlugin(OmnichannelCommunicationPlugin):
             # Test Twilio credentials
             if await self._test_twilio_connection():
                 self.enabled = True
-                logger.info(f"Twilio SMS plugin initialized successfully")
+                logger.info("Twilio SMS plugin initialized successfully")
                 return True
             else:
-                logger.error(
-                    "Twilio SMS plugin initialization failed - invalid credentials"
-                )
+                logger.error("Twilio SMS plugin initialization failed - invalid credentials")
                 return False
 
         except Exception as e:
@@ -114,7 +108,7 @@ class TwilioSMSPlugin(OmnichannelCommunicationPlugin):
                 )
 
                 if response.status_code == 201:
-                    result_data = response.model_dump_json()
+                    result_data = await response.json()
 
                     return MessageResult(
                         success=True,
@@ -132,12 +126,15 @@ class TwilioSMSPlugin(OmnichannelCommunicationPlugin):
                         },
                     )
                 else:
-                    error_data = response.model_dump_json() if response.text else {}
+                    error_data = await response.json() if response.text else {}
 
+                    error_message = (
+                        f"Twilio API error: {response.status_code} - " f"{error_data.get('message', 'Unknown error')}"
+                    )
                     return MessageResult(
                         success=False,
                         status=MessageStatus.FAILED,
-                        error_message=f"Twilio API error: {response.status_code} - {error_data.get('message', 'Unknown error')}",
+                        error_message=error_message,
                         provider_response=error_data,
                         metadata={
                             "provider": "twilio",
@@ -159,7 +156,7 @@ class TwilioSMSPlugin(OmnichannelCommunicationPlugin):
                 },
             )
 
-    async def send_bulk_messages(self, messages: List[Message]) -> BulkMessageResult:
+    async def send_bulk_messages(self, messages: list[Message]) -> BulkMessageResult:
         """Send multiple SMS messages"""
         try:
             results = []
@@ -198,7 +195,7 @@ class TwilioSMSPlugin(OmnichannelCommunicationPlugin):
                 metadata={"provider": "twilio", "error": str(e)},
             )
 
-    async def get_capabilities(self) -> Dict[str, Any]:
+    async def get_capabilities(self) -> dict[str, Any]:
         """Get Twilio SMS plugin capabilities"""
         return {
             "send_sms": True,
@@ -214,7 +211,7 @@ class TwilioSMSPlugin(OmnichannelCommunicationPlugin):
             "webhook_support": True,
         }
 
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """Perform health check on Twilio service"""
         try:
             # Check account status
@@ -228,7 +225,7 @@ class TwilioSMSPlugin(OmnichannelCommunicationPlugin):
                 )
 
                 if response.status_code == 200:
-                    account_data = response.model_dump_json()
+                    account_data = await response.json()
 
                     return {
                         "status": "healthy",
@@ -258,7 +255,7 @@ class TwilioSMSPlugin(OmnichannelCommunicationPlugin):
                 "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
-    async def handle_webhook(self, payload: Dict[str, Any]) -> List[Dict[str, Any]]:
+    async def handle_webhook(self, payload: dict[str, Any]) -> list[dict[str, Any]]:
         """Handle Twilio webhook for status updates"""
         try:
             events = []
@@ -289,11 +286,7 @@ class TwilioSMSPlugin(OmnichannelCommunicationPlugin):
                         "message_id": payload.get("MessageSid"),
                         "timestamp": datetime.now(timezone.utc).isoformat(),
                         "provider": "twilio",
-                        "channel_type": (
-                            "whatsapp"
-                            if payload.get("From", "").startswith("whatsapp:")
-                            else "sms"
-                        ),
+                        "channel_type": ("whatsapp" if payload.get("From", "").startswith("whatsapp:") else "sms"),
                         "metadata": {
                             "from_city": payload.get("FromCity"),
                             "from_state": payload.get("FromState"),
@@ -309,7 +302,7 @@ class TwilioSMSPlugin(OmnichannelCommunicationPlugin):
             logger.error(f"Failed to handle Twilio webhook: {e}")
             return []
 
-    async def get_message_status(self, message_id: str) -> Optional[Dict[str, Any]]:
+    async def get_message_status(self, message_id: str) -> Optional[dict[str, Any]]:
         """Get message delivery status from Twilio"""
         try:
             auth = (self.account_sid, self.auth_token)
@@ -322,7 +315,7 @@ class TwilioSMSPlugin(OmnichannelCommunicationPlugin):
                 )
 
                 if response.status_code == 200:
-                    return response.model_dump_json()
+                    return await response.json()
                 else:
                     return None
 
@@ -361,7 +354,7 @@ class TwilioSMSPlugin(OmnichannelCommunicationPlugin):
 
 
 # Plugin factory function for registration
-def create_twilio_sms_plugin(config: Dict[str, Any]) -> TwilioSMSPlugin:
+def create_twilio_sms_plugin(config: dict[str, Any]) -> TwilioSMSPlugin:
     """Create Twilio SMS plugin instance"""
     metadata = PluginMetadata(
         plugin_id="twilio_sms_omnichannel",

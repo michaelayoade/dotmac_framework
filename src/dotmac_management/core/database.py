@@ -3,10 +3,11 @@ Core database utilities and transaction management.
 """
 
 import logging
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator, Optional
-from uuid import UUID
+from typing import Optional
 
+from dotmac_shared.exceptions import ExceptionContext
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -45,7 +46,7 @@ async def database_transaction(
                 await db_session.rollback()
                 logger.error(f"Database transaction error: {e}")
                 raise
-            except Exception as e:
+            except ExceptionContext.DATABASE_EXCEPTIONS as e:
                 await db_session.rollback()
                 logger.error(f"Unexpected error in database transaction: {e}")
                 raise
@@ -57,7 +58,7 @@ async def database_transaction(
             await session.rollback()
             logger.error(f"Database transaction error: {e}")
             raise
-        except Exception as e:
+        except ExceptionContext.DATABASE_EXCEPTIONS as e:
             await session.rollback()
             logger.error(f"Unexpected error in database transaction: {e}")
             raise
@@ -85,14 +86,10 @@ async def execute_with_retry(
             return await operation_func(session)
         except (SQLAlchemyError, ConnectionError) as e:
             if attempt == max_retries:
-                logger.error(
-                    f"Database operation failed after {max_retries} retries: {e}"
-                )
+                logger.error(f"Database operation failed after {max_retries} retries: {e}")
                 raise
 
-            logger.warning(
-                f"Database operation failed (attempt {attempt + 1}/{max_retries + 1}): {e}"
-            )
+            logger.warning(f"Database operation failed (attempt {attempt + 1}/{max_retries + 1}): {e}")
             if attempt < max_retries:
                 await asyncio.sleep(retry_delay * (2**attempt))  # Exponential backoff
 
@@ -123,7 +120,7 @@ async def check_database_health(session: AsyncSession) -> dict:
                 "message": "Database query returned unexpected result",
                 "timestamp": logger.name,
             }
-    except Exception as e:
+    except ExceptionContext.DATABASE_EXCEPTIONS as e:
         return {
             "status": "unhealthy",
             "message": f"Database health check failed: {str(e)}",
@@ -163,6 +160,6 @@ async def get_database_stats(session: AsyncSession) -> dict:
             "active_connections": active_count,
             "status": "operational",
         }
-    except Exception as e:
+    except ExceptionContext.DATABASE_EXCEPTIONS as e:
         logger.warning(f"Failed to get database stats: {e}")
         return {"status": "stats_unavailable", "error": str(e)}

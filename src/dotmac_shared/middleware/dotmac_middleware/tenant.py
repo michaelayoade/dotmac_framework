@@ -48,9 +48,7 @@ class TenantConfig:
     tenant_cache_ttl: int = 300  # 5 minutes
 
     # Excluded paths (no tenant isolation)
-    excluded_paths: list[str] = field(
-        default_factory=lambda: ["/health", "/metrics", "/docs", "/openapi.json"]
-    )
+    excluded_paths: list[str] = field(default_factory=lambda: ["/health", "/metrics", "/docs", "/openapi.json"])
 
     # Multi-tenant routing
     tenant_routing_enabled: bool = False
@@ -161,9 +159,7 @@ class DatabaseIsolationMiddleware(BaseHTTPMiddleware):
             # Set client IP for audit logs
             if client_ip:
                 await session.execute(
-                    text(
-                        "SELECT set_config('app.current_client_ip', :client_ip, false)"
-                    ),
+                    text("SELECT set_config('app.current_client_ip', :client_ip, false)"),
                     {"client_ip": client_ip},
                 )
 
@@ -182,9 +178,7 @@ class DatabaseIsolationMiddleware(BaseHTTPMiddleware):
             )
             return False
 
-    async def _validate_tenant_access(
-        self, session: AsyncSession, tenant_id: str, user_id: str | None = None
-    ) -> bool:
+    async def _validate_tenant_access(self, session: AsyncSession, tenant_id: str, user_id: str | None = None) -> bool:
         """Validate user has access to tenant."""
         if not self.config.enforce_tenant_access:
             return True
@@ -232,9 +226,7 @@ class DatabaseIsolationMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """Apply database tenant isolation."""
         # Skip excluded paths
-        if any(
-            request.url.path.startswith(path) for path in self.config.excluded_paths
-        ):
+        if any(request.url.path.startswith(path) for path in self.config.excluded_paths):
             return await call_next(request)
 
         # Get tenant context
@@ -303,10 +295,7 @@ class TenantContextMiddleware(BaseHTTPMiddleware):
             # Assume first path segment is tenant ID
             potential_tenant = path_parts[0]
             # Basic validation - could be enhanced
-            if (
-                len(potential_tenant) > 0
-                and potential_tenant.replace("-", "").isalnum()
-            ):
+            if len(potential_tenant) > 0 and potential_tenant.replace("-", "").isalnum():
                 return potential_tenant
 
         return None
@@ -382,9 +371,7 @@ class TenantContextMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """Extract and set tenant context."""
         # Skip excluded paths
-        if any(
-            request.url.path.startswith(path) for path in self.config.excluded_paths
-        ):
+        if any(request.url.path.startswith(path) for path in self.config.excluded_paths):
             return await call_next(request)
 
         try:
@@ -408,12 +395,8 @@ class TenantContextMiddleware(BaseHTTPMiddleware):
 
             # Validate tenant
             if not await self._validate_tenant(tenant_id):
-                logger.warning(
-                    "Invalid tenant ID", tenant_id=tenant_id, path=request.url.path
-                )
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND, detail="Tenant not found"
-                )
+                logger.warning("Invalid tenant ID", tenant_id=tenant_id, path=request.url.path)
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tenant not found")
 
             # Extract additional user context
             user_context = self._extract_user_context(request)
@@ -451,7 +434,7 @@ class TenantContextMiddleware(BaseHTTPMiddleware):
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal server error",
-            )
+            ) from e
         finally:
             # Clean up context after request
             tenant_context.clear_context()
@@ -501,9 +484,7 @@ def require_tenant_context():
     """Dependency that requires tenant context."""
     context = get_tenant_context()
     if not context.get("tenant_id"):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Tenant context required"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tenant context required")
     return context
 
 

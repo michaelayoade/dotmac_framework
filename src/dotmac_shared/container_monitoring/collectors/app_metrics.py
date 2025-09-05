@@ -13,15 +13,12 @@ import json
 import logging
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Union
-from urllib.parse import urljoin
-
-from docker.models.containers import Container
+from datetime import datetime
+from typing import Any, Optional, Union
 
 import docker
+from docker.models.containers import Container
 
-# Optional import for HTTP client
 try:
     import httpx
 
@@ -45,7 +42,7 @@ class EndpointMetrics:
     response_time_p99: float = 0.0
     error_count: int = 0
     error_rate: float = 0.0
-    status_codes: Dict[int, int] = field(default_factory=dict)
+    status_codes: dict[int, int] = field(default_factory=dict)
     last_error: Optional[str] = None
     last_request_time: Optional[datetime] = None
 
@@ -81,22 +78,22 @@ class ApplicationMetricsSnapshot:
     auth_operations_per_min: float = 0.0
 
     # Endpoint-specific metrics
-    endpoints: Dict[str, EndpointMetrics] = field(default_factory=dict)
+    endpoints: dict[str, EndpointMetrics] = field(default_factory=dict)
 
     # Error details
-    recent_errors: List[str] = field(default_factory=list)
-    error_types: Dict[str, int] = field(default_factory=dict)
+    recent_errors: list[str] = field(default_factory=list)
+    error_types: dict[str, int] = field(default_factory=dict)
 
     # Custom metrics
-    custom_metrics: Dict[str, Union[int, float, str]] = field(default_factory=dict)
+    custom_metrics: dict[str, Union[int, float, str]] = field(default_factory=dict)
 
     # Health indicators
     health_status: str = "unknown"
-    health_checks: Dict[str, bool] = field(default_factory=dict)
+    health_checks: dict[str, bool] = field(default_factory=dict)
 
     timestamp: datetime = field(default_factory=datetime.utcnow)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary representation"""
         return {
             "application": {
@@ -161,7 +158,7 @@ class AppMetricsCollector:
         collection_timeout: int = 10,
         enable_endpoint_metrics: bool = True,
         enable_business_metrics: bool = True,
-        custom_metrics_endpoints: Optional[List[str]] = None,
+        custom_metrics_endpoints: Optional[list[str]] = None,
         prometheus_enabled: bool = True,
     ):
         self.collection_timeout = collection_timeout
@@ -174,12 +171,10 @@ class AppMetricsCollector:
         self.logger = logging.getLogger(__name__)
 
         # Cache for rate calculations
-        self._previous_snapshots: Dict[str, ApplicationMetricsSnapshot] = {}
-        self._collection_timestamps: Dict[str, float] = {}
+        self._previous_snapshots: dict[str, ApplicationMetricsSnapshot] = {}
+        self._collection_timestamps: dict[str, float] = {}
 
-    async def collect_application_metrics(
-        self, container_id: str
-    ) -> ApplicationMetricsSnapshot:
+    async def collect_application_metrics(self, container_id: str) -> ApplicationMetricsSnapshot:
         """
         Collect comprehensive application metrics for a container
 
@@ -200,18 +195,14 @@ class AppMetricsCollector:
             ports = self._get_port_mappings(container)
 
             if not ports:
-                self.logger.warning(
-                    f"No accessible ports found for container {container_id}"
-                )
+                self.logger.warning(f"No accessible ports found for container {container_id}")
                 return snapshot
 
             # Collect metrics from various sources
             collection_tasks = []
 
             if self.prometheus_enabled:
-                collection_tasks.append(
-                    self._collect_prometheus_metrics(container_ip, ports, snapshot)
-                )
+                collection_tasks.append(self._collect_prometheus_metrics(container_ip, ports, snapshot))
 
             collection_tasks.extend(
                 [
@@ -221,14 +212,10 @@ class AppMetricsCollector:
             )
 
             if self.enable_business_metrics:
-                collection_tasks.append(
-                    self._collect_business_metrics(container_ip, ports, snapshot)
-                )
+                collection_tasks.append(self._collect_business_metrics(container_ip, ports, snapshot))
 
             if self.custom_metrics_endpoints:
-                collection_tasks.append(
-                    self._collect_custom_metrics(container_ip, ports, snapshot)
-                )
+                collection_tasks.append(self._collect_custom_metrics(container_ip, ports, snapshot))
 
             # Execute all collection tasks
             await asyncio.gather(*collection_tasks, return_exceptions=True)
@@ -244,14 +231,12 @@ class AppMetricsCollector:
         except docker.errors.NotFound:
             self.logger.error(f"Container {container_id} not found")
         except Exception as e:
-            self.logger.error(
-                f"Application metrics collection failed for {container_id}: {e}"
-            )
+            self.logger.error(f"Application metrics collection failed for {container_id}: {e}")
 
         return snapshot
 
     async def _collect_prometheus_metrics(
-        self, container_ip: str, ports: List[int], snapshot: ApplicationMetricsSnapshot
+        self, container_ip: str, ports: list[int], snapshot: ApplicationMetricsSnapshot
     ) -> None:
         """Collect Prometheus metrics"""
         try:
@@ -298,7 +283,7 @@ class AppMetricsCollector:
             self.logger.error(f"Failed to collect Prometheus metrics: {e}")
 
     async def _collect_health_metrics(
-        self, container_ip: str, ports: List[int], snapshot: ApplicationMetricsSnapshot
+        self, container_ip: str, ports: list[int], snapshot: ApplicationMetricsSnapshot
     ) -> None:
         """Collect application health metrics"""
         if not HTTP_CLIENT_AVAILABLE:
@@ -325,19 +310,15 @@ class AppMetricsCollector:
 
                             # Parse health response
                             try:
-                                health_data = response.model_dump_json()
+                                health_data = await response.json()
                                 if isinstance(health_data, dict):
                                     # Extract health checks
                                     for key, value in health_data.items():
                                         if isinstance(value, bool):
                                             snapshot.health_checks[key] = value
-                                        elif isinstance(
-                                            value, str
-                                        ) and value.lower() in ["ok", "healthy", "up"]:
+                                        elif isinstance(value, str) and value.lower() in ["ok", "healthy", "up"]:
                                             snapshot.health_checks[key] = True
-                                        elif isinstance(
-                                            value, str
-                                        ) and value.lower() in [
+                                        elif isinstance(value, str) and value.lower() in [
                                             "error",
                                             "unhealthy",
                                             "down",
@@ -356,7 +337,7 @@ class AppMetricsCollector:
                 snapshot.health_status = "unknown"
 
     async def _collect_api_metrics(
-        self, container_ip: str, ports: List[int], snapshot: ApplicationMetricsSnapshot
+        self, container_ip: str, ports: list[int], snapshot: ApplicationMetricsSnapshot
     ) -> None:
         """Collect API-specific metrics"""
         if not self.enable_endpoint_metrics or not HTTP_CLIENT_AVAILABLE:
@@ -378,7 +359,7 @@ class AppMetricsCollector:
                     response = await client.get(openapi_url)
 
                     if response.status_code == 200:
-                        api_spec = response.model_dump_json()
+                        api_spec = await response.json()
                         await self._extract_endpoints_from_openapi(api_spec, snapshot)
 
                 except httpx.RequestError:
@@ -397,7 +378,7 @@ class AppMetricsCollector:
                         continue
 
     async def _collect_business_metrics(
-        self, container_ip: str, ports: List[int], snapshot: ApplicationMetricsSnapshot
+        self, container_ip: str, ports: list[int], snapshot: ApplicationMetricsSnapshot
     ) -> None:
         """Collect ISP business-specific metrics"""
         if not HTTP_CLIENT_AVAILABLE:
@@ -418,39 +399,27 @@ class AppMetricsCollector:
                         response = await client.get(url)
 
                         if response.status_code == 200:
-                            business_data = response.model_dump_json()
+                            business_data = await response.json()
 
                             # Extract business metrics
                             if isinstance(business_data, dict):
                                 # Tenant metrics
                                 if "active_tenants" in business_data:
-                                    snapshot.active_tenants = int(
-                                        business_data["active_tenants"]
-                                    )
+                                    snapshot.active_tenants = int(business_data["active_tenants"])
                                 elif "tenants" in business_data:
-                                    snapshot.active_tenants = int(
-                                        business_data["tenants"]
-                                    )
+                                    snapshot.active_tenants = int(business_data["tenants"])
 
                                 # Customer metrics
                                 if "active_customers" in business_data:
-                                    snapshot.active_customers = int(
-                                        business_data["active_customers"]
-                                    )
+                                    snapshot.active_customers = int(business_data["active_customers"])
                                 elif "customers" in business_data:
-                                    snapshot.active_customers = int(
-                                        business_data["customers"]
-                                    )
+                                    snapshot.active_customers = int(business_data["customers"])
 
                                 # Operation rates
                                 if "billing_operations" in business_data:
-                                    snapshot.billing_operations_per_min = float(
-                                        business_data["billing_operations"]
-                                    )
+                                    snapshot.billing_operations_per_min = float(business_data["billing_operations"])
                                 if "auth_operations" in business_data:
-                                    snapshot.auth_operations_per_min = float(
-                                        business_data["auth_operations"]
-                                    )
+                                    snapshot.auth_operations_per_min = float(business_data["auth_operations"])
 
                                 # Store other metrics as custom
                                 for key, value in business_data.items():
@@ -461,9 +430,7 @@ class AppMetricsCollector:
                                         "auth_operations",
                                     ]:
                                         if isinstance(value, (int, float, str)):
-                                            snapshot.custom_metrics[
-                                                f"business_{key}"
-                                            ] = value
+                                            snapshot.custom_metrics[f"business_{key}"] = value
 
                             return  # Found working business metrics endpoint
 
@@ -471,7 +438,7 @@ class AppMetricsCollector:
                         continue
 
     async def _collect_custom_metrics(
-        self, container_ip: str, ports: List[int], snapshot: ApplicationMetricsSnapshot
+        self, container_ip: str, ports: list[int], snapshot: ApplicationMetricsSnapshot
     ) -> None:
         """Collect custom application metrics"""
         if not HTTP_CLIENT_AVAILABLE:
@@ -485,27 +452,20 @@ class AppMetricsCollector:
                         response = await client.get(url)
 
                         if response.status_code == 200:
-                            custom_data = response.model_dump_json()
+                            custom_data = await response.json()
 
                             if isinstance(custom_data, dict):
                                 # Store all numeric values as custom metrics
                                 for key, value in custom_data.items():
                                     if isinstance(value, (int, float)):
                                         snapshot.custom_metrics[f"custom_{key}"] = value
-                                    elif (
-                                        isinstance(value, str)
-                                        and value.replace(".", "").isdigit()
-                                    ):
-                                        snapshot.custom_metrics[f"custom_{key}"] = (
-                                            float(value)
-                                        )
+                                    elif isinstance(value, str) and value.replace(".", "").isdigit():
+                                        snapshot.custom_metrics[f"custom_{key}"] = float(value)
 
                     except (httpx.RequestError, json.JSONDecodeError):
                         continue
 
-    async def _fetch_prometheus_data(
-        self, container_ip: str, ports: List[int]
-    ) -> Optional[str]:
+    async def _fetch_prometheus_data(self, container_ip: str, ports: list[int]) -> Optional[str]:
         """Fetch Prometheus metrics data"""
         if not HTTP_CLIENT_AVAILABLE:
             return None
@@ -521,25 +481,20 @@ class AppMetricsCollector:
 
                         if response.status_code == 200:
                             content_type = response.headers.get("content-type", "")
-                            if (
-                                "text/plain" in content_type
-                                or "prometheus" in content_type
-                            ):
+                            if "text/plain" in content_type or "prometheus" in content_type:
                                 return response.text
 
                     except httpx.RequestError:
                         continue
         return None
 
-    async def _extract_endpoints_from_openapi(
-        self, api_spec: Dict, snapshot: ApplicationMetricsSnapshot
-    ) -> None:
+    async def _extract_endpoints_from_openapi(self, api_spec: dict, snapshot: ApplicationMetricsSnapshot) -> None:
         """Extract endpoint information from OpenAPI specification"""
         try:
             paths = api_spec.get("paths", {})
 
             for path, methods in paths.items():
-                for method, spec in methods.items():
+                for method, _spec in methods.items():
                     if method.upper() in ["GET", "POST", "PUT", "DELETE", "PATCH"]:
                         endpoint = EndpointMetrics(path=path, method=method.upper())
                         snapshot.endpoints[f"{method.upper()} {path}"] = endpoint
@@ -547,13 +502,11 @@ class AppMetricsCollector:
         except Exception as e:
             self.logger.error(f"Failed to extract endpoints from OpenAPI spec: {e}")
 
-    async def _parse_api_metrics_response(
-        self, response: httpx.Response, snapshot: ApplicationMetricsSnapshot
-    ) -> None:
+    async def _parse_api_metrics_response(self, response: httpx.Response, snapshot: ApplicationMetricsSnapshot) -> None:
         """Parse API metrics response"""
         try:
             if "application/json" in response.headers.get("content-type", ""):
-                data = response.model_dump_json()
+                data = await response.json()
 
                 if isinstance(data, dict):
                     # Look for common metrics patterns
@@ -563,13 +516,8 @@ class AppMetricsCollector:
                                 snapshot.total_requests += int(value)
                             elif "error" in key.lower() and "count" in key.lower():
                                 snapshot.total_errors += int(value)
-                            elif (
-                                "response_time" in key.lower()
-                                or "latency" in key.lower()
-                            ):
-                                snapshot.avg_response_time = max(
-                                    snapshot.avg_response_time, float(value)
-                                )
+                            elif "response_time" in key.lower() or "latency" in key.lower():
+                                snapshot.avg_response_time = max(snapshot.avg_response_time, float(value))
 
         except json.JSONDecodeError:
             pass
@@ -590,35 +538,19 @@ class AppMetricsCollector:
                 return
 
             # Calculate requests per second
-            request_delta = (
-                current_snapshot.total_requests - previous_snapshot.total_requests
-            )
+            request_delta = current_snapshot.total_requests - previous_snapshot.total_requests
             current_snapshot.requests_per_second = max(0, request_delta / time_delta)
 
             # Calculate error rate
             if current_snapshot.total_requests > 0:
-                current_snapshot.error_rate = (
-                    current_snapshot.total_errors
-                    / current_snapshot.total_requests
-                    * 100
-                )
+                current_snapshot.error_rate = current_snapshot.total_errors / current_snapshot.total_requests * 100
 
             # Calculate business operation rates (convert to per minute)
-            billing_delta = (
-                current_snapshot.billing_operations_per_min
-                - previous_snapshot.billing_operations_per_min
-            )
-            current_snapshot.billing_operations_per_min = max(
-                0, billing_delta / time_delta * 60
-            )
+            billing_delta = current_snapshot.billing_operations_per_min - previous_snapshot.billing_operations_per_min
+            current_snapshot.billing_operations_per_min = max(0, billing_delta / time_delta * 60)
 
-            auth_delta = (
-                current_snapshot.auth_operations_per_min
-                - previous_snapshot.auth_operations_per_min
-            )
-            current_snapshot.auth_operations_per_min = max(
-                0, auth_delta / time_delta * 60
-            )
+            auth_delta = current_snapshot.auth_operations_per_min - previous_snapshot.auth_operations_per_min
+            current_snapshot.auth_operations_per_min = max(0, auth_delta / time_delta * 60)
 
         except Exception as e:
             self.logger.error(f"Failed to calculate rates: {e}")
@@ -635,7 +567,7 @@ class AppMetricsCollector:
             pass
         return "localhost"
 
-    def _get_port_mappings(self, container: Container) -> List[int]:
+    def _get_port_mappings(self, container: Container) -> list[int]:
         """Get accessible port mappings"""
         try:
             ports = container.attrs["NetworkSettings"]["Ports"]

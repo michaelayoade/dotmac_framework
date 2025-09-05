@@ -2,26 +2,30 @@
 Integration tests for user management v2 RBAC (Role-Based Access Control) system.
 Tests complete role and permission management workflows.
 """
-import pytest
-import asyncio
-from datetime import datetime, timedelta
+from collections.abc import AsyncGenerator
 from uuid import UUID, uuid4
-from typing import AsyncGenerator, List
 
+import pytest
+from dotmac_management.user_management.models.rbac_models import (
+    PermissionModel,
+    PermissionScope,
+    PermissionType,
+    RoleModel,
+)
+from dotmac_management.user_management.models.user_models import UserModel
+from dotmac_management.user_management.schemas.rbac_schemas import (
+    PermissionCreateSchema,
+    PermissionSearchSchema,
+    RoleCategory,
+    RoleCreateSchema,
+    RoleSearchSchema,
+)
+from dotmac_management.user_management.schemas.user_schemas import UserCreateSchema, UserType
+from dotmac_management.user_management.services.rbac_service import RBACService
+from dotmac_management.user_management.services.user_service import UserService
+from dotmac_shared.database.session import get_db_session
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from dotmac_shared.database.session import get_db_session
-from dotmac_management.user_management.models.user_models import UserModel
-from dotmac_management.user_management.models.rbac_models import (
-    RoleModel, PermissionModel, PermissionType, PermissionScope
-)
-from dotmac_management.user_management.services.user_service import UserService
-from dotmac_management.user_management.services.rbac_service import RBACService
-from dotmac_management.user_management.schemas.user_schemas import UserCreateSchema, UserType
-from dotmac_management.user_management.schemas.rbac_schemas import (
-    RoleCreateSchema, RoleCategory, PermissionCreateSchema,
-    RoleSearchSchema, PermissionSearchSchema, BulkRoleAssignmentSchema
-)
 
 @pytest.fixture
 async def db_session() -> AsyncGenerator[AsyncSession, None]:
@@ -71,7 +75,7 @@ async def admin_user(db_session: AsyncSession, tenant_id: UUID) -> UserModel:
     return user
 
 @pytest.fixture
-async def test_permissions(db_session: AsyncSession, tenant_id: UUID) -> List[PermissionModel]:
+async def test_permissions(db_session: AsyncSession, tenant_id: UUID) -> list[PermissionModel]:
     """Create test permissions."""
     rbac_service = RBACService(db_session, tenant_id)
     
@@ -122,7 +126,7 @@ async def test_permissions(db_session: AsyncSession, tenant_id: UUID) -> List[Pe
 async def test_role(
     db_session: AsyncSession, 
     tenant_id: UUID, 
-    test_permissions: List[PermissionModel],
+    test_permissions: list[PermissionModel],
     admin_user: UserModel
 ) -> RoleModel:
     """Create test role with permissions."""
@@ -147,7 +151,7 @@ class TestRoleManagement:
         self, 
         db_session: AsyncSession, 
         tenant_id: UUID,
-        test_permissions: List[PermissionModel],
+        test_permissions: list[PermissionModel],
         admin_user: UserModel
     ):
         """Test creating a role with permissions."""
@@ -178,7 +182,7 @@ class TestRoleManagement:
         self,
         db_session: AsyncSession,
         tenant_id: UUID,
-        test_permissions: List[PermissionModel],
+        test_permissions: list[PermissionModel],
         admin_user: UserModel
     ):
         """Test creating parent-child role relationships."""
@@ -220,7 +224,7 @@ class TestRoleManagement:
         self,
         db_session: AsyncSession,
         tenant_id: UUID,
-        test_permissions: List[PermissionModel],
+        test_permissions: list[PermissionModel],
         admin_user: UserModel
     ):
         """Test role search functionality."""
@@ -331,7 +335,7 @@ class TestPermissionManagement:
         self,
         db_session: AsyncSession,
         tenant_id: UUID,
-        test_permissions: List[PermissionModel]
+        test_permissions: list[PermissionModel]
     ):
         """Test permission search functionality."""
         rbac_service = RBACService(db_session, tenant_id)
@@ -374,7 +378,7 @@ class TestRolePermissionAssignment:
         db_session: AsyncSession,
         tenant_id: UUID,
         test_role: RoleModel,
-        test_permissions: List[PermissionModel],
+        test_permissions: list[PermissionModel],
         admin_user: UserModel
     ):
         """Test assigning additional permissions to role."""
@@ -405,7 +409,7 @@ class TestRolePermissionAssignment:
         db_session: AsyncSession,
         tenant_id: UUID,
         test_role: RoleModel,
-        test_permissions: List[PermissionModel]
+        test_permissions: list[PermissionModel]
     ):
         """Test revoking permissions from role."""
         rbac_service = RBACService(db_session, tenant_id)
@@ -493,7 +497,7 @@ class TestUserRoleAssignment:
         db_session: AsyncSession,
         tenant_id: UUID,
         admin_user: UserModel,
-        test_permissions: List[PermissionModel]
+        test_permissions: list[PermissionModel]
     ):
         """Test bulk role assignment to multiple users."""
         rbac_service = RBACService(db_session, tenant_id)

@@ -5,20 +5,17 @@ Tests plugin registration, lifecycle management, permission checks,
 duplicate handling, and error paths.
 """
 
-import pytest
-import asyncio
-from unittest.mock import Mock
 
+import pytest
 from dotmac.plugins import (
-    PluginRegistry,
     PluginKind,
-    PluginStatus,
     PluginNotFoundError,
-    PluginRegistrationError,
     PluginPermissionError,
-    IPlugin,
+    PluginRegistrationError,
+    PluginStatus,
 )
-from conftest import TestPlugin, AsyncTestPlugin, FailingPlugin
+
+from conftest import AsyncTestPlugin, FailingPlugin, TestPlugin
 
 
 class TestPluginRegistry:

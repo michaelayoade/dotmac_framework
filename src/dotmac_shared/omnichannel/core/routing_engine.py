@@ -6,13 +6,14 @@ appropriate agents based on skills, availability, workload, and business rules.
 
 import logging
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
 
@@ -63,17 +64,14 @@ class AgentStatus:
     status: str  # available, busy, away, offline
     current_interactions: int = 0
     max_interactions: int = 5
-    skills: List[AgentSkill] = field(default_factory=list)
-    languages: List[str] = field(default_factory=list)
+    skills: list[AgentSkill] = field(default_factory=list)
+    languages: list[str] = field(default_factory=list)
     timezone: str = "UTC"
     last_activity: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def is_available(self) -> bool:
         """Check if agent is available for new interactions."""
-        return (
-            self.status == "available"
-            and self.current_interactions < self.max_interactions
-        )
+        return self.status == "available" and self.current_interactions < self.max_interactions
 
     def get_workload_ratio(self) -> float:
         """Get current workload as ratio (0.0 = free, 1.0 = at capacity)."""
@@ -84,10 +82,7 @@ class AgentStatus:
     def has_skill(self, skill_name: str, min_proficiency: int = 1) -> bool:
         """Check if agent has required skill."""
         for skill in self.skills:
-            if (
-                skill.skill_name.lower() == skill_name.lower()
-                and skill.proficiency_level >= min_proficiency
-            ):
+            if skill.skill_name.lower() == skill_name.lower() and skill.proficiency_level >= min_proficiency:
                 return True
         return False
 
@@ -100,7 +95,7 @@ class RoutingCondition(BaseModel):
     value: Any  # Value to compare against
     case_sensitive: bool = False
 
-    def evaluate(self, interaction_data: Dict[str, Any]) -> bool:
+    def evaluate(self, interaction_data: dict[str, Any]) -> bool:
         """Evaluate condition against interaction data.
 
         Args:
@@ -152,12 +147,10 @@ class RoutingCondition(BaseModel):
             return False
 
         except Exception as e:
-            logger.error(
-                f"Error evaluating condition {self.field} {self.operator} {self.value}: {e}"
-            )
+            logger.error(f"Error evaluating condition {self.field} {self.operator} {self.value}: {e}")
             return False
 
-    def _get_field_value(self, data: Dict[str, Any], field_path: str) -> Any:
+    def _get_field_value(self, data: dict[str, Any], field_path: str) -> Any:
         """Get field value using dot notation."""
         keys = field_path.split(".")
         value = data
@@ -178,12 +171,12 @@ class RoutingAction(BaseModel):
 
     action_type: str  # route_to_agent, route_to_team, escalate, queue
     target_id: Optional[str] = None
-    parameters: Dict[str, Any] = Field(default_factory=dict)
+    parameters: dict[str, Any] = Field(default_factory=dict)
 
     # Routing preferences
     strategy: RoutingStrategy = RoutingStrategy.SKILL_BASED
-    required_skills: List[str] = Field(default_factory=list)
-    preferred_skills: List[str] = Field(default_factory=list)
+    required_skills: list[str] = Field(default_factory=list)
+    preferred_skills: list[str] = Field(default_factory=list)
     min_skill_level: int = 1
 
     # Queue settings
@@ -200,7 +193,7 @@ class RoutingRule(BaseModel):
     tenant_id: str
 
     # Rule logic
-    conditions: List[RoutingCondition]
+    conditions: list[RoutingCondition]
     condition_logic: str = "AND"  # AND, OR
     action: RoutingAction
 
@@ -214,7 +207,7 @@ class RoutingRule(BaseModel):
     usage_count: int = 0
     last_used: Optional[datetime] = None
 
-    def evaluate(self, interaction_data: Dict[str, Any]) -> bool:
+    def evaluate(self, interaction_data: dict[str, Any]) -> bool:
         """Evaluate if rule matches interaction.
 
         Args:
@@ -226,9 +219,7 @@ class RoutingRule(BaseModel):
         if not self.enabled or not self.conditions:
             return False
 
-        results = [
-            condition.evaluate(interaction_data) for condition in self.conditions
-        ]
+        results = [condition.evaluate(interaction_data) for condition in self.conditions]
 
         if self.condition_logic == "OR":
             return any(results)
@@ -248,7 +239,7 @@ class RoutingResult:
     strategy_used: Optional[RoutingStrategy] = None
     reason: str = ""
     estimated_wait_minutes: Optional[int] = None
-    alternative_agents: List[str] = field(default_factory=list)
+    alternative_agents: list[str] = field(default_factory=list)
 
 
 class RoutingStrategy_ABC(ABC):
@@ -257,9 +248,9 @@ class RoutingStrategy_ABC(ABC):
     @abstractmethod
     async def route(
         self,
-        interaction_data: Dict[str, Any],
-        available_agents: List[AgentStatus],
-        routing_context: Dict[str, Any],
+        interaction_data: dict[str, Any],
+        available_agents: list[AgentStatus],
+        routing_context: dict[str, Any],
     ) -> RoutingResult:
         """Execute routing strategy.
 
@@ -282,9 +273,9 @@ class RoundRobinStrategy(RoutingStrategy_ABC):
 
     async def route(
         self,
-        interaction_data: Dict[str, Any],
-        available_agents: List[AgentStatus],
-        routing_context: Dict[str, Any],
+        interaction_data: dict[str, Any],
+        available_agents: list[AgentStatus],
+        routing_context: dict[str, Any],
     ) -> RoutingResult:
         """Route using round-robin algorithm."""
         if not available_agents:
@@ -313,9 +304,9 @@ class LeastBusyStrategy(RoutingStrategy_ABC):
 
     async def route(
         self,
-        interaction_data: Dict[str, Any],
-        available_agents: List[AgentStatus],
-        routing_context: Dict[str, Any],
+        interaction_data: dict[str, Any],
+        available_agents: list[AgentStatus],
+        routing_context: dict[str, Any],
     ) -> RoutingResult:
         """Route to least busy agent."""
         if not available_agents:
@@ -330,9 +321,7 @@ class LeastBusyStrategy(RoutingStrategy_ABC):
             agent_id=selected_agent.agent_id,
             strategy_used=RoutingStrategy.LEAST_BUSY,
             reason=f"Least busy agent (workload: {selected_agent.get_workload_ratio():.1%})",
-            alternative_agents=[
-                a.agent_id for a in sorted_agents[1:5]
-            ],  # Top 5 alternatives
+            alternative_agents=[a.agent_id for a in sorted_agents[1:5]],  # Top 5 alternatives
         )
 
 
@@ -341,9 +330,9 @@ class SkillBasedStrategy(RoutingStrategy_ABC):
 
     async def route(
         self,
-        interaction_data: Dict[str, Any],
-        available_agents: List[AgentStatus],
-        routing_context: Dict[str, Any],
+        interaction_data: dict[str, Any],
+        available_agents: list[AgentStatus],
+        routing_context: dict[str, Any],
     ) -> RoutingResult:
         """Route based on required skills."""
         if not available_agents:
@@ -356,9 +345,7 @@ class SkillBasedStrategy(RoutingStrategy_ABC):
         # Filter agents with required skills
         qualified_agents = []
         for agent in available_agents:
-            if all(
-                agent.has_skill(skill, min_skill_level) for skill in required_skills
-            ):
+            if all(agent.has_skill(skill, min_skill_level) for skill in required_skills):
                 qualified_agents.append(agent)
 
         if not qualified_agents:
@@ -371,11 +358,7 @@ class SkillBasedStrategy(RoutingStrategy_ABC):
         if preferred_skills:
             agent_scores = []
             for agent in qualified_agents:
-                score = sum(
-                    skill.proficiency_level
-                    for skill in agent.skills
-                    if skill.skill_name in preferred_skills
-                )
+                score = sum(skill.proficiency_level for skill in agent.skills if skill.skill_name in preferred_skills)
                 agent_scores.append((agent, score))
 
             # Sort by score (descending), then by workload (ascending)
@@ -433,17 +416,17 @@ class RoutingEngine:
         self.cache_service = cache_service
 
         # Routing rules storage
-        self.routing_rules: Dict[str, List[RoutingRule]] = {}  # tenant_id -> rules
+        self.routing_rules: dict[str, list[RoutingRule]] = {}  # tenant_id -> rules
 
         # Strategy implementations
-        self.strategies: Dict[RoutingStrategy, RoutingStrategy_ABC] = {
+        self.strategies: dict[RoutingStrategy, RoutingStrategy_ABC] = {
             RoutingStrategy.ROUND_ROBIN: RoundRobinStrategy(),
             RoutingStrategy.LEAST_BUSY: LeastBusyStrategy(),
             RoutingStrategy.SKILL_BASED: SkillBasedStrategy(),
         }
 
         # Custom strategy handlers
-        self.custom_strategies: Dict[str, Callable] = {}
+        self.custom_strategies: dict[str, Callable] = {}
 
         logger.info("Routing Engine initialized")
 
@@ -477,15 +460,11 @@ class RoutingEngine:
         matching_rule.last_used = datetime.now(timezone.utc)
 
         # Execute rule action
-        result = await self._execute_routing_action(
-            matching_rule.action, interaction_data, matching_rule.id
-        )
+        result = await self._execute_routing_action(matching_rule.action, interaction_data, matching_rule.id)
 
         # Track analytics
         if self.analytics_service:
-            await self.analytics_service.track_routing_decision(
-                interaction.id, result, matching_rule.id
-            )
+            await self.analytics_service.track_routing_decision(interaction.id, result, matching_rule.id)
 
         logger.info(
             f"Routed interaction {interaction.id} using rule {matching_rule.name}: "
@@ -567,11 +546,11 @@ class RoutingEngine:
         self.custom_strategies[name] = strategy_func
         logger.info(f"Registered custom routing strategy: {name}")
 
-    async def _get_routing_rules(self, tenant_id: str) -> List[RoutingRule]:
+    async def _get_routing_rules(self, tenant_id: str) -> list[RoutingRule]:
         """Get routing rules for tenant."""
         return self.routing_rules.get(tenant_id, [])
 
-    async def _default_routing(self, interaction_data: Dict[str, Any]) -> RoutingResult:
+    async def _default_routing(self, interaction_data: dict[str, Any]) -> RoutingResult:
         """Execute default routing when no rules match."""
         tenant_id = interaction_data.get("tenant_id")
 
@@ -581,16 +560,14 @@ class RoutingEngine:
             available_agents = await self.agent_manager.get_available_agents(tenant_id)
 
         if not available_agents:
-            return RoutingResult(
-                success=False, reason="No available agents for default routing"
-            )
+            return RoutingResult(success=False, reason="No available agents for default routing")
 
         # Use least busy strategy as default
         strategy = self.strategies[RoutingStrategy.LEAST_BUSY]
         return await strategy.route(interaction_data, available_agents, {})
 
     async def _execute_routing_action(
-        self, action: RoutingAction, interaction_data: Dict[str, Any], rule_id: str
+        self, action: RoutingAction, interaction_data: dict[str, Any], rule_id: str
     ) -> RoutingResult:
         """Execute routing action."""
         if action.action_type == "route_to_agent":
@@ -611,12 +588,10 @@ class RoutingEngine:
             return await self._queue_interaction(action, interaction_data, rule_id)
 
         else:
-            return RoutingResult(
-                success=False, reason=f"Unknown action type: {action.action_type}"
-            )
+            return RoutingResult(success=False, reason=f"Unknown action type: {action.action_type}")
 
     async def _route_to_team(
-        self, action: RoutingAction, interaction_data: Dict[str, Any], rule_id: str
+        self, action: RoutingAction, interaction_data: dict[str, Any], rule_id: str
     ) -> RoutingResult:
         """Route to team using specified strategy."""
         team_id = action.target_id
@@ -624,9 +599,7 @@ class RoutingEngine:
         # Get available agents in team
         available_agents = []
         if self.agent_manager:
-            available_agents = await self.agent_manager.get_team_available_agents(
-                team_id
-            )
+            available_agents = await self.agent_manager.get_team_available_agents(team_id)
 
         if not available_agents:
             return RoutingResult(
@@ -653,16 +626,14 @@ class RoutingEngine:
             "min_skill_level": action.min_skill_level,
         }
 
-        result = await strategy.route(
-            interaction_data, available_agents, routing_context
-        )
+        result = await strategy.route(interaction_data, available_agents, routing_context)
         result.team_id = team_id
         result.rule_id = rule_id
 
         return result
 
     async def _escalate_interaction(
-        self, action: RoutingAction, interaction_data: Dict[str, Any], rule_id: str
+        self, action: RoutingAction, interaction_data: dict[str, Any], rule_id: str
     ) -> RoutingResult:
         """Escalate interaction."""
         escalation_team = action.target_id or action.parameters.get("escalation_team")
@@ -675,9 +646,7 @@ class RoutingEngine:
                 strategy=action.strategy,
                 required_skills=action.required_skills,
             )
-            result = await self._route_to_team(
-                escalation_action, interaction_data, rule_id
-            )
+            result = await self._route_to_team(escalation_action, interaction_data, rule_id)
             result.reason = f"Escalated to team {escalation_team}: {result.reason}"
             return result
 
@@ -688,7 +657,7 @@ class RoutingEngine:
         )
 
     async def _queue_interaction(
-        self, action: RoutingAction, interaction_data: Dict[str, Any], rule_id: str
+        self, action: RoutingAction, interaction_data: dict[str, Any], rule_id: str
     ) -> RoutingResult:
         """Queue interaction."""
         queue_id = action.target_id or "default"
@@ -709,7 +678,7 @@ class RoutingEngine:
         # Simplified estimation - would integrate with actual queue service
         return 15  # Default 15 minute estimate
 
-    def _interaction_to_dict(self, interaction) -> Dict[str, Any]:
+    def _interaction_to_dict(self, interaction) -> dict[str, Any]:
         """Convert interaction to dictionary for rule evaluation."""
         return {
             "id": interaction.id,
@@ -724,13 +693,10 @@ class RoutingEngine:
             "custom_fields": interaction.custom_fields,
             "context": interaction.context,
             "created_at": interaction.created_at,
-            "age_minutes": (
-                datetime.now(timezone.utc) - interaction.created_at
-            ).total_seconds()
-            / 60,
+            "age_minutes": (datetime.now(timezone.utc) - interaction.created_at).total_seconds() / 60,
         }
 
-    async def get_routing_stats(self, tenant_id: str) -> Dict[str, Any]:
+    async def get_routing_stats(self, tenant_id: str) -> dict[str, Any]:
         """Get routing statistics for tenant.
 
         Args:

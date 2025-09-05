@@ -1,14 +1,6 @@
 """Portal Account models for authentication and account management."""
 
 import enum
-from datetime import datetime
-from typing import Optional
-
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import relationship
-
-from dotmac_isp.shared.database.base import TenantModel
 
 
 class PortalAccountType(enum.Enum):

@@ -7,7 +7,7 @@ import logging
 import os
 import sys
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any
 
 import psutil
 from fastapi import APIRouter, HTTPException, status
@@ -35,7 +35,7 @@ class HealthStatus(BaseModel):
     # Service checks
     database: str = Field(description="Database health status")
     cache: str = Field(description="Cache health status")
-    external_services: Dict[str, str] = Field(description="External service statuses")
+    external_services: dict[str, str] = Field(description="External service statuses")
 
     # Additional info
     environment: str = Field(description="Environment name")
@@ -59,7 +59,7 @@ class DetailedHealthStatus(HealthStatus):
     network_connections: int = Field(description="Number of network connections")
 
     # Environment variables (non-sensitive)
-    config_status: Dict[str, bool] = Field(description="Configuration status")
+    config_status: dict[str, bool] = Field(description="Configuration status")
 
 
 # Store startup time for uptime calculation
@@ -70,7 +70,7 @@ async def check_database_health() -> str:
     """Check database connectivity."""
     try:
         # Import database session here to avoid circular imports
-        from dotmac_shared.database.session import check_database_health
+        from dotmac.database.session import check_database_health
 
         is_healthy = await check_database_health()
         return "healthy" if is_healthy else "unhealthy"
@@ -90,7 +90,7 @@ async def check_cache_health() -> str:
         return "unavailable"
 
 
-async def check_external_services() -> Dict[str, str]:
+async def check_external_services() -> dict[str, str]:
     """Check external service health."""
     external_services = {}
 
@@ -108,7 +108,7 @@ async def check_external_services() -> Dict[str, str]:
     return external_services
 
 
-def get_system_metrics() -> Dict[str, Any]:
+def get_system_metrics() -> dict[str, Any]:
     """Get system performance metrics."""
     try:
         # CPU usage
@@ -157,7 +157,7 @@ def get_system_metrics() -> Dict[str, Any]:
         }
 
 
-def get_config_status() -> Dict[str, bool]:
+def get_config_status() -> dict[str, bool]:
     """Check configuration status."""
     config_checks = {
         "database_url_set": bool(os.environ.get("DATABASE_URL")),
@@ -170,7 +170,7 @@ def get_config_status() -> Dict[str, bool]:
     return config_checks
 
 
-async def get_health_status(detailed: bool = False) -> Dict[str, Any]:
+async def get_health_status(detailed: bool = False) -> dict[str, Any]:
     """
     Get comprehensive health status.
 
@@ -261,9 +261,7 @@ async def health_check():
 
     # Return appropriate HTTP status based on health
     if health_data["status"] == "unhealthy":
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=health_data
-        )
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=health_data)
 
     return health_data
 
@@ -274,9 +272,7 @@ async def detailed_health_check():
     health_data = await get_health_status(detailed=True)
 
     if health_data["status"] == "unhealthy":
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=health_data
-        )
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=health_data)
 
     return health_data
 
@@ -315,14 +311,21 @@ async def metrics_endpoint():
         f"dotmac_cpu_percent {health_data['cpu_percent']}",
         f"dotmac_memory_percent {health_data['memory_percent']}",
         f"dotmac_disk_percent {health_data['disk_percent']}",
-        f"dotmac_database_healthy{{status=\"{health_data['database']}\"}} {1 if health_data['database'] == 'healthy' else 0}",
-        f"dotmac_cache_healthy{{status=\"{health_data['cache']}\"}} {1 if health_data['cache'] == 'healthy' else 0}",
+        (
+            'dotmac_database_healthy{status="%s"} %d'
+            % (health_data["database"], 1 if health_data["database"] == "healthy" else 0)
+        ),
+        (
+            'dotmac_cache_healthy{status="%s"} %d'
+            % (health_data["cache"], 1 if health_data["cache"] == "healthy" else 0)
+        ),
     ]
 
     # Add external service metrics
-    for service, status in health_data.get("external_services", {}).items():
+    for service, service_status in health_data.get("external_services", {}).items():
         metrics.append(
-            f"dotmac_external_service_healthy{{service=\"{service}\",status=\"{status}\"}} {1 if status == 'healthy' else 0}"
+            'dotmac_external_service_healthy{service="%s",status="%s"} %d'
+            % (service, service_status, 1 if service_status == "healthy" else 0)
         )
 
     return {"metrics": "\n".join(metrics), "content_type": "text/plain"}

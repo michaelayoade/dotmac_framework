@@ -75,7 +75,7 @@ The framework includes a comprehensive shared services ecosystem with **388 Pyth
 
 - **Device Management** - Network device automation and monitoring
 - **Provisioning** - Tenant and container provisioning
-- **Events** - Event bus with Kafka/Redis adapters
+- **Events** - Event bus with Redis and in-memory adapters (Kafka support removed)
 - **Secrets** - Enterprise secrets management with OpenBao
 - **Plugins** - Plugin system with dependency resolution
 - **Omnichannel** - Multi-channel communication orchestration

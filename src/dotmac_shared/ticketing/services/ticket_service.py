@@ -2,17 +2,14 @@
 High-level ticket service with business logic.
 """
 
-import asyncio
 import logging
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from datetime import datetime, timedelta, timezone
+from typing import Any, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..core.models import (
     CommentCreate,
-    CommentResponse,
-    Ticket,
     TicketCreate,
     TicketPriority,
     TicketResponse,
@@ -40,8 +37,8 @@ class TicketService:
         description: str,
         category: str,
         priority: str = "normal",
-        customer_email: str = None,
-        metadata: Dict[str, Any] = None,
+        customer_email: Optional[str] = None,
+        metadata: Optional[dict[str, Any]] = None,
     ) -> TicketResponse:
         """Create a ticket for a customer."""
         ticket_data = TicketCreate(
@@ -53,9 +50,7 @@ class TicketService:
             metadata=metadata or {},
         )
 
-        ticket = await self.ticket_manager.create_ticket(
-            db, tenant_id, ticket_data, customer_id
-        )
+        ticket = await self.ticket_manager.create_ticket(db, tenant_id, ticket_data, customer_id)
 
         # Convert to response format
         return TicketResponse.model_validate(ticket)
@@ -67,7 +62,7 @@ class TicketService:
         ticket_id: str,
         assigned_to_id: str,
         assigned_to_name: str,
-        assigned_team: str = None,
+        assigned_team: Optional[str] = None,
     ) -> Optional[TicketResponse]:
         """Assign ticket to a team member."""
         update_data = TicketUpdate(
@@ -90,9 +85,7 @@ class TicketService:
             author_type="system",
         )
 
-        ticket = await self.ticket_manager.update_ticket(
-            db, tenant_id, ticket_id, update_data
-        )
+        ticket = await self.ticket_manager.update_ticket(db, tenant_id, ticket_id, update_data)
 
         if ticket:
             return TicketResponse.model_validate(ticket)
@@ -106,7 +99,7 @@ class TicketService:
         escalation_reason: str,
         escalated_by: str,
         escalated_to: str,
-        escalated_to_team: str = None,
+        escalated_to_team: Optional[str] = None,
     ) -> Optional[TicketResponse]:
         """Escalate ticket to higher level support."""
         # Update priority if not already critical
@@ -133,16 +126,12 @@ class TicketService:
             db,
             tenant_id,
             ticket_id,
-            CommentCreate(
-                content=f"Ticket escalated: {escalation_reason}", is_internal=True
-            ),
+            CommentCreate(content=f"Ticket escalated: {escalation_reason}", is_internal=True),
             author_name=escalated_by,
             author_type="staff",
         )
 
-        updated_ticket = await self.ticket_manager.update_ticket(
-            db, tenant_id, ticket_id, update_data
-        )
+        updated_ticket = await self.ticket_manager.update_ticket(db, tenant_id, ticket_id, update_data)
 
         if updated_ticket:
             return TicketResponse.model_validate(updated_ticket)
@@ -179,8 +168,8 @@ class TicketService:
         db: AsyncSession,
         tenant_id: str,
         ticket_id: str,
-        closing_comment: str = None,
-        closed_by: str = None,
+        closing_comment: Optional[str] = None,
+        closed_by: Optional[str] = None,
     ) -> Optional[TicketResponse]:
         """Close ticket."""
         if closing_comment:
@@ -194,9 +183,7 @@ class TicketService:
             )
 
         update_data = TicketUpdate(status=TicketStatus.CLOSED)
-        ticket = await self.ticket_manager.update_ticket(
-            db, tenant_id, ticket_id, update_data
-        )
+        ticket = await self.ticket_manager.update_ticket(db, tenant_id, ticket_id, update_data)
 
         if ticket:
             return TicketResponse.model_validate(ticket)
@@ -207,18 +194,16 @@ class TicketService:
         db: AsyncSession,
         tenant_id: str,
         customer_id: str,
-        status_filter: List[str] = None,
+        status_filter: Optional[list[str]] = None,
         page: int = 1,
         page_size: int = 20,
-    ) -> Tuple[List[TicketResponse], int]:
+    ) -> tuple[list[TicketResponse], int]:
         """Get all tickets for a customer."""
         filters = {"customer_id": customer_id}
         if status_filter:
             filters["status"] = status_filter
 
-        tickets, total = await self.ticket_manager.list_tickets(
-            db, tenant_id, filters, page, page_size
-        )
+        tickets, total = await self.ticket_manager.list_tickets(db, tenant_id, filters, page, page_size)
 
         ticket_responses = [TicketResponse.model_validate(ticket) for ticket in tickets]
         return ticket_responses, total
@@ -228,25 +213,21 @@ class TicketService:
         db: AsyncSession,
         tenant_id: str,
         team_name: str,
-        status_filter: List[str] = None,
+        status_filter: Optional[list[str]] = None,
         page: int = 1,
         page_size: int = 50,
-    ) -> Tuple[List[TicketResponse], int]:
+    ) -> tuple[list[TicketResponse], int]:
         """Get all tickets assigned to a team."""
         filters = {"assigned_team": team_name}
         if status_filter:
             filters["status"] = status_filter
 
-        tickets, total = await self.ticket_manager.list_tickets(
-            db, tenant_id, filters, page, page_size
-        )
+        tickets, total = await self.ticket_manager.list_tickets(db, tenant_id, filters, page, page_size)
 
         ticket_responses = [TicketResponse.model_validate(ticket) for ticket in tickets]
         return ticket_responses, total
 
-    async def get_overdue_tickets(
-        self, db: AsyncSession, tenant_id: str
-    ) -> List[TicketResponse]:
+    async def get_overdue_tickets(self, db: AsyncSession, tenant_id: str) -> list[TicketResponse]:
         """Get tickets that are past their SLA."""
         now = datetime.now(timezone.utc)
         filters = {"created_before": now}
@@ -269,9 +250,9 @@ class TicketService:
         self,
         db: AsyncSession,
         tenant_id: str,
-        start_date: datetime = None,
-        end_date: datetime = None,
-    ) -> Dict[str, Any]:
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None,
+    ) -> dict[str, Any]:
         """Get ticket analytics for dashboard."""
         date_range = None
         if start_date and end_date:
@@ -281,9 +262,7 @@ class TicketService:
         elif end_date:
             date_range = (datetime.now(timezone.utc) - timedelta(days=30), end_date)
 
-        metrics = await self.ticket_manager.get_ticket_metrics(
-            db, tenant_id, date_range
-        )
+        metrics = await self.ticket_manager.get_ticket_metrics(db, tenant_id, date_range)
 
         # Add additional analytics
         overdue_tickets = await self.get_overdue_tickets(db, tenant_id)

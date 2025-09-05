@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional
 
 
 class AuditEventType(str, Enum):
@@ -53,7 +53,7 @@ class AuditEvent:
     user_id: Optional[str] = None
     tenant_id: Optional[str] = None
     description: str = ""
-    details: Dict[str, Any] = None
+    details: dict[str, Any] = None
     severity: AuditSeverity = AuditSeverity.INFO
     timestamp: Optional[datetime] = None
     ip_address: Optional[str] = None
@@ -73,10 +73,10 @@ class AuditQuery:
 
     tenant_id: Optional[str] = None
     user_id: Optional[str] = None
-    event_types: Optional[List[AuditEventType]] = None
-    resource_types: Optional[List[str]] = None
-    resource_ids: Optional[List[str]] = None
-    severity_levels: Optional[List[AuditSeverity]] = None
+    event_types: Optional[list[AuditEventType]] = None
+    resource_types: Optional[list[str]] = None
+    resource_ids: Optional[list[str]] = None
+    severity_levels: Optional[list[AuditSeverity]] = None
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
     search_text: Optional[str] = None
@@ -90,7 +90,7 @@ class AuditQuery:
 class AuditQueryResponse:
     """Audit query response."""
 
-    events: List[AuditEvent]
+    events: list[AuditEvent]
     total_count: int
     page_count: int
     current_page: int
@@ -126,11 +126,11 @@ class AuditMetrics:
     """Audit metrics response."""
 
     total_events: int
-    events_by_type: Dict[str, int]
-    events_by_severity: Dict[str, int]
-    events_by_user: Dict[str, int]
-    events_by_resource: Dict[str, int]
-    time_range: Dict[str, Any]
+    events_by_type: dict[str, int]
+    events_by_severity: dict[str, int]
+    events_by_user: dict[str, int]
+    events_by_resource: dict[str, int]
+    time_range: dict[str, Any]
 
 
 @dataclass
@@ -143,7 +143,7 @@ class AuditHealthCheck:
     average_response_time: float
     storage_usage_percent: float
     last_event_timestamp: Optional[datetime] = None
-    issues: List[str] = None
+    issues: list[str] = None
 
     def __post_init__(self):
         if self.issues is None:
@@ -160,8 +160,8 @@ class AuditRetentionPolicy:
     retention_days: int = 365
     archive_after_days: int = 90
     auto_delete: bool = True
-    event_types: Optional[List[str]] = None
-    severity_levels: Optional[List[str]] = None
+    event_types: Optional[list[str]] = None
+    severity_levels: Optional[list[str]] = None
     tenant_id: Optional[str] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
@@ -185,8 +185,8 @@ class AuditStats:
     events_last_24h: int
     events_last_7d: int
     events_last_30d: int
-    top_event_types: Dict[str, int]
-    top_users: Dict[str, int]
+    top_event_types: dict[str, int]
+    top_users: dict[str, int]
     error_count_24h: int
     warning_count_24h: int
     critical_count_24h: int

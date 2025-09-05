@@ -6,7 +6,7 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional
 
 
 class LocationSource(str, Enum):
@@ -53,13 +53,9 @@ class Coordinates:
     def __post_init__(self):
         # Validate coordinates
         if not (-90 <= self.latitude <= 90):
-            raise ValueError(
-                f"Invalid latitude: {self.latitude}. Must be between -90 and 90."
-            )
+            raise ValueError(f"Invalid latitude: {self.latitude}. Must be between -90 and 90.")
         if not (-180 <= self.longitude <= 180):
-            raise ValueError(
-                f"Invalid longitude: {self.longitude}. Must be between -180 and 180."
-            )
+            raise ValueError(f"Invalid longitude: {self.longitude}. Must be between -180 and 180.")
 
     @property
     def accuracy_level(self) -> LocationAccuracy:
@@ -73,7 +69,7 @@ class Coordinates:
         else:
             return LocationAccuracy.LOW
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "latitude": self.latitude,
@@ -126,7 +122,7 @@ class Location:
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     source: LocationSource = LocationSource.GPS
     address: Optional[Address] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     @property
     def latitude(self) -> float:
@@ -138,7 +134,7 @@ class Location:
         """Convenience property for longitude."""
         return self.coordinates.longitude
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "coordinates": self.coordinates.to_dict(),
@@ -157,7 +153,7 @@ class LocationUpdate:
     user_id: str = ""
     work_order_id: Optional[str] = None
     location: Location = field(default_factory=lambda: Location(Coordinates(0, 0)))
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
@@ -172,7 +168,7 @@ class Geofence:
     fence_type: GeofenceType = GeofenceType.WORK_SITE
     work_order_id: Optional[str] = None
     customer_id: Optional[str] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
     active: bool = True
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -194,7 +190,7 @@ class RouteWaypoint:
     estimated_arrival: Optional[datetime] = None
     estimated_duration: Optional[int] = None  # minutes
     address: Optional[Address] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -203,18 +199,18 @@ class Route:
 
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     name: str = ""
-    waypoints: List[RouteWaypoint] = field(default_factory=list)
+    waypoints: list[RouteWaypoint] = field(default_factory=list)
     total_distance: float = 0.0  # kilometers
     total_duration: int = 0  # minutes
     optimized: bool = False
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def add_waypoint(self, waypoint: RouteWaypoint) -> None:
         """Add waypoint to route."""
         self.waypoints.append(waypoint)
 
-    def get_coordinates_list(self) -> List[Coordinates]:
+    def get_coordinates_list(self) -> list[Coordinates]:
         """Get list of coordinates from waypoints."""
         return [wp.coordinates for wp in self.waypoints]
 
@@ -225,9 +221,9 @@ class RouteOptimizationRequest:
 
     start_location: Optional[Coordinates] = None
     end_location: Optional[Coordinates] = None
-    waypoints: List[Coordinates] = field(default_factory=list)
-    work_order_ids: List[str] = field(default_factory=list)
-    constraints: Dict[str, Any] = field(default_factory=dict)
+    waypoints: list[Coordinates] = field(default_factory=list)
+    work_order_ids: list[str] = field(default_factory=list)
+    constraints: dict[str, Any] = field(default_factory=dict)
     optimization_type: str = "distance"  # "distance", "time", "balanced"
 
 
@@ -243,7 +239,7 @@ class RouteOptimizationResult:
     distance_saved: float  # km
     time_saved: int  # minutes
     efficiency_improvement: float  # percentage
-    optimization_metadata: Dict[str, Any] = field(default_factory=dict)
+    optimization_metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -257,7 +253,7 @@ class GeofenceEvent:
     event_type: str = "enter"  # "enter", "exit", "dwell"
     location: Location = field(default_factory=lambda: Location(Coordinates(0, 0)))
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -266,13 +262,13 @@ class ServiceArea:
 
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     name: str = ""
-    boundary: List[Coordinates] = field(default_factory=list)  # Polygon vertices
+    boundary: list[Coordinates] = field(default_factory=list)  # Polygon vertices
     center: Optional[Coordinates] = None
     service_type: str = "fiber"  # "fiber", "wireless", "dsl"
     max_speed_mbps: Optional[int] = None
     coverage_level: str = "full"  # "full", "partial", "planned"
-    technician_zones: List[str] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    technician_zones: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
     active: bool = True
 
     def contains_location(self, coordinates: Coordinates) -> bool:

@@ -6,8 +6,11 @@ import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Type
+from inspect import iscoroutine
+from typing import Any, Optional
 from uuid import UUID
+
+from dotmac_shared.exceptions import ExceptionContext
 
 logger = logging.getLogger(__name__)
 
@@ -46,11 +49,11 @@ class PluginMeta:
     plugin_type: PluginType
     description: str
     author: str
-    dependencies: List[str] = field(default_factory=list)
+    dependencies: list[str] = field(default_factory=list)
     min_platform_version: str = "1.0.0"
     max_platform_version: Optional[str] = None
-    configuration_schema: Dict[str, Any] = field(default_factory=dict)
-    supported_features: List[str] = field(default_factory=list)
+    configuration_schema: dict[str, Any] = field(default_factory=dict)
+    supported_features: list[str] = field(default_factory=list)
     requires_license: bool = False
     license_tier: Optional[str] = None
 
@@ -58,7 +61,7 @@ class PluginMeta:
 class PluginError(Exception):
     """Base exception for plugin-related errors."""
 
-    def __init__(self, message: str, plugin_name: str = None, error_code: str = None):
+    def __init__(self, message: str, plugin_name: Optional[str] = None, error_code: Optional[str] = None):
         self.message = message
         self.plugin_name = plugin_name
         self.error_code = error_code
@@ -86,7 +89,7 @@ class PluginConfigurationError(PluginError):
 class BasePlugin(ABC):
     """Base class for all management platform plugins."""
 
-    def __init__(self, config: Dict[str, Any] = None):
+    def __init__(self, config: Optional[dict[str, Any]] = None):
         self.config = config or {}
         self.status = PluginStatus.LOADING
         self.last_error: Optional[Exception] = None
@@ -104,12 +107,12 @@ class BasePlugin(ABC):
         pass
 
     @abstractmethod
-    async def validate_configuration(self, config: Dict[str, Any]) -> bool:
+    async def validate_configuration(self, config: dict[str, Any]) -> bool:
         """Validate plugin configuration. Return True if valid."""
         pass
 
     @abstractmethod
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """Perform health check. Return status and details."""
         pass
 
@@ -119,11 +122,11 @@ class BasePlugin(ABC):
             self.status = PluginStatus.INACTIVE
             self._logger.info(f"Plugin {self.meta.name} shutdown successfully")
             return True
-        except Exception as e:
+        except ExceptionContext.LIFECYCLE_EXCEPTIONS as e:
             self._logger.error(f"Error shutting down plugin {self.meta.name}: {e}")
             return False
 
-    async def get_status(self) -> Dict[str, Any]:
+    async def get_status(self) -> dict[str, Any]:
         """Get current plugin status and health information."""
         health = await self.health_check()
 
@@ -137,7 +140,7 @@ class BasePlugin(ABC):
             "configuration": self._get_safe_config(),
         }
 
-    def _get_safe_config(self) -> Dict[str, Any]:
+    def _get_safe_config(self) -> dict[str, Any]:
         """Get configuration without sensitive data."""
         safe_config = {}
         sensitive_keys = {
@@ -157,7 +160,7 @@ class BasePlugin(ABC):
 
         return safe_config
 
-    def log_error(self, error: Exception, context: str = None):
+    def log_error(self, error: Exception, context: Optional[str] = None):
         """Log and store plugin error."""
         self.last_error = error
         self.status = PluginStatus.ERROR
@@ -174,6 +177,30 @@ class BasePlugin(ABC):
         return True
 
 
+async def safe_plugin_call(callable_or_coro, *args, plugin_name: Optional[str] = None, **kwargs) -> tuple[bool, Any, Optional[PluginError]]:
+    """Safely invoke a plugin callable or awaitable, normalizing exceptions to PluginError.
+
+    Returns (ok, result, error). Never raises; unexpected exceptions are logged via the caller's logger if provided.
+    """
+    try:
+        if callable(callable_or_coro):
+            res = callable_or_coro(*args, **kwargs)
+        else:
+            res = callable_or_coro
+
+        if iscoroutine(res):
+            res = await res
+
+        return True, res, None
+    except PluginError as e:
+        return False, None, e
+    except (ImportError, SyntaxError, AttributeError, TypeError, OSError, ValueError) as e:
+        return False, None, PluginExecutionError(str(e))
+    except Exception as e:  # noqa: BLE001 - normalization boundary for plugin calls
+        # The calling site is expected to log context; we normalize to a PluginExecutionError
+        return False, None, PluginExecutionError(str(e))
+
+
 class PluginCapability(ABC):
     """Base class for plugin capabilities."""
 
@@ -183,7 +210,7 @@ class PluginCapability(ABC):
         pass
 
     @abstractmethod
-    async def execute(self, context: Dict[str, Any]) -> Dict[str, Any]:
+    async def execute(self, context: dict[str, Any]) -> dict[str, Any]:
         """Execute the capability with given context."""
         pass
 
@@ -192,12 +219,12 @@ class EventBasedPlugin(BasePlugin):
     """Base class for event-driven plugins."""
 
     @abstractmethod
-    def get_supported_events(self) -> List[str]:
+    def get_supported_events(self) -> list[str]:
         """Return list of events this plugin can handle."""
         pass
 
     @abstractmethod
-    async def handle_event(self, event_type: str, event_data: Dict[str, Any]) -> bool:
+    async def handle_event(self, event_type: str, event_data: dict[str, Any]) -> bool:
         """Handle a specific event. Return True if handled successfully."""
         pass
 
@@ -216,7 +243,7 @@ class AsyncPlugin(BasePlugin):
         pass
 
     @abstractmethod
-    async def get_task_status(self) -> Dict[str, Any]:
+    async def get_task_status(self) -> dict[str, Any]:
         """Get status of background tasks."""
         pass
 
@@ -224,7 +251,7 @@ class AsyncPlugin(BasePlugin):
 class TenantAwarePlugin(BasePlugin):
     """Base class for plugins that need tenant context."""
 
-    def __init__(self, config: Dict[str, Any] = None, tenant_id: UUID = None):
+    def __init__(self, config: Optional[dict[str, Any]] = None, tenant_id: Optional[UUID] = None):
         super().__init__(config)
         self.tenant_id = tenant_id
 
@@ -243,14 +270,12 @@ class BillablePlugin(TenantAwarePlugin):
     """Base class for plugins that generate billable usage."""
 
     @abstractmethod
-    async def record_usage(
-        self, usage_type: str, quantity: int, metadata: Dict[str, Any] = None
-    ) -> bool:
+    async def record_usage(self, usage_type: str, quantity: int, metadata: Optional[dict[str, Any]] = None) -> bool:
         """Record billable usage for this plugin."""
         pass
 
     @abstractmethod
-    async def get_usage_summary(self, start_date: str, end_date: str) -> Dict[str, Any]:
+    async def get_usage_summary(self, start_date: str, end_date: str) -> dict[str, Any]:
         """Get usage summary for billing purposes."""
         pass
 

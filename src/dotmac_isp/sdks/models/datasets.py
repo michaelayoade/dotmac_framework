@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 from uuid import UUID
 
 
@@ -24,7 +24,7 @@ class DataSource:
     source_id: UUID
     source_name: str
     source_type: DataSourceType
-    connection_config: Dict[str, Any]
+    connection_config: dict[str, Any]
     is_active: bool = True
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
@@ -37,7 +37,7 @@ class Dataset:
     dataset_id: UUID
     dataset_name: str
     source_id: UUID
-    schema_definition: Dict[str, Any]
+    schema_definition: dict[str, Any]
     refresh_interval: Optional[int] = None  # seconds
     last_refresh: Optional[datetime] = None
     is_active: bool = True
@@ -52,5 +52,5 @@ class DataPoint:
     point_id: UUID
     dataset_id: UUID
     timestamp: datetime
-    data: Dict[str, Any]
-    metadata: Optional[Dict[str, Any]] = None
+    data: dict[str, Any]
+    metadata: Optional[dict[str, Any]] = None

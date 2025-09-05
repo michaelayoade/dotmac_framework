@@ -5,14 +5,13 @@ Enforces standardized integration patterns
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Type, TypeVar
+from typing import Any, Optional, TypeVar
 from uuid import UUID
 
+from dotmac.application import standard_exception_handler
+from dotmac.core.schemas.base_schemas import BaseResponseSchema
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from dotmac_shared.api.exception_handlers import standard_exception_handler
-from dotmac_shared.schemas.base_schemas import BaseResponseSchema
 
 logger = logging.getLogger(__name__)
 
@@ -21,21 +20,19 @@ T = TypeVar("T", bound=BaseResponseSchema)
 
 class IntegrationConfig(BaseModel):
     """Base configuration for integrations."""
+
     name: str
     description: str
     version: str
     enabled: bool = True
     auth_type: str = "none"  # none, api_key, oauth, jwt
-    rate_limits: Dict[str, int] = {}
-    retry_config: Dict[str, Any] = {
-        "max_retries": 3,
-        "backoff_factor": 2,
-        "timeout": 30
-    }
+    rate_limits: dict[str, int] = {}
+    retry_config: dict[str, Any] = {"max_retries": 3, "backoff_factor": 2, "timeout": 30}
 
 
 class IntegrationMetrics(BaseModel):
     """Integration performance metrics."""
+
     requests_total: int = 0
     requests_success: int = 0
     requests_failed: int = 0
@@ -47,16 +44,11 @@ class IntegrationMetrics(BaseModel):
 class BaseIntegration(ABC):
     """
     Base class for all integrations following DRY patterns.
-    
+
     MANDATORY: All integrations MUST inherit from this class.
     """
 
-    def __init__(
-        self, 
-        db: AsyncSession,
-        tenant_id: UUID,
-        config: IntegrationConfig
-    ):
+    def __init__(self, db: AsyncSession, tenant_id: UUID, config: IntegrationConfig):
         self.db = db
         self.tenant_id = tenant_id
         self.config = config
@@ -69,17 +61,17 @@ class BaseIntegration(ABC):
         pass
 
     @abstractmethod
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """Check integration health. Must return status dict."""
         pass
 
     @abstractmethod
-    async def authenticate(self, credentials: Dict[str, Any]) -> bool:
+    async def authenticate(self, credentials: dict[str, Any]) -> bool:
         """Authenticate with the external service."""
         pass
 
-    @abstractmethod 
-    async def sync_data(self) -> Dict[str, Any]:
+    @abstractmethod
+    async def sync_data(self) -> dict[str, Any]:
         """Sync data from external service."""
         pass
 
@@ -88,7 +80,7 @@ class BaseIntegration(ABC):
         """Get integration performance metrics."""
         return self.metrics
 
-    @standard_exception_handler 
+    @standard_exception_handler
     async def update_config(self, new_config: IntegrationConfig) -> bool:
         """Update integration configuration."""
         try:
@@ -131,21 +123,15 @@ class BaseIntegration(ABC):
         self.logger.error(f"Integration error: {error}")
 
     @standard_exception_handler
-    async def test_connection(self) -> Dict[str, Any]:
+    async def test_connection(self) -> dict[str, Any]:
         """Test connection to external service."""
         try:
             health = await self.health_check()
             self._record_success()
-            return {
-                "status": "connected",
-                "details": health
-            }
+            return {"status": "connected", "details": health}
         except Exception as e:
             self._record_error(str(e))
-            return {
-                "status": "failed", 
-                "error": str(e)
-            }
+            return {"status": "failed", "error": str(e)}
 
 
 class ApiIntegration(BaseIntegration):
@@ -154,23 +140,20 @@ class ApiIntegration(BaseIntegration):
     def __init__(self, db: AsyncSession, tenant_id: UUID, config: IntegrationConfig):
         super().__init__(db, tenant_id, config)
         self.base_url: Optional[str] = None
-        self.headers: Dict[str, str] = {}
+        self.headers: dict[str, str] = {}
 
     @abstractmethod
-    async def setup_auth_headers(self) -> Dict[str, str]:
+    async def setup_auth_headers(self) -> dict[str, str]:
         """Setup authentication headers for API requests."""
         pass
 
     async def make_request(
-        self, 
-        method: str,
-        endpoint: str,
-        data: Optional[Dict[str, Any]] = None,
-        params: Optional[Dict[str, str]] = None
-    ) -> Dict[str, Any]:
+        self, method: str, endpoint: str, data: Optional[dict[str, Any]] = None, params: Optional[dict[str, str]] = None
+    ) -> dict[str, Any]:
         """Make authenticated API request with error handling."""
-        import aiohttp
         import time
+
+        import aiohttp
 
         if not self.config.enabled:
             raise Exception("Integration is disabled")
@@ -182,28 +165,32 @@ class ApiIntegration(BaseIntegration):
         headers = {**self.headers, **(await self.setup_auth_headers())}
 
         start_time = time.time()
-        
+
         try:
-            async with aiohttp.ClientSession() as session:
+            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30)) as session:
                 async with session.request(
                     method=method,
                     url=url,
                     json=data,
                     params=params,
                     headers=headers,
-                    timeout=aiohttp.ClientTimeout(total=self.config.retry_config["timeout"])
+                    timeout=aiohttp.ClientTimeout(total=self.config.retry_config["timeout"]),
                 ) as response:
                     response_time = time.time() - start_time
-                    
+
                     if response.status < 400:
-                        result = await response.json() if response.content_type == 'application/json' else await response.text()
+                        result = (
+                            await response.json()
+                            if response.content_type == "application/json"
+                            else await response.text()
+                        )
                         self._record_success(response_time)
                         return result
                     else:
                         error_msg = f"API request failed with status {response.status}"
                         self._record_error(error_msg)
                         raise Exception(error_msg)
-                        
+
         except Exception as e:
             self._record_error(str(e))
             raise
@@ -214,24 +201,16 @@ class WebhookIntegration(BaseIntegration):
 
     def __init__(self, db: AsyncSession, tenant_id: UUID, config: IntegrationConfig):
         super().__init__(db, tenant_id, config)
-        self.webhook_endpoints: List[str] = []
+        self.webhook_endpoints: list[str] = []
         self.webhook_secret: Optional[str] = None
 
     @abstractmethod
-    async def validate_webhook_signature(
-        self, 
-        payload: bytes, 
-        signature: str
-    ) -> bool:
+    async def validate_webhook_signature(self, payload: bytes, signature: str) -> bool:
         """Validate webhook signature."""
         pass
 
     @abstractmethod
-    async def process_webhook_event(
-        self, 
-        event_type: str, 
-        payload: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def process_webhook_event(self, event_type: str, payload: dict[str, Any]) -> dict[str, Any]:
         """Process incoming webhook event."""
         pass
 

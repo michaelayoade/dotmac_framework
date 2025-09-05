@@ -2,17 +2,14 @@
 
 import logging
 from datetime import datetime, timezone
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
-from dotmac_isp.modules.identity.services.user_service import UserService
-from dotmac_isp.shared.exceptions import (
-    BusinessRuleError,
-    ServiceError,
+from dotmac.core.exceptions import (
     ValidationError,
 )
-from dotmac_shared.api.exception_handlers import standard_exception_handler
+from dotmac_isp.modules.identity.services.user_service import UserService
 
-from ..models import AuthMethodType, VoucherStatus
+from ..models import VoucherStatus
 from ..repository import VoucherRepository
 from ..schemas import AuthenticationRequest, VoucherAuthRequest
 from .base import AuthenticationResult, BaseAuthProvider
@@ -23,7 +20,7 @@ logger = logging.getLogger(__name__)
 class VoucherAuthProvider(BaseAuthProvider):
     """Voucher-based authentication provider for prepaid access."""
 
-    def __init__(self, db_session, tenant_id: str, config: Dict[str, Any]):
+    def __init__(self, db_session, tenant_id: str, config: dict[str, Any]):
         """Initialize voucher auth provider."""
         super().__init__(db_session, tenant_id, config)
         self.voucher_repo = VoucherRepository(db_session, tenant_id)
@@ -33,9 +30,7 @@ class VoucherAuthProvider(BaseAuthProvider):
         self.allow_multi_device = config.get("allow_multi_device", True)
         self.create_user_account = config.get("create_user_account", False)
 
-    async def authenticate(
-        self, request: AuthenticationRequest
-    ) -> AuthenticationResult:
+    async def authenticate(self, request: AuthenticationRequest) -> AuthenticationResult:
         """Authenticate user via voucher code."""
         if not isinstance(request, VoucherAuthRequest):
             return AuthenticationResult(
@@ -45,29 +40,19 @@ class VoucherAuthProvider(BaseAuthProvider):
         try:
             # Validate voucher code format
             if not self._is_valid_voucher_code(request.voucher_code):
-                return AuthenticationResult(
-                    success=False, error_message="Invalid voucher code format"
-                )
+                return AuthenticationResult(success=False, error_message="Invalid voucher code format")
             # Find voucher
-            voucher = self.voucher_repo.get_voucher_by_code(
-                request.voucher_code, request.portal_id
-            )
+            voucher = self.voucher_repo.get_voucher_by_code(request.voucher_code, request.portal_id)
             if not voucher:
-                return AuthenticationResult(
-                    success=False, error_message="Invalid voucher code"
-                )
+                return AuthenticationResult(success=False, error_message="Invalid voucher code")
             # Validate voucher
             validation_result = self._validate_voucher(voucher)
             if not validation_result["valid"]:
-                return AuthenticationResult(
-                    success=False, error_message=validation_result["reason"]
-                )
+                return AuthenticationResult(success=False, error_message=validation_result["reason"])
             # Check device limits
             device_check = await self._check_device_limits(voucher, request)
             if not device_check["allowed"]:
-                return AuthenticationResult(
-                    success=False, error_message=device_check["reason"]
-                )
+                return AuthenticationResult(success=False, error_message=device_check["reason"])
             # Redeem voucher (increment usage count)
             user_id = None
             if self.create_user_account:
@@ -78,9 +63,7 @@ class VoucherAuthProvider(BaseAuthProvider):
             # Update voucher redemption
             success = self.voucher_repo.redeem_voucher(voucher.id, user_id)
             if not success:
-                return AuthenticationResult(
-                    success=False, error_message="Failed to redeem voucher"
-                )
+                return AuthenticationResult(success=False, error_message="Failed to redeem voucher")
             # Create session data with voucher limits
             session_data = self._create_session_data(
                 {
@@ -96,18 +79,12 @@ class VoucherAuthProvider(BaseAuthProvider):
                 }
             )
 
-            return AuthenticationResult(
-                success=True, user_id=user_id, session_data=session_data
-            )
+            return AuthenticationResult(success=True, user_id=user_id, session_data=session_data)
         except Exception as e:
             logger.error(f"Voucher authentication failed: {e}")
-            return AuthenticationResult(
-                success=False, error_message="Voucher authentication failed"
-            )
+            return AuthenticationResult(success=False, error_message="Voucher authentication failed")
 
-    async def prepare_authentication(
-        self, request: AuthenticationRequest
-    ) -> Dict[str, Any]:
+    async def prepare_authentication(self, request: AuthenticationRequest) -> dict[str, Any]:
         """Prepare voucher authentication (no preparation needed)."""
         if not isinstance(request, VoucherAuthRequest):
             raise ValidationError("Invalid request type for voucher authentication")
@@ -130,7 +107,7 @@ class VoucherAuthProvider(BaseAuthProvider):
 
         return True
 
-    def _validate_voucher(self, voucher) -> Dict[str, Any]:
+    def _validate_voucher(self, voucher) -> dict[str, Any]:
         """Validate voucher eligibility."""
         now = datetime.now(timezone.utc)
 
@@ -154,9 +131,7 @@ class VoucherAuthProvider(BaseAuthProvider):
 
         return {"valid": True}
 
-    async def _check_device_limits(
-        self, voucher, request: VoucherAuthRequest
-    ) -> Dict[str, Any]:
+    async def _check_device_limits(self, voucher, request: VoucherAuthRequest) -> dict[str, Any]:
         """Check if device can use this voucher."""
         # If multi-device is allowed and voucher supports it, allow
         if self.allow_multi_device and voucher.max_devices > 1:
@@ -176,9 +151,7 @@ class VoucherAuthProvider(BaseAuthProvider):
 
         return {"allowed": True}
 
-    async def _create_guest_user(
-        self, voucher, request: VoucherAuthRequest
-    ) -> Optional[Any]:
+    async def _create_guest_user(self, voucher, request: VoucherAuthRequest) -> Optional[Any]:
         """Create a guest user account for voucher authentication."""
         try:
             user_data = {
@@ -207,9 +180,7 @@ class VoucherAuthProvider(BaseAuthProvider):
         # Allow alphanumeric codes (could be customized per implementation)
         return code.replace("-", "").replace("_", "").isalnum()
 
-    async def get_voucher_info(
-        self, voucher_code: str, portal_id: str
-    ) -> Optional[Dict[str, Any]]:
+    async def get_voucher_info(self, voucher_code: str, portal_id: str) -> Optional[dict[str, Any]]:
         """Get voucher information without redeeming (for preview)."""
         try:
             voucher = self.voucher_repo.get_voucher_by_code(voucher_code, portal_id)
@@ -228,14 +199,10 @@ class VoucherAuthProvider(BaseAuthProvider):
                 "bandwidth_limit_down": voucher.bandwidth_limit_down,
                 "bandwidth_limit_up": voucher.bandwidth_limit_up,
                 "max_devices": voucher.max_devices,
-                "redemptions_remaining": max(
-                    0, voucher.max_devices - voucher.redemption_count
-                ),
+                "redemptions_remaining": max(0, voucher.max_devices - voucher.redemption_count),
                 "price": voucher.price,
                 "currency": voucher.currency,
-                "valid_until": (
-                    voucher.valid_until.isoformat() if voucher.valid_until else None
-                ),
+                "valid_until": (voucher.valid_until.isoformat() if voucher.valid_until else None),
             }
 
         except Exception as e:

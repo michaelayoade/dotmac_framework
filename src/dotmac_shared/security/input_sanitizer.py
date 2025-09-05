@@ -10,9 +10,8 @@ import html
 import json
 import logging
 import re
-from html.parser import HTMLParser
-from typing import Any, Callable, Dict, List, Optional, Union
-from urllib.parse import unquote
+from collections.abc import Callable
+from typing import Any, Optional, Union
 
 import bleach
 
@@ -206,9 +205,7 @@ class SecuritySanitizer:
         return sanitized
 
     @classmethod
-    def sanitize_dict(
-        cls, data: Dict[str, Any], context_map: Optional[Dict[str, str]] = None
-    ) -> Dict[str, Any]:
+    def sanitize_dict(cls, data: dict[str, Any], context_map: Optional[dict[str, str]] = None) -> dict[str, Any]:
         """
         Sanitize all string values in a dictionary
 
@@ -251,9 +248,7 @@ class SecuritySanitizer:
         return sanitized
 
     @classmethod
-    def sanitize_list(
-        cls, data: List[Any], context_map: Optional[Dict[str, str]] = None
-    ) -> List[Any]:
+    def sanitize_list(cls, data: list[Any], context_map: Optional[dict[str, str]] = None) -> list[Any]:
         """Sanitize all values in a list"""
         if not isinstance(data, list):
             return data
@@ -273,8 +268,8 @@ class SecuritySanitizer:
 
     @classmethod
     def validate_and_sanitize(
-        cls, data: Any, rules: Optional[Dict[str, Callable]] = None
-    ) -> tuple[bool, Any, List[str]]:
+        cls, data: Any, rules: Optional[dict[str, Callable]] = None
+    ) -> tuple[bool, Any, list[str]]:
         """
         Validate and sanitize data with custom rules
 
@@ -328,7 +323,7 @@ class SecuritySanitizer:
 
 
 # Convenience functions for common use cases
-def sanitize_user_input(data: Union[str, Dict, List]) -> Any:
+def sanitize_user_input(data: Union[str, dict, list]) -> Any:
     """Sanitize any user input data"""
     if isinstance(data, str):
         return SecuritySanitizer.sanitize_string(data)
@@ -360,16 +355,8 @@ def is_input_safe(data: Any) -> bool:
     if isinstance(data, str):
         return SecuritySanitizer.is_safe_input(data)
     elif isinstance(data, dict):
-        return all(
-            SecuritySanitizer.is_safe_input(str(v))
-            for v in data.values()
-            if isinstance(v, str)
-        )
+        return all(SecuritySanitizer.is_safe_input(str(v)) for v in data.values() if isinstance(v, str))
     elif isinstance(data, list):
-        return all(
-            SecuritySanitizer.is_safe_input(str(item))
-            for item in data
-            if isinstance(item, str)
-        )
+        return all(SecuritySanitizer.is_safe_input(str(item)) for item in data if isinstance(item, str))
     else:
         return True

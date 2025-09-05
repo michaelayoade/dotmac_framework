@@ -4,17 +4,13 @@ Following DRY patterns with proper inheritance.
 """
 
 import enum
-from datetime import datetime
-from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from sqlalchemy import Column, DateTime
+from dotmac_isp.shared.database.base import BaseModel
+from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy import Enum as SQLEnum
-from sqlalchemy import Float, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
-
-from dotmac_isp.shared.database.base import BaseModel
 
 
 class ServiceTypeEnum(str, enum.Enum):
@@ -57,9 +53,7 @@ class ServiceArea(BaseModel):
     __tablename__ = "gis_service_areas"
 
     # GIS-specific fields
-    polygon_coordinates = Column(
-        JSONB, nullable=False, comment="Polygon coordinates as GeoJSON"
-    )
+    polygon_coordinates = Column(JSONB, nullable=False, comment="Polygon coordinates as GeoJSON")
     service_types = Column(JSONB, nullable=False, comment="Available service types")
     population = Column(Integer, default=0, comment="Population in service area")
     households = Column(Integer, default=0, comment="Number of households")
@@ -86,9 +80,7 @@ class NetworkNode(BaseModel):
 
     # Network properties
     bandwidth_mbps = Column(Integer, nullable=True, comment="Bandwidth in Mbps")
-    coverage_radius_km = Column(
-        Float, nullable=True, comment="Coverage radius for wireless"
-    )
+    coverage_radius_km = Column(Float, nullable=True, comment="Coverage radius for wireless")
 
     # Operational status
     operational_status = Column(String(20), default="active")
@@ -119,9 +111,7 @@ class CoverageGap(BaseModel):
     polygon_coordinates = Column(JSONB, nullable=False, comment="Gap area coordinates")
 
     # Impact analysis
-    affected_customers = Column(
-        Integer, default=0, comment="Estimated affected customers"
-    )
+    affected_customers = Column(Integer, default=0, comment="Estimated affected customers")
     potential_revenue = Column(Float, default=0.0, comment="Potential annual revenue")
     buildout_cost = Column(Float, default=0.0, comment="Estimated buildout cost")
     priority_score = Column(Float, default=0.0, comment="Priority score for addressing")
@@ -141,9 +131,7 @@ class CoverageRecommendation(BaseModel):
     service_area_id = Column(UUID, ForeignKey("gis_service_areas.id"), nullable=True)
 
     # Recommendation details
-    recommendation_type = Column(
-        String(50), nullable=False, comment="Type of recommendation"
-    )
+    recommendation_type = Column(String(50), nullable=False, comment="Type of recommendation")
     priority = Column(String(20), nullable=False, comment="Priority level")
     description = Column(Text, nullable=False, comment="Detailed description")
 
@@ -154,9 +142,7 @@ class CoverageRecommendation(BaseModel):
 
     # Implementation details
     requirements = Column(JSONB, default=[], comment="Implementation requirements")
-    affected_areas = Column(
-        JSONB, default=[], comment="Areas affected by recommendation"
-    )
+    affected_areas = Column(JSONB, default=[], comment="Areas affected by recommendation")
 
     # Status tracking
     status = Column(String(20), default="pending", comment="Implementation status")
@@ -170,9 +156,7 @@ class Territory(BaseModel):
     __tablename__ = "gis_territories"
 
     # Territory boundaries
-    boundary_coordinates = Column(
-        JSONB, nullable=False, comment="Territory boundary as GeoJSON"
-    )
+    boundary_coordinates = Column(JSONB, nullable=False, comment="Territory boundary as GeoJSON")
 
     # Territory metadata
     territory_type = Column(String(50), default="sales", comment="Territory type")
@@ -203,26 +187,18 @@ class RouteOptimization(BaseModel):
     waypoints = Column(JSONB, default=[], comment="Intermediate waypoints")
 
     # Optimization parameters
-    optimization_type = Column(
-        String(50), default="shortest", comment="Optimization goal"
-    )
+    optimization_type = Column(String(50), default="shortest", comment="Optimization goal")
     vehicle_type = Column(String(50), default="truck", comment="Vehicle type")
     constraints = Column(JSONB, default={}, comment="Route constraints")
 
     # Results
-    optimized_route = Column(
-        JSONB, nullable=True, comment="Optimized route coordinates"
-    )
+    optimized_route = Column(JSONB, nullable=True, comment="Optimized route coordinates")
     total_distance_km = Column(Float, nullable=True, comment="Total route distance")
-    estimated_duration_minutes = Column(
-        Integer, nullable=True, comment="Estimated travel time"
-    )
+    estimated_duration_minutes = Column(Integer, nullable=True, comment="Estimated travel time")
 
     # Metadata
     calculated_at = Column(DateTime, nullable=True)
-    calculation_parameters = Column(
-        JSONB, default={}, comment="Calculation settings used"
-    )
+    calculation_parameters = Column(JSONB, default={}, comment="Calculation settings used")
 
 
 # Export all models for use by services and routers

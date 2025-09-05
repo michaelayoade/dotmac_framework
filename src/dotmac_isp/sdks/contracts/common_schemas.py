@@ -2,9 +2,7 @@
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional
-
-from pydantic import ConfigDict
+from typing import Any, Optional
 
 
 class ExecutionStatus(str, Enum):
@@ -34,7 +32,7 @@ class APIResponse:
     """Standard API response schema."""
 
     success: bool
-    data: Optional[Dict[str, Any]] = None
+    data: Optional[dict[str, Any]] = None
     message: str = ""
     error_code: Optional[str] = None
 
@@ -55,7 +53,7 @@ class ErrorInfo:
 
     error_code: str
     error_message: str
-    error_details: Optional[Dict[str, Any]] = None
+    error_details: Optional[dict[str, Any]] = None
     timestamp: Optional[str] = None
 
 
@@ -67,7 +65,7 @@ class ExecutionContext:
     step_id: str
     user_id: Optional[str] = None
     tenant_id: Optional[str] = None
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: Optional[dict[str, Any]] = None
     status: ExecutionStatus = ExecutionStatus.PENDING
 
 
@@ -80,8 +78,8 @@ class OperationMetadata:
     initiated_by: Optional[str] = None
     tenant_id: Optional[str] = None
     timestamp: Optional[str] = None
-    tags: Optional[Dict[str, str]] = None
-    context: Optional[Dict[str, Any]] = None
+    tags: Optional[dict[str, str]] = None
+    context: Optional[dict[str, Any]] = None
     retry_count: int = 0
     max_retries: int = 3
 
@@ -94,7 +92,7 @@ class RetryPolicy:
     initial_delay: float = 1.0
     max_delay: float = 60.0
     backoff_multiplier: float = 2.0
-    retry_on_exceptions: Optional[List[str]] = None
+    retry_on_exceptions: Optional[list[str]] = None
 
     def __post_init__(self):
         """Initialize default retry exceptions."""

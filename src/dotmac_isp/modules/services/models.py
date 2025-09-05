@@ -1,21 +1,17 @@
 """Service management models for ISP platform."""
 
-from datetime import date, datetime
-from decimal import Decimal
 from enum import Enum
-from typing import Any, Dict, Optional
-from uuid import uuid4
 
+from dotmac_isp.shared.database.base import BaseModel
 from sqlalchemy import Boolean, Column, Date, DateTime, ForeignKey, Integer, Numeric, String, Text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
-from dotmac_isp.shared.database.base import BaseModel
-
 
 class ServiceType(str, Enum):
     """Service type enumeration."""
+
     INTERNET = "internet"
     PHONE = "phone"
     TV = "tv"
@@ -27,6 +23,7 @@ class ServiceType(str, Enum):
 
 class ServiceStatus(str, Enum):
     """Service status enumeration."""
+
     ACTIVE = "active"
     INACTIVE = "inactive"
     PENDING = "pending"
@@ -37,6 +34,7 @@ class ServiceStatus(str, Enum):
 
 class ProvisioningStatus(str, Enum):
     """Provisioning status enumeration."""
+
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
@@ -46,6 +44,7 @@ class ProvisioningStatus(str, Enum):
 
 class BandwidthUnit(str, Enum):
     """Bandwidth unit enumeration."""
+
     KBPS = "kbps"
     MBPS = "mbps"
     GBPS = "gbps"
@@ -53,6 +52,7 @@ class BandwidthUnit(str, Enum):
 
 class ServicePlan(BaseModel):
     """Service plan model for ISP service offerings."""
+
     __tablename__ = "service_plans"
 
     # Basic plan information
@@ -94,14 +94,15 @@ class ServicePlan(BaseModel):
 
 class ServiceInstance(BaseModel):
     """Service instance model for customer services."""
+
     __tablename__ = "service_instances"
 
     # Service identification
     service_number = Column(String(50), nullable=False, unique=True, index=True)
-    
+
     # Relationships
     customer_id = Column(UUID(as_uuid=True), nullable=False, index=True)
-    service_plan_id = Column(UUID(as_uuid=True), ForeignKey('service_plans.id'), nullable=False)
+    service_plan_id = Column(UUID(as_uuid=True), ForeignKey("service_plans.id"), nullable=False)
     service_plan = relationship("ServicePlan", back_populates="service_instances")
 
     # Service status and lifecycle
@@ -132,10 +133,11 @@ class ServiceInstance(BaseModel):
 
 class ServiceProvisioning(BaseModel):
     """Service provisioning tracking model."""
+
     __tablename__ = "service_provisioning"
 
     # Service reference
-    service_instance_id = Column(UUID(as_uuid=True), ForeignKey('service_instances.id'), nullable=False)
+    service_instance_id = Column(UUID(as_uuid=True), ForeignKey("service_instances.id"), nullable=False)
     service_instance = relationship("ServiceInstance")
 
     # Provisioning details
@@ -147,17 +149,17 @@ class ServiceProvisioning(BaseModel):
     # Assignment and tracking
     assigned_technician_id = Column(UUID(as_uuid=True), nullable=True, index=True)
     work_order_number = Column(String(50), nullable=True, index=True)
-    
+
     # Provisioning details
     equipment_required = Column(JSONB, nullable=True, default=list)
     installation_notes = Column(Text, nullable=True)
     completion_notes = Column(Text, nullable=True)
-    
+
     # Quality assurance
     tested = Column(Boolean, default=False, nullable=False)
     test_results = Column(JSONB, nullable=True, default=dict)
     customer_signature = Column(String(500), nullable=True)  # Base64 or path
-    
+
     # Failure tracking
     failure_reason = Column(Text, nullable=True)
     retry_count = Column(Integer, default=0, nullable=False)
@@ -169,10 +171,11 @@ class ServiceProvisioning(BaseModel):
 
 class ServiceStatusHistory(BaseModel):
     """Service status change history."""
+
     __tablename__ = "service_status_history"
 
     # Service reference
-    service_instance_id = Column(UUID(as_uuid=True), ForeignKey('service_instances.id'), nullable=False)
+    service_instance_id = Column(UUID(as_uuid=True), ForeignKey("service_instances.id"), nullable=False)
     service_instance = relationship("ServiceInstance")
 
     # Status change details
@@ -180,10 +183,10 @@ class ServiceStatusHistory(BaseModel):
     new_status = Column(String(20), nullable=False)
     change_reason = Column(String(500), nullable=True)
     changed_by_user_id = Column(UUID(as_uuid=True), nullable=True)
-    
+
     # Effective dates
     effective_date = Column(DateTime(timezone=True), default=func.now(), nullable=False)
-    
+
     # Additional context
     notes = Column(Text, nullable=True)
     change_metadata = Column(JSONB, nullable=True, default=dict)
@@ -194,10 +197,11 @@ class ServiceStatusHistory(BaseModel):
 
 class ServiceUsageMetric(BaseModel):
     """Service usage tracking for billing and analytics."""
+
     __tablename__ = "service_usage_metrics"
 
     # Service reference
-    service_instance_id = Column(UUID(as_uuid=True), ForeignKey('service_instances.id'), nullable=False)
+    service_instance_id = Column(UUID(as_uuid=True), ForeignKey("service_instances.id"), nullable=False)
     service_instance = relationship("ServiceInstance")
 
     # Usage period
@@ -209,12 +213,12 @@ class ServiceUsageMetric(BaseModel):
     data_uploaded_mb = Column(Numeric(15, 2), default=0, nullable=False)
     peak_download_speed_mbps = Column(Numeric(10, 2), nullable=True)
     peak_upload_speed_mbps = Column(Numeric(10, 2), nullable=True)
-    
+
     # Connection quality
     uptime_minutes = Column(Integer, default=0, nullable=False)
     downtime_minutes = Column(Integer, default=0, nullable=False)
     connection_drops = Column(Integer, default=0, nullable=False)
-    
+
     # Additional metrics
     custom_metrics = Column(JSONB, nullable=True, default=dict)
 

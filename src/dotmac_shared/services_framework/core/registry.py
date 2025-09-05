@@ -6,7 +6,7 @@ import asyncio
 import logging
 import time
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Set, Type
+from typing import Any, Optional
 
 from .base import BaseService, ServiceHealth, ServiceStatus
 
@@ -31,7 +31,7 @@ class ServiceConfig:
 
     # Notification service config
     notification_enabled: bool = True
-    notification_providers: List[str] = field(default_factory=lambda: ["email", "sms"])
+    notification_providers: list[str] = field(default_factory=lambda: ["email", "sms"])
     email_provider: str = "sendgrid"  # sendgrid, ses, mailgun
     sms_provider: str = "twilio"  # twilio, aws-sns
 
@@ -47,7 +47,7 @@ class ServiceConfig:
     max_retry_attempts: int = 3
 
     # Custom service configurations
-    custom_services: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    custom_services: dict[str, dict[str, Any]] = field(default_factory=dict)
 
 
 @dataclass
@@ -56,9 +56,7 @@ class ServiceDependency:
 
     service_name: str
     depends_on: str
-    required: bool = (
-        True  # If true, dependency must be ready before service can initialize
-    )
+    required: bool = True  # If true, dependency must be ready before service can initialize
 
 
 class ServiceRegistry:
@@ -67,12 +65,12 @@ class ServiceRegistry:
     def __init__(self, config: ServiceConfig = None):
         """__init__ service method."""
         self.config = config or ServiceConfig()
-        self.services: Dict[str, BaseService] = {}
-        self.dependencies: List[ServiceDependency] = []
-        self.initialization_order: List[str] = []
+        self.services: dict[str, BaseService] = {}
+        self.dependencies: list[ServiceDependency] = []
+        self.initialization_order: list[str] = []
         self._initialization_lock = asyncio.Lock()
-        self._initialization_results: Dict[str, bool] = {}
-        self._retry_counts: Dict[str, int] = {}
+        self._initialization_results: dict[str, bool] = {}
+        self._retry_counts: dict[str, int] = {}
 
         # Common service references for easy access
         self.auth: Optional[BaseService] = None
@@ -84,7 +82,7 @@ class ServiceRegistry:
         self._registry_initialized = False
         self._last_health_check = 0
 
-    def register_service(self, name: str, service: BaseService, priority: int = None):
+    def register_service(self, name: str, service: BaseService, priority: Optional[int] = None):
         """Register a service with the registry."""
         if name in self.services:
             logger.warning(f"Service {name} already registered, replacing")
@@ -109,20 +107,14 @@ class ServiceRegistry:
 
         # Check for circular dependencies
         if self._would_create_circular_dependency(dependency):
-            raise ValueError(
-                f"Adding dependency {service_name} -> {depends_on} would create circular dependency"
-            )
+            raise ValueError(f"Adding dependency {service_name} -> {depends_on} would create circular dependency")
 
         self.dependencies.append(dependency)
         self._calculate_initialization_order()
 
-        logger.info(
-            f"Added dependency: {service_name} depends on {depends_on} (required: {required})"
-        )
+        logger.info(f"Added dependency: {service_name} depends on {depends_on} (required: {required})")
 
-    def _would_create_circular_dependency(
-        self, new_dependency: ServiceDependency
-    ) -> bool:
+    def _would_create_circular_dependency(self, new_dependency: ServiceDependency) -> bool:
         """Check if adding a dependency would create a circular reference."""
         # Build dependency graph including new dependency
         graph = {}
@@ -134,7 +126,7 @@ class ServiceRegistry:
             graph[dep.service_name].append(dep.depends_on)
 
         # Check for cycles using DFS
-        def has_cycle(node: str, visited: Set[str], rec_stack: Set[str]) -> bool:
+        def has_cycle(node: str, visited: set[str], rec_stack: set[str]) -> bool:
             """has_cycle service method."""
             visited.add(node)
             rec_stack.add(node)
@@ -160,45 +152,33 @@ class ServiceRegistry:
     def _calculate_initialization_order(self):
         """Calculate service initialization order based on priorities and dependencies."""
         # First, sort by priority (higher priority first)
-        services_by_priority = sorted(
-            self.services.items(), key=lambda x: x[1].priority, reverse=True
-        )
+        services_by_priority = sorted(self.services.items(), key=lambda x: x[1].priority, reverse=True)
 
         # Apply dependency constraints
         ordered = []
-        remaining = {name: service for name, service in services_by_priority}
+        remaining = dict(services_by_priority)
 
         while remaining:
             # Find services with no unfulfilled dependencies
             ready_services = []
 
             for name, service in remaining.items():
-                dependencies = [
-                    dep
-                    for dep in self.dependencies
-                    if dep.service_name == name and dep.required
-                ]
-                unfulfilled_deps = [
-                    dep.depends_on
-                    for dep in dependencies
-                    if dep.depends_on in remaining
-                ]
+                dependencies = [dep for dep in self.dependencies if dep.service_name == name and dep.required]
+                unfulfilled_deps = [dep.depends_on for dep in dependencies if dep.depends_on in remaining]
 
                 if not unfulfilled_deps:
                     ready_services.append((name, service))
 
             if not ready_services:
                 # No services are ready - check for circular dependencies
-                logger.warning(
-                    f"Possible circular dependency detected. Remaining services: {list(remaining.keys())}"
-                )
+                logger.warning(f"Possible circular dependency detected. Remaining services: {list(remaining.keys())}")
                 # Add remaining services in priority order to break deadlock
                 ready_services = list(remaining.items())
 
             # Sort ready services by priority and add to order
             ready_services.sort(key=lambda x: x[1].priority, reverse=True)
 
-            for name, service in ready_services:
+            for name, _ in ready_services:
                 ordered.append(name)
                 remaining.pop(name)
 
@@ -224,27 +204,19 @@ class ServiceRegistry:
         """Check if a service is registered."""
         return name in self.services
 
-    def list_services(self) -> List[str]:
+    def list_services(self) -> list[str]:
         """List all registered service names."""
         return list(self.services.keys())
 
-    def get_service_dependencies(self, service_name: str) -> List[str]:
+    def get_service_dependencies(self, service_name: str) -> list[str]:
         """Get list of services that the given service depends on."""
-        return [
-            dep.depends_on
-            for dep in self.dependencies
-            if dep.service_name == service_name
-        ]
+        return [dep.depends_on for dep in self.dependencies if dep.service_name == service_name]
 
-    def get_service_dependents(self, service_name: str) -> List[str]:
+    def get_service_dependents(self, service_name: str) -> list[str]:
         """Get list of services that depend on the given service."""
-        return [
-            dep.service_name
-            for dep in self.dependencies
-            if dep.depends_on == service_name
-        ]
+        return [dep.service_name for dep in self.dependencies if dep.depends_on == service_name]
 
-    async def initialize_all(self) -> Dict[str, bool]:
+    async def initialize_all(self) -> dict[str, bool]:
         """Initialize all registered services in dependency order."""
         async with self._initialization_lock:
             if self._registry_initialized:
@@ -264,20 +236,14 @@ class ServiceRegistry:
                 await self._initialize_single_service(service_name)
 
             # Log summary
-            successful = sum(
-                1 for success in self._initialization_results.values() if success
-            )
+            successful = sum(1 for success in self._initialization_results.values() if success)
             total = len(self._initialization_results)
 
             if successful == total:
-                logger.info(
-                    f"✅ Service registry initialization complete: {successful}/{total} services ready"
-                )
+                logger.info(f"✅ Service registry initialization complete: {successful}/{total} services ready")
                 self._registry_initialized = True
             else:
-                logger.warning(
-                    f"⚠️ Service registry initialization partial: {successful}/{total} services ready"
-                )
+                logger.warning(f"⚠️ Service registry initialization partial: {successful}/{total} services ready")
 
             return self._initialization_results
 
@@ -291,24 +257,18 @@ class ServiceRegistry:
         service = self.services[service_name]
 
         # Check if dependencies are ready
-        dependencies = [
-            dep for dep in self.dependencies if dep.service_name == service_name
-        ]
+        dependencies = [dep for dep in self.dependencies if dep.service_name == service_name]
         for dep in dependencies:
             if dep.required and dep.depends_on in self.services:
                 dep_service = self.services[dep.depends_on]
                 if not dep_service.is_ready():
-                    logger.warning(
-                        f"Service {service_name} waiting for dependency {dep.depends_on}"
-                    )
+                    logger.warning(f"Service {service_name} waiting for dependency {dep.depends_on}")
                     # For now, continue anyway - could implement waiting logic here
 
         # Initialize the service
         try:
             logger.info(f"Initializing service: {service_name}")
-            success = await asyncio.wait_for(
-                service.initialize(), timeout=self.config.initialization_timeout_seconds
-            )
+            success = await asyncio.wait_for(service.initialize(), timeout=self.config.initialization_timeout_seconds)
 
             self._initialization_results[service_name] = success
 
@@ -322,9 +282,7 @@ class ServiceRegistry:
                     retry_count = self._retry_counts.get(service_name, 0)
                     if retry_count < self.config.max_retry_attempts:
                         self._retry_counts[service_name] = retry_count + 1
-                        logger.info(
-                            f"Retrying service {service_name} initialization (attempt {retry_count + 1})"
-                        )
+                        logger.info(f"Retrying service {service_name} initialization (attempt {retry_count + 1})")
                         return await self._initialize_single_service(service_name)
 
         except asyncio.TimeoutError:
@@ -339,7 +297,7 @@ class ServiceRegistry:
 
         return self._initialization_results[service_name]
 
-    async def shutdown_all(self) -> Dict[str, bool]:
+    async def shutdown_all(self) -> dict[str, bool]:
         """Shutdown all services in reverse initialization order."""
         logger.info("Starting service registry shutdown...")
         results = {}
@@ -354,7 +312,8 @@ class ServiceRegistry:
             try:
                 logger.info(f"Shutting down service: {service_name}")
                 success = await asyncio.wait_for(
-                    service.shutdown(), timeout=30  # 30 second timeout for shutdown
+                    service.shutdown(),
+                    timeout=30,  # 30 second timeout for shutdown
                 )
                 results[service_name] = success
 
@@ -373,23 +332,18 @@ class ServiceRegistry:
 
         successful = sum(1 for success in results.values() if success)
         total = len(results)
-        logger.info(
-            f"Service registry shutdown complete: {successful}/{total} services shutdown"
-        )
+        logger.info(f"Service registry shutdown complete: {successful}/{total} services shutdown")
 
         self._registry_initialized = False
         return results
 
-    async def health_check_all(self) -> Dict[str, ServiceHealth]:
+    async def health_check_all(self) -> dict[str, ServiceHealth]:
         """Perform health checks on all services."""
         health_results = {}
         current_time = time.time()
 
         # Only run health checks at configured intervals
-        if (
-            current_time - self._last_health_check
-            < self.config.health_check_interval_seconds
-        ):
+        if current_time - self._last_health_check < self.config.health_check_interval_seconds:
             # Return cached results if available
             for service_name, service in self.services.items():
                 health_results[service_name] = service.get_health()
@@ -405,9 +359,7 @@ class ServiceRegistry:
 
                 # Log health issues
                 if health.status == ServiceStatus.ERROR:
-                    logger.error(
-                        f"Service {service_name} health check failed: {health.message}"
-                    )
+                    logger.error(f"Service {service_name} health check failed: {health.message}")
 
             except Exception as e:
                 logger.error(f"Health check failed for {service_name}: {e}")
@@ -419,21 +371,17 @@ class ServiceRegistry:
 
         return health_results
 
-    def get_ready_services(self) -> List[str]:
+    def get_ready_services(self) -> list[str]:
         """Get list of services that are ready."""
         return [name for name, service in self.services.items() if service.is_ready()]
 
-    def get_unhealthy_services(self) -> List[str]:
+    def get_unhealthy_services(self) -> list[str]:
         """Get list of services that are not healthy."""
-        return [
-            name for name, service in self.services.items() if not service.is_healthy()
-        ]
+        return [name for name, service in self.services.items() if not service.is_healthy()]
 
-    def get_service_status_summary(self) -> Dict[str, str]:
+    def get_service_status_summary(self) -> dict[str, str]:
         """Get summary of all service statuses."""
-        return {
-            name: service.get_status().value for name, service in self.services.items()
-        }
+        return {name: service.get_status().value for name, service in self.services.items()}
 
     def is_all_services_ready(self) -> bool:
         """Check if all registered services are ready."""
@@ -446,7 +394,7 @@ class ServiceRegistry:
 
         return all(service.is_healthy() for service in self.services.values())
 
-    def get_registry_status(self) -> Dict[str, Any]:
+    def get_registry_status(self) -> dict[str, Any]:
         """Get comprehensive registry status."""
         return {
             "initialized": self._registry_initialized,
@@ -460,7 +408,7 @@ class ServiceRegistry:
             "service_statuses": self.get_service_status_summary(),
         }
 
-    def get_service_config_for(self, service_name: str) -> Dict[str, Any]:
+    def get_service_config_for(self, service_name: str) -> dict[str, Any]:
         """Get configuration for a specific service."""
         if service_name == "auth":
             return {

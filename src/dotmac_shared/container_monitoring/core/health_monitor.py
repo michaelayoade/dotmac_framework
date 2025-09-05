@@ -8,14 +8,13 @@ system metrics, application endpoints, and database connectivity.
 import asyncio
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 from uuid import UUID
 
 import docker
 
-# Optional imports
 try:
     import httpx
 
@@ -55,7 +54,7 @@ class HealthCheck:
     message: str
     timestamp: datetime = field(default_factory=datetime.utcnow)
     response_time: Optional[float] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -65,10 +64,10 @@ class HealthReport:
     container_id: str
     isp_id: Optional[UUID] = None
     overall_status: HealthStatus = HealthStatus.HEALTHY
-    checks: List[HealthCheck] = field(default_factory=list)
+    checks: list[HealthCheck] = field(default_factory=list)
     timestamp: datetime = field(default_factory=datetime.utcnow)
     uptime: Optional[timedelta] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def add_check(self, check: HealthCheck) -> None:
         """Add a health check result"""
@@ -228,9 +227,7 @@ class ContainerHealthMonitor:
 
             # Calculate memory usage
             memory_usage = self._calculate_memory_usage(stats)
-            memory_status = self._evaluate_threshold(
-                memory_usage, self.memory_threshold, "Memory"
-            )
+            memory_status = self._evaluate_threshold(memory_usage, self.memory_threshold, "Memory")
 
             report.add_check(
                 HealthCheck(
@@ -281,9 +278,7 @@ class ContainerHealthMonitor:
                         start_time = datetime.now(timezone.utc)
                         try:
                             response = await client.get(url)
-                            response_time = (
-                                datetime.now(timezone.utc) - start_time
-                            ).total_seconds()
+                            response_time = (datetime.now(timezone.utc) - start_time).total_seconds()
 
                             if response.status_code == 200:
                                 status = HealthStatus.HEALTHY
@@ -378,9 +373,7 @@ class ContainerHealthMonitor:
                 )
             )
 
-    def _extract_isp_id(
-        self, container: docker.models.containers.Container
-    ) -> Optional[UUID]:
+    def _extract_isp_id(self, container: docker.models.containers.Container) -> Optional[UUID]:
         """Extract ISP/tenant ID from container labels"""
         try:
             labels = container.labels or {}
@@ -392,9 +385,7 @@ class ContainerHealthMonitor:
             pass
         return None
 
-    def _calculate_uptime(
-        self, container: docker.models.containers.Container
-    ) -> timedelta:
+    def _calculate_uptime(self, container: docker.models.containers.Container) -> timedelta:
         """Calculate container uptime"""
         try:
             started_at = container.attrs["State"]["StartedAt"]
@@ -403,19 +394,14 @@ class ContainerHealthMonitor:
         except (KeyError, ValueError):
             return timedelta(0)
 
-    def _calculate_cpu_usage(self, stats: Dict) -> float:
+    def _calculate_cpu_usage(self, stats: dict) -> float:
         """Calculate CPU usage percentage from container stats"""
         try:
             cpu_stats = stats["cpu_stats"]
             precpu_stats = stats["precpu_stats"]
 
-            cpu_delta = (
-                cpu_stats["cpu_usage"]["total_usage"]
-                - precpu_stats["cpu_usage"]["total_usage"]
-            )
-            system_delta = (
-                cpu_stats["system_cpu_usage"] - precpu_stats["system_cpu_usage"]
-            )
+            cpu_delta = cpu_stats["cpu_usage"]["total_usage"] - precpu_stats["cpu_usage"]["total_usage"]
+            system_delta = cpu_stats["system_cpu_usage"] - precpu_stats["system_cpu_usage"]
 
             if system_delta > 0 and cpu_delta > 0:
                 cpu_count = len(cpu_stats["cpu_usage"]["percpu_usage"])
@@ -424,7 +410,7 @@ class ContainerHealthMonitor:
             pass
         return 0.0
 
-    def _calculate_memory_usage(self, stats: Dict) -> float:
+    def _calculate_memory_usage(self, stats: dict) -> float:
         """Calculate memory usage percentage from container stats"""
         try:
             memory_stats = stats["memory_stats"]
@@ -437,9 +423,7 @@ class ContainerHealthMonitor:
             pass
         return 0.0
 
-    def _evaluate_threshold(
-        self, value: float, threshold: float, metric_name: str
-    ) -> HealthStatus:
+    def _evaluate_threshold(self, value: float, threshold: float, metric_name: str) -> HealthStatus:
         """Evaluate metric against threshold"""
         if value >= threshold * 1.1:  # 110% of threshold
             return HealthStatus.CRITICAL
@@ -461,9 +445,7 @@ class ContainerHealthMonitor:
             pass
         return "localhost"
 
-    def _get_port_mappings(
-        self, container: docker.models.containers.Container
-    ) -> List[int]:
+    def _get_port_mappings(self, container: docker.models.containers.Container) -> list[int]:
         """Get exposed port mappings"""
         try:
             ports = container.attrs["NetworkSettings"]["Ports"]
@@ -481,7 +463,7 @@ class ContainerHealthMonitor:
         except (KeyError, ValueError):
             return [8000]  # Default FastAPI port
 
-    def _extract_db_configs(self, env_vars: List[str]) -> Dict[str, Dict[str, str]]:
+    def _extract_db_configs(self, env_vars: list[str]) -> dict[str, dict[str, str]]:
         """Extract database configurations from environment variables"""
         db_configs = {}
 
@@ -509,7 +491,7 @@ class ContainerHealthMonitor:
 
         return db_configs
 
-    async def _test_db_connection(self, db_config: Dict[str, str]) -> bool:
+    async def _test_db_connection(self, db_config: dict[str, str]) -> bool:
         """Test database connection"""
         # This would be implemented with actual database clients
         # For now, return True as placeholder

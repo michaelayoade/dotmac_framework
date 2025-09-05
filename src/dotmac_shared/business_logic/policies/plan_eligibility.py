@@ -5,24 +5,30 @@ Defines business rules for service plan eligibility, licensing constraints,
 and customer qualification requirements.
 """
 
-from datetime import datetime, date
-from decimal import Decimal
-from typing import Dict, Any, List, Optional
+from datetime import datetime
+from typing import Any
 
+from dotmac_shared.core.exceptions import ErrorContext
+
+from ..exceptions import LicensingError, PlanEligibilityError
 from ..policies import (
-    BusinessPolicy, PolicyRule, RuleOperator, PolicyResult, 
-    PolicyContext, PolicyEngine, PolicyRegistry
+    BusinessPolicy,
+    PolicyContext,
+    PolicyEngine,
+    PolicyRegistry,
+    PolicyResult,
+    PolicyRule,
+    RuleOperator,
 )
-from ..exceptions import PlanEligibilityError, LicensingError
 
 
 class PlanEligibilityPolicies:
     """Factory for creating plan eligibility business policies"""
-    
+
     @staticmethod
     def create_residential_basic_eligibility() -> BusinessPolicy:
         """Create residential basic plan eligibility policy"""
-        
+
         rules = [
             PolicyRule(
                 name="customer_type_residential",
@@ -30,7 +36,7 @@ class PlanEligibilityPolicies:
                 field_path="customer.customer_type",
                 operator=RuleOperator.EQUALS,
                 expected_value="residential",
-                error_message="Basic plans are only available for residential customers"
+                error_message="Basic plans are only available for residential customers",
             ),
             PolicyRule(
                 name="credit_score_minimum",
@@ -38,7 +44,7 @@ class PlanEligibilityPolicies:
                 field_path="customer.credit_score",
                 operator=RuleOperator.GREATER_THAN_OR_EQUAL,
                 expected_value=600,
-                error_message="Credit score must be at least 600 for basic plans"
+                error_message="Credit score must be at least 600 for basic plans",
             ),
             PolicyRule(
                 name="no_outstanding_debt",
@@ -46,7 +52,7 @@ class PlanEligibilityPolicies:
                 field_path="customer.outstanding_balance",
                 operator=RuleOperator.LESS_THAN_OR_EQUAL,
                 expected_value=0.00,
-                error_message="Outstanding balance must be resolved before plan activation"
+                error_message="Outstanding balance must be resolved before plan activation",
             ),
             PolicyRule(
                 name="service_area_coverage",
@@ -55,10 +61,10 @@ class PlanEligibilityPolicies:
                 operator=RuleOperator.EQUALS,
                 expected_value=True,
                 error_message="Service is not available in customer's location",
-                weight=2.0
-            )
+                weight=2.0,
+            ),
         ]
-        
+
         return BusinessPolicy(
             name="residential_basic_eligibility",
             version="1.0.0",
@@ -70,13 +76,13 @@ class PlanEligibilityPolicies:
             effective_from=datetime.utcnow(),
             is_active=True,
             created_by="system",
-            tags=["residential", "basic", "internet"]
+            tags=["residential", "basic", "internet"],
         )
-    
+
     @staticmethod
     def create_business_pro_eligibility() -> BusinessPolicy:
         """Create business pro plan eligibility policy"""
-        
+
         rules = [
             PolicyRule(
                 name="customer_type_business",
@@ -84,7 +90,7 @@ class PlanEligibilityPolicies:
                 field_path="customer.customer_type",
                 operator=RuleOperator.EQUALS,
                 expected_value="business",
-                error_message="Pro plans are only available for business customers"
+                error_message="Pro plans are only available for business customers",
             ),
             PolicyRule(
                 name="business_registration_valid",
@@ -92,7 +98,7 @@ class PlanEligibilityPolicies:
                 field_path="customer.business_details.registration_status",
                 operator=RuleOperator.EQUALS,
                 expected_value="active",
-                error_message="Valid business registration is required"
+                error_message="Valid business registration is required",
             ),
             PolicyRule(
                 name="minimum_contract_term",
@@ -100,7 +106,7 @@ class PlanEligibilityPolicies:
                 field_path="plan.contract_term_months",
                 operator=RuleOperator.GREATER_THAN_OR_EQUAL,
                 expected_value=12,
-                error_message="Business pro plans require minimum 12-month commitment"
+                error_message="Business pro plans require minimum 12-month commitment",
             ),
             PolicyRule(
                 name="credit_limit_sufficient",
@@ -108,7 +114,7 @@ class PlanEligibilityPolicies:
                 field_path="customer.credit_limit",
                 operator=RuleOperator.GREATER_THAN_OR_EQUAL,
                 expected_value=1000.00,
-                error_message="Minimum $1,000 credit limit required for business pro plans"
+                error_message="Minimum $1,000 credit limit required for business pro plans",
             ),
             PolicyRule(
                 name="dedicated_support_required",
@@ -116,10 +122,10 @@ class PlanEligibilityPolicies:
                 field_path="plan.support_tier",
                 operator=RuleOperator.IN,
                 expected_value=["premium", "enterprise"],
-                error_message="Business pro plans require premium or enterprise support"
-            )
+                error_message="Business pro plans require premium or enterprise support",
+            ),
         ]
-        
+
         return BusinessPolicy(
             name="business_pro_eligibility",
             version="1.0.0",
@@ -131,13 +137,13 @@ class PlanEligibilityPolicies:
             effective_from=datetime.utcnow(),
             is_active=True,
             created_by="system",
-            tags=["business", "pro", "internet"]
+            tags=["business", "pro", "internet"],
         )
-    
+
     @staticmethod
     def create_enterprise_eligibility() -> BusinessPolicy:
         """Create enterprise plan eligibility policy"""
-        
+
         rules = [
             PolicyRule(
                 name="customer_type_enterprise",
@@ -145,7 +151,7 @@ class PlanEligibilityPolicies:
                 field_path="customer.customer_type",
                 operator=RuleOperator.EQUALS,
                 expected_value="enterprise",
-                error_message="Enterprise plans require enterprise customer classification"
+                error_message="Enterprise plans require enterprise customer classification",
             ),
             PolicyRule(
                 name="minimum_employee_count",
@@ -153,7 +159,7 @@ class PlanEligibilityPolicies:
                 field_path="customer.business_details.employee_count",
                 operator=RuleOperator.GREATER_THAN_OR_EQUAL,
                 expected_value=50,
-                error_message="Enterprise plans require minimum 50 employees"
+                error_message="Enterprise plans require minimum 50 employees",
             ),
             PolicyRule(
                 name="annual_revenue_minimum",
@@ -161,7 +167,7 @@ class PlanEligibilityPolicies:
                 field_path="customer.business_details.annual_revenue",
                 operator=RuleOperator.GREATER_THAN_OR_EQUAL,
                 expected_value=1000000.00,
-                error_message="Enterprise plans require minimum $1M annual revenue"
+                error_message="Enterprise plans require minimum $1M annual revenue",
             ),
             PolicyRule(
                 name="sla_agreement_required",
@@ -169,7 +175,7 @@ class PlanEligibilityPolicies:
                 field_path="customer.agreements.sla_signed",
                 operator=RuleOperator.EQUALS,
                 expected_value=True,
-                error_message="Service Level Agreement must be signed for enterprise plans"
+                error_message="Service Level Agreement must be signed for enterprise plans",
             ),
             PolicyRule(
                 name="dedicated_account_manager",
@@ -178,7 +184,7 @@ class PlanEligibilityPolicies:
                 operator=RuleOperator.EQUALS,
                 expected_value=True,
                 error_message="Enterprise plans require dedicated account manager",
-                weight=1.5
+                weight=1.5,
             ),
             PolicyRule(
                 name="multi_location_support",
@@ -186,10 +192,10 @@ class PlanEligibilityPolicies:
                 field_path="customer.business_details.location_count",
                 operator=RuleOperator.GREATER_THAN,
                 expected_value=1,
-                error_message="Enterprise plans are designed for multi-location businesses"
-            )
+                error_message="Enterprise plans are designed for multi-location businesses",
+            ),
         ]
-        
+
         return BusinessPolicy(
             name="enterprise_eligibility",
             version="1.0.0",
@@ -201,17 +207,17 @@ class PlanEligibilityPolicies:
             effective_from=datetime.utcnow(),
             is_active=True,
             created_by="system",
-            tags=["enterprise", "sla", "multi-location"]
+            tags=["enterprise", "sla", "multi-location"],
         )
 
 
 class LicensingPolicies:
     """Factory for creating software licensing constraint policies"""
-    
+
     @staticmethod
     def create_tenant_license_limits() -> BusinessPolicy:
         """Create tenant licensing limit policy"""
-        
+
         rules = [
             PolicyRule(
                 name="user_count_within_limit",
@@ -219,7 +225,7 @@ class LicensingPolicies:
                 field_path="tenant.current_user_count",
                 operator=RuleOperator.LESS_THAN_OR_EQUAL,
                 expected_value="license.max_users",  # Dynamic reference
-                error_message="User count exceeds license limit"
+                error_message="User count exceeds license limit",
             ),
             PolicyRule(
                 name="bandwidth_within_limit",
@@ -227,7 +233,7 @@ class LicensingPolicies:
                 field_path="tenant.current_bandwidth_usage",
                 operator=RuleOperator.LESS_THAN_OR_EQUAL,
                 expected_value="license.max_bandwidth_mbps",
-                error_message="Bandwidth usage exceeds licensed capacity"
+                error_message="Bandwidth usage exceeds licensed capacity",
             ),
             PolicyRule(
                 name="storage_within_limit",
@@ -235,7 +241,7 @@ class LicensingPolicies:
                 field_path="tenant.current_storage_gb",
                 operator=RuleOperator.LESS_THAN_OR_EQUAL,
                 expected_value="license.max_storage_gb",
-                error_message="Storage usage exceeds licensed capacity"
+                error_message="Storage usage exceeds licensed capacity",
             ),
             PolicyRule(
                 name="feature_access_allowed",
@@ -243,7 +249,7 @@ class LicensingPolicies:
                 field_path="requested_features",
                 operator=RuleOperator.CONTAINS,  # Custom logic needed
                 expected_value="license.included_features",
-                error_message="Requested features not included in current license"
+                error_message="Requested features not included in current license",
             ),
             PolicyRule(
                 name="license_not_expired",
@@ -251,7 +257,7 @@ class LicensingPolicies:
                 field_path="license.expires_at",
                 operator=RuleOperator.GREATER_THAN,
                 expected_value="current_date",
-                error_message="License has expired and must be renewed"
+                error_message="License has expired and must be renewed",
             ),
             PolicyRule(
                 name="compliance_requirements_met",
@@ -259,10 +265,10 @@ class LicensingPolicies:
                 field_path="tenant.compliance_status",
                 operator=RuleOperator.EQUALS,
                 expected_value="compliant",
-                error_message="Compliance requirements must be met for continued service"
-            )
+                error_message="Compliance requirements must be met for continued service",
+            ),
         ]
-        
+
         return BusinessPolicy(
             name="tenant_license_limits",
             version="1.0.0",
@@ -274,13 +280,13 @@ class LicensingPolicies:
             effective_from=datetime.utcnow(),
             is_active=True,
             created_by="system",
-            tags=["licensing", "limits", "compliance"]
+            tags=["licensing", "limits", "compliance"],
         )
-    
+
     @staticmethod
     def create_feature_access_policy() -> BusinessPolicy:
         """Create feature access licensing policy"""
-        
+
         rules = [
             PolicyRule(
                 name="basic_features_always_allowed",
@@ -288,7 +294,7 @@ class LicensingPolicies:
                 field_path="requested_feature",
                 operator=RuleOperator.IN,
                 expected_value=["dashboard", "basic_reports", "user_management"],
-                error_message="Basic features should always be available"
+                error_message="Basic features should always be available",
             ),
             PolicyRule(
                 name="premium_features_license_required",
@@ -297,7 +303,7 @@ class LicensingPolicies:
                 operator=RuleOperator.IN,
                 expected_value=["premium", "enterprise"],
                 error_message="Premium license required for advanced features",
-                weight=2.0
+                weight=2.0,
             ),
             PolicyRule(
                 name="api_rate_limits_enforced",
@@ -305,7 +311,7 @@ class LicensingPolicies:
                 field_path="tenant.api_calls_per_hour",
                 operator=RuleOperator.LESS_THAN_OR_EQUAL,
                 expected_value="license.max_api_calls_per_hour",
-                error_message="API rate limit exceeded for current license tier"
+                error_message="API rate limit exceeded for current license tier",
             ),
             PolicyRule(
                 name="integration_count_within_limit",
@@ -313,10 +319,10 @@ class LicensingPolicies:
                 field_path="tenant.active_integrations",
                 operator=RuleOperator.LESS_THAN_OR_EQUAL,
                 expected_value="license.max_integrations",
-                error_message="Number of active integrations exceeds license limit"
-            )
+                error_message="Number of active integrations exceeds license limit",
+            ),
         ]
-        
+
         return BusinessPolicy(
             name="feature_access_licensing",
             version="1.0.0",
@@ -328,72 +334,57 @@ class LicensingPolicies:
             effective_from=datetime.utcnow(),
             is_active=True,
             created_by="system",
-            tags=["features", "licensing", "access_control"]
+            tags=["features", "licensing", "access_control"],
         )
 
 
 class PlanEligibilityEngine:
     """Specialized engine for plan eligibility evaluation"""
-    
+
     def __init__(self):
         self.registry = PolicyRegistry()
         self.engine = PolicyEngine(self.registry)
         self._register_default_policies()
-    
+
     def _register_default_policies(self):
         """Register default eligibility policies"""
         # Plan eligibility policies
-        self.registry.register_policy(
-            PlanEligibilityPolicies.create_residential_basic_eligibility()
-        )
-        self.registry.register_policy(
-            PlanEligibilityPolicies.create_business_pro_eligibility()
-        )
-        self.registry.register_policy(
-            PlanEligibilityPolicies.create_enterprise_eligibility()
-        )
-        
+        self.registry.register_policy(PlanEligibilityPolicies.create_residential_basic_eligibility())
+        self.registry.register_policy(PlanEligibilityPolicies.create_business_pro_eligibility())
+        self.registry.register_policy(PlanEligibilityPolicies.create_enterprise_eligibility())
+
         # Licensing policies
-        self.registry.register_policy(
-            LicensingPolicies.create_tenant_license_limits()
-        )
-        self.registry.register_policy(
-            LicensingPolicies.create_feature_access_policy()
-        )
-    
+        self.registry.register_policy(LicensingPolicies.create_tenant_license_limits())
+        self.registry.register_policy(LicensingPolicies.create_feature_access_policy())
+
     def check_plan_eligibility(
-        self,
-        plan_type: str,
-        customer_data: Dict[str, Any],
-        context: PolicyContext
-    ) -> Dict[str, Any]:
+        self, plan_type: str, customer_data: dict[str, Any], context: PolicyContext
+    ) -> dict[str, Any]:
         """Check if customer is eligible for specific plan"""
-        
+
         # Map plan type to policy name
         policy_map = {
             "residential_basic": "residential_basic_eligibility",
-            "business_pro": "business_pro_eligibility", 
-            "enterprise": "enterprise_eligibility"
+            "business_pro": "business_pro_eligibility",
+            "enterprise": "enterprise_eligibility",
         }
-        
+
         policy_name = policy_map.get(plan_type)
         if not policy_name:
             raise ValueError(f"Unknown plan type: {plan_type}")
-        
+
         try:
             result = self.engine.evaluate_policy(
-                policy_name=policy_name,
-                context=context,
-                evaluation_data={"customer": customer_data}
+                policy_name=policy_name, context=context, evaluation_data={"customer": customer_data}
             )
-            
+
             return {
                 "eligible": result.result == PolicyResult.ALLOW,
                 "requires_approval": result.result == PolicyResult.REQUIRE_APPROVAL,
                 "policy_result": result.to_dict(),
-                "plan_type": plan_type
+                "plan_type": plan_type,
             }
-            
+
         except Exception as e:
             raise PlanEligibilityError(
                 message=f"Plan eligibility check failed: {str(e)}",
@@ -406,38 +397,33 @@ class PlanEligibilityEngine:
                     resource_id=plan_type,
                     tenant_id=context.tenant_id,
                     user_id=context.user_id,
-                    correlation_id=context.correlation_id
-                )
-            )
-    
+                    correlation_id=context.correlation_id,
+                ),
+            ) from e
+
     def check_license_compliance(
-        self,
-        tenant_data: Dict[str, Any],
-        license_data: Dict[str, Any],
-        context: PolicyContext
-    ) -> Dict[str, Any]:
+        self, tenant_data: dict[str, Any], license_data: dict[str, Any], context: PolicyContext
+    ) -> dict[str, Any]:
         """Check tenant licensing compliance"""
-        
+
         evaluation_data = {
             "tenant": tenant_data,
             "license": license_data,
-            "current_date": datetime.utcnow().isoformat()
+            "current_date": datetime.utcnow().isoformat(),
         }
-        
+
         try:
             result = self.engine.evaluate_policy(
-                policy_name="tenant_license_limits",
-                context=context,
-                evaluation_data=evaluation_data
+                policy_name="tenant_license_limits", context=context, evaluation_data=evaluation_data
             )
-            
+
             return {
                 "compliant": result.result == PolicyResult.ALLOW,
                 "violations": result.violated_rules,
                 "policy_result": result.to_dict(),
-                "license_status": "active" if result.result == PolicyResult.ALLOW else "violation"
+                "license_status": "active" if result.result == PolicyResult.ALLOW else "violation",
             }
-            
+
         except Exception as e:
             raise LicensingError(
                 message=f"License compliance check failed: {str(e)}",
@@ -451,65 +437,54 @@ class PlanEligibilityEngine:
                     resource_id=license_data.get("id", "unknown"),
                     tenant_id=context.tenant_id,
                     user_id=context.user_id,
-                    correlation_id=context.correlation_id
-                )
-            )
-    
+                    correlation_id=context.correlation_id,
+                ),
+            ) from e
+
     def check_feature_access(
         self,
-        requested_features: List[str],
-        license_data: Dict[str, Any],
-        tenant_data: Dict[str, Any],
-        context: PolicyContext
-    ) -> Dict[str, Any]:
+        requested_features: list[str],
+        license_data: dict[str, Any],
+        tenant_data: dict[str, Any],
+        context: PolicyContext,
+    ) -> dict[str, Any]:
         """Check if tenant can access requested features"""
-        
-        evaluation_data = {
-            "requested_features": requested_features,
-            "license": license_data,
-            "tenant": tenant_data
-        }
-        
+
+        evaluation_data = {"requested_features": requested_features, "license": license_data, "tenant": tenant_data}
+
         try:
             result = self.engine.evaluate_policy(
-                policy_name="feature_access_licensing",
-                context=context,
-                evaluation_data=evaluation_data
+                policy_name="feature_access_licensing", context=context, evaluation_data=evaluation_data
             )
-            
+
             # Determine which features are allowed
             allowed_features = []
             denied_features = []
-            
+
             for feature in requested_features:
                 # This would need more sophisticated logic in practice
-                feature_evaluation_data = {
-                    **evaluation_data,
-                    "requested_feature": feature
-                }
-                
+                feature_evaluation_data = {**evaluation_data, "requested_feature": feature}
+
                 try:
                     feature_result = self.engine.evaluate_policy(
-                        policy_name="feature_access_licensing",
-                        context=context,
-                        evaluation_data=feature_evaluation_data
+                        policy_name="feature_access_licensing", context=context, evaluation_data=feature_evaluation_data
                     )
-                    
+
                     if feature_result.result == PolicyResult.ALLOW:
                         allowed_features.append(feature)
                     else:
                         denied_features.append(feature)
-                        
+
                 except Exception:
                     denied_features.append(feature)
-            
+
             return {
                 "access_granted": result.result == PolicyResult.ALLOW,
                 "allowed_features": allowed_features,
                 "denied_features": denied_features,
-                "policy_result": result.to_dict()
+                "policy_result": result.to_dict(),
             }
-            
+
         except Exception as e:
             raise LicensingError(
                 message=f"Feature access check failed: {str(e)}",
@@ -523,6 +498,6 @@ class PlanEligibilityEngine:
                     resource_id=",".join(requested_features),
                     tenant_id=context.tenant_id,
                     user_id=context.user_id,
-                    correlation_id=context.correlation_id
-                )
-            )
+                    correlation_id=context.correlation_id,
+                ),
+            ) from e

@@ -5,7 +5,7 @@ Coordinates multiple handlers using Chain of Responsibility pattern.
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from .configuration_handler import ConfigurationHandler, ReloadContext, ReloadStatus
 from .env_config_handler import EnvConfigHandler
@@ -45,8 +45,8 @@ class ConfigurationHandlerChain:
 
     def process_configurations(
         self,
-        config_paths: List[Path],
-        original_config: Dict[str, Any],
+        config_paths: list[Path],
+        original_config: dict[str, Any],
         tenant_id: Optional[str] = None,
     ) -> ReloadContext:
         """
@@ -119,9 +119,7 @@ class ConfigurationHandlerChain:
         if position == -1:
             # Add before validation handler (which should be last)
             current = self._chain
-            while current._next_handler and not isinstance(
-                current._next_handler, ValidationHandler
-            ):
+            while current._next_handler and not isinstance(current._next_handler, ValidationHandler):
                 current = current._next_handler
 
             # Insert before validation
@@ -129,16 +127,14 @@ class ConfigurationHandlerChain:
             current.set_next(handler)
         else:
             # Insert at specific position (more complex, not implemented for simplicity)
-            logger.warning(f"Positional insertion not implemented, adding at end")
+            logger.warning("Positional insertion not implemented, adding at end")
             self.add_handler(handler, -1)
 
-    def get_supported_extensions(self) -> List[str]:
+    def get_supported_extensions(self) -> list[str]:
         """Get list of supported file extensions."""
         return [".json", ".env", ".environment", ".yaml", ".yml"]
 
-    def validate_configuration_files(
-        self, config_paths: List[Path]
-    ) -> Dict[Path, bool]:
+    def validate_configuration_files(self, config_paths: list[Path]) -> dict[Path, bool]:
         """
         Validate that configuration files can be handled.
 
@@ -179,7 +175,7 @@ class ConfigurationHandlerChain:
 
         return False
 
-    def get_chain_info(self) -> List[str]:
+    def get_chain_info(self) -> list[str]:
         """Get information about handlers in the chain."""
         info = []
         current = self._chain

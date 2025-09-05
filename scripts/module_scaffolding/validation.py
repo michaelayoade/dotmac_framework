@@ -3,15 +3,12 @@ Module validation framework for ensuring module quality and completeness.
 """
 
 import ast
-import importlib.util
 import logging
 import re
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
-
-from dotmac_shared.api.exception_handlers import standard_exception_handler
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -57,36 +54,26 @@ class ValidationResult:
 
     module_name: str
     module_path: str
-    issues: List[ValidationIssue] = field(default_factory=list)
-    missing_components: List[str] = field(default_factory=list)
+    issues: list[ValidationIssue] = field(default_factory=list)
+    missing_components: list[str] = field(default_factory=list)
     warnings_count: int = 0
     errors_count: int = 0
     critical_count: int = 0
-    suggestions: List[str] = field(default_factory=list)
+    suggestions: list[str] = field(default_factory=list)
     is_valid: bool = field(init=False)
     score: float = field(init=False)  # 0-100
 
     def __post_init__(self):
         """Calculate counts and validity."""
-        self.warnings_count = len(
-            [i for i in self.issues if i.level == ValidationLevel.WARNING]
-        )
-        self.errors_count = len(
-            [i for i in self.issues if i.level == ValidationLevel.ERROR]
-        )
-        self.critical_count = len(
-            [i for i in self.issues if i.level == ValidationLevel.CRITICAL]
-        )
+        self.warnings_count = len([i for i in self.issues if i.level == ValidationLevel.WARNING])
+        self.errors_count = len([i for i in self.issues if i.level == ValidationLevel.ERROR])
+        self.critical_count = len([i for i in self.issues if i.level == ValidationLevel.CRITICAL])
 
         # Module is valid if no critical or error issues
         self.is_valid = self.critical_count == 0 and self.errors_count == 0
 
         # Calculate score (100 - penalty points)
-        penalty = (
-            (self.critical_count * 50)
-            + (self.errors_count * 25)
-            + (self.warnings_count * 5)
-        )
+        penalty = (self.critical_count * 50) + (self.errors_count * 25) + (self.warnings_count * 5)
         self.score = max(0, 100 - penalty)
 
 
@@ -108,7 +95,7 @@ class ModuleValidator:
         # Validation rules
         self.validation_rules = self._initialize_validation_rules()
 
-    def _initialize_validation_rules(self) -> Dict[str, Any]:
+    def _initialize_validation_rules(self) -> dict[str, Any]:
         """Initialize validation rules."""
         return {
             "required_imports": {
@@ -137,9 +124,7 @@ class ModuleValidator:
             },
         }
 
-    async def validate_module(
-        self, module_path: Path, module_name: str
-    ) -> ValidationResult:
+    async def validate_module(self, module_path: Path, module_name: str) -> ValidationResult:
         """Validate a complete module."""
         logger.info(f"🔍 Validating module: {module_name}")
 
@@ -178,9 +163,7 @@ class ModuleValidator:
                 )
             )
 
-        logger.info(
-            f"✅ Validation complete for {module_name}: Score {result.score:.1f}/100"
-        )
+        logger.info(f"✅ Validation complete for {module_name}: Score {result.score:.1f}/100")
         return result
 
     async def _validate_structure(self, module_path: Path, result: ValidationResult):
@@ -236,12 +219,10 @@ class ModuleValidator:
             if component_path.exists():
                 await self._validate_component_file(component_path, component, result)
 
-    async def _validate_component_file(
-        self, file_path: Path, component: str, result: ValidationResult
-    ):
+    async def _validate_component_file(self, file_path: Path, component: str, result: ValidationResult):
         """Validate a specific component file."""
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
 
             # Parse AST for deeper validation
@@ -282,15 +263,11 @@ class ModuleValidator:
                 )
             )
 
-    async def _validate_ast(
-        self, tree: ast.AST, file_path: Path, component: str, result: ValidationResult
-    ):
+    async def _validate_ast(self, tree: ast.AST, file_path: Path, component: str, result: ValidationResult):
         """Validate using AST analysis."""
 
         class ValidationVisitor(ast.NodeVisitor):
-            def __init__(
-                self, validator_instance, result_instance, file_path, component
-            ):
+            def __init__(self, validator_instance, result_instance, file_path, component):
                 self.validator = validator_instance
                 self.result = result_instance
                 self.file_path = file_path
@@ -354,9 +331,7 @@ class ModuleValidator:
         if component == "service.py":
             required_methods = self.validation_rules["required_methods"]["service"]
             for req_method in required_methods:
-                if not any(
-                    method.startswith(req_method) for method in visitor.functions_found
-                ):
+                if not any(method.startswith(req_method) for method in visitor.functions_found):
                     result.issues.append(
                         ValidationIssue(
                             level=ValidationLevel.WARNING,
@@ -374,7 +349,7 @@ class ModuleValidator:
             component_path = module_path / component
             if component_path.exists():
                 try:
-                    with open(component_path, "r", encoding="utf-8") as f:
+                    with open(component_path, encoding="utf-8") as f:
                         content = f.read()
 
                     for req_import in required:
@@ -407,9 +382,7 @@ class ModuleValidator:
                 except Exception as e:
                     logger.warning(f"Could not validate imports in {component}: {e}")
 
-    async def _validate_router(
-        self, content: str, file_path: Path, result: ValidationResult
-    ):
+    async def _validate_router(self, content: str, file_path: Path, result: ValidationResult):
         """Validate router.py specific requirements."""
         # Check for APIRouter instance
         if "APIRouter" not in content:
@@ -453,9 +426,7 @@ class ModuleValidator:
                 )
             )
 
-    async def _validate_service(
-        self, content: str, file_path: Path, result: ValidationResult
-    ):
+    async def _validate_service(self, content: str, file_path: Path, result: ValidationResult):
         """Validate service.py specific requirements."""
         # Check for service class
         if "class " not in content or "Service" not in content:
@@ -481,9 +452,7 @@ class ModuleValidator:
                 )
             )
 
-    async def _validate_models(
-        self, content: str, file_path: Path, result: ValidationResult
-    ):
+    async def _validate_models(self, content: str, file_path: Path, result: ValidationResult):
         """Validate models.py specific requirements."""
         # Check for SQLAlchemy imports
         if "Column" not in content or "Integer" not in content:
@@ -509,9 +478,7 @@ class ModuleValidator:
                 )
             )
 
-    async def _validate_schemas(
-        self, content: str, file_path: Path, result: ValidationResult
-    ):
+    async def _validate_schemas(self, content: str, file_path: Path, result: ValidationResult):
         """Validate schemas.py specific requirements."""
         # Check for Pydantic imports
         if "BaseModel" not in content:
@@ -551,7 +518,7 @@ class ModuleValidator:
             component_path = module_path / component
             if component_path.exists():
                 try:
-                    with open(component_path, "r", encoding="utf-8") as f:
+                    with open(component_path, encoding="utf-8") as f:
                         content = f.read()
 
                     if '"""' not in content and "'''" not in content:
@@ -581,7 +548,7 @@ class ModuleValidator:
 
         for component_path in module_path.glob("*.py"):
             try:
-                with open(component_path, "r", encoding="utf-8") as f:
+                with open(component_path, encoding="utf-8") as f:
                     content = f.read()
 
                 for pattern, message in security_patterns:
@@ -611,7 +578,7 @@ class ModuleValidator:
 
         for component_path in module_path.glob("*.py"):
             try:
-                with open(component_path, "r", encoding="utf-8") as f:
+                with open(component_path, encoding="utf-8") as f:
                     content = f.read()
 
                 for pattern, message in performance_patterns:
@@ -635,9 +602,7 @@ class ModuleValidator:
     def _generate_suggestions(self, result: ValidationResult):
         """Generate module improvement suggestions."""
         if result.missing_components:
-            result.suggestions.append(
-                f"Complete missing components: {', '.join(result.missing_components)}"
-            )
+            result.suggestions.append(f"Complete missing components: {', '.join(result.missing_components)}")
 
         if result.critical_count > 0:
             result.suggestions.append("Address all critical issues immediately")
@@ -646,32 +611,22 @@ class ModuleValidator:
             result.suggestions.append("Fix all error-level issues before deployment")
 
         if result.warnings_count > 5:
-            result.suggestions.append(
-                "Consider addressing warning-level issues for better code quality"
-            )
+            result.suggestions.append("Consider addressing warning-level issues for better code quality")
 
         if result.score < 80:
-            result.suggestions.append(
-                "Module needs significant improvements before production use"
-            )
+            result.suggestions.append("Module needs significant improvements before production use")
         elif result.score < 90:
             result.suggestions.append("Module is good but has room for improvement")
         else:
             result.suggestions.append("Module meets high quality standards")
 
-    async def validate_multiple_modules(
-        self, modules_info: Dict[str, Any]
-    ) -> Dict[str, ValidationResult]:
+    async def validate_multiple_modules(self, modules_info: dict[str, Any]) -> dict[str, ValidationResult]:
         """Validate multiple modules and return results."""
         results = {}
 
         for module_name, module_info in modules_info.items():
             try:
-                module_path = (
-                    Path(module_info["path"])
-                    if isinstance(module_info, dict)
-                    else Path(str(module_info))
-                )
+                module_path = Path(module_info["path"]) if isinstance(module_info, dict) else Path(str(module_info))
                 result = await self.validate_module(module_path, module_name)
                 results[module_name] = result
             except Exception as e:
@@ -685,7 +640,7 @@ class ModuleValidator:
 
         return results
 
-    def generate_validation_report(self, results: Dict[str, ValidationResult]) -> str:
+    def generate_validation_report(self, results: dict[str, ValidationResult]) -> str:
         """Generate a comprehensive validation report."""
         report = []
         report.append("# Module Validation Report")
@@ -695,17 +650,11 @@ class ModuleValidator:
         # Summary statistics
         total_modules = len(results)
         valid_modules = len([r for r in results.values() if r.is_valid])
-        avg_score = (
-            sum(r.score for r in results.values()) / total_modules
-            if total_modules > 0
-            else 0
-        )
+        avg_score = sum(r.score for r in results.values()) / total_modules if total_modules > 0 else 0
 
         report.append("## Summary")
         report.append(f"- Total modules validated: {total_modules}")
-        report.append(
-            f"- Valid modules: {valid_modules} ({valid_modules/total_modules*100:.1f}%)"
-        )
+        report.append(f"- Valid modules: {valid_modules} ({valid_modules/total_modules*100:.1f}%)")
         report.append(f"- Average score: {avg_score:.1f}/100")
         report.append("")
 
@@ -720,21 +669,15 @@ class ModuleValidator:
             issue_counts[key] = issue_counts.get(key, 0) + 1
 
         report.append("## Issue Summary")
-        for issue_type, count in sorted(
-            issue_counts.items(), key=lambda x: x[1], reverse=True
-        )[:10]:
+        for issue_type, count in sorted(issue_counts.items(), key=lambda x: x[1], reverse=True)[:10]:
             report.append(f"- {issue_type}: {count} occurrences")
         report.append("")
 
         # Module details
         report.append("## Module Details")
-        for module_name, result in sorted(
-            results.items(), key=lambda x: x[1].score, reverse=True
-        ):
+        for module_name, result in sorted(results.items(), key=lambda x: x[1].score, reverse=True):
             report.append(f"### {module_name} - Score: {result.score:.1f}/100")
-            report.append(
-                f"**Status:** {'✅ Valid' if result.is_valid else '❌ Invalid'}"
-            )
+            report.append(f"**Status:** {'✅ Valid' if result.is_valid else '❌ Invalid'}")
 
             if result.issues:
                 report.append("**Issues:**")

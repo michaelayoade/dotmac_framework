@@ -3,12 +3,11 @@
 from datetime import date, datetime
 from decimal import Decimal
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field
-
 from dotmac_isp.shared.schemas import TenantModelSchema
+from pydantic import BaseModel, Field
 
 
 class ServiceType(str, Enum):
@@ -67,8 +66,8 @@ class ServicePlanBase(BaseModel):
     upload_speed: Optional[int] = Field(None, gt=0)
     bandwidth_unit: BandwidthUnit = BandwidthUnit.MBPS
     data_allowance: Optional[int] = Field(None, gt=0)
-    features: Dict[str, Any] = Field(default_factory=dict)
-    technical_specs: Dict[str, Any] = Field(default_factory=dict)
+    features: dict[str, Any] = Field(default_factory=dict)
+    technical_specs: dict[str, Any] = Field(default_factory=dict)
     is_active: bool = True
     is_public: bool = True
     requires_approval: bool = False
@@ -93,8 +92,8 @@ class ServicePlanUpdate(BaseModel):
     download_speed: Optional[int] = Field(None, gt=0)
     upload_speed: Optional[int] = Field(None, gt=0)
     data_allowance: Optional[int] = Field(None, gt=0)
-    features: Optional[Dict[str, Any]] = None
-    technical_specs: Optional[Dict[str, Any]] = None
+    features: Optional[dict[str, Any]] = None
+    technical_specs: Optional[dict[str, Any]] = None
     is_active: Optional[bool] = None
     is_public: Optional[bool] = None
     requires_approval: Optional[bool] = None
@@ -123,12 +122,12 @@ class ServiceInstanceBase(BaseModel):
     service_coordinates: Optional[str] = Field(None, max_length=50)
     assigned_ip: Optional[str] = Field(None, max_length=45)
     assigned_vlan: Optional[int] = Field(None, gt=0)
-    router_config: Dict[str, Any] = Field(default_factory=dict)
+    router_config: dict[str, Any] = Field(default_factory=dict)
     contract_start_date: Optional[date] = None
     contract_end_date: Optional[date] = None
     monthly_price: Decimal = Field(..., gt=0, decimal_places=2)
     notes: Optional[str] = Field(None, max_length=1000)
-    custom_config: Dict[str, Any] = Field(default_factory=dict)
+    custom_config: dict[str, Any] = Field(default_factory=dict)
 
 
 class ServiceInstanceCreate(ServiceInstanceBase):
@@ -145,10 +144,10 @@ class ServiceInstanceUpdate(BaseModel):
     service_coordinates: Optional[str] = Field(None, max_length=50)
     assigned_ip: Optional[str] = Field(None, max_length=45)
     assigned_vlan: Optional[int] = Field(None, gt=0)
-    router_config: Optional[Dict[str, Any]] = None
+    router_config: Optional[dict[str, Any]] = None
     monthly_price: Optional[Decimal] = Field(None, gt=0, decimal_places=2)
     notes: Optional[str] = Field(None, max_length=1000)
-    custom_config: Optional[Dict[str, Any]] = None
+    custom_config: Optional[dict[str, Any]] = None
 
 
 class ServiceStatusUpdate(BaseModel):
@@ -177,7 +176,7 @@ class ProvisioningTaskBase(BaseModel):
     status: ProvisioningStatus = ProvisioningStatus.PENDING
     scheduled_date: Optional[datetime] = None
     assigned_technician_id: Optional[UUID] = None
-    task_data: Dict[str, Any] = Field(default_factory=dict)
+    task_data: dict[str, Any] = Field(default_factory=dict)
 
 
 class ProvisioningTaskCreate(ProvisioningTaskBase):
@@ -192,8 +191,8 @@ class ProvisioningTaskUpdate(BaseModel):
     status: Optional[ProvisioningStatus] = None
     scheduled_date: Optional[datetime] = None
     assigned_technician_id: Optional[UUID] = None
-    task_data: Optional[Dict[str, Any]] = None
-    result_data: Optional[Dict[str, Any]] = None
+    task_data: Optional[dict[str, Any]] = None
+    result_data: Optional[dict[str, Any]] = None
     error_message: Optional[str] = Field(None, max_length=1000)
 
 
@@ -201,7 +200,7 @@ class ProvisioningTaskStatusUpdate(BaseModel):
     """Schema for updating provisioning task status."""
 
     status: ProvisioningStatus
-    result_data: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    result_data: Optional[dict[str, Any]] = Field(default_factory=dict)
     error_message: Optional[str] = Field(None, max_length=1000)
     completion_notes: Optional[str] = Field(None, max_length=1000)
 
@@ -211,7 +210,7 @@ class ProvisioningTaskResponse(TenantModelSchema, ProvisioningTaskBase):
 
     started_date: Optional[datetime] = None
     completed_date: Optional[datetime] = None
-    result_data: Dict[str, Any] = Field(default_factory=dict)
+    result_data: dict[str, Any] = Field(default_factory=dict)
     error_message: Optional[str] = None
 
 
@@ -255,7 +254,7 @@ class ServiceUsageBase(BaseModel):
     peak_upload_speed: Optional[Decimal] = Field(None, ge=0, decimal_places=2)
     uptime_percentage: Optional[Decimal] = Field(None, ge=0, le=100, decimal_places=2)
     downtime_minutes: Optional[int] = Field(None, ge=0)
-    additional_metrics: Dict[str, Any] = Field(default_factory=dict)
+    additional_metrics: dict[str, Any] = Field(default_factory=dict)
 
 
 class ServiceUsageCreate(ServiceUsageBase):
@@ -279,7 +278,7 @@ class ServiceActivationRequest(BaseModel):
     service_address: str = Field(..., min_length=1, max_length=500)
     service_coordinates: Optional[str] = Field(None, max_length=50)
     contract_months: Optional[int] = Field(None, gt=0)
-    requested_addons: List[UUID] = Field(default_factory=list)
+    requested_addons: list[UUID] = Field(default_factory=list)
     installation_notes: Optional[str] = Field(None, max_length=1000)
     preferred_installation_date: Optional[datetime] = None
 
@@ -299,8 +298,8 @@ class ServiceModificationRequest(BaseModel):
     """Schema for service modification requests."""
 
     new_service_plan_id: Optional[UUID] = None
-    add_addons: List[UUID] = Field(default_factory=list)
-    remove_addons: List[UUID] = Field(default_factory=list)
+    add_addons: list[UUID] = Field(default_factory=list)
+    remove_addons: list[UUID] = Field(default_factory=list)
     change_address: Optional[str] = Field(None, max_length=500)
     modification_notes: Optional[str] = Field(None, max_length=1000)
     effective_date: Optional[datetime] = None
@@ -313,8 +312,8 @@ class ServiceProvisioningRequest(BaseModel):
     service_plan_id: UUID
     service_address: str = Field(..., max_length=500)
     installation_date: Optional[date] = None
-    service_addons: List[UUID] = Field(default_factory=list)
-    custom_configuration: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    service_addons: list[UUID] = Field(default_factory=list)
+    custom_configuration: Optional[dict[str, Any]] = Field(default_factory=dict)
     billing_start_date: Optional[date] = None
     provisioning_notes: Optional[str] = Field(None, max_length=1000)
     priority: str = Field("normal", pattern="^(low|normal|high|urgent)$")
@@ -332,7 +331,7 @@ class ServiceDashboard(BaseModel):
     monthly_revenue: Decimal = Field(..., ge=0, decimal_places=2)
     avg_service_value: Decimal = Field(..., ge=0, decimal_places=2)
     churn_rate: Decimal = Field(..., ge=0, le=100, decimal_places=2)
-    most_popular_plans: List[Dict[str, Any]] = Field(default_factory=list)
+    most_popular_plans: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class ServicePerformanceMetrics(BaseModel):
@@ -345,15 +344,13 @@ class ServicePerformanceMetrics(BaseModel):
     total_data_usage: Decimal = Field(..., ge=0, decimal_places=2)
     recent_alerts: int = Field(..., ge=0)
     last_outage: Optional[datetime] = None
-    customer_satisfaction: Optional[Decimal] = Field(
-        None, ge=0, le=10, decimal_places=1
-    )
+    customer_satisfaction: Optional[Decimal] = Field(None, ge=0, le=10, decimal_places=1)
 
 
 class BulkServiceOperation(BaseModel):
     """Schema for bulk service operations."""
 
-    service_instance_ids: List[UUID] = Field(..., min_length=1)
+    service_instance_ids: list[UUID] = Field(..., min_length=1)
     operation: str = Field(..., pattern="^(suspend|reactivate|cancel|maintenance)$")
     reason: str = Field(..., min_length=1, max_length=500)
     effective_date: Optional[datetime] = None
@@ -366,5 +363,5 @@ class BulkServiceOperationResponse(BaseModel):
     total_requested: int
     successful: int
     failed: int
-    results: List[Dict[str, Any]]
+    results: list[dict[str, Any]]
     operation_id: UUID

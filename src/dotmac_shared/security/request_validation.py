@@ -9,15 +9,19 @@ and sanitized to prevent injection attacks and malformed data processing
 import json
 import logging
 import re
-from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional, Type, Union
+from collections.abc import Callable
+from typing import Any, Optional
 
 import email_validator
 from fastapi import HTTPException, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field, ValidationError, field_validator, ConfigDict
-from pydantic._internal._model_construction import complete_model_class
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    field_validator,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +38,7 @@ class ValidationSeverity:
 class SecurityValidationError(HTTPException):
     """Custom security validation error"""
 
-    def __init__(self, detail: str, field: str = None):
+    def __init__(self, detail: str, field: Optional[str] = None):
         super().__init__(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
@@ -49,7 +53,7 @@ class SecurityValidationError(HTTPException):
 class SchemaValidationError(HTTPException):
     """Custom schema validation error"""
 
-    def __init__(self, detail: str, errors: List[Dict] = None):
+    def __init__(self, detail: str, errors: Optional[list[dict]] = None):
         super().__init__(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail={
@@ -131,9 +135,7 @@ class SecurityValidators:
         for pattern in cls.PATH_TRAVERSAL_PATTERNS:
             if re.search(pattern, value):
                 logger.warning(f"Path traversal attempt detected: {value}")
-                raise SecurityValidationError(
-                    "Input contains path traversal patterns", field="path_validation"
-                )
+                raise SecurityValidationError("Input contains path traversal patterns", field="path_validation")
 
         return value
 
@@ -172,25 +174,19 @@ class SecurityValidators:
             "LPT9",
         ]
         if value.upper().split(".")[0] in reserved_names:
-            raise SecurityValidationError(
-                "Filename uses reserved name", field="filename"
-            )
+            raise SecurityValidationError("Filename uses reserved name", field="filename")
 
         # Check for dangerous characters
         dangerous_chars = ["<", ">", ":", '"', "|", "?", "*", "\x00"]
         if any(char in value for char in dangerous_chars):
-            raise SecurityValidationError(
-                "Filename contains dangerous characters", field="filename"
-            )
+            raise SecurityValidationError("Filename contains dangerous characters", field="filename")
 
         return value
 
     @classmethod
     def validate_uuid_format(cls, value: str) -> str:
         """Validate UUID format"""
-        uuid_pattern = (
-            r"^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
-        )
+        uuid_pattern = r"^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
         if not re.match(uuid_pattern, value, re.IGNORECASE):
             raise SecurityValidationError("Invalid UUID format", field="uuid")
 
@@ -204,9 +200,7 @@ class SecurityValidators:
             validated_email = email_validator.validate_email(value)
             return validated_email.email
         except email_validator.EmailNotValidError as e:
-            raise SecurityValidationError(
-                f"Invalid email format: {str(e)}", field="email"
-            )
+            raise SecurityValidationError(f"Invalid email format: {str(e)}", field="email") from e
 
     @classmethod
     def validate_phone_number(cls, value: str) -> str:
@@ -219,16 +213,12 @@ class SecurityValidators:
             raise SecurityValidationError("Invalid phone number length", field="phone")
 
         # Check for valid international format
-        phone_pattern = (
-            r"^(\+?1-?)?(\([0-9]{3}\)|[0-9]{3})[\s.-]?[0-9]{3}[\s.-]?[0-9]{4}$"
-        )
+        phone_pattern = r"^(\+?1-?)?(\([0-9]{3}\)|[0-9]{3})[\s.-]?[0-9]{3}[\s.-]?[0-9]{4}$"
         if not re.match(phone_pattern, value.strip()):
             # Try international format
             intl_pattern = r"^\+?[1-9]\d{6,14}$"
             if not re.match(intl_pattern, digits_only):
-                raise SecurityValidationError(
-                    "Invalid phone number format", field="phone"
-                )
+                raise SecurityValidationError("Invalid phone number format", field="phone")
 
         return value
 
@@ -244,7 +234,7 @@ class BaseSecureModel(BaseModel):
         use_enum_values=True,
         extra="forbid",  # Prevent additional fields
         str_max_length=10000,  # Prevent extremely long strings
-        str_strip_whitespace=True
+        str_strip_whitespace=True,
     )
 
     @field_validator("*", mode="before")
@@ -277,9 +267,7 @@ class SecureStringField(BaseModel):
     @field_validator("value")
     @classmethod
     def validate_secure_string(cls, v):
-        return SecurityValidators.validate_no_sql_injection(
-            SecurityValidators.validate_no_xss(v)
-        )
+        return SecurityValidators.validate_no_sql_injection(SecurityValidators.validate_no_xss(v))
 
 
 class SecureEmailField(BaseModel):
@@ -332,9 +320,7 @@ class SecureFileUpload(BaseModel):
         ]
 
         if v not in allowed_types:
-            raise SecurityValidationError(
-                f"File type not allowed: {v}", field="content_type"
-            )
+            raise SecurityValidationError(f"File type not allowed: {v}", field="content_type")
 
         return v
 
@@ -350,8 +336,8 @@ class RequestValidationMiddleware:
         max_request_size: int = 10_000_000,  # 10MB
         max_json_depth: int = 10,
         validate_content_type: bool = True,
-        allowed_content_types: Optional[List[str]] = None,
-        exempt_paths: Optional[List[str]] = None,
+        allowed_content_types: Optional[list[str]] = None,
+        exempt_paths: Optional[list[str]] = None,
     ):
         self.app = app
         self.max_request_size = max_request_size
@@ -407,9 +393,7 @@ class RequestValidationMiddleware:
 
         if request.method in ["POST", "PUT", "PATCH"] and content_type:
             if content_type not in self.allowed_content_types:
-                raise SecurityValidationError(
-                    f"Content type not allowed: {content_type}", field="content_type"
-                )
+                raise SecurityValidationError(f"Content type not allowed: {content_type}", field="content_type")
 
     async def validate_request_body(self, request: Request) -> None:
         """Validate request body content"""
@@ -432,22 +416,16 @@ class RequestValidationMiddleware:
                     # Additional JSON security checks
                     json_str = json.dumps(json_data)
                     if len(json_str) > self.max_request_size:
-                        raise SecurityValidationError(
-                            "JSON payload too large after parsing", field="json_size"
-                        )
+                        raise SecurityValidationError("JSON payload too large after parsing", field="json_size")
 
                 except json.JSONDecodeError as e:
-                    raise SecurityValidationError(
-                        f"Invalid JSON: {str(e)}", field="json_format"
-                    )
+                    raise SecurityValidationError(f"Invalid JSON: {str(e)}", field="json_format") from e
 
         except Exception as e:
             if isinstance(e, SecurityValidationError):
                 raise
             logger.error(f"Request body validation error: {e}")
-            raise SecurityValidationError(
-                "Request body validation failed", field="request_body"
-            )
+            raise SecurityValidationError("Request body validation failed", field="request_body") from e
 
     async def __call__(self, scope, receive, send):
         if scope["type"] == "http":
@@ -468,9 +446,7 @@ class RequestValidationMiddleware:
                 await self.app(scope, receive, send)
 
             except SecurityValidationError as e:
-                error_response = JSONResponse(
-                    status_code=e.status_code, content=e.detail
-                )
+                error_response = JSONResponse(status_code=e.status_code, content=e.detail)
                 await error_response(scope, receive, send)
             except Exception as e:
                 logger.error(f"Request validation middleware error: {e}")
@@ -514,14 +490,10 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 
 # Factory functions
-def create_request_validation_middleware(
-    max_request_size: int = 10_000_000, **kwargs
-) -> Callable:
+def create_request_validation_middleware(max_request_size: int = 10_000_000, **kwargs) -> Callable:
     """Factory for creating request validation middleware"""
 
     def middleware_factory(app):
-        return RequestValidationMiddleware(
-            app=app, max_request_size=max_request_size, **kwargs
-        )
+        return RequestValidationMiddleware(app=app, max_request_size=max_request_size, **kwargs)
 
     return middleware_factory

@@ -5,7 +5,7 @@ Profile-related models for SDKs.
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 from uuid import UUID, uuid4
 
 
@@ -43,7 +43,7 @@ class UserProfile:
     language: str
     visibility: ProfileVisibility
     status: ProfileStatus
-    preferences: Dict[str, Any]
+    preferences: dict[str, Any]
     created_at: datetime
     updated_at: datetime
     last_active_at: Optional[datetime] = None

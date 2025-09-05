@@ -5,9 +5,9 @@ Handles complete device lifecycle from provisioning to decommissioning.
 """
 
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from sqlalchemy.orm import Session
 
@@ -74,13 +74,13 @@ class DeviceLifecycleManager:
         }
 
     async def execute_lifecycle_action(
-        self, device_id: str, action: str, parameters: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        self, device_id: str, action: str, parameters: Optional[dict[str, Any]] = None
+    ) -> dict[str, Any]:
         """Execute a lifecycle action on a device."""
         try:
             action_enum = LifecycleAction(action)
-        except ValueError:
-            raise DeviceLifecycleError(f"Invalid lifecycle action: {action}")
+        except ValueError as e:
+            raise DeviceLifecycleError(f"Invalid lifecycle action: {action}") from e
 
         parameters = parameters or {}
 
@@ -88,8 +88,6 @@ class DeviceLifecycleManager:
         device = await self.inventory_service.manager.get_device(device_id)
         if not device:
             raise DeviceLifecycleError(f"Device not found: {device_id}")
-
-        current_status = device.status
 
         # Execute action based on type
         if action_enum == LifecycleAction.PROVISION:
@@ -111,9 +109,7 @@ class DeviceLifecycleManager:
         else:
             raise DeviceLifecycleError(f"Action not implemented: {action}")
 
-    async def _execute_provision(
-        self, device_id: str, parameters: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def _execute_provision(self, device_id: str, parameters: dict[str, Any]) -> dict[str, Any]:
         """Execute device provisioning workflow."""
         workflow_id = str(uuid.uuid4())
         start_time = datetime.now(timezone.utc)
@@ -147,11 +143,9 @@ class DeviceLifecycleManager:
 
             # Set up basic monitoring if monitoring config provided
             if parameters.get("enable_monitoring", True):
-                monitor_result = await self.monitoring_service.create_snmp_monitor(
+                await self.monitoring_service.create_snmp_monitor(
                     device_id=device_id,
-                    metrics=parameters.get(
-                        "monitoring_metrics", ["system", "interfaces"]
-                    ),
+                    metrics=parameters.get("monitoring_metrics", ["system", "interfaces"]),
                     collection_interval=parameters.get("monitoring_interval", 60),
                     snmp_community=parameters.get("snmp_community", "public"),
                 )
@@ -171,9 +165,7 @@ class DeviceLifecycleManager:
 
         except Exception as e:
             # Update device status to failed
-            await self.inventory_service.manager.update_device(
-                device_id, {"status": DeviceStatus.FAILED}
-            )
+            await self.inventory_service.manager.update_device(device_id, {"status": DeviceStatus.FAILED})
 
             return {
                 "workflow_id": workflow_id,
@@ -185,22 +177,18 @@ class DeviceLifecycleManager:
                 "failed_at": datetime.now(timezone.utc).isoformat(),
             }
 
-    async def _execute_deploy(
-        self, device_id: str, parameters: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def _execute_deploy(self, device_id: str, parameters: dict[str, Any]) -> dict[str, Any]:
         """Execute device deployment workflow."""
         workflow_id = str(uuid.uuid4())
         start_time = datetime.now(timezone.utc)
 
         try:
             # Update device status
-            await self.inventory_service.manager.update_device(
-                device_id, {"status": DeviceStatus.PROVISIONING}
-            )
+            await self.inventory_service.manager.update_device(device_id, {"status": DeviceStatus.PROVISIONING})
 
             # Discover and register MAC addresses if interfaces provided
             if parameters.get("interface_macs"):
-                mac_result = await self.mac_service.discover_device_macs(
+                await self.mac_service.discover_device_macs(
                     device_id=device_id, interface_macs=parameters["interface_macs"]
                 )
 
@@ -227,9 +215,7 @@ class DeviceLifecycleManager:
 
             if validation_results["valid"]:
                 # Update status to active
-                await self.inventory_service.manager.update_device(
-                    device_id, {"status": DeviceStatus.ACTIVE}
-                )
+                await self.inventory_service.manager.update_device(device_id, {"status": DeviceStatus.ACTIVE})
                 final_status = "completed"
                 next_action = "activate"
             else:
@@ -251,9 +237,7 @@ class DeviceLifecycleManager:
             }
 
         except Exception as e:
-            await self.inventory_service.manager.update_device(
-                device_id, {"status": DeviceStatus.FAILED}
-            )
+            await self.inventory_service.manager.update_device(device_id, {"status": DeviceStatus.FAILED})
 
             return {
                 "workflow_id": workflow_id,
@@ -265,9 +249,7 @@ class DeviceLifecycleManager:
                 "failed_at": datetime.now(timezone.utc).isoformat(),
             }
 
-    async def _execute_activate(
-        self, device_id: str, parameters: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def _execute_activate(self, device_id: str, parameters: dict[str, Any]) -> dict[str, Any]:
         """Execute device activation workflow."""
         workflow_id = str(uuid.uuid4())
         start_time = datetime.now(timezone.utc)
@@ -276,22 +258,18 @@ class DeviceLifecycleManager:
             # Verify device is ready for activation
             device = await self.inventory_service.manager.get_device(device_id)
             if device.status not in [DeviceStatus.PROVISIONING, DeviceStatus.ACTIVE]:
-                raise DeviceLifecycleError(
-                    f"Device not ready for activation: {device.status}"
-                )
+                raise DeviceLifecycleError(f"Device not ready for activation: {device.status}")
 
             # Start monitoring
             if parameters.get("start_monitoring", True):
-                health_check = await self.monitoring_service.create_health_check(
+                await self.monitoring_service.create_health_check(
                     device_id=device_id,
                     check_type="ping",
                     target=device.management_ip or device_id,
                 )
 
             # Run connectivity tests
-            connectivity_results = await self._test_device_connectivity(
-                device_id, parameters
-            )
+            connectivity_results = await self._test_device_connectivity(device_id, parameters)
 
             # Update device status
             if connectivity_results["reachable"]:
@@ -329,18 +307,14 @@ class DeviceLifecycleManager:
                 "failed_at": datetime.now(timezone.utc).isoformat(),
             }
 
-    async def _execute_maintenance(
-        self, device_id: str, parameters: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def _execute_maintenance(self, device_id: str, parameters: dict[str, Any]) -> dict[str, Any]:
         """Execute device maintenance workflow."""
         workflow_id = str(uuid.uuid4())
         start_time = datetime.now(timezone.utc)
 
         try:
             # Update status to maintenance
-            await self.inventory_service.manager.update_device(
-                device_id, {"status": DeviceStatus.MAINTENANCE}
-            )
+            await self.inventory_service.manager.update_device(device_id, {"status": DeviceStatus.MAINTENANCE})
 
             maintenance_type = parameters.get("maintenance_type", "routine")
             maintenance_tasks = parameters.get("tasks", [])
@@ -356,9 +330,7 @@ class DeviceLifecycleManager:
 
             # Update status based on validation
             if validation_results["healthy"]:
-                await self.inventory_service.manager.update_device(
-                    device_id, {"status": DeviceStatus.ACTIVE}
-                )
+                await self.inventory_service.manager.update_device(device_id, {"status": DeviceStatus.ACTIVE})
                 final_status = "completed"
             else:
                 final_status = "validation_failed"
@@ -371,12 +343,8 @@ class DeviceLifecycleManager:
                 "device_id": device_id,
                 "status": final_status,
                 "maintenance_type": maintenance_type,
-                "tasks_completed": len(
-                    [r for r in task_results if r.get("status") == "success"]
-                ),
-                "tasks_failed": len(
-                    [r for r in task_results if r.get("status") == "failed"]
-                ),
+                "tasks_completed": len([r for r in task_results if r.get("status") == "success"]),
+                "tasks_failed": len([r for r in task_results if r.get("status") == "failed"]),
                 "validation_results": validation_results,
                 "duration_seconds": duration,
                 "completed_at": datetime.now(timezone.utc).isoformat(),
@@ -384,9 +352,7 @@ class DeviceLifecycleManager:
 
         except Exception as e:
             # Restore device status
-            await self.inventory_service.manager.update_device(
-                device_id, {"status": DeviceStatus.ACTIVE}
-            )
+            await self.inventory_service.manager.update_device(device_id, {"status": DeviceStatus.ACTIVE})
 
             return {
                 "workflow_id": workflow_id,
@@ -398,18 +364,14 @@ class DeviceLifecycleManager:
                 "failed_at": datetime.now(timezone.utc).isoformat(),
             }
 
-    async def _execute_decommission(
-        self, device_id: str, parameters: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def _execute_decommission(self, device_id: str, parameters: dict[str, Any]) -> dict[str, Any]:
         """Execute device decommissioning workflow."""
         workflow_id = str(uuid.uuid4())
         start_time = datetime.now(timezone.utc)
 
         try:
             # Update status to decommissioning
-            await self.inventory_service.manager.update_device(
-                device_id, {"status": DeviceStatus.DECOMMISSIONING}
-            )
+            await self.inventory_service.manager.update_device(device_id, {"status": DeviceStatus.DECOMMISSIONING})
 
             # Remove from monitoring
             # Note: In a real implementation, this would disable monitoring
@@ -417,16 +379,12 @@ class DeviceLifecycleManager:
             # Remove topology connections
             topology_node = await self.topology_service.manager.get_node(device_id)
             if topology_node:
-                removed_links = await self.topology_service.manager.get_node_links(
-                    device_id
-                )
+                removed_links = await self.topology_service.manager.get_node_links(device_id)
                 await self.topology_service.manager.delete_node(device_id)
 
             # Clean up MAC address registrations if requested
             if parameters.get("cleanup_mac_addresses", True):
-                device_macs = await self.mac_service.manager.get_device_mac_addresses(
-                    device_id
-                )
+                device_macs = await self.mac_service.manager.get_device_mac_addresses(device_id)
                 for mac_record in device_macs:
                     await self.mac_service.manager.update_mac_address(
                         mac_record.mac_address,
@@ -439,9 +397,7 @@ class DeviceLifecycleManager:
 
             # Final status update
             if parameters.get("archive_device", True):
-                await self.inventory_service.manager.update_device(
-                    device_id, {"status": DeviceStatus.DECOMMISSIONED}
-                )
+                await self.inventory_service.manager.update_device(device_id, {"status": DeviceStatus.DECOMMISSIONED})
                 final_status = "decommissioned"
             else:
                 await self.inventory_service.manager.delete_device(device_id)
@@ -454,9 +410,7 @@ class DeviceLifecycleManager:
                 "action": "decommission",
                 "device_id": device_id,
                 "status": final_status,
-                "removed_topology_links": (
-                    len(removed_links) if "removed_links" in locals() else 0
-                ),
+                "removed_topology_links": (len(removed_links) if "removed_links" in locals() else 0),
                 "duration_seconds": duration,
                 "completed_at": datetime.now(timezone.utc).isoformat(),
             }
@@ -472,9 +426,7 @@ class DeviceLifecycleManager:
                 "failed_at": datetime.now(timezone.utc).isoformat(),
             }
 
-    async def _execute_upgrade(
-        self, device_id: str, parameters: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def _execute_upgrade(self, device_id: str, parameters: dict[str, Any]) -> dict[str, Any]:
         """Execute device upgrade workflow."""
         # Implementation would handle firmware upgrades, configuration updates, etc.
         return {
@@ -485,9 +437,7 @@ class DeviceLifecycleManager:
             "message": "Upgrade workflow not yet implemented",
         }
 
-    async def _execute_migrate(
-        self, device_id: str, parameters: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def _execute_migrate(self, device_id: str, parameters: dict[str, Any]) -> dict[str, Any]:
         """Execute device migration workflow."""
         # Implementation would handle device migrations between sites/racks
         return {
@@ -498,9 +448,7 @@ class DeviceLifecycleManager:
             "message": "Migration workflow not yet implemented",
         }
 
-    async def _execute_retire(
-        self, device_id: str, parameters: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def _execute_retire(self, device_id: str, parameters: dict[str, Any]) -> dict[str, Any]:
         """Execute device retirement workflow."""
         # Implementation would handle final retirement and archival
         return {
@@ -512,9 +460,7 @@ class DeviceLifecycleManager:
         }
 
     # Helper methods
-    async def _validate_deployment(
-        self, device_id: str, parameters: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def _validate_deployment(self, device_id: str, parameters: dict[str, Any]) -> dict[str, Any]:
         """Validate device deployment."""
         validation_results = {"valid": True, "checks": {}, "errors": []}
 
@@ -538,26 +484,18 @@ class DeviceLifecycleManager:
 
         # Check interfaces if specified
         if parameters.get("required_interfaces"):
-            interfaces = await self.inventory_service.manager.get_device_interfaces(
-                device_id
-            )
+            interfaces = await self.inventory_service.manager.get_device_interfaces(device_id)
             interface_count = len(interfaces)
             required_count = parameters["required_interfaces"]
 
-            validation_results["checks"]["sufficient_interfaces"] = (
-                interface_count >= required_count
-            )
+            validation_results["checks"]["sufficient_interfaces"] = interface_count >= required_count
             if interface_count < required_count:
                 validation_results["valid"] = False
-                validation_results["errors"].append(
-                    f"Insufficient interfaces: {interface_count} < {required_count}"
-                )
+                validation_results["errors"].append(f"Insufficient interfaces: {interface_count} < {required_count}")
 
         return validation_results
 
-    async def _test_device_connectivity(
-        self, device_id: str, parameters: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def _test_device_connectivity(self, device_id: str, parameters: dict[str, Any]) -> dict[str, Any]:
         """Test device connectivity."""
         device = await self.inventory_service.manager.get_device(device_id)
 
@@ -589,11 +527,9 @@ class DeviceLifecycleManager:
 
         return connectivity_results
 
-    async def _validate_device_health(self, device_id: str) -> Dict[str, Any]:
+    async def _validate_device_health(self, device_id: str) -> dict[str, Any]:
         """Validate device health after maintenance."""
-        health_status = await self.monitoring_service.manager.get_device_health_status(
-            device_id
-        )
+        health_status = await self.monitoring_service.manager.get_device_health_status(device_id)
 
         return {
             "healthy": health_status.get("health_status") in ["healthy", "warning"],
@@ -602,9 +538,7 @@ class DeviceLifecycleManager:
             "last_check": health_status.get("last_check"),
         }
 
-    async def _execute_maintenance_task(
-        self, device_id: str, task: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def _execute_maintenance_task(self, device_id: str, task: dict[str, Any]) -> dict[str, Any]:
         """Execute individual maintenance task."""
         task_type = task.get("type", "generic")
         task_id = str(uuid.uuid4())
@@ -634,38 +568,38 @@ class DeviceLifecycleManager:
             }
 
     # Workflow handlers (called by lifecycle stage transitions)
-    async def _handle_planning(self, device_id: str, context: Dict[str, Any]):
+    async def _handle_planning(self, device_id: str, context: dict[str, Any]):
         """Handle planning stage."""
         pass
 
-    async def _handle_provisioning(self, device_id: str, context: Dict[str, Any]):
+    async def _handle_provisioning(self, device_id: str, context: dict[str, Any]):
         """Handle provisioning stage."""
         pass
 
-    async def _handle_deployment(self, device_id: str, context: Dict[str, Any]):
+    async def _handle_deployment(self, device_id: str, context: dict[str, Any]):
         """Handle deployment stage."""
         pass
 
-    async def _handle_active(self, device_id: str, context: Dict[str, Any]):
+    async def _handle_active(self, device_id: str, context: dict[str, Any]):
         """Handle active stage."""
         pass
 
-    async def _handle_maintenance(self, device_id: str, context: Dict[str, Any]):
+    async def _handle_maintenance(self, device_id: str, context: dict[str, Any]):
         """Handle maintenance stage."""
         pass
 
-    async def _handle_upgrade(self, device_id: str, context: Dict[str, Any]):
+    async def _handle_upgrade(self, device_id: str, context: dict[str, Any]):
         """Handle upgrade stage."""
         pass
 
-    async def _handle_migration(self, device_id: str, context: Dict[str, Any]):
+    async def _handle_migration(self, device_id: str, context: dict[str, Any]):
         """Handle migration stage."""
         pass
 
-    async def _handle_decommissioning(self, device_id: str, context: Dict[str, Any]):
+    async def _handle_decommissioning(self, device_id: str, context: dict[str, Any]):
         """Handle decommissioning stage."""
         pass
 
-    async def _handle_retired(self, device_id: str, context: Dict[str, Any]):
+    async def _handle_retired(self, device_id: str, context: dict[str, Any]):
         """Handle retired stage."""
         pass

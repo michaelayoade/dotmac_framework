@@ -14,7 +14,7 @@ import {
   type NotificationSettings as NotificationSettingsType,
   type SecuritySettings as SecuritySettingsType,
   type AppearanceSettings as AppearanceSettingsType,
-} from '@dotmac/settings-system';
+} from '@/components/adapters/SettingsComponents';
 import { User, Bell, Shield, Palette, Save, Crown, Settings } from 'lucide-react';
 
 // Management Admin-specific mock data

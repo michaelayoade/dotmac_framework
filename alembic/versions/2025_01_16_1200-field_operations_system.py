@@ -13,9 +13,10 @@ Revises: 2025_01_15_1200_support_system_tables
 Create Date: 2025-01-16 12:00:00.000000
 """
 
-from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
+
+from alembic import op
 
 # revision identifiers
 revision = 'field_ops_2025_01_16_1200'

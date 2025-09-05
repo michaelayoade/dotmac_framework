@@ -3,10 +3,10 @@ Configuration system for deployment-aware application factory.
 """
 
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Protocol, Union
+from typing import Any, Protocol
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +41,7 @@ class ResourceLimits:
 
     @classmethod
     def from_plan_type(
-        cls, plan_type: str, custom_limits: Optional[Dict[str, Any]] = None
+        cls, plan_type: str, custom_limits: dict[str, Any] | None = None
     ) -> "ResourceLimits":
         """Create resource limits based on plan type with optional customization."""
         # Default plan configurations
@@ -84,11 +84,11 @@ class DeploymentContext:
     """Context information for deployment-specific configuration."""
 
     mode: DeploymentMode
-    tenant_id: Optional[str] = None
+    tenant_id: str | None = None
     isolation_level: IsolationLevel = IsolationLevel.CONTAINER
-    resource_limits: Optional[ResourceLimits] = None
-    kubernetes_namespace: Optional[str] = None
-    container_name: Optional[str] = None
+    resource_limits: ResourceLimits | None = None
+    kubernetes_namespace: str | None = None
+    container_name: str | None = None
 
     def __post_init__(self):
         if self.mode == DeploymentMode.TENANT_CONTAINER and not self.tenant_id:
@@ -103,8 +103,8 @@ class RouterConfig:
     prefix: str = ""
     auto_discover: bool = False
     required: bool = False
-    tags: List[str] = field(default_factory=list)
-    dependencies: List[str] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)
+    dependencies: list[str] = field(default_factory=list)
 
     def __post_init__(self):
         if self.auto_discover and not self.tags:
@@ -116,22 +116,22 @@ class RouterConfig:
 class HealthCheckConfig:
     """Health check configuration."""
 
-    enabled_checks: List[str] = field(
+    enabled_checks: list[str] = field(
         default_factory=lambda: ["database", "cache", "observability"]
     )
-    additional_filesystem_paths: List[str] = field(
+    additional_filesystem_paths: list[str] = field(
         default_factory=lambda: ["logs", "uploads", "static"]
     )
-    custom_checks: Dict[str, Callable] = field(default_factory=dict)
+    custom_checks: dict[str, Callable] = field(default_factory=dict)
 
 
 @dataclass
 class FeatureConfig:
     """Feature flag configuration."""
 
-    enabled_features: List[str] = field(default_factory=list)
-    disabled_features: List[str] = field(default_factory=list)
-    plan_based_features: Dict[str, List[str]] = field(
+    enabled_features: list[str] = field(default_factory=list)
+    disabled_features: list[str] = field(default_factory=list)
+    plan_based_features: dict[str, list[str]] = field(
         default_factory=lambda: {
             "standard": [
                 "customer_portal",
@@ -162,8 +162,8 @@ class FeatureConfig:
     )
 
     def get_features_for_plan(
-        self, plan_type: str, tenant_id: Optional[str] = None
-    ) -> List[str]:
+        self, plan_type: str, tenant_id: str | None = None
+    ) -> list[str]:
         """Get enabled features for a specific plan type and tenant."""
         # Start with plan-based features
         features = self.plan_based_features.get(
@@ -182,7 +182,7 @@ class FeatureConfig:
         return list(dict.fromkeys(features))
 
     def is_feature_enabled(
-        self, feature: str, plan_type: str, tenant_id: Optional[str] = None
+        self, feature: str, plan_type: str, tenant_id: str | None = None
     ) -> bool:
         """Check if a specific feature is enabled."""
         return feature in self.get_features_for_plan(plan_type, tenant_id)
@@ -197,7 +197,7 @@ class ObservabilityConfig:
     metrics_enabled: bool = True
     tracing_enabled: bool = True
     logging_level: str = "INFO"
-    custom_metrics: List[str] = field(default_factory=list)
+    custom_metrics: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -209,7 +209,7 @@ class KubernetesConfig:
     service_pattern: str = "{tenant_id}-service"
     ingress_pattern: str = "{tenant_id}.dotmac.app"
 
-    def get_names(self, tenant_id: str) -> Dict[str, str]:
+    def get_names(self, tenant_id: str) -> dict[str, str]:
         """Generate Kubernetes resource names for a tenant."""
         # Clean tenant ID for Kubernetes naming
         clean_tenant_id = tenant_id.lower().replace("_", "-").replace(".", "-")
@@ -237,44 +237,44 @@ class SecurityConfig:
 # Provider Protocol Definitions
 class SecurityProvider(Protocol):
     """Protocol for security middleware providers."""
-    
-    def apply_jwt_authentication(self, app: Any, config: Dict[str, Any]) -> None:
+
+    def apply_jwt_authentication(self, app: Any, config: dict[str, Any]) -> None:
         """Apply JWT authentication middleware."""
         ...
-    
-    def apply_csrf_protection(self, app: Any, config: Dict[str, Any]) -> None:
+
+    def apply_csrf_protection(self, app: Any, config: dict[str, Any]) -> None:
         """Apply CSRF protection middleware."""
         ...
-    
-    def apply_rate_limiting(self, app: Any, config: Dict[str, Any]) -> None:
+
+    def apply_rate_limiting(self, app: Any, config: dict[str, Any]) -> None:
         """Apply rate limiting middleware."""
         ...
 
 
 class TenantBoundaryProvider(Protocol):
     """Protocol for tenant boundary enforcement providers."""
-    
-    def apply_tenant_security(self, app: Any, config: Dict[str, Any]) -> None:
+
+    def apply_tenant_security(self, app: Any, config: dict[str, Any]) -> None:
         """Apply tenant security middleware."""
         ...
-    
-    def apply_tenant_isolation(self, app: Any, config: Dict[str, Any]) -> None:
+
+    def apply_tenant_isolation(self, app: Any, config: dict[str, Any]) -> None:
         """Apply tenant isolation middleware."""
         ...
 
 
 class ObservabilityProvider(Protocol):
     """Protocol for observability providers."""
-    
-    def apply_metrics(self, app: Any, config: Dict[str, Any]) -> None:
+
+    def apply_metrics(self, app: Any, config: dict[str, Any]) -> None:
         """Apply metrics collection middleware."""
         ...
-    
-    def apply_tracing(self, app: Any, config: Dict[str, Any]) -> None:
+
+    def apply_tracing(self, app: Any, config: dict[str, Any]) -> None:
         """Apply tracing middleware."""
         ...
-    
-    def apply_logging(self, app: Any, config: Dict[str, Any]) -> None:
+
+    def apply_logging(self, app: Any, config: dict[str, Any]) -> None:
         """Apply structured logging middleware."""
         ...
 
@@ -282,10 +282,10 @@ class ObservabilityProvider(Protocol):
 @dataclass
 class Providers:
     """Container for middleware providers."""
-    
-    security: Optional[SecurityProvider] = None
-    tenant: Optional[TenantBoundaryProvider] = None
-    observability: Optional[ObservabilityProvider] = None
+
+    security: SecurityProvider | None = None
+    tenant: TenantBoundaryProvider | None = None
+    observability: ObservabilityProvider | None = None
 
 
 @dataclass
@@ -299,13 +299,13 @@ class PlatformConfig:
     version: str = "1.0.0"
 
     # Deployment context
-    deployment_context: Optional[DeploymentContext] = None
+    deployment_context: DeploymentContext | None = None
 
     # FastAPI configuration
-    fastapi_kwargs: Dict[str, Any] = field(default_factory=dict)
+    fastapi_kwargs: dict[str, Any] = field(default_factory=dict)
 
     # Router configuration
-    routers: List[RouterConfig] = field(default_factory=list)
+    routers: list[RouterConfig] = field(default_factory=list)
 
     # Feature configurations
     health_config: HealthCheckConfig = field(default_factory=HealthCheckConfig)
@@ -317,14 +317,14 @@ class PlatformConfig:
     kubernetes_config: KubernetesConfig = field(default_factory=KubernetesConfig)
 
     # Startup tasks
-    startup_tasks: List[str] = field(default_factory=list)
-    shutdown_tasks: List[str] = field(default_factory=list)
+    startup_tasks: list[str] = field(default_factory=list)
+    shutdown_tasks: list[str] = field(default_factory=list)
 
     # Middleware providers
-    middleware_providers: Optional[Providers] = None
+    middleware_providers: Providers | None = None
 
     # Custom settings
-    custom_settings: Dict[str, Any] = field(default_factory=dict)
+    custom_settings: dict[str, Any] = field(default_factory=dict)
 
     def customize_for_deployment(self, context: DeploymentContext) -> "PlatformConfig":
         """Create a deployment-specific configuration."""
@@ -389,14 +389,14 @@ class TenantConfig:
     deployment_context: DeploymentContext
 
     # Tenant-specific isolation settings
-    database_config: Dict[str, Any] = field(default_factory=dict)
-    redis_config: Dict[str, Any] = field(default_factory=dict)
-    networking_config: Dict[str, Any] = field(default_factory=dict)
-    storage_config: Dict[str, Any] = field(default_factory=dict)
+    database_config: dict[str, Any] = field(default_factory=dict)
+    redis_config: dict[str, Any] = field(default_factory=dict)
+    networking_config: dict[str, Any] = field(default_factory=dict)
+    storage_config: dict[str, Any] = field(default_factory=dict)
 
     # Feature flags for tenant
-    enabled_features: List[str] = field(default_factory=list)
-    disabled_features: List[str] = field(default_factory=list)
+    enabled_features: list[str] = field(default_factory=list)
+    disabled_features: list[str] = field(default_factory=list)
     plan_type: str = "standard"  # standard, premium, enterprise
 
     def __post_init__(self):

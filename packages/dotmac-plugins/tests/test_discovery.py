@@ -5,23 +5,21 @@ Tests entry point discovery, namespace package discovery,
 plugin validation, and factory creation.
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
 from types import ModuleType
-import sys
+from unittest.mock import Mock, patch
 
+import pytest
 from dotmac.plugins import (
     PluginDiscovery,
-    discover_plugins,
+    PluginDiscoveryError,
+    create_plugin_factory,
     discover_entry_points_only,
     discover_namespace_only,
+    discover_plugins,
     validate_plugin_requirements,
-    create_plugin_factory,
-    PluginDiscoveryError,
-    PluginKind,
-    IPlugin,
 )
-from conftest import TestPlugin, TestExportPlugin
+
+from conftest import TestExportPlugin, TestPlugin
 
 
 class TestPluginDiscovery:

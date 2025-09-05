@@ -7,7 +7,7 @@ to ensure complete tenant data isolation at the database level
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from sqlalchemy import text
 from sqlalchemy.engine import Engine
@@ -31,18 +31,14 @@ class RLSPolicyManager:
         self.engine = engine
         self.policies_created = set()
 
-    async def enable_rls_for_table(
-        self, table_name: str, tenant_column: str = "tenant_id"
-    ) -> bool:
+    async def enable_rls_for_table(self, table_name: str, tenant_column: str = "tenant_id") -> bool:
         """
         Enable Row Level Security for a specific table
         """
         try:
             with self.engine.begin() as conn:
                 # Enable RLS on the table
-                conn.execute(
-                    text(f"ALTER TABLE {table_name} ENABLE ROW LEVEL SECURITY;")
-                )
+                conn.execute(text(f"ALTER TABLE {table_name} ENABLE ROW LEVEL SECURITY;"))
 
                 # Create tenant isolation policy
                 policy_name = f"{table_name}_tenant_isolation"
@@ -74,9 +70,7 @@ class RLSPolicyManager:
             logger.error(f"❌ Failed to enable RLS for {table_name}: {e}")
             return False
 
-    async def enable_rls_for_all_tenant_tables(
-        self, session: Session
-    ) -> Dict[str, bool]:
+    async def enable_rls_for_all_tenant_tables(self, session: Session) -> dict[str, bool]:
         """
         Enable RLS for all tables that have tenant_id columns
         """
@@ -91,7 +85,7 @@ class RLSPolicyManager:
 
         return results
 
-    async def _find_tenant_tables(self, session: Session) -> List[str]:
+    async def _find_tenant_tables(self, session: Session) -> list[str]:
         """
         Find all tables that have tenant_id columns
         """
@@ -113,11 +107,7 @@ class RLSPolicyManager:
         Set the current tenant context for the database session
         """
         try:
-            session.execute(
-                text(
-                    f"SELECT set_config('app.current_tenant_id', '{tenant_id}', false);"
-                )
-            )
+            session.execute(text(f"SELECT set_config('app.current_tenant_id', '{tenant_id}', false);"))
             logger.debug(f"Set tenant context to: {tenant_id}")
             return True
         except Exception as e:
@@ -129,9 +119,7 @@ class RLSPolicyManager:
         Clear the current tenant context
         """
         try:
-            session.execute(
-                text("SELECT set_config('app.current_tenant_id', '', false);")
-            )
+            session.execute(text("SELECT set_config('app.current_tenant_id', '', false);"))
             return True
         except Exception as e:
             logger.error(f"Failed to clear tenant context: {e}")
@@ -296,9 +284,7 @@ class RLSPolicyManager:
                 for operation in ["INSERT", "UPDATE", "DELETE"]:
                     trigger_name = f"audit_{table_name}_{operation.lower()}"
 
-                    conn.execute(
-                        text(f"DROP TRIGGER IF EXISTS {trigger_name} ON {table_name};")
-                    )
+                    conn.execute(text(f"DROP TRIGGER IF EXISTS {trigger_name} ON {table_name};"))
 
                     conn.execute(
                         text(
@@ -319,7 +305,7 @@ class RLSPolicyManager:
 
     async def validate_tenant_isolation(
         self, session: Session, test_tenant_1: str, test_tenant_2: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Validate tenant isolation by attempting cross-tenant access
         """
@@ -347,18 +333,14 @@ class RLSPolicyManager:
                 if count > 0:
                     results["isolation_working"] = False
                     results["tests_failed"] += 1
-                    results["details"].append(
-                        f"❌ Cross-tenant access succeeded (found {count} records)"
-                    )
+                    results["details"].append(f"❌ Cross-tenant access succeeded (found {count} records)")
                 else:
                     results["tests_passed"] += 1
                     results["details"].append("✅ Cross-tenant access properly blocked")
 
             except Exception as e:
                 results["tests_passed"] += 1
-                results["details"].append(
-                    f"✅ Cross-tenant access blocked with error: {str(e)[:100]}"
-                )
+                results["details"].append(f"✅ Cross-tenant access blocked with error: {str(e)[:100]}")
 
             return results
 
@@ -367,7 +349,7 @@ class RLSPolicyManager:
             results["details"].append(f"❌ Test setup failed: {e}")
             return results
 
-    async def get_rls_status(self, session: Session) -> Dict[str, Any]:
+    async def get_rls_status(self, session: Session) -> dict[str, Any]:
         """
         Get the current status of RLS policies
         """
@@ -409,7 +391,7 @@ class RLSPolicyManager:
 
 
 # Convenience functions
-async def setup_complete_rls(engine: Engine, session: Session) -> Dict[str, Any]:
+async def setup_complete_rls(engine: Engine, session: Session) -> dict[str, Any]:
     """
     Set up complete Row Level Security for the database
     """
@@ -428,8 +410,7 @@ async def setup_complete_rls(engine: Engine, session: Session) -> Dict[str, Any]
         # 1. Create audit infrastructure
         results["audit_table_created"] = await rls_manager.create_audit_log_table()
         results["audit_functions_created"] = (
-            await rls_manager.create_tenant_isolation_function()
-            and await rls_manager.create_audit_trigger_function()
+            await rls_manager.create_tenant_isolation_function() and await rls_manager.create_audit_trigger_function()
         )
 
         # 2. Enable RLS for all tenant tables

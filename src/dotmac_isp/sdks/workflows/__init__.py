@@ -10,7 +10,6 @@ This module provides SDKs for:
 - Support automation workflows
 """
 
-# Import core workflow infrastructure (always available)
 from dotmac_shared.workflows import (
     AutomationRule,
     AutomationWorkflow,

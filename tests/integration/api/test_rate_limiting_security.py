@@ -3,16 +3,11 @@ Test rate limiting and security features for the DotMac ISP Framework API.
 Comprehensive testing of rate limits, authentication security, and abuse prevention.
 """
 
-import asyncio
-import pytest
 import time
-from datetime import datetime, timezone, timedelta
-from typing import Dict, Any, List
-from unittest.mock import AsyncMock, MagicMock, patch
-from uuid import uuid4
+from datetime import datetime, timedelta, timezone
+from unittest.mock import AsyncMock, patch
 
-from fastapi import HTTPException, status
-from fastapi.testclient import TestClient
+from fastapi import HTTPException
 
 
 class TestRateLimiting:
@@ -52,8 +47,8 @@ class TestRateLimiting:
 
     def test_api_endpoint_rate_limiting(self, client):
         """Test rate limiting on general API endpoints."""
-        with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
-            with patch('dotmac_shared.auth.dependencies.require_permissions') as mock_perms:
+        with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
+            with patch('dotmac.auth.dependencies.require_permissions') as mock_perms:
                 mock_get_user.return_value = {"id": "user-123", "tenant_id": "tenant-123"}
                 mock_perms.return_value = lambda: None
                 
@@ -98,8 +93,8 @@ class TestRateLimiting:
 
     def test_rate_limit_per_user(self, client):
         """Test that rate limits are applied per user."""
-        with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
-            with patch('dotmac_shared.auth.dependencies.require_permissions') as mock_perms:
+        with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
+            with patch('dotmac.auth.dependencies.require_permissions') as mock_perms:
                 mock_perms.return_value = lambda: None
                 
                 # User 1 makes requests
@@ -163,8 +158,9 @@ class TestAuthenticationSecurity:
     def test_token_expiration_enforcement(self, client):
         """Test that expired tokens are rejected."""
         # Create an expired token
+        from datetime import datetime, timedelta, timezone
+
         import jwt
-        from datetime import datetime, timezone, timedelta
         
         expired_payload = {
             "sub": "user-123",
@@ -335,8 +331,8 @@ class TestInputValidationSecurity:
 
     def test_sql_injection_prevention(self, client):
         """Test SQL injection prevention in search parameters."""
-        with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
-            with patch('dotmac_shared.auth.dependencies.require_permissions') as mock_perms:
+        with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
+            with patch('dotmac.auth.dependencies.require_permissions') as mock_perms:
                 with patch('dotmac_isp.modules.identity.router.CustomerService') as mock_service:
                     mock_get_user.return_value = {"id": "user-123"}
                     mock_perms.return_value = lambda: None
@@ -371,8 +367,8 @@ class TestInputValidationSecurity:
 
     def test_xss_prevention_in_responses(self, client):
         """Test XSS prevention in API responses."""
-        with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
-            with patch('dotmac_shared.auth.dependencies.require_permissions') as mock_perms:
+        with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
+            with patch('dotmac.auth.dependencies.require_permissions') as mock_perms:
                 with patch('dotmac_isp.modules.identity.router.CustomerService') as mock_service:
                     mock_get_user.return_value = {"id": "user-123"}
                     mock_perms.return_value = lambda: None
@@ -402,8 +398,8 @@ class TestInputValidationSecurity:
     def test_file_path_traversal_prevention(self, client):
         """Test prevention of directory traversal attacks."""
         # Test path traversal in customer ID parameter
-        with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
-            with patch('dotmac_shared.auth.dependencies.require_permissions') as mock_perms:
+        with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
+            with patch('dotmac.auth.dependencies.require_permissions') as mock_perms:
                 mock_get_user.return_value = {"id": "user-123"}
                 mock_perms.return_value = lambda: None
                 
@@ -425,8 +421,8 @@ class TestInputValidationSecurity:
 
     def test_command_injection_prevention(self, client):
         """Test prevention of command injection attacks."""
-        with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
-            with patch('dotmac_shared.auth.dependencies.require_permissions') as mock_perms:
+        with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
+            with patch('dotmac.auth.dependencies.require_permissions') as mock_perms:
                 with patch('dotmac_isp.modules.identity.router.CustomerService') as mock_service:
                     mock_get_user.return_value = {"id": "user-123"}
                     mock_perms.return_value = lambda: None
@@ -491,8 +487,8 @@ class TestAPIAbusePrevention:
 
     def test_concurrent_request_handling(self, client):
         """Test handling of many concurrent requests."""
-        import threading
         import queue
+        import threading
         
         results = queue.Queue()
         

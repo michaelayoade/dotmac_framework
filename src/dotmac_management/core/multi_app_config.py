@@ -7,7 +7,7 @@ Extends the existing TenantConfig to support multiple applications within a sing
 import logging
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from dotmac_shared.application.config import (
     DeploymentContext,
@@ -46,8 +46,8 @@ class ApplicationDeployment:
     status: ApplicationStatus = ApplicationStatus.PENDING
 
     # Configuration Overrides
-    config_overrides: Dict[str, Any] = field(default_factory=dict)
-    environment_overrides: Dict[str, str] = field(default_factory=dict)
+    config_overrides: dict[str, Any] = field(default_factory=dict)
+    environment_overrides: dict[str, str] = field(default_factory=dict)
 
     # Resource Overrides
     resource_overrides: Optional[ResourceLimits] = None
@@ -59,23 +59,23 @@ class ApplicationDeployment:
 
     # Network Configuration
     custom_domain: Optional[str] = None  # Custom subdomain
-    port_overrides: Dict[int, int] = field(default_factory=dict)  # internal -> external
+    port_overrides: dict[int, int] = field(default_factory=dict)  # internal -> external
 
     # Health and Monitoring
-    health_check_overrides: Optional[Dict[str, Any]] = None
+    health_check_overrides: Optional[dict[str, Any]] = None
 
     # Metadata
-    labels: Dict[str, str] = field(default_factory=dict)
-    annotations: Dict[str, str] = field(default_factory=dict)
+    labels: dict[str, str] = field(default_factory=dict)
+    annotations: dict[str, str] = field(default_factory=dict)
 
-    def get_effective_config(self, template: ApplicationTemplate) -> Dict[str, Any]:
+    def get_effective_config(self, template: ApplicationTemplate) -> dict[str, Any]:
         """Get effective configuration by merging template defaults with overrides."""
 
         config = template.default_config.copy()
         config.update(self.config_overrides)
         return config
 
-    def get_effective_environment(self, base_env: Dict[str, str]) -> Dict[str, str]:
+    def get_effective_environment(self, base_env: dict[str, str]) -> dict[str, str]:
         """Get effective environment variables."""
 
         env = base_env.copy()
@@ -84,9 +84,7 @@ class ApplicationDeployment:
 
     def get_deployment_name(self, tenant_id: str) -> str:
         """Get unique deployment name for Kubernetes/Docker."""
-        return f"{self.app_type}-{self.instance_name}-{tenant_id}".lower().replace(
-            "_", "-"
-        )
+        return f"{self.app_type}-{self.instance_name}-{tenant_id}".lower().replace("_", "-")
 
 
 @dataclass
@@ -104,13 +102,11 @@ class NetworkConfiguration:
     # SSL/TLS
     ssl_enabled: bool = True
     ssl_redirect: bool = True
-    custom_certificates: Dict[str, str] = field(
-        default_factory=dict
-    )  # domain -> cert_path
+    custom_certificates: dict[str, str] = field(default_factory=dict)  # domain -> cert_path
 
     # Domain Configuration
     base_domain: str = "dotmac.cloud"
-    custom_domains: List[str] = field(default_factory=list)
+    custom_domains: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -124,22 +120,22 @@ class MultiAppTenantConfig:
     deployment_context: Optional[DeploymentContext] = None
 
     # Multi-Application Configuration
-    applications: List[ApplicationDeployment] = field(default_factory=list)
+    applications: list[ApplicationDeployment] = field(default_factory=list)
 
     # Shared Infrastructure
-    shared_services: List[str] = field(default_factory=lambda: ["postgres", "redis"])
-    shared_volumes: Dict[str, str] = field(default_factory=dict)  # name -> mount_path
+    shared_services: list[str] = field(default_factory=lambda: ["postgres", "redis"])
+    shared_volumes: dict[str, str] = field(default_factory=dict)  # name -> mount_path
 
     # Network Configuration
     network_config: Optional[NetworkConfiguration] = None
 
     # Resource Management
     total_resource_limits: Optional[ResourceLimits] = None
-    resource_quotas: Dict[str, str] = field(default_factory=dict)
+    resource_quotas: dict[str, str] = field(default_factory=dict)
 
     # Security Configuration
-    security_policies: Dict[str, Any] = field(default_factory=dict)
-    secrets: Dict[str, str] = field(default_factory=dict)
+    security_policies: dict[str, Any] = field(default_factory=dict)
+    secrets: dict[str, str] = field(default_factory=dict)
 
     # Backup and Persistence
     backup_enabled: bool = True
@@ -152,8 +148,8 @@ class MultiAppTenantConfig:
     metrics_retention_days: int = 7
 
     # Metadata
-    labels: Dict[str, str] = field(default_factory=dict)
-    annotations: Dict[str, str] = field(default_factory=dict)
+    labels: dict[str, str] = field(default_factory=dict)
+    annotations: dict[str, str] = field(default_factory=dict)
 
     def __post_init__(self):
         """Post-initialization validation and setup."""
@@ -180,9 +176,7 @@ class MultiAppTenantConfig:
         # Validate unique instance name
         existing_names = {app.instance_name for app in self.applications}
         if app_deployment.instance_name in existing_names:
-            raise ValueError(
-                f"Instance name '{app_deployment.instance_name}' already exists"
-            )
+            raise ValueError(f"Instance name '{app_deployment.instance_name}' already exists")
 
         self.applications.append(app_deployment)
         logger.info(
@@ -195,9 +189,7 @@ class MultiAppTenantConfig:
         for i, app in enumerate(self.applications):
             if app.instance_name == instance_name:
                 removed_app = self.applications.pop(i)
-                logger.info(
-                    f"Removed application {removed_app.app_type}:{instance_name} from tenant {self.tenant_id}"
-                )
+                logger.info(f"Removed application {removed_app.app_type}:{instance_name} from tenant {self.tenant_id}")
                 return True
 
         return False
@@ -211,12 +203,12 @@ class MultiAppTenantConfig:
 
         return None
 
-    def get_applications_by_type(self, app_type: str) -> List[ApplicationDeployment]:
+    def get_applications_by_type(self, app_type: str) -> list[ApplicationDeployment]:
         """Get all applications of a specific type."""
 
         return [app for app in self.applications if app.app_type == app_type]
 
-    def validate_configuration(self) -> Dict[str, List[str]]:
+    def validate_configuration(self) -> dict[str, list[str]]:
         """Validate the entire tenant configuration and return any issues."""
 
         issues = {}
@@ -251,21 +243,18 @@ class MultiAppTenantConfig:
 
             # Check against limits (simplified)
             tenant_cpu_limit = self.total_resource_limits.cpu_limit
-            tenant_memory_limit = self.total_resource_limits.memory_limit
 
             resource_issues = []
             if tenant_cpu_limit and tenant_cpu_limit.endswith("m"):
                 if total_cpu_request > int(tenant_cpu_limit[:-1]):
-                    resource_issues.append(
-                        f"CPU request ({total_cpu_request}m) exceeds limit ({tenant_cpu_limit})"
-                    )
+                    resource_issues.append(f"CPU request ({total_cpu_request}m) exceeds limit ({tenant_cpu_limit})")
 
             if resource_issues:
                 issues["resources"] = resource_issues
 
         return issues
 
-    def get_deployment_order(self) -> List[str]:
+    def get_deployment_order(self) -> list[str]:
         """Get deployment order for applications based on dependencies."""
 
         registry = get_application_registry()
@@ -286,7 +275,7 @@ class MultiAppTenantConfig:
     def from_legacy_tenant_config(
         cls,
         legacy_config: TenantConfig,
-        applications: Optional[List[ApplicationDeployment]] = None,
+        applications: Optional[list[ApplicationDeployment]] = None,
     ) -> "MultiAppTenantConfig":
         """Create MultiAppTenantConfig from legacy TenantConfig."""
 

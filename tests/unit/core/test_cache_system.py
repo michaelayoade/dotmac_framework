@@ -2,9 +2,7 @@
 Test core functionality - Clean, focused unit tests.
 """
 
-from unittest.mock import MagicMock, patch
 
-import pytest
 
 from tests.utilities.test_helpers import MockRedisManager, create_mock_settings
 

@@ -1,0 +1,322 @@
+name: DotMac Business Logic CI/CD
+
+on:
+  push:
+    paths:
+      - 'packages/dotmac-business-logic/**'
+      - 'src/dotmac_business_logic/**'
+      - '.github/workflows/business-logic-ci.yml'
+  pull_request:
+    paths:
+      - 'packages/dotmac-business-logic/**'
+      - 'src/dotmac_business_logic/**'
+      - '.github/workflows/business-logic-ci.yml'
+
+env:
+  PYTHON_VERSION: '3.11'
+  POETRY_VERSION: '1.7.1'
+
+jobs:
+  quality-checks:
+    name: Code Quality & Security
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: ${{ env.POETRY_VERSION }}
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --no-interaction --no-root
+
+      - name: Install project
+        run: |
+          cd packages/dotmac-business-logic
+          poetry install --no-interaction
+
+      - name: Lint with ruff
+        run: |
+          poetry run ruff check packages/dotmac-business-logic/src
+          poetry run ruff check src/dotmac_business_logic
+
+      - name: Format check with ruff
+        run: |
+          poetry run ruff format --check packages/dotmac-business-logic/src
+          poetry run ruff format --check src/dotmac_business_logic
+
+      - name: Type check with mypy
+        run: |
+          poetry run mypy packages/dotmac-business-logic/src/dotmac_business_logic
+          poetry run mypy src/dotmac_business_logic
+        continue-on-error: true
+
+      - name: Security scan with bandit
+        run: |
+          poetry run bandit -r packages/dotmac-business-logic/src
+          poetry run bandit -r src/dotmac_business_logic
+        continue-on-error: true
+
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: quality-checks
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.10', '3.11', '3.12']
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: ${{ env.POETRY_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          cd packages/dotmac-business-logic
+          poetry install --no-interaction --with test
+
+      - name: Run unit tests
+        run: |
+          cd src/dotmac_business_logic
+          poetry run python -m pytest tests/unit/ -v --tb=short --cov=dotmac_business_logic --cov-report=xml --cov-report=term-missing
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./src/dotmac_business_logic/coverage.xml
+          flags: unit-tests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: dotmac_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: ${{ env.POETRY_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          cd packages/dotmac-business-logic
+          poetry install --no-interaction --with test
+
+      - name: Run integration tests
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/dotmac_test
+          REDIS_URL: redis://localhost:6379/0
+        run: |
+          cd src/dotmac_business_logic
+          poetry run python -m pytest tests/integration/ -v --tb=short --cov=dotmac_business_logic --cov-report=xml
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./src/dotmac_business_logic/coverage.xml
+          flags: integration-tests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
+  performance-tests:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    needs: integration-tests
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: ${{ env.POETRY_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          cd packages/dotmac-business-logic
+          poetry install --no-interaction --with test,performance
+
+      - name: Run performance tests
+        run: |
+          cd src/dotmac_business_logic
+          poetry run python -m pytest tests/performance/ -v --tb=short --benchmark-only --benchmark-json=benchmark.json
+
+      - name: Store benchmark results
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          tool: 'pytest'
+          output-file-path: src/dotmac_business_logic/benchmark.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: true
+          comment-on-alert: true
+          alert-threshold: '200%'
+          fail-on-alert: true
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: 'packages/dotmac-business-logic'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  package-build:
+    name: Package Build & Test
+    runs-on: ubuntu-latest
+    needs: [quality-checks, unit-tests]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: ${{ env.POETRY_VERSION }}
+
+      - name: Build package
+        run: |
+          cd packages/dotmac-business-logic
+          poetry build
+
+      - name: Test package installation
+        run: |
+          cd packages/dotmac-business-logic
+          pip install dist/*.whl
+          python -c "import dotmac_business_logic; print('Package imports successfully')"
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: package-distributions
+          path: packages/dotmac-business-logic/dist/
+
+  publish:
+    name: Publish Package
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/business-logic-v')
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests, performance-tests, package-build]
+    environment:
+      name: production
+      url: https://pypi.org/p/dotmac-business-logic
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: ${{ env.POETRY_VERSION }}
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: package-distributions
+          path: packages/dotmac-business-logic/dist/
+
+      - name: Publish to PyPI
+        env:
+          POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_TOKEN }}
+        run: |
+          cd packages/dotmac-business-logic
+          poetry publish
+
+  notification:
+    name: Notify Results
+    runs-on: ubuntu-latest
+    needs: [quality-checks, unit-tests, integration-tests, performance-tests, package-build]
+    if: always()
+    steps:
+      - name: Notify on success
+        if: ${{ needs.quality-checks.result == 'success' && needs.unit-tests.result == 'success' && needs.integration-tests.result == 'success' && needs.performance-tests.result == 'success' && needs.package-build.result == 'success' }}
+        run: echo "✅ All CI/CD checks passed successfully!"
+
+      - name: Notify on failure
+        if: ${{ needs.quality-checks.result == 'failure' || needs.unit-tests.result == 'failure' || needs.integration-tests.result == 'failure' || needs.performance-tests.result == 'failure' || needs.package-build.result == 'failure' }}
+        run: |
+          echo "❌ CI/CD pipeline failed!"
+          echo "Quality checks: ${{ needs.quality-checks.result }}"
+          echo "Unit tests: ${{ needs.unit-tests.result }}"
+          echo "Integration tests: ${{ needs.integration-tests.result }}"
+          echo "Performance tests: ${{ needs.performance-tests.result }}"
+          echo "Package build: ${{ needs.package-build.result }}"
+          exit 1

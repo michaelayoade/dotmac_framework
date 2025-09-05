@@ -2,7 +2,7 @@
 
 import os
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 
 @dataclass
@@ -14,7 +14,7 @@ class SDKConfig:
     retries: int = int(os.getenv("DOTMAC_API_RETRIES", "3"))
     api_key: Optional[str] = os.getenv("DOTMAC_API_KEY")
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert config to dictionary."""
         return {
             "base_url": self.base_url,

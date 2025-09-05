@@ -6,13 +6,12 @@ SECURITY: This module coordinates all security middleware and provides validatio
 tools to ensure complete API security coverage across the platform
 """
 
-import asyncio
 import logging
-from contextlib import asynccontextmanager
-from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional
+import os
+from datetime import datetime, timezone
+from typing import Any, Optional
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 
 try:
     # Try relative imports first (when used as package)
@@ -28,7 +27,6 @@ try:
         create_threat_detection_middleware,
     )
     from .request_validation import (
-        RequestValidationMiddleware,
         create_request_validation_middleware,
     )
 except ImportError:
@@ -45,7 +43,6 @@ except ImportError:
         create_threat_detection_middleware,
     )
     from security.request_validation import (
-        RequestValidationMiddleware,
         create_request_validation_middleware,
     )
 
@@ -60,9 +57,9 @@ class APISecuritySuite:
     def __init__(
         self,
         environment: str = "development",
-        jwt_secret_key: str = None,
+        jwt_secret_key: Optional[str] = None,
         redis_url: Optional[str] = None,
-        tenant_domains: Optional[List[str]] = None,
+        tenant_domains: Optional[list[str]] = None,
     ):
         self.environment = environment
         self.jwt_secret_key = jwt_secret_key
@@ -81,7 +78,7 @@ class APISecuritySuite:
         # Validation results
         self.validation_results = {}
 
-    def _get_security_config(self) -> Dict[str, Any]:
+    def _get_security_config(self) -> dict[str, Any]:
         """Get environment-specific security configuration"""
         base_config = {
             "rate_limiting": {"enabled": True, "redis_db": 1, "tenant_aware": True},
@@ -147,19 +144,12 @@ class APISecuritySuite:
                 logger.info("Rate limiter initialized")
 
             # Initialize JWT validator and RBAC
-            if (
-                self.security_config["authentication"]["enabled"]
-                and self.jwt_secret_key
-            ):
+            if self.security_config["authentication"]["enabled"] and self.jwt_secret_key:
                 self.jwt_validator = JWTTokenValidator(
                     secret_key=self.jwt_secret_key,
                     algorithm=self.security_config["authentication"]["jwt_algorithm"],
-                    max_token_age=self.security_config["authentication"][
-                        "token_expiry"
-                    ],
-                    require_tenant_context=self.security_config["authentication"][
-                        "require_tenant_context"
-                    ],
+                    max_token_age=self.security_config["authentication"]["token_expiry"],
+                    require_tenant_context=self.security_config["authentication"]["require_tenant_context"],
                 )
                 self.rbac = RoleBasedAccessControl()
                 logger.info("JWT authentication and RBAC initialized")
@@ -177,9 +167,7 @@ class APISecuritySuite:
             logger.error(f"Failed to initialize security components: {e}")
             return False
 
-    def configure_app_security(
-        self, app: FastAPI, api_type: str = "api"
-    ) -> Dict[str, Any]:
+    def configure_app_security(self, app: FastAPI, api_type: str = "api") -> dict[str, Any]:
         """Configure comprehensive security for FastAPI application"""
         security_status = {"configured_components": [], "errors": [], "warnings": []}
 
@@ -199,12 +187,8 @@ class APISecuritySuite:
             # 2. Add request validation middleware
             if self.security_config["request_validation"]["enabled"]:
                 validation_middleware = create_request_validation_middleware(
-                    max_request_size=self.security_config["request_validation"][
-                        "max_request_size"
-                    ],
-                    max_json_depth=self.security_config["request_validation"][
-                        "max_json_depth"
-                    ],
+                    max_request_size=self.security_config["request_validation"]["max_request_size"],
+                    max_json_depth=self.security_config["request_validation"]["max_json_depth"],
                 )
                 app.middleware("http")(validation_middleware(app))
                 security_status["configured_components"].append("request_validation")
@@ -219,11 +203,7 @@ class APISecuritySuite:
                 security_status["configured_components"].append("rate_limiting")
 
             # 4. Add authentication middleware
-            if (
-                self.jwt_validator
-                and self.rbac
-                and self.security_config["authentication"]["enabled"]
-            ):
+            if self.jwt_validator and self.rbac and self.security_config["authentication"]["enabled"]:
                 auth_middleware = create_api_auth_middleware(
                     jwt_validator=self.jwt_validator,
                     rbac=self.rbac,
@@ -240,22 +220,15 @@ class APISecuritySuite:
                 security_status["configured_components"].append("authentication")
 
             # 5. Add threat detection middleware (should be last)
-            if (
-                self.threat_detector
-                and self.security_config["threat_detection"]["enabled"]
-            ):
+            if self.threat_detector and self.security_config["threat_detection"]["enabled"]:
                 threat_middleware = create_threat_detection_middleware(
                     threat_detector=self.threat_detector,
-                    block_threats=self.security_config["threat_detection"][
-                        "block_threats"
-                    ],
+                    block_threats=self.security_config["threat_detection"]["block_threats"],
                 )
                 app.middleware("http")(threat_middleware(app))
                 security_status["configured_components"].append("threat_detection")
 
-            logger.info(
-                f"API security configured with components: {security_status['configured_components']}"
-            )
+            logger.info(f"API security configured with components: {security_status['configured_components']}")
 
         except Exception as e:
             error_msg = f"Error configuring app security: {e}"
@@ -264,7 +237,7 @@ class APISecuritySuite:
 
         return security_status
 
-    async def validate_security_implementation(self) -> Dict[str, Any]:
+    async def validate_security_implementation(self) -> dict[str, Any]:
         """Comprehensive validation of security implementation"""
         validation_results = {
             "overall_status": "UNKNOWN",
@@ -283,15 +256,11 @@ class APISecuritySuite:
             # 1. Validate Rate Limiting
             if self.rate_limiter:
                 rate_limit_status = await self._validate_rate_limiting()
-                validation_results["component_status"][
-                    "rate_limiting"
-                ] = rate_limit_status
+                validation_results["component_status"]["rate_limiting"] = rate_limit_status
                 total_score += rate_limit_status.get("score", 0)
                 max_score += 100
             else:
-                validation_results["critical_issues"].append(
-                    "Rate limiting not configured"
-                )
+                validation_results["critical_issues"].append("Rate limiting not configured")
 
             # 2. Validate Authentication
             if self.jwt_validator and self.rbac:
@@ -300,16 +269,12 @@ class APISecuritySuite:
                 total_score += auth_status.get("score", 0)
                 max_score += 100
             else:
-                validation_results["critical_issues"].append(
-                    "Authentication not properly configured"
-                )
+                validation_results["critical_issues"].append("Authentication not properly configured")
 
             # 3. Validate Threat Detection
             if self.threat_detector:
                 threat_status = await self._validate_threat_detection()
-                validation_results["component_status"][
-                    "threat_detection"
-                ] = threat_status
+                validation_results["component_status"]["threat_detection"] = threat_status
                 total_score += threat_status.get("score", 0)
                 max_score += 100
             else:
@@ -326,15 +291,9 @@ class APISecuritySuite:
                 validation_results["security_score"] = (total_score / max_score) * 100
 
             # Determine overall status
-            if (
-                validation_results["security_score"] >= 90
-                and not validation_results["critical_issues"]
-            ):
+            if validation_results["security_score"] >= 90 and not validation_results["critical_issues"]:
                 validation_results["overall_status"] = "EXCELLENT"
-            elif (
-                validation_results["security_score"] >= 75
-                and len(validation_results["critical_issues"]) <= 1
-            ):
+            elif validation_results["security_score"] >= 75 and len(validation_results["critical_issues"]) <= 1:
                 validation_results["overall_status"] = "GOOD"
             elif validation_results["security_score"] >= 60:
                 validation_results["overall_status"] = "NEEDS_IMPROVEMENT"
@@ -342,9 +301,7 @@ class APISecuritySuite:
                 validation_results["overall_status"] = "CRITICAL"
 
             # Add recommendations
-            validation_results["recommendations"] = (
-                self._generate_security_recommendations(validation_results)
-            )
+            validation_results["recommendations"] = self._generate_security_recommendations(validation_results)
 
         except Exception as e:
             logger.error(f"Security validation failed: {e}")
@@ -354,7 +311,7 @@ class APISecuritySuite:
         self.validation_results = validation_results
         return validation_results
 
-    async def _validate_rate_limiting(self) -> Dict[str, Any]:
+    async def _validate_rate_limiting(self) -> dict[str, Any]:
         """Validate rate limiting implementation"""
         status = {"score": 0, "issues": [], "passed_checks": []}
 
@@ -367,10 +324,7 @@ class APISecuritySuite:
                 status["issues"].append("Redis connection failed")
 
             # Check tenant quotas configuration
-            if (
-                hasattr(self.rate_limiter, "tenant_quotas")
-                and self.rate_limiter.tenant_quotas
-            ):
+            if hasattr(self.rate_limiter, "tenant_quotas") and self.rate_limiter.tenant_quotas:
                 status["passed_checks"].append("Tenant quotas configured")
                 status["score"] += 40
             else:
@@ -391,16 +345,13 @@ class APISecuritySuite:
 
         return status
 
-    def _validate_authentication(self) -> Dict[str, Any]:
+    def _validate_authentication(self) -> dict[str, Any]:
         """Validate authentication implementation"""
         status = {"score": 0, "issues": [], "passed_checks": []}
 
         try:
             # Check JWT validator configuration
-            if (
-                self.jwt_validator.secret_key
-                and len(self.jwt_validator.secret_key) >= 32
-            ):
+            if self.jwt_validator.secret_key and len(self.jwt_validator.secret_key) >= 32:
                 status["passed_checks"].append("JWT secret key properly configured")
                 status["score"] += 25
             else:
@@ -432,25 +383,20 @@ class APISecuritySuite:
 
         return status
 
-    async def _validate_threat_detection(self) -> Dict[str, Any]:
+    async def _validate_threat_detection(self) -> dict[str, Any]:
         """Validate threat detection implementation"""
         status = {"score": 0, "issues": [], "passed_checks": []}
 
         try:
             # Check threat detector initialization
             if self.threat_detector.redis and await self.threat_detector.redis.ping():
-                status["passed_checks"].append(
-                    "Threat detector Redis connection active"
-                )
+                status["passed_checks"].append("Threat detector Redis connection active")
                 status["score"] += 20
             else:
                 status["issues"].append("Threat detector Redis connection failed")
 
             # Check threat patterns configuration
-            if (
-                self.threat_detector.threat_patterns
-                and len(self.threat_detector.threat_patterns) > 0
-            ):
+            if self.threat_detector.threat_patterns and len(self.threat_detector.threat_patterns) > 0:
                 status["passed_checks"].append("Threat patterns configured")
                 status["score"] += 30
             else:
@@ -475,7 +421,7 @@ class APISecuritySuite:
 
         return status
 
-    def _validate_security_configuration(self) -> Dict[str, Any]:
+    def _validate_security_configuration(self) -> dict[str, Any]:
         """Validate overall security configuration"""
         status = {"score": 0, "issues": [], "passed_checks": []}
 
@@ -489,12 +435,8 @@ class APISecuritySuite:
 
             # Check production security requirements
             if self.environment == "production":
-                if (
-                    self.security_config["authentication"]["token_expiry"] <= 1800
-                ):  # 30 minutes max
-                    status["passed_checks"].append(
-                        "Production token expiry properly configured"
-                    )
+                if self.security_config["authentication"]["token_expiry"] <= 1800:  # 30 minutes max
+                    status["passed_checks"].append("Production token expiry properly configured")
                     status["score"] += 20
                 else:
                     status["issues"].append("Production token expiry too long")
@@ -506,29 +448,19 @@ class APISecuritySuite:
                     status["issues"].append("Production threat blocking disabled")
 
             # Check security component integration
-            enabled_components = sum(
-                1
-                for config in self.security_config.values()
-                if config.get("enabled", False)
-            )
+            enabled_components = sum(1 for config in self.security_config.values() if config.get("enabled", False))
             if enabled_components >= 4:  # At least 4 out of 5 components
-                status["passed_checks"].append(
-                    f"Most security components enabled ({enabled_components}/5)"
-                )
+                status["passed_checks"].append(f"Most security components enabled ({enabled_components}/5)")
                 status["score"] += 40
             else:
-                status["issues"].append(
-                    f"Too few security components enabled ({enabled_components}/5)"
-                )
+                status["issues"].append(f"Too few security components enabled ({enabled_components}/5)")
 
         except Exception as e:
             status["issues"].append(f"Configuration validation error: {str(e)}")
 
         return status
 
-    def _generate_security_recommendations(
-        self, validation_results: Dict[str, Any]
-    ) -> List[str]:
+    def _generate_security_recommendations(self, validation_results: dict[str, Any]) -> list[str]:
         """Generate security recommendations based on validation results"""
         recommendations = []
 
@@ -538,18 +470,14 @@ class APISecuritySuite:
 
         # Score-based recommendations
         if validation_results["security_score"] < 90:
-            recommendations.append(
-                "Consider implementing additional security hardening measures"
-            )
+            recommendations.append("Consider implementing additional security hardening measures")
 
         # Component-specific recommendations
         component_status = validation_results.get("component_status", {})
 
         if "rate_limiting" in component_status:
             if component_status["rate_limiting"]["score"] < 80:
-                recommendations.append(
-                    "Improve rate limiting configuration and monitoring"
-                )
+                recommendations.append("Improve rate limiting configuration and monitoring")
 
         if "authentication" in component_status:
             if component_status["authentication"]["score"] < 80:
@@ -571,7 +499,7 @@ class APISecuritySuite:
 
         return recommendations
 
-    async def get_security_health_report(self) -> Dict[str, Any]:
+    async def get_security_health_report(self) -> dict[str, Any]:
         """Get comprehensive security health report"""
         health_report = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -592,9 +520,7 @@ class APISecuritySuite:
 
         if self.threat_detector:
             try:
-                health_report["threat_summary"] = (
-                    await self.threat_detector.get_threat_summary()
-                )
+                health_report["threat_summary"] = await self.threat_detector.get_threat_summary()
                 health_report["components_status"]["threat_detector"] = "healthy"
             except Exception:
                 health_report["components_status"]["threat_detector"] = "error"
@@ -613,9 +539,9 @@ async def setup_complete_api_security(
     jwt_secret_key: str,
     redis_url: str = "redis://localhost:6379",
     api_type: str = "api",
-    tenant_domains: Optional[List[str]] = None,
+    tenant_domains: Optional[list[str]] = None,
     validate_implementation: bool = True,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Complete API security setup with validation
     """

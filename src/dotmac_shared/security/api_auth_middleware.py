@@ -4,10 +4,10 @@ API Authentication Middleware for DotMac Framework
 
 import logging
 import time
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 import jwt
-from fastapi import HTTPException, Request
+from fastapi import Request
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ class APIAuthMiddleware:
         except Exception:
             return None
 
-    def _validate_token(self, token: str) -> Optional[Dict[str, Any]]:
+    def _validate_token(self, token: str) -> Optional[dict[str, Any]]:
         """Validate JWT token and return payload."""
         try:
             payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
@@ -45,7 +45,7 @@ class APIAuthMiddleware:
             logger.error(f"Token validation error: {e}")
             return None
 
-    async def authenticate_request(self, request: Request) -> Dict[str, Any]:
+    async def authenticate_request(self, request: Request) -> dict[str, Any]:
         """Authenticate incoming request."""
         try:
             token = self._extract_token(request)
@@ -71,9 +71,7 @@ class APIAuthMiddleware:
             logger.error(f"Authentication error: {e}")
             return {"authenticated": False, "error": f"Authentication failed: {str(e)}"}
 
-    def _check_permissions(
-        self, payload: Dict[str, Any], required_scope: str = None
-    ) -> bool:
+    def _check_permissions(self, payload: dict[str, Any], required_scope: Optional[str] = None) -> bool:
         """Check if user has required permissions."""
         if not required_scope:
             return True
@@ -81,9 +79,7 @@ class APIAuthMiddleware:
         user_scopes = payload.get("scope", [])
         return required_scope in user_scopes
 
-    def generate_token(
-        self, user_id: str, scopes: list = None, expires_in: int = 3600
-    ) -> str:
+    def generate_token(self, user_id: str, scopes: Optional[list] = None, expires_in: int = 3600) -> str:
         """Generate JWT token for user."""
         now = int(time.time())
         payload = {
@@ -130,7 +126,7 @@ class RateLimiter:
             # Fail open - allow request if Redis is down
             return True
 
-    async def get_rate_limit_status(self, identifier: str) -> Dict[str, Any]:
+    async def get_rate_limit_status(self, identifier: str) -> dict[str, Any]:
         """Get current rate limit status."""
         try:
             key = f"rate_limit:{identifier}"
@@ -166,7 +162,7 @@ class RateLimiter:
 class SecurityHeaders:
     """Security headers middleware."""
 
-    def __init__(self, csp_policy: str = None, enable_hsts: bool = True):
+    def __init__(self, csp_policy: Optional[str] = None, enable_hsts: bool = True):
         """__init__ operation."""
         self.csp_policy = csp_policy or "default-src 'self'"
         self.enable_hsts = enable_hsts
@@ -194,7 +190,7 @@ class InputSanitizer:
         """__init__ operation."""
         pass
 
-    def sanitize_html(self, html_content: str, allowed_tags: list = None) -> str:
+    def sanitize_html(self, html_content: str, allowed_tags: Optional[list] = None) -> str:
         """Sanitize HTML content."""
         try:
             import bleach
@@ -249,7 +245,7 @@ class InputSanitizer:
         sanitized = re.sub(r"[^a-zA-Z0-9._-]", "", sanitized)
         return sanitized
 
-    def sanitize_url(self, url: str) -> Dict[str, Any]:
+    def sanitize_url(self, url: str) -> dict[str, Any]:
         """Sanitize and validate URL."""
         try:
             from urllib.parse import urlparse

@@ -10,22 +10,19 @@ import time
 from abc import abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 from .config import MonitoringConfig, create_monitoring_config
 
-# OpenTelemetry imports for direct SignOz integration
 try:
     from opentelemetry import metrics, trace
     from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import (
         OTLPMetricExporter,
     )
-    from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
     from opentelemetry.sdk.metrics import MeterProvider
     from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
     from opentelemetry.sdk.resources import SERVICE_NAME, SERVICE_VERSION, Resource
     from opentelemetry.sdk.trace import TracerProvider
-    from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
     OPENTELEMETRY_AVAILABLE = True
 except ImportError:
@@ -58,7 +55,7 @@ class MetricConfig:
     description: str
     metric_type: MetricType
     unit: Optional[str] = None
-    labels: Optional[List[str]] = None
+    labels: Optional[list[str]] = None
 
     def __post_init__(self):
         if self.labels is None:
@@ -81,7 +78,7 @@ class HealthCheck:
     status: HealthStatus
     message: str
     timestamp: float = None
-    details: Dict[str, Any] = None
+    details: dict[str, Any] = None
 
     def __post_init__(self):
         if self.timestamp is None:
@@ -140,9 +137,7 @@ class BaseMonitoringService(abc.ABC):
                 OTLPMetricExporter(endpoint=signoz_endpoint),
                 export_interval_millis=10000,  # 10 seconds
             )
-            metrics.set_meter_provider(
-                MeterProvider(resource=resource, metric_readers=[metric_reader])
-            )
+            metrics.set_meter_provider(MeterProvider(resource=resource, metric_readers=[metric_reader]))
 
         self.meter = metrics.get_meter(self.service_name)
 
@@ -240,12 +235,12 @@ class BaseMonitoringService(abc.ABC):
         pass
 
     @abstractmethod
-    def perform_health_check(self) -> List[HealthCheck]:
+    def perform_health_check(self) -> list[HealthCheck]:
         """Perform service health checks."""
         pass
 
     @abstractmethod
-    def get_metrics_endpoint(self) -> Tuple[str, str]:
+    def get_metrics_endpoint(self) -> tuple[str, str]:
         """Get metrics data and content type."""
         pass
 
@@ -255,7 +250,7 @@ class BaseMonitoringService(abc.ABC):
         operation_name: str,
         duration: float,
         success: bool,
-        labels: Dict[str, str],
+        labels: dict[str, str],
     ) -> None:
         """Record operation duration (implementation-specific)."""
         pass
@@ -373,7 +368,7 @@ class SignOzMonitoringService(BaseMonitoringService):
                 },
             )
 
-    def perform_health_check(self) -> List[HealthCheck]:
+    def perform_health_check(self) -> list[HealthCheck]:
         """Perform service health checks."""
         checks = []
 
@@ -406,7 +401,7 @@ class SignOzMonitoringService(BaseMonitoringService):
 
         return checks
 
-    def get_metrics_endpoint(self) -> Tuple[str, str]:
+    def get_metrics_endpoint(self) -> tuple[str, str]:
         """Get metrics info for SignOz integration."""
         info = f"""# SignOz monitoring for {self.service_name}
 # Service: {self.service_name}
@@ -422,7 +417,7 @@ class SignOzMonitoringService(BaseMonitoringService):
         operation_name: str,
         duration: float,
         success: bool,
-        labels: Dict[str, str],
+        labels: dict[str, str],
     ) -> None:
         """Record operation duration using OpenTelemetry."""
         if self.meter:
@@ -462,7 +457,7 @@ class NoOpMonitoringService(BaseMonitoringService):
         """No-op error recording."""
         pass
 
-    def perform_health_check(self) -> List[HealthCheck]:
+    def perform_health_check(self) -> list[HealthCheck]:
         """Basic health check for no-op service."""
         return [
             HealthCheck(
@@ -472,7 +467,7 @@ class NoOpMonitoringService(BaseMonitoringService):
             )
         ]
 
-    def get_metrics_endpoint(self) -> Tuple[str, str]:
+    def get_metrics_endpoint(self) -> tuple[str, str]:
         """No-op metrics endpoint."""
         return f"# No-op monitoring for {self.service_name}\n", "text/plain"
 
@@ -499,9 +494,7 @@ def create_monitoring_service(
     return SignOzMonitoringService(service_name, tenant_id, config)
 
 
-def get_monitoring(
-    service_name: str, tenant_id: Optional[str] = None
-) -> BaseMonitoringService:
+def get_monitoring(service_name: str, tenant_id: Optional[str] = None) -> BaseMonitoringService:
     """Get monitoring service instance."""
     return create_monitoring_service(service_name, tenant_id)
 

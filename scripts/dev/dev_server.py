@@ -2,7 +2,6 @@
 """Development server with hot reload."""
 
 import subprocess
-import sys
 from pathlib import Path
 
 

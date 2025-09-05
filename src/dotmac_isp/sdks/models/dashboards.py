@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 
 class ChartType(str, Enum):
@@ -23,8 +23,8 @@ class ChartWidget:
     title: str
     chart_type: ChartType
     data_source: str
-    config: Dict[str, Any]
-    position: Dict[str, int] = None  # x, y, width, height
+    config: dict[str, Any]
+    position: dict[str, int] = None  # x, y, width, height
 
     def __post_init__(self):
         """Post Init   operation."""
@@ -39,7 +39,7 @@ class Dashboard:
     id: str
     name: str
     description: str = ""
-    widgets: List[ChartWidget] = None
+    widgets: list[ChartWidget] = None
     is_public: bool = False
     owner_id: Optional[str] = None
     created_at: Optional[str] = None

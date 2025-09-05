@@ -18,15 +18,12 @@ import json
 import logging
 import os
 import shutil
-import subprocess
 import tarfile
 import tempfile
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 import boto3
-import psycopg2
 import yaml
 from cryptography.fernet import Fernet
 
@@ -116,7 +113,7 @@ class BackupEncryption:
 class DatabaseBackup:
     """Handle PostgreSQL database backups."""
 
-    def __init__(self, db_config: Dict[str, str]):
+    def __init__(self, db_config: dict[str, str]):
         self.db_config = db_config
         self.host = db_config.get("host", "localhost")
         self.port = db_config.get("port", "5432")
@@ -124,7 +121,7 @@ class DatabaseBackup:
         self.password = db_config.get("password", "")
         self.databases = db_config.get("databases", ["dotmac_db", "identity_db", "billing_db"])
 
-    async def create_backup(self, backup_dir: str, tenant_id: Optional[str] = None) -> List[str]:
+    async def create_backup(self, backup_dir: str, tenant_id: Optional[str] = None) -> list[str]:
         """Create database backup with optional tenant filtering."""
         backup_files = []
         timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
@@ -231,7 +228,7 @@ class DatabaseBackup:
 class ConfigurationBackup:
     """Handle configuration and plugin state backups."""
 
-    def __init__(self, config_dirs: List[str]):
+    def __init__(self, config_dirs: list[str]):
         self.config_dirs = config_dirs
         self.docker_client = docker.from_env()
 
@@ -332,7 +329,7 @@ class ContainerBackup:
     def __init__(self):
         self.docker_client = docker.from_env()
 
-    async def backup_images(self, backup_dir: str, image_tags: List[str]) -> List[str]:
+    async def backup_images(self, backup_dir: str, image_tags: list[str]) -> list[str]:
         """Backup Docker images."""
         backup_files = []
         timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
@@ -368,7 +365,7 @@ class ContainerBackup:
             logger.error(f"Container image backup failed: {e}")
             raise
 
-    async def backup_volumes(self, backup_dir: str, volume_names: List[str]) -> List[str]:
+    async def backup_volumes(self, backup_dir: str, volume_names: list[str]) -> list[str]:
         """Backup Docker volumes."""
         backup_files = []
         timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
@@ -459,7 +456,7 @@ class CloudStorageUpload:
             logger.error(f"Failed to upload {local_file}: {e}")
             return False
 
-    async def list_backups(self, prefix: str) -> List[Dict[str, Any]]:
+    async def list_backups(self, prefix: str) -> list[dict[str, Any]]:
         """List available backups in cloud storage."""
         try:
             if self.provider == "aws" and self.s3_client:
@@ -497,7 +494,7 @@ class DisasterRecoveryManager:
         self.container_backup = ContainerBackup()
         self.cloud_storage = CloudStorageUpload(self.config.get("cloud_provider", "aws"))
 
-    def _load_config(self, config_file: str) -> Dict[str, Any]:
+    def _load_config(self, config_file: str) -> dict[str, Any]:
         """Load backup configuration."""
         default_config = {
             "database": {
@@ -536,7 +533,7 @@ class DisasterRecoveryManager:
 
         return default_config
 
-    async def create_full_backup(self, backup_type: str = "scheduled") -> Dict[str, Any]:
+    async def create_full_backup(self, backup_type: str = "scheduled") -> dict[str, Any]:
         """Create a complete system backup."""
         timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         backup_id = f"backup_{backup_type}_{timestamp}"
@@ -658,7 +655,7 @@ class DisasterRecoveryManager:
             logger.error(f"Full backup failed: {e}")
             raise
 
-    async def restore_from_backup(self, backup_id: str, components: List[str] = None) -> bool:
+    async def restore_from_backup(self, backup_id: str, components: list[str] = None) -> bool:
         """Restore system from backup."""
         try:
             logger.info(f"Starting restore from backup: {backup_id}")
@@ -807,7 +804,6 @@ async def main():
     """Main backup script entry point."""
     import argparse
 
-from dotmac_shared.api.exception_handlers import standard_exception_handler
 
     parser = argparse.ArgumentParser(description="DotMac Platform Backup & Disaster Recovery")
     parser.add_argument("action", choices=["backup", "restore", "verify", "cleanup", "list"])
@@ -873,4 +869,4 @@ from dotmac_shared.api.exception_handlers import standard_exception_handler
 
 
 if __name__ == "__main__":
-    exit(asyncio.run(main())
+    exit(asyncio.run(main()))

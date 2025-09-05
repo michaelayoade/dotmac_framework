@@ -5,22 +5,20 @@ Tests observability hooks, metrics collection, logging integration,
 and event monitoring.
 """
 
-import pytest
-import asyncio
 import logging
-from unittest.mock import Mock, patch, call
-from io import StringIO
+from unittest.mock import Mock, patch
 
+import pytest
 from dotmac.plugins import (
-    PluginObservabilityHooks,
-    ObservabilityCollector,
     LoggingObservabilityCollector,
     MetricsCollector,
-    PluginRegistry,
+    ObservabilityCollector,
     PluginLifecycleManager,
-    PluginStatus,
+    PluginObservabilityHooks,
+    PluginRegistry,
 )
-from conftest import TestPlugin, AsyncTestPlugin, FailingPlugin
+
+from conftest import AsyncTestPlugin, FailingPlugin, TestPlugin
 
 
 class TestPluginObservabilityHooks:

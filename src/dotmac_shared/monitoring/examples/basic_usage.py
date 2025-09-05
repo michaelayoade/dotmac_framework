@@ -3,6 +3,7 @@ Basic usage examples for DotMac Audit API.
 
 This module demonstrates common audit patterns with minimal code.
 """
+import logging
 
 from dotmac_shared.monitoring import (
     AuditEventType,
@@ -11,12 +12,14 @@ from dotmac_shared.monitoring import (
     init_audit_config,
 )
 
+logger = logging.getLogger(__name__)
+
 
 def example_basic_audit_logging():
     """Example of basic audit event logging."""
 
     # Initialize configuration and logger
-    config = init_audit_config()
+    init_audit_config()
     audit_logger = create_audit_logger("example-service", "tenant-123")
 
     # Log authentication event
@@ -38,7 +41,7 @@ def example_basic_audit_logging():
 
     # Query recent events
     events = audit_logger.query_events(limit=10)
-    print(f"Found {len(events)} audit events")
+    logger.info(f"Found {len(events)} audit events")
 
     return audit_logger
 
@@ -47,13 +50,12 @@ def example_fastapi_integration():
     """Example of FastAPI integration (requires fastapi)."""
 
     try:
-        from fastapi import FastAPI
-
         from dotmac_shared.monitoring import (
             AuditMiddleware,
             create_audit_api_router,
             init_audit_logger,
         )
+        from fastapi import FastAPI
 
         # Initialize audit logger
         audit_logger = init_audit_logger("api-service")
@@ -74,7 +76,7 @@ def example_fastapi_integration():
         return app
 
     except ImportError:
-        print("FastAPI not available - install with: pip install fastapi")
+        logger.info("FastAPI not available - install with: pip install fastapi")
         return None
 
 
@@ -85,7 +87,7 @@ if __name__ == "__main__":
     # Show FastAPI integration
     app = example_fastapi_integration()
     if app:
-        print("✅ FastAPI app with audit logging created")
-        print("💡 Run with: uvicorn basic_usage:app --reload")
+        logger.info("✅ FastAPI app with audit logging created")
+        logger.info("💡 Run with: uvicorn basic_usage:app --reload")
     else:
-        print("⚠️ FastAPI integration example skipped")
+        logger.info("⚠️ FastAPI integration example skipped")

@@ -2,7 +2,7 @@
 
 import html
 import re
-from typing import Any, Dict, List, Union
+from typing import Any
 from urllib.parse import quote
 
 from dotmac_isp.core.exceptions import SecurityViolationError
@@ -56,7 +56,7 @@ class InputSanitizer:
 
         return value.strip()
 
-    def sanitize_dict(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def sanitize_dict(self, data: dict[str, Any]) -> dict[str, Any]:
         """Recursively sanitize dictionary values."""
         sanitized = {}
         for key, value in data.items():
@@ -70,7 +70,7 @@ class InputSanitizer:
                 sanitized[key] = value
         return sanitized
 
-    def sanitize_list(self, data: List[Any]) -> List[Any]:
+    def sanitize_list(self, data: list[Any]) -> list[Any]:
         """Sanitize list values."""
         sanitized = []
         for item in data:

@@ -89,11 +89,10 @@ export const PluginCollaboration: React.FC<PluginCollaborationProps> = ({
 
   // Plugin files
   const pluginFiles = [
-    { name: 'main.py', type: 'python', icon: '=
-' },
-    { name: 'config.yaml', type: 'yaml', icon: '™' },
-    { name: 'requirements.txt', type: 'text', icon: '=æ' },
-    { name: 'README.md', type: 'markdown', icon: '=Ý' }
+    { name: 'main.py', type: 'python', icon: 'ðŸ' },
+    { name: 'config.yaml', type: 'yaml', icon: 'âš™ï¸' },
+    { name: 'requirements.txt', type: 'text', icon: 'ðŸ“„' },
+    { name: 'README.md', type: 'markdown', icon: 'ðŸ“' }
   ];
 
   const handleFileChange = (fileName: string) => {

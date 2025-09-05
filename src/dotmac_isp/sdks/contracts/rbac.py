@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 
 class PermissionType(str, Enum):
@@ -57,7 +57,7 @@ class Permission:
     resource_type: ResourceType
     permission_type: PermissionType
     description: Optional[str] = None
-    conditions: Optional[Dict[str, Any]] = None
+    conditions: Optional[dict[str, Any]] = None
 
 
 @dataclass
@@ -67,7 +67,7 @@ class Role:
     id: str
     name: str
     description: Optional[str] = None
-    permissions: List[Permission] = None
+    permissions: list[Permission] = None
     is_system_role: bool = False
     tenant_id: Optional[str] = None
 
@@ -83,7 +83,7 @@ class RoleAssignment:
     granted_by: Optional[str] = None
     granted_at: Optional[str] = None
     expires_at: Optional[str] = None
-    conditions: Optional[Dict[str, Any]] = None
+    conditions: Optional[dict[str, Any]] = None
 
 
 @dataclass
@@ -95,7 +95,7 @@ class AccessRequest:
     permission_type: PermissionType
     resource_id: Optional[str] = None
     tenant_id: Optional[str] = None
-    context: Optional[Dict[str, Any]] = None
+    context: Optional[dict[str, Any]] = None
 
 
 @dataclass
@@ -107,7 +107,7 @@ class RoleAssignmentRequest:
     tenant_id: str
     granted_by: Optional[str] = None
     expires_at: Optional[str] = None
-    conditions: Optional[Dict[str, Any]] = None
+    conditions: Optional[dict[str, Any]] = None
 
 
 @dataclass
@@ -130,8 +130,8 @@ class RoleHierarchyResponse:
 
     role_id: str
     role_name: str
-    parent_roles: List[str] = None
-    child_roles: List[str] = None
+    parent_roles: list[str] = None
+    child_roles: list[str] = None
     level: int = 0
 
 
@@ -152,17 +152,17 @@ PermissionCheckResponse = AccessResponse
 class BulkPermissionCheckRequest:
     """Bulk permission check request."""
 
-    requests: List[AccessRequest]
+    requests: list[AccessRequest]
     user_id: str
     tenant_id: Optional[str] = None
-    context: Optional[Dict[str, Any]] = None
+    context: Optional[dict[str, Any]] = None
 
 
 @dataclass
 class BulkPermissionCheckResponse:
     """Bulk permission check response."""
 
-    results: List[AccessResponse]
+    results: list[AccessResponse]
     user_id: str
     tenant_id: Optional[str] = None
 
@@ -172,8 +172,8 @@ class UserRolesResponse:
     """User roles response."""
 
     user_id: str
-    roles: List[str]
-    effective_permissions: List[str]
+    roles: list[str]
+    effective_permissions: list[str]
     is_admin: bool = False
 
 

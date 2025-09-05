@@ -5,16 +5,14 @@ Monitoring and analytics models.
 from datetime import datetime, timezone
 from decimal import Decimal
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Optional
 
-from sqlalchemy import Boolean, Column, DateTime
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, Numeric, String, Text
 from sqlalchemy import Enum as SQLEnum
-from sqlalchemy import ForeignKey, Integer, Numeric, String, Text
-from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy.dialects.postgresql import JSON, UUID
 from sqlalchemy.orm import relationship
 
 from .base import BaseModel
-from sqlalchemy.dialects.postgresql import UUID
 
 
 class HealthStatus(str, Enum):
@@ -58,18 +56,12 @@ class HealthCheck(BaseModel):
 
     __tablename__ = "health_checks"
 
-    tenant_id = Column(
-        UUID(as_uuid=True), ForeignKey("customer_tenants.id"), nullable=False, index=True
-    )
-    deployment_id = Column(
-        UUID(as_uuid=True), ForeignKey("deployments.id"), nullable=True, index=True
-    )
+    tenant_id = Column(UUID(as_uuid=True), ForeignKey("customer_tenants.id"), nullable=False, index=True)
+    deployment_id = Column(UUID(as_uuid=True), ForeignKey("deployments.id"), nullable=True, index=True)
 
     # Health check details
     check_name = Column(String(255), nullable=False, index=True)
-    check_type = Column(
-        String(100), nullable=False, index=True
-    )  # http, tcp, database, custom
+    check_type = Column(String(100), nullable=False, index=True)  # http, tcp, database, custom
     endpoint_url = Column(String(500), nullable=True)
 
     # Health status
@@ -116,9 +108,7 @@ class HealthCheck(BaseModel):
         """Schedule next health check."""
         from datetime import timedelta
 
-        self.next_check_at = datetime.now(timezone.utc) + timedelta(
-            seconds=self.check_interval_seconds
-        )
+        self.next_check_at = datetime.now(timezone.utc) + timedelta(seconds=self.check_interval_seconds)
 
 
 class Metric(BaseModel):
@@ -126,12 +116,8 @@ class Metric(BaseModel):
 
     __tablename__ = "metrics"
 
-    tenant_id = Column(
-        UUID(as_uuid=True), ForeignKey("customer_tenants.id"), nullable=False, index=True
-    )
-    deployment_id = Column(
-        UUID(as_uuid=True), ForeignKey("deployments.id"), nullable=True, index=True
-    )
+    tenant_id = Column(UUID(as_uuid=True), ForeignKey("customer_tenants.id"), nullable=False, index=True)
+    deployment_id = Column(UUID(as_uuid=True), ForeignKey("deployments.id"), nullable=True, index=True)
 
     # Metric identification
     metric_name = Column(String(255), nullable=False, index=True)
@@ -142,9 +128,7 @@ class Metric(BaseModel):
     unit = Column(String(50), nullable=True)
 
     # Metric timestamp
-    timestamp = Column(
-        DateTime, default=lambda: datetime.now(timezone.utc), nullable=False, index=True
-    )
+    timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False, index=True)
 
     # Metric dimensions/labels
     labels = Column(JSON, default=dict, nullable=False)
@@ -174,24 +158,16 @@ class Alert(BaseModel):
 
     __tablename__ = "alerts"
 
-    tenant_id = Column(
-        UUID(as_uuid=True), ForeignKey("customer_tenants.id"), nullable=False, index=True
-    )
-    deployment_id = Column(
-        UUID(as_uuid=True), ForeignKey("deployments.id"), nullable=True, index=True
-    )
+    tenant_id = Column(UUID(as_uuid=True), ForeignKey("customer_tenants.id"), nullable=False, index=True)
+    deployment_id = Column(UUID(as_uuid=True), ForeignKey("deployments.id"), nullable=True, index=True)
 
     # Alert identification
     alert_name = Column(String(255), nullable=False, index=True)
-    alert_type = Column(
-        String(100), nullable=False, index=True
-    )  # threshold, anomaly, custom
+    alert_type = Column(String(100), nullable=False, index=True)  # threshold, anomaly, custom
 
     # Alert severity and status
     severity = Column(SQLEnum(AlertSeverity), nullable=False, index=True)
-    status = Column(
-        SQLEnum(AlertStatus), default=AlertStatus.ACTIVE, nullable=False, index=True
-    )
+    status = Column(SQLEnum(AlertStatus), default=AlertStatus.ACTIVE, nullable=False, index=True)
 
     # Alert details
     title = Column(String(500), nullable=False)
@@ -204,20 +180,14 @@ class Alert(BaseModel):
     current_value = Column(Numeric(20, 6), nullable=True)
 
     # Alert timing
-    first_triggered_at = Column(
-        DateTime, default=lambda: datetime.now(timezone.utc), nullable=False
-    )
-    last_triggered_at = Column(
-        DateTime, default=lambda: datetime.now(timezone.utc), nullable=False
-    )
+    first_triggered_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    last_triggered_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     acknowledged_at = Column(DateTime, nullable=True)
     resolved_at = Column(DateTime, nullable=True)
 
     # Alert configuration
     evaluation_interval_seconds = Column(Integer, default=60, nullable=False)
-    suppression_duration_seconds = Column(
-        Integer, default=3600, nullable=False
-    )  # 1 hour
+    suppression_duration_seconds = Column(Integer, default=3600, nullable=False)  # 1 hour
 
     # Alert metadata
     labels = Column(JSON, default=dict, nullable=False)
@@ -264,7 +234,7 @@ class Alert(BaseModel):
         self.acknowledged_at = datetime.now(timezone.utc)
         self.acknowledged_by = user_id
 
-    def resolve(self, user_id: str = None) -> None:
+    def resolve(self, user_id: Optional[str] = None) -> None:
         """Resolve the alert."""
         self.status = AlertStatus.RESOLVED
         self.resolved_at = datetime.now(timezone.utc)
@@ -281,19 +251,13 @@ class SLARecord(BaseModel):
 
     __tablename__ = "sla_records"
 
-    tenant_id = Column(
-        UUID(as_uuid=True), ForeignKey("customer_tenants.id"), nullable=False, index=True
-    )
-    deployment_id = Column(
-        UUID(as_uuid=True), ForeignKey("deployments.id"), nullable=True, index=True
-    )
+    tenant_id = Column(UUID(as_uuid=True), ForeignKey("customer_tenants.id"), nullable=False, index=True)
+    deployment_id = Column(UUID(as_uuid=True), ForeignKey("deployments.id"), nullable=True, index=True)
 
     # SLA period
     period_start = Column(DateTime, nullable=False, index=True)
     period_end = Column(DateTime, nullable=False, index=True)
-    period_type = Column(
-        String(20), default="monthly", nullable=False
-    )  # daily, weekly, monthly
+    period_type = Column(String(20), default="monthly", nullable=False)  # daily, weekly, monthly
 
     # SLA metrics
     uptime_percentage = Column(Numeric(5, 4), nullable=False)  # 99.9500 = 99.95%
@@ -342,9 +306,7 @@ class SLARecord(BaseModel):
         if self.uptime_met:
             scores.append(100)
         else:
-            scores.append(
-                float(self.uptime_percentage / self.uptime_target_percentage * 100)
-            )
+            scores.append(float(self.uptime_percentage / self.uptime_target_percentage * 100))
 
         if self.response_time_met:
             scores.append(100)
@@ -352,8 +314,7 @@ class SLARecord(BaseModel):
             scores.append(
                 max(
                     0,
-                    100
-                    - (self.response_time_avg_ms - self.response_time_target_ms) / 10,
+                    100 - (self.response_time_avg_ms - self.response_time_target_ms) / 10,
                 )
             )
 

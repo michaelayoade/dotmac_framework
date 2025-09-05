@@ -3,19 +3,14 @@ Test utilities and helpers for DotMac Framework API testing.
 Provides common fixtures, mock factories, and testing utilities.
 """
 
-import asyncio
-import json
-import jwt
-from datetime import datetime, timezone, timedelta
-from typing import Any, Dict, List, Optional, Union
-from unittest.mock import AsyncMock, MagicMock
-from uuid import UUID, uuid4
+from datetime import datetime, timedelta, timezone
+from typing import Any, Optional
+from unittest.mock import MagicMock
+from uuid import uuid4
 
-import pytest
-from fastapi import FastAPI
+import jwt
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import Session
 
 
 class MockAuthService:
@@ -27,7 +22,7 @@ class MockAuthService:
         self.sessions = {}
         self.failed_attempts = {}
     
-    async def authenticate_user(self, username: str, password: str, **kwargs) -> Optional[Dict[str, Any]]:
+    async def authenticate_user(self, username: str, password: str, **kwargs) -> Optional[dict[str, Any]]:
         """Mock user authentication."""
         if username == "testuser" and password == "password":
             user_id = f"user-{username}"
@@ -50,7 +45,7 @@ class MockAuthService:
             del self.sessions[session_id]
         return True
     
-    async def refresh_token(self, refresh_token: str) -> Optional[Dict[str, Any]]:
+    async def refresh_token(self, refresh_token: str) -> Optional[dict[str, Any]]:
         """Mock token refresh."""
         return {
             "access_token": "refreshed_access_token",
@@ -109,7 +104,7 @@ class MockCustomerService:
         for customer in test_customers:
             self.customers[customer["id"]] = customer
     
-    async def create_customer(self, customer_data: Dict[str, Any], created_by: str = None) -> Dict[str, Any]:
+    async def create_customer(self, customer_data: dict[str, Any], created_by: str = None) -> dict[str, Any]:
         """Mock customer creation."""
         customer_id = f"customer-{uuid4()}"
         customer = {
@@ -122,15 +117,15 @@ class MockCustomerService:
         self.customers[customer_id] = customer
         return customer
     
-    async def get_customer_by_id(self, customer_id: str) -> Optional[Dict[str, Any]]:
+    async def get_customer_by_id(self, customer_id: str) -> Optional[dict[str, Any]]:
         """Mock customer retrieval by ID."""
         return self.customers.get(customer_id)
     
-    async def get_customers_by_status(self, status: str) -> List[Dict[str, Any]]:
+    async def get_customers_by_status(self, status: str) -> list[dict[str, Any]]:
         """Mock customer retrieval by status."""
         return [c for c in self.customers.values() if c.get("status") == status]
     
-    async def search_customers(self, search_term: str) -> List[Dict[str, Any]]:
+    async def search_customers(self, search_term: str) -> list[dict[str, Any]]:
         """Mock customer search."""
         results = []
         for customer in self.customers.values():
@@ -189,7 +184,7 @@ class MockServicesService:
         for plan in test_plans:
             self.service_plans[plan["id"]] = plan
     
-    async def create_service_plan(self, plan_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def create_service_plan(self, plan_data: dict[str, Any]) -> dict[str, Any]:
         """Mock service plan creation."""
         plan_id = f"plan-{uuid4()}"
         plan = {
@@ -201,11 +196,11 @@ class MockServicesService:
         self.service_plans[plan_id] = plan
         return plan
     
-    async def get_service_plan(self, plan_id: str) -> Optional[Dict[str, Any]]:
+    async def get_service_plan(self, plan_id: str) -> Optional[dict[str, Any]]:
         """Mock service plan retrieval."""
         return self.service_plans.get(plan_id)
     
-    async def list_service_plans(self, filters: Dict[str, Any] = None, limit: int = 50, offset: int = 0) -> List[Dict[str, Any]]:
+    async def list_service_plans(self, filters: dict[str, Any] = None, limit: int = 50, offset: int = 0) -> list[dict[str, Any]]:
         """Mock service plan listing."""
         plans = list(self.service_plans.values())
         
@@ -215,7 +210,7 @@ class MockServicesService:
         
         return plans[offset:offset + limit]
     
-    async def activate_service(self, activation_request: Dict[str, Any]) -> Dict[str, Any]:
+    async def activate_service(self, activation_request: dict[str, Any]) -> dict[str, Any]:
         """Mock service activation."""
         service_id = f"service-{uuid4()}"
         service_instance = {
@@ -236,7 +231,7 @@ class MockServicesService:
             "status": "pending_installation"
         }
     
-    async def get_service_instance(self, service_id: str) -> Optional[Dict[str, Any]]:
+    async def get_service_instance(self, service_id: str) -> Optional[dict[str, Any]]:
         """Mock service instance retrieval."""
         return self.service_instances.get(service_id)
 
@@ -245,7 +240,7 @@ class TestDataFactory:
     """Factory for creating test data objects."""
     
     @staticmethod
-    def create_customer_data(**overrides) -> Dict[str, Any]:
+    def create_customer_data(**overrides) -> dict[str, Any]:
         """Create test customer data."""
         default_data = {
             "email": f"test.{uuid4()}@example.com",
@@ -265,7 +260,7 @@ class TestDataFactory:
         return default_data
     
     @staticmethod
-    def create_service_plan_data(**overrides) -> Dict[str, Any]:
+    def create_service_plan_data(**overrides) -> dict[str, Any]:
         """Create test service plan data."""
         default_data = {
             "name": f"Test Plan {uuid4()}",
@@ -283,7 +278,7 @@ class TestDataFactory:
         return default_data
     
     @staticmethod
-    def create_user_data(**overrides) -> Dict[str, Any]:
+    def create_user_data(**overrides) -> dict[str, Any]:
         """Create test user data."""
         username = f"testuser{uuid4()}"
         default_data = {
@@ -345,7 +340,7 @@ class APITestClient:
         
         raise Exception(f"Authentication failed: {response.status_code}")
     
-    def get_auth_headers(self, token: str = None) -> Dict[str, str]:
+    def get_auth_headers(self, token: str = None) -> dict[str, str]:
         """Get authentication headers."""
         token = token or self._auth_token
         headers = {
@@ -397,14 +392,14 @@ class DatabaseTestHelper:
         # In real implementation, would create tenant record
         return tenant_id
     
-    def create_test_user(self, tenant_id: str, **overrides) -> Dict[str, Any]:
+    def create_test_user(self, tenant_id: str, **overrides) -> dict[str, Any]:
         """Create test user in database."""
         user_data = TestDataFactory.create_user_data(**overrides)
         user_data["tenant_id"] = tenant_id
         # In real implementation, would create user record
         return user_data
     
-    def create_test_customer(self, tenant_id: str, **overrides) -> Dict[str, Any]:
+    def create_test_customer(self, tenant_id: str, **overrides) -> dict[str, Any]:
         """Create test customer in database."""
         customer_data = TestDataFactory.create_customer_data(**overrides)
         customer_data["tenant_id"] = tenant_id
@@ -428,7 +423,7 @@ def assert_error_response(response: Any, expected_status: int, expected_message:
         assert expected_message in error_data["detail"]
 
 
-def assert_successful_response(response: Any, expected_fields: List[str] = None):
+def assert_successful_response(response: Any, expected_fields: list[str] = None):
     """Assert that response is successful and contains expected fields."""
     assert 200 <= response.status_code < 300
     

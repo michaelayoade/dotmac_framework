@@ -40,14 +40,11 @@ Since: 2024-08-24
 import asyncio
 import logging
 import re
-import time
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional, Tuple
+from datetime import datetime, timezone
+from typing import Any, Optional
 
 import asyncpg
-
-# Use unified monitoring system instead of direct Prometheus
 from dotmac_shared.monitoring import get_monitoring
 
 logger = logging.getLogger(__name__)
@@ -79,7 +76,7 @@ class SlowQuery:
         timestamp (datetime): When this slow query was detected
 
     Example:
-        >>> slow_query = SlowQuery(
+        >>> slow_query = SlowQuery(  # noqa: B008
         ...     query="SELECT * FROM customers WHERE status = $1",
         ...     mean_time_ms=1500.5,
         ...     calls=100,
@@ -140,7 +137,7 @@ class DatabaseMonitor:
         >>> await monitor.start()
     """
 
-    def __init__(self, db_pool: asyncpg.Pool, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, db_pool: asyncpg.Pool, config: Optional[dict[str, Any]] = None):
         self.db_pool = db_pool
         self.slow_query_threshold_ms = config.get("slow_query_threshold_ms", 1000)
         self.monitoring_interval = config.get("monitoring_interval", 60)
@@ -155,9 +152,7 @@ class DatabaseMonitor:
             return
 
         self._monitoring_task = asyncio.create_task(self._monitoring_loop())
-        logger.info(
-            f"Database monitoring started (interval: {self.monitoring_interval}s)"
-        )
+        logger.info(f"Database monitoring started (interval: {self.monitoring_interval}s)")
 
     async def stop(self):
         """Stop the monitoring loop."""
@@ -184,7 +179,7 @@ class DatabaseMonitor:
                 logger.error(f"Monitoring error: {e}")
                 await asyncio.sleep(self.monitoring_interval)
 
-    async def check_slow_queries(self) -> List[SlowQuery]:
+    async def check_slow_queries(self) -> list[SlowQuery]:
         """
         Check for slow queries using pg_stat_statements.
 
@@ -244,9 +239,7 @@ class DatabaseMonitor:
                         success=True,
                         tenant_id=tenant_id,
                     )
-                    monitoring.record_error(
-                        error_type="slow_query", service="database", tenant_id=tenant_id
-                    )
+                    monitoring.record_error(error_type="slow_query", service="database", tenant_id=tenant_id)
                     # Log warning for very slow queries
                     if slow_query.mean_time_ms > 5000:  # > 5 seconds
                         logger.warning(
@@ -291,10 +284,7 @@ class DatabaseMonitor:
             return "UPDATE"
         elif query_upper.startswith("DELETE"):
             return "DELETE"
-        elif any(
-            query_upper.startswith(ddl)
-            for ddl in ["CREATE", "ALTER", "DROP", "TRUNCATE"]
-        ):
+        elif any(query_upper.startswith(ddl) for ddl in ["CREATE", "ALTER", "DROP", "TRUNCATE"]):
             return "DDL"
         else:
             return "OTHER"
@@ -386,9 +376,7 @@ class DatabaseMonitor:
 
         return None
 
-    async def get_slow_queries(
-        self, threshold_ms: Optional[float] = None, limit: int = 100
-    ) -> List[SlowQuery]:
+    async def get_slow_queries(self, threshold_ms: Optional[float] = None, limit: int = 100) -> list[SlowQuery]:
         """
         Get slow queries from pg_stat_statements.
 
@@ -401,7 +389,7 @@ class DatabaseMonitor:
             limit (int): Maximum number of queries to return (default: 100)
 
         Returns:
-            List[SlowQuery]: List of slow queries with performance metrics
+            list[SlowQuery]: List of slow queries with performance metrics
 
         Raises:
             asyncpg.PostgresError: If pg_stat_statements is not available
@@ -460,7 +448,7 @@ class DatabaseMonitor:
 
             return slow_queries
 
-    async def get_metrics(self) -> Dict[str, Any]:
+    async def get_metrics(self) -> dict[str, Any]:
         """
         Get current database performance metrics.
 
@@ -468,7 +456,7 @@ class DatabaseMonitor:
         including connection statistics, cache hit ratios, and checkpoint performance.
 
         Returns:
-            Dict[str, Any]: Current database performance metrics snapshot
+            dict[str, Any]: Current database performance metrics snapshot
 
         Raises:
             asyncpg.PostgresError: If unable to query system views

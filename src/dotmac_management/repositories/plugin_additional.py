@@ -3,15 +3,15 @@ Additional plugin repository methods.
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 from uuid import UUID
 
-from schemas.plugin import PluginSearchRequest
-from sqlalchemy import and_, func, select
+from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models.plugin import Plugin, PluginLicense, PluginUsage
 from ..repositories.base import BaseRepository
+from ..schemas.plugin import PluginSearchRequest
 
 
 class PluginRepository(BaseRepository[Plugin]):
@@ -28,27 +28,21 @@ class PluginRepository(BaseRepository[Plugin]):
         """Increment plugin download count."""
         plugin = await self.get_by_id(plugin_id)
         if plugin:
-            await self.update(
-                plugin_id, {"download_count": plugin.download_count + 1}, "system"
-            )
+            await self.update(plugin_id, {"download_count": plugin.download_count + 1}, "system")
 
-    async def update_rating(
-        self, plugin_id: UUID, rating: float, review_count: int
-    ) -> None:
+    async def update_rating(self, plugin_id: UUID, rating: float, review_count: int) -> None:
         """Update plugin rating and review count."""
-        await self.update(
-            plugin_id, {"rating": rating, "review_count": review_count}, "system"
-        )
+        await self.update(plugin_id, {"rating": rating, "review_count": review_count}, "system")
 
     async def search_plugins(
         self,
-        query: str = None,
-        filters: dict = None,
+        query: Optional[str] = None,
+        filters: Optional[dict] = None,
         sort_by: str = "popularity",
         sort_order: str = "desc",
         skip: int = 0,
         limit: int = 100,
-    ) -> List[Plugin]:
+    ) -> list[Plugin]:
         """Search plugins with filters."""
         # For now, simple implementation - would add full-text search in production
         search_filters = {"is_deleted": False, "is_active": True}
@@ -84,15 +78,13 @@ class PluginLicenseRepository(BaseRepository[PluginLicense]):
     def __init__(self, db: AsyncSession):
         super().__init__(db, PluginLicense)
 
-    async def get_by_tenant_and_plugin(
-        self, tenant_id: UUID, plugin_id: UUID
-    ) -> Optional[PluginLicense]:
+    async def get_by_tenant_and_plugin(self, tenant_id: UUID, plugin_id: UUID) -> Optional[PluginLicense]:
         """Get installation by tenant and plugin."""
         stmt = select(self.model).where(
             and_(
                 self.model.tenant_id == tenant_id,
                 self.model.plugin_id == plugin_id,
-                self.model.is_deleted == False,
+                self.model.is_deleted is False,
             )
         )
         result = await self.db.execute(stmt)
@@ -103,21 +95,19 @@ class PluginLicenseRepository(BaseRepository[PluginLicense]):
         # For now, just get the installation - would implement join in production
         return await self.get_by_id(installation_id)
 
-    async def get_by_tenant(self, tenant_id: UUID) -> List[PluginLicense]:
+    async def get_by_tenant(self, tenant_id: UUID) -> list[PluginLicense]:
         """Get installations by tenant."""
         return await self.list(filters={"tenant_id": tenant_id, "is_deleted": False})
 
-    async def get_by_plugin(self, plugin_id: UUID) -> List[PluginLicense]:
+    async def get_by_plugin(self, plugin_id: UUID) -> list[PluginLicense]:
         """Get installations by plugin."""
         return await self.list(filters={"plugin_id": plugin_id, "is_deleted": False})
 
-    async def update_status(
-        self, installation_id: UUID, status: str, updated_by: str
-    ) -> Optional[PluginLicense]:
+    async def update_status(self, installation_id: UUID, status: str, updated_by: str) -> Optional[PluginLicense]:
         """Update installation status."""
         return await self.update(installation_id, {"status": status}, updated_by)
 
-    async def get_auto_update_enabled(self) -> List[PluginLicense]:
+    async def get_auto_update_enabled(self) -> list[PluginLicense]:
         """Get installations with auto-update enabled."""
         return await self.list(
             filters={
@@ -135,11 +125,11 @@ class PluginUsageRepository(BaseRepository[PluginUsage]):
     def __init__(self, db: AsyncSession):
         super().__init__(db, PluginUsage)
 
-    async def get_by_license(self, license_id: UUID) -> List[PluginUsage]:
+    async def get_by_license(self, license_id: UUID) -> list[PluginUsage]:
         """Get usage records by license."""
         return await self.list(filters={"license_id": license_id, "is_deleted": False})
 
-    async def get_by_plugin(self, plugin_id: UUID) -> List[PluginUsage]:
+    async def get_by_plugin(self, plugin_id: UUID) -> list[PluginUsage]:
         """Get usage records by plugin."""
         return await self.list(filters={"plugin_id": plugin_id, "is_deleted": False})
 
@@ -150,15 +140,13 @@ class PluginInstallationRepository(BaseRepository[PluginLicense]):
     def __init__(self, db: AsyncSession):
         super().__init__(db, PluginLicense)
 
-    async def get_by_tenant_and_plugin(
-        self, tenant_id: UUID, plugin_id: UUID
-    ) -> Optional[PluginLicense]:
+    async def get_by_tenant_and_plugin(self, tenant_id: UUID, plugin_id: UUID) -> Optional[PluginLicense]:
         """Get installation by tenant and plugin."""
         stmt = select(self.model).where(
             and_(
                 self.model.tenant_id == tenant_id,
                 self.model.plugin_id == plugin_id,
-                self.model.is_deleted == False,
+                self.model.is_deleted is False,
             )
         )
         result = await self.db.execute(stmt)
@@ -176,7 +164,7 @@ class PluginResourceUsageRepository(BaseRepository[PluginUsage]):
         license_id: UUID,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
-    ) -> List[PluginUsage]:
+    ) -> list[PluginUsage]:
         """Get resource usage records by license within date range."""
         filters = {"license_id": license_id, "is_deleted": False}
         # In production, would add date filtering logic here
@@ -187,7 +175,7 @@ class PluginResourceUsageRepository(BaseRepository[PluginUsage]):
         plugin_id: UUID,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
-    ) -> List[PluginUsage]:
+    ) -> list[PluginUsage]:
         """Get resource usage records by plugin within date range."""
         filters = {"plugin_id": plugin_id, "is_deleted": False}
         # In production, would add date filtering logic here
@@ -200,15 +188,13 @@ class PluginSecurityScanRepository(BaseRepository[Plugin]):
     def __init__(self, db: AsyncSession):
         super().__init__(db, Plugin)
 
-    async def get_plugins_for_security_scan(
-        self, scan_type: str = "all"
-    ) -> List[Plugin]:
+    async def get_plugins_for_security_scan(self, scan_type: str = "all") -> list[Plugin]:
         """Get plugins that need security scanning."""
         filters = {"is_deleted": False, "is_active": True}
         return await self.list(filters=filters)
 
     async def update_security_status(
-        self, plugin_id: UUID, security_data: Dict[str, Any], updated_by: str
+        self, plugin_id: UUID, security_data: dict[str, Any], updated_by: str
     ) -> Optional[Plugin]:
         """Update plugin security scan results."""
         # In production, would store security scan results in a separate table
@@ -227,7 +213,7 @@ class PluginVersionRepository(BaseRepository[Plugin]):
     def __init__(self, db: AsyncSession):
         super().__init__(db, Plugin)
 
-    async def get_plugin_versions(self, plugin_name: str) -> List[Plugin]:
+    async def get_plugin_versions(self, plugin_name: str) -> list[Plugin]:
         """Get all versions of a plugin."""
         # In a production system, versions would be in a separate table
         # For now, get plugins by name pattern

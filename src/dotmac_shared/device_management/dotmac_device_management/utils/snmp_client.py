@@ -7,8 +7,8 @@ Provides SNMP query capabilities and metric collection functionality.
 import asyncio
 import time
 from dataclasses import dataclass
-from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from datetime import datetime, timezone
+from typing import Any, Optional
 
 from ..exceptions import SNMPError
 
@@ -101,9 +101,9 @@ class SNMPClient:
             return self._mock_snmp_response(oid)
 
         except Exception as e:
-            raise SNMPError(f"SNMP GET failed for OID {oid}: {str(e)}")
+            raise SNMPError(f"SNMP GET failed for OID {oid}: {str(e)}") from e
 
-    async def walk(self, oid: str) -> List[Tuple[str, Any]]:
+    async def walk(self, oid: str) -> list[tuple[str, Any]]:
         """Perform SNMP WALK operation."""
         try:
             # Simulate SNMP WALK operation
@@ -113,9 +113,9 @@ class SNMPClient:
             return self._mock_snmp_walk(oid)
 
         except Exception as e:
-            raise SNMPError(f"SNMP WALK failed for OID {oid}: {str(e)}")
+            raise SNMPError(f"SNMP WALK failed for OID {oid}: {str(e)}") from e
 
-    async def get_bulk(self, oids: List[str]) -> Dict[str, Any]:
+    async def get_bulk(self, oids: list[str]) -> dict[str, Any]:
         """Perform bulk SNMP GET operations."""
         results = {}
         for oid in oids:
@@ -160,7 +160,7 @@ class SNMPClient:
 
         return None
 
-    def _mock_snmp_walk(self, base_oid: str) -> List[Tuple[str, Any]]:
+    def _mock_snmp_walk(self, base_oid: str) -> list[tuple[str, Any]]:
         """Mock SNMP walk response."""
         results = []
 
@@ -190,7 +190,7 @@ class SNMPCollector:
         """Initialize collector with SNMP client."""
         self.client = client
 
-    async def collect_system_info(self) -> Dict[str, Any]:
+    async def collect_system_info(self) -> dict[str, Any]:
         """Collect basic system information."""
         system_oids = [
             ("system_description", self.client.SYSTEM_OID_MAP["sysDescr"]),
@@ -210,7 +210,7 @@ class SNMPCollector:
 
         return system_info
 
-    async def collect_interface_stats(self) -> Dict[str, Any]:
+    async def collect_interface_stats(self) -> dict[str, Any]:
         """Collect interface statistics."""
         interface_stats = {
             "interfaces": {},
@@ -221,9 +221,7 @@ class SNMPCollector:
 
         try:
             # Walk interface description table
-            if_descr_results = await self.client.walk(
-                self.client.INTERFACE_OID_MAP["ifDescr"]
-            )
+            if_descr_results = await self.client.walk(self.client.INTERFACE_OID_MAP["ifDescr"])
 
             for oid, description in if_descr_results:
                 # Extract interface index
@@ -234,27 +232,13 @@ class SNMPCollector:
 
                 # Get additional interface data
                 try:
-                    admin_status = await self.client.get(
-                        f"{self.client.INTERFACE_OID_MAP['ifAdminStatus']}.{if_index}"
-                    )
-                    oper_status = await self.client.get(
-                        f"{self.client.INTERFACE_OID_MAP['ifOperStatus']}.{if_index}"
-                    )
-                    speed = await self.client.get(
-                        f"{self.client.INTERFACE_OID_MAP['ifSpeed']}.{if_index}"
-                    )
-                    in_octets = await self.client.get(
-                        f"{self.client.INTERFACE_OID_MAP['ifInOctets']}.{if_index}"
-                    )
-                    out_octets = await self.client.get(
-                        f"{self.client.INTERFACE_OID_MAP['ifOutOctets']}.{if_index}"
-                    )
-                    in_errors = await self.client.get(
-                        f"{self.client.INTERFACE_OID_MAP['ifInErrors']}.{if_index}"
-                    )
-                    out_errors = await self.client.get(
-                        f"{self.client.INTERFACE_OID_MAP['ifOutErrors']}.{if_index}"
-                    )
+                    admin_status = await self.client.get(f"{self.client.INTERFACE_OID_MAP['ifAdminStatus']}.{if_index}")
+                    oper_status = await self.client.get(f"{self.client.INTERFACE_OID_MAP['ifOperStatus']}.{if_index}")
+                    speed = await self.client.get(f"{self.client.INTERFACE_OID_MAP['ifSpeed']}.{if_index}")
+                    in_octets = await self.client.get(f"{self.client.INTERFACE_OID_MAP['ifInOctets']}.{if_index}")
+                    out_octets = await self.client.get(f"{self.client.INTERFACE_OID_MAP['ifOutOctets']}.{if_index}")
+                    in_errors = await self.client.get(f"{self.client.INTERFACE_OID_MAP['ifInErrors']}.{if_index}")
+                    out_errors = await self.client.get(f"{self.client.INTERFACE_OID_MAP['ifOutErrors']}.{if_index}")
 
                     interface_data.update(
                         {
@@ -285,24 +269,20 @@ class SNMPCollector:
 
         return interface_stats
 
-    async def collect_cpu_memory_stats(self) -> Dict[str, Any]:
+    async def collect_cpu_memory_stats(self) -> dict[str, Any]:
         """Collect CPU and memory utilization."""
         cpu_memory_stats = {}
 
         # Try Cisco-specific OIDs first
         try:
-            cpu_usage = await self.client.get(
-                self.client.CPU_MEMORY_OID_MAP["cpmCPUTotal5minRev"]
-            )
+            cpu_usage = await self.client.get(self.client.CPU_MEMORY_OID_MAP["cpmCPUTotal5minRev"])
             if cpu_usage is not None:
                 cpu_memory_stats["cpu_usage"] = cpu_usage
                 cpu_memory_stats["cpu_source"] = "cisco"
         except SNMPError:
             # Try generic host resources
             try:
-                cpu_usage = await self.client.get(
-                    self.client.CPU_MEMORY_OID_MAP["hrProcessorLoad"]
-                )
+                cpu_usage = await self.client.get(self.client.CPU_MEMORY_OID_MAP["hrProcessorLoad"])
                 if cpu_usage is not None:
                     cpu_memory_stats["cpu_usage"] = cpu_usage
                     cpu_memory_stats["cpu_source"] = "host_resources"
@@ -313,18 +293,12 @@ class SNMPCollector:
         # Try to collect memory stats
         try:
             # Cisco memory
-            memory_used = await self.client.get(
-                self.client.CPU_MEMORY_OID_MAP["ciscoMemoryPoolUsed"]
-            )
-            memory_free = await self.client.get(
-                self.client.CPU_MEMORY_OID_MAP["ciscoMemoryPoolFree"]
-            )
+            memory_used = await self.client.get(self.client.CPU_MEMORY_OID_MAP["ciscoMemoryPoolUsed"])
+            memory_free = await self.client.get(self.client.CPU_MEMORY_OID_MAP["ciscoMemoryPoolFree"])
 
             if memory_used is not None and memory_free is not None:
                 total_memory = memory_used + memory_free
-                memory_utilization = (
-                    (memory_used / total_memory) * 100 if total_memory > 0 else 0
-                )
+                memory_utilization = (memory_used / total_memory) * 100 if total_memory > 0 else 0
                 cpu_memory_stats["memory_usage"] = memory_utilization
                 cpu_memory_stats["memory_total"] = total_memory
                 cpu_memory_stats["memory_used"] = memory_used
@@ -333,9 +307,7 @@ class SNMPCollector:
         except SNMPError:
             try:
                 # Generic host resources
-                memory_size = await self.client.get(
-                    self.client.CPU_MEMORY_OID_MAP["hrMemorySize"]
-                )
+                memory_size = await self.client.get(self.client.CPU_MEMORY_OID_MAP["hrMemorySize"])
                 if memory_size is not None:
                     cpu_memory_stats["memory_total"] = memory_size
                     cpu_memory_stats["memory_source"] = "host_resources"
@@ -344,7 +316,7 @@ class SNMPCollector:
 
         return cpu_memory_stats
 
-    async def collect_comprehensive_metrics(self) -> Dict[str, Any]:
+    async def collect_comprehensive_metrics(self) -> dict[str, Any]:
         """Collect comprehensive device metrics."""
         start_time = time.time()
 
@@ -358,9 +330,7 @@ class SNMPCollector:
                 system_task, interface_task, cpu_memory_task, return_exceptions=True
             )
 
-            collection_duration = (
-                time.time() - start_time
-            ) * 1000  # Convert to milliseconds
+            collection_duration = (time.time() - start_time) * 1000  # Convert to milliseconds
 
             metrics = {
                 "collection_timestamp": datetime.now(timezone.utc),
@@ -396,7 +366,7 @@ class SNMPCollector:
                 "device_host": self.client.config.host,
             }
 
-    async def test_device_reachability(self) -> Dict[str, Any]:
+    async def test_device_reachability(self) -> dict[str, Any]:
         """Test device reachability and basic SNMP functionality."""
         test_results = {
             "host": self.client.config.host,
@@ -412,11 +382,7 @@ class SNMPCollector:
             connectivity_test = await self.client.test_connectivity()
             test_results["tests"]["connectivity"] = {
                 "status": "pass" if connectivity_test else "fail",
-                "message": (
-                    "SNMP connectivity successful"
-                    if connectivity_test
-                    else "SNMP connectivity failed"
-                ),
+                "message": ("SNMP connectivity successful" if connectivity_test else "SNMP connectivity failed"),
             }
         except Exception as e:
             test_results["tests"]["connectivity"] = {
@@ -429,11 +395,7 @@ class SNMPCollector:
             system_name = await self.client.get(self.client.SYSTEM_OID_MAP["sysName"])
             test_results["tests"]["system_info"] = {
                 "status": "pass" if system_name else "fail",
-                "message": (
-                    f"System name: {system_name}"
-                    if system_name
-                    else "Failed to retrieve system name"
-                ),
+                "message": (f"System name: {system_name}" if system_name else "Failed to retrieve system name"),
                 "system_name": system_name,
             }
         except Exception as e:
@@ -444,9 +406,7 @@ class SNMPCollector:
 
         # Test interface walk
         try:
-            interface_results = await self.client.walk(
-                self.client.INTERFACE_OID_MAP["ifDescr"]
-            )
+            interface_results = await self.client.walk(self.client.INTERFACE_OID_MAP["ifDescr"])
             interface_count = len(interface_results)
             test_results["tests"]["interface_discovery"] = {
                 "status": "pass" if interface_count > 0 else "fail",
@@ -460,9 +420,7 @@ class SNMPCollector:
             }
 
         # Overall test result
-        all_tests_passed = all(
-            test["status"] == "pass" for test in test_results["tests"].values()
-        )
+        all_tests_passed = all(test["status"] == "pass" for test in test_results["tests"].values())
         test_results["overall_status"] = "pass" if all_tests_passed else "fail"
 
         return test_results

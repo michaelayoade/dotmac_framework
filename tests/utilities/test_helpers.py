@@ -8,21 +8,21 @@ methodology for validating UI flows and ensuring production readiness.
 import asyncio
 import json
 import uuid
-from datetime import datetime, timedelta
+from collections.abc import Callable
+from datetime import datetime
 from decimal import Decimal
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
-from unittest.mock import AsyncMock, MagicMock, patch
+from typing import Any, Optional
+from unittest.mock import MagicMock, patch
 
 import httpx
 import pytest
 from faker import Faker
-from sqlalchemy.ext.asyncio import AsyncSession
 
 # Framework imports
 try:
+    from dotmac.auth.current_user import get_current_user
     from dotmac_isp.core.settings import get_settings
-    from dotmac_shared.auth.current_user import get_current_user
     from dotmac_shared.database.session import get_async_db
 except ImportError:
     # Handle missing imports gracefully for testing
@@ -42,7 +42,7 @@ class TestDataFactory:
         tenant_id: str = "test_tenant_001",
         reseller_id: Optional[str] = None,
         **overrides,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Create a complete test customer with realistic data."""
 
         base_data = {
@@ -94,7 +94,7 @@ class TestDataFactory:
     @staticmethod
     def create_test_service_plan(
         plan_type: str = "residential", **overrides
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Create a test service plan with realistic pricing."""
 
         plans = {
@@ -128,7 +128,7 @@ class TestDataFactory:
         return base_plan
 
     @staticmethod
-    def create_test_reseller(**overrides) -> Dict[str, Any]:
+    def create_test_reseller(**overrides) -> dict[str, Any]:
         """Create a test reseller with territory and commission structure."""
 
         base_data = {
@@ -163,7 +163,7 @@ class APITestHelper:
         self.base_url = base_url
         self.client = httpx.AsyncClient(base_url=base_url)
 
-    async def authenticate_user(self, email: str, password: str) -> Dict[str, Any]:
+    async def authenticate_user(self, email: str, password: str) -> dict[str, Any]:
         """Authenticate a user and return auth token."""
         response = await self.client.post(
             "/api/v1/auth/login", json={"email": email, "password": password}
@@ -174,8 +174,8 @@ class APITestHelper:
             raise ValueError(f"Authentication failed: {response.text}")
 
     async def create_test_customer_via_api(
-        self, customer_data: Dict[str, Any], auth_token: str
-    ) -> Dict[str, Any]:
+        self, customer_data: dict[str, Any], auth_token: str
+    ) -> dict[str, Any]:
         """Create a customer via API."""
         headers = {"Authorization": f"Bearer {auth_token}"}
         response = await self.client.post(
@@ -190,17 +190,17 @@ class APITestHelper:
         """Generate activation token for customer."""
         return f"activation_token_{email}_{uuid.uuid4()}"
 
-    async def complete_customer_installation(self, email: str) -> Dict[str, Any]:
+    async def complete_customer_installation(self, email: str) -> dict[str, Any]:
         """Mark customer installation as complete."""
         return {"status": "completed", "email": email}
 
-    async def trigger_billing_cycle(self, email: str) -> Dict[str, Any]:
+    async def trigger_billing_cycle(self, email: str) -> dict[str, Any]:
         """Trigger billing cycle for testing."""
         return {"status": "processed", "email": email}
 
     async def resolve_ticket(
         self, ticket_number: str, resolution: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Resolve a support ticket."""
         return {
             "ticket_number": ticket_number,
@@ -208,7 +208,7 @@ class APITestHelper:
             "resolution": resolution,
         }
 
-    async def simulate_payment_failure(self, email: str) -> Dict[str, Any]:
+    async def simulate_payment_failure(self, email: str) -> dict[str, Any]:
         """Simulate payment failure for testing."""
         return {"status": "failed", "email": email, "reason": "insufficient_funds"}
 
@@ -244,9 +244,8 @@ def create_mock_settings(**overrides) -> MagicMock:
 
 async def create_unified_test_client():
     """Create FastAPI test client using the unified factory."""
-    from fastapi.testclient import TestClient
-
     from dotmac_shared.application.factory import create_isp_framework_app
+    from fastapi.testclient import TestClient
 
     # Create app using the unified factory in development mode
     app = await create_isp_framework_app(tenant_config=None)  # None = development mode
@@ -355,9 +354,9 @@ def assert_valid_response(
             assert key in response_data, f"Expected key '{key}' not found in response"
 
 
-def load_test_data(filename: str) -> Dict[str, Any]:
+def load_test_data(filename: str) -> dict[str, Any]:
     """Load test data from JSON file."""
-    test_data_dir = Path(__file__).parent / "data"
+    test_data_dir = Path(__file__).parent / "data"  # noqa: B008
     file_path = test_data_dir / filename
 
     if not file_path.exists():
@@ -388,7 +387,7 @@ def patch_dotmac_module(module_path: str, **patches):
     return patch.multiple(module_path, **patches)
 
 
-def generate_test_auth_headers(user_id: str, roles: List[str] = None) -> Dict[str, str]:
+def generate_test_auth_headers(user_id: str, roles: list[str] = None) -> dict[str, str]:
     """Generate test authentication headers."""
     if roles is None:
         roles = ["user"]

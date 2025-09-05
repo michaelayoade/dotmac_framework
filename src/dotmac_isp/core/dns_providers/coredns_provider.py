@@ -3,10 +3,8 @@ CoreDNS Provider - Modern Kubernetes-Native DNS
 File-based or etcd-backed DNS with simple management
 """
 
-import json
 import logging
 from pathlib import Path
-from typing import Dict, List
 
 import aiofiles
 
@@ -21,7 +19,7 @@ class CoreDNSProvider:
         self.base_domain = "dotmac.io"
         self.load_balancer_ip = "127.0.0.1"
 
-    async def create_tenant_records(self, tenant_id: str) -> Dict[str, bool]:
+    async def create_tenant_records(self, tenant_id: str) -> dict[str, bool]:
         """Add tenant records to CoreDNS hosts file"""
         try:
             records = [
@@ -55,7 +53,7 @@ class CoreDNSProvider:
             logger.error(f"❌ Failed to add CoreDNS records for {tenant_id}: {e}")
             return {f"{tenant_id}.{self.base_domain}": False}
 
-    def generate_corefile(self, tenants: List[str]) -> str:
+    def generate_corefile(self, tenants: list[str]) -> str:
         """Generate CoreDNS Corefile configuration"""
         corefile = f"""# CoreDNS Configuration for DotMac Platform
 

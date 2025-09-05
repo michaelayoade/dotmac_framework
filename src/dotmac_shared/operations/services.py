@@ -5,19 +5,17 @@ Service layer for operations automation following DRY patterns.
 Integrates with existing repository patterns and exception handling.
 """
 
-import asyncio
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 from uuid import UUID, uuid4
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from dotmac_shared.api.exception_handlers import standard_exception_handler
-from dotmac_shared.core.exceptions import BusinessRuleError, EntityNotFoundError
+from dotmac.application import standard_exception_handler
+from dotmac.core.exceptions import BusinessRuleError, EntityNotFoundError
 from dotmac_management.user_management.schemas.lifecycle_schemas import UserRegistration
 from dotmac_management.user_management.schemas.user_schemas import UserType
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from .automation import InfrastructureAutomation, OperationsOrchestrator
+from .automation import OperationsOrchestrator
 from .health_monitoring import NetworkEndpoint, NetworkHealthMonitor, ServiceHealthChecker
 from .lifecycle_management import CustomerLifecycleManager, ServiceProvisioningAutomation
 from .schemas import (
@@ -43,11 +41,9 @@ class NetworkMonitoringService:
         self.service_checker = ServiceHealthChecker()
 
     @standard_exception_handler
-    async def register_endpoint(
-        self, endpoint_data: Dict[str, Any], user_id: UUID
-    ) -> NetworkEndpointResponse:
+    async def register_endpoint(self, endpoint_data: dict[str, Any], user_id: UUID) -> NetworkEndpointResponse:
         """Register network endpoint for monitoring."""
-        
+
         endpoint = NetworkEndpoint(
             id=uuid4(),
             name=endpoint_data["name"],
@@ -60,9 +56,9 @@ class NetworkMonitoringService:
             retry_count=endpoint_data.get("retry_count", 3),
             expected_response_time=endpoint_data.get("expected_response_time", 1.0),
         )
-        
+
         await self.health_monitor.register_endpoint(endpoint)
-        
+
         return NetworkEndpointResponse(
             id=endpoint.id,
             name=endpoint.name,
@@ -82,7 +78,7 @@ class NetworkMonitoringService:
     async def get_network_health_summary(self, user_id: UUID) -> NetworkHealthSummary:
         """Get comprehensive network health summary."""
         summary = await self.health_monitor.get_network_health_summary()
-        
+
         return NetworkHealthSummary(
             overall_status=summary["overall_status"],
             total_endpoints=summary["total_endpoints"],
@@ -96,12 +92,10 @@ class NetworkMonitoringService:
         )
 
     @standard_exception_handler
-    async def get_endpoint_trends(
-        self, endpoint_id: UUID, hours: int, user_id: UUID
-    ) -> EndpointTrendsResponse:
+    async def get_endpoint_trends(self, endpoint_id: UUID, hours: int, user_id: UUID) -> EndpointTrendsResponse:
         """Get endpoint health trends."""
         trends = await self.health_monitor.get_endpoint_trends(endpoint_id, hours)
-        
+
         return EndpointTrendsResponse(
             endpoint_id=UUID(trends["endpoint_id"]),
             endpoint_name=trends.get("endpoint_name"),
@@ -115,39 +109,35 @@ class NetworkMonitoringService:
 
     @standard_exception_handler
     async def check_service_health(
-        self, service_type: str, connection_params: Dict[str, Any], user_id: UUID
+        self, service_type: str, connection_params: dict[str, Any], user_id: UUID
     ) -> ServiceHealthCheckResponse:
         """Check specific service health."""
-        
+
         if service_type == "database":
             if "connection_string" not in connection_params:
                 raise BusinessRuleError("Database connection string required")
-            
+
             result = await self.service_checker.check_database_health(
-                connection_params["connection_string"],
-                connection_params.get("timeout", 5)
+                connection_params["connection_string"], connection_params.get("timeout", 5)
             )
-            
+
         elif service_type == "redis":
             if "redis_url" not in connection_params:
                 raise BusinessRuleError("Redis URL required")
-            
+
             result = await self.service_checker.check_redis_health(
-                connection_params["redis_url"],
-                connection_params.get("timeout", 5)
+                connection_params["redis_url"], connection_params.get("timeout", 5)
             )
-            
+
         elif service_type == "container":
             if "container_id" not in connection_params:
                 raise BusinessRuleError("Container ID required")
-            
-            result = await self.service_checker.check_container_health(
-                connection_params["container_id"]
-            )
-            
+
+            result = await self.service_checker.check_container_health(connection_params["container_id"])
+
         else:
             raise BusinessRuleError(f"Unsupported service type: {service_type}")
-        
+
         return ServiceHealthCheckResponse(
             status=result["status"],
             response_time=result.get("response_time", 0.0),
@@ -171,11 +161,9 @@ class CustomerLifecycleService:
         self.provisioning = ServiceProvisioningAutomation(db_session)
 
     @standard_exception_handler
-    async def register_customer(
-        self, registration_data: Dict[str, Any], user_id: UUID
-    ) -> CustomerLifecycleResponse:
+    async def register_customer(self, registration_data: dict[str, Any], user_id: UUID) -> CustomerLifecycleResponse:
         """Register new customer."""
-        
+
         # Convert to UserRegistration schema
         user_registration = UserRegistration(
             username=registration_data["username"],
@@ -190,9 +178,9 @@ class CustomerLifecycleService:
             privacy_policy_accepted=registration_data.get("privacy_policy_accepted", True),
             marketing_consent=registration_data.get("marketing_consent", False),
         )
-        
+
         result = await self.lifecycle_manager.process_new_registration(user_registration)
-        
+
         return CustomerLifecycleResponse(
             id=result["user_id"],
             user_id=result["user_id"],
@@ -206,14 +194,12 @@ class CustomerLifecycleService:
 
     @standard_exception_handler
     async def verify_customer(
-        self, customer_id: UUID, verification_data: Dict[str, Any], user_id: UUID
+        self, customer_id: UUID, verification_data: dict[str, Any], user_id: UUID
     ) -> CustomerLifecycleResponse:
         """Verify customer account."""
-        
-        result = await self.lifecycle_manager.verify_customer_account(
-            customer_id, verification_data
-        )
-        
+
+        result = await self.lifecycle_manager.verify_customer_account(customer_id, verification_data)
+
         return CustomerLifecycleResponse(
             id=customer_id,
             user_id=customer_id,
@@ -227,14 +213,12 @@ class CustomerLifecycleService:
 
     @standard_exception_handler
     async def suspend_customer(
-        self, customer_id: UUID, reason: str, suspension_data: Dict[str, Any], user_id: UUID
+        self, customer_id: UUID, reason: str, suspension_data: dict[str, Any], user_id: UUID
     ) -> CustomerLifecycleResponse:
         """Suspend customer account."""
-        
-        result = await self.lifecycle_manager.suspend_customer(
-            customer_id, reason, suspension_data
-        )
-        
+
+        result = await self.lifecycle_manager.suspend_customer(customer_id, reason, suspension_data)
+
         return CustomerLifecycleResponse(
             id=customer_id,
             user_id=customer_id,
@@ -248,14 +232,12 @@ class CustomerLifecycleService:
 
     @standard_exception_handler
     async def provision_service(
-        self, customer_id: UUID, service_name: str, custom_config: Dict[str, Any], user_id: UUID
+        self, customer_id: UUID, service_name: str, custom_config: dict[str, Any], user_id: UUID
     ) -> ServiceProvisioningResponse:
         """Provision service for customer."""
-        
-        result = await self.provisioning.provision_service(
-            customer_id, service_name, custom_config
-        )
-        
+
+        result = await self.provisioning.provision_service(customer_id, service_name, custom_config)
+
         return ServiceProvisioningResponse(
             id=UUID(result["request_id"]),
             request_id=UUID(result["request_id"]),
@@ -268,13 +250,11 @@ class CustomerLifecycleService:
         )
 
     @standard_exception_handler
-    async def get_provisioning_status(
-        self, request_id: UUID, user_id: UUID
-    ) -> ServiceProvisioningResponse:
+    async def get_provisioning_status(self, request_id: UUID, user_id: UUID) -> ServiceProvisioningResponse:
         """Get service provisioning status."""
-        
+
         result = await self.provisioning.get_provisioning_status(request_id)
-        
+
         return ServiceProvisioningResponse(
             id=request_id,
             request_id=request_id,
@@ -287,9 +267,7 @@ class CustomerLifecycleService:
         )
 
     @standard_exception_handler
-    async def get_customer_lifecycle_summary(
-        self, customer_id: UUID, user_id: UUID
-    ) -> Dict[str, Any]:
+    async def get_customer_lifecycle_summary(self, customer_id: UUID, user_id: UUID) -> dict[str, Any]:
         """Get customer lifecycle summary."""
         return await self.lifecycle_manager.get_customer_lifecycle_summary(customer_id)
 
@@ -303,12 +281,12 @@ class InfrastructureMaintenanceService:
 
     @standard_exception_handler
     async def execute_maintenance(
-        self, maintenance_type: str, parameters: Dict[str, Any], user_id: UUID
+        self, maintenance_type: str, parameters: dict[str, Any], user_id: UUID
     ) -> MaintenanceResult:
         """Execute maintenance operation manually."""
-        
+
         automation = self.orchestrator.infrastructure_automation
-        
+
         if maintenance_type == "database_cleanup":
             result = await automation.database_cleanup(parameters)
         elif maintenance_type == "log_rotation":
@@ -319,7 +297,7 @@ class InfrastructureMaintenanceService:
             result = await automation.performance_optimization(parameters)
         else:
             raise BusinessRuleError(f"Unsupported maintenance type: {maintenance_type}")
-        
+
         return MaintenanceResult(
             task_id=result.task_id,
             task_name=result.task_name,
@@ -338,7 +316,7 @@ class InfrastructureMaintenanceService:
     async def get_operations_status(self, user_id: UUID) -> OperationsStatus:
         """Get comprehensive operations status."""
         status = await self.orchestrator.get_operations_status()
-        
+
         return OperationsStatus(
             scheduler_running=status["scheduler_running"],
             active_tasks=status["active_tasks"],
@@ -348,14 +326,14 @@ class InfrastructureMaintenanceService:
         )
 
     @standard_exception_handler
-    async def start_operations(self, user_id: UUID) -> Dict[str, str]:
+    async def start_operations(self, user_id: UUID) -> dict[str, str]:
         """Start operations automation."""
         # This would typically be done at application startup
         await self.orchestrator.start_operations()
         return {"message": "Operations automation started"}
 
     @standard_exception_handler
-    async def stop_operations(self, user_id: UUID) -> Dict[str, str]:
+    async def stop_operations(self, user_id: UUID) -> dict[str, str]:
         """Stop operations automation."""
         await self.orchestrator.stop_operations()
         return {"message": "Operations automation stopped"}
@@ -368,14 +346,14 @@ class OperationsService:
     def __init__(self, db_session: AsyncSession, tenant_id: Optional[UUID] = None):
         self.db = db_session
         self.tenant_id = tenant_id
-        
+
         # Initialize sub-services
         self.network_monitoring = NetworkMonitoringService(db_session)
         self.customer_lifecycle = CustomerLifecycleService(db_session)
         self.infrastructure_maintenance = InfrastructureMaintenanceService(db_session)
 
     # Network Monitoring Operations
-    async def create_endpoint(self, data: Dict[str, Any], user_id: UUID):
+    async def create_endpoint(self, data: dict[str, Any], user_id: UUID):
         """Create network monitoring endpoint."""
         return await self.network_monitoring.register_endpoint(data, user_id)
 
@@ -388,16 +366,16 @@ class OperationsService:
         return await self.network_monitoring.get_endpoint_trends(endpoint_id, hours, user_id)
 
     # Customer Lifecycle Operations
-    async def register_customer(self, data: Dict[str, Any], user_id: UUID):
+    async def register_customer(self, data: dict[str, Any], user_id: UUID):
         """Register new customer."""
         return await self.customer_lifecycle.register_customer(data, user_id)
 
-    async def provision_service(self, customer_id: UUID, service_name: str, config: Dict[str, Any], user_id: UUID):
+    async def provision_service(self, customer_id: UUID, service_name: str, config: dict[str, Any], user_id: UUID):
         """Provision service for customer."""
         return await self.customer_lifecycle.provision_service(customer_id, service_name, config, user_id)
 
     # Infrastructure Maintenance Operations
-    async def execute_maintenance(self, maintenance_type: str, parameters: Dict[str, Any], user_id: UUID):
+    async def execute_maintenance(self, maintenance_type: str, parameters: dict[str, Any], user_id: UUID):
         """Execute maintenance operation."""
         return await self.infrastructure_maintenance.execute_maintenance(maintenance_type, parameters, user_id)
 
@@ -410,15 +388,22 @@ class OperationsService:
         """Get entity by ID (placeholder for RouterFactory compatibility)."""
         raise EntityNotFoundError(f"Entity {entity_id} not found")
 
-    async def list(self, skip: int = 0, limit: int = 100, filters: Dict = None, order_by: str = "created_at", user_id: UUID = None):
+    async def list(
+        self,
+        skip: int = 0,
+        limit: int = 100,
+        filters: Optional[dict] = None,
+        order_by: str = "created_at",
+        user_id: Optional[UUID] = None,
+    ):
         """List entities (placeholder for RouterFactory compatibility)."""
         return []
 
-    async def count(self, filters: Dict = None, user_id: UUID = None):
+    async def count(self, filters: Optional[dict] = None, user_id: Optional[UUID] = None):
         """Count entities (placeholder for RouterFactory compatibility)."""
         return 0
 
-    async def update(self, entity_id: UUID, data: Dict[str, Any], user_id: UUID):
+    async def update(self, entity_id: UUID, data: dict[str, Any], user_id: UUID):
         """Update entity (placeholder for RouterFactory compatibility)."""
         raise EntityNotFoundError(f"Entity {entity_id} not found")
 

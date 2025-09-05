@@ -4,14 +4,18 @@ Benchmarking Analyzers Module
 Provides analysis and comparison tools for performance benchmark results.
 """
 
-from .regression_detector import RegressionDetector, RegressionAnalysis, PerformanceTrend
-from .benchmark_comparator import BenchmarkComparator, ComparisonResult, BenchmarkDiff
+from .benchmark_comparator import BenchmarkComparator, BenchmarkDiff, ComparisonResult
+from .regression_detector import (
+    PerformanceTrend,
+    RegressionAnalysis,
+    RegressionDetector,
+)
 
 __all__ = [
-    'RegressionDetector',
-    'RegressionAnalysis', 
-    'PerformanceTrend',
-    'BenchmarkComparator',
-    'ComparisonResult',
-    'BenchmarkDiff'
+    "RegressionDetector",
+    "RegressionAnalysis",
+    "PerformanceTrend",
+    "BenchmarkComparator",
+    "ComparisonResult",
+    "BenchmarkDiff",
 ]

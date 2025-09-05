@@ -5,17 +5,29 @@ Platform-agnostic models that work across ISP Framework and Management Platform.
 """
 
 from datetime import date, datetime, timezone
-from decimal import Decimal
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Optional
 from uuid import uuid4
 
-from sqlalchemy import JSON, Boolean, CheckConstraint, Column, Date, DateTime
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    CheckConstraint,
+    Column,
+    Date,
+    DateTime,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    Numeric,
+    String,
+    Text,
+)
 from sqlalchemy import Enum as SQLEnum
-from sqlalchemy import Float, ForeignKey, Index, Integer, Numeric, String, Text
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
-from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.orm import declarative_base, relationship
 
 Base = declarative_base()
 
@@ -191,9 +203,7 @@ class Item(Base):
     updated_by = Column(String(255), nullable=True)
 
     # Relationships
-    stock_items = relationship(
-        "StockItem", back_populates="item", cascade="all, delete-orphan"
-    )
+    stock_items = relationship("StockItem", back_populates="item", cascade="all, delete-orphan")
     movements = relationship("StockMovement", back_populates="item")
 
     __table_args__ = (
@@ -285,9 +295,7 @@ class Warehouse(Base):
     updated_by = Column(String(255), nullable=True)
 
     # Relationships
-    stock_items = relationship(
-        "StockItem", back_populates="warehouse", cascade="all, delete-orphan"
-    )
+    stock_items = relationship("StockItem", back_populates="warehouse", cascade="all, delete-orphan")
     movements = relationship(
         "StockMovement",
         foreign_keys="[StockMovement.warehouse_id]",
@@ -338,12 +346,8 @@ class StockItem(Base):
     shelf = Column(String(20), nullable=True)
 
     # Item condition and status
-    condition = Column(
-        SQLEnum(ItemCondition), default=ItemCondition.NEW, nullable=False
-    )
-    item_status = Column(
-        SQLEnum(ItemStatus), default=ItemStatus.AVAILABLE, nullable=False, index=True
-    )
+    condition = Column(SQLEnum(ItemCondition), default=ItemCondition.NEW, nullable=False)
+    item_status = Column(SQLEnum(ItemStatus), default=ItemStatus.AVAILABLE, nullable=False, index=True)
 
     # Tracking information
     serial_numbers = Column(JSON, nullable=True)
@@ -379,9 +383,7 @@ class StockItem(Base):
         Index("ix_stock_items_item_warehouse", "item_id", "warehouse_id", unique=True),
         Index("ix_stock_items_status_quantity", "item_status", "quantity"),
         CheckConstraint("quantity >= 0", name="ck_stock_quantity_non_negative"),
-        CheckConstraint(
-            "reserved_quantity >= 0", name="ck_reserved_quantity_non_negative"
-        ),
+        CheckConstraint("reserved_quantity >= 0", name="ck_reserved_quantity_non_negative"),
     )
 
     @hybrid_property
@@ -429,9 +431,7 @@ class StockMovement(Base):
 
     # Movement details
     movement_type = Column(SQLEnum(MovementType), nullable=False, index=True)
-    movement_date = Column(
-        DateTime, nullable=False, default=datetime.utcnow, index=True
-    )
+    movement_date = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
 
     # Quantities
     quantity = Column(Integer, nullable=False)
@@ -439,9 +439,7 @@ class StockMovement(Base):
     total_cost = Column(Numeric(12, 2), nullable=True)
 
     # Source and destination (for transfers)
-    from_warehouse_id = Column(
-        PGUUID(as_uuid=True), ForeignKey("inventory_warehouses.id"), nullable=True
-    )
+    from_warehouse_id = Column(PGUUID(as_uuid=True), ForeignKey("inventory_warehouses.id"), nullable=True)
     from_location = Column(String(100), nullable=True)
     to_location = Column(String(100), nullable=True)
 
@@ -474,9 +472,7 @@ class StockMovement(Base):
 
     # Relationships
     item = relationship("Item", back_populates="movements")
-    warehouse = relationship(
-        "Warehouse", foreign_keys=[warehouse_id], back_populates="movements"
-    )
+    warehouse = relationship("Warehouse", foreign_keys=[warehouse_id], back_populates="movements")
     from_warehouse = relationship("Warehouse", foreign_keys=[from_warehouse_id])
 
     __table_args__ = (
@@ -653,9 +649,7 @@ class PurchaseOrderLine(Base):
     item = relationship("Item")
 
     __table_args__ = (
-        Index(
-            "ix_po_lines_order_line", "purchase_order_id", "line_number", unique=True
-        ),
+        Index("ix_po_lines_order_line", "purchase_order_id", "line_number", unique=True),
         Index("ix_po_lines_item", "item_id"),
     )
 
@@ -723,9 +717,7 @@ class StockCount(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
-    count_lines = relationship(
-        "StockCountLine", back_populates="stock_count", cascade="all, delete-orphan"
-    )
+    count_lines = relationship("StockCountLine", back_populates="stock_count", cascade="all, delete-orphan")
     warehouse = relationship("Warehouse")
 
     __table_args__ = (

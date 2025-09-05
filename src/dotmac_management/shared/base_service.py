@@ -2,19 +2,16 @@
 Shared base service following ISP Framework standardization patterns.
 """
 
-from abc import ABC, abstractmethod
-from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
+from abc import ABC
+from typing import Any, Generic, Optional, TypeVar
 from uuid import UUID
 
-from core.exceptions import (
-    BusinessRuleError,
-    EntityNotFoundError,
-    ServiceError,
-    ValidationError,
-)
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..core.exceptions import (
+    EntityNotFoundError,
+)
 from ..models.base import BaseModel
 from ..repositories.base import BaseRepository
 
@@ -24,9 +21,7 @@ UpdateSchemaType = TypeVar("UpdateSchemaType")
 ResponseSchemaType = TypeVar("ResponseSchemaType")
 
 
-class BaseManagementService(
-    Generic[ModelType, CreateSchemaType, UpdateSchemaType, ResponseSchemaType], ABC
-):
+class BaseManagementService(Generic[ModelType, CreateSchemaType, UpdateSchemaType, ResponseSchemaType], ABC):
     """Service layer - exceptions bubble up to router @standard_exception_handler."""
 
     """
@@ -43,10 +38,10 @@ class BaseManagementService(
     def __init__(
         self,
         db: AsyncSession,
-        model_class: Type[ModelType],
-        create_schema: Type[CreateSchemaType],
-        update_schema: Type[UpdateSchemaType],
-        response_schema: Type[ResponseSchemaType],
+        model_class: type[ModelType],
+        create_schema: type[CreateSchemaType],
+        update_schema: type[UpdateSchemaType],
+        response_schema: type[ResponseSchemaType],
         tenant_id: Optional[str] = None,
     ):
         self.db = db
@@ -62,9 +57,7 @@ class BaseManagementService(
         """Override to implement create validation rules."""
         pass
 
-    async def _validate_update_rules(
-        self, entity: ModelType, data: UpdateSchemaType
-    ) -> None:
+    async def _validate_update_rules(self, entity: ModelType, data: UpdateSchemaType) -> None:
         """Override to implement update validation rules."""
         pass
 
@@ -73,15 +66,11 @@ class BaseManagementService(
         pass
 
     # Post-operation hooks for automated workflows
-    async def _post_create_hook(
-        self, entity: ModelType, data: CreateSchemaType
-    ) -> None:
+    async def _post_create_hook(self, entity: ModelType, data: CreateSchemaType) -> None:
         """Override to implement post-creation workflows."""
         pass
 
-    async def _post_update_hook(
-        self, entity: ModelType, data: UpdateSchemaType
-    ) -> None:
+    async def _post_update_hook(self, entity: ModelType, data: UpdateSchemaType) -> None:
         """Override to implement post-update workflows."""
         pass
 
@@ -99,9 +88,7 @@ class BaseManagementService(
         pass
 
     # Standard CRUD operations
-    async def create(
-        self, data: CreateSchemaType, user_id: Optional[str] = None
-    ) -> ModelType:
+    async def create(self, data: CreateSchemaType, user_id: Optional[str] = None) -> ModelType:
         """Create a new entity with validation and hooks."""
         # Pre-creation hook
         await self._pre_create_hook(data)
@@ -129,9 +116,7 @@ class BaseManagementService(
 
         return entity
 
-    async def get_by_id(
-        self, entity_id: UUID, user_id: Optional[str] = None
-    ) -> Optional[ModelType]:
+    async def get_by_id(self, entity_id: UUID, user_id: Optional[str] = None) -> Optional[ModelType]:
         """Get entity by ID with tenant filtering."""
         if self.tenant_id and hasattr(self.model_class, "tenant_id"):
             # Multi-tenant query
@@ -139,7 +124,7 @@ class BaseManagementService(
                 and_(
                     self.model_class.id == entity_id,
                     self.model_class.tenant_id == self.tenant_id,
-                    self.model_class.is_deleted == False,
+                    self.model_class.is_deleted is False,
                 )
             )
             result = await self.db.execute(query)
@@ -155,9 +140,7 @@ class BaseManagementService(
         # Get existing entity
         entity = await self.get_by_id(entity_id, user_id)
         if not entity:
-            raise EntityNotFoundError(
-                f"{self.model_class.__name__} with ID {entity_id} not found"
-            )
+            raise EntityNotFoundError(f"{self.model_class.__name__} with ID {entity_id} not found")
 
         # Pre-update hook
         await self._pre_update_hook(entity, data)
@@ -182,16 +165,12 @@ class BaseManagementService(
 
         return updated_entity
 
-    async def delete(
-        self, entity_id: UUID, user_id: Optional[str] = None, soft_delete: bool = True
-    ) -> bool:
+    async def delete(self, entity_id: UUID, user_id: Optional[str] = None, soft_delete: bool = True) -> bool:
         """Delete entity with validation and hooks."""
         # Get existing entity
         entity = await self.get_by_id(entity_id, user_id)
         if not entity:
-            raise EntityNotFoundError(
-                f"{self.model_class.__name__} with ID {entity_id} not found"
-            )
+            raise EntityNotFoundError(f"{self.model_class.__name__} with ID {entity_id} not found")
 
         # Business rule validation
         await self._validate_delete_rules(entity)
@@ -209,23 +188,19 @@ class BaseManagementService(
         self,
         skip: int = 0,
         limit: int = 100,
-        filters: Optional[Dict[str, Any]] = None,
+        filters: Optional[dict[str, Any]] = None,
         order_by: Optional[str] = None,
         user_id: Optional[str] = None,
-    ) -> List[ModelType]:
+    ) -> list[ModelType]:
         """List entities with tenant filtering."""
         # Add tenant filtering if applicable
         if self.tenant_id and hasattr(self.model_class, "tenant_id"):
             filters = filters or {}
             filters["tenant_id"] = self.tenant_id
 
-        return await self.repository.list(
-            skip=skip, limit=limit, filters=filters, order_by=order_by
-        )
+        return await self.repository.list(skip=skip, limit=limit, filters=filters, order_by=order_by)
 
-    async def count(
-        self, filters: Optional[Dict[str, Any]] = None, user_id: Optional[str] = None
-    ) -> int:
+    async def count(self, filters: Optional[dict[str, Any]] = None, user_id: Optional[str] = None) -> int:
         """Count entities with tenant filtering."""
         # Add tenant filtering if applicable
         if self.tenant_id and hasattr(self.model_class, "tenant_id"):
@@ -234,9 +209,7 @@ class BaseManagementService(
 
         return await self.repository.count(filters)
 
-    async def exists(
-        self, field_name: str, value: Any, exclude_id: Optional[UUID] = None
-    ) -> bool:
+    async def exists(self, field_name: str, value: Any, exclude_id: Optional[UUID] = None) -> bool:
         """Check if entity exists with given field value."""
         entity = await self.repository.get_by_field(field_name, value)
 

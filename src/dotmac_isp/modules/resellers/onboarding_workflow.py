@@ -4,25 +4,22 @@ Provides structured onboarding process for new resellers
 """
 
 import uuid
-from datetime import datetime, date, timedelta
-from typing import Dict, List, Optional, Any, Union
+from datetime import datetime, timedelta, timezone
 from enum import Enum
+from typing import Any, Optional
 
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import Column, String, DateTime, Boolean, Text, JSON, ForeignKey
+from dotmac.database.base import Base
+from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import relationship
 
-from dotmac_shared.database.base import Base
-from dotmac_shared.api.standard_responses import standard_exception_handler
-
 from .services_complete import ResellerService
-from .repositories import BaseRepository
-from .db_models import Reseller
 
 
 class OnboardingTaskStatus(str, Enum):
     """Onboarding task status options"""
+
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
@@ -32,6 +29,7 @@ class OnboardingTaskStatus(str, Enum):
 
 class OnboardingTaskPriority(str, Enum):
     """Task priority levels"""
+
     HIGH = "high"
     MEDIUM = "medium"
     LOW = "low"
@@ -39,6 +37,7 @@ class OnboardingTaskPriority(str, Enum):
 
 class OnboardingTaskCategory(str, Enum):
     """Task categories for organization"""
+
     SETUP = "setup"
     TRAINING = "training"
     LEGAL = "legal"
@@ -48,75 +47,77 @@ class OnboardingTaskCategory(str, Enum):
 
 class ResellerOnboardingChecklist(Base):
     """Database model for reseller onboarding checklists"""
+
     __tablename__ = "reseller_onboarding_checklists"
-    
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     reseller_id = Column(UUID(as_uuid=True), ForeignKey("isp_resellers.id"), nullable=False)
     checklist_version = Column(String(50), default="1.0")
-    
+
     # Progress tracking
     total_tasks = Column(String(10), default="0")
     completed_tasks = Column(String(10), default="0")
     completion_percentage = Column(String(10), default="0")
-    
+
     # Timing
     created_at = Column(DateTime, default=datetime.utcnow)
     started_at = Column(DateTime, nullable=True)
     completed_at = Column(DateTime, nullable=True)
     target_completion_date = Column(DateTime, nullable=True)
-    
+
     # Status
     is_active = Column(Boolean, default=True)
     is_completed = Column(Boolean, default=False)
-    
+
     # Additional data
     metadata = Column(JSON, default=dict)
     notes = Column(Text, nullable=True)
-    
+
     # Relationships
     reseller = relationship("Reseller", back_populates="onboarding_checklists")
 
 
 class OnboardingTask(Base):
     """Database model for individual onboarding tasks"""
+
     __tablename__ = "onboarding_tasks"
-    
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     checklist_id = Column(UUID(as_uuid=True), ForeignKey("reseller_onboarding_checklists.id"), nullable=False)
-    
+
     # Task identification
     task_id = Column(String(100), nullable=False, unique=True, index=True)
     task_name = Column(String(300), nullable=False)
     task_description = Column(Text, nullable=True)
-    
+
     # Task properties
     category = Column(String(50), default=OnboardingTaskCategory.SETUP.value)
     priority = Column(String(20), default=OnboardingTaskPriority.MEDIUM.value)
     estimated_duration_minutes = Column(String(10), nullable=True)
-    
+
     # Status and progress
     status = Column(String(50), default=OnboardingTaskStatus.PENDING.value)
     completion_percentage = Column(String(10), default="0")
-    
+
     # Timing
     created_at = Column(DateTime, default=datetime.utcnow)
     started_at = Column(DateTime, nullable=True)
     completed_at = Column(DateTime, nullable=True)
     due_date = Column(DateTime, nullable=True)
-    
+
     # Task requirements and completion
     prerequisites = Column(JSON, default=list)  # List of task_ids that must be completed first
     completion_criteria = Column(Text, nullable=True)
     completion_notes = Column(Text, nullable=True)
-    
+
     # Resources and guidance
     instructions = Column(Text, nullable=True)
     resources = Column(JSON, default=list)  # List of helpful resources/links
     assigned_to = Column(String(200), nullable=True)  # Who is responsible
-    
+
     # Additional data
     metadata = Column(JSON, default=dict)
-    
+
     # Relationships
     checklist = relationship("ResellerOnboardingChecklist", back_populates="tasks")
 
@@ -128,11 +129,11 @@ class OnboardingTask(Base):
 
 class OnboardingTaskTemplate:
     """Template for creating standardized onboarding tasks"""
-    
+
     @staticmethod
-    def get_standard_onboarding_tasks() -> List[Dict[str, Any]]:
+    def get_standard_onboarding_tasks() -> list[dict[str, Any]]:
         """Get the standard onboarding task templates"""
-        
+
         return [
             # Setup Phase
             {
@@ -151,12 +152,12 @@ class OnboardingTaskTemplate:
                 "completion_criteria": "Signed agreement received and processed",
                 "resources": [
                     {"name": "Reseller Agreement Template", "url": "/docs/reseller-agreement.pdf"},
-                    {"name": "Commission Structure Guide", "url": "/docs/commission-guide.pdf"}
+                    {"name": "Commission Structure Guide", "url": "/docs/commission-guide.pdf"},
                 ],
-                "due_days": 5
+                "due_days": 5,
             },
             {
-                "task_id": "setup_002", 
+                "task_id": "setup_002",
                 "task_name": "Portal Account Setup",
                 "task_description": "Set up your reseller portal account and complete profile",
                 "category": OnboardingTaskCategory.SETUP,
@@ -172,13 +173,13 @@ class OnboardingTaskTemplate:
                 "completion_criteria": "Portal profile 100% complete with all required information",
                 "resources": [
                     {"name": "Portal Setup Guide", "url": "/docs/portal-setup.pdf"},
-                    {"name": "Profile Completion Checklist", "url": "/portal/profile/checklist"}
+                    {"name": "Profile Completion Checklist", "url": "/portal/profile/checklist"},
                 ],
-                "due_days": 3
+                "due_days": 3,
             },
             {
                 "task_id": "setup_003",
-                "task_name": "Banking & Payment Setup", 
+                "task_name": "Banking & Payment Setup",
                 "task_description": "Configure banking information for commission payments",
                 "category": OnboardingTaskCategory.BUSINESS,
                 "priority": OnboardingTaskPriority.HIGH,
@@ -192,11 +193,10 @@ class OnboardingTaskTemplate:
                 "completion_criteria": "Banking information verified and test payment successful",
                 "resources": [
                     {"name": "Payment Setup Guide", "url": "/docs/payment-setup.pdf"},
-                    {"name": "Tax Forms", "url": "/forms/tax-documents"}
+                    {"name": "Tax Forms", "url": "/forms/tax-documents"},
                 ],
-                "due_days": 7
+                "due_days": 7,
             },
-            
             # Training Phase
             {
                 "task_id": "training_001",
@@ -215,10 +215,10 @@ class OnboardingTaskTemplate:
                 "resources": [
                     {"name": "Product Training Portal", "url": "/training/products/basic"},
                     {"name": "Service Catalog", "url": "/docs/service-catalog.pdf"},
-                    {"name": "Pricing Guide", "url": "/docs/pricing-guide.pdf"}
+                    {"name": "Pricing Guide", "url": "/docs/pricing-guide.pdf"},
                 ],
                 "prerequisites": ["setup_002"],
-                "due_days": 14
+                "due_days": 14,
             },
             {
                 "task_id": "training_002",
@@ -237,12 +237,11 @@ class OnboardingTaskTemplate:
                 "resources": [
                     {"name": "Sales Training Modules", "url": "/training/sales"},
                     {"name": "CRM User Guide", "url": "/docs/crm-guide.pdf"},
-                    {"name": "Sales Playbook", "url": "/docs/sales-playbook.pdf"}
+                    {"name": "Sales Playbook", "url": "/docs/sales-playbook.pdf"},
                 ],
                 "prerequisites": ["training_001"],
-                "due_days": 21
+                "due_days": 21,
             },
-            
             # Technical Setup
             {
                 "task_id": "technical_001",
@@ -260,9 +259,9 @@ class OnboardingTaskTemplate:
                 "completion_criteria": "Technical assessment completed and reviewed",
                 "resources": [
                     {"name": "Technical Assessment Form", "url": "/forms/technical-assessment"},
-                    {"name": "Recommended Certifications", "url": "/docs/certifications.pdf"}
+                    {"name": "Recommended Certifications", "url": "/docs/certifications.pdf"},
                 ],
-                "due_days": 10
+                "due_days": 10,
             },
             {
                 "task_id": "technical_002",
@@ -281,12 +280,11 @@ class OnboardingTaskTemplate:
                 "resources": [
                     {"name": "API Documentation", "url": "/docs/api"},
                     {"name": "Integration Examples", "url": "/docs/integration-examples"},
-                    {"name": "SDK Downloads", "url": "/downloads/sdk"}
+                    {"name": "SDK Downloads", "url": "/downloads/sdk"},
                 ],
                 "prerequisites": ["technical_001"],
-                "due_days": 21
+                "due_days": 21,
             },
-            
             # Business Development
             {
                 "task_id": "business_001",
@@ -305,10 +303,10 @@ class OnboardingTaskTemplate:
                 "resources": [
                     {"name": "Territory Planning Template", "url": "/docs/territory-planning.docx"},
                     {"name": "Market Research Tools", "url": "/tools/market-research"},
-                    {"name": "Business Plan Template", "url": "/docs/business-plan.docx"}
+                    {"name": "Business Plan Template", "url": "/docs/business-plan.docx"},
                 ],
                 "prerequisites": ["training_002"],
-                "due_days": 30
+                "due_days": 30,
             },
             {
                 "task_id": "business_002",
@@ -327,12 +325,11 @@ class OnboardingTaskTemplate:
                 "resources": [
                     {"name": "Marketing Portal", "url": "/marketing"},
                     {"name": "Brand Guidelines", "url": "/docs/brand-guidelines.pdf"},
-                    {"name": "Campaign Templates", "url": "/marketing/templates"}
+                    {"name": "Campaign Templates", "url": "/marketing/templates"},
                 ],
                 "prerequisites": ["setup_002"],
-                "due_days": 30
+                "due_days": 30,
             },
-            
             # Final Steps
             {
                 "task_id": "final_001",
@@ -350,10 +347,10 @@ class OnboardingTaskTemplate:
                 "completion_criteria": "Introduction meeting completed and follow-up scheduled",
                 "resources": [
                     {"name": "Account Manager Contact Info", "url": "/portal/contacts"},
-                    {"name": "Support Resources", "url": "/support"}
+                    {"name": "Support Resources", "url": "/support"},
                 ],
                 "prerequisites": ["setup_001", "setup_002"],
-                "due_days": 7
+                "due_days": 7,
             },
             {
                 "task_id": "final_002",
@@ -371,264 +368,257 @@ class OnboardingTaskTemplate:
                 "completion_criteria": "First customer acquisition plan approved",
                 "resources": [
                     {"name": "Goal Setting Template", "url": "/docs/goal-setting.docx"},
-                    {"name": "Prospecting Tools", "url": "/tools/prospecting"}
+                    {"name": "Prospecting Tools", "url": "/tools/prospecting"},
                 ],
                 "prerequisites": ["training_002", "business_001", "final_001"],
-                "due_days": 14
-            }
+                "due_days": 14,
+            },
         ]
 
 
 class OnboardingWorkflowEngine:
     """Main engine for managing reseller onboarding workflows"""
-    
+
     def __init__(self, db: AsyncSession, tenant_id: Optional[str] = None):
         self.db = db
         self.tenant_id = tenant_id
         self.reseller_service = ResellerService(db, tenant_id)
-    
-    async def create_onboarding_checklist(self, reseller_id: str) -> Dict[str, Any]:
+
+    async def create_onboarding_checklist(self, reseller_id: str) -> dict[str, Any]:
         """Create a new onboarding checklist for a reseller"""
-        
+
         # Verify reseller exists
         reseller = await self.reseller_service.get_by_id(reseller_id)
         if not reseller:
             raise ValueError(f"Reseller {reseller_id} not found")
-        
+
         # Create the checklist
         checklist_data = {
-            'reseller_id': reseller.id,
-            'checklist_version': '1.0',
-            'target_completion_date': datetime.now(timezone.utc) + timedelta(days=45),  # 45 days to complete
-            'metadata': {
-                'created_by': 'system',
-                'reseller_type': reseller.reseller_type.value if reseller.reseller_type else 'standard'
-            }
+            "reseller_id": reseller.id,
+            "checklist_version": "1.0",
+            "target_completion_date": datetime.now(timezone.utc) + timedelta(days=45),  # 45 days to complete
+            "metadata": {
+                "created_by": "system",
+                "reseller_type": reseller.reseller_type.value if reseller.reseller_type else "standard",
+            },
         }
-        
+
         # This would use a repository in production
         checklist = ResellerOnboardingChecklist(**checklist_data)
         self.db.add(checklist)
         await self.db.flush()
-        
+
         # Create standard tasks
         standard_tasks = OnboardingTaskTemplate.get_standard_onboarding_tasks()
         created_tasks = []
-        
+
         for task_template in standard_tasks:
             task_data = {
-                'checklist_id': checklist.id,
-                'task_id': task_template['task_id'],
-                'task_name': task_template['task_name'],
-                'task_description': task_template['task_description'],
-                'category': task_template['category'],
-                'priority': task_template['priority'],
-                'estimated_duration_minutes': str(task_template.get('estimated_duration_minutes', 30)),
-                'instructions': task_template.get('instructions', ''),
-                'completion_criteria': task_template.get('completion_criteria', ''),
-                'resources': task_template.get('resources', []),
-                'prerequisites': task_template.get('prerequisites', []),
-                'due_date': datetime.now(timezone.utc) + timedelta(days=task_template.get('due_days', 30)),
-                'metadata': {
-                    'template_version': '1.0',
-                    'auto_created': True
-                }
+                "checklist_id": checklist.id,
+                "task_id": task_template["task_id"],
+                "task_name": task_template["task_name"],
+                "task_description": task_template["task_description"],
+                "category": task_template["category"],
+                "priority": task_template["priority"],
+                "estimated_duration_minutes": str(task_template.get("estimated_duration_minutes", 30)),
+                "instructions": task_template.get("instructions", ""),
+                "completion_criteria": task_template.get("completion_criteria", ""),
+                "resources": task_template.get("resources", []),
+                "prerequisites": task_template.get("prerequisites", []),
+                "due_date": datetime.now(timezone.utc) + timedelta(days=task_template.get("due_days", 30)),
+                "metadata": {"template_version": "1.0", "auto_created": True},
             }
-            
+
             task = OnboardingTask(**task_data)
             self.db.add(task)
             created_tasks.append(task)
-        
+
         # Update checklist totals
         checklist.total_tasks = str(len(created_tasks))
-        
+
         await self.db.commit()
-        
+
         return {
-            'checklist_id': str(checklist.id),
-            'reseller_id': reseller_id,
-            'total_tasks': len(created_tasks),
-            'target_completion_date': checklist.target_completion_date.isoformat(),
-            'tasks_created': len(created_tasks),
-            'created_at': checklist.created_at.isoformat()
+            "checklist_id": str(checklist.id),
+            "reseller_id": reseller_id,
+            "total_tasks": len(created_tasks),
+            "target_completion_date": checklist.target_completion_date.isoformat(),
+            "tasks_created": len(created_tasks),
+            "created_at": checklist.created_at.isoformat(),
         }
-    
-    async def get_onboarding_progress(self, reseller_id: str) -> Dict[str, Any]:
+
+    async def get_onboarding_progress(self, reseller_id: str) -> dict[str, Any]:
         """Get detailed onboarding progress for a reseller"""
-        
+
         # In production, this would use proper repository queries
         # For now, simulate the data structure
-        
+
         progress_data = {
-            'reseller_id': reseller_id,
-            'checklist_status': {
-                'is_active': True,
-                'is_completed': False,
-                'completion_percentage': 35.0,
-                'total_tasks': 11,
-                'completed_tasks': 4,
-                'in_progress_tasks': 2,
-                'pending_tasks': 5,
-                'overdue_tasks': 1
+            "reseller_id": reseller_id,
+            "checklist_status": {
+                "is_active": True,
+                "is_completed": False,
+                "completion_percentage": 35.0,
+                "total_tasks": 11,
+                "completed_tasks": 4,
+                "in_progress_tasks": 2,
+                "pending_tasks": 5,
+                "overdue_tasks": 1,
             },
-            'timeline': {
-                'created_at': '2024-03-01T10:00:00Z',
-                'started_at': '2024-03-01T14:30:00Z',
-                'target_completion_date': '2024-04-15T23:59:59Z',
-                'estimated_completion_date': '2024-04-10T12:00:00Z',
-                'days_remaining': 12
+            "timeline": {
+                "created_at": "2024-03-01T10:00:00Z",
+                "started_at": "2024-03-01T14:30:00Z",
+                "target_completion_date": "2024-04-15T23:59:59Z",
+                "estimated_completion_date": "2024-04-10T12:00:00Z",
+                "days_remaining": 12,
             },
-            'category_progress': {
-                'setup': {'total': 3, 'completed': 2, 'percentage': 66.7},
-                'training': {'total': 2, 'completed': 1, 'percentage': 50.0},
-                'technical': {'total': 2, 'completed': 0, 'percentage': 0.0},
-                'business': {'total': 3, 'completed': 1, 'percentage': 33.3},
-                'legal': {'total': 1, 'completed': 1, 'percentage': 100.0}
+            "category_progress": {
+                "setup": {"total": 3, "completed": 2, "percentage": 66.7},
+                "training": {"total": 2, "completed": 1, "percentage": 50.0},
+                "technical": {"total": 2, "completed": 0, "percentage": 0.0},
+                "business": {"total": 3, "completed": 1, "percentage": 33.3},
+                "legal": {"total": 1, "completed": 1, "percentage": 100.0},
             },
-            'recent_activity': [
+            "recent_activity": [
                 {
-                    'task_id': 'setup_002',
-                    'task_name': 'Portal Account Setup',
-                    'action': 'completed',
-                    'timestamp': '2024-03-05T16:45:00Z'
+                    "task_id": "setup_002",
+                    "task_name": "Portal Account Setup",
+                    "action": "completed",
+                    "timestamp": "2024-03-05T16:45:00Z",
                 },
                 {
-                    'task_id': 'training_001', 
-                    'task_name': 'Product Training - Basic',
-                    'action': 'started',
-                    'timestamp': '2024-03-04T09:15:00Z'
-                }
+                    "task_id": "training_001",
+                    "task_name": "Product Training - Basic",
+                    "action": "started",
+                    "timestamp": "2024-03-04T09:15:00Z",
+                },
             ],
-            'upcoming_tasks': [
+            "upcoming_tasks": [
                 {
-                    'task_id': 'training_001',
-                    'task_name': 'Product Training - Basic',
-                    'due_date': '2024-03-15T23:59:59Z',
-                    'priority': 'high',
-                    'status': 'in_progress'
+                    "task_id": "training_001",
+                    "task_name": "Product Training - Basic",
+                    "due_date": "2024-03-15T23:59:59Z",
+                    "priority": "high",
+                    "status": "in_progress",
                 },
                 {
-                    'task_id': 'setup_003',
-                    'task_name': 'Banking & Payment Setup',
-                    'due_date': '2024-03-08T23:59:59Z',
-                    'priority': 'high',
-                    'status': 'pending'
-                }
+                    "task_id": "setup_003",
+                    "task_name": "Banking & Payment Setup",
+                    "due_date": "2024-03-08T23:59:59Z",
+                    "priority": "high",
+                    "status": "pending",
+                },
             ],
-            'recommendations': [
+            "recommendations": [
                 "Complete the Banking & Payment Setup task to avoid delays in commission payments",
                 "Schedule time for Product Training to stay on track with your timeline",
-                "Consider reaching out to your account manager for assistance with technical tasks"
-            ]
+                "Consider reaching out to your account manager for assistance with technical tasks",
+            ],
         }
-        
+
         return progress_data
-    
+
     async def update_task_status(
         self,
         reseller_id: str,
         task_id: str,
         new_status: str,
         completion_notes: Optional[str] = None,
-        completion_percentage: Optional[int] = None
-    ) -> Dict[str, Any]:
+        completion_percentage: Optional[int] = None,
+    ) -> dict[str, Any]:
         """Update the status of a specific onboarding task"""
-        
+
         # Validate status
         try:
             status_enum = OnboardingTaskStatus(new_status)
-        except ValueError:
-            raise ValueError(f"Invalid status: {new_status}")
-        
+        except ValueError as e:
+            raise ValueError(f"Invalid status: {new_status}") from e
+
         # In production, this would update the database
         # For now, return success response
-        
+
         update_result = {
-            'task_id': task_id,
-            'reseller_id': reseller_id,
-            'old_status': 'pending',  # Would come from database
-            'new_status': new_status,
-            'updated_at': datetime.now(timezone.utc).isoformat(),
-            'completion_notes': completion_notes,
-            'completion_percentage': completion_percentage or 0
+            "task_id": task_id,
+            "reseller_id": reseller_id,
+            "old_status": "pending",  # Would come from database
+            "new_status": new_status,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+            "completion_notes": completion_notes,
+            "completion_percentage": completion_percentage or 0,
         }
-        
+
         # If task is completed, check if it unlocks other tasks
         if status_enum == OnboardingTaskStatus.COMPLETED:
-            update_result['unlocked_tasks'] = await self._check_unlocked_tasks(task_id)
-            update_result['overall_progress_updated'] = True
-        
+            update_result["unlocked_tasks"] = await self._check_unlocked_tasks(task_id)
+            update_result["overall_progress_updated"] = True
+
         return update_result
-    
-    async def get_task_details(self, reseller_id: str, task_id: str) -> Dict[str, Any]:
+
+    async def get_task_details(self, reseller_id: str, task_id: str) -> dict[str, Any]:
         """Get detailed information about a specific task"""
-        
+
         # In production, this would query the database
         # For now, return simulated task details
-        
+
         task_details = {
-            'task_id': task_id,
-            'task_name': 'Portal Account Setup',
-            'task_description': 'Set up your reseller portal account and complete profile',
-            'category': 'setup',
-            'priority': 'high',
-            'status': 'completed',
-            'completion_percentage': 100,
-            'estimated_duration_minutes': 30,
-            'actual_duration_minutes': 25,
-            'created_at': '2024-03-01T10:00:00Z',
-            'started_at': '2024-03-01T14:30:00Z',
-            'completed_at': '2024-03-01T15:00:00Z',
-            'due_date': '2024-03-04T23:59:59Z',
-            'instructions': """
+            "task_id": task_id,
+            "task_name": "Portal Account Setup",
+            "task_description": "Set up your reseller portal account and complete profile",
+            "category": "setup",
+            "priority": "high",
+            "status": "completed",
+            "completion_percentage": 100,
+            "estimated_duration_minutes": 30,
+            "actual_duration_minutes": 25,
+            "created_at": "2024-03-01T10:00:00Z",
+            "started_at": "2024-03-01T14:30:00Z",
+            "completed_at": "2024-03-01T15:00:00Z",
+            "due_date": "2024-03-04T23:59:59Z",
+            "instructions": """
 1. Log into your reseller portal account
 2. Complete your company profile information
 3. Upload company logo and marketing materials
 4. Set up payment information for commission payments
 5. Configure notification preferences
             """,
-            'completion_criteria': 'Portal profile 100% complete with all required information',
-            'completion_notes': 'Profile completed successfully. All required fields filled.',
-            'resources': [
+            "completion_criteria": "Portal profile 100% complete with all required information",
+            "completion_notes": "Profile completed successfully. All required fields filled.",
+            "resources": [
                 {"name": "Portal Setup Guide", "url": "/docs/portal-setup.pdf"},
-                {"name": "Profile Completion Checklist", "url": "/portal/profile/checklist"}
+                {"name": "Profile Completion Checklist", "url": "/portal/profile/checklist"},
             ],
-            'prerequisites': [],
-            'dependents': ['training_001', 'business_002'],  # Tasks that depend on this one
-            'assigned_to': 'reseller_self',
-            'metadata': {
-                'difficulty_level': 'easy',
-                'auto_created': True,
-                'template_version': '1.0'
-            }
+            "prerequisites": [],
+            "dependents": ["training_001", "business_002"],  # Tasks that depend on this one
+            "assigned_to": "reseller_self",
+            "metadata": {"difficulty_level": "easy", "auto_created": True, "template_version": "1.0"},
         }
-        
+
         return task_details
-    
-    async def _check_unlocked_tasks(self, completed_task_id: str) -> List[str]:
+
+    async def _check_unlocked_tasks(self, completed_task_id: str) -> list[str]:
         """Check which tasks are unlocked when a task is completed"""
-        
+
         # In production, this would query tasks with prerequisites
         # Return list of task_ids that are now available
-        
+
         task_dependencies = {
-            'setup_002': ['training_001', 'business_002'],
-            'training_001': ['training_002'],
-            'training_002': ['business_001', 'final_002'],
-            'technical_001': ['technical_002'],
-            'setup_001': ['final_001']
+            "setup_002": ["training_001", "business_002"],
+            "training_001": ["training_002"],
+            "training_002": ["business_001", "final_002"],
+            "technical_001": ["technical_002"],
+            "setup_001": ["final_001"],
         }
-        
+
         return task_dependencies.get(completed_task_id, [])
 
 
 # Export classes
 __all__ = [
     "OnboardingTaskStatus",
-    "OnboardingTaskPriority", 
+    "OnboardingTaskPriority",
     "OnboardingTaskCategory",
     "ResellerOnboardingChecklist",
     "OnboardingTask",
     "OnboardingTaskTemplate",
-    "OnboardingWorkflowEngine"
+    "OnboardingWorkflowEngine",
 ]

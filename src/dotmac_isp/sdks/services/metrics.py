@@ -3,15 +3,13 @@
 This module provides metrics-related service operations for analytics integration.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 from uuid import UUID
 
-from sqlalchemy.orm import Session
-
 from dotmac_isp.sdks.core.exceptions import SDKError
-from dotmac_shared.api.exception_handlers import standard_exception_handler
+from sqlalchemy.orm import Session
 
 
 class MetricService:
@@ -20,16 +18,16 @@ class MetricService:
     def __init__(self, db: Session, timezone):
         """Initialize metrics service with database session."""
         self.db = db
-        self._metrics_cache: Dict[str, Any] = {}
+        self._metrics_cache: dict[str, Any] = {}
 
     async def create_metric(
         self,
         name: str,
         value: Decimal,
         metric_type: str = "gauge",
-        tags: Optional[Dict[str, str]] = None,
+        tags: Optional[dict[str, str]] = None,
         timestamp: Optional[datetime] = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Create a new metric entry."""
         try:
             metric_data = {
@@ -48,23 +46,23 @@ class MetricService:
 
             return metric_data
         except Exception as e:
-            raise SDKError(f"Failed to create metric: {str(e)}")
+            raise SDKError(f"Failed to create metric: {str(e)}") from e
 
-    async def get_metric(self, metric_id: str) -> Optional[Dict[str, Any]]:
+    async def get_metric(self, metric_id: str) -> Optional[dict[str, Any]]:
         """Get metric by ID."""
         try:
             return self._metrics_cache.get(metric_id)
         except Exception as e:
-            raise SDKError(f"Failed to get metric: {str(e)}")
+            raise SDKError(f"Failed to get metric: {str(e)}") from e
 
     async def query_metrics(
         self,
         name_pattern: Optional[str] = None,
-        tags: Optional[Dict[str, str]] = None,
+        tags: Optional[dict[str, str]] = None,
         start_time: Optional[datetime] = None,
         end_time: Optional[datetime] = None,
         limit: int = 100,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Query metrics with filters."""
         try:
             results = []
@@ -92,7 +90,7 @@ class MetricService:
 
             return results
         except Exception as e:
-            raise SDKError(f"Failed to query metrics: {str(e)}")
+            raise SDKError(f"Failed to query metrics: {str(e)}") from e
 
     async def aggregate_metrics(
         self,
@@ -100,8 +98,8 @@ class MetricService:
         aggregation: str = "sum",  # sum, avg, min, max, count
         start_time: Optional[datetime] = None,
         end_time: Optional[datetime] = None,
-        group_by: Optional[List[str]] = None,
-    ) -> Dict[str, Any]:
+        group_by: Optional[list[str]] = None,
+    ) -> dict[str, Any]:
         """Aggregate metrics data."""
         try:
             metrics = await self.query_metrics(
@@ -136,7 +134,7 @@ class MetricService:
                 "end_time": end_time,
             }
         except Exception as e:
-            raise SDKError(f"Failed to aggregate metrics: {str(e)}")
+            raise SDKError(f"Failed to aggregate metrics: {str(e)}") from e
 
     async def delete_metric(self, metric_id: str) -> bool:
         """Delete metric by ID."""
@@ -146,19 +144,17 @@ class MetricService:
                 return True
             return False
         except Exception as e:
-            raise SDKError(f"Failed to delete metric: {str(e)}")
+            raise SDKError(f"Failed to delete metric: {str(e)}") from e
 
-    async def get_metrics_summary(
-        self, time_window: timedelta = timedelta(hours=24)
-    ) -> Dict[str, Any]:
-        """Get summary of metrics within time window."""
+    async def get_metrics_summary(self, time_window: Optional[timedelta] = None) -> dict[str, Any]:
+        """Get         if time_window is None:
+                    time_window = timedelta(hours=24)
+        summary of metrics within time window."""
         try:
             end_time = datetime.now(timezone.utc)
             start_time = end_time - time_window
 
-            metrics = await self.query_metrics(
-                start_time=start_time, end_time=end_time, limit=10000
-            )
+            metrics = await self.query_metrics(start_time=start_time, end_time=end_time, limit=10000)
             summary = {
                 "total_metrics": len(metrics),
                 "time_window": str(time_window),
@@ -172,9 +168,7 @@ class MetricService:
                 metric_type = metric.get("metric_type", "unknown")
                 metric_name = metric.get("name", "unknown")
 
-                summary["metric_types"][metric_type] = (
-                    summary["metric_types"].get(metric_type, 0) + 1
-                )
+                summary["metric_types"][metric_type] = summary["metric_types"].get(metric_type, 0) + 1
                 summary["unique_names"].add(metric_name)
 
             summary["unique_names"] = list(summary["unique_names"])
@@ -182,4 +176,4 @@ class MetricService:
 
             return summary
         except Exception as e:
-            raise SDKError(f"Failed to get metrics summary: {str(e)}")
+            raise SDKError(f"Failed to get metrics summary: {str(e)}") from e

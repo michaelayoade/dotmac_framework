@@ -3,13 +3,12 @@ User and authentication models.
 """
 
 from datetime import datetime, timedelta, timezone
-from typing import Optional
 
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
 from .base import BaseModel
-from sqlalchemy.dialects.postgresql import UUID
 
 
 class UserRole:
@@ -43,9 +42,7 @@ class User(BaseModel):
     role = Column(String(50), nullable=False, default="user")
 
     # Tenant association (None for master admins)
-    tenant_id = Column(
-        UUID(as_uuid=True), ForeignKey("customer_tenants.id"), nullable=True, index=True
-    )
+    tenant_id = Column(UUID(as_uuid=True), ForeignKey("customer_tenants.id"), nullable=True, index=True)
 
     # Additional fields from migration
     permissions = Column(Text, nullable=True)  # JSON permissions
@@ -65,9 +62,7 @@ class User(BaseModel):
     # Security settings
     two_factor_enabled = Column(Boolean, default=False, nullable=False)
     two_factor_secret = Column(String(32), nullable=True)
-    password_changed_at = Column(
-        DateTime, default=lambda: datetime.now(timezone.utc), nullable=False
-    )
+    password_changed_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
     # Notification preferences
     email_notifications = Column(Boolean, default=True, nullable=False)
@@ -103,9 +98,7 @@ class User(BaseModel):
 
     def lock_account(self, duration_minutes: int = 30) -> None:
         """Lock user account for specified duration."""
-        self.locked_until = datetime.now(timezone.utc) + timedelta(
-            minutes=duration_minutes
-        )
+        self.locked_until = datetime.now(timezone.utc) + timedelta(minutes=duration_minutes)
         self.failed_login_attempts += 1
 
     def unlock_account(self) -> None:
@@ -126,9 +119,7 @@ class UserSession(BaseModel):
 
     __tablename__ = "user_sessions"
 
-    user_id = Column(
-        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True
-    )
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
     session_token = Column(String(255), unique=True, nullable=False, index=True)
     refresh_token = Column(String(255), unique=True, nullable=True, index=True)
 
@@ -140,9 +131,7 @@ class UserSession(BaseModel):
     # Session status
     is_active = Column(Boolean, default=True, nullable=False, index=True)
     expires_at = Column(DateTime, nullable=False, index=True)
-    last_activity = Column(
-        DateTime, default=lambda: datetime.now(timezone.utc), nullable=False
-    )
+    last_activity = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
     # Relationships
     user = relationship("User", backref="sessions")
@@ -170,9 +159,7 @@ class UserInvitation(BaseModel):
     # Invitation details
     email = Column(String(255), nullable=False, index=True)
     role = Column(String(50), nullable=False)
-    tenant_id = Column(
-        UUID(as_uuid=True), ForeignKey("customer_tenants.id"), nullable=True, index=True
-    )
+    tenant_id = Column(UUID(as_uuid=True), ForeignKey("customer_tenants.id"), nullable=True, index=True)
 
     # Invitation metadata
     invitation_token = Column(String(255), unique=True, nullable=False, index=True)

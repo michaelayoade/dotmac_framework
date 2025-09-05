@@ -1,6 +1,7 @@
 """
 Workflow-specific exceptions.
 """
+from typing import Optional
 
 
 class WorkflowError(Exception):
@@ -27,10 +28,16 @@ class WorkflowTimeoutError(WorkflowError):
     pass
 
 
+class WorkflowTransientError(WorkflowError):
+    """Raised for transient, retryable workflow errors (e.g., connectivity)."""
+
+    pass
+
+
 class WorkflowStepError(WorkflowError):
     """Raised when a specific workflow step fails."""
 
-    def __init__(self, step_name: str, message: str, original_error: Exception = None):
+    def __init__(self, step_name: str, message: str, original_error: Optional[Exception] = None):
         self.step_name = step_name
         self.original_error = original_error
         super().__init__(f"Step '{step_name}' failed: {message}")

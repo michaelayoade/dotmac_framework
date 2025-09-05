@@ -5,9 +5,10 @@ Revises: 952b95951dab
 Create Date: 2025-09-02 11:00:00.000000
 
 """
-from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
+
+from alembic import op
 
 # revision identifiers
 revision = 'add_user_management'

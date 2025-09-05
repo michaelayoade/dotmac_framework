@@ -1,15 +1,13 @@
 """Captive Portal Pydantic schemas for API requests and responses."""
 
 from datetime import datetime
-from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from .models import AuthMethodType, PortalStatus, SessionStatus, VoucherStatus
 
 
-# Base schemas
 class TenantAwareSchema(BaseModel):
     """Base schema for tenant-aware models."""
 
@@ -24,15 +22,13 @@ class CaptivePortalConfigBase(BaseModel):
 
     name: str = Field(..., min_length=1, max_length=255, description="Portal name")
     ssid: str = Field(..., min_length=1, max_length=100, description="WiFi SSID")
-    location: Optional[str] = Field(
-        None, max_length=500, description="Physical location"
-    )
+    location: Optional[str] = Field(None, max_length=500, description="Physical location")
     description: Optional[str] = Field(None, description="Portal description")
 
     # Network settings
     network_range: Optional[str] = Field(None, description="Network CIDR range")
     gateway_ip: Optional[str] = Field(None, description="Gateway IP address")
-    dns_servers: Optional[List[str]] = Field(None, description="DNS server list")
+    dns_servers: Optional[list[str]] = Field(None, description="DNS server list")
 
     # Portal URLs
     portal_url: Optional[str] = Field(None, description="Portal landing page URL")
@@ -41,45 +37,25 @@ class CaptivePortalConfigBase(BaseModel):
     terms_url: Optional[str] = Field(None, description="Terms of service URL")
 
     # Authentication settings
-    auth_methods: List[str] = Field(
-        default=["social"], description="Enabled auth methods"
-    )
+    auth_methods: list[str] = Field(default=["social"], description="Enabled auth methods")
     require_terms: bool = Field(default=True, description="Require terms acceptance")
-    require_email_verification: bool = Field(
-        default=True, description="Require email verification"
-    )
+    require_email_verification: bool = Field(default=True, description="Require email verification")
 
     # Session limits
-    session_timeout: int = Field(
-        default=3600, ge=60, le=86400, description="Session timeout in seconds"
-    )
-    idle_timeout: int = Field(
-        default=1800, ge=60, le=7200, description="Idle timeout in seconds"
-    )
-    max_concurrent_sessions: int = Field(
-        default=100, ge=1, le=10000, description="Max concurrent sessions"
-    )
-    data_limit_mb: int = Field(
-        default=0, ge=0, description="Data limit in MB (0 = unlimited)"
-    )
+    session_timeout: int = Field(default=3600, ge=60, le=86400, description="Session timeout in seconds")
+    idle_timeout: int = Field(default=1800, ge=60, le=7200, description="Idle timeout in seconds")
+    max_concurrent_sessions: int = Field(default=100, ge=1, le=10000, description="Max concurrent sessions")
+    data_limit_mb: int = Field(default=0, ge=0, description="Data limit in MB (0 = unlimited)")
 
     # Bandwidth limits
-    bandwidth_limit_down: int = Field(
-        default=0, ge=0, description="Download bandwidth limit in kbps"
-    )
-    bandwidth_limit_up: int = Field(
-        default=0, ge=0, description="Upload bandwidth limit in kbps"
-    )
+    bandwidth_limit_down: int = Field(default=0, ge=0, description="Download bandwidth limit in kbps")
+    bandwidth_limit_up: int = Field(default=0, ge=0, description="Upload bandwidth limit in kbps")
 
     # Billing
-    billing_enabled: bool = Field(
-        default=False, description="Enable billing integration"
-    )
+    billing_enabled: bool = Field(default=False, description="Enable billing integration")
 
     # Customization
-    theme_config: Optional[Dict[str, Any]] = Field(
-        None, description="Theme configuration"
-    )
+    theme_config: Optional[dict[str, Any]] = Field(None, description="Theme configuration")
     custom_css: Optional[str] = Field(None, description="Custom CSS")
     logo_url: Optional[str] = Field(None, description="Logo URL")
 
@@ -88,9 +64,7 @@ class CaptivePortalConfigCreate(CaptivePortalConfigBase):
     """Schema for creating a captive portal configuration."""
 
     customer_id: Optional[str] = Field(None, description="Associated customer ID")
-    default_billing_plan_id: Optional[str] = Field(
-        None, description="Default billing plan"
-    )
+    default_billing_plan_id: Optional[str] = Field(None, description="Default billing plan")
 
 
 class CaptivePortalConfigUpdate(BaseModel):
@@ -101,7 +75,7 @@ class CaptivePortalConfigUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=255)
     location: Optional[str] = Field(None, max_length=500)
     description: Optional[str] = None
-    auth_methods: Optional[List[str]] = None
+    auth_methods: Optional[list[str]] = None
     session_timeout: Optional[int] = Field(None, ge=60, le=86400)
     max_concurrent_sessions: Optional[int] = Field(None, ge=1, le=10000)
     billing_enabled: Optional[bool] = None
@@ -129,18 +103,14 @@ class AuthenticationRequest(BaseModel):
     client_ip: Optional[str] = Field(None, description="Client IP address")
     client_mac: Optional[str] = Field(None, description="Client MAC address")
     user_agent: Optional[str] = Field(None, description="User agent string")
-    device_info: Optional[Dict[str, Any]] = Field(
-        None, description="Device information"
-    )
+    device_info: Optional[dict[str, Any]] = Field(None, description="Device information")
 
 
 class EmailAuthRequest(AuthenticationRequest):
     """Email authentication request."""
 
     email: str = Field(..., description="User email address")
-    verification_code: Optional[str] = Field(
-        None, description="Email verification code"
-    )
+    verification_code: Optional[str] = Field(None, description="Email verification code")
     first_name: Optional[str] = Field(None, description="First name")
     last_name: Optional[str] = Field(None, description="Last name")
 
@@ -178,9 +148,7 @@ class AuthenticationResponse(BaseModel):
     user_id: Optional[str] = Field(None, description="User ID")
     error_message: Optional[str] = Field(None, description="Error message if failed")
     redirect_url: Optional[str] = Field(None, description="Redirect URL for OAuth")
-    requires_verification: bool = Field(
-        default=False, description="Requires additional verification"
-    )
+    requires_verification: bool = Field(default=False, description="Requires additional verification")
 
 
 # Session Schemas
@@ -222,7 +190,7 @@ class SessionTerminateRequest(BaseModel):
 class SessionListResponse(BaseModel):
     """List of sessions response."""
 
-    sessions: List[SessionResponse] = Field(..., description="List of sessions")
+    sessions: list[SessionResponse] = Field(..., description="List of sessions")
     total: int = Field(..., description="Total session count")
     active: int = Field(..., description="Active session count")
 
@@ -233,15 +201,9 @@ class VoucherBase(BaseModel):
 
     duration_minutes: int = Field(..., ge=1, description="Access duration in minutes")
     data_limit_mb: int = Field(default=0, ge=0, description="Data limit in MB")
-    bandwidth_limit_down: int = Field(
-        default=0, ge=0, description="Download bandwidth limit"
-    )
-    bandwidth_limit_up: int = Field(
-        default=0, ge=0, description="Upload bandwidth limit"
-    )
-    max_devices: int = Field(
-        default=1, ge=1, le=10, description="Maximum devices per voucher"
-    )
+    bandwidth_limit_down: int = Field(default=0, ge=0, description="Download bandwidth limit")
+    bandwidth_limit_up: int = Field(default=0, ge=0, description="Upload bandwidth limit")
+    max_devices: int = Field(default=1, ge=1, le=10, description="Maximum devices per voucher")
     price: float = Field(default=0.0, ge=0, description="Voucher price")
     currency: str = Field(default="USD", description="Currency code")
     valid_until: Optional[datetime] = Field(None, description="Expiration date")
@@ -251,9 +213,7 @@ class VoucherCreateRequest(VoucherBase):
     """Request to create vouchers."""
 
     portal_id: str = Field(..., description="Portal ID")
-    quantity: int = Field(
-        default=1, ge=1, le=1000, description="Number of vouchers to create"
-    )
+    quantity: int = Field(default=1, ge=1, le=1000, description="Number of vouchers to create")
     batch_name: Optional[str] = Field(None, description="Batch name for bulk creation")
     generation_notes: Optional[str] = Field(None, description="Generation notes")
 
@@ -273,12 +233,8 @@ class VoucherResponse(VoucherBase, TenantAwareSchema):
     # Dates
     valid_from: datetime = Field(..., description="Valid from date")
     created_at: datetime = Field(..., description="Creation date")
-    first_redeemed_at: Optional[datetime] = Field(
-        None, description="First redemption date"
-    )
-    last_redeemed_at: Optional[datetime] = Field(
-        None, description="Last redemption date"
-    )
+    first_redeemed_at: Optional[datetime] = Field(None, description="First redemption date")
+    last_redeemed_at: Optional[datetime] = Field(None, description="Last redemption date")
 
 
 class VoucherBatchCreateRequest(BaseModel):
@@ -305,19 +261,13 @@ class VoucherBatchResponse(TenantAwareSchema):
 class PortalCustomizationBase(BaseModel):
     """Base portal customization schema."""
 
-    company_name: Optional[str] = Field(
-        None, max_length=255, description="Company name"
-    )
+    company_name: Optional[str] = Field(None, max_length=255, description="Company name")
     logo_url: Optional[str] = Field(None, description="Logo URL")
     background_url: Optional[str] = Field(None, description="Background image URL")
 
     # Colors
-    primary_color: Optional[str] = Field(
-        None, pattern=r"^#[0-9A-Fa-f]{6}$", description="Primary color"
-    )
-    secondary_color: Optional[str] = Field(
-        None, pattern=r"^#[0-9A-Fa-f]{6}$", description="Secondary color"
-    )
+    primary_color: Optional[str] = Field(None, pattern=r"^#[0-9A-Fa-f]{6}$", description="Primary color")
+    secondary_color: Optional[str] = Field(None, pattern=r"^#[0-9A-Fa-f]{6}$", description="Secondary color")
 
     # Content
     welcome_message: Optional[str] = Field(None, description="Welcome message")
@@ -329,9 +279,7 @@ class PortalCustomizationBase(BaseModel):
     website_url: Optional[str] = Field(None, description="Website URL")
 
     # Legal
-    terms_of_service_url: Optional[str] = Field(
-        None, description="Terms of service URL"
-    )
+    terms_of_service_url: Optional[str] = Field(None, description="Terms of service URL")
     privacy_policy_url: Optional[str] = Field(None, description="Privacy policy URL")
 
 
@@ -357,9 +305,7 @@ class UsageStatsRequest(BaseModel):
     portal_id: Optional[str] = Field(None, description="Portal ID filter")
     start_date: Optional[datetime] = Field(None, description="Start date")
     end_date: Optional[datetime] = Field(None, description="End date")
-    period_type: str = Field(
-        default="day", description="Period type (hour, day, week, month)"
-    )
+    period_type: str = Field(default="day", description="Period type (hour, day, week, month)")
 
 
 class UsageStatsResponse(BaseModel):
@@ -371,21 +317,15 @@ class UsageStatsResponse(BaseModel):
     # Session stats
     total_sessions: int = Field(..., description="Total sessions")
     unique_users: int = Field(..., description="Unique users")
-    avg_session_duration: float = Field(
-        ..., description="Average session duration (minutes)"
-    )
+    avg_session_duration: float = Field(..., description="Average session duration (minutes)")
 
     # Data usage
     total_bytes_downloaded: int = Field(..., description="Total bytes downloaded")
     total_bytes_uploaded: int = Field(..., description="Total bytes uploaded")
 
     # Breakdown
-    auth_method_breakdown: Dict[str, int] = Field(
-        ..., description="Authentication method breakdown"
-    )
-    device_type_breakdown: Dict[str, int] = Field(
-        ..., description="Device type breakdown"
-    )
+    auth_method_breakdown: dict[str, int] = Field(..., description="Authentication method breakdown")
+    device_type_breakdown: dict[str, int] = Field(..., description="Device type breakdown")
 
     # Revenue
     total_revenue: float = Field(..., description="Total revenue")
@@ -405,9 +345,7 @@ class ErrorResponse(BaseModel):
 
     error: str = Field(..., description="Error type")
     message: str = Field(..., description="Error message")
-    details: Optional[List[ErrorDetail]] = Field(
-        None, description="Detailed error information"
-    )
+    details: Optional[list[ErrorDetail]] = Field(None, description="Detailed error information")
     request_id: Optional[str] = Field(None, description="Request ID for tracking")
 
 
@@ -428,9 +366,7 @@ class PaginatedResponse(BaseModel):
     pages: int = Field(..., description="Total pages")
 
     @classmethod
-    def create(
-        cls, items: List[Any], total: int, page: int, size: int
-    ) -> "PaginatedResponse":
+    def create(cls, items: list[Any], total: int, page: int, size: int) -> "PaginatedResponse":
         """Create a paginated response."""
         pages = (total + size - 1) // size  # Ceiling division
         return cls(total=total, page=page, size=size, pages=pages)

@@ -2,11 +2,11 @@
 ISP Framework base models using DRY shared patterns.
 """
 
+from dotmac.database.base import Base
+from dotmac.database.base import BaseModel as SharedBaseModel
+from dotmac.database.mixins import ISPModelMixin
 from sqlalchemy import Boolean, Column, String
 from sqlalchemy.ext.declarative import declared_attr
-
-from dotmac_shared.database.base import BaseModel as SharedBaseModel, Base
-from dotmac_shared.database.mixins import ISPModelMixin
 
 __all__ = ["BaseModel", "Base"]
 
@@ -18,7 +18,7 @@ class BaseModel(SharedBaseModel, ISPModelMixin):
 
     # Tenant isolation
     tenant_id = Column(String(255), nullable=False, index=True)
-    
+
     # Soft delete support
     is_active = Column(Boolean, default=True, nullable=False, index=True)
 
@@ -26,9 +26,10 @@ class BaseModel(SharedBaseModel, ISPModelMixin):
     def __tablename__(cls) -> str:
         """Generate ISP table names with prefix."""
         import re
+
         name = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", cls.__name__)
         name = re.sub("([a-z0-9])([A-Z])", r"\1_\2", name).lower()
-        
+
         # Simple pluralization
         if name.endswith("y"):
             name = name[:-1] + "ies"
@@ -36,7 +37,7 @@ class BaseModel(SharedBaseModel, ISPModelMixin):
             name = name + "es"
         else:
             name = name + "s"
-            
+
         return f"isp_{name}"
 
     @property

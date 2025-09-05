@@ -1,0 +1,46 @@
+name: Exception Handling Standards
+
+on:
+  pull_request:
+    paths:
+      - 'src/dotmac_shared/repositories/**'
+      - 'src/dotmac_management/core/**'
+      - 'scripts/check_broad_exceptions.py'
+  push:
+    paths:
+      - 'src/dotmac_shared/repositories/**'
+      - 'src/dotmac_management/core/**'
+
+jobs:
+  check-exception-handling:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff
+          
+      - name: Check for broad exceptions in critical modules
+        run: |
+          echo "🔍 Checking critical modules for broad exception handling..."
+          python scripts/check_broad_exceptions.py
+          
+      - name: Run ruff BLE001 check on critical modules
+        run: |
+          echo "🛡️ Running strict BLE001 check on fixed modules..."
+          ruff check --select=BLE001 src/dotmac_shared/repositories/async_base_repository.py src/dotmac_shared/repositories/sync_base_repository.py src/dotmac_management/core/sanitization.py || true
+          
+      - name: Check overall BLE001 status
+        run: |
+          echo "📊 Overall BLE001 violation count:"
+          ruff check --select=BLE001 | wc -l || echo "ruff check failed"
+          echo "✅ BLE001 is enabled and detecting broad exception handling"

@@ -1,10 +1,14 @@
 """Domain Management Schemas for the Management Platform."""
 
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import (
+    BaseModel,
+    Field,
+    field_validator,
+)
 
 from ..models.domain_management import (
     DNSRecordType,
@@ -14,11 +18,12 @@ from ..models.domain_management import (
     VerificationStatus,
 )
 
-
 # Base Schemas
+
 
 class BaseSchema(BaseModel):
     """Base schema with common fields."""
+
     id: Optional[UUID] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
@@ -26,7 +31,8 @@ class BaseSchema(BaseModel):
 
 class PaginatedResponse(BaseModel):
     """Paginated response wrapper."""
-    items: List[BaseModel]
+
+    items: list[BaseModel]
     total: int
     page: int = Field(ge=1)
     size: int = Field(ge=1, le=100)
@@ -35,52 +41,59 @@ class PaginatedResponse(BaseModel):
 
 # Domain Schemas
 
+
 class DomainBase(BaseModel):
     """Base domain schema."""
+
     domain_name: str = Field(..., min_length=1, max_length=255)
     subdomain: Optional[str] = Field(None, max_length=100)
     is_primary: bool = False
     auto_renew: bool = True
     notes: Optional[str] = Field(None, max_length=1000)
-    tags: List[str] = Field(default_factory=list, max_length=10)
-    
-    @field_validator('domain_name')
+    tags: list[str] = Field(default_factory=list, max_length=10)
+
+    @field_validator("domain_name")
     @classmethod
     def validate_domain_name(cls, v):
         import re
-        pattern = r'^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*$'
+
+        pattern = r"^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*$"
         if not re.match(pattern, v):
-            raise ValueError('Invalid domain name format')
+            raise ValueError("Invalid domain name format")
         return v.lower()
-    
-    @field_validator('subdomain')
+
+    @field_validator("subdomain")
     @classmethod
     def validate_subdomain(cls, v):
         if v:
             import re
-            pattern = r'^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?$'
+
+            pattern = r"^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?$"
             if not re.match(pattern, v):
-                raise ValueError('Invalid subdomain format')
+                raise ValueError("Invalid subdomain format")
             return v.lower()
         return v
 
 
 class DomainCreate(DomainBase):
     """Schema for creating domains."""
+
     dns_provider: DomainProvider = DomainProvider.COREDNS
     auto_ssl: bool = True
 
 
 class DomainUpdate(BaseModel):
     """Schema for updating domains."""
+
     domain_name: Optional[str] = Field(None, min_length=1, max_length=255)
     auto_renew: Optional[bool] = None
     notes: Optional[str] = Field(None, max_length=1000)
-    tags: Optional[List[str]] = Field(None, max_length=10)
+    tags: Optional[list[str]] = Field(None, max_length=10)
 
 
 class DomainResponse(DomainBase, BaseSchema):
     """Response schema for domains."""
+
     domain_id: str
     tenant_id: str
     full_domain: str
@@ -89,7 +102,7 @@ class DomainResponse(DomainBase, BaseSchema):
     registration_date: Optional[datetime]
     expiration_date: Optional[datetime]
     dns_provider: DomainProvider
-    nameservers: List[str] = Field(default_factory=list)
+    nameservers: list[str] = Field(default_factory=list)
     dns_zone_id: Optional[str]
     verification_status: VerificationStatus
     verified_at: Optional[datetime]
@@ -101,7 +114,7 @@ class DomainResponse(DomainBase, BaseSchema):
     uptime_percentage: int = Field(ge=0, le=100)
     owner_user_id: str
     managed_by_system: bool = True
-    
+
     # Computed properties
     is_expired: Optional[bool] = None
     days_until_expiration: Optional[int] = None
@@ -112,13 +125,16 @@ class DomainResponse(DomainBase, BaseSchema):
 
 class DomainListResponse(PaginatedResponse):
     """Paginated domain list response."""
-    items: List[DomainResponse]
+
+    items: list[DomainResponse]
 
 
 # DNS Record Schemas
 
+
 class DNSRecordBase(BaseModel):
     """Base DNS record schema."""
+
     name: str = Field(..., min_length=1, max_length=255)
     record_type: DNSRecordType
     value: str = Field(..., min_length=1, max_length=2000)
@@ -127,26 +143,29 @@ class DNSRecordBase(BaseModel):
     port: Optional[int] = Field(None, ge=1, le=65535)
     weight: Optional[int] = Field(None, ge=0, le=65535)
     notes: Optional[str] = Field(None, max_length=500)
-    tags: List[str] = Field(default_factory=list, max_length=5)
+    tags: list[str] = Field(default_factory=list, max_length=5)
 
 
 class DNSRecordCreate(DNSRecordBase):
     """Schema for creating DNS records."""
+
     domain_id: str = Field(..., min_length=1)
 
 
 class DNSRecordUpdate(BaseModel):
     """Schema for updating DNS records."""
+
     name: Optional[str] = Field(None, min_length=1, max_length=255)
     value: Optional[str] = Field(None, min_length=1, max_length=2000)
     ttl: Optional[int] = Field(None, ge=60, le=86400)
     priority: Optional[int] = Field(None, ge=0, le=65535)
     notes: Optional[str] = Field(None, max_length=500)
-    tags: Optional[List[str]] = Field(None, max_length=5)
+    tags: Optional[list[str]] = Field(None, max_length=5)
 
 
 class DNSRecordResponse(DNSRecordBase, BaseSchema):
     """Response schema for DNS records."""
+
     record_id: str
     domain_id: str
     tenant_id: str
@@ -157,9 +176,9 @@ class DNSRecordResponse(DNSRecordBase, BaseSchema):
     last_sync_attempt: Optional[datetime]
     sync_error_message: Optional[str]
     is_valid: bool = True
-    validation_errors: Optional[Dict] = None
+    validation_errors: Optional[dict] = None
     last_validated: Optional[datetime]
-    
+
     # Computed properties
     full_record_name: Optional[str] = None
     needs_sync: Optional[bool] = None
@@ -167,11 +186,13 @@ class DNSRecordResponse(DNSRecordBase, BaseSchema):
 
 # SSL Certificate Schemas
 
+
 class SSLCertificateBase(BaseModel):
     """Base SSL certificate schema."""
+
     certificate_name: str = Field(..., min_length=1, max_length=200)
     common_name: str = Field(..., min_length=1, max_length=255)
-    subject_alternative_names: List[str] = Field(default_factory=list, max_length=100)
+    subject_alternative_names: list[str] = Field(default_factory=list, max_length=100)
     certificate_authority: str = Field(default="letsencrypt", max_length=100)
     auto_renew: bool = True
     renewal_threshold_days: int = Field(default=30, ge=1, le=90)
@@ -179,11 +200,13 @@ class SSLCertificateBase(BaseModel):
 
 class SSLCertificateCreate(SSLCertificateBase):
     """Schema for creating SSL certificates."""
+
     domain_id: str = Field(..., min_length=1)
 
 
 class SSLCertificateResponse(SSLCertificateBase, BaseSchema):
     """Response schema for SSL certificates."""
+
     certificate_id: str
     domain_id: str
     tenant_id: str
@@ -197,7 +220,7 @@ class SSLCertificateResponse(SSLCertificateBase, BaseSchema):
     key_size: int = 2048
     signature_algorithm: Optional[str]
     fingerprint_sha256: Optional[str]
-    
+
     # Computed properties
     is_expired: Optional[bool] = None
     days_until_expiration: Optional[int] = None
@@ -207,18 +230,22 @@ class SSLCertificateResponse(SSLCertificateBase, BaseSchema):
 
 # Domain Verification Schemas
 
+
 class DomainVerificationBase(BaseModel):
     """Base domain verification schema."""
+
     verification_method: str = Field(default="DNS", pattern="^(DNS|HTTP|email)$")
 
 
 class DomainVerificationCreate(DomainVerificationBase):
     """Schema for creating domain verifications."""
+
     domain_id: str = Field(..., min_length=1)
 
 
 class DomainVerificationResponse(DomainVerificationBase, BaseSchema):
     """Response schema for domain verifications."""
+
     verification_id: str
     domain_id: str
     tenant_id: str
@@ -232,9 +259,9 @@ class DomainVerificationResponse(DomainVerificationBase, BaseSchema):
     expires_at: Optional[datetime]
     last_check: Optional[datetime]
     next_check: Optional[datetime]
-    verification_response: Optional[Dict] = None
-    error_details: Optional[Dict] = None
-    
+    verification_response: Optional[dict] = None
+    error_details: Optional[dict] = None
+
     # Computed properties
     is_expired: Optional[bool] = None
     is_due_for_check: Optional[bool] = None
@@ -243,6 +270,7 @@ class DomainVerificationResponse(DomainVerificationBase, BaseSchema):
 
 class DomainVerificationInstructions(BaseModel):
     """Domain verification instructions."""
+
     method: str
     instructions: str
     record_name: Optional[str] = None
@@ -254,8 +282,10 @@ class DomainVerificationInstructions(BaseModel):
 
 # Domain Log Schemas
 
+
 class DomainLogResponse(BaseModel):
     """Response schema for domain logs."""
+
     id: UUID
     domain_id: str
     tenant_id: str
@@ -263,35 +293,39 @@ class DomainLogResponse(BaseModel):
     action: str
     user_id: str
     description: str
-    before_state: Optional[Dict] = None
-    after_state: Optional[Dict] = None
+    before_state: Optional[dict] = None
+    after_state: Optional[dict] = None
     success: bool
     error_code: Optional[str]
     error_message: Optional[str]
     duration_ms: Optional[int]
     operation_id: Optional[str]
-    
+
     # Computed properties
     operation_duration_seconds: Optional[float] = None
 
 
 # Statistics Schemas
 
+
 class DomainStatsResponse(BaseModel):
     """Domain statistics response."""
+
     tenant_id: str
     total_domains: int = Field(ge=0)
-    domains_by_status: Dict[str, int] = Field(default_factory=dict)
-    ssl_by_status: Dict[str, int] = Field(default_factory=dict)
-    providers_usage: Dict[str, int] = Field(default_factory=dict)
-    expiring_domains: List[DomainResponse] = Field(default_factory=list)
-    expiring_ssl_certificates: List[SSLCertificateResponse] = Field(default_factory=list)
+    domains_by_status: dict[str, int] = Field(default_factory=dict)
+    ssl_by_status: dict[str, int] = Field(default_factory=dict)
+    providers_usage: dict[str, int] = Field(default_factory=dict)
+    expiring_domains: list[DomainResponse] = Field(default_factory=list)
+    expiring_ssl_certificates: list[SSLCertificateResponse] = Field(default_factory=list)
 
 
 # Search and Filter Schemas
 
+
 class DomainSearchFilters(BaseModel):
     """Domain search filters."""
+
     status: Optional[DomainStatus] = None
     dns_provider: Optional[DomainProvider] = None
     verification_status: Optional[VerificationStatus] = None
@@ -299,11 +333,12 @@ class DomainSearchFilters(BaseModel):
     is_primary: Optional[bool] = None
     expires_within_days: Optional[int] = Field(None, ge=1, le=365)
     owner_user_id: Optional[str] = None
-    tags: Optional[List[str]] = Field(None, max_length=10)
+    tags: Optional[list[str]] = Field(None, max_length=10)
 
 
 class DomainSearchRequest(BaseModel):
     """Domain search request."""
+
     query: Optional[str] = Field(None, max_length=200)  # Search in domain name
     filters: Optional[DomainSearchFilters] = None
     sort_by: str = Field(default="created_at", pattern="^(created_at|domain_name|expiration_date|status)$")
@@ -314,25 +349,30 @@ class DomainSearchRequest(BaseModel):
 
 # Domain Operations Schemas
 
+
 class BulkDomainOperationRequest(BaseModel):
     """Bulk domain operations request."""
-    domain_ids: List[str] = Field(..., min_length=1, max_length=50)
+
+    domain_ids: list[str] = Field(..., min_length=1, max_length=50)
     operation: str = Field(..., pattern="^(delete|suspend|activate|renew|update_dns)$")
-    parameters: Optional[Dict] = Field(default_factory=dict)
+    parameters: Optional[dict] = Field(default_factory=dict)
 
 
 class BulkDomainOperationResponse(BaseModel):
     """Bulk domain operations response."""
+
     total_requested: int = Field(ge=0)
     successful: int = Field(ge=0)
     failed: int = Field(ge=0)
-    results: List[Dict] = Field(default_factory=list)
+    results: list[dict] = Field(default_factory=list)
 
 
 # DNS Zone Schemas
 
+
 class DNSZoneBase(BaseModel):
     """Base DNS zone schema."""
+
     zone_name: str = Field(..., min_length=1, max_length=255)
     primary_nameserver: str = Field(..., min_length=1, max_length=255)
     admin_email: str = Field(..., min_length=1, max_length=255)
@@ -344,11 +384,13 @@ class DNSZoneBase(BaseModel):
 
 class DNSZoneCreate(DNSZoneBase):
     """Schema for creating DNS zones."""
+
     provider: DomainProvider = DomainProvider.COREDNS
 
 
 class DNSZoneResponse(DNSZoneBase, BaseSchema):
     """Response schema for DNS zones."""
+
     zone_id: str
     tenant_id: str
     serial_number: int = Field(ge=1)
@@ -360,7 +402,7 @@ class DNSZoneResponse(DNSZoneBase, BaseSchema):
     sync_error_message: Optional[str]
     zone_file_path: Optional[str]
     zone_file_hash: Optional[str]
-    
+
     # Computed properties
     needs_sync: Optional[bool] = None
 
@@ -370,45 +412,36 @@ __all__ = [
     # Base
     "BaseSchema",
     "PaginatedResponse",
-    
     # Domains
     "DomainBase",
     "DomainCreate",
     "DomainUpdate",
     "DomainResponse",
     "DomainListResponse",
-    
     # DNS Records
     "DNSRecordBase",
     "DNSRecordCreate",
     "DNSRecordUpdate",
     "DNSRecordResponse",
-    
     # SSL Certificates
     "SSLCertificateBase",
     "SSLCertificateCreate",
     "SSLCertificateResponse",
-    
     # Domain Verification
     "DomainVerificationBase",
     "DomainVerificationCreate",
     "DomainVerificationResponse",
     "DomainVerificationInstructions",
-    
     # Domain Logs
     "DomainLogResponse",
-    
     # Statistics
     "DomainStatsResponse",
-    
     # Search
     "DomainSearchFilters",
     "DomainSearchRequest",
-    
     # Operations
     "BulkDomainOperationRequest",
     "BulkDomainOperationResponse",
-    
     # DNS Zones
     "DNSZoneBase",
     "DNSZoneCreate",

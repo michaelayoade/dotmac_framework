@@ -2,12 +2,10 @@
 Seed Manager - Handles initial data seeding for ISP databases.
 """
 
-import asyncio
-import json
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
-from uuid import UUID, uuid4
+from typing import Any, Optional
+from uuid import uuid4
 
 import asyncpg
 import structlog
@@ -22,13 +20,9 @@ logger = structlog.get_logger(__name__)
 class SeedManager:
     """Manages initial data seeding for ISP databases."""
 
-    def __init__(
-        self, db_instance: DatabaseInstance, templates_path: Optional[str] = None
-    ):
+    def __init__(self, db_instance: DatabaseInstance, templates_path: Optional[str] = None):
         self.db_instance = db_instance
-        self.logger = logger.bind(
-            component="seed_manager", database=db_instance.database_name
-        )
+        self.logger = logger.bind(component="seed_manager", database=db_instance.database_name)
 
         # Set up templates path
         self.templates_path = templates_path or self._get_default_templates_path()
@@ -44,12 +38,8 @@ class SeedManager:
         package_dir = Path(__file__).parent.parent
         return str(package_dir / "templates")
 
-    @retry(
-        stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10)
-    )
-    async def seed_initial_data(
-        self, custom_data: Optional[Dict[str, Any]] = None
-    ) -> bool:
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
+    async def seed_initial_data(self, custom_data: Optional[dict[str, Any]] = None) -> bool:
         """
         Seed the database with initial data.
 
@@ -83,9 +73,7 @@ class SeedManager:
                 raise RuntimeError("Data verification failed")
 
         except Exception as e:
-            self.logger.error(
-                "Initial data seeding failed", error=str(e), exc_info=True
-            )
+            self.logger.error("Initial data seeding failed", error=str(e), exc_info=True)
             return False
 
     async def _validate_database_connection(self) -> bool:
@@ -99,9 +87,7 @@ class SeedManager:
             self.logger.error("Database connection failed", error=str(e))
             return False
 
-    async def _generate_seed_context(
-        self, custom_data: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+    async def _generate_seed_context(self, custom_data: Optional[dict[str, Any]] = None) -> dict[str, Any]:
         """Generate context data for seeding templates."""
         context = {
             "isp_id": str(self.db_instance.isp_id),
@@ -165,7 +151,7 @@ class SeedManager:
 
         return context
 
-    async def _seed_system_data(self, context: Dict[str, Any]) -> None:
+    async def _seed_system_data(self, context: dict[str, Any]) -> None:
         """Seed system-level data."""
         self.logger.info("Seeding system data")
 
@@ -182,7 +168,7 @@ class SeedManager:
             self.logger.error("Failed to seed system data", error=str(e))
             raise
 
-    async def _seed_admin_users(self, context: Dict[str, Any]) -> None:
+    async def _seed_admin_users(self, context: dict[str, Any]) -> None:
         """Seed admin users."""
         self.logger.info("Seeding admin users")
 
@@ -203,7 +189,7 @@ class SeedManager:
             self.logger.error("Failed to seed admin users", error=str(e))
             raise
 
-    async def _create_default_admin_user(self, context: Dict[str, Any]) -> None:
+    async def _create_default_admin_user(self, context: dict[str, Any]) -> None:
         """Create default admin user directly."""
         admin = context["admin_user"]
 
@@ -247,9 +233,7 @@ class SeedManager:
                         admin["created_at"],
                     )
 
-                    self.logger.info(
-                        "Default admin user created", username=admin["username"]
-                    )
+                    self.logger.info("Default admin user created", username=admin["username"])
                 else:
                     self.logger.info("Admin user already exists")
             else:
@@ -258,7 +242,7 @@ class SeedManager:
         finally:
             await conn.close()
 
-    async def _seed_default_configurations(self, context: Dict[str, Any]) -> None:
+    async def _seed_default_configurations(self, context: dict[str, Any]) -> None:
         """Seed default configurations."""
         self.logger.info("Seeding default configurations")
 
@@ -279,7 +263,7 @@ class SeedManager:
             self.logger.error("Failed to seed default configurations", error=str(e))
             raise
 
-    async def _create_default_configurations(self, context: Dict[str, Any]) -> None:
+    async def _create_default_configurations(self, context: dict[str, Any]) -> None:
         """Create default configurations directly."""
         conn = await asyncpg.connect(**self.db_instance.get_connection_params())
 
@@ -319,7 +303,7 @@ class SeedManager:
         finally:
             await conn.close()
 
-    async def _seed_sample_data(self, context: Dict[str, Any]) -> None:
+    async def _seed_sample_data(self, context: dict[str, Any]) -> None:
         """Seed sample data (service plans, etc.)."""
         self.logger.info("Seeding sample data")
 
@@ -340,7 +324,7 @@ class SeedManager:
             self.logger.error("Failed to seed sample data", error=str(e))
             raise
 
-    async def _create_sample_service_plans(self, context: Dict[str, Any]) -> None:
+    async def _create_sample_service_plans(self, context: dict[str, Any]) -> None:
         """Create sample service plans directly."""
         conn = await asyncpg.connect(**self.db_instance.get_connection_params())
 
@@ -384,9 +368,7 @@ class SeedManager:
         finally:
             await conn.close()
 
-    async def _load_template(
-        self, template_name: str, context: Dict[str, Any]
-    ) -> Optional[str]:
+    async def _load_template(self, template_name: str, context: dict[str, Any]) -> Optional[str]:
         """Load and render a SQL template."""
         try:
             template = self.jinja_env.get_template(template_name)
@@ -395,9 +377,7 @@ class SeedManager:
             self.logger.debug("Template not found", template=template_name)
             raise
         except Exception as e:
-            self.logger.error(
-                "Failed to render template", template=template_name, error=str(e)
-            )
+            self.logger.error("Failed to render template", template=template_name, error=str(e))
             raise
 
     async def _execute_sql(self, sql_content: str, description: str) -> None:
@@ -407,9 +387,7 @@ class SeedManager:
         try:
             async with conn.transaction():
                 # Split SQL by semicolon and execute each statement
-                statements = [
-                    stmt.strip() for stmt in sql_content.split(";") if stmt.strip()
-                ]
+                statements = [stmt.strip() for stmt in sql_content.split(";") if stmt.strip()]
 
                 for stmt in statements:
                     if stmt:
@@ -458,7 +436,7 @@ class SeedManager:
             self.logger.error("Data verification failed", error=str(e))
             return False
 
-    async def get_seed_status(self) -> Dict[str, Any]:
+    async def get_seed_status(self) -> dict[str, Any]:
         """Get status of seeded data."""
         try:
             conn = await asyncpg.connect(**self.db_instance.get_connection_params())
@@ -482,11 +460,7 @@ class SeedManager:
                         status[key] = None  # Table doesn't exist
 
                 return {
-                    "status": (
-                        "seeded"
-                        if any(v and v > 0 for v in status.values())
-                        else "empty"
-                    ),
+                    "status": ("seeded" if any(v and v > 0 for v in status.values()) else "empty"),
                     "details": status,
                 }
 

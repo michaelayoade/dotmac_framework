@@ -1,10 +1,7 @@
 """
 Pagination utilities for API endpoints.
 """
-
 from typing import Optional
-
-from fastapi import Query
 
 
 class PaginationParams:
@@ -12,15 +9,17 @@ class PaginationParams:
 
     def __init__(
         self,
-        page: int = Query(1, ge=1, description="Page number (starts from 1)"),
-        size: int = Query(20, ge=1, le=100, description="Number of items per page"),
+        page: Optional[int] = None,
+        size: Optional[int] = None,
     ):
         self.page = page
         self.size = size
 
     @property
     def skip(self) -> int:
-        """Calculate skip value for database queries."""
+        """Calculate skip va        if size is None:
+                    size = Query(20, ge=1, le=100, description="Number of items per page")  # noqa: B008
+        lue for database queries."""
         return (self.page - 1) * self.size
 
     @property

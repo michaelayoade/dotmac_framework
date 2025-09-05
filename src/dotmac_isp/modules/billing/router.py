@@ -4,22 +4,20 @@ All manual router patterns have been eliminated.
 """
 
 import io
-from typing import Any, Dict
+from typing import Any
 from uuid import UUID
 
-from fastapi import File, UploadFile, Depends
-from fastapi.responses import StreamingResponse
-
+from dotmac.application import standard_exception_handler
 from dotmac_shared.api.dependencies import (
-    StandardDependencies,
     PaginatedDependencies,
     SearchParams,
-    get_standard_deps,
+    StandardDependencies,
     get_paginated_deps,
-    get_admin_deps
+    get_standard_deps,
 )
-from dotmac_shared.api.exception_handlers import standard_exception_handler
 from dotmac_shared.api.router_factory import BillingRouterFactory, RouterFactory
+from fastapi import Depends, UploadFile
+from fastapi.responses import StreamingResponse
 
 from .schemas import (
     BillingReport,
@@ -71,7 +69,7 @@ router.include_router(payment_router)
 
 @router.get("/dashboard")
 @standard_exception_handler
-async def get_billing_dashboard(deps: StandardDependencies = Depends(get_standard_deps)) -> Dict[str, Any]:
+async def get_billing_dashboard(deps: StandardDependencies = Depends(get_standard_deps)) -> dict[str, Any]:
     """Get billing dashboard with summary statistics."""
     service = BillingService(deps.db, deps.tenant_id)
     return await service.get_dashboard_data(deps.user_id)
@@ -79,7 +77,10 @@ async def get_billing_dashboard(deps: StandardDependencies = Depends(get_standar
 
 @router.get("/reports/revenue")
 @standard_exception_handler
-async def get_revenue_report(deps: PaginatedDependencies = Depends(get_paginated_deps), search: SearchParams = Depends(SearchParams)) -> BillingReport:
+async def get_revenue_report(
+    deps: PaginatedDependencies = Depends(get_paginated_deps),
+    search: SearchParams = Depends(SearchParams),
+) -> BillingReport:
     """Generate revenue report with filters."""
     service = BillingService(deps.db, deps.tenant_id)
     return await service.generate_revenue_report(
@@ -90,7 +91,8 @@ async def get_revenue_report(deps: PaginatedDependencies = Depends(get_paginated
 @router.post("/invoices/{invoice_id}/pdf")
 @standard_exception_handler
 async def generate_invoice_pdf(
-    invoice_id: UUID, deps: StandardDependencies = Depends(get_standard_deps)
+    invoice_id: UUID,
+    deps: StandardDependencies = Depends(get_standard_deps),
 ) -> StreamingResponse:
     """Generate and download invoice PDF."""
     service = BillingService(deps.db, deps.tenant_id)
@@ -98,9 +100,7 @@ async def generate_invoice_pdf(
     return StreamingResponse(
         io.BytesIO(pdf_content),
         media_type="application/pdf",
-        headers={
-            "Content-Disposition": f"attachment; filename=invoice-{invoice_id}.pdf"
-        },
+        headers={"Content-Disposition": f"attachment; filename = invoice-{invoice_id}.pdf"},
     )
 
 
@@ -108,17 +108,17 @@ async def generate_invoice_pdf(
 @standard_exception_handler
 async def upload_invoice_attachment(
     invoice_id: UUID,
-    file: UploadFile = File(...),
-    deps: StandardDependencies = Depends(get_standard_deps) = None,
-    upload_params: FileUploadDeps = None,
+    file: UploadFile = None,
+    deps: StandardDependencies = Depends(get_standard_deps),
+    # upload_params: FileUploadDeps = None,  # Not implemented
 ):
     """Upload attachment to invoice."""
     service = BillingService(deps.db, deps.tenant_id)
     return await service.upload_invoice_attachment(
         invoice_id=invoice_id,
         file=file,
-        max_size=upload_params.max_size_bytes,
-        allowed_types=upload_params.allowed_extensions,
+        max_size=10 * 1024 * 1024,  # 10MB default
+        allowed_types=["pdf", "jpg", "png", "doc", "docx"],  # Default allowed types
         user_id=deps.user_id,
     )
 

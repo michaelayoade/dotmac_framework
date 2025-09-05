@@ -2,7 +2,7 @@
 Exception classes for the DotMac Container Provisioning Service.
 """
 
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 from uuid import UUID
 
 
@@ -15,7 +15,7 @@ class ProvisioningError(Exception):
         isp_id: Optional[UUID] = None,
         stage: Optional[str] = None,
         rollback_completed: bool = False,
-        context: Optional[Dict[str, Any]] = None,
+        context: Optional[dict[str, Any]] = None,
     ):
         super().__init__(message)
         self.isp_id = isp_id
@@ -73,7 +73,7 @@ class ResourceCalculationError(ProvisioningError):
         self,
         message: str,
         customer_count: Optional[int] = None,
-        requested_resources: Optional[Dict[str, Any]] = None,
+        requested_resources: Optional[dict[str, Any]] = None,
         **kwargs,
     ):
         super().__init__(message, **kwargs)

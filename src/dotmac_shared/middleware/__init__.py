@@ -13,7 +13,7 @@ Key Components:
 - Pluggable middleware system for extensions
 
 Usage:
-    from dotmac_middleware import MiddlewareStack, SecurityConfig
+    from dotmac_middleware import MiddlewareStack, SecurityConfig  # noqa: F401
 
     app = FastAPI()
 
@@ -28,12 +28,22 @@ Usage:
     middleware_stack.apply(app)
 """
 
-# from .auth import (
-#     AuthenticationMiddleware,
-#     AuthorizationMiddleware,
-#     JWTMiddleware,
-#     SessionMiddleware,
-# )
+from .api_versioning import (
+    APIVersionInfo,
+    APIVersioningMiddleware,
+    VersionStatus,
+    add_api_versioning_middleware,
+)
+from .background_operations import (
+    BackgroundOperationsManager,
+    BackgroundOperationsMiddleware,
+    IdempotencyKey,
+    OperationStatus,
+    SagaStep,
+    SagaStepStatus,
+    SagaWorkflow,
+    add_background_operations_middleware,
+)
 from .core import MiddlewareConfig, MiddlewareManager, MiddlewareStack
 from .plugins import MiddlewarePlugin, MiddlewareRegistry, PluginManager
 from .processing import (
@@ -55,25 +65,6 @@ from .tenant import (
     TenantConfig,
     TenantContextMiddleware,
     TenantMiddleware,
-)
-
-# New enhanced middleware components
-from .api_versioning import (
-    APIVersioningMiddleware,
-    APIVersionInfo,
-    VersionStatus,
-    add_api_versioning_middleware,
-)
-
-from .background_operations import (
-    BackgroundOperationsMiddleware,
-    BackgroundOperationsManager,
-    SagaWorkflow,
-    SagaStep,
-    IdempotencyKey,
-    OperationStatus,
-    SagaStepStatus,
-    add_background_operations_middleware,
 )
 
 __version__ = "1.0.0"
@@ -106,7 +97,6 @@ __all__ = [
     "MiddlewarePlugin",
     "PluginManager",
     "MiddlewareRegistry",
-    
     # New Enhanced Components
     "APIVersioningMiddleware",
     "APIVersionInfo",

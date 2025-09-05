@@ -3,7 +3,7 @@ Lead scoring engine using Strategy pattern.
 """
 
 import logging
-from typing import Any, Dict, List
+from typing import Any, Optional
 
 try:
     from .strategies import (
@@ -37,7 +37,7 @@ class LeadScoringEngine:
     focused, configurable scoring strategies (Complexity: 3).
     """
 
-    def __init__(self, custom_strategies: List[LeadScoringStrategy] = None):
+    def __init__(self, custom_strategies: Optional[list[LeadScoringStrategy]] = None):
         """Initialize with default and custom scoring strategies."""
         self.strategies = [
             BudgetScoringStrategy(),
@@ -52,7 +52,7 @@ class LeadScoringEngine:
         if custom_strategies:
             self.strategies.extend(custom_strategies)
 
-    def calculate_lead_score(self, lead_data: Dict[str, Any]) -> int:
+    def calculate_lead_score(self, lead_data: dict[str, Any]) -> int:
         """
         Calculate total lead score using all scoring strategies.
 
@@ -87,7 +87,7 @@ class LeadScoringEngine:
 
         return final_score
 
-    def get_scoring_breakdown(self, lead_data: Dict[str, Any]) -> Dict[str, int]:
+    def get_scoring_breakdown(self, lead_data: dict[str, Any]) -> dict[str, int]:
         """Get detailed scoring breakdown by strategy."""
         breakdown = {}
 
@@ -109,9 +109,7 @@ class LeadScoringEngine:
     def remove_scoring_strategy(self, strategy_name: str) -> bool:
         """Remove a scoring strategy by name."""
         original_count = len(self.strategies)
-        self.strategies = [
-            s for s in self.strategies if s.get_strategy_name() != strategy_name
-        ]
+        self.strategies = [s for s in self.strategies if s.get_strategy_name() != strategy_name]
         removed = len(self.strategies) < original_count
 
         if removed:
@@ -119,7 +117,7 @@ class LeadScoringEngine:
 
         return removed
 
-    def get_active_strategies(self) -> List[str]:
+    def get_active_strategies(self) -> list[str]:
         """Get list of active scoring strategy names."""
         return [strategy.get_strategy_name() for strategy in self.strategies]
 
@@ -130,7 +128,7 @@ class WeightedLeadScoringEngine(LeadScoringEngine):
     Allows different importance weights for different scoring criteria.
     """
 
-    def __init__(self, strategy_weights: Dict[str, float] = None):
+    def __init__(self, strategy_weights: Optional[dict[str, float]] = None):
         """Initialize with weighted strategies."""
         super().__init__()
 
@@ -144,7 +142,7 @@ class WeightedLeadScoringEngine(LeadScoringEngine):
             "Engagement Scoring": 0.7,  # Nice to have
         }
 
-    def calculate_lead_score(self, lead_data: Dict[str, Any]) -> int:
+    def calculate_lead_score(self, lead_data: dict[str, Any]) -> int:
         """Calculate weighted lead score."""
         total_score = 0
 
@@ -163,8 +161,8 @@ class WeightedLeadScoringEngine(LeadScoringEngine):
 
 def create_lead_scoring_engine(
     weighted: bool = False,
-    custom_strategies: List[LeadScoringStrategy] = None,
-    strategy_weights: Dict[str, float] = None,
+    custom_strategies: Optional[list[LeadScoringStrategy]] = None,
+    strategy_weights: Optional[dict[str, float]] = None,
 ) -> LeadScoringEngine:
     """
     Factory function to create a configured lead scoring engine.

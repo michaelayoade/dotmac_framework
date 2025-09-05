@@ -9,13 +9,14 @@ Defines the abstract interface that all event adapters must implement:
 """
 
 from abc import ABC, abstractmethod
+from collections.abc import AsyncIterator
 from datetime import datetime
-from typing import Any, AsyncIterator, Dict, List, Optional
+from typing import Any, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
-class AdapterConfig(BaseModel, ConfigDict):
+class AdapterConfig(BaseModel):
     """Base configuration for event adapters."""
 
     connection_string: str
@@ -31,12 +32,12 @@ class EventRecord(BaseModel):
 
     event_id: str
     event_type: str
-    data: Dict[str, Any]
+    data: dict[str, Any]
     partition_key: Optional[str] = None
     timestamp: datetime
     offset: Optional[str] = None
     partition: Optional[int] = None
-    headers: Optional[Dict[str, str]] = None
+    headers: Optional[dict[str, str]] = None
 
 
 class PublishResult(BaseModel):
@@ -80,9 +81,7 @@ class EventAdapter(ABC):
         pass
 
     @abstractmethod
-    async def publish(
-        self, topic: str, event: EventRecord, partition_key: Optional[str] = None
-    ) -> PublishResult:
+    async def publish(self, topic: str, event: EventRecord, partition_key: Optional[str] = None) -> PublishResult:
         """
         Publish an event to a topic.
 
@@ -98,7 +97,7 @@ class EventAdapter(ABC):
 
     @abstractmethod
     async def subscribe(
-        self, topics: List[str], consumer_group: str, auto_commit: bool = True
+        self, topics: list[str], consumer_group: str, auto_commit: bool = True
     ) -> AsyncIterator[ConsumerRecord]:
         """
         Subscribe to topics and yield consumed events.
@@ -114,9 +113,7 @@ class EventAdapter(ABC):
         pass
 
     @abstractmethod
-    async def commit_offset(
-        self, consumer_group: str, topic: str, partition: int, offset: str
-    ) -> None:
+    async def commit_offset(self, consumer_group: str, topic: str, partition: int, offset: str) -> None:
         """
         Manually commit an offset for a consumer group.
 
@@ -134,7 +131,7 @@ class EventAdapter(ABC):
         topic: str,
         partitions: int = 3,
         replication_factor: int = 2,
-        config: Optional[Dict[str, Any]] = None,
+        config: Optional[dict[str, Any]] = None,
     ) -> None:
         """
         Create a new topic.
@@ -158,7 +155,7 @@ class EventAdapter(ABC):
         pass
 
     @abstractmethod
-    async def list_topics(self) -> List[str]:
+    async def list_topics(self) -> list[str]:
         """
         List all available topics.
 
@@ -168,7 +165,7 @@ class EventAdapter(ABC):
         pass
 
     @abstractmethod
-    async def get_topic_info(self, topic: str) -> Dict[str, Any]:
+    async def get_topic_info(self, topic: str) -> dict[str, Any]:
         """
         Get information about a topic.
 
@@ -181,7 +178,7 @@ class EventAdapter(ABC):
         pass
 
     @abstractmethod
-    async def list_consumer_groups(self) -> List[Dict[str, Any]]:
+    async def list_consumer_groups(self) -> list[dict[str, Any]]:
         """
         List all consumer groups.
 
@@ -201,7 +198,7 @@ class EventAdapter(ABC):
         pass
 
     @abstractmethod
-    async def get_consumer_group_info(self, group_id: str) -> Dict[str, Any]:
+    async def get_consumer_group_info(self, group_id: str) -> dict[str, Any]:
         """
         Get information about a consumer group.
 
@@ -214,9 +211,7 @@ class EventAdapter(ABC):
         pass
 
     @abstractmethod
-    async def seek_to_beginning(
-        self, consumer_group: str, topic: str, partition: Optional[int] = None
-    ) -> None:
+    async def seek_to_beginning(self, consumer_group: str, topic: str, partition: Optional[int] = None) -> None:
         """
         Seek consumer group to the beginning of a topic/partition.
 
@@ -228,9 +223,7 @@ class EventAdapter(ABC):
         pass
 
     @abstractmethod
-    async def seek_to_end(
-        self, consumer_group: str, topic: str, partition: Optional[int] = None
-    ) -> None:
+    async def seek_to_end(self, consumer_group: str, topic: str, partition: Optional[int] = None) -> None:
         """
         Seek consumer group to the end of a topic/partition.
 
@@ -242,9 +235,7 @@ class EventAdapter(ABC):
         pass
 
     @abstractmethod
-    async def seek_to_offset(
-        self, consumer_group: str, topic: str, partition: int, offset: str
-    ) -> None:
+    async def seek_to_offset(self, consumer_group: str, topic: str, partition: int, offset: str) -> None:
         """
         Seek consumer group to a specific offset.
 
@@ -284,7 +275,7 @@ class EventAdapter(ABC):
         """
         pass
 
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """
         Perform a health check on the adapter.
 

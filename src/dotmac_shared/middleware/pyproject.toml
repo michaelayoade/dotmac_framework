@@ -54,11 +54,8 @@ mypy = "^1.8.0"
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
-[tool.ruff]
-line-length = 88
-target-version = "py312"
-select = ["E", "W", "F", "I", "N", "B", "C4", "UP"]
-ignore = ["E501", "B008"]
+## Ruff configuration is centralized in the repository root pyproject.toml
+## This local section was removed to avoid conflicts and ensure consistency.
 
 [tool.mypy]
 python_version = "3.12"

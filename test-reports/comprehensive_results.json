@@ -1,0 +1,73 @@
+{
+  "timestamp": "2025-09-05T17:33:22.404979",
+  "overall_success": false,
+  "total_execution_time": 113.4062237739563,
+  "suites": {
+    "unit": {
+      "name": "Unit Tests",
+      "passed": 0,
+      "failed": 1,
+      "errors": 1,
+      "skipped": 0,
+      "execution_time": 0.0,
+      "coverage_percent": 0.0,
+      "exit_code": 1,
+      "error_count": 1
+    },
+    "platform-services": {
+      "name": "Platform Services Tests",
+      "passed": 0,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "execution_time": 2.1870815753936768,
+      "coverage_percent": 0.0,
+      "exit_code": 2,
+      "error_count": 0
+    },
+    "integration": {
+      "name": "Integration Tests",
+      "passed": 0,
+      "failed": 1,
+      "errors": 1,
+      "skipped": 0,
+      "execution_time": 0.0,
+      "coverage_percent": 0.0,
+      "exit_code": 1,
+      "error_count": 1
+    },
+    "security": {
+      "name": "Security Tests",
+      "passed": 0,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "execution_time": 15.234765529632568,
+      "coverage_percent": 0.0,
+      "exit_code": 2,
+      "error_count": 0
+    },
+    "e2e": {
+      "name": "End-to-End Tests",
+      "passed": 0,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "execution_time": 16.064039707183838,
+      "coverage_percent": 6.0,
+      "exit_code": 1,
+      "error_count": 1
+    },
+    "performance": {
+      "name": "Performance Tests",
+      "passed": 0,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "execution_time": 1.013653039932251,
+      "coverage_percent": 0.0,
+      "exit_code": 4,
+      "error_count": 1
+    }
+  }
+}

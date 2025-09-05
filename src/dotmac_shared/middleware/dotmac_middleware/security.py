@@ -33,12 +33,8 @@ class SecurityConfig:
     # CSRF Protection
     csrf_secret_key: str | None = None
     csrf_token_lifetime: int = 3600  # 1 hour
-    csrf_excluded_paths: list[str] = field(
-        default_factory=lambda: ["/health", "/metrics"]
-    )
-    csrf_safe_methods: set[str] = field(
-        default_factory=lambda: {"GET", "HEAD", "OPTIONS"}
-    )
+    csrf_excluded_paths: list[str] = field(default_factory=lambda: ["/health", "/metrics"])
+    csrf_safe_methods: set[str] = field(default_factory=lambda: {"GET", "HEAD", "OPTIONS"})
 
     # Rate Limiting
     rate_limit_requests_per_minute: int = 100
@@ -105,10 +101,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             )
         else:
             # More permissive for development
-            return (
-                "default-src 'self' 'unsafe-inline' 'unsafe-eval' data:; "
-                "frame-ancestors 'none'"
-            )
+            return "default-src 'self' 'unsafe-inline' 'unsafe-eval' data:; " "frame-ancestors 'none'"
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """Add comprehensive security headers to all responses."""
@@ -120,15 +113,11 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["Referrer-Policy"] = self.config.referrer_policy
 
         # Content Security Policy
-        response.headers["Content-Security-Policy"] = (
-            self.config.content_security_policy
-        )
+        response.headers["Content-Security-Policy"] = self.config.content_security_policy
 
         # HTTPS-only headers for production
         if self.config.environment == "production":
-            response.headers["Strict-Transport-Security"] = (
-                self.config.strict_transport_security
-            )
+            response.headers["Strict-Transport-Security"] = self.config.strict_transport_security
 
         # XSS Protection (legacy but still useful)
         response.headers["X-XSS-Protection"] = "1; mode=block"
@@ -185,9 +174,7 @@ class CSRFMiddleware(BaseHTTPMiddleware):
 
             # Verify signature
             expected_data = f"{timestamp_str}:{random_data}"
-            expected_signature = hashlib.sha256(
-                (expected_data + self.secret_key).encode()
-            ).hexdigest()
+            expected_signature = hashlib.sha256((expected_data + self.secret_key).encode()).hexdigest()
 
             return secrets.compare_digest(signature, expected_signature)
 
@@ -283,9 +270,7 @@ class RateLimitingMiddleware(BaseHTTPMiddleware):
         # Clean old entries
         if client_id in self._request_counts:
             self._request_counts[client_id] = [
-                timestamp
-                for timestamp in self._request_counts[client_id]
-                if timestamp > window_start
+                timestamp for timestamp in self._request_counts[client_id] if timestamp > window_start
             ]
         else:
             self._request_counts[client_id] = []
@@ -324,9 +309,7 @@ class RateLimitingMiddleware(BaseHTTPMiddleware):
 
         # Check if client is blocked
         if self._is_blocked(client_id):
-            logger.warning(
-                "Blocked client attempted request", client_id=client_id, path=path
-            )
+            logger.warning("Blocked client attempted request", client_id=client_id, path=path)
 
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
@@ -481,10 +464,7 @@ class InputValidationMiddleware(BaseHTTPMiddleware):
         if request.method in {"POST", "PUT", "PATCH"}:
             try:
                 content_type = request.headers.get("Content-Type", "")
-                if (
-                    "multipart/form-data" in content_type
-                    or "application/x-www-form-urlencoded" in content_type
-                ):
+                if "multipart/form-data" in content_type or "application/x-www-form-urlencoded" in content_type:
                     form_data = await request.form()
                     await self._validate_form_data(form_data)
             except HTTPException:
@@ -526,6 +506,4 @@ class SecurityMiddleware(BaseHTTPMiddleware):
             return await self.rate_limit_middleware.dispatch(req, csrf_handler)
 
         # Start the security pipeline
-        return await self.input_validation_middleware.dispatch(
-            request, rate_limit_handler
-        )
+        return await self.input_validation_middleware.dispatch(request, rate_limit_handler)

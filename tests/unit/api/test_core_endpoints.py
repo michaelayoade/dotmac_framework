@@ -2,14 +2,12 @@
 Test core API endpoints and routing.
 """
 
-import json
-from datetime import datetime, timezone
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
 # Mock core API components for testing
-from fastapi import APIRouter, FastAPI, HTTPException
+from fastapi import APIRouter, FastAPI
 from fastapi.testclient import TestClient
 
 core_router = APIRouter()

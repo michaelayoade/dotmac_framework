@@ -2,11 +2,9 @@
 Container template management for the DotMac Provisioning Service.
 """
 
-import asyncio
-import json
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional
 from uuid import UUID
 
 import yaml
@@ -14,10 +12,8 @@ from pydantic import BaseModel, Field
 
 from .exceptions import TemplateError
 from .models import (
-    DatabaseConfig,
     InfrastructureType,
     ISPConfig,
-    NetworkConfig,
     ResourceRequirements,
 )
 
@@ -27,25 +23,23 @@ class ContainerTemplate(BaseModel):
 
     name: str = Field(..., description="Template name")
     version: str = Field(default="1.0.0", description="Template version")
-    infrastructure_type: InfrastructureType = Field(
-        ..., description="Target infrastructure"
-    )
+    infrastructure_type: InfrastructureType = Field(..., description="Target infrastructure")
     description: Optional[str] = Field(default=None)
 
     # Template content
-    template_content: Dict[str, Any] = Field(..., description="Template specification")
-    default_values: Dict[str, Any] = Field(default_factory=dict)
+    template_content: dict[str, Any] = Field(..., description="Template specification")
+    default_values: dict[str, Any] = Field(default_factory=dict)
 
     # Metadata
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
-    tags: List[str] = Field(default_factory=list)
+    tags: list[str] = Field(default_factory=list)
 
     # Validation
-    required_variables: List[str] = Field(default_factory=list)
-    optional_variables: List[str] = Field(default_factory=list)
+    required_variables: list[str] = Field(default_factory=list)
+    optional_variables: list[str] = Field(default_factory=list)
 
-    def render(self, variables: Dict[str, Any]) -> Dict[str, Any]:
+    def render(self, variables: dict[str, Any]) -> dict[str, Any]:
         """Render template with provided variables."""
         # Check required variables
         missing_vars = [var for var in self.required_variables if var not in variables]
@@ -62,13 +56,10 @@ class ContainerTemplate(BaseModel):
         # Render template
         return self._render_recursive(self.template_content, render_vars)
 
-    def _render_recursive(self, obj: Any, variables: Dict[str, Any]) -> Any:
+    def _render_recursive(self, obj: Any, variables: dict[str, Any]) -> Any:
         """Recursively render template variables."""
         if isinstance(obj, dict):
-            return {
-                key: self._render_recursive(value, variables)
-                for key, value in obj.items()
-            }
+            return {key: self._render_recursive(value, variables) for key, value in obj.items()}
         elif isinstance(obj, list):
             return [self._render_recursive(item, variables) for item in obj]
         elif isinstance(obj, str):
@@ -76,7 +67,7 @@ class ContainerTemplate(BaseModel):
         else:
             return obj
 
-    def _render_string(self, template_str: str, variables: Dict[str, Any]) -> str:
+    def _render_string(self, template_str: str, variables: dict[str, Any]) -> str:
         """Render string template with variables."""
         try:
             # Simple variable substitution: {{variable_name}}
@@ -89,7 +80,7 @@ class ContainerTemplate(BaseModel):
             raise TemplateError(
                 f"Failed to render template string: {template_str}: {e}",
                 template_name=self.name,
-            )
+            ) from e
 
 
 class TemplateManager:
@@ -97,7 +88,7 @@ class TemplateManager:
 
     def __init__(self, template_dir: Optional[Path] = None):
         self.template_dir = template_dir or Path(__file__).parent.parent / "templates"
-        self.templates: Dict[str, ContainerTemplate] = {}
+        self.templates: dict[str, ContainerTemplate] = {}
         self.loaded = False
 
     async def load_templates(self) -> None:
@@ -111,7 +102,7 @@ class TemplateManager:
             try:
                 await self._load_template_file(template_file)
             except Exception as e:
-                raise TemplateError(f"Failed to load template {template_file}: {e}")
+                raise TemplateError(f"Failed to load template {template_file}: {e}") from e
 
         # Create default templates if none exist
         if not self.templates:
@@ -121,16 +112,14 @@ class TemplateManager:
 
     async def _load_template_file(self, template_file: Path) -> None:
         """Load a single template file."""
-        with open(template_file, "r") as f:
+        with open(template_file) as f:
             template_data = yaml.safe_load(f)
 
         template = ContainerTemplate(**template_data)
         template_key = f"{template.name}:{template.infrastructure_type.value}"
         self.templates[template_key] = template
 
-    async def get_template(
-        self, name: str, infrastructure_type: InfrastructureType
-    ) -> ContainerTemplate:
+    async def get_template(self, name: str, infrastructure_type: InfrastructureType) -> ContainerTemplate:
         """Get template by name and infrastructure type."""
         if not self.loaded:
             await self.load_templates()
@@ -148,14 +137,12 @@ class TemplateManager:
         isp_id: UUID,
         config: ISPConfig,
         resources: ResourceRequirements,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Render a template with ISP configuration."""
         template = await self.get_template(template_name, infrastructure_type)
 
         # Prepare template variables
-        variables = self._prepare_template_variables(
-            isp_id, config, resources, infrastructure_type
-        )
+        variables = self._prepare_template_variables(isp_id, config, resources, infrastructure_type)
 
         # Render template
         return template.render(variables)
@@ -166,7 +153,7 @@ class TemplateManager:
         config: ISPConfig,
         resources: ResourceRequirements,
         infrastructure_type: InfrastructureType,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Prepare variables for template rendering."""
 
         # Base variables
@@ -184,9 +171,7 @@ class TemplateManager:
                 {
                     "cpu_limit": resources.to_kubernetes_limits()["cpu"],
                     "memory_limit": resources.to_kubernetes_limits()["memory"],
-                    "storage_limit": resources.to_kubernetes_limits()[
-                        "ephemeral-storage"
-                    ],
+                    "storage_limit": resources.to_kubernetes_limits()["ephemeral-storage"],
                     "namespace": f"tenant-{config.tenant_name}",
                     "container_name": f"isp-framework-{config.tenant_name}",
                     "service_name": f"{config.tenant_name}-service",
@@ -210,11 +195,7 @@ class TemplateManager:
                 "domain": network.domain or f"{network.subdomain}.dotmac.app",
                 "subdomain": network.subdomain,
                 "ssl_enabled": network.ssl_enabled,
-                "external_port": (
-                    list(network.port_mapping.values())[0]
-                    if network.port_mapping
-                    else 80
-                ),
+                "external_port": (list(network.port_mapping.values())[0] if network.port_mapping else 80),
             }
         )
 
@@ -270,81 +251,80 @@ class TemplateManager:
     async def _create_kubernetes_template(self) -> ContainerTemplate:
         """Create default Kubernetes deployment template."""
 
-        template_content = {
-            "apiVersion": "v1",
-            "kind": "Namespace",
-            "metadata": {
-                "name": "{{namespace}}",
-                "labels": {
-                    "tenant": "{{tenant_name}}",
-                    "isp-id": "{{isp_id}}",
-                    "plan": "{{plan_type}}",
-                },
-            },
-            "spec": {},
-            "---": None,
-            "apiVersion": "apps/v1",
-            "kind": "Deployment",
-            "metadata": {
-                "name": "{{container_name}}",
-                "namespace": "{{namespace}}",
-                "labels": {"app": "isp-framework", "tenant": "{{tenant_name}}"},
-            },
-            "spec": {
-                "replicas": 1,
-                "selector": {
-                    "matchLabels": {"app": "isp-framework", "tenant": "{{tenant_name}}"}
-                },
-                "template": {
-                    "metadata": {
-                        "labels": {"app": "isp-framework", "tenant": "{{tenant_name}}"}
-                    },
-                    "spec": {
-                        "containers": [
-                            {
-                                "name": "isp-framework",
-                                "image": "registry.dotmac.app/isp-framework:latest",
-                                "ports": [{"containerPort": 8000}],
-                                "resources": {
-                                    "limits": {
-                                        "cpu": "{{cpu_limit}}",
-                                        "memory": "{{memory_limit}}",
-                                        "ephemeral-storage": "{{storage_limit}}",
-                                    },
-                                    "requests": {
-                                        "cpu": "{{cpu_limit}}",
-                                        "memory": "{{memory_limit}}",
-                                    },
-                                },
-                                "env": [
-                                    {"name": "TENANT_ID", "value": "{{tenant_name}}"},
-                                    {"name": "ISP_ID", "value": "{{isp_id}}"},
-                                    {"name": "PLAN_TYPE", "value": "{{plan_type}}"},
-                                    {
-                                        "name": "DATABASE_URL",
-                                        "value": "postgresql://{{database_user}}:{{database_password}}@{{database_host}}/{{database_name}}",
-                                    },
-                                    {
-                                        "name": "REDIS_URL",
-                                        "value": "redis://{{redis_host}}:6379/0",
-                                    },
-                                ],
-                                "livenessProbe": {
-                                    "httpGet": {"path": "/health/live", "port": 8000},
-                                    "initialDelaySeconds": 30,
-                                    "periodSeconds": 10,
-                                },
-                                "readinessProbe": {
-                                    "httpGet": {"path": "/health/ready", "port": 8000},
-                                    "initialDelaySeconds": 5,
-                                    "periodSeconds": 5,
-                                },
-                            }
-                        ]
+        template_content = [
+            {
+                "apiVersion": "v1",
+                "kind": "Namespace",
+                "metadata": {
+                    "name": "{{namespace}}",
+                    "labels": {
+                        "tenant": "{{tenant_name}}",
+                        "isp-id": "{{isp_id}}",
+                        "plan": "{{plan_type}}",
                     },
                 },
+                "spec": {},
             },
-        }
+            {
+                "apiVersion": "apps/v1",
+                "kind": "Deployment",
+                "metadata": {
+                    "name": "{{container_name}}",
+                    "namespace": "{{namespace}}",
+                    "labels": {"app": "isp-framework", "tenant": "{{tenant_name}}"},
+                },
+                "spec": {
+                    "replicas": 1,
+                    "selector": {"matchLabels": {"app": "isp-framework", "tenant": "{{tenant_name}}"}},
+                    "template": {
+                        "metadata": {"labels": {"app": "isp-framework", "tenant": "{{tenant_name}}"}},
+                        "spec": {
+                            "containers": [
+                                {
+                                    "name": "isp-framework",
+                                    "image": "registry.dotmac.app/isp-framework:latest",
+                                    "ports": [{"containerPort": 8000}],
+                                    "resources": {
+                                        "limits": {
+                                            "cpu": "{{cpu_limit}}",
+                                            "memory": "{{memory_limit}}",
+                                            "ephemeral-storage": "{{storage_limit}}",
+                                        },
+                                        "requests": {
+                                            "cpu": "{{cpu_limit}}",
+                                            "memory": "{{memory_limit}}",
+                                        },
+                                    },
+                                    "env": [
+                                        {"name": "TENANT_ID", "value": "{{tenant_name}}"},
+                                        {"name": "ISP_ID", "value": "{{isp_id}}"},
+                                        {"name": "PLAN_TYPE", "value": "{{plan_type}}"},
+                                        {
+                                            "name": "DATABASE_URL",
+                                            "value": "postgresql://{{database_user}}:{{database_password}}@{{database_host}}/{{database_name}}",
+                                        },
+                                        {
+                                            "name": "REDIS_URL",
+                                            "value": "redis://{{redis_host}}:6379/0",
+                                        },
+                                    ],
+                                    "livenessProbe": {
+                                        "httpGet": {"path": "/health/live", "port": 8000},
+                                        "initialDelaySeconds": 30,
+                                        "periodSeconds": 10,
+                                    },
+                                    "readinessProbe": {
+                                        "httpGet": {"path": "/health/ready", "port": 8000},
+                                        "initialDelaySeconds": 5,
+                                        "periodSeconds": 5,
+                                    },
+                                }
+                            ]
+                        },
+                    },
+                },
+            },
+        ]
 
         return ContainerTemplate(
             name="isp-framework",
@@ -466,7 +446,7 @@ class TemplateManager:
         with open(filepath, "w") as f:
             yaml.dump(template_data, f, default_flow_style=False)
 
-    async def list_templates(self) -> List[ContainerTemplate]:
+    async def list_templates(self) -> list[ContainerTemplate]:
         """List all available templates."""
         if not self.loaded:
             await self.load_templates()

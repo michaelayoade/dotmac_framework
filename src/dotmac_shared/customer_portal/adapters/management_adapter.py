@@ -3,28 +3,27 @@ Management Platform adapter for customer portal.
 
 Integrates the unified customer portal service with Management Platform functionality.
 """
-
 import logging
 from datetime import datetime, timedelta
 from decimal import Decimal
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 from uuid import UUID
+
+from dotmac_shared.logging import get_logger
 
 from ..core.schemas import ServiceStatus, ServiceSummary, ServiceUsageData, UsageSummary
 from .base import CustomerPortalAdapter
 
-# Import Management Platform services (when available)
 try:
-    from dotmac_management.repositories.customer import CustomerRepository
     from dotmac_management.services.customer_service import CustomerManagementService
     from dotmac_management.services.partner_service import PartnerService
 
     MANAGEMENT_SERVICES_AVAILABLE = True
 except ImportError:
     MANAGEMENT_SERVICES_AVAILABLE = False
-    logger.warning("Management platform services not available")
+    logging.getLogger(__name__).warning("Management platform services not available")
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class ManagementPortalAdapter(CustomerPortalAdapter):
@@ -43,7 +42,7 @@ class ManagementPortalAdapter(CustomerPortalAdapter):
         self.customer_service = None
         self.partner_service = None
 
-    async def get_customer_info(self, customer_id: UUID) -> Dict[str, Any]:
+    async def get_customer_info(self, customer_id: UUID) -> dict[str, Any]:
         """Get Management Platform customer information."""
         try:
             if not MANAGEMENT_SERVICES_AVAILABLE:
@@ -80,12 +79,10 @@ class ManagementPortalAdapter(CustomerPortalAdapter):
             }
 
         except Exception as e:
-            logger.error(
-                f"Failed to get Management Platform customer info for {customer_id}: {e}"
-            )
+            logger.error(f"Failed to get Management Platform customer info for {customer_id}: {e}")
             raise
 
-    async def get_customer_services(self, customer_id: UUID) -> List[ServiceSummary]:
+    async def get_customer_services(self, customer_id: UUID) -> list[ServiceSummary]:
         """Get Management Platform customer services."""
         try:
             if not MANAGEMENT_SERVICES_AVAILABLE:
@@ -137,9 +134,7 @@ class ManagementPortalAdapter(CustomerPortalAdapter):
             return service_summaries
 
         except Exception as e:
-            logger.error(
-                f"Failed to get Management Platform services for {customer_id}: {e}"
-            )
+            logger.error(f"Failed to get Management Platform services for {customer_id}: {e}")
             raise
 
     async def get_usage_summary(self, customer_id: UUID) -> Optional[UsageSummary]:
@@ -163,7 +158,7 @@ class ManagementPortalAdapter(CustomerPortalAdapter):
             logger.error(f"Failed to get usage summary for {customer_id}: {e}")
             return None
 
-    async def get_platform_data(self, customer_id: UUID) -> Dict[str, Any]:
+    async def get_platform_data(self, customer_id: UUID) -> dict[str, Any]:
         """Get Management Platform-specific data."""
         try:
             platform_data = {
@@ -206,37 +201,27 @@ class ManagementPortalAdapter(CustomerPortalAdapter):
 
             # Real implementation would get partner/business metrics
             partner_service = PartnerService(str(self.tenant_id))
-            partner_metrics = await partner_service.get_customer_metrics(
-                str(customer_id)
-            )
+            partner_metrics = await partner_service.get_customer_metrics(str(customer_id))
 
             platform_data["partner_metrics"] = partner_metrics
 
             return platform_data
 
         except Exception as e:
-            logger.error(
-                f"Failed to get Management Platform data for {customer_id}: {e}"
-            )
+            logger.error(f"Failed to get Management Platform data for {customer_id}: {e}")
             return {"platform_type": "management_platform"}
 
-    async def update_customer_custom_fields(
-        self, customer_id: UUID, custom_fields: Dict[str, Any]
-    ) -> bool:
+    async def update_customer_custom_fields(self, customer_id: UUID, custom_fields: dict[str, Any]) -> bool:
         """Update Management Platform customer custom fields."""
         try:
             if not MANAGEMENT_SERVICES_AVAILABLE:
                 # Mock successful update
-                logger.info(
-                    f"Mock update of custom fields for {customer_id}: {custom_fields}"
-                )
+                logger.info(f"Mock update of custom fields for {customer_id}: {custom_fields}")
                 return True
 
             # Real implementation
             customer_service = CustomerManagementService(str(self.tenant_id))
-            await customer_service.update_customer_metadata(
-                customer_id=str(customer_id), metadata=custom_fields
-            )
+            await customer_service.update_customer_metadata(customer_id=str(customer_id), metadata=custom_fields)
 
             return True
 
@@ -296,15 +281,13 @@ class ManagementPortalAdapter(CustomerPortalAdapter):
 
             # Real implementation would get platform-specific usage
             # This might involve API usage tracking, storage usage, etc.
-            raise NotImplementedError(
-                "Real Management Platform usage tracking not implemented"
-            )
+            raise NotImplementedError("Real Management Platform usage tracking not implemented")
 
         except Exception as e:
             logger.error(f"Failed to get service usage for {service_id}: {e}")
             raise
 
-    async def get_available_actions(self, customer_id: UUID) -> List[str]:
+    async def get_available_actions(self, customer_id: UUID) -> list[str]:
         """Get Management Platform-specific available actions."""
         base_actions = await super().get_available_actions(customer_id)
 
@@ -320,9 +303,7 @@ class ManagementPortalAdapter(CustomerPortalAdapter):
 
         return base_actions + mgmt_actions
 
-    async def validate_customer_access(
-        self, customer_id: UUID, requesting_user_id: UUID
-    ) -> bool:
+    async def validate_customer_access(self, customer_id: UUID, requesting_user_id: UUID) -> bool:
         """
         Validate access for Management Platform customers.
 

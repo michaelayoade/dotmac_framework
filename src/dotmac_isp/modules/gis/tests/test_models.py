@@ -1,12 +1,11 @@
+
 """
 Unit tests for GIS models.
 Tests model creation, validation, and relationships.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import uuid4
-
-import pytest
 
 from dotmac_isp.modules.gis.models import (
     CoverageGap,

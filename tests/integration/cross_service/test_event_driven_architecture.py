@@ -3,17 +3,15 @@ Event-Driven Architecture Integration Tests
 Tests message passing, event ordering, and system resilience
 """
 import asyncio
-import pytest
-import json
-from typing import Dict, List, Any
-from datetime import datetime, timedelta
 import uuid
+from datetime import datetime, timedelta
 
-from dotmac_shared.testing.integration_base import IntegrationTestBase
-from dotmac_shared.testing.event_simulator import EventSimulator
-from dotmac_shared.testing.message_bus_tester import MessageBusTester
-from dotmac_shared.events.event_types import EventType
+import pytest
+from dotmac.communications.events.message import Event as EventType
 from dotmac_shared.messaging.reliability_tester import ReliabilityTester
+from dotmac_shared.testing.event_simulator import EventSimulator
+from dotmac_shared.testing.integration_base import IntegrationTestBase
+from dotmac_shared.testing.message_bus_tester import MessageBusTester
 
 
 class TestEventDrivenArchitecture(IntegrationTestBase):

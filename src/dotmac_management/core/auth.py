@@ -3,7 +3,8 @@ Authentication dependencies and utilities.
 """
 
 import logging
-from typing import Callable, List, Optional
+from collections.abc import Callable
+from typing import Optional
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, status
@@ -12,7 +13,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..database import get_db
 from ..repositories.user import UserRepository
-from .security import CurrentUser, check_permission, decode_token, security
+from .security import CurrentUser, decode_token, security
+
+try:
+    from dotmac.platform.auth.jwt_service import JWTService as ManagementJWTService
+except ImportError:
+    # Fallback stub if platform services not available
+    class ManagementJWTService:
+        def __init__(self, *args, **kwargs):
+            pass
+
 
 logger = logging.getLogger(__name__)
 
@@ -45,12 +55,12 @@ async def get_current_user(
     user_repo = UserRepository(db)
     try:
         user = await user_repo.get_by_id(UUID(user_id))
-    except ValueError:
+    except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid user ID format",
             headers={"WWW-Authenticate": "Bearer"},
-        )
+        ) from e
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -85,13 +95,11 @@ async def get_current_active_user(
 ) -> CurrentUser:
     """Get current active user (additional validation)."""
     if not current_user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="User account is inactive"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User account is inactive")
     return current_user
 
 
-def require_permissions(required_permissions: List[str]) -> Callable:
+def require_permissions(required_permissions: list[str]) -> Callable:
     """Dependency factory for requiring specific permissions."""
 
     def permission_checker(
@@ -111,7 +119,7 @@ def require_permissions(required_permissions: List[str]) -> Callable:
     return permission_checker
 
 
-def require_role(required_roles: List[str]) -> Callable:
+def require_role(required_roles: list[str]) -> Callable:
     """Dependency factory for requiring specific roles."""
 
     def role_checker(
@@ -133,7 +141,8 @@ def require_tenant_access(tenant_id_param: str = "tenant_id") -> Callable:
     """Dependency factory for requiring tenant access."""
 
     def tenant_access_checker(
-        tenant_id: UUID, current_user: CurrentUser = Depends(get_current_active_user)
+        tenant_id: UUID,
+        current_user: CurrentUser = Depends(get_current_active_user),
     ) -> CurrentUser:
         """Check if user can access the specified tenant."""
 
@@ -152,9 +161,7 @@ def require_master_admin(
 ) -> CurrentUser:
     """Require master admin role."""
     if not current_user.is_master_admin():
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Master admin access required"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Master admin access required")
     return current_user
 
 
@@ -183,9 +190,7 @@ def require_tenant_admin(
 ) -> CurrentUser:
     """Require tenant admin role or higher."""
     if not (current_user.is_master_admin() or current_user.is_tenant_admin()):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Tenant admin access required"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Tenant admin access required")
     return current_user
 
 
@@ -251,8 +256,6 @@ def get_current_tenant_id(
     return current_user.tenant_id
 
 
-def verify_tenant_access(
-    tenant_id: str, current_user: CurrentUser = Depends(get_current_user)
-) -> bool:
+def verify_tenant_access(tenant_id: str, current_user: CurrentUser = Depends(get_current_user)) -> bool:
     """Verify user has access to specified tenant."""
     return current_user.can_access_tenant(tenant_id)

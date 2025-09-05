@@ -75,13 +75,8 @@ Homepage = "https://dotmac.com/captive-portal"
 Documentation = "https://docs.dotmac.com/captive-portal"
 Repository = "https://github.com/dotmac/captive-portal"
 
-[tool.ruff.lint]
-select = ["E", "F", "W", "C90", "I", "N", "UP", "YTT", "S", "BLE", "B", "A", "COM", "C4", "DTZ", "T10", "EM", "EXE", "FA", "ISC", "ICN", "G", "INP", "PIE", "T20", "PYI", "PT", "Q", "RSE", "RET", "SLF", "SLOT", "SIM", "TID", "TCH", "INT", "ARG", "PTH", "ERA", "PD", "PGH", "PL", "TRY", "FLY", "NPY", "PERF", "FURB", "LOG", "RUF"]
-ignore = ["E501", "S101", "S104", "S108", "PLR0913", "PLR0912", "PLR0915"]
-
-[tool.ruff.lint.per-file-ignores]
-"__init__.py" = ["F401", "F403"]
-"*/migrations/*" = ["ALL"]
+## Ruff configuration is centralized in the repository root pyproject.toml
+## This local section was removed to avoid conflicts and ensure consistency.
 
 [tool.mypy]
 python_version = "3.12"

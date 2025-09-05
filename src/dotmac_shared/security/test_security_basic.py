@@ -4,78 +4,79 @@ Basic Security Implementation Test
 Simple validation script to test security components without complex imports.
 """
 
+import logging
 import os
-import sys
 from datetime import datetime
+
 
 def test_file_structure():
     """Test that all security files exist."""
-    print("=== Security File Structure Test ===")
-    
+    logger.info("=== Security File Structure Test ===")
+
     required_files = [
         "secrets_policy.py",
-        "hardened_secret_factory.py", 
+        "hardened_secret_factory.py",
         "unified_csrf_strategy.py",
         "environment_security_validator.py",
         "SECURITY_STANDARDS.md",
-        "tests/test_security_integration.py"
+        "tests/test_security_integration.py",
     ]
-    
+
     current_dir = os.path.dirname(__file__)
-    
+
     for file_path in required_files:
         full_path = os.path.join(current_dir, file_path)
         if os.path.exists(full_path):
-            print(f"   ✅ {file_path}")
+            logger.info(f"   ✅ {file_path}")
         else:
-            print(f"   ❌ {file_path} - Missing")
-    
-    print()
+            logger.info(f"   ❌ {file_path} - Missing")
+
+    logger.info("")
 
 
 def test_secrets_policy_structure():
     """Test secrets policy file structure."""
-    print("=== Secrets Policy Structure Test ===")
-    
+    logger.info("=== Secrets Policy Structure Test ===")
+
     try:
         file_path = os.path.join(os.path.dirname(__file__), "secrets_policy.py")
-        with open(file_path, 'r') as f:
+        with open(file_path) as f:
             content = f.read()
-        
+
         # Check for key classes and functions
         required_elements = [
             "class Environment",
-            "class SecretType", 
+            "class SecretType",
             "class HardenedSecretsManager",
             "class OpenBaoClient",
             "def create_secrets_manager",
             "PRODUCTION",
-            "DEVELOPMENT"
+            "DEVELOPMENT",
         ]
-        
+
         for element in required_elements:
             if element in content:
-                print(f"   ✅ {element}")
+                logger.info(f"   ✅ {element}")
             else:
-                print(f"   ❌ {element} - Not found")
-        
-        print("   ✅ Secrets policy structure validated")
-        
+                logger.info(f"   ❌ {element} - Not found")
+
+        logger.info("   ✅ Secrets policy structure validated")
+
     except Exception as e:
-        print(f"   ❌ Failed to validate secrets policy: {e}")
-    
-    print()
+        logger.info(f"   ❌ Failed to validate secrets policy: {e}")
+
+    logger.info("")
 
 
 def test_csrf_strategy_structure():
     """Test CSRF strategy file structure."""
-    print("=== CSRF Strategy Structure Test ===")
-    
+    logger.info("=== CSRF Strategy Structure Test ===")
+
     try:
         file_path = os.path.join(os.path.dirname(__file__), "unified_csrf_strategy.py")
-        with open(file_path, 'r') as f:
+        with open(file_path) as f:
             content = f.read()
-        
+
         # Check for key classes and functions
         required_elements = [
             "class CSRFMode",
@@ -84,34 +85,34 @@ def test_csrf_strategy_structure():
             "class CSRFToken",
             "def create_admin_portal_csrf_config",
             "def create_customer_portal_csrf_config",
-            "HYBRID", 
+            "HYBRID",
             "API_ONLY",
-            "SSR_ONLY"
+            "SSR_ONLY",
         ]
-        
+
         for element in required_elements:
             if element in content:
-                print(f"   ✅ {element}")
+                logger.info(f"   ✅ {element}")
             else:
-                print(f"   ❌ {element} - Not found")
-        
-        print("   ✅ CSRF strategy structure validated")
-        
+                logger.info(f"   ❌ {element} - Not found")
+
+        logger.info("   ✅ CSRF strategy structure validated")
+
     except Exception as e:
-        print(f"   ❌ Failed to validate CSRF strategy: {e}")
-    
-    print()
+        logger.info(f"   ❌ Failed to validate CSRF strategy: {e}")
+
+    logger.info("")
 
 
 def test_hardened_factory_structure():
     """Test hardened factory file structure."""
-    print("=== Hardened Factory Structure Test ===")
-    
+    logger.info("=== Hardened Factory Structure Test ===")
+
     try:
         file_path = os.path.join(os.path.dirname(__file__), "hardened_secret_factory.py")
-        with open(file_path, 'r') as f:
+        with open(file_path) as f:
             content = f.read()
-        
+
         # Check for key classes and functions
         required_elements = [
             "class HardenedSecretFactory",
@@ -120,68 +121,68 @@ def test_hardened_factory_structure():
             "async def get_service_api_key",
             "async def get_encryption_key",
             "def get_hardened_jwt_secret",
-            "def initialize_hardened_secrets"
+            "def initialize_hardened_secrets",
         ]
-        
+
         for element in required_elements:
             if element in content:
-                print(f"   ✅ {element}")
+                logger.info(f"   ✅ {element}")
             else:
-                print(f"   ❌ {element} - Not found")
-        
-        print("   ✅ Hardened factory structure validated")
-        
+                logger.info(f"   ❌ {element} - Not found")
+
+        logger.info("   ✅ Hardened factory structure validated")
+
     except Exception as e:
-        print(f"   ❌ Failed to validate hardened factory: {e}")
-    
-    print()
+        logger.info(f"   ❌ Failed to validate hardened factory: {e}")
+
+    logger.info("")
 
 
 def test_environment_validator_structure():
-    """Test environment validator file structure.""" 
-    print("=== Environment Validator Structure Test ===")
-    
+    """Test environment validator file structure."""
+    logger.info("=== Environment Validator Structure Test ===")
+
     try:
         file_path = os.path.join(os.path.dirname(__file__), "environment_security_validator.py")
-        with open(file_path, 'r') as f:
+        with open(file_path) as f:
             content = f.read()
-        
+
         # Check for key classes and functions
         required_elements = [
             "class SecuritySeverity",
             "class SecurityViolation",
             "class EnvironmentSecurityValidator",
-            "class SecurityValidationResult", 
+            "class SecurityValidationResult",
             "async def validate_comprehensive_security",
             "def validate_portal_security",
             "CRITICAL",
             "HIGH",
-            "MEDIUM"
+            "MEDIUM",
         ]
-        
+
         for element in required_elements:
             if element in content:
-                print(f"   ✅ {element}")
+                logger.info(f"   ✅ {element}")
             else:
-                print(f"   ❌ {element} - Not found")
-        
-        print("   ✅ Environment validator structure validated")
-        
+                logger.info(f"   ❌ {element} - Not found")
+
+        logger.info("   ✅ Environment validator structure validated")
+
     except Exception as e:
-        print(f"   ❌ Failed to validate environment validator: {e}")
-    
-    print()
+        logger.info(f"   ❌ Failed to validate environment validator: {e}")
+
+    logger.info("")
 
 
 def test_security_documentation():
     """Test security documentation exists and has content."""
-    print("=== Security Documentation Test ===")
-    
+    logger.info("=== Security Documentation Test ===")
+
     try:
         file_path = os.path.join(os.path.dirname(__file__), "SECURITY_STANDARDS.md")
-        with open(file_path, 'r') as f:
+        with open(file_path) as f:
             content = f.read()
-        
+
         # Check for key sections
         required_sections = [
             "# DotMac Platform Security Standards",
@@ -192,149 +193,148 @@ def test_security_documentation():
             "### Production Environment",
             "### Development Environment",
             "OpenBao",
-            "Vault"
+            "Vault",
         ]
-        
+
         for section in required_sections:
             if section in content:
-                print(f"   ✅ {section}")
+                logger.info(f"   ✅ {section}")
             else:
-                print(f"   ❌ {section} - Not found")
-        
+                logger.info(f"   ❌ {section} - Not found")
+
         # Check document length (should be substantial)
         if len(content) > 10000:  # At least 10KB of documentation
-            print("   ✅ Documentation is comprehensive")
+            logger.info("   ✅ Documentation is comprehensive")
         else:
-            print("   ❌ Documentation seems too short")
-        
-        print("   ✅ Security documentation validated")
-        
+            logger.info("   ❌ Documentation seems too short")
+
+        logger.info("   ✅ Security documentation validated")
+
     except Exception as e:
-        print(f"   ❌ Failed to validate documentation: {e}")
-    
-    print()
+        logger.info(f"   ❌ Failed to validate documentation: {e}")
+
+    logger.info("")
 
 
 def test_integration_tests_structure():
     """Test integration tests file structure."""
-    print("=== Integration Tests Structure Test ===")
-    
+    logger.info("=== Integration Tests Structure Test ===")
+
     try:
         file_path = os.path.join(os.path.dirname(__file__), "tests", "test_security_integration.py")
-        with open(file_path, 'r') as f:
+        with open(file_path) as f:
             content = f.read()
-        
+
         # Check for test classes and methods
         required_elements = [
             "class TestSecretsPolicy",
             "class TestHardenedSecretFactory",
-            "class TestUnifiedCSRFStrategy", 
+            "class TestUnifiedCSRFStrategy",
             "class TestEnvironmentSecurityValidator",
             "class TestSecurityIntegration",
             "def test_environment_detection",
             "def test_production_vault_requirement",
             "def test_csrf_config_creation",
             "def test_comprehensive_security_validation",
-            "import pytest"
+            "import pytest",
         ]
-        
+
         for element in required_elements:
             if element in content:
-                print(f"   ✅ {element}")
+                logger.info(f"   ✅ {element}")
             else:
-                print(f"   ❌ {element} - Not found")
-        
-        print("   ✅ Integration tests structure validated")
-        
+                logger.info(f"   ❌ {element} - Not found")
+
+        logger.info("   ✅ Integration tests structure validated")
+
     except Exception as e:
-        print(f"   ❌ Failed to validate integration tests: {e}")
-    
-    print()
+        logger.info(f"   ❌ Failed to validate integration tests: {e}")
+
+    logger.info("")
 
 
 def test_python_syntax():
     """Test that all Python files have valid syntax."""
-    print("=== Python Syntax Validation Test ===")
-    
+    logger.info("=== Python Syntax Validation Test ===")
+
     python_files = [
         "secrets_policy.py",
         "hardened_secret_factory.py",
-        "unified_csrf_strategy.py", 
+        "unified_csrf_strategy.py",
         "environment_security_validator.py",
-        "tests/test_security_integration.py"
+        "tests/test_security_integration.py",
     ]
-    
+
     current_dir = os.path.dirname(__file__)
-    
+
     for file_name in python_files:
         try:
             file_path = os.path.join(current_dir, file_name)
             if os.path.exists(file_path):
-                with open(file_path, 'r') as f:
+                with open(file_path) as f:
                     content = f.read()
-                
+
                 # Try to compile the file
-                compile(content, file_path, 'exec')
-                print(f"   ✅ {file_name} - Syntax valid")
+                compile(content, file_path, "exec")
+                logger.info(f"   ✅ {file_name} - Syntax valid")
             else:
-                print(f"   ❌ {file_name} - File not found")
-                
+                logger.info(f"   ❌ {file_name} - File not found")
+
         except SyntaxError as e:
-            print(f"   ❌ {file_name} - Syntax error: {e}")
+            logger.info(f"   ❌ {file_name} - Syntax error: {e}")
         except Exception as e:
-            print(f"   ❌ {file_name} - Error: {e}")
-    
-    print()
+            logger.info(f"   ❌ {file_name} - Error: {e}")
+
+    logger.info("")
 
 
 def test_configuration_consistency():
     """Test configuration consistency across files."""
-    print("=== Configuration Consistency Test ===")
-    
+    logger.info("=== Configuration Consistency Test ===")
+
     try:
         # Check that secret types are consistent
         secrets_file = os.path.join(os.path.dirname(__file__), "secrets_policy.py")
         factory_file = os.path.join(os.path.dirname(__file__), "hardened_secret_factory.py")
-        
-        with open(secrets_file, 'r') as f:
+
+        with open(secrets_file) as f:
             secrets_content = f.read()
-        
-        with open(factory_file, 'r') as f:
+
+        with open(factory_file) as f:
             factory_content = f.read()
-        
+
         # Check that both files reference the same secret types
         secret_types = ["JWT_SECRET", "DATABASE_CREDENTIAL", "API_KEY", "ENCRYPTION_KEY"]
-        
+
         for secret_type in secret_types:
             if secret_type in secrets_content and secret_type in factory_content:
-                print(f"   ✅ {secret_type} - Consistent across files")
+                logger.info(f"   ✅ {secret_type} - Consistent across files")
             else:
-                print(f"   ❌ {secret_type} - Inconsistent")
-        
+                logger.info(f"   ❌ {secret_type} - Inconsistent")
+
         # Check that environments are consistent
         environments = ["PRODUCTION", "DEVELOPMENT", "STAGING"]
-        
+
         for env in environments:
             if env in secrets_content:
-                print(f"   ✅ {env} - Defined in secrets policy")
+                logger.info(f"   ✅ {env} - Defined in secrets policy")
             else:
-                print(f"   ❌ {env} - Missing from secrets policy")
-        
-        print("   ✅ Configuration consistency validated")
-        
+                logger.info(f"   ❌ {env} - Missing from secrets policy")
+
+        logger.info("   ✅ Configuration consistency validated")
+
     except Exception as e:
-        print(f"   ❌ Failed to validate configuration consistency: {e}")
-    
-    print()
+        logger.info(f"   ❌ Failed to validate configuration consistency: {e}")
+
+    logger.info("")
 
 
 def main():
     """Run all basic security tests."""
-    print("DotMac Security Implementation Basic Validation")
-    print("=" * 50)
-    print(f"Started at: {datetime.now()}")
-    print()
-    
+    logger.info("DotMac Security Implementation Basic Validation")
+    logger.info("=" * 50)
+    logger.info(f"Started at: {datetime.now()}")
+    logger.info("")
     # Run all tests
     tests = [
         ("File Structure", test_file_structure),
@@ -345,36 +345,37 @@ def main():
         ("Security Documentation", test_security_documentation),
         ("Integration Tests Structure", test_integration_tests_structure),
         ("Python Syntax", test_python_syntax),
-        ("Configuration Consistency", test_configuration_consistency)
+        ("Configuration Consistency", test_configuration_consistency),
     ]
-    
+
     for test_name, test_func in tests:
-        print(f"Running {test_name} test...")
+        logger.info(f"Running {test_name} test...")
         try:
             test_func()
         except Exception as e:
-            print(f"   ❌ {test_name} test failed with exception: {e}\n")
-    
+            logger.info(f"   ❌ {test_name} test failed with exception: {e}\n")
+
     # Summary
-    print("=" * 50)
-    print("BASIC VALIDATION SUMMARY")
-    print("=" * 50)
-    print("\n🎉 BASIC SECURITY VALIDATION COMPLETED!")
-    print("\nThe security implementation includes:")
-    print("• OpenBao/Vault secrets policy with environment checks")
-    print("• Hardened secret factory with production enforcement") 
-    print("• Unified CSRF strategy supporting SSR and API scenarios")
-    print("• Environment-specific security validation with compliance checking")
-    print("• Portal-specific security configurations for all portal types")
-    print("• Comprehensive documentation and integration tests")
-    print("• Proper error handling and validation structures")
-    print("\nAll files have been created with valid Python syntax and")
-    print("consistent configuration across the security framework.")
-    print("\nNext Steps:")
-    print("1. Run the integration tests when dependencies are available")
-    print("2. Test with actual OpenBao/Vault instances")
-    print("3. Validate with production-like environments")
+    logger.info("=" * 50)
+    logger.info("BASIC VALIDATION SUMMARY")
+    logger.info("=" * 50)
+    logger.info("\n🎉 BASIC SECURITY VALIDATION COMPLETED!")
+    logger.info("\nThe security implementation includes:")
+    logger.info("• OpenBao/Vault secrets policy with environment checks")
+    logger.info("• Hardened secret factory with production enforcement")
+    logger.info("• Unified CSRF strategy supporting SSR and API scenarios")
+    logger.info("• Environment-specific security validation with compliance checking")
+    logger.info("• Portal-specific security configurations for all portal types")
+    logger.info("• Comprehensive documentation and integration tests")
+    logger.info("• Proper error handling and validation structures")
+    logger.info("\nAll files have been created with valid Python syntax and")
+    logger.info("consistent configuration across the security framework.")
+    logger.info("\nNext Steps:")
+    logger.info("1. Run the integration tests when dependencies are available")
+    logger.info("2. Test with actual OpenBao/Vault instances")
+    logger.info("3. Validate with production-like environments")
 
 
 if __name__ == "__main__":
     main()
+logger = logging.getLogger(__name__)

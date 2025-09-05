@@ -5,11 +5,12 @@ Revises: 0001_initial_baseline
 Create Date: 2025-09-01 13:44:35.718945
 
 """
-from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
-from sqlalchemy import Text
 from dotmac_shared.database.mixins import GUID
+from sqlalchemy import Text
+from sqlalchemy.dialects import postgresql
+
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = '90ab336e04eb'

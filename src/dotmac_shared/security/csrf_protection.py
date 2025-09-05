@@ -12,8 +12,8 @@ import hashlib
 import hmac
 import logging
 import secrets
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from datetime import datetime, timezone
+from typing import Optional
 
 from fastapi import HTTPException, Request, Response, status
 from fastapi.responses import JSONResponse
@@ -39,12 +39,10 @@ class CSRFProtection:
         token_lifetime: int = 3600,  # 1 hour
         cookie_name: str = "csrf_token",
         header_name: str = "X-CSRF-Token",
-        exempt_methods: List[str] = None,
-        exempt_paths: List[str] = None,
+        exempt_methods: Optional[list[str]] = None,
+        exempt_paths: Optional[list[str]] = None,
     ):
-        self.secret_key = (
-            secret_key.encode() if isinstance(secret_key, str) else secret_key
-        )
+        self.secret_key = secret_key.encode() if isinstance(secret_key, str) else secret_key
         self.token_lifetime = token_lifetime
         self.cookie_name = cookie_name
         self.header_name = header_name
@@ -161,30 +159,18 @@ class CSRFProtection:
 
         # Validate tokens exist
         if not header_token or not cookie_token:
-            logger.warning(
-                f"Missing CSRF tokens - Method: {request.method}, Path: {request.url.path}"
-            )
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN, detail="CSRF token missing"
-            )
+            logger.warning(f"Missing CSRF tokens - Method: {request.method}, Path: {request.url.path}")
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="CSRF token missing")
 
         # Validate tokens match (double-submit pattern)
         if not secrets.compare_digest(header_token, cookie_token):
-            logger.warning(
-                f"CSRF token mismatch - Method: {request.method}, Path: {request.url.path}"
-            )
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN, detail="CSRF token invalid"
-            )
+            logger.warning(f"CSRF token mismatch - Method: {request.method}, Path: {request.url.path}")
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="CSRF token invalid")
 
         # Validate token authenticity
         if not self.validate_token(header_token):
-            logger.warning(
-                f"CSRF token validation failed - Method: {request.method}, Path: {request.url.path}"
-            )
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN, detail="CSRF token invalid"
-            )
+            logger.warning(f"CSRF token validation failed - Method: {request.method}, Path: {request.url.path}")
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="CSRF token invalid")
 
     def set_csrf_cookie(self, response: Response, token: str) -> None:
         """

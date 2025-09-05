@@ -10,7 +10,7 @@ authors = [
     {name = "DotMac Team", email = "dev@dotmac.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.9"
 license = {text = "MIT"}
 classifiers = [
     "Development Status :: 5 - Production/Stable",

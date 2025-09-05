@@ -493,7 +493,7 @@ class Customer(Base):
 3. **Add Service** (`services/customer_service.py`):
 ```python
 async def create_customer(db: Session, data: CustomerCreate):
-    customer = Customer(**data.dict())
+    customer = Customer(**data.model_dump())
     db.add(customer)
     await db.commit()
     return customer

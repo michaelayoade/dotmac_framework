@@ -5,8 +5,8 @@
  * without requiring full container orchestration.
  */
 
-const express = require('express');
-const WebSocket = require('ws');
+import express from 'express';
+import { WebSocketServer } from 'ws';
 const app = express();
 const PORT = 3100;
 
@@ -48,7 +48,7 @@ const server = app.listen(PORT, () => {
 });
 
 // WebSocket server for real-time communication testing
-const wss = new WebSocket.Server({ server });
+const wss = new WebSocketServer({ server });
 
 wss.on('connection', (ws, req) => {
   console.log('Mock WebSocket connection established');

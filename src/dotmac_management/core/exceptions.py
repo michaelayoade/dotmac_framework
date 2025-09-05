@@ -4,11 +4,11 @@ Custom exception classes and error handlers for the DotMac Management Platform.
 Provides structured error handling with specific exception types
 for different business logic and system errors.
 """
-
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 from uuid import UUID
 
+from dotmac_shared.exceptions import DotMacException
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
@@ -23,7 +23,7 @@ class DotMacError(Exception):
         self,
         message: str,
         error_code: Optional[str] = None,
-        details: Optional[Dict[str, Any]] = None,
+        details: Optional[dict[str, Any]] = None,
     ):
         self.message = message
         self.error_code = error_code or self.__class__.__name__
@@ -209,7 +209,7 @@ class DeploymentFailedError(DotMacException):
 class BillingError(DotMacException):
     """Billing operation error."""
 
-    def __init__(self, message: str, subscription_id: str = None):
+    def __init__(self, message: str, subscription_id: Optional[str] = None):
         super().__init__(
             message=message,
             error_code="BILLING_ERROR",
@@ -292,9 +292,7 @@ async def http_exception_handler(request: Request, exc: HTTPException) -> JSONRe
     return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
 
 
-async def sqlalchemy_exception_handler(
-    request: Request, exc: SQLAlchemyError
-) -> JSONResponse:
+async def sqlalchemy_exception_handler(request: Request, exc: SQLAlchemyError) -> JSONResponse:
     """Handle SQLAlchemy database exceptions."""
     logger.error(
         f"Database exception: {type(exc).__name__} - {str(exc)}",
@@ -326,7 +324,9 @@ async def sqlalchemy_exception_handler(
 async def general_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """Handle general unexpected exceptions."""
     logger.error(
-        f"Unexpected exception: {type(exc).__name__} - {str(exc)}",
+        "Unexpected exception: %s - %s",
+        type(exc).__name__,
+        str(exc),
         extra={"path": str(request.url)},
         exc_info=True,
     )
@@ -345,9 +345,7 @@ async def general_exception_handler(request: Request, exc: Exception) -> JSONRes
 def add_exception_handlers(app: FastAPI) -> None:
     """Add all exception handlers to FastAPI app."""
     app.add_exception_handler(DotMacError, dotmac_exception_handler)
-    app.add_exception_handler(
-        DotMacException, dotmac_exception_handler
-    )  # Legacy support
+    app.add_exception_handler(DotMacException, dotmac_exception_handler)  # Legacy support
     app.add_exception_handler(HTTPException, http_exception_handler)
     app.add_exception_handler(SQLAlchemyError, sqlalchemy_exception_handler)
     app.add_exception_handler(Exception, general_exception_handler)

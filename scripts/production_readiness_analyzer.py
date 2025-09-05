@@ -2,21 +2,18 @@
 """
 import sys
 from pathlib import Path
-project_root = Path(__file__).parent.parent
+project_root = Path(__file__).parent.parent  # noqa: B008
 sys.path.insert(0, str(project_root / "src"))
 
 Comprehensive Production Readiness Analysis for DotMac Framework
 Analyzes all critical aspects needed for production deployment.
 """
 
-import ast
 import json
 import logging
-import os
-import re
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -29,7 +26,7 @@ class ProductionReadinessAnalyzer:
         self.root_dir = Path(root_dir)
         self.analysis_results = {}
 
-    def analyze_codebase_structure(self) -> Dict[str, Any]:
+    def analyze_codebase_structure(self) -> dict[str, Any]:
         """Analyze overall codebase structure and architecture."""
         structure_analysis = {
             "modules": {},
@@ -67,7 +64,7 @@ class ProductionReadinessAnalyzer:
 
         return structure_analysis
 
-    def _analyze_module_structure(self, module_dir: Path) -> Dict[str, Any]:
+    def _analyze_module_structure(self, module_dir: Path) -> dict[str, Any]:
         """Analyze individual module structure."""
         module_info = {
             "python_files": 0,
@@ -98,16 +95,12 @@ class ProductionReadinessAnalyzer:
 
         # Get subdirectories
         for subdir in module_dir.iterdir():
-            if (
-                subdir.is_dir()
-                and not subdir.name.startswith(".")
-                and subdir.name != "__pycache__"
-            ):
+            if subdir.is_dir() and not subdir.name.startswith(".") and subdir.name != "__pycache__":
                 module_info["subdirectories"].append(subdir.name)
 
         return module_info
 
-    def analyze_security_implementation(self) -> Dict[str, Any]:
+    def analyze_security_implementation(self) -> dict[str, Any]:
         """Analyze security implementation and compliance."""
         security_analysis = {
             "authentication": {},
@@ -138,10 +131,7 @@ class ProductionReadinessAnalyzer:
             "csrf_protection": len(list(self.root_dir.rglob("*csrf*.py"))) > 0,
             "rate_limiting": len(list(self.root_dir.rglob("*rate_limit*.py"))) > 0,
             "input_validation": len(list(self.root_dir.rglob("*validation*.py"))) > 0,
-            "security_middleware": len(
-                list(self.root_dir.rglob("*security*middleware*.py"))
-            )
-            > 0,
+            "security_middleware": len(list(self.root_dir.rglob("*security*middleware*.py"))) > 0,
         }
 
         # Check secrets management
@@ -156,7 +146,7 @@ class ProductionReadinessAnalyzer:
 
         return security_analysis
 
-    def analyze_testing_coverage(self) -> Dict[str, Any]:
+    def analyze_testing_coverage(self) -> dict[str, Any]:
         """Analyze testing implementation and coverage."""
         testing_analysis = {
             "test_files": {},
@@ -174,9 +164,7 @@ class ProductionReadinessAnalyzer:
             total_tests += len(test_files)
 
         testing_analysis["test_files"]["total_test_files"] = total_tests
-        testing_analysis["test_files"]["has_test_directory"] = (
-            self.root_dir / "tests"
-        ).exists()
+        testing_analysis["test_files"]["has_test_directory"] = (self.root_dir / "tests").exists()
 
         # Check for testing frameworks
         framework_indicators = {
@@ -210,7 +198,7 @@ class ProductionReadinessAnalyzer:
 
         return testing_analysis
 
-    def analyze_deployment_readiness(self) -> Dict[str, Any]:
+    def analyze_deployment_readiness(self) -> dict[str, Any]:
         """Analyze deployment and infrastructure readiness."""
         deployment_analysis = {
             "containerization": {},
@@ -233,11 +221,10 @@ class ProductionReadinessAnalyzer:
 
         if dockerfile_main.exists():
             try:
-                with open(dockerfile_main, "r") as f:
+                with open(dockerfile_main) as f:
                     dockerfile_content = f.read()
                     deployment_analysis["containerization"]["multi_stage_build"] = (
-                        "FROM" in dockerfile_content
-                        and dockerfile_content.count("FROM") > 1
+                        "FROM" in dockerfile_content and dockerfile_content.count("FROM") > 1
                     )
             except Exception:
                 pass
@@ -246,10 +233,8 @@ class ProductionReadinessAnalyzer:
         k8s_dir = self.root_dir / "k8s"
         deployment_analysis["orchestration"] = {
             "kubernetes_configs": k8s_dir.exists(),
-            "helm_charts": (self.root_dir / "helm").exists()
-            or len(list(self.root_dir.rglob("Chart.yaml"))) > 0,
-            "deployment_manifests": len(list(self.root_dir.rglob("*deployment*.yaml")))
-            > 0,
+            "helm_charts": (self.root_dir / "helm").exists() or len(list(self.root_dir.rglob("Chart.yaml"))) > 0,
+            "deployment_manifests": len(list(self.root_dir.rglob("*deployment*.yaml"))) > 0,
             "service_manifests": len(list(self.root_dir.rglob("*service*.yaml"))) > 0,
             "ingress_configs": len(list(self.root_dir.rglob("*ingress*.yaml"))) > 0,
         }
@@ -265,9 +250,9 @@ class ProductionReadinessAnalyzer:
 
         deployment_analysis["configuration_management"] = {}
         for config_file in config_files:
-            deployment_analysis["configuration_management"][
-                config_file.replace(".", "_")
-            ] = (self.root_dir / config_file).exists()
+            deployment_analysis["configuration_management"][config_file.replace(".", "_")] = (
+                self.root_dir / config_file
+            ).exists()
 
         # Monitoring setup
         monitoring_indicators = ["prometheus", "grafana", "signoz", "opentelemetry"]
@@ -285,7 +270,7 @@ class ProductionReadinessAnalyzer:
 
         return deployment_analysis
 
-    def analyze_documentation(self) -> Dict[str, Any]:
+    def analyze_documentation(self) -> dict[str, Any]:
         """Analyze documentation and operational procedures."""
         docs_analysis = {
             "user_documentation": {},
@@ -305,24 +290,18 @@ class ProductionReadinessAnalyzer:
 
         for doc_type, pattern in doc_patterns.items():
             doc_files = list(self.root_dir.rglob(pattern))
-            docs_analysis["user_documentation"][doc_type.lower().replace(" ", "_")] = (
-                len(doc_files)
-            )
+            docs_analysis["user_documentation"][doc_type.lower().replace(" ", "_")] = len(doc_files)
 
         # Check for docs directory
         docs_dir = self.root_dir / "docs"
         docs_analysis["developer_documentation"] = {
             "docs_directory_exists": docs_dir.exists(),
             "total_md_files": len(list(self.root_dir.rglob("*.md"))),
-            "sphinx_docs": (
-                (docs_dir / "conf.py").exists() if docs_dir.exists() else False
-            ),
+            "sphinx_docs": ((docs_dir / "conf.py").exists() if docs_dir.exists() else False),
         }
 
         # OpenAPI/Swagger documentation
-        openapi_files = list(self.root_dir.rglob("*openapi*.json")) + list(
-            self.root_dir.rglob("*swagger*.json")
-        )
+        openapi_files = list(self.root_dir.rglob("*openapi*.json")) + list(self.root_dir.rglob("*swagger*.json"))
         docs_analysis["api_documentation"] = {
             "openapi_specs": len(openapi_files),
             "fastapi_docs": True,  # FastAPI auto-generates docs
@@ -330,7 +309,7 @@ class ProductionReadinessAnalyzer:
 
         return docs_analysis
 
-    def calculate_readiness_score(self, analysis: Dict[str, Any]) -> Dict[str, Any]:
+    def calculate_readiness_score(self, analysis: dict[str, Any]) -> dict[str, Any]:
         """Calculate overall production readiness score."""
         scores = {}
 
@@ -424,7 +403,7 @@ class ProductionReadinessAnalyzer:
 
         return scores
 
-    def run_comprehensive_analysis(self) -> Dict[str, Any]:
+    def run_comprehensive_analysis(self) -> dict[str, Any]:
         """Run comprehensive production readiness analysis."""
         logger.info("Starting comprehensive production readiness analysis...")
 

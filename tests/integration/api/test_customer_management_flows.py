@@ -5,23 +5,17 @@ This module tests complete customer lifecycle workflows across all portals,
 ensuring data consistency and business rule enforcement.
 """
 
-import asyncio
 from datetime import datetime, timedelta
 from decimal import Decimal
-from typing import Any, Dict, List
-from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi import status
 from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
 
 # Test utilities
 from tests.utilities.test_helpers import (
     create_test_customer,
     create_test_reseller,
-    create_test_service_plan,
-    generate_test_billing_data,
 )
 
 
@@ -554,19 +548,19 @@ async def test_reseller(async_client: AsyncClient, admin_auth_headers: Dict):
 
 
 @pytest.fixture
-def admin_auth_headers(admin_user_token: str) -> Dict[str, str]:
+def admin_auth_headers(admin_user_token: str) -> dict[str, str]:
     """Create admin authentication headers."""
     return {"Authorization": f"Bearer {admin_user_token}"}
 
 
 @pytest.fixture
-def reseller_auth_headers(reseller_user_token: str) -> Dict[str, str]:
+def reseller_auth_headers(reseller_user_token: str) -> dict[str, str]:
     """Create reseller authentication headers."""
     return {"Authorization": f"Bearer {reseller_user_token}"}
 
 
 @pytest.fixture
-def customer_auth_headers(customer_user_token: str) -> Dict[str, str]:
+def customer_auth_headers(customer_user_token: str) -> dict[str, str]:
     """Create customer authentication headers."""
     return {"Authorization": f"Bearer {customer_user_token}"}
 

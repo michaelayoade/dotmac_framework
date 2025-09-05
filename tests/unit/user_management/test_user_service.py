@@ -3,20 +3,20 @@ Unit tests for UserService.
 Tests core user management business logic.
 """
 
-import pytest
 from datetime import datetime, timezone
+from unittest.mock import AsyncMock, patch
 from uuid import uuid4
-from unittest.mock import AsyncMock, MagicMock, patch
 
-from dotmac_shared.core.exceptions import ValidationError, EntityNotFoundError, AuthorizationError
-from dotmac_management.user_management.services.user_service import UserService
+import pytest
+from dotmac_management.user_management.models.user_models import UserModel
 from dotmac_management.user_management.schemas.user_schemas import (
     UserCreateSchema,
-    UserUpdateSchema,
+    UserStatus,
     UserType,
-    UserStatus
+    UserUpdateSchema,
 )
-from dotmac_management.user_management.models.user_models import UserModel
+from dotmac_management.user_management.services.user_service import UserService
+from dotmac_shared.core.exceptions import AuthorizationError, EntityNotFoundError, ValidationError
 
 
 @pytest.fixture

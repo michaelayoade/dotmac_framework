@@ -54,13 +54,13 @@ __all__ = [
     "PaymentService",
     "PaymentServiceConfig",
     # "NotificationService",  # Now in dotmac_shared.notifications.core
-    # "NotificationServiceConfig",  # Now in dotmac_shared.notifications.core
+    # "None  # TODO: Fix None  # TODO: Fix NotificationServiceConfig",  # Now in dotmac_shared.notifications.core
     "AnalyticsService",
     "AnalyticsServiceConfig",
     # Service creators
     "create_auth_service",
     "create_payment_service",
-    # "create_notification_service",  # Now in dotmac_shared.notifications.core
+    # "None  # TODO: Fix None  # TODO: Fix create_notification_service",  # Now in dotmac_shared.notifications.core
     "create_analytics_service",
     # Utilities
     "ServiceDiscovery",

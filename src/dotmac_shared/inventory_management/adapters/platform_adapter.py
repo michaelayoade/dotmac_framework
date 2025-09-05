@@ -4,17 +4,15 @@ Platform adapters for integrating inventory management with ISP Framework and Ma
 
 import logging
 from abc import ABC, abstractmethod
-from datetime import date, datetime
 from decimal import Decimal
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..core.models import ItemStatus, ItemType, MovementType, WarehouseType
+from ..core.models import ItemType, MovementType, WarehouseType
 from ..core.schemas import (
     ItemCreate,
     ItemResponse,
-    PurchaseOrderResponse,
     StockMovementResponse,
     WarehouseCreate,
     WarehouseResponse,
@@ -31,21 +29,19 @@ class BaseInventoryAdapter(ABC):
         self.inventory_service = inventory_service
 
     @abstractmethod
-    async def get_vendor_info(self, tenant_id: str, vendor_id: str) -> Dict[str, Any]:
+    async def get_vendor_info(self, tenant_id: str, vendor_id: str) -> dict[str, Any]:
         """Get vendor information from the platform."""
         pass
 
     @abstractmethod
     async def send_inventory_notification(
-        self, notification_type: str, recipient: str, data: Dict[str, Any], **kwargs
+        self, notification_type: str, recipient: str, data: dict[str, Any], **kwargs
     ) -> bool:
         """Send inventory-related notification."""
         pass
 
     @abstractmethod
-    async def create_inventory_event(
-        self, event_type: str, data: Dict[str, Any]
-    ) -> bool:
+    async def create_inventory_event(self, event_type: str, data: dict[str, Any]) -> bool:
         """Create inventory event in platform system."""
         pass
 
@@ -57,7 +53,7 @@ class ISPInventoryAdapter(BaseInventoryAdapter):
         super().__init__(inventory_service)
         self.isp_client = isp_client
 
-    async def get_vendor_info(self, tenant_id: str, vendor_id: str) -> Dict[str, Any]:
+    async def get_vendor_info(self, tenant_id: str, vendor_id: str) -> dict[str, Any]:
         """Get vendor info from ISP Framework."""
         try:
             if self.isp_client:
@@ -68,22 +64,18 @@ class ISPInventoryAdapter(BaseInventoryAdapter):
             return {"id": vendor_id, "name": f"Vendor {vendor_id}"}
 
     async def send_inventory_notification(
-        self, notification_type: str, recipient: str, data: Dict[str, Any], **kwargs
+        self, notification_type: str, recipient: str, data: dict[str, Any], **kwargs
     ) -> bool:
         """Send notification via ISP Framework."""
         try:
             if self.isp_client:
-                return await self.isp_client.send_notification(
-                    notification_type, recipient, data
-                )
+                return await self.isp_client.send_notification(notification_type, recipient, data)
             return True
         except Exception as e:
             logger.error(f"Error sending notification: {e}")
             return False
 
-    async def create_inventory_event(
-        self, event_type: str, data: Dict[str, Any]
-    ) -> bool:
+    async def create_inventory_event(self, event_type: str, data: dict[str, Any]) -> bool:
         """Create inventory event in ISP Framework."""
         try:
             if self.isp_client:
@@ -95,8 +87,8 @@ class ISPInventoryAdapter(BaseInventoryAdapter):
 
     # ISP-specific inventory operations
     async def setup_isp_equipment_catalog(
-        self, db: AsyncSession, tenant_id: str, created_by: str = None
-    ) -> List[ItemResponse]:
+        self, db: AsyncSession, tenant_id: str, created_by: Optional[str] = None
+    ) -> list[ItemResponse]:
         """Setup standard ISP equipment catalog."""
 
         isp_equipment = [
@@ -216,9 +208,7 @@ class ISPInventoryAdapter(BaseInventoryAdapter):
                 created_items.append(ItemResponse.model_validate(item))
 
             except Exception as e:
-                logger.warning(
-                    f"Failed to create equipment item {equipment_data['name']}: {e}"
-                )
+                logger.warning(f"Failed to create equipment item {equipment_data['name']}: {e}")
 
         logger.info(f"Created {len(created_items)} ISP equipment items")
         return created_items
@@ -227,9 +217,9 @@ class ISPInventoryAdapter(BaseInventoryAdapter):
         self,
         db: AsyncSession,
         tenant_id: str,
-        locations: List[Dict[str, Any]] = None,
-        created_by: str = None,
-    ) -> List[WarehouseResponse]:
+        locations: Optional[list[dict[str, Any]]] = None,
+        created_by: Optional[str] = None,
+    ) -> list[WarehouseResponse]:
         """Setup ISP-specific warehouse structure."""
 
         if not locations:
@@ -289,17 +279,13 @@ class ISPInventoryAdapter(BaseInventoryAdapter):
 
                 warehouse_create = WarehouseCreate(**warehouse_data)
 
-                warehouse = (
-                    await self.inventory_service.inventory_manager.create_warehouse(
-                        db, tenant_id, warehouse_create, created_by
-                    )
+                warehouse = await self.inventory_service.inventory_manager.create_warehouse(
+                    db, tenant_id, warehouse_create, created_by
                 )
                 created_warehouses.append(WarehouseResponse.model_validate(warehouse))
 
             except Exception as e:
-                logger.warning(
-                    f"Failed to create warehouse {warehouse_data['name']}: {e}"
-                )
+                logger.warning(f"Failed to create warehouse {warehouse_data['name']}: {e}")
 
         logger.info(f"Created {len(created_warehouses)} ISP warehouses")
         return created_warehouses
@@ -309,10 +295,10 @@ class ISPInventoryAdapter(BaseInventoryAdapter):
         db: AsyncSession,
         tenant_id: str,
         customer_id: str,
-        installation_items: List[Dict[str, Any]],
+        installation_items: list[dict[str, Any]],
         technician_id: str,
-        project_id: str = None,
-    ) -> List[StockMovementResponse]:
+        project_id: Optional[str] = None,
+    ) -> list[StockMovementResponse]:
         """Process equipment allocation for customer installation."""
 
         movements = []
@@ -323,9 +309,7 @@ class ISPInventoryAdapter(BaseInventoryAdapter):
             warehouse_id = item_data.get("warehouse_id")
 
             # Get item
-            item = await self.inventory_service.inventory_manager.get_item_by_code(
-                db, tenant_id, item_code
-            )
+            item = await self.inventory_service.inventory_manager.get_item_by_code(db, tenant_id, item_code)
             if not item:
                 logger.error(f"Item not found: {item_code}")
                 continue
@@ -362,29 +346,27 @@ class ISPInventoryAdapter(BaseInventoryAdapter):
         self,
         db: AsyncSession,
         tenant_id: str,
-        return_items: List[Dict[str, Any]],
+        return_items: list[dict[str, Any]],
         technician_id: str,
         reason: str = "Installation complete",
-    ) -> List[StockMovementResponse]:
+    ) -> list[StockMovementResponse]:
         """Process equipment return from field operations."""
 
         movements = []
 
         for item_data in return_items:
-            movement = (
-                await self.inventory_service.inventory_manager.create_stock_movement(
-                    db,
-                    tenant_id,
-                    {
-                        "item_id": item_data["item_id"],
-                        "warehouse_id": item_data["warehouse_id"],
-                        "movement_type": MovementType.RETURN,
-                        "quantity": item_data["quantity"],
-                        "reason_description": reason,
-                        "serial_numbers": item_data.get("serial_numbers"),
-                    },
-                    technician_id,
-                )
+            movement = await self.inventory_service.inventory_manager.create_stock_movement(
+                db,
+                tenant_id,
+                {
+                    "item_id": item_data["item_id"],
+                    "warehouse_id": item_data["warehouse_id"],
+                    "movement_type": MovementType.RETURN,
+                    "quantity": item_data["quantity"],
+                    "reason_description": reason,
+                    "serial_numbers": item_data.get("serial_numbers"),
+                },
+                technician_id,
             )
 
             movements.append(StockMovementResponse.model_validate(movement))
@@ -399,7 +381,7 @@ class ManagementInventoryAdapter(BaseInventoryAdapter):
         super().__init__(inventory_service)
         self.management_client = management_client
 
-    async def get_vendor_info(self, tenant_id: str, vendor_id: str) -> Dict[str, Any]:
+    async def get_vendor_info(self, tenant_id: str, vendor_id: str) -> dict[str, Any]:
         """Get vendor info from Management Platform."""
         try:
             if self.management_client:
@@ -410,22 +392,18 @@ class ManagementInventoryAdapter(BaseInventoryAdapter):
             return {"id": vendor_id, "name": f"Vendor {vendor_id}"}
 
     async def send_inventory_notification(
-        self, notification_type: str, recipient: str, data: Dict[str, Any], **kwargs
+        self, notification_type: str, recipient: str, data: dict[str, Any], **kwargs
     ) -> bool:
         """Send notification via Management Platform."""
         try:
             if self.management_client:
-                return await self.management_client.send_notification(
-                    notification_type, recipient, data
-                )
+                return await self.management_client.send_notification(notification_type, recipient, data)
             return True
         except Exception as e:
             logger.error(f"Error sending notification: {e}")
             return False
 
-    async def create_inventory_event(
-        self, event_type: str, data: Dict[str, Any]
-    ) -> bool:
+    async def create_inventory_event(self, event_type: str, data: dict[str, Any]) -> bool:
         """Create inventory event in Management Platform."""
         try:
             if self.management_client:
@@ -440,9 +418,9 @@ class ManagementInventoryAdapter(BaseInventoryAdapter):
         self,
         db: AsyncSession,
         tenant_id: str,
-        datacenter_locations: List[Dict[str, Any]] = None,
-        created_by: str = None,
-    ) -> Dict[str, Any]:
+        datacenter_locations: Optional[list[dict[str, Any]]] = None,
+        created_by: Optional[str] = None,
+    ) -> dict[str, Any]:
         """Setup datacenter equipment inventory for Management Platform."""
 
         if not datacenter_locations:
@@ -528,9 +506,7 @@ class ManagementInventoryAdapter(BaseInventoryAdapter):
                 created_items.append(ItemResponse.model_validate(item))
 
             except Exception as e:
-                logger.warning(
-                    f"Failed to create datacenter item {equipment_data['name']}: {e}"
-                )
+                logger.warning(f"Failed to create datacenter item {equipment_data['name']}: {e}")
 
         # Create warehouses
         created_warehouses = []
@@ -555,17 +531,13 @@ class ManagementInventoryAdapter(BaseInventoryAdapter):
 
                 warehouse_create = WarehouseCreate(**warehouse_data)
 
-                warehouse = (
-                    await self.inventory_service.inventory_manager.create_warehouse(
-                        db, tenant_id, warehouse_create, created_by
-                    )
+                warehouse = await self.inventory_service.inventory_manager.create_warehouse(
+                    db, tenant_id, warehouse_create, created_by
                 )
                 created_warehouses.append(WarehouseResponse.model_validate(warehouse))
 
             except Exception as e:
-                logger.warning(
-                    f"Failed to create datacenter warehouse {location['name']}: {e}"
-                )
+                logger.warning(f"Failed to create datacenter warehouse {location['name']}: {e}")
 
         return {
             "items": created_items,
@@ -580,9 +552,9 @@ class ManagementInventoryAdapter(BaseInventoryAdapter):
         self,
         db: AsyncSession,
         tenant_id: str,
-        deployment_config: Dict[str, Any],
+        deployment_config: dict[str, Any],
         allocated_by: str,
-    ) -> List[StockMovementResponse]:
+    ) -> list[StockMovementResponse]:
         """Allocate equipment for tenant deployment."""
 
         required_equipment = deployment_config.get("equipment_requirements", [])
@@ -653,9 +625,9 @@ class InventoryPlatformAdapter:
         platform: str,
         db: AsyncSession,
         tenant_id: str,
-        config: Dict[str, Any] = None,
-        created_by: str = None,
-    ) -> Dict[str, Any]:
+        config: Optional[dict[str, Any]] = None,
+        created_by: Optional[str] = None,
+    ) -> dict[str, Any]:
         """Setup inventory for specific platform."""
 
         adapter = self.get_adapter(platform)
@@ -667,12 +639,8 @@ class InventoryPlatformAdapter:
                 db, tenant_id, config.get("datacenter_locations"), created_by
             )
         elif platform == "isp":
-            equipment_result = await adapter.setup_isp_equipment_catalog(
-                db, tenant_id, created_by
-            )
-            warehouses_result = await adapter.setup_isp_warehouses(
-                db, tenant_id, config.get("locations"), created_by
-            )
+            equipment_result = await adapter.setup_isp_equipment_catalog(db, tenant_id, created_by)
+            warehouses_result = await adapter.setup_isp_warehouses(db, tenant_id, config.get("locations"), created_by)
 
             return {
                 "equipment": equipment_result,
@@ -690,13 +658,11 @@ class InventoryPlatformAdapter:
         platform: str,
         notification_type: str,
         recipient: str,
-        data: Dict[str, Any],
+        data: dict[str, Any],
         **kwargs,
     ) -> bool:
         """Send notification through appropriate platform."""
         adapter = self.get_adapter(platform)
         if adapter:
-            return await adapter.send_inventory_notification(
-                notification_type, recipient, data, **kwargs
-            )
+            return await adapter.send_inventory_notification(notification_type, recipient, data, **kwargs)
         return False

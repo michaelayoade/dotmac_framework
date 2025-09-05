@@ -1,12 +1,10 @@
 """Customer service intelligence for proactive portal notifications."""
 
-from datetime import datetime, timedelta
-from typing import Any, Dict, List
+from datetime import datetime, timedelta, timezone
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy.orm import Session
-
-from dotmac_shared.api.exception_handlers import standard_exception_handler
 
 from .service import ServiceProvisioningService
 
@@ -20,11 +18,9 @@ class CustomerServiceIntelligenceService:
         self.tenant_id = tenant_id
         self.service_provisioning = ServiceProvisioningService(db, tenant_id)
 
-    async def get_proactive_notifications(self, customer_id: UUID) -> Dict[str, Any]:
+    async def get_proactive_notifications(self, customer_id: UUID) -> dict[str, Any]:
         """Get proactive service status notifications for customer."""
-        services = await self.service_provisioning.list_customer_services(
-            customer_id, skip=0, limit=100
-        )
+        services = await self.service_provisioning.list_customer_services(customer_id, skip=0, limit=100)
         notifications = []
         service_summary = {
             "total_services": len(services),
@@ -68,9 +64,7 @@ class CustomerServiceIntelligenceService:
                             "service_id": str(service.id),
                             "service_name": service.service_plan.name,
                             "action_required": False,
-                            "scheduled_date": (
-                                datetime.now(timezone.utc) + timedelta(days=7)
-                            ).isoformat(),
+                            "scheduled_date": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
                             "created_at": datetime.now(timezone.utc).isoformat(),
                         }
                     )
@@ -97,11 +91,9 @@ class CustomerServiceIntelligenceService:
             "last_updated": datetime.now(timezone.utc).isoformat(),
         }
 
-    async def get_usage_insights(self, customer_id: UUID) -> Dict[str, Any]:
+    async def get_usage_insights(self, customer_id: UUID) -> dict[str, Any]:
         """Get usage insights for customer optimization."""
-        services = await self.service_provisioning.list_customer_services(
-            customer_id, skip=0, limit=100
-        )
+        services = await self.service_provisioning.list_customer_services(customer_id, skip=0, limit=100)
         insights = []
 
         # Simple usage-based insights (demo logic)
@@ -138,9 +130,7 @@ class CustomerServiceIntelligenceService:
             "usage_insights": insights,
             "summary": {
                 "total_insights": len(insights),
-                "potential_monthly_impact": (
-                    "$20 savings" if insights else "No recommendations"
-                ),
+                "potential_monthly_impact": ("$20 savings" if insights else "No recommendations"),
             },
             "last_updated": datetime.now(timezone.utc).isoformat(),
         }

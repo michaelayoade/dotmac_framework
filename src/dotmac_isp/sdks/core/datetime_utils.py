@@ -3,8 +3,6 @@
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from dotmac_shared.api.exception_handlers import standard_exception_handler
-
 
 def utc_now() -> datetime:
     """Get current UTC datetime."""

@@ -4,10 +4,10 @@ Core ticketing models for universal ticket management.
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 from uuid import uuid4
 
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import (
     JSON,
     Boolean,
@@ -18,8 +18,7 @@ from sqlalchemy import (
     String,
     Text,
 )
-from sqlalchemy.orm import declarative_base
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import declarative_base, relationship
 
 Base = declarative_base()
 
@@ -105,9 +104,7 @@ class Ticket(Base):
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
-    updated_at = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
-    )
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     resolved_at = Column(DateTime, nullable=True)
     closed_at = Column(DateTime, nullable=True)
     due_date = Column(DateTime, nullable=True)
@@ -119,21 +116,13 @@ class Ticket(Base):
 
     # Metadata
     tags = Column(JSON, default=list)
-    extra_data = Column(
-        JSON, default=dict
-    )  # Renamed from metadata to avoid SQLAlchemy conflict
+    extra_data = Column(JSON, default=dict)  # Renamed from metadata to avoid SQLAlchemy conflict
     external_references = Column(JSON, default=dict)  # Links to other systems
 
     # Relationships
-    comments = relationship(
-        "TicketComment", back_populates="ticket", cascade="all, delete-orphan"
-    )
-    attachments = relationship(
-        "TicketAttachment", back_populates="ticket", cascade="all, delete-orphan"
-    )
-    escalations = relationship(
-        "TicketEscalation", back_populates="ticket", cascade="all, delete-orphan"
-    )
+    comments = relationship("TicketComment", back_populates="ticket", cascade="all, delete-orphan")
+    attachments = relationship("TicketAttachment", back_populates="ticket", cascade="all, delete-orphan")
+    escalations = relationship("TicketEscalation", back_populates="ticket", cascade="all, delete-orphan")
 
 
 class TicketComment(Base):
@@ -147,9 +136,7 @@ class TicketComment(Base):
 
     # Comment content
     content = Column(Text, nullable=False)
-    is_internal = Column(
-        Boolean, default=False, nullable=False
-    )  # Internal notes vs customer-visible
+    is_internal = Column(Boolean, default=False, nullable=False)  # Internal notes vs customer-visible
     is_solution = Column(Boolean, default=False, nullable=False)  # Mark as solution
 
     # Author information
@@ -163,9 +150,7 @@ class TicketComment(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Additional data
-    extra_data = Column(
-        JSON, default=dict
-    )  # Renamed from metadata to avoid SQLAlchemy conflict
+    extra_data = Column(JSON, default=dict)  # Renamed from metadata to avoid SQLAlchemy conflict
 
     # Relationships
     ticket = relationship("Ticket", back_populates="comments")
@@ -194,9 +179,7 @@ class TicketAttachment(Base):
     uploaded_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     # Additional data
-    extra_data = Column(
-        JSON, default=dict
-    )  # Renamed from metadata to avoid SQLAlchemy conflict
+    extra_data = Column(JSON, default=dict)  # Renamed from metadata to avoid SQLAlchemy conflict
 
     # Relationships
     ticket = relationship("Ticket", back_populates="attachments")
@@ -225,9 +208,7 @@ class TicketEscalation(Base):
 
     # Metadata
     escalation_rules = Column(JSON, default=dict)  # Rules that triggered escalation
-    extra_data = Column(
-        JSON, default=dict
-    )  # Renamed from metadata to avoid SQLAlchemy conflict
+    extra_data = Column(JSON, default=dict)  # Renamed from metadata to avoid SQLAlchemy conflict
 
     # Relationships
     ticket = relationship("Ticket", back_populates="escalations")
@@ -245,8 +226,8 @@ class TicketCreate(BaseModel):
     customer_email: Optional[str] = None
     customer_name: Optional[str] = None
     customer_phone: Optional[str] = None
-    tags: List[str] = Field(default_factory=list)
-    extra_data: Dict[str, Any] = Field(default_factory=dict, alias="metadata")
+    tags: list[str] = Field(default_factory=list)
+    extra_data: dict[str, Any] = Field(default_factory=dict, alias="metadata")
 
 
 class TicketUpdate(BaseModel):
@@ -259,8 +240,8 @@ class TicketUpdate(BaseModel):
     category: Optional[TicketCategory] = None
     assigned_to_id: Optional[str] = None
     assigned_team: Optional[str] = None
-    tags: Optional[List[str]] = None
-    extra_data: Optional[Dict[str, Any]] = Field(None, alias="metadata")
+    tags: Optional[list[str]] = None
+    extra_data: Optional[dict[str, Any]] = Field(None, alias="metadata")
     due_date: Optional[datetime] = None
 
 
@@ -285,15 +266,12 @@ class TicketResponse(BaseModel):
     resolved_at: Optional[datetime] = None
     closed_at: Optional[datetime] = None
     due_date: Optional[datetime] = None
-    tags: List[str] = Field(default_factory=list)
-    extra_data: Dict[str, Any] = Field(default_factory=dict, alias="metadata")
+    tags: list[str] = Field(default_factory=list)
+    extra_data: dict[str, Any] = Field(default_factory=dict, alias="metadata")
     comment_count: Optional[int] = None
     attachment_count: Optional[int] = None
 
-    model_config = ConfigDict(
-        from_attributes=True,
-        populate_by_name=True
-    )
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
 
 class CommentCreate(BaseModel):
@@ -318,7 +296,4 @@ class CommentResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    model_config = ConfigDict(
-        from_attributes=True,
-        populate_by_name=True
-    )
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)

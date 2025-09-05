@@ -3,17 +3,17 @@
 import asyncio
 import json
 import logging
+from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Optional
 
-import redis.asyncio as redis
 import websockets
+from dotmac_isp.core.settings import get_settings
 from websockets.exceptions import ConnectionClosedError, ConnectionClosedOK
 
-from dotmac_isp.core.settings import get_settings
-from dotmac_shared.api.exception_handlers import standard_exception_handler
+import redis.asyncio as redis
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -43,10 +43,10 @@ class BillingEvent:
     customer_id: str
     entity_id: str  # Invoice ID, Payment ID, etc.
     timestamp: datetime
-    data: Dict[str, Any]
+    data: dict[str, Any]
     user_id: Optional[str] = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         result = asdict(self)
         result["event_type"] = self.event_type.value
@@ -59,27 +59,23 @@ class WebSocketConnectionManager:
 
     def __init__(self):
         """Init   operation."""
-        self.connections: Dict[str, List[websockets.WebSocketServerProtocol]] = {}
+        self.connections: dict[str, list[websockets.WebSocketServerProtocol]] = {}
         self.redis_client: Optional[redis.Redis] = None
-        self.retry_counts: Dict[str, int] = {}
+        self.retry_counts: dict[str, int] = {}
         self.max_retries = 3
         self.retry_delay = 1.0  # seconds
 
     async def initialize(self):
         """Initialize Redis connection for event publishing."""
         try:
-            self.redis_client = redis.from_url(
-                settings.redis_url, encoding="utf-8", decode_responses=True
-            )
+            self.redis_client = redis.from_url(settings.redis_url, encoding="utf-8", decode_responses=True)
             await self.redis_client.ping()
             logger.info("WebSocket manager initialized with Redis connection")
         except Exception as e:
             logger.error(f"Failed to initialize Redis connection: {e}")
             raise
 
-    async def connect(
-        self, websocket: websockets.WebSocketServerProtocol, tenant_id: str
-    ):
+    async def connect(self, websocket: websockets.WebSocketServerProtocol, tenant_id: str):
         """Register a new WebSocket connection."""
         if tenant_id not in self.connections:
             self.connections[tenant_id] = []
@@ -98,9 +94,7 @@ class WebSocketConnectionManager:
             },
         )
 
-    async def disconnect(
-        self, websocket: websockets.WebSocketServerProtocol, tenant_id: str
-    ):
+    async def disconnect(self, websocket: websockets.WebSocketServerProtocol, tenant_id: str):
         """Unregister a WebSocket connection."""
         if tenant_id in self.connections:
             try:
@@ -138,7 +132,7 @@ class WebSocketConnectionManager:
         self,
         websocket: websockets.WebSocketServerProtocol,
         tenant_id: str,
-        message: Dict[str, Any],
+        message: dict[str, Any],
     ):
         """Send message to WebSocket with retry logic."""
         connection_key = f"{tenant_id}_{id(websocket)}"
@@ -157,20 +151,14 @@ class WebSocketConnectionManager:
 
             except Exception as e:
                 self.retry_counts[connection_key] = attempt + 1
-                logger.warning(
-                    f"Failed to send message to WebSocket (attempt {attempt + 1}): {e}"
-                )
+                logger.warning(f"Failed to send message to WebSocket (attempt {attempt + 1}): {e}")
                 if attempt < self.max_retries:
-                    await asyncio.sleep(
-                        self.retry_delay * (2**attempt)
-                    )  # Exponential backoff
+                    await asyncio.sleep(self.retry_delay * (2**attempt))  # Exponential backoff
                 else:
-                    logger.error(f"Max retries exceeded for WebSocket connection")
+                    logger.error("Max retries exceeded for WebSocket connection")
                     await self.disconnect(websocket, tenant_id)
 
-    async def _send_to_websocket(
-        self, websocket: websockets.WebSocketServerProtocol, message: Dict[str, Any]
-    ):
+    async def _send_to_websocket(self, websocket: websockets.WebSocketServerProtocol, message: dict[str, Any]):
         """Send message to a single WebSocket connection."""
         await websocket.send(json.dumps(message))
 
@@ -182,9 +170,7 @@ class WebSocketConnectionManager:
         except Exception as e:
             logger.error(f"Failed to publish event to Redis: {e}")
 
-    async def subscribe_to_redis_events(
-        self, tenant_id: str, callback: Callable[[BillingEvent], None]
-    ):
+    async def subscribe_to_redis_events(self, tenant_id: str, callback: Callable[[BillingEvent], None]):
         """Subscribe to Redis events for cross-instance communication."""
         if not self.redis_client:
             logger.error("Redis client not initialized")
@@ -218,7 +204,7 @@ class WebSocketConnectionManager:
         """Get number of active connections for a tenant."""
         return len(self.connections.get(tenant_id, []))
 
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """Return health check information."""
         total_connections = sum(len(conns) for conns in self.connections.values())
 
@@ -246,7 +232,7 @@ class BillingEventPublisher:
         tenant_id: str,
         customer_id: str,
         invoice_id: str,
-        invoice_data: Dict[str, Any],
+        invoice_data: dict[str, Any],
         user_id: Optional[str] = None,
     ):
         """Publish invoice created event."""
@@ -266,7 +252,7 @@ class BillingEventPublisher:
         tenant_id: str,
         customer_id: str,
         invoice_id: str,
-        payment_data: Dict[str, Any],
+        payment_data: dict[str, Any],
         user_id: Optional[str] = None,
     ):
         """Publish invoice paid event."""
@@ -286,7 +272,7 @@ class BillingEventPublisher:
         tenant_id: str,
         customer_id: str,
         payment_id: str,
-        failure_data: Dict[str, Any],
+        failure_data: dict[str, Any],
         user_id: Optional[str] = None,
     ):
         """Publish payment failed event."""
@@ -306,7 +292,7 @@ class BillingEventPublisher:
         tenant_id: str,
         customer_id: str,
         subscription_id: str,
-        cancellation_data: Dict[str, Any],
+        cancellation_data: dict[str, Any],
         user_id: Optional[str] = None,
     ):
         """Publish subscription cancelled event."""

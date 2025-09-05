@@ -5,18 +5,19 @@ Tests plugin lifecycle orchestration, startup/shutdown ordering,
 batch operations, and error handling.
 """
 
-import pytest
 import asyncio
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
+import pytest
 from dotmac.plugins import (
+    PluginError,
+    PluginKind,
     PluginLifecycleManager,
     PluginRegistry,
-    PluginKind,
     PluginStatus,
-    PluginError,
 )
-from conftest import TestPlugin, AsyncTestPlugin, FailingPlugin, TestExportPlugin
+
+from conftest import AsyncTestPlugin, FailingPlugin, TestExportPlugin, TestPlugin
 
 
 class TestLifecycleManager:

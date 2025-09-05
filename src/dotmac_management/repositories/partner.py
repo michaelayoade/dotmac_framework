@@ -2,10 +2,10 @@
 Partner repository providing async CRUD operations and actions.
 """
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Optional
 from uuid import UUID
 
-from sqlalchemy import and_, or_, select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models.partner import Partner
@@ -25,9 +25,9 @@ class PartnerRepository(BaseRepository[Partner]):
         q: Optional[str] = None,
         status: Optional[str] = None,
         tier: Optional[str] = None,
-    ) -> Tuple[List[Partner], int]:
+    ) -> tuple[list[Partner], int]:
         """List partners with optional filters and total count."""
-        query = select(Partner).where(Partner.is_deleted == False)
+        query = select(Partner).where(Partner.is_deleted is False)
 
         if status:
             query = query.where(Partner.status == status)
@@ -85,4 +85,3 @@ class PartnerRepository(BaseRepository[Partner]):
         await self.db.flush()
         await self.db.refresh(partner)
         return partner
-

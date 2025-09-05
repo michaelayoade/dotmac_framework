@@ -6,37 +6,17 @@ GIS Services leveraging existing DotMac systems:
 - Multi-tenant isolation
 """
 
-import asyncio
-from datetime import datetime
-from typing import Any, Dict, List, Optional
+import math
+from datetime import datetime, timezone
+from typing import Any
 from uuid import UUID
 
-from sqlalchemy import delete, func, select, update
+from dotmac.core.exceptions import EntityNotFoundError as NotFoundError
+from dotmac_shared.services.base import BaseService
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
-
-from dotmac_isp.shared.base_service import BaseService
-from dotmac_isp.shared.exceptions import EntityNotFoundError as NotFoundError
-from dotmac_isp.shared.exceptions import ValidationError
-import math
-
-def haversine_distance(lat1, lon1, lat2, lon2, timezone):
-    """Calculate distance between two points using haversine formula."""
-    R = 6371  # Earth's radius in kilometers
-    lat1_rad, lon1_rad = math.radians(lat1), math.radians(lon1)
-    lat2_rad, lon2_rad = math.radians(lat2), math.radians(lon2)
-    
-    dlat = lat2_rad - lat1_rad
-    dlon = lon2_rad - lon1_rad
-    
-    a = math.sin(dlat/2)**2 + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(dlon/2)**2
-    c = 2 * math.asin(math.sqrt(a))
-    
-    return R * c
 
 from .models import (
-    CoverageGap,
-    CoverageRecommendation,
     NetworkNode,
     RouteOptimization,
     ServiceArea,
@@ -45,8 +25,6 @@ from .models import (
 from .schemas import (
     CoverageAnalysisRequest,
     GeocodingRequest,
-    NetworkNodeCreate,
-    NetworkNodeUpdate,
     ReverseGeocodingRequest,
     RouteOptimizationRequest,
     ServiceAreaCreate,
@@ -56,9 +34,22 @@ from .schemas import (
 )
 
 
-class ServiceCoverageService(
-    BaseService[ServiceArea, ServiceAreaCreate, ServiceAreaUpdate]
-):
+def haversine_distance(lat1, lon1, lat2, lon2, timezone):
+    """Calculate distance between two points using haversine formula."""
+    R = 6371  # Earth's radius in kilometers
+    lat1_rad, lon1_rad = math.radians(lat1), math.radians(lon1)
+    lat2_rad, lon2_rad = math.radians(lat2), math.radians(lon2)
+
+    dlat = lat2_rad - lat1_rad
+    dlon = lon2_rad - lon1_rad
+
+    a = math.sin(dlat / 2) ** 2 + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(dlon / 2) ** 2
+    c = 2 * math.asin(math.sqrt(a))
+
+    return R * c
+
+
+class ServiceCoverageService(BaseService[ServiceArea, ServiceAreaCreate, ServiceAreaUpdate]):
     """
     Service coverage analysis service integrating with network visualization.
     Leverages existing DotMac patterns and network topology module.
@@ -67,9 +58,7 @@ class ServiceCoverageService(
     def __init__(self, db: AsyncSession, tenant_id: str):
         super().__init__(ServiceArea, db, tenant_id)
 
-    async def analyze_coverage(
-        self, request: CoverageAnalysisRequest, user_id: UUID
-    ) -> Dict[str, Any]:
+    async def analyze_coverage(self, request: CoverageAnalysisRequest, user_id: UUID) -> dict[str, Any]:
         """
         Perform comprehensive coverage analysis using network topology.
         Integrates with existing network visualization module.
@@ -88,9 +77,7 @@ class ServiceCoverageService(
             demographics = await self._analyze_demographics(service_area)
 
         # Calculate coverage using network nodes
-        coverage_data = await self._calculate_coverage(
-            service_area, request.service_types
-        )
+        coverage_data = await self._calculate_coverage(service_area, request.service_types)
 
         # Identify coverage gaps using topology analysis
         gaps = await self._identify_coverage_gaps(service_area, coverage_data)
@@ -122,16 +109,14 @@ class ServiceCoverageService(
             "network_health": network_health,
         }
 
-    async def _calculate_coverage(
-        self, service_area: ServiceArea, service_types: List[str]
-    ) -> Dict[str, Any]:
+    async def _calculate_coverage(self, service_area: ServiceArea, service_types: list[str]) -> dict[str, Any]:
         """Calculate coverage using network nodes and topology."""
 
         # Get network nodes in service area
         query = select(NetworkNode).where(
             NetworkNode.service_area_id == service_area.id,
             NetworkNode.tenant_id == self.tenant_id,
-            NetworkNode.is_active == True,
+            NetworkNode.is_active is True,
         )
         result = await self.db.execute(query)
         nodes = result.scalars().all()
@@ -141,9 +126,7 @@ class ServiceCoverageService(
 
         # Calculate coverage areas for each node
         total_coverage_area = 0.0
-        service_area_size = self._calculate_polygon_area(
-            service_area.polygon_coordinates
-        )
+        service_area_size = self._calculate_polygon_area(service_area.polygon_coordinates)
 
         for node in nodes:
             if node.coverage_radius_km and node.latitude and node.longitude:
@@ -152,9 +135,7 @@ class ServiceCoverageService(
                 total_coverage_area += coverage_area
 
         # Calculate coverage percentage (with overlap consideration)
-        coverage_percentage = min(
-            100.0, (total_coverage_area / service_area_size) * 100
-        )
+        coverage_percentage = min(100.0, (total_coverage_area / service_area_size) * 100)
 
         return {
             "coverage_percentage": coverage_percentage,
@@ -164,8 +145,8 @@ class ServiceCoverageService(
         }
 
     async def _identify_coverage_gaps(
-        self, service_area: ServiceArea, coverage_data: Dict[str, Any]
-    ) -> List[Dict[str, Any]]:
+        self, service_area: ServiceArea, coverage_data: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """Identify coverage gaps using spatial analysis."""
 
         gaps = []
@@ -176,27 +157,21 @@ class ServiceCoverageService(
             gap = {
                 "id": f"gap_{service_area.id}_{datetime.now(timezone.utc).timestamp()}",
                 "gap_type": "coverage_deficiency",
-                "severity": self._calculate_gap_severity(
-                    coverage_data["coverage_percentage"]
-                ),
+                "severity": self._calculate_gap_severity(coverage_data["coverage_percentage"]),
                 "polygon_coordinates": service_area.polygon_coordinates,  # Simplified
                 "affected_customers": int(service_area.population * 0.1),  # Estimate
-                "potential_revenue": service_area.population
-                * 75
-                * 12,  # $75/month ARPU
+                "potential_revenue": service_area.population * 75 * 12,  # $75/month ARPU
                 "buildout_cost": self._estimate_buildout_cost(service_area),
                 "priority_score": self._calculate_priority_score(coverage_data),
-                "recommendations": await self._generate_gap_recommendations(
-                    coverage_data
-                ),
+                "recommendations": await self._generate_gap_recommendations(coverage_data),
             }
             gaps.append(gap)
 
         return gaps
 
     async def _generate_recommendations(
-        self, gaps: List[Dict[str, Any]], service_area: ServiceArea
-    ) -> List[Dict[str, Any]]:
+        self, gaps: list[dict[str, Any]], service_area: ServiceArea
+    ) -> list[dict[str, Any]]:
         """Generate coverage improvement recommendations."""
 
         recommendations = []
@@ -223,7 +198,7 @@ class ServiceCoverageService(
 
         return recommendations
 
-    async def _analyze_demographics(self, service_area: ServiceArea) -> Dict[str, Any]:
+    async def _analyze_demographics(self, service_area: ServiceArea) -> dict[str, Any]:
         """Analyze demographics for service area."""
 
         # In production, this would integrate with demographic data APIs
@@ -242,7 +217,7 @@ class ServiceCoverageService(
             "age_distribution": {"18-34": 0.25, "35-54": 0.35, "55+": 0.4},
         }
 
-    def _calculate_polygon_area(self, coordinates: List[Dict[str, float]]) -> float:
+    def _calculate_polygon_area(self, coordinates: list[dict[str, float]]) -> float:
         """Calculate polygon area in square kilometers."""
         if len(coordinates) < 3:
             return 0.0
@@ -278,14 +253,12 @@ class ServiceCoverageService(
         cost_per_km2 = 50000  # $50k per km² - rough estimate
         return area_size * cost_per_km2
 
-    def _calculate_priority_score(self, coverage_data: Dict[str, Any]) -> float:
+    def _calculate_priority_score(self, coverage_data: dict[str, Any]) -> float:
         """Calculate priority score for addressing coverage gap."""
         coverage_deficit = 100.0 - coverage_data["coverage_percentage"]
         return min(100.0, coverage_deficit + (coverage_data.get("active_nodes", 0) * 5))
 
-    async def _generate_gap_recommendations(
-        self, coverage_data: Dict[str, Any]
-    ) -> List[str]:
+    async def _generate_gap_recommendations(self, coverage_data: dict[str, Any]) -> list[str]:
         """Generate recommendations for addressing coverage gaps."""
         recommendations = []
 
@@ -301,9 +274,7 @@ class ServiceCoverageService(
         return recommendations
 
 
-class TerritoryManagementService(
-    BaseService[Territory, TerritoryCreate, TerritoryUpdate]
-):
+class TerritoryManagementService(BaseService[Territory, TerritoryCreate, TerritoryUpdate]):
     """Territory management service with GIS capabilities."""
 
     def __init__(self, db: AsyncSession, tenant_id: str):
@@ -311,29 +282,23 @@ class TerritoryManagementService(
 
     async def find_territories_containing_point(
         self, latitude: float, longitude: float, user_id: UUID
-    ) -> List[Territory]:
+    ) -> list[Territory]:
         """Find territories containing a specific geographic point."""
 
         # In production, this would use PostGIS or similar for spatial queries
         # For now, implement basic point-in-polygon check
-        query = select(Territory).where(
-            Territory.tenant_id == self.tenant_id, Territory.is_active == True
-        )
+        query = select(Territory).where(Territory.tenant_id == self.tenant_id, Territory.is_active is True)
         result = await self.db.execute(query)
         territories = result.scalars().all()
 
         containing_territories = []
         for territory in territories:
-            if self._point_in_polygon(
-                latitude, longitude, territory.boundary_coordinates
-            ):
+            if self._point_in_polygon(latitude, longitude, territory.boundary_coordinates):
                 containing_territories.append(territory)
 
         return containing_territories
 
-    async def calculate_territory_metrics(
-        self, territory_id: UUID, user_id: UUID
-    ) -> Dict[str, Any]:
+    async def calculate_territory_metrics(self, territory_id: UUID, user_id: UUID) -> dict[str, Any]:
         """Calculate territory performance metrics."""
 
         territory = await self.get_by_id(territory_id, user_id)
@@ -345,9 +310,7 @@ class TerritoryManagementService(
 
         # Calculate performance metrics
         revenue_performance = (
-            territory.actual_revenue / territory.revenue_target
-            if territory.revenue_target > 0
-            else 0.0
+            territory.actual_revenue / territory.revenue_target if territory.revenue_target > 0 else 0.0
         ) * 100
 
         customer_density = territory.customer_count / area_km2 if area_km2 > 0 else 0
@@ -364,9 +327,7 @@ class TerritoryManagementService(
             "competitor_analysis": territory.competitor_analysis,
         }
 
-    def _point_in_polygon(
-        self, latitude: float, longitude: float, polygon: List[Dict[str, float]]
-    ) -> bool:
+    def _point_in_polygon(self, latitude: float, longitude: float, polygon: list[dict[str, float]]) -> bool:
         """Check if point is inside polygon using ray casting algorithm."""
 
         x, y = longitude, latitude
@@ -391,7 +352,7 @@ class TerritoryManagementService(
 
         return inside
 
-    def _calculate_territory_area(self, coordinates: List[Dict[str, float]]) -> float:
+    def _calculate_territory_area(self, coordinates: list[dict[str, float]]) -> float:
         """Calculate territory area in square kilometers."""
         # Same calculation as service area - could be extracted to utility
         if len(coordinates) < 3:
@@ -409,17 +370,13 @@ class TerritoryManagementService(
         return area * 111.32 * 111.32  # Approximate conversion to km²
 
 
-class RouteOptimizationService(
-    BaseService[RouteOptimization, RouteOptimizationRequest, RouteOptimizationRequest]
-):
+class RouteOptimizationService(BaseService[RouteOptimization, RouteOptimizationRequest, RouteOptimizationRequest]):
     """Route optimization service for field operations."""
 
     def __init__(self, db: AsyncSession, tenant_id: str):
         super().__init__(RouteOptimization, db, tenant_id)
 
-    async def optimize_route(
-        self, request: RouteOptimizationRequest, user_id: UUID
-    ) -> Dict[str, Any]:
+    async def optimize_route(self, request: RouteOptimizationRequest, user_id: UUID) -> dict[str, Any]:
         """Optimize route for field technician visits."""
 
         # Create route optimization record
@@ -457,9 +414,7 @@ class RouteOptimizationService(
             "calculated_at": route_data.calculated_at,
         }
 
-    async def _calculate_optimal_route(
-        self, request: RouteOptimizationRequest
-    ) -> Dict[str, Any]:
+    async def _calculate_optimal_route(self, request: RouteOptimizationRequest) -> dict[str, Any]:
         """Calculate optimal route using distance calculations."""
 
         # Collect all points
@@ -489,7 +444,7 @@ class RouteOptimizationService(
             "duration": int(total_duration),
         }
 
-    async def _optimize_by_distance(self, points: List[Dict[str, float]]) -> List[int]:
+    async def _optimize_by_distance(self, points: list[dict[str, float]]) -> list[int]:
         """Optimize route by minimizing total distance (simplified TSP)."""
 
         if len(points) <= 2:
@@ -516,7 +471,7 @@ class RouteOptimizationService(
 
         return route
 
-    def _calculate_total_distance(self, coordinates: List[Dict[str, float]]) -> float:
+    def _calculate_total_distance(self, coordinates: list[dict[str, float]]) -> float:
         """Calculate total distance for route."""
 
         if len(coordinates) < 2:
@@ -541,7 +496,7 @@ class GeocodingService:
     def __init__(self, tenant_id: str):
         self.tenant_id = tenant_id
 
-    async def geocode_address(self, request: GeocodingRequest) -> Dict[str, Any]:
+    async def geocode_address(self, request: GeocodingRequest) -> dict[str, Any]:
         """Convert address to coordinates."""
 
         # In production, integrate with geocoding APIs (Google, MapBox, Nominatim)
@@ -560,7 +515,7 @@ class GeocodingService:
             },
         }
 
-    async def reverse_geocode(self, request: ReverseGeocodingRequest) -> Dict[str, Any]:
+    async def reverse_geocode(self, request: ReverseGeocodingRequest) -> dict[str, Any]:
         """Convert coordinates to address."""
 
         # Mock implementation - in production use real geocoding APIs

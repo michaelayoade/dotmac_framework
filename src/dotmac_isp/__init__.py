@@ -1,3 +1,5 @@
+from pydantic import Field
+
 """
 DotMac ISP Framework - Comprehensive modular monolith for Internet Service Provider management.
 
@@ -18,7 +20,6 @@ This package provides a complete ISP management solution including:
 
 Architecture: Modular monolith with FastAPI, SQLAlchemy 2.0, and Pydantic v2
 """
-
 __version__ = "1.0.0"
 __author__ = "DotMac Team"
 __email__ = "info@dotmac.com"

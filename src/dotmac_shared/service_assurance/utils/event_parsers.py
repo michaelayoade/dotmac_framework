@@ -2,8 +2,8 @@
 
 import ipaddress
 import re
-from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from datetime import datetime, timezone
+from typing import Any, Optional
 
 
 class SNMPTrapParser:
@@ -34,7 +34,7 @@ class SNMPTrapParser:
         """Initialize SNMP trap parser."""
         pass
 
-    def parse_trap_data(self, raw_trap: str) -> Dict[str, Any]:
+    def parse_trap_data(self, raw_trap: str) -> dict[str, Any]:
         """Parse raw SNMP trap data into structured format."""
         try:
             trap_data = {
@@ -64,9 +64,7 @@ class SNMPTrapParser:
                     oid_match = re.search(r"Trap OID:\s*([0-9.]+)", line)
                     if oid_match:
                         trap_data["trap_oid"] = oid_match.group(1)
-                        trap_data["trap_name"] = self.get_trap_name(
-                            trap_data["trap_oid"]
-                        )
+                        trap_data["trap_name"] = self.get_trap_name(trap_data["trap_oid"])
 
                 # Parse agent address
                 elif "Agent Address:" in line:
@@ -79,9 +77,7 @@ class SNMPTrapParser:
                     ent_match = re.search(r"Enterprise:\s*([0-9.]+)", line)
                     if ent_match:
                         trap_data["enterprise_oid"] = ent_match.group(1)
-                        trap_data["enterprise_name"] = self.get_enterprise_name(
-                            trap_data["enterprise_oid"]
-                        )
+                        trap_data["enterprise_name"] = self.get_enterprise_name(trap_data["enterprise_oid"])
 
                 # Parse generic trap type
                 elif "Generic Trap:" in line:
@@ -119,7 +115,7 @@ class SNMPTrapParser:
                 "raw_data": raw_trap,
             }
 
-    def parse_varbind(self, line: str) -> Optional[Dict[str, Any]]:
+    def parse_varbind(self, line: str) -> Optional[dict[str, Any]]:
         """Parse a single varbind line."""
         try:
             # Common varbind formats:
@@ -168,7 +164,7 @@ class SNMPTrapParser:
                 return name
         return "unknown"
 
-    def analyze_trap_severity(self, trap_data: Dict[str, Any]) -> Dict[str, Any]:
+    def analyze_trap_severity(self, trap_data: dict[str, Any]) -> dict[str, Any]:
         """Analyze trap to determine severity and description."""
         severity = "info"
         description = ""
@@ -195,7 +191,7 @@ class SNMPTrapParser:
 
         # Analyze based on varbinds
         varbinds = trap_data.get("varbinds", {})
-        for oid, value in varbinds.items():
+        for _oid, value in varbinds.items():
             if "error" in str(value).lower():
                 severity = "warning"
             elif "fail" in str(value).lower():
@@ -261,7 +257,7 @@ class SyslogParser:
             r"(\d{2}/\d{2}/\d{4}\s+\d{2}:\d{2}:\d{2})",  # MM/DD/YYYY HH:MM:SS
         ]
 
-    def parse_syslog_message(self, raw_message: str) -> Dict[str, Any]:
+    def parse_syslog_message(self, raw_message: str) -> dict[str, Any]:
         """Parse raw syslog message into structured format."""
         try:
             syslog_data = {
@@ -286,12 +282,8 @@ class SyslogParser:
                 priority = int(priority_match.group(1))
                 syslog_data["facility"] = priority >> 3
                 syslog_data["severity"] = priority & 7
-                syslog_data["facility_name"] = self.FACILITIES.get(
-                    syslog_data["facility"], "unknown"
-                )
-                syslog_data["severity_name"] = self.SEVERITIES.get(
-                    syslog_data["severity"], "unknown"
-                )
+                syslog_data["facility_name"] = self.FACILITIES.get(syslog_data["facility"], "unknown")
+                syslog_data["severity_name"] = self.SEVERITIES.get(syslog_data["severity"], "unknown")
 
                 message = message[priority_match.end() :].strip()
 
@@ -341,7 +333,7 @@ class SyslogParser:
                 "parsing_errors": [f"Failed to parse syslog: {str(e)}"],
             }
 
-    def parse_structured_data(self, message: str) -> Dict[str, Any]:
+    def parse_structured_data(self, message: str) -> dict[str, Any]:
         """Parse structured data from syslog message."""
         structured_data = {}
 
@@ -349,7 +341,7 @@ class SyslogParser:
         kv_pattern = r'(\w+)=(["\']?)([^"\'\s]+)\2'
         matches = re.findall(kv_pattern, message)
 
-        for key, quote, value in matches:
+        for key, _quote, value in matches:
             structured_data[key] = value
 
         return structured_data
@@ -362,10 +354,12 @@ class SyslogParser:
             return True
         except ValueError:
             # Check if it looks like a hostname
-            hostname_pattern = r"^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*$"
+            hostname_pattern = (
+                r"^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*$"
+            )
             return bool(re.match(hostname_pattern, text)) and len(text) <= 253
 
-    def analyze_message_content(self, message: str) -> Dict[str, Any]:
+    def analyze_message_content(self, message: str) -> dict[str, Any]:
         """Analyze message content for additional insights."""
         analysis = {
             "keywords": [],
@@ -431,9 +425,7 @@ class EventNormalizer:
         self.snmp_parser = SNMPTrapParser()
         self.syslog_parser = SyslogParser()
 
-    def normalize_snmp_trap(
-        self, raw_trap: str, source_ip: str, source_device: Optional[str] = None
-    ) -> Dict[str, Any]:
+    def normalize_snmp_trap(self, raw_trap: str, source_ip: str, source_device: Optional[str] = None) -> dict[str, Any]:
         """Normalize SNMP trap to common event format."""
         parsed_trap = self.snmp_parser.parse_trap_data(raw_trap)
 
@@ -461,7 +453,7 @@ class EventNormalizer:
 
     def normalize_syslog_message(
         self, raw_message: str, source_ip: str, source_device: Optional[str] = None
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Normalize syslog message to common event format."""
         parsed_syslog = self.syslog_parser.parse_syslog_message(raw_message)
 
@@ -493,7 +485,7 @@ class EventNormalizer:
             "parsing_errors": parsed_syslog.get("parsing_errors", []),
         }
 
-    def extract_event_patterns(self, events: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def extract_event_patterns(self, events: list[dict[str, Any]]) -> dict[str, Any]:
         """Extract patterns from a collection of events."""
         patterns = {
             "common_sources": {},
@@ -506,34 +498,21 @@ class EventNormalizer:
         for event in events:
             # Count sources
             source_key = event.get("source", {}).get("device", "unknown")
-            patterns["common_sources"][source_key] = (
-                patterns["common_sources"].get(source_key, 0) + 1
-            )
+            patterns["common_sources"][source_key] = patterns["common_sources"].get(source_key, 0) + 1
 
             # Count severities
             severity = event.get("severity", "unknown")
-            patterns["severity_distribution"][severity] = (
-                patterns["severity_distribution"].get(severity, 0) + 1
-            )
+            patterns["severity_distribution"][severity] = patterns["severity_distribution"].get(severity, 0) + 1
 
             # Look for error patterns
             description = event.get("description", "").lower()
-            if any(
-                term in description
-                for term in ["error", "fail", "exception", "timeout"]
-            ):
-                patterns["frequent_errors"][description[:50]] = (
-                    patterns["frequent_errors"].get(description[:50], 0) + 1
-                )
+            if any(term in description for term in ["error", "fail", "exception", "timeout"]):
+                patterns["frequent_errors"][description[:50]] = patterns["frequent_errors"].get(description[:50], 0) + 1
 
         # Sort by frequency
-        patterns["common_sources"] = dict(
-            sorted(patterns["common_sources"].items(), key=lambda x: x[1], reverse=True)
-        )
+        patterns["common_sources"] = dict(sorted(patterns["common_sources"].items(), key=lambda x: x[1], reverse=True))
         patterns["frequent_errors"] = dict(
-            sorted(
-                patterns["frequent_errors"].items(), key=lambda x: x[1], reverse=True
-            )
+            sorted(patterns["frequent_errors"].items(), key=lambda x: x[1], reverse=True)
         )
 
         return patterns

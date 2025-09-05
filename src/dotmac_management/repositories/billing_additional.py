@@ -4,7 +4,7 @@ Additional billing repository methods that are expected by the service layer.
 
 from datetime import date
 from decimal import Decimal
-from typing import List, Optional
+from typing import Optional
 from uuid import UUID
 
 from sqlalchemy import and_, select
@@ -40,7 +40,7 @@ class SubscriptionRepository(BaseRepository[Subscription]):
             and_(
                 self.model.tenant_id == tenant_id,
                 self.model.status.in_(["active", "trial"]),
-                self.model.is_deleted == False,
+                self.model.is_deleted is False,
             )
         )
         result = await self.db.execute(stmt)
@@ -51,34 +51,30 @@ class SubscriptionRepository(BaseRepository[Subscription]):
         # For now, just get the subscription - would implement join with plan in full implementation
         return await self.get_by_id(subscription_id)
 
-    async def update_status(
-        self, subscription_id: UUID, status: str, updated_by: str
-    ) -> Optional[Subscription]:
+    async def update_status(self, subscription_id: UUID, status: str, updated_by: str) -> Optional[Subscription]:
         """Update subscription status."""
         return await self.update(subscription_id, {"status": status}, updated_by)
 
-    async def get_expiring_subscriptions(self, cutoff_date: date) -> List[Subscription]:
+    async def get_expiring_subscriptions(self, cutoff_date: date) -> list[Subscription]:
         """Get subscriptions expiring before cutoff date."""
         stmt = select(self.model).where(
             and_(
                 self.model.end_date <= cutoff_date,
                 self.model.status == "active",
-                self.model.is_deleted == False,
+                self.model.is_deleted is False,
             )
         )
         result = await self.db.execute(stmt)
         return result.scalars().all()
 
-    async def get_usage_based_subscriptions(
-        self, tenant_id: UUID = None
-    ) -> List[Subscription]:
+    async def get_usage_based_subscriptions(self, tenant_id: Optional[UUID] = None) -> list[Subscription]:
         """Get subscriptions with usage-based billing."""
         filters = {"is_deleted": False}
         if tenant_id:
             filters["tenant_id"] = tenant_id
         return await self.list(filters=filters)
 
-    async def count_active_subscriptions(self, tenant_id: UUID = None) -> int:
+    async def count_active_subscriptions(self, tenant_id: Optional[UUID] = None) -> int:
         """Count active subscriptions."""
         filters = {"status": "active", "is_deleted": False}
         if tenant_id:
@@ -92,27 +88,23 @@ class InvoiceRepository(BaseRepository[Invoice]):
     def __init__(self, db: AsyncSession):
         super().__init__(db, Invoice)
 
-    async def update_status(
-        self, invoice_id: UUID, status: str, updated_by: str
-    ) -> Optional[Invoice]:
+    async def update_status(self, invoice_id: UUID, status: str, updated_by: str) -> Optional[Invoice]:
         """Update invoice status."""
         return await self.update(invoice_id, {"status": status}, updated_by)
 
-    async def get_overdue_invoices(self, cutoff_date: date) -> List[Invoice]:
+    async def get_overdue_invoices(self, cutoff_date: date) -> list[Invoice]:
         """Get overdue invoices."""
         stmt = select(self.model).where(
             and_(
                 self.model.due_date <= cutoff_date,
                 self.model.status == "pending",
-                self.model.is_deleted == False,
+                self.model.is_deleted is False,
             )
         )
         result = await self.db.execute(stmt)
         return result.scalars().all()
 
-    async def get_tenant_invoices(
-        self, tenant_id: UUID, limit: int = 10
-    ) -> List[Invoice]:
+    async def get_tenant_invoices(self, tenant_id: UUID, limit: int = 10) -> list[Invoice]:
         """Get recent invoices for a tenant."""
         return await self.list(
             filters={"tenant_id": tenant_id, "is_deleted": False},
@@ -120,22 +112,18 @@ class InvoiceRepository(BaseRepository[Invoice]):
             order_by="created_at DESC",
         )
 
-    async def get_unpaid_invoices(self, tenant_id: UUID) -> List[Invoice]:
+    async def get_unpaid_invoices(self, tenant_id: UUID) -> list[Invoice]:
         """Get unpaid invoices for a tenant."""
-        return await self.list(
-            filters={"tenant_id": tenant_id, "status": "pending", "is_deleted": False}
-        )
+        return await self.list(filters={"tenant_id": tenant_id, "status": "pending", "is_deleted": False})
 
-    async def get_tenant_invoices_for_period(
-        self, tenant_id: UUID, start_date: date, end_date: date
-    ) -> List[Invoice]:
+    async def get_tenant_invoices_for_period(self, tenant_id: UUID, start_date: date, end_date: date) -> list[Invoice]:
         """Get tenant invoices for a period."""
         stmt = select(self.model).where(
             and_(
                 self.model.tenant_id == tenant_id,
                 self.model.issue_date >= start_date,
                 self.model.issue_date <= end_date,
-                self.model.is_deleted == False,
+                self.model.is_deleted is False,
             )
         )
         result = await self.db.execute(stmt)
@@ -148,15 +136,11 @@ class PaymentRepository(BaseRepository[Payment]):
     def __init__(self, db: AsyncSession):
         super().__init__(db, Payment)
 
-    async def update_status(
-        self, payment_id: UUID, status: str, updated_by: str
-    ) -> Optional[Payment]:
+    async def update_status(self, payment_id: UUID, status: str, updated_by: str) -> Optional[Payment]:
         """Update payment status."""
         return await self.update(payment_id, {"status": status}, updated_by)
 
-    async def get_tenant_payments(
-        self, tenant_id: UUID, limit: int = 10
-    ) -> List[Payment]:
+    async def get_tenant_payments(self, tenant_id: UUID, limit: int = 10) -> list[Payment]:
         """Get recent payments for a tenant."""
         return await self.list(
             filters={"tenant_id": tenant_id, "is_deleted": False},
@@ -164,7 +148,7 @@ class PaymentRepository(BaseRepository[Payment]):
             order_by="created_at DESC",
         )
 
-    async def get_pending_payments(self, provider: str = None) -> List[Payment]:
+    async def get_pending_payments(self, provider: Optional[str] = None) -> list[Payment]:
         """Get pending payments."""
         filters = {"status": "pending", "is_deleted": False}
         if provider:
@@ -172,15 +156,15 @@ class PaymentRepository(BaseRepository[Payment]):
         return await self.list(filters=filters)
 
     async def get_payments_in_period(
-        self, start_date: date, end_date: date, tenant_id: UUID = None
-    ) -> List[Payment]:
+        self, start_date: date, end_date: date, tenant_id: Optional[UUID] = None
+    ) -> list[Payment]:
         """Get payments in a date period."""
         stmt = select(self.model).where(
             and_(
                 self.model.processed_at >= start_date,
                 self.model.processed_at <= end_date,
                 self.model.status == "completed",
-                self.model.is_deleted == False,
+                self.model.is_deleted is False,
             )
         )
         if tenant_id:
@@ -189,9 +173,7 @@ class PaymentRepository(BaseRepository[Payment]):
         result = await self.db.execute(stmt)
         return result.scalars().all()
 
-    async def get_tenant_payments_for_period(
-        self, tenant_id: UUID, start_date: date, end_date: date
-    ) -> List[Payment]:
+    async def get_tenant_payments_for_period(self, tenant_id: UUID, start_date: date, end_date: date) -> list[Payment]:
         """Get tenant payments for a period."""
         return await self.get_payments_in_period(start_date, end_date, tenant_id)
 
@@ -212,7 +194,7 @@ class UsageRecordRepository(BaseRepository[UsageRecord]):
                 self.model.metric_name == metric_name,
                 self.model.timestamp >= start_date,
                 self.model.timestamp <= end_date,
-                self.model.is_deleted == False,
+                self.model.is_deleted is False,
             )
         )
         result = await self.db.execute(stmt)
@@ -221,29 +203,27 @@ class UsageRecordRepository(BaseRepository[UsageRecord]):
 
     async def get_period_usage_detailed(
         self, subscription_id: UUID, start_date: date, end_date: date
-    ) -> List[UsageRecord]:
+    ) -> list[UsageRecord]:
         """Get detailed usage records for a period."""
         stmt = select(self.model).where(
             and_(
                 self.model.subscription_id == subscription_id,
                 self.model.timestamp >= start_date,
                 self.model.timestamp <= end_date,
-                self.model.is_deleted == False,
+                self.model.is_deleted is False,
             )
         )
         result = await self.db.execute(stmt)
         return result.scalars().all()
 
-    async def get_tenant_usage_for_period(
-        self, tenant_id: UUID, start_date: date, end_date: date
-    ) -> List[UsageRecord]:
+    async def get_tenant_usage_for_period(self, tenant_id: UUID, start_date: date, end_date: date) -> list[UsageRecord]:
         """Get tenant usage for a period."""
         stmt = select(self.model).where(
             and_(
                 self.model.tenant_id == tenant_id,
                 self.model.timestamp >= start_date,
                 self.model.timestamp <= end_date,
-                self.model.is_deleted == False,
+                self.model.is_deleted is False,
             )
         )
         result = await self.db.execute(stmt)

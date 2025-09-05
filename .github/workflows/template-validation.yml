@@ -1,0 +1,348 @@
+name: Template Validation
+
+on:
+  push:
+    paths:
+      - 'templates/**'
+      - 'docs/**'
+      - 'tools/**'
+  pull_request:
+    paths:
+      - 'templates/**'
+      - 'docs/**'
+      - 'tools/**'
+  workflow_dispatch:
+
+jobs:
+  template-validation:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        template-category:
+          - communication
+          - portals
+          - scripts
+          - docs
+      fail-fast: false
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+
+    - name: Install template validation dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyyaml jinja2
+
+    - name: Validate Communication Templates
+      if: matrix.template-category == 'communication'
+      run: |
+        python .dev-artifacts/scripts/template_validator.py templates/isp-communication* \
+          --format json \
+          --output validation-communication.json
+      continue-on-error: true
+
+    - name: Validate Portal Templates  
+      if: matrix.template-category == 'portals'
+      run: |
+        python .dev-artifacts/scripts/template_validator.py templates/isp-*portal* \
+          --format json \
+          --output validation-portals.json
+        python .dev-artifacts/scripts/template_validator.py templates/isp-crm* \
+          --format json \
+          --output validation-crm.json
+      continue-on-error: true
+
+    - name: Validate Script Templates
+      if: matrix.template-category == 'scripts'
+      run: |
+        python .dev-artifacts/scripts/template_validator.py deployment/scripts \
+          --format json \
+          --output validation-scripts.json
+        # Also validate tools directory
+        python .dev-artifacts/scripts/template_validator.py tools/ \
+          --format json \
+          --output validation-tools.json
+      continue-on-error: true
+
+    - name: Validate Documentation
+      if: matrix.template-category == 'docs'
+      run: |
+        python .dev-artifacts/scripts/template_validator.py docs/ \
+          --format json \
+          --output validation-docs.json
+      continue-on-error: true
+
+    - name: Upload Validation Results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: template-validation-${{ matrix.template-category }}
+        path: |
+          validation-*.json
+
+    - name: Generate Template Summary
+      if: always()
+      run: |
+        python -c "
+        import json
+        import glob
+        import sys
+        
+        total_files = 0
+        total_issues = 0
+        errors = 0
+        warnings = 0
+        info = 0
+        
+        for report_file in glob.glob('validation-*.json'):
+            try:
+                with open(report_file, 'r') as f:
+                    data = json.load(f)
+                    summary = data.get('summary', {})
+                    total_files += summary.get('total_files', 0)
+                    total_issues += summary.get('total_issues', 0)
+                    errors += summary.get('errors', 0)
+                    warnings += summary.get('warnings', 0)
+                    info += summary.get('info', 0)
+            except Exception as e:
+                print(f'Error reading {report_file}: {e}')
+        
+        print(f'## Template Validation Summary (${{ matrix.template-category }})')
+        print(f'- **Files processed:** {total_files}')
+        print(f'- **Total issues:** {total_issues}')
+        print(f'- **Errors:** {errors}')
+        print(f'- **Warnings:** {warnings}')
+        print(f'- **Info:** {info}')
+        
+        if errors > 0:
+            print('- **Status:** ⚠️ Templates have errors (non-blocking)')
+        elif warnings > 10:
+            print('- **Status:** ⚠️ Many warnings found')
+        else:
+            print('- **Status:** ✅ Templates validated')
+        
+        # Templates don't fail the build, but we report issues
+        sys.exit(0)
+        "
+
+  template-deployment-test:
+    runs-on: ubuntu-latest
+    needs: template-validation
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install fastapi uvicorn jinja2 pydantic sqlalchemy
+        # Add other template dependencies as needed
+
+    - name: Test ISP Communication Template
+      run: |
+        cd templates/isp-communications
+        # Create a minimal test to see if template can be imported
+        python -c "
+        import sys
+        import os
+        sys.path.insert(0, '.')
+        
+        # Test basic import - template should be importable even with placeholders
+        try:
+            # Don't actually import, just check syntax
+            import ast
+            with open('main.py', 'r') as f:
+                content = f.read()
+            
+            # Check if it would parse (ignoring placeholder issues)
+            try:
+                ast.parse(content)
+                print('✅ ISP Communication template syntax is valid')
+            except SyntaxError as e:
+                print(f'⚠️ ISP Communication template has syntax issues: {e}')
+                
+        except Exception as e:
+            print(f'⚠️ Error testing ISP Communication template: {e}')
+        " || true
+
+    - name: Test Portal Templates
+      run: |
+        for portal in templates/isp-*portal*; do
+          if [ -d "$portal" ] && [ -f "$portal/main.py" ]; then
+            echo "Testing $(basename "$portal")"
+            cd "$portal"
+            python -c "
+            import ast
+            try:
+                with open('main.py', 'r') as f:
+                    content = f.read()
+                ast.parse(content)
+                print('✅ $(basename "$portal") template syntax is valid')
+            except Exception as e:
+                print('⚠️ $(basename "$portal") template has issues: {}'.format(e))
+            " || true
+            cd ../..
+          fi
+        done
+
+    - name: Template Documentation Check
+      run: |
+        python -c "
+        import os
+        from pathlib import Path
+        
+        template_dirs = []
+        for item in Path('templates').iterdir():
+            if item.is_dir():
+                template_dirs.append(item)
+        
+        print(f'## Template Documentation Status')
+        
+        for template_dir in template_dirs:
+            readme_exists = (template_dir / 'README.md').exists()
+            config_exists = any((template_dir / f).exists() for f in ['config.yaml', 'config.yml', '.env.example'])
+            
+            status = '✅' if readme_exists and config_exists else '⚠️' if readme_exists or config_exists else '❌'
+            
+            print(f'- **{template_dir.name}**: {status}')
+            if not readme_exists:
+                print(f'  - Missing README.md')
+            if not config_exists:
+                print(f'  - Missing configuration example')
+        "
+
+  template-security-scan:
+    runs-on: ubuntu-latest
+    needs: template-validation
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Security Scan Templates
+      run: |
+        python -c "
+        import os
+        import re
+        from pathlib import Path
+        
+        security_issues = []
+        
+        def scan_file(file_path):
+            try:
+                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    content = f.read()
+                
+                issues = []
+                
+                # Check for hardcoded secrets
+                secret_patterns = [
+                    (r'password\s*=\s*[\"\\'].*[\"\\']', 'hardcoded password'),
+                    (r'api[_-]?key\s*=\s*[\"\\'].*[\"\\']', 'hardcoded API key'),
+                    (r'secret[_-]?key\s*=\s*[\"\\'].*[\"\\']', 'hardcoded secret key'),
+                    (r'token\s*=\s*[\"\\'].*[\"\\']', 'hardcoded token'),
+                    (r'aws[_-]?access[_-]?key', 'AWS access key reference'),
+                ]
+                
+                for pattern, description in secret_patterns:
+                    if re.search(pattern, content, re.IGNORECASE):
+                        # Allow obvious placeholders
+                        if not re.search(r'(YOUR_|REPLACE_|TODO|FIXME|\{\{|\$\{|<.*>)', content, re.IGNORECASE):
+                            issues.append(f'{description} detected')
+                
+                # Check for SQL injection risks in templates
+                sql_patterns = [
+                    r'execute\s*\(\s*[\"\\'].*%.*[\"\\']',
+                    r'query\s*\(\s*[\"\\'].*\+.*[\"\\']',
+                ]
+                
+                for pattern in sql_patterns:
+                    if re.search(pattern, content, re.IGNORECASE):
+                        issues.append('potential SQL injection risk')
+                
+                return issues
+                
+            except Exception as e:
+                return [f'error scanning: {e}']
+        
+        # Scan all template files
+        for root, dirs, files in os.walk('templates'):
+            for file in files:
+                if file.endswith(('.py', '.sh', '.yaml', '.yml', '.env')):
+                    file_path = os.path.join(root, file)
+                    issues = scan_file(file_path)
+                    if issues:
+                        security_issues.append((file_path, issues))
+        
+        print('## Template Security Scan Results')
+        
+        if security_issues:
+            print(f'⚠️ Found {len(security_issues)} files with potential security issues:')
+            for file_path, issues in security_issues:
+                print(f'- **{file_path}**:')
+                for issue in issues:
+                    print(f'  - {issue}')
+        else:
+            print('✅ No obvious security issues found in templates')
+        
+        # Don't fail the build for template security issues
+        "
+
+    - name: Template Placeholder Report
+      run: |
+        python -c "
+        import os
+        import re
+        from pathlib import Path
+        from collections import defaultdict
+        
+        placeholder_files = defaultdict(list)
+        
+        # Common placeholder patterns
+        patterns = [
+            (r'\{\{.*?\}\}', 'Jinja2 variables'),
+            (r'\$\{.*?\}', 'Shell/environment variables'),
+            (r'YOUR_[A-Z_]+', 'YOUR_* placeholders'),
+            (r'REPLACE_[A-Z_]+', 'REPLACE_* placeholders'),
+            (r'TODO:', 'TODO comments'),
+            (r'FIXME:', 'FIXME comments'),
+            (r'<[A-Z_]+>', 'Angle bracket placeholders'),
+        ]
+        
+        for root, dirs, files in os.walk('templates'):
+            for file in files:
+                if not file.endswith(('.pyc', '.pyo', '.git', '.DS_Store')):
+                    file_path = os.path.join(root, file)
+                    try:
+                        with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                            content = f.read()
+                        
+                        for pattern, description in patterns:
+                            matches = re.findall(pattern, content, re.IGNORECASE)
+                            if matches:
+                                placeholder_files[file_path].append((description, len(matches)))
+                    except Exception:
+                        pass
+        
+        print('## Template Customization Required')
+        
+        if placeholder_files:
+            print(f'Found {len(placeholder_files)} template files requiring customization:')
+            for file_path, placeholders in placeholder_files.items():
+                print(f'- **{file_path}**:')
+                for description, count in placeholders:
+                    print(f'  - {description}: {count} occurrences')
+        else:
+            print('ℹ️ No obvious placeholders found (templates may be ready-to-use)')
+        "

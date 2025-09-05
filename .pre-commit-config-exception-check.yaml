@@ -1,0 +1,26 @@
+# Pre-commit configuration for exception handling standards
+# Add these hooks to your existing .pre-commit-config.yaml
+
+repos:
+  - repo: local
+    hooks:
+      - id: check-critical-module-exceptions
+        name: Check critical modules for broad exceptions
+        entry: python scripts/check_broad_exceptions.py
+        language: system
+        pass_filenames: false
+        files: '^(src/dotmac_shared/repositories/|src/dotmac_management/core/).*\.py$'
+        
+      - id: ruff-strict-ble001
+        name: Strict BLE001 check on fixed modules  
+        entry: ./.venv/bin/ruff check --select=BLE001
+        language: system
+        pass_filenames: true
+        files: '^(src/dotmac_shared/repositories/(async_base_repository|sync_base_repository)\.py|src/dotmac_management/core/sanitization\.py)$'
+        
+      - id: check-websocket-exceptions
+        name: Check WebSocket manager uses specific exceptions
+        entry: bash -c 'if grep -n "except Exception[^A-Za-z]" src/dotmac_management/core/websocket_manager.py; then echo "❌ WebSocket manager should use specific exceptions"; exit 1; fi'
+        language: system
+        pass_filenames: false
+        files: 'src/dotmac_management/core/websocket_manager\.py'

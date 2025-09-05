@@ -1,0 +1,25 @@
+# TruffleHog exclude patterns for DotMac Framework
+# These patterns are legitimate and should not trigger alerts
+
+# Secret management templates (standard pattern)
+${SECRET:*}
+
+# Configuration files with templates
+*config_generator.py
+*validators.py
+
+# Template validation code patterns
+SECRET:")
+"SECRET:" in 
+.startswith("SECRET:
+
+# Test and example files
+*test*.py
+*example*.py
+*template*.py
+*.md
+
+# Specific safe patterns we've identified
+PASSWORD = "pwd"
+api_key="${SECRET:
+password="${SECRET:

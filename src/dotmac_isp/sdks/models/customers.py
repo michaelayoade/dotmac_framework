@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Optional
 from uuid import UUID
 
 
@@ -41,8 +41,8 @@ class Customer:
     last_name: Optional[str] = None
     email: Optional[str] = None
     phone: Optional[str] = None
-    billing_address: Optional[Dict] = None
-    service_address: Optional[Dict] = None
+    billing_address: Optional[dict] = None
+    service_address: Optional[dict] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
@@ -53,9 +53,9 @@ class CustomerProfile:
 
     profile_id: UUID
     customer_id: UUID
-    preferences: Dict
-    communication_settings: Dict
-    billing_preferences: Dict
+    preferences: dict
+    communication_settings: dict
+    billing_preferences: dict
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 

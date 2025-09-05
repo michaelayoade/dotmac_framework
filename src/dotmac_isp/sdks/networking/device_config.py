@@ -3,11 +3,10 @@ Device Config SDK - intent → template, diff, drift, approvals, maintenance win
 """
 
 import difflib
-from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 from uuid import uuid4
 
-from dotmac_isp.sdks.core.datetime_utils import utc_now, utc_now_iso
+from dotmac_isp.sdks.core.datetime_utils import utc_now
 
 from ..core.exceptions import ConfigDriftDetectedError, ConfigError
 from .netjson_support import NetJSONConfigMixin
@@ -18,14 +17,14 @@ class DeviceConfigService:
 
     def __init__(self):
         """Init   operation."""
-        self._configs: Dict[str, Dict[str, Any]] = {}
-        self._templates: Dict[str, Dict[str, Any]] = {}
-        self._intents: Dict[str, Dict[str, Any]] = {}
-        self._approvals: Dict[str, Dict[str, Any]] = {}
-        self._maintenance_windows: Dict[str, Dict[str, Any]] = {}
-        self._config_history: Dict[str, List[Dict[str, Any]]] = {}
+        self._configs: dict[str, dict[str, Any]] = {}
+        self._templates: dict[str, dict[str, Any]] = {}
+        self._intents: dict[str, dict[str, Any]] = {}
+        self._approvals: dict[str, dict[str, Any]] = {}
+        self._maintenance_windows: dict[str, dict[str, Any]] = {}
+        self._config_history: dict[str, list[dict[str, Any]]] = {}
 
-    async def create_config_template(self, **kwargs) -> Dict[str, Any]:
+    async def create_config_template(self, **kwargs) -> dict[str, Any]:
         """Create configuration template."""
         template_id = kwargs.get("template_id") or str(uuid4())
 
@@ -46,7 +45,7 @@ class DeviceConfigService:
         self._templates[template_id] = template
         return template
 
-    async def create_config_intent(self, **kwargs) -> Dict[str, Any]:
+    async def create_config_intent(self, **kwargs) -> dict[str, Any]:
         """Create configuration intent."""
         intent_id = kwargs.get("intent_id") or str(uuid4())
 
@@ -67,7 +66,7 @@ class DeviceConfigService:
         self._intents[intent_id] = intent
         return intent
 
-    async def render_config(self, intent_id: str) -> Dict[str, Any]:
+    async def render_config(self, intent_id: str) -> dict[str, Any]:
         """Render configuration from intent and template."""
         if intent_id not in self._intents:
             raise ConfigError(f"Intent not found: {intent_id}")
@@ -106,7 +105,7 @@ class DeviceConfigService:
 
         return config
 
-    async def calculate_diff(self, device_id: str, new_config: str) -> Dict[str, Any]:
+    async def calculate_diff(self, device_id: str, new_config: str) -> dict[str, Any]:
         """Calculate configuration diff."""
         # Get current config for device
         current_configs = [
@@ -139,24 +138,12 @@ class DeviceConfigService:
             "device_id": device_id,
             "has_changes": len(diff) > 0,
             "diff": "\n".join(diff),
-            "added_lines": len(
-                [
-                    line
-                    for line in diff
-                    if line.startswith("+") and not line.startswith("+++")
-                ]
-            ),
-            "removed_lines": len(
-                [
-                    line
-                    for line in diff
-                    if line.startswith("-") and not line.startswith("---")
-                ]
-            ),
+            "added_lines": len([line for line in diff if line.startswith("+") and not line.startswith("+++")]),
+            "removed_lines": len([line for line in diff if line.startswith("-") and not line.startswith("---")]),
             "calculated_at": utc_now().isoformat(),
         }
 
-    async def detect_drift(self, device_id: str, running_config: str) -> Dict[str, Any]:
+    async def detect_drift(self, device_id: str, running_config: str) -> dict[str, Any]:
         """Detect configuration drift."""
         # Get expected config for device
         expected_configs = [
@@ -196,7 +183,7 @@ class DeviceConfigService:
             "last_check": utc_now().isoformat(),
         }
 
-    async def create_maintenance_window(self, **kwargs) -> Dict[str, Any]:
+    async def create_maintenance_window(self, **kwargs) -> dict[str, Any]:
         """Create maintenance window."""
         window_id = kwargs.get("window_id") or str(uuid4())
 
@@ -207,9 +194,7 @@ class DeviceConfigService:
             "start_time": kwargs["start_time"],
             "end_time": kwargs["end_time"],
             "timezone": kwargs.get("timezone", "UTC"),
-            "recurrence": kwargs.get(
-                "recurrence", "none"
-            ),  # none, daily, weekly, monthly
+            "recurrence": kwargs.get("recurrence", "none"),  # none, daily, weekly, monthly
             "device_ids": kwargs.get("device_ids", []),
             "max_concurrent_changes": kwargs.get("max_concurrent_changes", 5),
             "status": kwargs.get("status", "scheduled"),
@@ -237,9 +222,9 @@ class DeviceConfigSDK(NetJSONConfigMixin):
         template_content: str,
         device_type: str = "generic",
         vendor: Optional[str] = None,
-        variables: Optional[List[str]] = None,
+        variables: Optional[list[str]] = None,
         **kwargs,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Create configuration template."""
         template = await self._service.create_config_template(
             template_name=template_name,
@@ -266,11 +251,11 @@ class DeviceConfigSDK(NetJSONConfigMixin):
         self,
         device_id: str,
         template_id: str,
-        parameters: Dict[str, Any],
+        parameters: dict[str, Any],
         requires_approval: bool = False,
         maintenance_window_id: Optional[str] = None,
         **kwargs,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Create configuration intent."""
         intent = await self._service.create_config_intent(
             device_id=device_id,
@@ -294,7 +279,7 @@ class DeviceConfigSDK(NetJSONConfigMixin):
             "created_by": intent["created_by"],
         }
 
-    async def render_configuration(self, intent_id: str) -> Dict[str, Any]:
+    async def render_configuration(self, intent_id: str) -> dict[str, Any]:
         """Render configuration from intent."""
         config = await self._service.render_config(intent_id)
 
@@ -309,9 +294,7 @@ class DeviceConfigSDK(NetJSONConfigMixin):
             "rendered_at": config["rendered_at"],
         }
 
-    async def calculate_config_diff(
-        self, device_id: str, new_config: str
-    ) -> Dict[str, Any]:
+    async def calculate_config_diff(self, device_id: str, new_config: str) -> dict[str, Any]:
         """Calculate configuration diff."""
         diff_result = await self._service.calculate_diff(device_id, new_config)
 
@@ -324,9 +307,7 @@ class DeviceConfigSDK(NetJSONConfigMixin):
             "calculated_at": diff_result["calculated_at"],
         }
 
-    async def detect_config_drift(
-        self, device_id: str, running_config: str
-    ) -> Dict[str, Any]:
+    async def detect_config_drift(self, device_id: str, running_config: str) -> dict[str, Any]:
         """Detect configuration drift."""
         drift_result = await self._service.detect_drift(device_id, running_config)
 
@@ -351,10 +332,10 @@ class DeviceConfigSDK(NetJSONConfigMixin):
         window_name: str,
         start_time: str,
         end_time: str,
-        device_ids: Optional[List[str]] = None,
+        device_ids: Optional[list[str]] = None,
         description: Optional[str] = None,
         **kwargs,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Create maintenance window."""
         window = await self._service.create_maintenance_window(
             window_name=window_name,
@@ -381,7 +362,7 @@ class DeviceConfigSDK(NetJSONConfigMixin):
 
     async def approve_config_intent(
         self, intent_id: str, approver: str, comments: Optional[str] = None
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Approve configuration intent."""
         if intent_id not in self._service._intents:
             raise ConfigError(f"Intent not found: {intent_id}")
@@ -412,7 +393,7 @@ class DeviceConfigSDK(NetJSONConfigMixin):
             "approved_at": approval["approved_at"],
         }
 
-    async def get_pending_approvals(self) -> List[Dict[str, Any]]:
+    async def get_pending_approvals(self) -> list[dict[str, Any]]:
         """Get pending configuration approvals."""
         pending_intents = [
             intent
@@ -432,9 +413,7 @@ class DeviceConfigSDK(NetJSONConfigMixin):
             for intent in pending_intents
         ]
 
-    async def get_maintenance_windows(
-        self, active_only: bool = False
-    ) -> List[Dict[str, Any]]:
+    async def get_maintenance_windows(self, active_only: bool = False) -> list[dict[str, Any]]:
         """Get maintenance windows."""
         windows = list(self._service._maintenance_windows.values())
 
@@ -443,8 +422,7 @@ class DeviceConfigSDK(NetJSONConfigMixin):
             windows = [
                 window
                 for window in windows
-                if window["start_time"] <= now <= window["end_time"]
-                and window["status"] == "active"
+                if window["start_time"] <= now <= window["end_time"] and window["status"] == "active"
             ]
 
         return [

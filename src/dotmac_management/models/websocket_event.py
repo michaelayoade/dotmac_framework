@@ -1,66 +1,65 @@
 """WebSocket Event Models for the Management Platform."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional
 
+from dotmac.database.base import AuditableMixin, TenantModel
 from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, Index, Integer, String, Text
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
-from dotmac_shared.database.base import AuditableMixin, TenantModel
-
 
 class EventType(str, Enum):
     """WebSocket event types."""
+
     # System Events
     SYSTEM_NOTIFICATION = "system_notification"
     CONNECTION_STATUS = "connection_status"
     HEARTBEAT = "heartbeat"
-    
+
     # User Events
     USER_LOGIN = "user_login"
     USER_LOGOUT = "user_logout"
     USER_SESSION_UPDATE = "user_session_update"
-    
+
     # Platform Events
     TENANT_CREATED = "tenant_created"
     TENANT_UPDATED = "tenant_updated"
     TENANT_DEPLOYED = "tenant_deployed"
     TENANT_SUSPENDED = "tenant_suspended"
-    
+
     # Billing Events
     PAYMENT_PROCESSED = "payment_processed"
     INVOICE_GENERATED = "invoice_generated"
     BILLING_UPDATE = "billing_update"
     PAYMENT_FAILED = "payment_failed"
-    
+
     # Service Events
     SERVICE_ACTIVATED = "service_activated"
     SERVICE_SUSPENDED = "service_suspended"
     SERVICE_PROVISIONED = "service_provisioned"
     SERVICE_ERROR = "service_error"
-    
+
     # Network Events
     NETWORK_ALERT = "network_alert"
     DEVICE_STATUS_CHANGE = "device_status_change"
     BANDWIDTH_ALERT = "bandwidth_alert"
     CONNECTION_EVENT = "connection_event"
-    
+
     # Support Events
     TICKET_CREATED = "ticket_created"
     TICKET_UPDATED = "ticket_updated"
     TICKET_ASSIGNED = "ticket_assigned"
     TICKET_RESOLVED = "ticket_resolved"
-    
+
     # File Events
     FILE_UPLOADED = "file_uploaded"
     FILE_DOWNLOADED = "file_downloaded"
     FILE_DELETED = "file_deleted"
     FILE_SHARED = "file_shared"
-    
+
     # Domain Events
     DOMAIN_ADDED = "domain_added"
     DOMAIN_VERIFIED = "domain_verified"
@@ -70,6 +69,7 @@ class EventType(str, Enum):
 
 class EventPriority(str, Enum):
     """Event priority levels."""
+
     LOW = "low"
     NORMAL = "normal"
     HIGH = "high"
@@ -79,6 +79,7 @@ class EventPriority(str, Enum):
 
 class DeliveryStatus(str, Enum):
     """Event delivery status."""
+
     PENDING = "pending"
     DELIVERED = "delivered"
     FAILED = "failed"
@@ -88,6 +89,7 @@ class DeliveryStatus(str, Enum):
 
 class SubscriptionType(str, Enum):
     """WebSocket subscription types."""
+
     USER_SPECIFIC = "user_specific"
     TENANT_WIDE = "tenant_wide"
     ROLE_BASED = "role_based"
@@ -104,49 +106,49 @@ class WebSocketEvent(TenantModel, AuditableMixin):
     event_id = Column(String(100), nullable=False, unique=True, index=True)
     event_type = Column(SQLEnum(EventType), nullable=False, index=True)
     event_category = Column(String(50), nullable=False, index=True)  # system, billing, network, etc.
-    
+
     # Event content
     title = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)
     event_data = Column(JSON, nullable=False)
     metadata = Column(JSON, nullable=True)
-    
+
     # Event properties
     priority = Column(SQLEnum(EventPriority), default=EventPriority.NORMAL, nullable=False, index=True)
     is_persistent = Column(Boolean, default=False, nullable=False)  # Store for offline users
     requires_acknowledgment = Column(Boolean, default=False, nullable=False)
-    
+
     # Targeting
     target_user_id = Column(String(100), nullable=True, index=True)
     target_user_ids = Column(JSON, nullable=True)  # List of user IDs for multi-user events
     target_roles = Column(JSON, nullable=True)  # List of roles
     broadcast_to_tenant = Column(Boolean, default=False, nullable=False)
-    
+
     # Delivery tracking
     delivery_status = Column(SQLEnum(DeliveryStatus), default=DeliveryStatus.PENDING, nullable=False, index=True)
     delivery_attempts = Column(Integer, default=0, nullable=False)
     max_delivery_attempts = Column(Integer, default=3, nullable=False)
     last_delivery_attempt = Column(DateTime, nullable=True)
     delivered_at = Column(DateTime, nullable=True, index=True)
-    
+
     # Scheduling
     scheduled_for = Column(DateTime, nullable=True, index=True)
     expires_at = Column(DateTime, nullable=True, index=True)
-    
+
     # Source information
     source_service = Column(String(100), nullable=True, index=True)
     source_entity_type = Column(String(50), nullable=True, index=True)
     source_entity_id = Column(String(100), nullable=True, index=True)
-    
+
     # Response tracking
     acknowledged_by = Column(JSON, nullable=True)  # List of user IDs who acknowledged
     acknowledged_at = Column(DateTime, nullable=True)
     response_data = Column(JSON, nullable=True)
-    
+
     # Error handling
     error_message = Column(Text, nullable=True)
     retry_count = Column(Integer, default=0, nullable=False)
-    
+
     # Custom fields
     custom_fields = Column(JSON, nullable=True)
 
@@ -180,13 +182,13 @@ class WebSocketEvent(TenantModel, AuditableMixin):
         """Calculate acknowledgment rate if required."""
         if not self.requires_acknowledgment or not self.acknowledged_by:
             return None
-        
+
         target_count = 0
         if self.target_user_ids:
             target_count = len(self.target_user_ids)
         elif self.target_user_id:
             target_count = 1
-        
+
         if target_count > 0:
             return len(self.acknowledged_by) / target_count * 100
         return 0
@@ -204,41 +206,41 @@ class WebSocketConnection(TenantModel):
     connection_id = Column(String(100), nullable=False, unique=True, index=True)
     user_id = Column(String(100), nullable=False, index=True)
     session_id = Column(String(100), nullable=True, index=True)
-    
+
     # Connection details
     client_ip = Column(String(45), nullable=True, index=True)
     user_agent = Column(String(500), nullable=True)
     origin = Column(String(200), nullable=True)
-    
+
     # Connection lifecycle
     connected_at = Column(DateTime(timezone=True), nullable=False, default=func.now(), index=True)
     last_ping = Column(DateTime(timezone=True), nullable=True)
     last_activity = Column(DateTime(timezone=True), nullable=True)
     disconnected_at = Column(DateTime, nullable=True, index=True)
-    
+
     # Connection properties
     is_active = Column(Boolean, default=True, nullable=False, index=True)
     protocol_version = Column(String(10), default="1.0", nullable=False)
     compression_enabled = Column(Boolean, default=False, nullable=False)
-    
+
     # Usage statistics
     messages_sent = Column(Integer, default=0, nullable=False)
     messages_received = Column(Integer, default=0, nullable=False)
     bytes_sent = Column(Integer, default=0, nullable=False)
     bytes_received = Column(Integer, default=0, nullable=False)
-    
+
     # Subscription tracking
     active_subscriptions = Column(JSON, nullable=True)  # List of subscription names
-    
+
     # Error tracking
     error_count = Column(Integer, default=0, nullable=False)
     last_error = Column(Text, nullable=True)
     last_error_at = Column(DateTime, nullable=True)
-    
+
     # Connection quality
     average_latency_ms = Column(Integer, nullable=True)
     connection_quality_score = Column(Integer, default=100, nullable=False)  # 0-100
-    
+
     # Custom fields
     custom_fields = Column(JSON, nullable=True)
 
@@ -279,25 +281,25 @@ class WebSocketSubscription(TenantModel, AuditableMixin):
     connection_id = Column(String(100), ForeignKey("websocket_connections.connection_id"), nullable=False, index=True)
     subscription_name = Column(String(100), nullable=False, index=True)
     subscription_type = Column(SQLEnum(SubscriptionType), nullable=False, index=True)
-    
+
     # Subscription target
     user_id = Column(String(100), nullable=False, index=True)
     event_types = Column(JSON, nullable=True)  # List of event types to receive
     entity_filter = Column(JSON, nullable=True)  # Filter criteria
-    
+
     # Subscription properties
     is_active = Column(Boolean, default=True, nullable=False, index=True)
     priority_filter = Column(SQLEnum(EventPriority), nullable=True, index=True)
     auto_acknowledge = Column(Boolean, default=False, nullable=False)
-    
+
     # Usage statistics
     events_received = Column(Integer, default=0, nullable=False)
     last_event_received = Column(DateTime, nullable=True)
-    
+
     # Subscription lifecycle
     subscribed_at = Column(DateTime, default=func.now(), nullable=False, index=True)
     unsubscribed_at = Column(DateTime, nullable=True, index=True)
-    
+
     # Custom fields
     custom_fields = Column(JSON, nullable=True)
 
@@ -317,21 +319,21 @@ class WebSocketSubscription(TenantModel, AuditableMixin):
         # Check event types filter
         if self.event_types and event.event_type not in self.event_types:
             return False
-        
+
         # Check priority filter
         if self.priority_filter and event.priority < self.priority_filter:
             return False
-        
+
         # Check entity filter
         if self.entity_filter:
-            entity_type = self.entity_filter.get('entity_type')
-            entity_id = self.entity_filter.get('entity_id')
-            
+            entity_type = self.entity_filter.get("entity_type")
+            entity_id = self.entity_filter.get("entity_id")
+
             if entity_type and event.source_entity_type != entity_type:
                 return False
             if entity_id and event.source_entity_id != entity_id:
                 return False
-        
+
         return True
 
     def __repr__(self):
@@ -347,30 +349,30 @@ class WebSocketDelivery(TenantModel):
     event_id = Column(String(100), ForeignKey("websocket_events.event_id"), nullable=False, index=True)
     connection_id = Column(String(100), ForeignKey("websocket_connections.connection_id"), nullable=False, index=True)
     delivery_id = Column(String(100), nullable=False, unique=True, index=True)
-    
+
     # Delivery details
     user_id = Column(String(100), nullable=False, index=True)
     attempted_at = Column(DateTime, nullable=False, default=func.now(), index=True)
     delivered_at = Column(DateTime, nullable=True, index=True)
     acknowledged_at = Column(DateTime, nullable=True, index=True)
-    
+
     # Delivery status
     status = Column(SQLEnum(DeliveryStatus), default=DeliveryStatus.PENDING, nullable=False, index=True)
     attempt_count = Column(Integer, default=1, nullable=False)
-    
+
     # Delivery metrics
     delivery_latency_ms = Column(Integer, nullable=True)
     message_size_bytes = Column(Integer, nullable=True)
-    
+
     # Error details
     error_code = Column(String(50), nullable=True, index=True)
     error_message = Column(Text, nullable=True)
     retry_after = Column(DateTime, nullable=True, index=True)
-    
+
     # Response tracking
     client_response = Column(JSON, nullable=True)
     response_received_at = Column(DateTime, nullable=True)
-    
+
     # Custom fields
     custom_fields = Column(JSON, nullable=True)
 
@@ -395,13 +397,13 @@ class WebSocketDelivery(TenantModel):
     def needs_retry(self):
         """Check if delivery needs retry."""
         return (
-            self.status == DeliveryStatus.FAILED and
-            self.retry_after and
-            datetime.now(timezone.utc) >= self.retry_after
+            self.status == DeliveryStatus.FAILED and self.retry_after and datetime.now(timezone.utc) >= self.retry_after
         )
 
     def __repr__(self):
-        return f"<WebSocketDelivery(event='{self.event_id}', connection='{self.connection_id}', status='{self.status}')>"
+        return (
+            f"<WebSocketDelivery(event='{self.event_id}', connection='{self.connection_id}', status='{self.status}')>"
+        )
 
 
 class WebSocketMetrics(TenantModel):
@@ -413,34 +415,34 @@ class WebSocketMetrics(TenantModel):
     metric_date = Column(DateTime, nullable=False, index=True)
     metric_hour = Column(Integer, nullable=False, index=True)  # 0-23
     user_id = Column(String(100), nullable=True, index=True)
-    
+
     # Connection metrics
     total_connections = Column(Integer, default=0, nullable=False)
     unique_users = Column(Integer, default=0, nullable=False)
     average_connection_duration_seconds = Column(Integer, default=0, nullable=False)
     total_connection_time_seconds = Column(Integer, default=0, nullable=False)
-    
+
     # Message metrics
     total_messages_sent = Column(Integer, default=0, nullable=False)
     total_messages_received = Column(Integer, default=0, nullable=False)
     total_bytes_sent = Column(Integer, default=0, nullable=False)
     total_bytes_received = Column(Integer, default=0, nullable=False)
-    
+
     # Event metrics
     events_by_type = Column(JSON, nullable=True)  # Count by event type
     events_by_priority = Column(JSON, nullable=True)  # Count by priority
     delivery_success_rate = Column(Integer, default=100, nullable=False)  # Percentage
     average_delivery_latency_ms = Column(Integer, default=0, nullable=False)
-    
+
     # Error metrics
     total_errors = Column(Integer, default=0, nullable=False)
     error_breakdown = Column(JSON, nullable=True)  # Count by error type
-    
+
     # Performance metrics
     peak_concurrent_connections = Column(Integer, default=0, nullable=False)
     average_latency_ms = Column(Integer, default=0, nullable=False)
     bandwidth_usage_mb = Column(Integer, default=0, nullable=False)
-    
+
     # Custom fields
     custom_fields = Column(JSON, nullable=True)
 
@@ -472,14 +474,13 @@ class WebSocketMetrics(TenantModel):
 __all__ = [
     # Enums
     "EventType",
-    "EventPriority", 
+    "EventPriority",
     "DeliveryStatus",
     "SubscriptionType",
-    
     # Models
     "WebSocketEvent",
     "WebSocketConnection",
-    "WebSocketSubscription", 
+    "WebSocketSubscription",
     "WebSocketDelivery",
     "WebSocketMetrics",
 ]

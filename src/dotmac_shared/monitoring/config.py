@@ -7,7 +7,7 @@ including version detection and environment configuration.
 
 import os
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 try:
     from pydantic import BaseModel, ConfigDict
@@ -30,10 +30,10 @@ except ImportError:
     DeploymentMode = None
 
 try:
-    import toml
+    import tomllib as toml  # Python 3.11+
 
     TOML_AVAILABLE = True
-except ImportError:
+except Exception:
     TOML_AVAILABLE = False
 
 
@@ -46,7 +46,7 @@ class MonitoringConfig:
         version: Optional[str] = None,
         environment: Optional[str] = None,
         enabled: bool = True,
-        custom_labels: Optional[Dict[str, str]] = None,
+        custom_labels: Optional[dict[str, str]] = None,
         deployment_context: Optional[Any] = None,  # DeploymentContext if available
     ):
         """
@@ -65,15 +65,9 @@ class MonitoringConfig:
 
         # Leverage existing deployment context if available
         if EXISTING_CONFIG_AVAILABLE and deployment_context:
-            self.version = (
-                version
-                or getattr(deployment_context, "version", None)
-                or self._detect_version()
-            )
+            self.version = version or getattr(deployment_context, "version", None) or self._detect_version()
             self.environment = (
-                environment
-                or getattr(deployment_context, "environment", None)
-                or self._detect_environment()
+                environment or getattr(deployment_context, "environment", None) or self._detect_environment()
             )
         else:
             self.version = version or self._detect_version()
@@ -148,7 +142,7 @@ class MonitoringConfig:
             for path in [current_path] + list(current_path.parents):
                 pyproject_path = path / "pyproject.toml"
                 if pyproject_path.exists():
-                    with open(pyproject_path, "r") as f:
+                    with open(pyproject_path) as f:
                         config = toml.load(f)
 
                     # Check poetry section first
@@ -164,7 +158,7 @@ class MonitoringConfig:
 
         return None
 
-    def get_service_info(self) -> Dict[str, str]:
+    def get_service_info(self) -> dict[str, str]:
         """Get service information for metrics."""
         info = {
             "service": self.service_name,
@@ -177,7 +171,7 @@ class MonitoringConfig:
 
         return info
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert configuration to dictionary."""
         return {
             "service_name": self.service_name,
@@ -205,12 +199,9 @@ class MonitoringSettings(BaseSettings if PYDANTIC_AVAILABLE else dict):
         service_name: str = "dotmac"
         version: Optional[str] = None
         environment: Optional[str] = None
-        labels: Dict[str, str] = {}
+        labels: dict[str, str] = {}
 
-        model_config = ConfigDict(
-            env_prefix="MONITORING_",
-            case_sensitive=False
-        )
+        model_config = ConfigDict(env_prefix="MONITORING_", case_sensitive=False)
 
     else:
 
@@ -240,9 +231,7 @@ def create_monitoring_config(
     Returns:
         MonitoringConfig: Configured monitoring settings
     """
-    return MonitoringConfig(
-        service_name=service_name, version=version, environment=environment, **kwargs
-    )
+    return MonitoringConfig(service_name=service_name, version=version, environment=environment, **kwargs)
 
 
 def load_monitoring_settings() -> MonitoringSettings:

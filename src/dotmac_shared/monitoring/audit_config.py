@@ -8,7 +8,7 @@ with environment-based settings, validation, and security considerations.
 import os
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set
+from typing import Optional
 
 from .utils import (
     DEFAULT_PAGE_SIZE,
@@ -77,14 +77,14 @@ class APIConfig:
     default_page_size: int = DEFAULT_PAGE_SIZE
     enable_streaming: bool = True
     enable_export: bool = True
-    export_formats: Set[str] = field(default_factory=lambda: {"json", "csv"})
+    export_formats: set[str] = field(default_factory=lambda: {"json", "csv"})
     rate_limit_enabled: bool = True
     rate_limit_requests: int = 100
     rate_limit_window: int = 60  # seconds
 
     # Security settings
     require_authentication: bool = True
-    allowed_origins: List[str] = field(default_factory=list)
+    allowed_origins: list[str] = field(default_factory=list)
     enable_cors: bool = False
 
 
@@ -93,7 +93,7 @@ class MiddlewareConfig:
     """Configuration for audit middleware."""
 
     enabled: bool = True
-    excluded_paths: Set[str] = field(
+    excluded_paths: set[str] = field(
         default_factory=lambda: {
             "/health",
             "/metrics",
@@ -106,11 +106,11 @@ class MiddlewareConfig:
             "/live",
         }
     )
-    excluded_methods: Set[str] = field(default_factory=lambda: {"OPTIONS", "HEAD"})
+    excluded_methods: set[str] = field(default_factory=lambda: {"OPTIONS", "HEAD"})
     log_request_body: bool = False
     log_response_body: bool = False
     max_body_size: int = 10 * 1024  # 10KB
-    sensitive_headers: Set[str] = field(
+    sensitive_headers: set[str] = field(
         default_factory=lambda: {
             "authorization",
             "cookie",
@@ -131,7 +131,7 @@ class MiddlewareConfig:
 class ComplianceConfig:
     """Configuration for compliance features."""
 
-    enabled_frameworks: Set[str] = field(default_factory=lambda: {"SOC2", "GDPR"})
+    enabled_frameworks: set[str] = field(default_factory=lambda: {"SOC2", "GDPR"})
     pii_detection: bool = True
     risk_scoring: bool = True
     high_risk_threshold: int = 70
@@ -142,7 +142,7 @@ class ComplianceConfig:
     default_classification: str = "internal"
 
     # Retention policies
-    retention_policies: Dict[str, int] = field(
+    retention_policies: dict[str, int] = field(
         default_factory=lambda: {
             "auth": 2555,  # 7 years
             "data": 2555,  # 7 years
@@ -191,32 +191,20 @@ class AuditConfig:
         if not self.service_name.strip():
             raise ConfigurationError("service_name cannot be empty")
 
-        if (
-            self.storage.backend == StorageBackend.POSTGRESQL
-            and not self.storage.connection_string
-        ):
+        if self.storage.backend == StorageBackend.POSTGRESQL and not self.storage.connection_string:
             raise ConfigurationError("PostgreSQL backend requires connection_string")
 
         if self.storage.backend == StorageBackend.FILE and not self.storage.file_path:
             raise ConfigurationError("File backend requires file_path")
 
         if self.storage.encrypt_at_rest and not self.storage.encryption_key:
-            raise ConfigurationError(
-                "Encryption enabled but no encryption_key provided"
-            )
+            raise ConfigurationError("Encryption enabled but no encryption_key provided")
 
         if self.api.max_page_size > MAX_PAGE_SIZE:
-            logger.warning(
-                f"API max_page_size {self.api.max_page_size} exceeds recommended maximum {MAX_PAGE_SIZE}"
-            )
+            logger.warning(f"API max_page_size {self.api.max_page_size} exceeds recommended maximum {MAX_PAGE_SIZE}")
 
-        if (
-            self.compliance.high_risk_threshold
-            >= self.compliance.critical_risk_threshold
-        ):
-            raise ConfigurationError(
-                "high_risk_threshold must be less than critical_risk_threshold"
-            )
+        if self.compliance.high_risk_threshold >= self.compliance.critical_risk_threshold:
+            raise ConfigurationError("high_risk_threshold must be less than critical_risk_threshold")
 
 
 def create_audit_config_from_env() -> AuditConfig:
@@ -243,9 +231,7 @@ def create_audit_config_from_env() -> AuditConfig:
     # Basic service configuration
     service_name = os.getenv("DOTMAC_AUDIT_SERVICE_NAME", "dotmac-service")
     tenant_id = os.getenv("DOTMAC_AUDIT_TENANT_ID")
-    environment = os.getenv(
-        "DOTMAC_ENVIRONMENT", os.getenv("ENVIRONMENT", "development")
-    )
+    environment = os.getenv("DOTMAC_ENVIRONMENT", os.getenv("ENVIRONMENT", "development"))
 
     # Feature flags
     enabled = os.getenv("DOTMAC_AUDIT_ENABLED", "true").lower() == "true"
@@ -269,13 +255,10 @@ def create_audit_config_from_env() -> AuditConfig:
         backend=storage_backend,
         connection_string=os.getenv("DOTMAC_AUDIT_STORAGE_CONNECTION"),
         max_events=safe_cast(os.getenv("DOTMAC_AUDIT_STORAGE_MAX_EVENTS"), int, 10000),
-        retention_days=safe_cast(
-            os.getenv("DOTMAC_AUDIT_STORAGE_RETENTION_DAYS"), int, 365
-        ),
+        retention_days=safe_cast(os.getenv("DOTMAC_AUDIT_STORAGE_RETENTION_DAYS"), int, 365),
         table_name=os.getenv("DOTMAC_AUDIT_STORAGE_TABLE", "audit_events"),
         file_path=os.getenv("DOTMAC_AUDIT_STORAGE_FILE_PATH"),
-        encrypt_at_rest=os.getenv("DOTMAC_AUDIT_ENCRYPT_AT_REST", "false").lower()
-        == "true",
+        encrypt_at_rest=os.getenv("DOTMAC_AUDIT_ENCRYPT_AT_REST", "false").lower() == "true",
         encryption_key=os.getenv("DOTMAC_AUDIT_ENCRYPTION_KEY"),
     )
 
@@ -283,46 +266,30 @@ def create_audit_config_from_env() -> AuditConfig:
     api_config = APIConfig(
         enabled=os.getenv("DOTMAC_AUDIT_API_ENABLED", "true").lower() == "true",
         prefix=os.getenv("DOTMAC_AUDIT_API_PREFIX", "/audit"),
-        max_page_size=safe_cast(
-            os.getenv("DOTMAC_AUDIT_API_MAX_PAGE_SIZE"), int, MAX_PAGE_SIZE
-        ),
-        require_authentication=os.getenv(
-            "DOTMAC_AUDIT_API_REQUIRE_AUTH", "true"
-        ).lower()
-        == "true",
-        enable_cors=os.getenv("DOTMAC_AUDIT_API_ENABLE_CORS", "false").lower()
-        == "true",
+        max_page_size=safe_cast(os.getenv("DOTMAC_AUDIT_API_MAX_PAGE_SIZE"), int, MAX_PAGE_SIZE),
+        require_authentication=os.getenv("DOTMAC_AUDIT_API_REQUIRE_AUTH", "true").lower() == "true",
+        enable_cors=os.getenv("DOTMAC_AUDIT_API_ENABLE_CORS", "false").lower() == "true",
     )
 
     # Middleware configuration
     middleware_config = MiddlewareConfig(
         enabled=os.getenv("DOTMAC_AUDIT_MIDDLEWARE_ENABLED", "true").lower() == "true",
-        log_request_body=os.getenv("DOTMAC_AUDIT_LOG_REQUEST_BODY", "false").lower()
-        == "true",
-        log_response_body=os.getenv("DOTMAC_AUDIT_LOG_RESPONSE_BODY", "false").lower()
-        == "true",
-        max_body_size=safe_cast(
-            os.getenv("DOTMAC_AUDIT_MAX_BODY_SIZE"), int, 10 * 1024
-        ),
+        log_request_body=os.getenv("DOTMAC_AUDIT_LOG_REQUEST_BODY", "false").lower() == "true",
+        log_response_body=os.getenv("DOTMAC_AUDIT_LOG_RESPONSE_BODY", "false").lower() == "true",
+        max_body_size=safe_cast(os.getenv("DOTMAC_AUDIT_MAX_BODY_SIZE"), int, 10 * 1024),
         async_logging=os.getenv("DOTMAC_AUDIT_ASYNC_LOGGING", "true").lower() == "true",
     )
 
     # Compliance configuration
     frameworks_str = os.getenv("DOTMAC_AUDIT_COMPLIANCE_FRAMEWORKS", "SOC2,GDPR")
-    enabled_frameworks = {
-        f.strip().upper() for f in frameworks_str.split(",") if f.strip()
-    }
+    enabled_frameworks = {f.strip().upper() for f in frameworks_str.split(",") if f.strip()}
 
     compliance_config = ComplianceConfig(
         enabled_frameworks=enabled_frameworks,
         pii_detection=os.getenv("DOTMAC_AUDIT_PII_DETECTION", "true").lower() == "true",
         risk_scoring=os.getenv("DOTMAC_AUDIT_RISK_SCORING", "true").lower() == "true",
-        high_risk_threshold=safe_cast(
-            os.getenv("DOTMAC_AUDIT_HIGH_RISK_THRESHOLD"), int, 70
-        ),
-        critical_risk_threshold=safe_cast(
-            os.getenv("DOTMAC_AUDIT_CRITICAL_RISK_THRESHOLD"), int, 90
-        ),
+        high_risk_threshold=safe_cast(os.getenv("DOTMAC_AUDIT_HIGH_RISK_THRESHOLD"), int, 70),
+        critical_risk_threshold=safe_cast(os.getenv("DOTMAC_AUDIT_CRITICAL_RISK_THRESHOLD"), int, 90),
     )
 
     return AuditConfig(
@@ -338,7 +305,7 @@ def create_audit_config_from_env() -> AuditConfig:
     )
 
 
-def validate_production_config(config: AuditConfig) -> List[str]:
+def validate_production_config(config: AuditConfig) -> list[str]:
     """
     Validate configuration for production deployment.
 
@@ -352,14 +319,9 @@ def validate_production_config(config: AuditConfig) -> List[str]:
 
     # Storage validation
     if config.storage.backend == StorageBackend.MEMORY:
-        warnings.append(
-            "Memory storage not recommended for production - events will be lost on restart"
-        )
+        warnings.append("Memory storage not recommended for production - events will be lost on restart")
 
-    if (
-        config.storage.backend == StorageBackend.FILE
-        and not config.storage.rotate_files
-    ):
+    if config.storage.backend == StorageBackend.FILE and not config.storage.rotate_files:
         warnings.append("File rotation disabled - log files may grow very large")
 
     if not config.storage.encrypt_at_rest and config.environment == "production":
@@ -381,14 +343,10 @@ def validate_production_config(config: AuditConfig) -> List[str]:
 
     # Security validation
     if config.middleware.log_request_body or config.middleware.log_response_body:
-        warnings.append(
-            "Request/response body logging enabled - may log sensitive data"
-        )
+        warnings.append("Request/response body logging enabled - may log sensitive data")
 
     if config.log_level == AuditLogLevel.DEBUG and config.environment == "production":
-        warnings.append(
-            "Debug logging enabled in production - may log sensitive information"
-        )
+        warnings.append("Debug logging enabled in production - may log sensitive information")
 
     return warnings
 
@@ -412,11 +370,9 @@ def init_audit_config(config: Optional[AuditConfig] = None) -> AuditConfig:
     Returns:
         The initialized configuration
     """
-    global _global_config
-
     if config is None:
         config = create_audit_config_from_env()
-
+    global _global_config
     # Validate for production
     if config.environment in ["production", "prod"]:
         warnings = validate_production_config(config)

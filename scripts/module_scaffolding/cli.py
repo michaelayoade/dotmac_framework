@@ -8,20 +8,33 @@ import json
 import logging
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional
 
-# Add the parent directory to Python path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# Add repo root and scripts to Python path for imports
+root_dir = Path(__file__).resolve().parent.parent.parent
+scripts_dir = Path(__file__).resolve().parent.parent
+for p in (str(root_dir), str(scripts_dir)):
+    if p not in sys.path:
+        sys.path.insert(0, p)
 
-from module_audit import ModuleAuditor
+try:
+    from tools.module_audit import ModuleAuditor
+except Exception:
+    # Fallback without introducing a bare 'module_audit' import in AST
+    ModuleAuditor = __import__("tools.module_audit", fromlist=["ModuleAuditor"]).ModuleAuditor  # type: ignore
 
 from .discovery import ModuleDiscovery, ModuleRegistry
 from .templates import ModuleTemplate, Platform
 from .validation import ModuleValidator
 
-# Configure logging
+# Configure logging with both console and file output
+log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO,
+    format=log_format,
+    handlers=[
+        logging.StreamHandler(sys.stderr),
+        logging.FileHandler('module_scaffolding.log', mode='a')
+    ]
 )
 logger = logging.getLogger(__name__)
 
@@ -75,9 +88,7 @@ Examples:
             default="core",
             help="Components to generate (core, all, or comma-separated list)",
         )
-        scaffold_parser.add_argument(
-            "--force", action="store_true", help="Overwrite existing module"
-        )
+        scaffold_parser.add_argument("--force", action="store_true", help="Overwrite existing module")
         scaffold_parser.add_argument(
             "--dry-run",
             action="store_true",
@@ -87,18 +98,14 @@ Examples:
         # Validate command
         validate_parser = subparsers.add_parser("validate", help="Validate modules")
         validate_parser.add_argument("--module", help="Specific module to validate")
-        validate_parser.add_argument(
-            "--platform", choices=["isp", "management"], help="Platform to validate"
-        )
+        validate_parser.add_argument("--platform", choices=["isp", "management"], help="Platform to validate")
         validate_parser.add_argument(
             "--output",
             choices=["console", "json", "report"],
             default="console",
             help="Output format",
         )
-        validate_parser.add_argument(
-            "--save-report", help="Save detailed report to file"
-        )
+        validate_parser.add_argument("--save-report", help="Save detailed report to file")
 
         # Audit command
         audit_parser = subparsers.add_parser("audit", help="Run full module audit")
@@ -111,12 +118,8 @@ Examples:
         audit_parser.add_argument("--save", help="Save results to file")
 
         # Discover command
-        discover_parser = subparsers.add_parser(
-            "discover", help="Discover and register modules"
-        )
-        discover_parser.add_argument(
-            "--platform", choices=["isp", "management"], help="Platform to discover"
-        )
+        discover_parser = subparsers.add_parser("discover", help="Discover and register modules")
+        discover_parser.add_argument("--platform", choices=["isp", "management"], help="Platform to discover")
         discover_parser.add_argument(
             "--health-check",
             action="store_true",
@@ -124,9 +127,7 @@ Examples:
         )
 
         # Repair command
-        repair_parser = subparsers.add_parser(
-            "repair", help="Repair incomplete modules"
-        )
+        repair_parser = subparsers.add_parser("repair", help="Repair incomplete modules")
         repair_parser.add_argument("module_name", help="Name of the module to repair")
         repair_parser.add_argument(
             "--missing",
@@ -139,21 +140,15 @@ Examples:
             required=True,
             help="Platform the module belongs to",
         )
-        repair_parser.add_argument(
-            "--backup", action="store_true", help="Create backup before repair"
-        )
+        repair_parser.add_argument("--backup", action="store_true", help="Create backup before repair")
 
         # Status command
-        status_parser = subparsers.add_parser(
-            "status", help="Show module registry status"
-        )
-        status_parser.add_argument(
-            "--detailed", action="store_true", help="Show detailed status information"
-        )
+        status_parser = subparsers.add_parser("status", help="Show module registry status")
+        status_parser.add_argument("--detailed", action="store_true", help="Show detailed status information")
 
         return parser
 
-    async def run(self, args: List[str]):
+    async def run(self, args: list[str]):
         """Run the CLI with given arguments."""
         parser = self.create_parser()
         parsed_args = parser.parse_args(args)
@@ -190,27 +185,13 @@ Examples:
 
         # Determine target directory
         if platform == Platform.ISP:
-            target_dir = (
-                self.framework_root
-                / "src"
-                / "dotmac_isp"
-                / "modules"
-                / args.module_name
-            )
+            target_dir = self.framework_root / "src" / "dotmac_isp" / "modules" / args.module_name
         else:
-            target_dir = (
-                self.framework_root
-                / "src"
-                / "dotmac_management"
-                / "modules"
-                / args.module_name
-            )
+            target_dir = self.framework_root / "src" / "dotmac_management" / "modules" / args.module_name
 
         # Check if module exists
         if target_dir.exists() and not args.force:
-            print(
-                f"❌ Module {args.module_name} already exists. Use --force to overwrite."
-            )
+            print(f"❌ Module {args.module_name} already exists. Use --force to overwrite.")
             return
 
         # Determine components to generate
@@ -229,9 +210,7 @@ Examples:
             components = [c.strip() for c in args.components.split(",")]
 
         # Generate template variables
-        variables = self.template_system.generate_module_variables(
-            args.module_name, platform
-        )
+        variables = self.template_system.generate_module_variables(args.module_name, platform)
 
         if args.dry_run:
             print("🔍 Dry run - would create:")
@@ -283,24 +262,12 @@ Examples:
         if args.module:
             # Validate specific module
             if args.platform:
-                platform_dir = (
-                    "dotmac_isp" if args.platform == "isp" else "dotmac_management"
-                )
-                module_path = (
-                    self.framework_root / "src" / platform_dir / "modules" / args.module
-                )
+                platform_dir = "dotmac_isp" if args.platform == "isp" else "dotmac_management"
+                module_path = self.framework_root / "src" / platform_dir / "modules" / args.module
             else:
                 # Try both platforms
-                isp_path = (
-                    self.framework_root / "src" / "dotmac_isp" / "modules" / args.module
-                )
-                mgmt_path = (
-                    self.framework_root
-                    / "src"
-                    / "dotmac_management"
-                    / "modules"
-                    / args.module
-                )
+                isp_path = self.framework_root / "src" / "dotmac_isp" / "modules" / args.module
+                mgmt_path = self.framework_root / "src" / "dotmac_management" / "modules" / args.module
 
                 if isp_path.exists():
                     module_path = isp_path
@@ -323,9 +290,7 @@ Examples:
 
             # Filter by platform if specified
             if args.platform:
-                modules = {
-                    k: v for k, v in modules.items() if v.platform == args.platform
-                }
+                modules = {k: v for k, v in modules.items() if v.platform == args.platform}
 
             # Convert to validation format
             validation_modules = {}
@@ -366,11 +331,9 @@ Examples:
             # Console output
             total = len(results)
             valid = len([r for r in results.values() if r.is_valid])
-            avg_score = (
-                sum(r.score for r in results.values()) / total if total > 0 else 0
-            )
+            avg_score = sum(r.score for r in results.values()) / total if total > 0 else 0
 
-            print(f"\n📊 Validation Results:")
+            print("\n📊 Validation Results:")
             print(f"  Total modules: {total}")
             print(f"  Valid modules: {valid} ({valid/total*100:.1f}%)")
             print(f"  Average score: {avg_score:.1f}/100")
@@ -378,7 +341,7 @@ Examples:
             # Show worst modules
             sorted_results = sorted(results.items(), key=lambda x: x[1].score)
             if sorted_results:
-                print(f"\n⚠️  Modules needing attention:")
+                print("\n⚠️  Modules needing attention:")
                 for name, result in sorted_results[:5]:
                     status = "✅" if result.is_valid else "❌"
                     print(
@@ -406,8 +369,7 @@ Examples:
                 "summary": {
                     "total_modules": len(modules),
                     "completeness_breakdown": {
-                        level.value: len(module_list)
-                        for level, module_list in categories.items()
+                        level.value: len(module_list) for level, module_list in categories.items()
                     },
                 },
                 "modules": [
@@ -448,7 +410,7 @@ Examples:
         if args.platform:
             modules = {k: v for k, v in modules.items() if v.platform == args.platform}
 
-        print(f"\n📊 Discovery Results:")
+        print("\n📊 Discovery Results:")
         print(f"  Total modules: {len(modules)}")
 
         # Group by status
@@ -463,7 +425,7 @@ Examples:
             print(f"  {status.title()}: {len(module_list)} modules")
 
         # Show module details
-        print(f"\n📋 Module Details:")
+        print("\n📋 Module Details:")
         for name, module in sorted(modules.items()):
             status_icon = {
                 "healthy": "✅",
@@ -493,7 +455,7 @@ Examples:
                 print(f"      Error: {module.error_message}")
 
         if args.health_check:
-            print(f"\n🏥 Running health checks...")
+            print("\n🏥 Running health checks...")
             await registry.run_health_checks()
             print("✅ Health checks completed")
 
@@ -508,21 +470,9 @@ Examples:
 
         # Find module directory
         if platform == Platform.ISP:
-            module_dir = (
-                self.framework_root
-                / "src"
-                / "dotmac_isp"
-                / "modules"
-                / args.module_name
-            )
+            module_dir = self.framework_root / "src" / "dotmac_isp" / "modules" / args.module_name
         else:
-            module_dir = (
-                self.framework_root
-                / "src"
-                / "dotmac_management"
-                / "modules"
-                / args.module_name
-            )
+            module_dir = self.framework_root / "src" / "dotmac_management" / "modules" / args.module_name
 
         if not module_dir.exists():
             print(f"❌ Module {args.module_name} not found at {module_dir}")
@@ -531,8 +481,6 @@ Examples:
         # Backup if requested
         if args.backup:
             import shutil
-
-            from dotmac_shared.api.exception_handlers import standard_exception_handler
 
             backup_dir = module_dir.parent / f"{args.module_name}_backup"
             if backup_dir.exists():
@@ -544,9 +492,7 @@ Examples:
         missing_components = [c.strip() for c in args.missing.split(",")]
 
         # Generate template variables
-        variables = self.template_system.generate_module_variables(
-            args.module_name, platform
-        )
+        variables = self.template_system.generate_module_variables(args.module_name, platform)
 
         # Create missing components
         created_files = []
@@ -596,22 +542,18 @@ Examples:
             print(f"Total modules: {stats['total_modules']}")
             print(f"Healthy routers: {stats['healthy_routers']}")
 
-            print(f"\nBy Platform:")
+            print("\nBy Platform:")
             for platform, count in stats["by_platform"].items():
                 print(f"  {platform}: {count} modules")
 
-            print(f"\nBy Status:")
+            print("\nBy Status:")
             for status, count in stats["by_status"].items():
                 print(f"  {status}: {count} modules")
 
             if args.detailed:
-                print(f"\nComponent Availability:")
+                print("\nComponent Availability:")
                 for component, count in stats["component_availability"].items():
-                    percentage = (
-                        (count / stats["total_modules"]) * 100
-                        if stats["total_modules"] > 0
-                        else 0
-                    )
+                    percentage = (count / stats["total_modules"]) * 100 if stats["total_modules"] > 0 else 0
                     print(f"  {component}: {count} modules ({percentage:.1f}%)")
 
             await registry.shutdown()
@@ -622,8 +564,19 @@ Examples:
 
 def main():
     """Main CLI entry point."""
-    cli = ScaffoldingCLI()
-    asyncio.run(cli.run(sys.argv[1:]))
+    try:
+        logger.info("Starting module scaffolding CLI")
+        cli = ScaffoldingCLI()
+        asyncio.run(cli.run(sys.argv[1:]))
+        logger.info("Module scaffolding operation completed successfully")
+    except KeyboardInterrupt:
+        logger.info("Operation cancelled by user")
+        print("\n🛑 Operation cancelled")
+        sys.exit(130)
+    except Exception as e:
+        logger.error(f"Fatal error in module scaffolding: {e}", exc_info=True)
+        print(f"\n❌ Fatal error: {e}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

@@ -661,7 +661,7 @@ async def create_invoice(
     """Create a new invoice."""
     try:
         invoice = await service.create_invoice(invoice_data)
-        return InvoiceResponse.from_orm(invoice)
+        return InvoiceResponse.model_validate(invoice)
     except CustomerNotFoundError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -685,14 +685,14 @@ async def get_invoice(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Invoice not found"
         )
-    return InvoiceResponse.from_orm(invoice)
+    return InvoiceResponse.model_validate(invoice)
 ```
 
 ### Pydantic Schemas
 
 ```python
 # models/schemas.py
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 from datetime import datetime, date
 from decimal import Decimal
 from uuid import UUID
@@ -706,7 +706,7 @@ class InvoiceBase(BaseModel):
 class InvoiceCreate(InvoiceBase):
     line_items: List[LineItemCreate] = Field(default_factory=list)
 
-    @validator('due_date')
+    @field_validator('due_date')
     def due_date_must_be_future(cls, v):
         if v <= date.today():
             raise ValueError('Due date must be in the future')
@@ -718,9 +718,8 @@ class InvoiceResponse(InvoiceBase):
     created_at: datetime
     line_items: List[LineItemResponse]
 
-    class Config:
-        orm_mode = True
-        schema_extra = {
+    model_config = ConfigDict(from_attributes=True)
+    json_schema_extra = {
             "example": {
                 "id": "123e4567-e89b-12d3-a456-426614174000",
                 "customer_id": "123e4567-e89b-12d3-a456-426614174001",
@@ -860,7 +859,7 @@ class InvoiceService:
 
     async def create_invoice(self, invoice_data: InvoiceCreate) -> Invoice:
         # Create invoice
-        invoice = Invoice(**invoice_data.dict())
+        invoice = Invoice(**invoice_data.model_dump())
         invoice = await self.repository.create(invoice)
 
         # Publish event

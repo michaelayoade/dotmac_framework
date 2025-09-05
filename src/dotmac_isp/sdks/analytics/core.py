@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Optional
 
 
 class MetricType(str, Enum):
@@ -23,7 +23,7 @@ class MetricData:
     metric_type: MetricType
     value: float
     timestamp: datetime
-    labels: Optional[Dict[str, str]] = None
+    labels: Optional[dict[str, str]] = None
 
 
 class AnalyticsCoreSDK:
@@ -38,9 +38,7 @@ class AnalyticsCoreSDK:
         # Mock implementation
         return True
 
-    async def get_metrics(
-        self, metric_name: str, start_time: datetime, end_time: datetime
-    ) -> List[MetricData]:
+    async def get_metrics(self, metric_name: str, start_time: datetime, end_time: datetime) -> list[MetricData]:
         """Get metrics."""
         # Mock implementation
         return []

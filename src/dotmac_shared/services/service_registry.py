@@ -1,10 +1,11 @@
 """
+from __future__ import annotations
 Service registry for DotMac platforms.
 """
 
 import logging
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +25,7 @@ class ServiceRegistry:
 
     def __init__(self):
         """__init__ service method."""
-        self._services: Dict[str, ServiceInfo] = {}
+        self._services: dict[str, ServiceInfo] = {}
 
     def register(
         self,
@@ -48,15 +49,11 @@ class ServiceRegistry:
         service_info = self._services.get(name)
         return service_info.instance if service_info else None
 
-    def get_by_type(self, service_type: str) -> List[Any]:
+    def get_by_type(self, service_type: str) -> list[Any]:
         """Get all services of a specific type."""
-        return [
-            info.instance
-            for info in self._services.values()
-            if info.service_type == service_type
-        ]
+        return [info.instance for info in self._services.values() if info.service_type == service_type]
 
-    def list_all(self) -> Dict[str, ServiceInfo]:
+    def list_all(self) -> dict[str, ServiceInfo]:
         """List all registered services."""
         return self._services.copy()
 
@@ -68,7 +65,7 @@ class ServiceRegistry:
             return True
         return False
 
-    def get_ready_services(self) -> Dict[str, Dict[str, Any]]:
+    def get_ready_services(self) -> dict[str, dict[str, Any]]:
         """
         Get services that are ready for use.
 

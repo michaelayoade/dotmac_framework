@@ -7,8 +7,8 @@ Provides advanced network topology analysis, path optimization, and redundancy d
 import heapq
 from collections import defaultdict, deque
 from dataclasses import dataclass
-from datetime import datetime
-from typing import Any, Dict, List, Optional, Set, Tuple
+from datetime import datetime, timezone
+from typing import Any, Optional
 
 from ..exceptions import TopologyAnalysisError
 
@@ -28,9 +28,9 @@ class PathMetrics:
 class RedundancyAnalysis:
     """Results of redundancy analysis."""
 
-    single_points_of_failure: List[str]
-    redundancy_paths: Dict[str, List[List[str]]]
-    critical_links: List[str]
+    single_points_of_failure: list[str]
+    redundancy_paths: dict[str, list[list[str]]]
+    critical_links: list[str]
     reliability_score: float
 
 
@@ -45,7 +45,7 @@ class TopologyAnalyzer:
         self.node_attributes = defaultdict(dict)
         self.link_attributes = defaultdict(dict)
 
-    def build_graph(self, nodes: List[Dict[str, Any]], links: List[Dict[str, Any]]):
+    def build_graph(self, nodes: list[dict[str, Any]], links: list[dict[str, Any]]):
         """Build internal graph representation from nodes and links."""
         self.graph.clear()
         self.nodes.clear()
@@ -88,9 +88,7 @@ class TopologyAnalyzer:
 
             self.link_attributes[link_id] = link_data
 
-    def find_shortest_path(
-        self, source: str, target: str, metric: str = "hops"
-    ) -> Optional[List[str]]:
+    def find_shortest_path(self, source: str, target: str, metric: str = "hops") -> Optional[list[str]]:
         """Find shortest path using different metrics."""
         if source not in self.nodes or target not in self.nodes:
             raise TopologyAnalysisError(f"Node not found: {source} or {target}")
@@ -104,7 +102,7 @@ class TopologyAnalyzer:
         else:
             raise TopologyAnalysisError(f"Unknown metric: {metric}")
 
-    def _bfs_shortest_path(self, source: str, target: str) -> Optional[List[str]]:
+    def _bfs_shortest_path(self, source: str, target: str) -> Optional[list[str]]:
         """BFS for shortest hop path."""
         if source == target:
             return [source]
@@ -128,9 +126,7 @@ class TopologyAnalyzer:
 
         return None
 
-    def _dijkstra_shortest_path(
-        self, source: str, target: str, weight_attr: str
-    ) -> Optional[List[str]]:
+    def _dijkstra_shortest_path(self, source: str, target: str, weight_attr: str) -> Optional[list[str]]:
         """Dijkstra's algorithm for weighted shortest path."""
         distances = {node: float("inf") for node in self.nodes}
         distances[source] = 0
@@ -171,16 +167,14 @@ class TopologyAnalyzer:
 
         return None
 
-    def find_all_paths(
-        self, source: str, target: str, max_hops: int = 10
-    ) -> List[List[str]]:
+    def find_all_paths(self, source: str, target: str, max_hops: int = 10) -> list[list[str]]:
         """Find all paths between source and target up to max_hops."""
         if source not in self.nodes or target not in self.nodes:
             raise TopologyAnalysisError(f"Node not found: {source} or {target}")
 
         all_paths = []
 
-        def dfs_paths(current: str, path: List[str], visited: Set[str]):
+        def dfs_paths(current: str, path: list[str], visited: set[str]):
             if len(path) > max_hops:
                 return
 
@@ -199,7 +193,7 @@ class TopologyAnalyzer:
         dfs_paths(source, [source], {source})
         return all_paths
 
-    def calculate_path_metrics(self, path: List[str]) -> PathMetrics:
+    def calculate_path_metrics(self, path: list[str]) -> PathMetrics:
         """Calculate comprehensive metrics for a path."""
         if len(path) < 2:
             return PathMetrics(0, 0, None, 0, 1.0)
@@ -257,7 +251,7 @@ class TopologyAnalyzer:
             reliability_score=reliability_score,
         )
 
-    def analyze_redundancy(self, critical_nodes: List[str]) -> RedundancyAnalysis:
+    def analyze_redundancy(self, critical_nodes: list[str]) -> RedundancyAnalysis:
         """Analyze network redundancy for critical nodes."""
         single_points = []
         redundancy_paths = {}
@@ -269,9 +263,7 @@ class TopologyAnalyzer:
                 continue
 
             neighbors = list(self.graph.get(node, {}).keys())
-            active_neighbors = [
-                n for n in neighbors if self.graph[node][n].get("status") == "active"
-            ]
+            active_neighbors = [n for n in neighbors if self.graph[node][n].get("status") == "active"]
 
             if len(active_neighbors) <= 1:
                 single_points.append(node)
@@ -332,12 +324,12 @@ class TopologyAnalyzer:
             reliability_score=min(reliability_score, 1.0),
         )
 
-    def detect_loops(self) -> List[List[str]]:
+    def detect_loops(self) -> list[list[str]]:
         """Detect loops in the network topology."""
         visited = set()
         loops = []
 
-        def dfs_detect_cycles(node: str, path: List[str], parent: Optional[str] = None):
+        def dfs_detect_cycles(node: str, path: list[str], parent: Optional[str] = None):
             visited.add(node)
             path.append(node)
 
@@ -362,7 +354,7 @@ class TopologyAnalyzer:
 
         return loops
 
-    def calculate_centrality_metrics(self) -> Dict[str, Dict[str, float]]:
+    def calculate_centrality_metrics(self) -> dict[str, dict[str, float]]:
         """Calculate various centrality metrics for nodes."""
         centrality_metrics = {}
 
@@ -372,9 +364,7 @@ class TopologyAnalyzer:
             # Degree centrality
             degree = len(self.graph.get(node, {}))
             max_possible_degree = len(self.nodes) - 1
-            metrics["degree_centrality"] = (
-                degree / max_possible_degree if max_possible_degree > 0 else 0
-            )
+            metrics["degree_centrality"] = degree / max_possible_degree if max_possible_degree > 0 else 0
 
             # Betweenness centrality (simplified)
             betweenness = 0
@@ -405,9 +395,7 @@ class TopologyAnalyzer:
 
             if reachable_nodes > 0:
                 avg_distance = total_distance / reachable_nodes
-                metrics["closeness_centrality"] = (
-                    1 / avg_distance if avg_distance > 0 else 0
-                )
+                metrics["closeness_centrality"] = 1 / avg_distance if avg_distance > 0 else 0
             else:
                 metrics["closeness_centrality"] = 0
 
@@ -415,7 +403,7 @@ class TopologyAnalyzer:
 
         return centrality_metrics
 
-    def generate_topology_report(self) -> Dict[str, Any]:
+    def generate_topology_report(self) -> dict[str, Any]:
         """Generate comprehensive topology analysis report."""
         report = {
             "analysis_timestamp": datetime.now(timezone.utc).isoformat(),
@@ -445,9 +433,7 @@ class TopologyAnalyzer:
             )
 
         # Connectivity analysis
-        isolated_nodes = [
-            node for node in self.nodes if len(self.graph.get(node, {})) == 0
-        ]
+        isolated_nodes = [node for node in self.nodes if len(self.graph.get(node, {})) == 0]
 
         loops = self.detect_loops()
 
@@ -456,10 +442,7 @@ class TopologyAnalyzer:
             "loops_detected": len(loops),
             "loops": loops[:5],  # Show first 5 loops
             "average_degree": (
-                sum(len(neighbors) for neighbors in self.graph.values())
-                / len(self.nodes)
-                if self.nodes
-                else 0
+                sum(len(neighbors) for neighbors in self.graph.values()) / len(self.nodes) if self.nodes else 0
             ),
         }
 
@@ -467,9 +450,7 @@ class TopologyAnalyzer:
         centrality = self.calculate_centrality_metrics()
 
         # Find most central nodes
-        most_central_by_degree = sorted(
-            centrality.items(), key=lambda x: x[1]["degree_centrality"], reverse=True
-        )[:5]
+        most_central_by_degree = sorted(centrality.items(), key=lambda x: x[1]["degree_centrality"], reverse=True)[:5]
 
         most_central_by_betweenness = sorted(
             centrality.items(),
@@ -523,8 +504,8 @@ class TopologyAnalyzer:
         return report
 
     def find_optimal_placement(
-        self, new_node_candidates: List[str], existing_connections: Dict[str, List[str]]
-    ) -> Dict[str, Any]:
+        self, new_node_candidates: list[str], existing_connections: dict[str, list[str]]
+    ) -> dict[str, Any]:
         """Find optimal placement for new network nodes."""
         placement_analysis = {
             "candidates": [],
@@ -556,9 +537,7 @@ class TopologyAnalyzer:
             # Connectivity improvement
             original_components = self._count_connected_components(original_graph)
             new_components = self._count_connected_components(self.graph)
-            candidate_analysis["metrics"]["connectivity_improvement"] = max(
-                0, original_components - new_components
-            )
+            candidate_analysis["metrics"]["connectivity_improvement"] = max(0, original_components - new_components)
 
             # Average path length improvement
             avg_path_length = self._calculate_average_path_length()
@@ -595,7 +574,7 @@ class TopologyAnalyzer:
 
         return placement_analysis
 
-    def _count_connected_components(self, graph: Dict[str, Dict[str, Any]]) -> int:
+    def _count_connected_components(self, graph: dict[str, dict[str, Any]]) -> int:
         """Count connected components in the graph."""
         visited = set()
         components = 0

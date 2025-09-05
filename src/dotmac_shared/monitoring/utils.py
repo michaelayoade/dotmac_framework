@@ -6,10 +6,9 @@ and ensure consistent patterns across the monitoring package.
 """
 
 import time
-from typing import Any, Dict, Optional, Type, TypeVar
+from typing import Any, Optional, TypeVar
 
 
-# Logger setup utility to eliminate duplication
 def get_logger(name: str):
     """
     Get a logger instance with consistent configuration.
@@ -30,9 +29,7 @@ def get_logger(name: str):
 T = TypeVar("T")
 
 
-def safe_import(
-    module_name: str, class_name: Optional[str] = None, default_value: Any = None
-):
+def safe_import(module_name: str, class_name: Optional[str] = None, default_value: Any = None):
     """
     Safely import a module or class, returning default_value if import fails.
 
@@ -53,9 +50,7 @@ def safe_import(
         return default_value
 
 
-def validate_required_field(
-    value: Any, field_name: str, expected_type: Optional[Type] = None
-) -> Any:
+def validate_required_field(value: Any, field_name: str, expected_type: Optional[type] = None) -> Any:
     """
     Validate a required field with optional type checking.
 
@@ -79,9 +74,7 @@ def validate_required_field(
     return value
 
 
-def safe_cast(
-    value: Any, target_type: Type[T], default: Optional[T] = None
-) -> Optional[T]:
+def safe_cast(value: Any, target_type: type[T], default: Optional[T] = None) -> Optional[T]:
     """
     Safely cast a value to target type, returning default if cast fails.
 
@@ -120,7 +113,7 @@ def format_duration_ms(start_time: float, end_time: Optional[float] = None) -> f
     return (end_time - start_time) * 1000
 
 
-def sanitize_dict(data: Dict[str, Any], sensitive_keys: set = None) -> Dict[str, Any]:
+def sanitize_dict(data: dict[str, Any], sensitive_keys: Optional[set] = None) -> dict[str, Any]:
     """
     Sanitize a dictionary by redacting sensitive keys.
 
@@ -175,7 +168,7 @@ def truncate_string(text: str, max_length: int = 1000, suffix: str = "...") -> s
     return text[: max_length - len(suffix)] + suffix
 
 
-def deep_merge_dicts(dict1: Dict[str, Any], dict2: Dict[str, Any]) -> Dict[str, Any]:
+def deep_merge_dicts(dict1: dict[str, Any], dict2: dict[str, Any]) -> dict[str, Any]:
     """
     Deep merge two dictionaries, with dict2 taking precedence.
 

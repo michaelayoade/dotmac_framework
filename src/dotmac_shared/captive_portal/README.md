@@ -408,7 +408,7 @@ portal = CaptivePortal(config)
 @app.post("/auth/email/prepare")
     result = await portal.service.auth_manager.prepare_authentication(
         method_name="email",
-        user_data=request.dict(),
+        user_data=request.model_dump(),
         portal_id=request.portal_id
     )
     return result
@@ -416,7 +416,7 @@ portal = CaptivePortal(config)
 @app.post("/auth/email/verify")
     result = await portal.service.auth_manager.authenticate(
         method_name="email",
-        credentials=request.dict(),
+        credentials=request.model_dump(),
         portal_id=request.portal_id,
         client_ip=request.client_ip
     )

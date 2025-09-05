@@ -3,19 +3,9 @@ Test complete API workflows for the DotMac ISP Framework.
 End-to-end testing of business processes and user journeys.
 """
 
-import pytest
-from datetime import datetime, timezone, timedelta
-from typing import Dict, Any
-from unittest.mock import AsyncMock, patch
+from datetime import datetime, timezone
+from unittest.mock import patch
 from uuid import uuid4
-
-from tests.utils.api_test_helpers import (
-    MockAuthService,
-    MockCustomerService,
-    MockServicesService,
-    assert_successful_response,
-    assert_error_response
-)
 
 
 class TestCustomerOnboardingWorkflow:
@@ -25,8 +15,8 @@ class TestCustomerOnboardingWorkflow:
         """Test successful end-to-end customer onboarding."""
         with patch('dotmac_isp.modules.identity.router.CustomerService', return_value=mock_customer_service):
             with patch('dotmac_isp.modules.services.router.get_services_service', return_value=mock_services_service):
-                with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
-                    with patch('dotmac_shared.auth.dependencies.require_permissions') as mock_perms:
+                with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
+                    with patch('dotmac.auth.dependencies.require_permissions') as mock_perms:
                         mock_get_user.return_value = {"id": "admin-123", "tenant_id": "tenant-123"}
                         mock_perms.return_value = lambda: None
                         
@@ -99,8 +89,8 @@ class TestCustomerOnboardingWorkflow:
 
     def test_customer_onboarding_with_validation_errors(self, client):
         """Test customer onboarding with validation failures."""
-        with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
-            with patch('dotmac_shared.auth.dependencies.require_permissions') as mock_perms:
+        with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
+            with patch('dotmac.auth.dependencies.require_permissions') as mock_perms:
                 mock_get_user.return_value = {"id": "admin-123"}
                 mock_perms.return_value = lambda: None
                 
@@ -129,8 +119,8 @@ class TestCustomerOnboardingWorkflow:
     def test_customer_onboarding_duplicate_email(self, client, mock_customer_service):
         """Test customer onboarding with duplicate email."""
         with patch('dotmac_isp.modules.identity.router.CustomerService', return_value=mock_customer_service):
-            with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
-                with patch('dotmac_shared.auth.dependencies.require_permissions') as mock_perms:
+            with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
+                with patch('dotmac.auth.dependencies.require_permissions') as mock_perms:
                     mock_get_user.return_value = {"id": "admin-123"}
                     mock_perms.return_value = lambda: None
                     
@@ -159,7 +149,7 @@ class TestServiceManagementWorkflow:
     def test_service_lifecycle_complete(self, client, mock_services_service):
         """Test complete service lifecycle from activation to cancellation."""
         with patch('dotmac_isp.modules.services.router.get_services_service', return_value=mock_services_service):
-            with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
+            with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
                 mock_get_user.return_value = {"id": "admin-123", "user_id": "admin-123"}
                 
                 headers = {"Authorization": "Bearer valid_token"}
@@ -243,7 +233,7 @@ class TestServiceManagementWorkflow:
     def test_bulk_service_operations_workflow(self, client, mock_services_service):
         """Test bulk service operations workflow."""
         with patch('dotmac_isp.modules.services.router.get_services_service', return_value=mock_services_service):
-            with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
+            with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
                 mock_get_user.return_value = {"id": "admin-123", "user_id": "admin-123"}
                 
                 # Mock bulk operation responses
@@ -289,7 +279,7 @@ class TestServiceManagementWorkflow:
     def test_usage_data_recording_workflow(self, client, mock_services_service):
         """Test usage data recording and retrieval workflow."""
         with patch('dotmac_isp.modules.services.router.get_services_service', return_value=mock_services_service):
-            with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
+            with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
                 mock_get_user.return_value = {"id": "admin-123"}
                 
                 headers = {"Authorization": "Bearer valid_token"}
@@ -363,8 +353,8 @@ class TestAuthenticationWorkflow:
             assert login_result["user"]["username"] == "testuser"
             
             # Step 2: Use token to access protected endpoint
-            with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
-                with patch('dotmac_shared.auth.dependencies.require_permissions') as mock_perms:
+            with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
+                with patch('dotmac.auth.dependencies.require_permissions') as mock_perms:
                     mock_get_user.return_value = {"id": "testuser", "username": "testuser"}
                     mock_perms.return_value = lambda: None
                     
@@ -374,7 +364,7 @@ class TestAuthenticationWorkflow:
                     assert protected_response.status_code == 200
             
             # Step 3: Logout
-            with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
+            with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
                 mock_get_user.return_value = {"id": "testuser", "username": "testuser"}
                 
                 headers = {"Authorization": f"Bearer {access_token}"}
@@ -404,8 +394,9 @@ class TestAuthenticationWorkflow:
 
     def test_token_expiration_workflow(self, client):
         """Test token expiration and refresh workflow."""
+        from datetime import datetime, timedelta, timezone
+
         import jwt
-        from datetime import datetime, timezone, timedelta
         
         # Create expired token
         expired_payload = {
@@ -432,8 +423,8 @@ class TestMultiTenantWorkflows:
     def test_tenant_isolation_workflow(self, client, mock_customer_service):
         """Test that tenant isolation is properly enforced."""
         with patch('dotmac_isp.modules.identity.router.CustomerService', return_value=mock_customer_service):
-            with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
-                with patch('dotmac_shared.auth.dependencies.require_permissions') as mock_perms:
+            with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
+                with patch('dotmac.auth.dependencies.require_permissions') as mock_perms:
                     mock_perms.return_value = lambda: None
                     
                     # User from tenant A
@@ -458,13 +449,14 @@ class TestMultiTenantWorkflows:
 
     def test_cross_tenant_data_access_prevention(self, client):
         """Test prevention of cross-tenant data access."""
-        with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
-            with patch('dotmac_shared.auth.dependencies.require_permissions') as mock_perms:
+        with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
+            with patch('dotmac.auth.dependencies.require_permissions') as mock_perms:
                 mock_perms.return_value = lambda: None
                 
                 # Create tokens for different tenants
+                from datetime import datetime, timedelta, timezone
+
                 import jwt
-                from datetime import datetime, timezone, timedelta
                 
                 tenant_a_payload = {
                     "sub": "user-a",
@@ -503,7 +495,7 @@ class TestErrorRecoveryWorkflows:
     def test_service_activation_rollback(self, client, mock_services_service):
         """Test service activation rollback on failure."""
         with patch('dotmac_isp.modules.services.router.get_services_service', return_value=mock_services_service):
-            with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
+            with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
                 mock_get_user.return_value = {"id": "admin-123"}
                 
                 # Mock activation failure
@@ -533,7 +525,7 @@ class TestErrorRecoveryWorkflows:
     def test_partial_bulk_operation_handling(self, client, mock_services_service):
         """Test handling of partial failures in bulk operations."""
         with patch('dotmac_isp.modules.services.router.get_services_service', return_value=mock_services_service):
-            with patch('dotmac_shared.auth.dependencies.get_current_user') as mock_get_user:
+            with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
                 mock_get_user.return_value = {"id": "admin-123", "user_id": "admin-123"}
                 
                 # Mock partial failure

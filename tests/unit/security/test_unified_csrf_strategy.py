@@ -10,24 +10,23 @@ Tests cover:
 """
 
 import time
-from unittest.mock import Mock, patch, MagicMock
-import pytest
-from fastapi import HTTPException, Request, Response
-from starlette.datastructures import Headers, FormData
 
+import pytest
 from dotmac_shared.security.unified_csrf_strategy import (
-    CSRFMode,
-    CSRFTokenDelivery,
     CSRFConfig,
+    CSRFError,
+    CSRFMode,
     CSRFToken,
+    CSRFTokenDelivery,
+    CSRFTokenExpiredError,
+    CSRFTokenMismatchError,
     CSRFValidationResult,
     CSRFViolation,
     UnifiedCSRFMiddleware,
     get_portal_csrf_config,
-    CSRFError,
-    CSRFTokenExpiredError,
-    CSRFTokenMismatchError,
 )
+from fastapi import HTTPException, Request, Response
+from starlette.datastructures import FormData, Headers
 
 
 class TestCSRFMode:

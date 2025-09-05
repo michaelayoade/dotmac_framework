@@ -10,21 +10,21 @@ Tests cover:
 """
 
 import os
-import pytest
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
-from uuid import UUID, uuid4
+from unittest.mock import AsyncMock, Mock, patch
+from uuid import uuid4
 
-from dotmac_shared.security.secrets_policy import (
+import pytest
+from dotmac.secrets import (
     Environment,
-    SecretType,
+    HardenedSecretsManager,
+    OpenBaoClient,
+    SecretAuditLog,
+    SecretMetadata,
     SecretPolicy,
     SecretsEnvironmentError,
     SecretsRetrievalError,
     SecretsValidationError,
-    OpenBaoClient,
-    HardenedSecretsManager,
-    SecretMetadata,
-    SecretAuditLog,
+    SecretType,
 )
 
 

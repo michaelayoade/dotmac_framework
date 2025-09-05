@@ -6,21 +6,20 @@ integration to validate end-to-end network operations functionality.
 """
 
 import asyncio
-import pytest
 from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock
 
-from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+import pytest
+from dotmac_isp.modules.events.handlers.device_event_handlers import DeviceEventHandlers
+from dotmac_isp.modules.events.services.event_bus import EventBusService
+from dotmac_isp.modules.noc.services.alarm_management_service import AlarmManagementService
+from dotmac_isp.modules.noc.services.event_correlation_service import EventCorrelationService
 
 # Import the modules we've implemented
 from dotmac_isp.modules.noc.services.noc_dashboard_service import NOCDashboardService
-from dotmac_isp.modules.noc.services.alarm_management_service import AlarmManagementService
-from dotmac_isp.modules.noc.services.event_correlation_service import EventCorrelationService
 from dotmac_isp.modules.orchestration.services.network_orchestrator import NetworkOrchestrationService
-from dotmac_isp.modules.events.services.event_bus import EventBusService
-from dotmac_isp.modules.events.handlers.device_event_handlers import DeviceEventHandlers
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
 
 # Mock database setup for testing

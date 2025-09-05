@@ -3,30 +3,24 @@ Comprehensive End-to-End Support & Ticketing System Tests
 Tests the complete user journey from knowledge base search to live chat to ticket creation
 """
 
-import pytest
-import asyncio
-import json
 from datetime import datetime, timedelta
-from typing import Dict, List, Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import httpx
-from fastapi.testclient import TestClient
-from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import WebSocket
+import pytest
+from dotmac_plugins.communication.chat_service import ChatService
+from dotmac_plugins.communication.live_chat_plugin import ChatSessionCreate, LiveChatPlugin
 
 # Import the components we've built
 from dotmac_shared.knowledge.models import (
-    ArticleCreate, ArticleResponse, ArticleSearchParams,
-    CommentCreate, PortalSettingsUpdate
+    ArticleCreate,
+    ArticleResponse,
+    ArticleSearchParams,
+    PortalSettingsUpdate,
 )
 from dotmac_shared.knowledge.service import KnowledgeService
-from dotmac_shared.plugins.communication.live_chat_plugin import (
-    ChatSessionCreate, ChatMessageCreate, LiveChatPlugin
-)
-from dotmac_shared.plugins.communication.chat_service import ChatService
-from dotmac_shared.ticketing.core.models import TicketCreate, TicketResponse
+from dotmac_shared.ticketing.core.models import TicketCreate
 from dotmac_shared.ticketing.services.ticket_service import TicketService
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class TestKnowledgeBaseSystem:

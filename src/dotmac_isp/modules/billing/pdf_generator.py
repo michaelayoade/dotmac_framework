@@ -2,21 +2,16 @@
 
 import io
 import logging
-from datetime import date, datetime
-from decimal import Decimal
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
+from dotmac_isp.modules.billing.models import Invoice, InvoiceLineItem, Payment, Receipt
 from reportlab.lib import colors
-from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
-from reportlab.lib.pagesizes import A4, letter
+from reportlab.lib.enums import TA_LEFT, TA_RIGHT
+from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 from reportlab.platypus.flowables import HRFlowable
-
-from dotmac_isp.modules.billing.models import Invoice, InvoiceLineItem, Payment, Receipt
-from dotmac_shared.api.exception_handlers import standard_exception_handler
 
 logger = logging.getLogger(__name__)
 
@@ -24,13 +19,13 @@ logger = logging.getLogger(__name__)
 class InvoicePDFGenerator:
     """Generate PDF documents for invoices."""
 
-    def __init__(self, company_info: Optional[Dict[str, Any]] = None):
+    def __init__(self, company_info: Optional[dict[str, Any]] = None):
         """Init   operation."""
         self.company_info = company_info or self._get_default_company_info()
         self.styles = getSampleStyleSheet()
         self._setup_custom_styles()
 
-    def _get_default_company_info(self) -> Dict[str, Any]:
+    def _get_default_company_info(self) -> dict[str, Any]:
         """Get default company information."""
         return {
             "name": "DotMac ISP Services",
@@ -102,9 +97,7 @@ class InvoicePDFGenerator:
             )
         )
 
-    async def generate_invoice_pdf(
-        self, invoice: Invoice, customer_data: Dict[str, Any]
-    ) -> bytes:
+    async def generate_invoice_pdf(self, invoice: Invoice, customer_data: dict[str, Any]) -> bytes:
         """Generate PDF for an invoice."""
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(
@@ -145,7 +138,7 @@ class InvoicePDFGenerator:
         buffer.seek(0)
         return buffer.getvalue()
 
-    def _build_header(self, invoice: Invoice) -> List[Any]:
+    def _build_header(self, invoice: Invoice) -> list[Any]:
         """Build PDF header with company info and invoice title."""
         elements = []
 
@@ -183,15 +176,11 @@ class InvoicePDFGenerator:
         )
 
         elements.append(header_table)
-        elements.append(
-            HRFlowable(width="100%", thickness=1, color=colors.HexColor("#e5e7eb"))
-        )
+        elements.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#e5e7eb")))
 
         return elements
 
-    def _build_invoice_info(
-        self, invoice: Invoice, customer_data: Dict[str, Any]
-    ) -> List[Any]:
+    def _build_invoice_info(self, invoice: Invoice, customer_data: dict[str, Any]) -> list[Any]:
         """Build invoice and customer information section."""
         elements = []
 
@@ -223,7 +212,7 @@ class InvoicePDFGenerator:
 
         return elements
 
-    def _build_line_items_table(self, line_items: List[InvoiceLineItem]) -> List[Any]:
+    def _build_line_items_table(self, line_items: list[InvoiceLineItem]) -> list[Any]:
         """Build line items table."""
         elements = []
 
@@ -243,9 +232,7 @@ class InvoicePDFGenerator:
                 ]
             )
 
-        table = Table(
-            data, colWidths=[2.5 * inch, 0.8 * inch, 1 * inch, 0.8 * inch, 1 * inch]
-        )
+        table = Table(data, colWidths=[2.5 * inch, 0.8 * inch, 1 * inch, 0.8 * inch, 1 * inch])
         table.setStyle(
             TableStyle(
                 [
@@ -278,7 +265,7 @@ class InvoicePDFGenerator:
 
         return elements
 
-    def _build_totals_section(self, invoice: Invoice) -> List[Any]:
+    def _build_totals_section(self, invoice: Invoice) -> list[Any]:
         """Build totals section."""
         elements = []
 
@@ -324,7 +311,7 @@ class InvoicePDFGenerator:
 
         return elements
 
-    def _build_payment_section(self, payments: List[Payment]) -> List[Any]:
+    def _build_payment_section(self, payments: list[Payment]) -> list[Any]:
         """Build payment history section."""
         elements = []
 
@@ -346,9 +333,7 @@ class InvoicePDFGenerator:
                 ]
             )
 
-        payment_table = Table(
-            data, colWidths=[1 * inch, 1.2 * inch, 1 * inch, 1 * inch, 1.5 * inch]
-        )
+        payment_table = Table(data, colWidths=[1 * inch, 1.2 * inch, 1 * inch, 1 * inch, 1.5 * inch])
         payment_table.setStyle(
             TableStyle(
                 [
@@ -373,14 +358,12 @@ class InvoicePDFGenerator:
 
         return elements
 
-    def _build_footer(self) -> List[Any]:
+    def _build_footer(self) -> list[Any]:
         """Build PDF footer."""
         elements = []
 
         elements.append(Spacer(1, 40))
-        elements.append(
-            HRFlowable(width="100%", thickness=1, color=colors.HexColor("#e5e7eb"))
-        )
+        elements.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#e5e7eb")))
         elements.append(Spacer(1, 12))
 
         footer_text = f"""
@@ -398,12 +381,12 @@ class InvoicePDFGenerator:
 class ReceiptPDFGenerator:
     """Generate PDF receipts for payments."""
 
-    def __init__(self, company_info: Optional[Dict[str, Any]] = None):
+    def __init__(self, company_info: Optional[dict[str, Any]] = None):
         """Init   operation."""
         self.company_info = company_info or self._get_default_company_info()
         self.styles = getSampleStyleSheet()
 
-    def _get_default_company_info(self) -> Dict[str, Any]:
+    def _get_default_company_info(self) -> dict[str, Any]:
         """Get default company information."""
         return {
             "name": "DotMac ISP Services",
@@ -417,9 +400,7 @@ class ReceiptPDFGenerator:
             "tax_id": "TAX123456789",
         }
 
-    async def generate_receipt_pdf(
-        self, receipt: Receipt, customer_data: Dict[str, Any]
-    ) -> bytes:
+    async def generate_receipt_pdf(self, receipt: Receipt, customer_data: dict[str, Any]) -> bytes:
         """Generate PDF receipt for a payment."""
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(buffer, pagesize=letter)
@@ -472,45 +453,37 @@ class PDFBatchProcessor:
         self.receipt_generator = ReceiptPDFGenerator()
 
     async def generate_monthly_invoices(
-        self, invoices: List[Invoice], customer_data_map: Dict[str, Dict[str, Any]]
-    ) -> Dict[str, bytes]:
+        self, invoices: list[Invoice], customer_data_map: dict[str, dict[str, Any]]
+    ) -> dict[str, bytes]:
         """Generate PDFs for multiple invoices."""
         results = {}
 
         for invoice in invoices:
             try:
                 customer_data = customer_data_map.get(str(invoice.customer_id), {})
-                pdf_data = await self.invoice_generator.generate_invoice_pdf(
-                    invoice, customer_data
-                )
+                pdf_data = await self.invoice_generator.generate_invoice_pdf(invoice, customer_data)
                 results[invoice.invoice_number] = pdf_data
                 logger.info(f"Generated PDF for invoice {invoice.invoice_number}")
             except Exception as e:
-                logger.error(
-                    f"Failed to generate PDF for invoice {invoice.invoice_number}: {e}"
-                )
+                logger.error(f"Failed to generate PDF for invoice {invoice.invoice_number}: {e}")
                 results[invoice.invoice_number] = None
 
         return results
 
     async def generate_payment_receipts(
-        self, receipts: List[Receipt], customer_data_map: Dict[str, Dict[str, Any]]
-    ) -> Dict[str, bytes]:
+        self, receipts: list[Receipt], customer_data_map: dict[str, dict[str, Any]]
+    ) -> dict[str, bytes]:
         """Generate PDFs for multiple receipts."""
         results = {}
 
         for receipt in receipts:
             try:
                 customer_data = customer_data_map.get(receipt.customer_name, {})
-                pdf_data = await self.receipt_generator.generate_receipt_pdf(
-                    receipt, customer_data
-                )
+                pdf_data = await self.receipt_generator.generate_receipt_pdf(receipt, customer_data)
                 results[receipt.receipt_number] = pdf_data
                 logger.info(f"Generated PDF for receipt {receipt.receipt_number}")
             except Exception as e:
-                logger.error(
-                    f"Failed to generate PDF for receipt {receipt.receipt_number}: {e}"
-                )
+                logger.error(f"Failed to generate PDF for receipt {receipt.receipt_number}: {e}")
                 results[receipt.receipt_number] = None
 
         return results
@@ -519,8 +492,8 @@ class PDFBatchProcessor:
 # Utility functions for external use
 async def generate_invoice_pdf(
     invoice: Invoice,
-    customer_data: Dict[str, Any],
-    company_info: Optional[Dict[str, Any]] = None,
+    customer_data: dict[str, Any],
+    company_info: Optional[dict[str, Any]] = None,
 ) -> bytes:
     """Convenience function to generate invoice PDF."""
     generator = InvoicePDFGenerator(company_info)
@@ -529,8 +502,8 @@ async def generate_invoice_pdf(
 
 async def generate_receipt_pdf(
     receipt: Receipt,
-    customer_data: Dict[str, Any],
-    company_info: Optional[Dict[str, Any]] = None,
+    customer_data: dict[str, Any],
+    company_info: Optional[dict[str, Any]] = None,
 ) -> bytes:
     """Convenience function to generate receipt PDF."""
     generator = ReceiptPDFGenerator(company_info)

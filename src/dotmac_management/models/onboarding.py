@@ -2,16 +2,14 @@
 Onboarding data models: requests, steps, and artifacts.
 """
 
-from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, Optional
-from uuid import UUID
 
-from sqlalchemy import JSON, Column, DateTime, Enum as SQLEnum, ForeignKey, String
-from sqlalchemy.dialects.postgresql import UUID as PGUUID
+from sqlalchemy import JSON, Column, DateTime, ForeignKey, String
+from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import relationship
 
-from .base import BaseModel, UUID as GUID
+from .base import UUID as GUID
+from .base import BaseModel
 
 
 class OnboardingStatus(str, Enum):
@@ -78,4 +76,3 @@ class OnboardingArtifact(BaseModel):
     data = Column(JSON, default=dict, nullable=False)
 
     request = relationship("OnboardingRequest", back_populates="artifacts")
-

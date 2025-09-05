@@ -4,10 +4,10 @@ Interaction management models.
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class InteractionPriority(str, Enum):
@@ -45,11 +45,9 @@ class InteractionMessage(BaseModel):
     sender_type: str = "customer"  # customer, agent, system
     sent_at: datetime = Field(default_factory=datetime.utcnow)
     message_type: str = "text"  # text, attachment, system_note
-    extra_data: Dict[str, Any] = Field(default_factory=dict, alias="metadata")
+    extra_data: dict[str, Any] = Field(default_factory=dict, alias="metadata")
 
-    model_config = ConfigDict(
-        populate_by_name=True
-    )
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class InteractionModel(BaseModel):
@@ -68,7 +66,7 @@ class InteractionModel(BaseModel):
     priority: InteractionPriority = InteractionPriority.MEDIUM
     status: InteractionStatus = InteractionStatus.OPEN
     category: Optional[str] = None
-    tags: List[str] = Field(default_factory=list)
+    tags: list[str] = Field(default_factory=list)
 
     # Assignment
     assigned_to_id: Optional[UUID] = None
@@ -92,7 +90,7 @@ class InteractionModel(BaseModel):
     resolution_time_minutes: Optional[int] = None
 
     # Communication
-    messages: List[InteractionMessage] = Field(default_factory=list)
+    messages: list[InteractionMessage] = Field(default_factory=list)
 
     # Escalation
     escalation_level: int = 0
@@ -105,11 +103,9 @@ class InteractionModel(BaseModel):
     satisfaction_score: Optional[int] = None
 
     # Additional data - using alias to avoid SQLAlchemy conflict
-    extra_data: Dict[str, Any] = Field(default_factory=dict, alias="metadata")
+    extra_data: dict[str, Any] = Field(default_factory=dict, alias="metadata")
 
-    model_config = ConfigDict(
-        populate_by_name=True
-    )
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class CreateInteractionRequest(BaseModel):
@@ -121,14 +117,12 @@ class CreateInteractionRequest(BaseModel):
     content: str = Field(..., min_length=1)
     priority: InteractionPriority = InteractionPriority.MEDIUM
     category: Optional[str] = None
-    tags: List[str] = Field(default_factory=list)
+    tags: list[str] = Field(default_factory=list)
     source: str = "customer_portal"
     due_date: Optional[datetime] = None
-    extra_data: Dict[str, Any] = Field(default_factory=dict, alias="metadata")
+    extra_data: dict[str, Any] = Field(default_factory=dict, alias="metadata")
 
-    model_config = ConfigDict(
-        populate_by_name=True
-    )
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class UpdateInteractionRequest(BaseModel):
@@ -139,15 +133,13 @@ class UpdateInteractionRequest(BaseModel):
     priority: Optional[InteractionPriority] = None
     status: Optional[InteractionStatus] = None
     category: Optional[str] = None
-    tags: Optional[List[str]] = None
+    tags: Optional[list[str]] = None
     assigned_to_id: Optional[UUID] = None
     assigned_team: Optional[str] = None
     due_date: Optional[datetime] = None
     resolution_summary: Optional[str] = None
     customer_satisfied: Optional[bool] = None
     satisfaction_score: Optional[int] = Field(None, ge=1, le=5)
-    extra_data: Optional[Dict[str, Any]] = Field(None, alias="metadata")
+    extra_data: Optional[dict[str, Any]] = Field(None, alias="metadata")
 
-    model_config = ConfigDict(
-        populate_by_name=True
-    )
+    model_config = ConfigDict(populate_by_name=True)

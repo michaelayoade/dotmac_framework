@@ -1,18 +1,16 @@
 """
 Unit tests for the testing framework components
 """
-import pytest
-from unittest.mock import AsyncMock, patch
-import asyncio
 import uuid
-from datetime import datetime
+from unittest.mock import AsyncMock, patch
 
-from dotmac_shared.testing.integration_base import IntegrationTestBase
-from dotmac_shared.testing.event_simulator import EventSimulator
-from dotmac_shared.testing.service_clients import ServiceClientManager
-from dotmac_shared.testing.event_tracer import EventTracer
-from dotmac_shared.events.event_types import EventType
+import pytest
+from dotmac.communications.events.message import Event as EventType
 from dotmac_shared.models.customer import Customer, CustomerTier
+from dotmac_shared.testing.event_simulator import EventSimulator
+from dotmac_shared.testing.event_tracer import EventTracer
+from dotmac_shared.testing.integration_base import IntegrationTestBase
+from dotmac_shared.testing.service_clients import ServiceClientManager
 
 
 @pytest.mark.unit

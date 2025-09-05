@@ -4,11 +4,18 @@ Onboarding service orchestrating the workflow and persisting state.
 
 import asyncio
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 from uuid import UUID, uuid4
 
+from dotmac.communications.events import create_memory_event_bus, create_redis_event_bus
+from dotmac.communications.events.message import Event as EventRecord
+from dotmac_shared.core.error_utils import publish_event
+from dotmac_shared.provisioning import provision_isp_container, validate_container_health
+from dotmac_shared.provisioning.core.models import InfrastructureType, ISPConfig, PlanType
+from dotmac_shared.workflows.task import create_sequential_workflow
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..core.websocket_manager import websocket_manager
 from ..database import async_session_maker
 from ..models.onboarding import OnboardingRequest, OnboardingStatus, StepStatus
 from ..repositories.onboarding import (
@@ -16,13 +23,7 @@ from ..repositories.onboarding import (
     OnboardingRequestRepository,
     OnboardingStepRepository,
 )
-from ..schemas.tenant import TenantOnboardingRequest, TenantResponse
-from dotmac_shared.provisioning import provision_isp_container, validate_container_health
-from dotmac_shared.provisioning.core.models import ISPConfig, PlanType, InfrastructureType
-from dotmac_shared.workflows.task import create_sequential_workflow
-from dotmac_shared.events import create_memory_event_bus, create_redis_event_bus
-from dotmac_shared.events.core.models import EventRecord
-from ..core.websocket_manager import websocket_manager
+from ..schemas.tenant import TenantOnboardingRequest
 
 # Simple in-process event bus (can be swapped to Redis/Kafka in prod)
 _event_bus = None
@@ -34,7 +35,7 @@ try:
         _event_bus = create_redis_event_bus(_settings.events_redis_url)
     else:
         _event_bus = create_memory_event_bus()
-except Exception:
+except (ImportError, AttributeError):
     _event_bus = None
 
 
@@ -78,11 +79,7 @@ class OnboardingService:
             if not req:
                 return
 
-            plan = (
-                PlanType.PREMIUM
-                if "advanced_analytics" in (request.enabled_features or [])
-                else PlanType.STANDARD
-            )
+            plan = PlanType.PREMIUM if "advanced_analytics" in (request.enabled_features or []) else PlanType.STANDARD
             isp_config = ISPConfig(
                 tenant_name=request.tenant_info.slug,
                 display_name=request.tenant_info.name,
@@ -90,23 +87,25 @@ class OnboardingService:
             )
             isp_id = uuid4()
 
-            async def _emit(event_type: str, payload: Dict[str, Any]):
+            async def _emit(event_type: str, payload: dict[str, Any]):
                 if _event_bus:
-                    try:
-                        await _event_bus.publish(EventRecord(event_type=event_type, data=payload))
-                    except Exception:
-                        pass
+                    await publish_event(_event_bus, EventRecord(event_type=event_type, data=payload))
                 # Also broadcast to admins via WS
                 try:
-                    await websocket_manager.broadcast_to_admins({
-                        "type": event_type,
-                        "onboarding": {"workflow_id": req.workflow_id, "request_id": str(req.id)},
-                        "payload": payload,
-                    })
-                except Exception:
+                    await websocket_manager.broadcast_to_admins(
+                        {
+                            "type": event_type,
+                            "onboarding": {"workflow_id": req.workflow_id, "request_id": str(req.id)},
+                            "payload": payload,
+                        }
+                    )
+                except (RuntimeError, ConnectionError, TimeoutError):
+                    # Ignore transient WS errors during emit
                     pass
 
-            async def mark_step(key: str, status: StepStatus, data: Optional[Dict[str, Any]] = None, error: Optional[str] = None):
+            async def mark_step(
+                key: str, status: StepStatus, data: Optional[dict[str, Any]] = None, error: Optional[str] = None
+            ):
                 step = await step_repo.upsert_step(req.id, key, key.replace("_", " ").title())
                 await step_repo.set_status(step.id, status, error_message=error, data=data or {})
                 await _emit(
@@ -164,8 +163,14 @@ class OnboardingService:
                 health = await validate_container_health(base_url=req.endpoint_url, timeout=60)
                 await mark_step(
                     "validate_health",
-                    StepStatus.COMPLETED if getattr(health, "overall_status", None) and health.overall_status.value == "healthy" else StepStatus.FAILED,
-                    data={"health": getattr(health, "overall_status", None).value if getattr(health, "overall_status", None) else "unknown"},
+                    StepStatus.COMPLETED
+                    if getattr(health, "overall_status", None) and health.overall_status.value == "healthy"
+                    else StepStatus.FAILED,
+                    data={
+                        "health": getattr(health, "overall_status", None).value
+                        if getattr(health, "overall_status", None)
+                        else "unknown"
+                    },
                 )
 
             workflow = create_sequential_workflow(
@@ -181,7 +186,7 @@ class OnboardingService:
                     "onboarding.status.updated",
                     {"status": req.status.value, "endpoint_url": req.endpoint_url},
                 )
-            except Exception as e:
+            except (RuntimeError, ValueError) as e:
                 req.status = OnboardingStatus.FAILED
                 req.error_message = str(e)
                 await _emit(

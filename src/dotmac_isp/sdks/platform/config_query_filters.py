@@ -1,11 +1,11 @@
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Optional
+
 """
 Configuration query filter strategies using Strategy pattern.
 Replaces the 24-complexity _matches_query method with focused filter strategies.
 """
-
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from typing import Any, List, Optional
 
 
 @dataclass
@@ -22,7 +22,7 @@ class ConfigEntry:
     data_type: Optional[str] = None
     is_secret: Optional[bool] = None
     is_readonly: Optional[bool] = None
-    tags: List[str] = None
+    tags: list[str] = None
 
 
 @dataclass
@@ -34,13 +34,13 @@ class ConfigQuery:
     user_id: Optional[str] = None
     service_name: Optional[str] = None
     key_prefix: Optional[str] = None
-    keys: Optional[List[str]] = None
+    keys: Optional[list[str]] = None
     category: Optional[str] = None
     environment: Optional[str] = None
-    data_types: Optional[List[str]] = None
+    data_types: Optional[list[str]] = None
     is_secret: Optional[bool] = None
     is_readonly: Optional[bool] = None
-    tags: Optional[List[str]] = None
+    tags: Optional[list[str]] = None
 
 
 class ConfigFilterStrategy(ABC):
@@ -226,12 +226,10 @@ class ConfigQueryMatcher:
     def remove_filter_strategy(self, strategy_class: type) -> bool:
         """Remove a filter strategy by class type."""
         original_count = len(self.strategies)
-        self.strategies = [
-            s for s in self.strategies if not isinstance(s, strategy_class)
-        ]
+        self.strategies = [s for s in self.strategies if not isinstance(s, strategy_class)]
         return len(self.strategies) < original_count
 
-    def get_active_strategies(self) -> List[str]:
+    def get_active_strategies(self) -> list[str]:
         """Get list of active filter strategy names."""
         return [strategy.__class__.__name__ for strategy in self.strategies]
 

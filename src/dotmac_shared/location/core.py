@@ -2,17 +2,11 @@
 Core location services for the DotMac platform.
 """
 
-import asyncio
-import json
-from abc import ABC, abstractmethod
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Optional
 
 from .exceptions import (
     AddressNotFoundError,
-    GeocodingError,
-    GeofenceError,
-    LocationError,
     LocationNotFoundError,
     RouteOptimizationError,
 )
@@ -28,11 +22,8 @@ from .models import (
     RouteOptimizationRequest,
     RouteOptimizationResult,
     RouteWaypoint,
-    ServiceArea,
 )
 from .utils import (
-    calculate_bearing,
-    calculate_center_from_coordinates,
     calculate_distance,
     calculate_route_distance,
     estimate_travel_time,
@@ -46,9 +37,9 @@ class LocationService:
     """
 
     def __init__(self):
-        self.location_cache: Dict[str, Location] = {}
+        self.location_cache: dict[str, Location] = {}
         self.cache_ttl = timedelta(minutes=5)
-        self.location_history: Dict[str, List[LocationUpdate]] = {}
+        self.location_history: dict[str, list[LocationUpdate]] = {}
         self.max_history_per_user = 1000
 
     def update_location(
@@ -57,7 +48,7 @@ class LocationService:
         coordinates: Coordinates,
         source: LocationSource = LocationSource.GPS,
         work_order_id: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: Optional[dict[str, Any]] = None,
     ) -> LocationUpdate:
         """
         Update user location and create location update event.
@@ -72,9 +63,7 @@ class LocationService:
         Returns:
             LocationUpdate object
         """
-        location = Location(
-            coordinates=coordinates, source=source, metadata=metadata or {}
-        )
+        location = Location(coordinates=coordinates, source=source, metadata=metadata or {})
 
         # Cache the location
         self.location_cache[user_id] = location
@@ -95,9 +84,7 @@ class LocationService:
 
         # Trim history if needed
         if len(self.location_history[user_id]) > self.max_history_per_user:
-            self.location_history[user_id] = self.location_history[user_id][
-                -self.max_history_per_user :
-            ]
+            self.location_history[user_id] = self.location_history[user_id][-self.max_history_per_user :]
 
         return update
 
@@ -126,7 +113,7 @@ class LocationService:
         user_id: str,
         since: Optional[datetime] = None,
         limit: Optional[int] = None,
-    ) -> List[LocationUpdate]:
+    ) -> list[LocationUpdate]:
         """
         Get location history for user.
 
@@ -148,9 +135,7 @@ class LocationService:
 
         return history
 
-    def calculate_distance_between_users(
-        self, user1_id: str, user2_id: str
-    ) -> Optional[float]:
+    def calculate_distance_between_users(self, user1_id: str, user2_id: str) -> Optional[float]:
         """
         Calculate distance between two users based on their current locations.
 
@@ -169,9 +154,7 @@ class LocationService:
 
         return calculate_distance(loc1.coordinates, loc2.coordinates)
 
-    def find_nearby_users(
-        self, user_id: str, radius_meters: float = 1000
-    ) -> List[Tuple[str, float]]:
+    def find_nearby_users(self, user_id: str, radius_meters: float = 1000) -> list[tuple[str, float]]:
         """
         Find users within specified radius of given user.
 
@@ -197,9 +180,7 @@ class LocationService:
             if age > self.cache_ttl:
                 continue
 
-            distance = calculate_distance(
-                user_location.coordinates, location.coordinates
-            )
+            distance = calculate_distance(user_location.coordinates, location.coordinates)
             if distance <= radius_meters:
                 nearby_users.append((other_user_id, distance))
 
@@ -216,10 +197,10 @@ class GeocodingService:
 
     def __init__(self, api_key: Optional[str] = None):
         self.api_key = api_key
-        self.geocoding_cache: Dict[str, Tuple[Coordinates, Address]] = {}
-        self.reverse_geocoding_cache: Dict[str, Address] = {}
+        self.geocoding_cache: dict[str, tuple[Coordinates, Address]] = {}
+        self.reverse_geocoding_cache: dict[str, Address] = {}
 
-    async def geocode_address(self, address: str) -> Tuple[Coordinates, Address]:
+    async def geocode_address(self, address: str) -> tuple[Coordinates, Address]:
         """
         Convert address string to coordinates and structured address.
 
@@ -276,10 +257,7 @@ class GeocodingService:
 
         # In a real implementation, this would call a reverse geocoding API
         # For now, return mock data based on coordinates
-        if (
-            40.7 <= coordinates.latitude <= 40.8
-            and -74.1 <= coordinates.longitude <= -74.0
-        ):
+        if 40.7 <= coordinates.latitude <= 40.8 and -74.1 <= coordinates.longitude <= -74.0:
             address = Address(
                 street_name="Broadway",
                 city="New York",
@@ -296,9 +274,7 @@ class GeocodingService:
             f"Could not reverse geocode coordinates: {coordinates.latitude}, {coordinates.longitude}"
         )
 
-    async def batch_geocode(
-        self, addresses: List[str]
-    ) -> List[Optional[Tuple[Coordinates, Address]]]:
+    async def batch_geocode(self, addresses: list[str]) -> list[Optional[tuple[Coordinates, Address]]]:
         """
         Geocode multiple addresses in batch.
 
@@ -326,11 +302,9 @@ class GeofencingService:
     """
 
     def __init__(self):
-        self.geofences: Dict[str, Geofence] = {}
-        self.user_geofence_status: Dict[str, Dict[str, bool]] = (
-            {}
-        )  # user_id -> geofence_id -> inside
-        self.event_callbacks: List[callable] = []
+        self.geofences: dict[str, Geofence] = {}
+        self.user_geofence_status: dict[str, dict[str, bool]] = {}  # user_id -> geofence_id -> inside
+        self.event_callbacks: list[callable] = []
 
     def create_geofence(self, geofence: Geofence) -> str:
         """
@@ -349,7 +323,7 @@ class GeofencingService:
         """Get geofence by ID."""
         return self.geofences.get(geofence_id)
 
-    def update_geofence(self, geofence_id: str, updates: Dict[str, Any]) -> bool:
+    def update_geofence(self, geofence_id: str, updates: dict[str, Any]) -> bool:
         """
         Update geofence properties.
 
@@ -392,7 +366,7 @@ class GeofencingService:
 
         return False
 
-    def get_geofences_for_location(self, coordinates: Coordinates) -> List[Geofence]:
+    def get_geofences_for_location(self, coordinates: Coordinates) -> list[Geofence]:
         """
         Get all geofences that contain the given location.
 
@@ -413,9 +387,7 @@ class GeofencingService:
 
         return containing_geofences
 
-    def check_geofence_events(
-        self, user_id: str, location_update: LocationUpdate
-    ) -> List[GeofenceEvent]:
+    def check_geofence_events(self, user_id: str, location_update: LocationUpdate) -> list[GeofenceEvent]:
         """
         Check for geofence entry/exit events for a user location update.
 
@@ -487,7 +459,9 @@ class GeofencingService:
                 callback(event)
             except Exception as e:
                 # Log error but don't fail the event processing
-                print(f"Error in geofence event callback: {e}")
+                import logging
+
+                logging.getLogger(__name__).info(f"Error in geofence event callback: {e}")
 
 
 class RouteOptimizationService:
@@ -496,11 +470,9 @@ class RouteOptimizationService:
     """
 
     def __init__(self):
-        self.optimization_cache: Dict[str, RouteOptimizationResult] = {}
+        self.optimization_cache: dict[str, RouteOptimizationResult] = {}
 
-    def optimize_route(
-        self, request: RouteOptimizationRequest
-    ) -> RouteOptimizationResult:
+    def optimize_route(self, request: RouteOptimizationRequest) -> RouteOptimizationResult:
         """
         Optimize a route based on the given request.
 
@@ -517,9 +489,7 @@ class RouteOptimizationService:
 
         # Simple nearest neighbor optimization (for demo)
         # In production, would use more sophisticated algorithms
-        optimized_waypoints = self._nearest_neighbor_optimization(
-            waypoints, request.start_location
-        )
+        optimized_waypoints = self._nearest_neighbor_optimization(waypoints, request.start_location)
 
         # Calculate metrics
         original_distance = calculate_route_distance(waypoints) / 1000  # Convert to km
@@ -530,9 +500,7 @@ class RouteOptimizationService:
 
         distance_saved = original_distance - optimized_distance
         time_saved = original_duration - optimized_duration
-        efficiency_improvement = (
-            (distance_saved / original_distance * 100) if original_distance > 0 else 0
-        )
+        efficiency_improvement = (distance_saved / original_distance * 100) if original_distance > 0 else 0
 
         # Create optimized route
         route_waypoints = []
@@ -562,8 +530,8 @@ class RouteOptimizationService:
         return result
 
     def _nearest_neighbor_optimization(
-        self, waypoints: List[Coordinates], start_location: Optional[Coordinates] = None
-    ) -> List[Coordinates]:
+        self, waypoints: list[Coordinates], start_location: Optional[Coordinates] = None
+    ) -> list[Coordinates]:
         """
         Simple nearest neighbor route optimization.
 
@@ -594,7 +562,7 @@ class RouteOptimizationService:
 
         return optimized
 
-    def calculate_route_metrics(self, waypoints: List[Coordinates]) -> Dict[str, Any]:
+    def calculate_route_metrics(self, waypoints: list[Coordinates]) -> dict[str, Any]:
         """
         Calculate metrics for a route.
 
@@ -621,11 +589,7 @@ class RouteOptimizationService:
             segment_dist = calculate_distance(waypoints[i], waypoints[i + 1]) / 1000.0
             segment_distances.append(segment_dist)
 
-        avg_segment_distance = (
-            sum(segment_distances) / len(segment_distances)
-            if segment_distances
-            else 0.0
-        )
+        avg_segment_distance = sum(segment_distances) / len(segment_distances) if segment_distances else 0.0
 
         return {
             "total_distance_km": total_distance_km,

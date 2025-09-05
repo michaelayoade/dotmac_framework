@@ -3,9 +3,6 @@
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Union
 
-from dotmac_shared.api.exception_handlers import standard_exception_handler
-
-# UTC timezone constant
 UTC = timezone.utc
 
 
@@ -72,7 +69,7 @@ def parse_datetime(dt_string: str) -> Optional[datetime]:
         return None
 
 
-def format_datetime(dt: Union[datetime, None], fmt: str = None) -> Optional[str]:
+def format_datetime(dt: Union[datetime, None], fmt: Optional[str] = None) -> Optional[str]:
     """Format datetime to string."""
     if dt is None:
         return None

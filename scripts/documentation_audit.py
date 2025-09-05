@@ -2,7 +2,7 @@
 """
 import sys
 from pathlib import Path
-project_root = Path(__file__).parent.parent
+project_root = Path(__file__).parent.parent  # noqa: B008
 sys.path.insert(0, str(project_root / "src"))
 
 Documentation Audit Tool for DotMac Framework
@@ -10,16 +10,12 @@ Validates code-documentation alignment and implements DRY principles
 """
 
 import ast
-import importlib.util
-import inspect
 import json
 import logging
-import os
 import subprocess
-import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Optional
 
 
 @dataclass
@@ -30,7 +26,7 @@ class APIEndpoint:
     path: str
     function_name: str
     docstring: Optional[str]
-    parameters: List[str]
+    parameters: list[str]
     response_model: Optional[str]
     file_path: str
     line_number: int
@@ -42,11 +38,11 @@ class ClassInfo:
 
     name: str
     docstring: Optional[str]
-    methods: List[str]
-    properties: List[str]
+    methods: list[str]
+    properties: list[str]
     file_path: str
     line_number: int
-    base_classes: List[str]
+    base_classes: list[str]
 
 
 @dataclass
@@ -56,9 +52,9 @@ class ModuleInfo:
     name: str
     file_path: str
     docstring: Optional[str]
-    classes: List[ClassInfo]
-    functions: List[str]
-    imports: List[str]
+    classes: list[ClassInfo]
+    functions: list[str]
+    imports: list[str]
 
 
 @dataclass
@@ -79,14 +75,14 @@ class CodeAnalyzer:
 
     def __init__(self, source_root: str):
         self.source_root = Path(source_root)
-        self.modules: Dict[str, ModuleInfo] = {}
-        self.api_endpoints: Dict[str, List[APIEndpoint]] = {}
-        self.gaps: List[DocumentationGap] = []
+        self.modules: dict[str, ModuleInfo] = {}
+        self.api_endpoints: dict[str, list[APIEndpoint]] = {}
+        self.gaps: list[DocumentationGap] = []
 
     def analyze_file(self, file_path: Path) -> Optional[ModuleInfo]:
         """Analyze a single Python file"""
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 source = f.read()
 
             tree = ast.parse(source)
@@ -95,11 +91,7 @@ class CodeAnalyzer:
             module_docstring = ast.get_docstring(tree)
 
             # Get module name relative to source root
-            module_name = (
-                str(file_path.relative_to(self.source_root))
-                .replace("/", ".")
-                .replace(".py", "")
-            )
+            module_name = str(file_path.relative_to(self.source_root)).replace("/", ".").replace(".py", "")
 
             classes = []
             functions = []
@@ -112,8 +104,7 @@ class CodeAnalyzer:
                     if not any(
                         isinstance(parent, ast.ClassDef)
                         for parent in ast.walk(tree)
-                        if hasattr(parent, "body")
-                        and node in getattr(parent, "body", [])
+                        if hasattr(parent, "body") and node in getattr(parent, "body", [])
                     ):
                         functions.append(node.name)
                 elif isinstance(node, (ast.Import, ast.ImportFrom)):
@@ -156,11 +147,11 @@ class CodeAnalyzer:
             base_classes=base_classes,
         )
 
-    def analyze_api_routes(self, file_path: Path) -> List[APIEndpoint]:
+    def analyze_api_routes(self, file_path: Path) -> list[APIEndpoint]:
         """Analyze FastAPI routes in a file"""
         endpoints = []
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 source = f.read()
 
             tree = ast.parse(source)
@@ -170,9 +161,7 @@ class CodeAnalyzer:
                     # Look for FastAPI route decorators
                     for decorator in node.decorator_list:
                         if self._is_fastapi_route_decorator(decorator):
-                            endpoint = self._extract_endpoint_info(
-                                node, decorator, file_path
-                            )
+                            endpoint = self._extract_endpoint_info(node, decorator, file_path)
                             if endpoint:
                                 endpoints.append(endpoint)
 
@@ -237,9 +226,7 @@ class CodeAnalyzer:
                 self.modules[module_info.name] = module_info
 
             # Analyze API routes
-            if any(
-                keyword in str(file_path) for keyword in ["router", "api", "endpoints"]
-            ):
+            if any(keyword in str(file_path) for keyword in ["router", "api", "endpoints"]):
                 endpoints = self.analyze_api_routes(file_path)
                 if endpoints:
                     self.api_endpoints[str(file_path)] = endpoints
@@ -251,8 +238,8 @@ class DocumentationValidator:
     def __init__(self, project_root: str, code_analyzer: CodeAnalyzer):
         self.project_root = Path(project_root)
         self.code_analyzer = code_analyzer
-        self.documentation_files: Dict[str, str] = {}
-        self.gaps: List[DocumentationGap] = []
+        self.documentation_files: dict[str, str] = {}
+        self.gaps: list[DocumentationGap] = []
 
     def scan_documentation(self) -> None:
         """Scan all documentation files"""
@@ -261,19 +248,14 @@ class DocumentationValidator:
         for ext in doc_extensions:
             for doc_file in self.project_root.rglob(f"*{ext}"):
                 # Skip node_modules and other irrelevant directories
-                if any(
-                    skip in str(doc_file)
-                    for skip in ["node_modules", "test_env", "__pycache__", ".git"]
-                ):
+                if any(skip in str(doc_file) for skip in ["node_modules", "test_env", "__pycache__", ".git"]):
                     continue
 
                 try:
-                    with open(doc_file, "r", encoding="utf-8") as f:
+                    with open(doc_file, encoding="utf-8") as f:
                         self.documentation_files[str(doc_file)] = f.read()
                 except Exception as e:
-                    logging.warning(
-                        f"Failed to read documentation file {doc_file}: {e}"
-                    )
+                    logging.warning(f"Failed to read documentation file {doc_file}: {e}")
 
     def validate_api_documentation(self) -> None:
         """Validate API documentation against actual endpoints"""
@@ -281,10 +263,7 @@ class DocumentationValidator:
         api_doc_files = [
             f
             for f in self.documentation_files.keys()
-            if any(
-                keyword in f.lower()
-                for keyword in ["api", "endpoint", "swagger", "openapi"]
-            )
+            if any(keyword in f.lower() for keyword in ["api", "endpoint", "swagger", "openapi"])
         ]
 
         # Get all actual endpoints
@@ -297,9 +276,7 @@ class DocumentationValidator:
             if "api" in doc_file.lower():
                 self._validate_api_doc_file(doc_file, content, all_endpoints)
 
-    def _validate_api_doc_file(
-        self, doc_file: str, content: str, actual_endpoints: List[APIEndpoint]
-    ) -> None:
+    def _validate_api_doc_file(self, doc_file: str, content: str, actual_endpoints: list[APIEndpoint]) -> None:
         """Validate a single API documentation file"""
         # This is a simplified check - in practice, you'd parse the doc format
         actual_paths = {ep.path for ep in actual_endpoints}
@@ -434,9 +411,7 @@ def main():
     code_analyzer.analyze_all()
 
     print(f"✅ Analyzed {len(code_analyzer.modules)} modules")
-    print(
-        f"✅ Found {sum(len(eps) for eps in code_analyzer.api_endpoints.values())} API endpoints"
-    )
+    print(f"✅ Found {sum(len(eps) for eps in code_analyzer.api_endpoints.values())} API endpoints")
 
     # Validate documentation
     print("📋 Validating documentation...")
@@ -458,19 +433,13 @@ def main():
     # Save audit results
     audit_report = {
         "modules_analyzed": len(code_analyzer.modules),
-        "api_endpoints_found": sum(
-            len(eps) for eps in code_analyzer.api_endpoints.values()
-        ),
+        "api_endpoints_found": sum(len(eps) for eps in code_analyzer.api_endpoints.values()),
         "documentation_files": len(validator.documentation_files),
         "gaps_found": len(validator.gaps),
         "gaps": [asdict(gap) for gap in validator.gaps[:50]],  # Limit for readability
-        "modules": {
-            name: asdict(info)
-            for name, info in list(code_analyzer.modules.items())[:20]
-        },  # Sample
+        "modules": {name: asdict(info) for name, info in list(code_analyzer.modules.items())[:20]},  # Sample
         "api_endpoints": {
-            file: [asdict(ep) for ep in eps]
-            for file, eps in list(code_analyzer.api_endpoints.items())[:10]
+            file: [asdict(ep) for ep in eps] for file, eps in list(code_analyzer.api_endpoints.items())[:10]
         },  # Sample
     }
 
@@ -480,14 +449,10 @@ def main():
     # Generate markdown report
     with open(reports_dir / "documentation_audit_report.md", "w") as f:
         f.write("# Documentation Audit Report\n\n")
-        f.write(
-            f"**Generated on:** {subprocess.check_output(['date']).decode().strip()}\n\n"
-        )
+        f.write(f"**Generated on:** {subprocess.check_output(['date']).decode().strip()}\n\n")
         f.write("## Summary\n\n")
         f.write(f"- **Modules Analyzed:** {len(code_analyzer.modules)}\n")
-        f.write(
-            f"- **API Endpoints Found:** {sum(len(eps) for eps in code_analyzer.api_endpoints.values())}\n"
-        )
+        f.write(f"- **API Endpoints Found:** {sum(len(eps) for eps in code_analyzer.api_endpoints.values())}\n")
         f.write(f"- **Documentation Files:** {len(validator.documentation_files)}\n")
         f.write(f"- **Gaps Found:** {len(validator.gaps)}\n\n")
 

@@ -1,13 +1,20 @@
 # DotMac Framework Code Owners
 # This file defines who should review code in different parts of the repository
+# Optimized for fast PR reviews with backup reviewers and auto-assignment
 
 # Global fallback - all files require review
-* @dotmac-admin
+* @dotmac-admin @platform-maintainers
 
-# Platform-specific ownership
-/isp-framework/ @isp-framework-team
-/management-platform/ @management-platform-team
-/shared/ @platform-architecture-team
+# SaaS Automation - High Priority (Fast Track Review)
+/src/dotmac_management/services/fast_deployment_optimizer.py @platform-architecture-team @devops-team
+/src/dotmac_isp/modules/resellers/realtime_usage_billing.py @business-logic-team @api-team  
+/src/dotmac_management/api/v1/saas_automation.py @api-team @platform-architecture-team
+/src/dotmac_isp/modules/resellers/portal_interface.py @frontend-team @business-logic-team
+
+# Platform-specific ownership with backup reviewers
+/src/dotmac_isp/ @isp-framework-team @business-logic-team
+/src/dotmac_management/ @management-platform-team @platform-architecture-team  
+/src/dotmac_shared/ @platform-architecture-team @devops-team
 
 # Infrastructure and deployment
 /docker-compose*.yml @devops-team @platform-architecture-team
@@ -21,10 +28,13 @@ docker-compose*.yml @dotmac-admin
 */alembic/ @database-team @dotmac-admin
 */migrations/ @database-team @dotmac-admin
 
-# Security-sensitive files
+# Security-sensitive files (Priority Review)
 .env* @security-team @dotmac-admin
-*/core/security* @security-team
-*/core/auth* @security-team
+*/core/security* @security-team @platform-architecture-team
+*/core/auth* @security-team @business-logic-team
+**/security/** @security-team @platform-architecture-team
+**/*security*.py @security-team @business-logic-team
+**/*auth*.py @security-team @business-logic-team
 
 # Documentation
 /docs/ @documentation-team
@@ -47,8 +57,16 @@ README.md @documentation-team
 */services/ @business-logic-team
 */modules/ @business-logic-team
 
-# Testing and quality assurance
-*/tests/ @qa-team
+# Testing and quality assurance (Fast Track for CI/CD)
+*/tests/ @qa-team @business-logic-team
 /scripts/validate_* @qa-team @devops-team
-/scripts/container_* @qa-team @devops-team
-pytest.ini @qa-team
+/scripts/container_* @qa-team @devops-team  
+/.github/workflows/ @devops-team @qa-team @platform-architecture-team
+pytest.ini @qa-team @devops-team
+**/*test*.py @qa-team @business-logic-team
+
+# Package and dependency management (Dependabot auto-merge eligible)
+pyproject.toml @platform-architecture-team @devops-team
+requirements*.txt @devops-team @security-team
+package*.json @frontend-team @devops-team
+**/Dockerfile @devops-team @platform-architecture-team

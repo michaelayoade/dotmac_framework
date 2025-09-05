@@ -1,7 +1,6 @@
 """Data formatting utilities."""
 
 import re
-from typing import Optional
 
 
 def format_phone(phone: str, format_type: str = "us") -> str:

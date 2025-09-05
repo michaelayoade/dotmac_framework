@@ -5,7 +5,7 @@ Automatically sanitizes all incoming request data to prevent security vulnerabil
 
 import json
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 from fastapi import HTTPException, Request, status
 from fastapi.responses import JSONResponse
@@ -49,7 +49,7 @@ class InputSanitizationMiddleware:
         """Check if path is exempt from sanitization"""
         return any(path.startswith(exempt_path) for exempt_path in self.exempt_paths)
 
-    async def sanitize_query_params(self, request: Request) -> Dict[str, Any]:
+    async def sanitize_query_params(self, request: Request) -> dict[str, Any]:
         """Sanitize query parameters"""
         sanitized = {}
 
@@ -71,7 +71,7 @@ class InputSanitizationMiddleware:
 
         return sanitized
 
-    async def sanitize_json_body(self, request: Request) -> Optional[Dict[str, Any]]:
+    async def sanitize_json_body(self, request: Request) -> Optional[dict[str, Any]]:
         """Sanitize JSON request body"""
         try:
             # Get raw body
@@ -92,9 +92,7 @@ class InputSanitizationMiddleware:
 
             # Log if significant changes were made
             if self.log_suspicious and json_data != sanitized:
-                logger.warning(
-                    f"Sanitized suspicious JSON body in request to {request.url.path}"
-                )
+                logger.warning(f"Sanitized suspicious JSON body in request to {request.url.path}")
 
             return sanitized
 
@@ -107,18 +105,15 @@ class InputSanitizationMiddleware:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Request body sanitization failed",
-                )
+                ) from e
             return None
 
-    async def sanitize_form_data(self, request: Request) -> Optional[Dict[str, Any]]:
+    async def sanitize_form_data(self, request: Request) -> Optional[dict[str, Any]]:
         """Sanitize form data"""
         try:
             # Check if request has form data
             content_type = request.headers.get("content-type", "")
-            if not any(
-                ct in content_type
-                for ct in ["application/x-www-form-urlencoded", "multipart/form-data"]
-            ):
+            if not any(ct in content_type for ct in ["application/x-www-form-urlencoded", "multipart/form-data"]):
                 return None
 
             form_data = await request.form()
@@ -160,9 +155,7 @@ class InputSanitizationMiddleware:
                 try:
                     sanitized_params = await self.sanitize_query_params(request)
                     # Update query string in scope
-                    query_string = "&".join(
-                        [f"{k}={v}" for k, v in sanitized_params.items()]
-                    )
+                    query_string = "&".join([f"{k}={v}" for k, v in sanitized_params.items()])
                     sanitized_scope["query_string"] = query_string.encode()
                 except Exception as e:
                     logger.error(f"Error sanitizing query params: {e}")

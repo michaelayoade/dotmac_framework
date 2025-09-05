@@ -1,7 +1,7 @@
 """ISP Framework adapter for sales package integration."""
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 try:
     from ..core.models import Lead, Opportunity, SalesActivity
@@ -29,7 +29,7 @@ class ISPSalesAdapter:
     - Territory-based sales management
     """
 
-    def __init__(self, database_session=None, config: Dict[str, Any] = None):
+    def __init__(self, database_session=None, config: Optional[dict[str, Any]] = None):
         """Initialize ISP sales adapter."""
         if not SALES_DEPENDENCIES_AVAILABLE:
             raise ImportError("Sales package dependencies not available")
@@ -43,9 +43,7 @@ class ISPSalesAdapter:
         else:
             self.lead_service = None
 
-    async def create_customer_prospect(
-        self, customer_data: Dict[str, Any], tenant_id: str
-    ) -> Dict[str, Any]:
+    async def create_customer_prospect(self, customer_data: dict[str, Any], tenant_id: str) -> dict[str, Any]:
         """Create a sales prospect from ISP customer inquiry."""
         if not self.lead_service:
             raise RuntimeError("Lead service not available")
@@ -59,9 +57,7 @@ class ISPSalesAdapter:
             company=customer_data.get("company_name"),
             job_title=customer_data.get("job_title"),
             lead_source=self._map_isp_lead_source(customer_data.get("inquiry_source")),
-            customer_type=self._map_isp_customer_type(
-                customer_data.get("customer_type")
-            ),
+            customer_type=self._map_isp_customer_type(customer_data.get("customer_type")),
             budget=customer_data.get("monthly_budget"),
             need=customer_data.get("service_requirements"),
             timeline=customer_data.get("service_timeline"),
@@ -88,8 +84,8 @@ class ISPSalesAdapter:
         }
 
     async def create_service_opportunity(
-        self, prospect_id: str, service_data: Dict[str, Any], tenant_id: str
-    ) -> Dict[str, Any]:
+        self, prospect_id: str, service_data: dict[str, Any], tenant_id: str
+    ) -> dict[str, Any]:
         """Create service opportunity for ISP customer."""
         # This would integrate with opportunity service
         # For now, return mock data structure
@@ -103,8 +99,8 @@ class ISPSalesAdapter:
         }
 
     async def track_customer_interaction(
-        self, prospect_id: str, interaction_data: Dict[str, Any], tenant_id: str
-    ) -> Dict[str, Any]:
+        self, prospect_id: str, interaction_data: dict[str, Any], tenant_id: str
+    ) -> dict[str, Any]:
         """Track customer service interactions as sales activities."""
         # This would integrate with activity service
         # For now, return mock data
@@ -117,9 +113,7 @@ class ISPSalesAdapter:
             "follow_up_required": interaction_data.get("follow_up_required", False),
         }
 
-    async def get_territory_prospects(
-        self, territory_code: str, tenant_id: str
-    ) -> List[Dict[str, Any]]:
+    async def get_territory_prospects(self, territory_code: str, tenant_id: str) -> list[dict[str, Any]]:
         """Get prospects for a specific ISP territory."""
         if not self.lead_service:
             raise RuntimeError("Lead service not available")
@@ -130,9 +124,7 @@ class ISPSalesAdapter:
             "lead_status": ["new", "contacted", "qualified"],
         }
 
-        leads_result = await self.lead_service.list_leads(
-            tenant_id=tenant_id, filters=territory_filters
-        )
+        leads_result = await self.lead_service.list_leads(tenant_id=tenant_id, filters=territory_filters)
 
         # Format for ISP consumption
         prospects = []
@@ -148,9 +140,7 @@ class ISPSalesAdapter:
                         "state": lead.state_province,
                         "zip": lead.postal_code,
                     },
-                    "interested_services": self._extract_interested_services(
-                        lead.notes
-                    ),
+                    "interested_services": self._extract_interested_services(lead.notes),
                     "lead_score": lead.lead_score,
                     "status": lead.lead_status,
                     "assigned_technician": lead.assigned_to,
@@ -159,7 +149,7 @@ class ISPSalesAdapter:
 
         return prospects
 
-    async def get_sales_dashboard_data(self, tenant_id: str) -> Dict[str, Any]:
+    async def get_sales_dashboard_data(self, tenant_id: str) -> dict[str, Any]:
         """Get ISP-specific sales dashboard data."""
         if not self.lead_service:
             raise RuntimeError("Lead service not available")
@@ -180,19 +170,9 @@ class ISPSalesAdapter:
         return {
             "total_prospects": total_prospects,
             "high_value_prospects": high_value_prospects,
-            "conversion_opportunities": len(
-                [
-                    lead
-                    for lead in leads_result.get("leads", [])
-                    if lead.lead_score >= 70
-                ]
-            ),
-            "service_territories": self._get_territory_breakdown(
-                leads_result.get("leads", [])
-            ),
-            "pipeline_value": self._calculate_pipeline_value(
-                leads_result.get("leads", [])
-            ),
+            "conversion_opportunities": len([lead for lead in leads_result.get("leads", []) if lead.lead_score >= 70]),
+            "service_territories": self._get_territory_breakdown(leads_result.get("leads", [])),
+            "pipeline_value": self._calculate_pipeline_value(leads_result.get("leads", [])),
         }
 
     def _map_isp_lead_source(self, inquiry_source: str) -> str:
@@ -223,7 +203,7 @@ class ISPSalesAdapter:
 
         return type_mapping.get(customer_type, "residential")
 
-    def _extract_interested_services(self, notes: str) -> List[str]:
+    def _extract_interested_services(self, notes: str) -> list[str]:
         """Extract interested services from lead notes."""
         if not notes:
             return []
@@ -246,7 +226,7 @@ class ISPSalesAdapter:
 
         return services or ["Internet Service"]
 
-    def _get_territory_breakdown(self, leads: List[Any]) -> Dict[str, int]:
+    def _get_territory_breakdown(self, leads: list[Any]) -> dict[str, int]:
         """Get breakdown of prospects by territory."""
         territory_counts = {}
 
@@ -257,7 +237,7 @@ class ISPSalesAdapter:
 
         return territory_counts
 
-    def _calculate_pipeline_value(self, leads: List[Any]) -> Dict[str, float]:
+    def _calculate_pipeline_value(self, leads: list[Any]) -> dict[str, float]:
         """Calculate pipeline value for ISP services."""
         total_monthly = 0
         qualified_monthly = 0

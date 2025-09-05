@@ -7,14 +7,12 @@ from decimal import Decimal
 from enum import Enum
 from typing import Optional
 
-from sqlalchemy import Boolean, Column, DateTime
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, Numeric, String, Text
 from sqlalchemy import Enum as SQLEnum
-from sqlalchemy import ForeignKey, Integer, Numeric, String, Text
-from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy.dialects.postgresql import JSON, UUID
 from sqlalchemy.orm import relationship
 
 from .base import BaseModel
-from sqlalchemy.dialects.postgresql import UUID
 
 
 class SubscriptionStatus(str, Enum):
@@ -84,9 +82,7 @@ class PricingPlan(BaseModel):
     setup_fee_cents = Column(Integer, default=0, nullable=False)
 
     # Billing configuration
-    billing_interval = Column(
-        String(20), default="monthly", nullable=False
-    )  # monthly, annual
+    billing_interval = Column(String(20), default="monthly", nullable=False)  # monthly, annual
     billing_interval_count = Column(Integer, default=1, nullable=False)
     trial_days = Column(Integer, default=14, nullable=False)
 
@@ -136,12 +132,8 @@ class Subscription(BaseModel):
 
     __tablename__ = "subscriptions"
 
-    tenant_id = Column(
-        UUID(as_uuid=True), ForeignKey("customer_tenants.id"), nullable=False, index=True
-    )
-    pricing_plan_id = Column(
-        UUID(as_uuid=True), ForeignKey("pricing_plans.id"), nullable=False
-    )
+    tenant_id = Column(UUID(as_uuid=True), ForeignKey("customer_tenants.id"), nullable=False, index=True)
+    pricing_plan_id = Column(UUID(as_uuid=True), ForeignKey("pricing_plans.id"), nullable=False)
 
     # Subscription details
     status = Column(
@@ -158,9 +150,7 @@ class Subscription(BaseModel):
     trial_end = Column(DateTime, nullable=True)
 
     # Billing configuration
-    billing_cycle_day = Column(
-        Integer, default=1, nullable=False
-    )  # Day of month for billing
+    billing_cycle_day = Column(Integer, default=1, nullable=False)  # Day of month for billing
 
     # Subscription metadata
     cancel_at_period_end = Column(Boolean, default=False, nullable=False)
@@ -202,7 +192,7 @@ class Subscription(BaseModel):
         delta = self.current_period_end - datetime.now(timezone.utc)
         return max(0, delta.days)
 
-    def cancel(self, reason: str = None, at_period_end: bool = True) -> None:
+    def cancel(self, reason: Optional[str] = None, at_period_end: bool = True) -> None:
         """Cancel subscription."""
         if at_period_end:
             self.cancel_at_period_end = True
@@ -224,15 +214,11 @@ class Invoice(BaseModel):
 
     __tablename__ = "invoices"
 
-    subscription_id = Column(
-        UUID(as_uuid=True), ForeignKey("subscriptions.id"), nullable=False, index=True
-    )
+    subscription_id = Column(UUID(as_uuid=True), ForeignKey("subscriptions.id"), nullable=False, index=True)
 
     # Invoice details
     invoice_number = Column(String(100), unique=True, nullable=False, index=True)
-    status = Column(
-        SQLEnum(InvoiceStatus), default=InvoiceStatus.DRAFT, nullable=False, index=True
-    )
+    status = Column(SQLEnum(InvoiceStatus), default=InvoiceStatus.DRAFT, nullable=False, index=True)
 
     # Invoice period
     period_start = Column(DateTime, nullable=False)
@@ -246,9 +232,7 @@ class Invoice(BaseModel):
     amount_due_cents = Column(Integer, nullable=False)
 
     # Invoice dates
-    invoice_date = Column(
-        DateTime, default=lambda: datetime.now(timezone.utc), nullable=False
-    )
+    invoice_date = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     due_date = Column(DateTime, nullable=False)
     paid_at = Column(DateTime, nullable=True)
 
@@ -290,7 +274,7 @@ class Invoice(BaseModel):
         """Check if invoice is fully paid."""
         return self.status == InvoiceStatus.PAID
 
-    def mark_paid(self, payment_date: datetime = None) -> None:
+    def mark_paid(self, payment_date: Optional[datetime] = None) -> None:
         """Mark invoice as paid."""
         self.status = InvoiceStatus.PAID
         self.paid_at = payment_date or datetime.now(timezone.utc)
@@ -302,9 +286,7 @@ class Payment(BaseModel):
 
     __tablename__ = "payments"
 
-    invoice_id = Column(
-        UUID(as_uuid=True), ForeignKey("invoices.id"), nullable=False, index=True
-    )
+    invoice_id = Column(UUID(as_uuid=True), ForeignKey("invoices.id"), nullable=False, index=True)
 
     # Payment details
     amount_cents = Column(Integer, nullable=False)
@@ -317,9 +299,7 @@ class Payment(BaseModel):
     )
 
     # Payment method
-    payment_method_type = Column(
-        String(50), nullable=False
-    )  # card, bank_transfer, etc.
+    payment_method_type = Column(String(50), nullable=False)  # card, bank_transfer, etc.
     payment_method_details = Column(JSON, default=dict, nullable=False)
 
     # Payment processing
@@ -343,12 +323,12 @@ class Payment(BaseModel):
         """Get payment amount in dollars."""
         return Decimal(self.amount_cents) / 100
 
-    def mark_succeeded(self, processed_at: datetime = None) -> None:
+    def mark_succeeded(self, processed_at: Optional[datetime] = None) -> None:
         """Mark payment as succeeded."""
         self.status = PaymentStatus.SUCCEEDED
         self.processed_at = processed_at or datetime.now(timezone.utc)
 
-    def mark_failed(self, reason: str, failed_at: datetime = None) -> None:
+    def mark_failed(self, reason: str, failed_at: Optional[datetime] = None) -> None:
         """Mark payment as failed."""
         self.status = PaymentStatus.FAILED
         self.failed_at = failed_at or datetime.now(timezone.utc)
@@ -360,14 +340,10 @@ class UsageRecord(BaseModel):
 
     __tablename__ = "usage_records"
 
-    subscription_id = Column(
-        UUID(as_uuid=True), ForeignKey("subscriptions.id"), nullable=False, index=True
-    )
+    subscription_id = Column(UUID(as_uuid=True), ForeignKey("subscriptions.id"), nullable=False, index=True)
 
     # Usage details
-    metric_name = Column(
-        String(100), nullable=False, index=True
-    )  # api_calls, storage_gb, etc.
+    metric_name = Column(String(100), nullable=False, index=True)  # api_calls, storage_gb, etc.
     quantity = Column(Numeric(15, 6), nullable=False)
     unit_price_cents = Column(Integer, nullable=False)
     total_cost_cents = Column(Integer, nullable=False)
@@ -404,22 +380,14 @@ class Commission(BaseModel):
     __tablename__ = "commissions"
 
     # Commission details
-    reseller_id = Column(
-        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True
-    )
-    tenant_id = Column(
-        UUID(as_uuid=True), ForeignKey("customer_tenants.id"), nullable=False, index=True
-    )
-    subscription_id = Column(
-        UUID(as_uuid=True), ForeignKey("subscriptions.id"), nullable=True
-    )
+    reseller_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
+    tenant_id = Column(UUID(as_uuid=True), ForeignKey("customer_tenants.id"), nullable=False, index=True)
+    subscription_id = Column(UUID(as_uuid=True), ForeignKey("subscriptions.id"), nullable=True)
     invoice_id = Column(UUID(as_uuid=True), ForeignKey("invoices.id"), nullable=True)
 
     # Commission calculation
     base_amount_cents = Column(Integer, nullable=False)  # Amount commission is based on
-    commission_rate = Column(
-        Numeric(5, 4), nullable=False
-    )  # Commission rate (0.1000 = 10%)
+    commission_rate = Column(Numeric(5, 4), nullable=False)  # Commission rate (0.1000 = 10%)
     commission_amount_cents = Column(Integer, nullable=False)
 
     # Commission status
@@ -433,9 +401,7 @@ class Commission(BaseModel):
     # Commission period
     period_start = Column(DateTime, nullable=False)
     period_end = Column(DateTime, nullable=False)
-    earned_date = Column(
-        DateTime, default=lambda: datetime.now(timezone.utc), nullable=False
-    )
+    earned_date = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
     # Payment details
     paid_at = Column(DateTime, nullable=True)
@@ -460,9 +426,7 @@ class Commission(BaseModel):
         """Get base amount in dollars."""
         return Decimal(self.base_amount_cents) / 100
 
-    def mark_paid(
-        self, payment_reference: str = None, paid_at: datetime = None
-    ) -> None:
+    def mark_paid(self, payment_reference: Optional[str] = None, paid_at: Optional[datetime] = None) -> None:
         """Mark commission as paid."""
         self.status = CommissionStatus.PAID
         self.paid_at = paid_at or datetime.now(timezone.utc)

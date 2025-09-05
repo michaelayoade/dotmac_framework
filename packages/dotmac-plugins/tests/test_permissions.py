@@ -5,17 +5,15 @@ Tests plugin context creation, permission checking, wildcard permissions,
 service registration, and tenant isolation.
 """
 
-import pytest
 import logging
 from unittest.mock import Mock
 
+import pytest
 from dotmac.plugins import (
     PluginContext,
     PluginPermissionError,
-    PluginMetadata,
-    PluginKind,
-    Author,
 )
+
 from conftest import TestPlugin
 
 

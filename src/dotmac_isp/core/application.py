@@ -3,20 +3,16 @@ Clean application initialization with optimal performance systems.
 Zero legacy code, 100% production-ready integration.
 """
 
-import asyncio
 import logging
 from contextlib import asynccontextmanager
-from typing import Optional
-
-from fastapi import FastAPI
 
 from dotmac_isp.api.performance_api import performance_api
 from dotmac_isp.core.cache_system import SmartCacheMiddleware, cache_invalidator
 from dotmac_isp.core.performance_monitor import (
-    database_monitor,
     http_monitor,
     performance_collector,
 )
+from fastapi import FastAPI
 
 logger = logging.getLogger(__name__)
 

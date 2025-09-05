@@ -5,7 +5,10 @@ Plugin hook system for event-driven plugin execution.
 import asyncio
 import logging
 from collections import defaultdict
-from typing import Any, Callable, Dict, List, Optional
+from collections.abc import Callable
+from typing import Any, Optional
+
+from dotmac_shared.exceptions import ExceptionContext
 
 from .base import BasePlugin, PluginError
 
@@ -16,15 +19,11 @@ class PluginHooks:
     """Event-driven plugin hook system."""
 
     def __init__(self):
-        self._hooks: Dict[str, List[Callable]] = defaultdict(list)
-        self._plugin_hooks: Dict[str, List[str]] = defaultdict(
-            list
-        )  # plugin_name -> hook_names
+        self._hooks: dict[str, list[Callable]] = defaultdict(list)
+        self._plugin_hooks: dict[str, list[str]] = defaultdict(list)  # plugin_name -> hook_names
         self._lock = asyncio.Lock()
 
-    async def register_hook(
-        self, hook_name: str, plugin: BasePlugin, handler: Callable
-    ) -> bool:
+    async def register_hook(self, hook_name: str, plugin: BasePlugin, handler: Callable) -> bool:
         """Register a plugin hook for an event."""
         async with self._lock:
             try:
@@ -34,13 +33,14 @@ class PluginHooks:
                 self._hooks[hook_name].append(handler)
                 self._plugin_hooks[plugin.meta.name].append(hook_name)
 
-                logger.debug(
-                    f"Hook registered: {hook_name} for plugin {plugin.meta.name}"
-                )
+                logger.debug(f"Hook registered: {hook_name} for plugin {plugin.meta.name}")
                 return True
 
-            except Exception as e:
-                logger.error(f"Failed to register hook {hook_name}: {e}")
+            except PluginError:
+                logger.exception("Failed to register hook %s", hook_name)
+                return False
+            except ExceptionContext.LIFECYCLE_EXCEPTIONS:
+                logger.exception("Unexpected error registering hook")
                 return False
 
     async def unregister_plugin_hooks(self, plugin_name: str) -> bool:
@@ -61,15 +61,14 @@ class PluginHooks:
                 logger.info(f"Unregistered all hooks for plugin: {plugin_name}")
                 return True
 
-            except Exception as e:
-                logger.error(
-                    f"Failed to unregister hooks for plugin {plugin_name}: {e}"
-                )
+            except PluginError:
+                logger.exception("Failed to unregister hooks for plugin %s", plugin_name)
+                return False
+            except ExceptionContext.LIFECYCLE_EXCEPTIONS:
+                logger.exception("Unexpected error unregistering hooks")
                 return False
 
-    async def trigger_hook(
-        self, hook_name: str, context: Dict[str, Any]
-    ) -> List[Dict[str, Any]]:
+    async def trigger_hook(self, hook_name: str, context: dict[str, Any]) -> list[dict[str, Any]]:
         """Trigger all handlers for a specific hook."""
         handlers = self._hooks.get(hook_name, [])
         if not handlers:
@@ -94,8 +93,8 @@ class PluginHooks:
                     }
                 )
 
-            except Exception as e:
-                logger.error(f"Hook handler failed for {hook_name}: {e}")
+            except PluginError as e:
+                logger.exception("Hook handler failed for %s", hook_name)
                 results.append(
                     {
                         "handler": getattr(handler, "__name__", str(handler)),
@@ -103,13 +102,20 @@ class PluginHooks:
                         "error": str(e),
                     }
                 )
+            except ExceptionContext.LIFECYCLE_EXCEPTIONS:
+                logger.exception("Unexpected error in hook handler for %s", hook_name)
+                results.append(
+                    {
+                        "handler": getattr(handler, "__name__", str(handler)),
+                        "success": False,
+                        "error": "unexpected_error",
+                    }
+                )
 
         logger.debug(f"Triggered hook {hook_name}: {len(results)} handlers executed")
         return results
 
-    async def trigger_hook_first_success(
-        self, hook_name: str, context: Dict[str, Any]
-    ) -> Optional[Any]:
+    async def trigger_hook_first_success(self, hook_name: str, context: dict[str, Any]) -> Optional[Any]:
         """Trigger handlers until one succeeds, return the result."""
         handlers = self._hooks.get(hook_name, [])
         if not handlers:
@@ -122,23 +128,24 @@ class PluginHooks:
                 else:
                     result = handler(context)
 
-                logger.debug(
-                    f"Hook {hook_name} succeeded with handler {getattr(handler, '__name__', str(handler))}"
-                )
+                logger.debug(f"Hook {hook_name} succeeded with handler {getattr(handler, '__name__', str(handler))}")
                 return result
 
-            except Exception as e:
+            except PluginError as e:
                 logger.debug(f"Hook handler failed for {hook_name}: {e}")
+                continue
+            except ExceptionContext.LIFECYCLE_EXCEPTIONS:
+                logger.exception("Unexpected error in hook handler for %s", hook_name)
                 continue
 
         logger.warning(f"No handlers succeeded for hook: {hook_name}")
         return None
 
-    def list_hooks(self) -> Dict[str, int]:
+    def list_hooks(self) -> dict[str, int]:
         """List all registered hooks and handler counts."""
         return {hook_name: len(handlers) for hook_name, handlers in self._hooks.items()}
 
-    def get_plugin_hooks(self, plugin_name: str) -> List[str]:
+    def get_plugin_hooks(self, plugin_name: str) -> list[str]:
         """Get all hooks registered by a plugin."""
         return self._plugin_hooks.get(plugin_name, [])
 

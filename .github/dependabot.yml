@@ -26,10 +26,21 @@ updates:
     allow:
       - dependency-type: "direct"
       - dependency-type: "indirect"
-    ignore:
-      # Ignore patch updates for stable packages
-      - dependency-name: "*"
-        update-types: ["version-update:semver-patch"]
+    # Enable vulnerability alerts
+    vulnerability-alerts:
+      enabled: true
+    # Auto-merge configuration for patch updates  
+    auto-merge:
+      - dependency-type: "development"
+        update-type: "patch"
+      - dependency-type: "direct"
+        update-type: "patch"
+        package-patterns: 
+          - "bandit*"
+          - "safety*" 
+          - "pytest*"
+          - "black*"
+          - "ruff*"
     # Group related updates
     groups:
       security-updates:

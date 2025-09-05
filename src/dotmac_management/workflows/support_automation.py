@@ -3,24 +3,19 @@ Support Automation Workflows
 Automated support ticket management, escalation, and resolution
 """
 
-import json
-import re
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from datetime import datetime, timedelta, timezone
+from typing import Any
 
 from celery import shared_task
-
-from dotmac_shared.api.exception_handlers import standard_exception_handler
+from dotmac_shared.exceptions import ExceptionContext
 
 
 @shared_task(bind=True, max_retries=3)
-def categorize_ticket(self, ticket_data: Dict[str, Any]) -> Dict[str, Any]:
+def categorize_ticket(self, ticket_data: dict[str, Any]) -> dict[str, Any]:
     """Automatically categorize support tickets"""
 
     try:
-        ticket_content = (
-            f"{ticket_data.get('subject', '')} {ticket_data.get('description', '')}"
-        )
+        ticket_content = f"{ticket_data.get('subject', '')} {ticket_data.get('description', '')}"
 
         # Keyword-based categorization
         categories = {
@@ -65,9 +60,7 @@ def categorize_ticket(self, ticket_data: Dict[str, Any]) -> Dict[str, Any]:
         category_score = 0
 
         for category, keywords in categories.items():
-            score = sum(
-                1 for keyword in keywords if keyword.lower() in ticket_content.lower()
-            )
+            score = sum(1 for keyword in keywords if keyword.lower() in ticket_content.lower())
             if score > category_score:
                 category_score = score
                 detected_category = category
@@ -77,9 +70,7 @@ def categorize_ticket(self, ticket_data: Dict[str, Any]) -> Dict[str, Any]:
         priority_score = 0
 
         for priority, keywords in priority_keywords.items():
-            score = sum(
-                1 for keyword in keywords if keyword.lower() in ticket_content.lower()
-            )
+            score = sum(1 for keyword in keywords if keyword.lower() in ticket_content.lower())
             if score > priority_score:
                 priority_score = score
                 detected_priority = priority
@@ -105,9 +96,7 @@ def categorize_ticket(self, ticket_data: Dict[str, Any]) -> Dict[str, Any]:
         }
 
         estimated_hours = resolution_times.get(detected_priority, 72)
-        estimated_resolution = (
-            datetime.now(timezone.utc) + timedelta(hours=estimated_hours)
-        ).isoformat()
+        estimated_resolution = (datetime.now(timezone.utc) + timedelta(hours=estimated_hours)).isoformat()
 
         categorization_result = {
             "ticket_id": ticket_data.get("ticket_id"),
@@ -122,11 +111,11 @@ def categorize_ticket(self, ticket_data: Dict[str, Any]) -> Dict[str, Any]:
 
         return categorization_result
 
-    except Exception as e:
-        raise self.retry(countdown=60, exc=e)
+    except ExceptionContext.PARSING_EXCEPTIONS as e:
+        raise self.retry(countdown=60, exc=e) from e
 
 
-def get_auto_responses(category: str, priority: str) -> List[str]:
+def get_auto_responses(category: str, priority: str) -> list[str]:
     """Get appropriate auto-responses based on category and priority"""
 
     responses = []
@@ -165,9 +154,7 @@ def get_auto_responses(category: str, priority: str) -> List[str]:
 
 
 @shared_task(bind=True)
-def auto_respond_to_ticket(
-    self, categorization_result: Dict[str, Any]
-) -> Dict[str, Any]:
+def auto_respond_to_ticket(self, categorization_result: dict[str, Any]) -> dict[str, Any]:
     """Send automatic response to customer"""
 
     ticket_id = categorization_result["ticket_id"]
@@ -213,7 +200,7 @@ def auto_respond_to_ticket(
 
 
 @shared_task(bind=True)
-def assign_to_team(self, categorization_result: Dict[str, Any]) -> Dict[str, Any]:
+def assign_to_team(self, categorization_result: dict[str, Any]) -> dict[str, Any]:
     """Assign ticket to appropriate team"""
 
     ticket_id = categorization_result["ticket_id"]
@@ -248,7 +235,7 @@ def assign_to_team(self, categorization_result: Dict[str, Any]) -> Dict[str, Any
     return assignment_result
 
 
-def get_available_team_members(team: str, priority: str) -> List[Dict[str, Any]]:
+def get_available_team_members(team: str, priority: str) -> list[dict[str, Any]]:
     """Get available team members (placeholder)"""
 
     # This would query actual staffing system
@@ -311,7 +298,7 @@ def calculate_sla_deadline(priority: str) -> str:
 
 
 @shared_task
-def check_escalation() -> Dict[str, Any]:
+def check_escalation() -> dict[str, Any]:
     """Check for tickets that need escalation"""
 
     # Get tickets approaching SLA deadline
@@ -350,7 +337,7 @@ def check_escalation() -> Dict[str, Any]:
     }
 
 
-def get_tickets_near_sla_deadline() -> List[Dict[str, Any]]:
+def get_tickets_near_sla_deadline() -> list[dict[str, Any]]:
     """Get tickets approaching SLA deadline (placeholder)"""
     # Would query database for tickets with SLA deadline within next 2 hours
     return [
@@ -363,7 +350,7 @@ def get_tickets_near_sla_deadline() -> List[Dict[str, Any]]:
     ]
 
 
-def get_overdue_tickets() -> List[Dict[str, Any]]:
+def get_overdue_tickets() -> list[dict[str, Any]]:
     """Get overdue tickets (placeholder)"""
     # Would query database for tickets past SLA deadline
     return [
@@ -377,7 +364,7 @@ def get_overdue_tickets() -> List[Dict[str, Any]]:
 
 
 @shared_task(bind=True)
-def escalate_ticket(self, ticket_data: Dict[str, Any]) -> Dict[str, Any]:
+def escalate_ticket(self, ticket_data: dict[str, Any]) -> dict[str, Any]:
     """Escalate ticket to higher level support"""
 
     ticket_id = ticket_data["ticket_id"]
@@ -418,7 +405,7 @@ def escalate_ticket(self, ticket_data: Dict[str, Any]) -> Dict[str, Any]:
 
 
 @shared_task
-def notify_escalation(escalation_data: Dict[str, Any]):
+def notify_escalation(escalation_data: dict[str, Any]):
     """Notify stakeholders about ticket escalation"""
 
     ticket_id = escalation_data["ticket_id"]
@@ -434,7 +421,7 @@ def notify_escalation(escalation_data: Dict[str, Any]):
     recipients = notification_recipients.get(new_priority, [])
 
     # Send notifications (placeholder)
-    for recipient in recipients:
+    for _recipient in recipients:
         # email_service.send_escalation_notification(recipient, escalation_data)
         pass
 
@@ -447,7 +434,7 @@ def notify_escalation(escalation_data: Dict[str, Any]):
 
 
 @shared_task
-def analyze_support_metrics() -> Dict[str, Any]:
+def analyze_support_metrics() -> dict[str, Any]:
     """Analyze support team performance metrics"""
 
     # Calculate metrics for the last 24 hours
@@ -519,7 +506,7 @@ def get_customer_satisfaction_score(since: datetime) -> float:
     return 4.3  # 4.3/5.0
 
 
-def get_team_performance_metrics(since: datetime) -> Dict[str, Any]:
+def get_team_performance_metrics(since: datetime) -> dict[str, Any]:
     """Get team performance metrics (placeholder)"""
     return {
         "billing_team": {
@@ -541,7 +528,7 @@ def get_team_performance_metrics(since: datetime) -> Dict[str, Any]:
 
 
 @shared_task
-def send_support_metrics_report(metrics: Dict[str, Any]):
+def send_support_metrics_report(metrics: dict[str, Any]):
     """Send support metrics report to management"""
 
     # Format report (placeholder)
@@ -561,7 +548,7 @@ def send_support_metrics_report(metrics: Dict[str, Any]):
 
 
 @shared_task
-def knowledge_base_update_suggestion(ticket_data: Dict[str, Any]) -> Dict[str, Any]:
+def knowledge_base_update_suggestion(ticket_data: dict[str, Any]) -> dict[str, Any]:
     """Suggest knowledge base updates based on common issues"""
 
     # Analyze ticket patterns to suggest KB articles
@@ -591,7 +578,7 @@ def knowledge_base_update_suggestion(ticket_data: Dict[str, Any]) -> Dict[str, A
     }
 
 
-def analyze_common_ticket_patterns() -> List[Dict[str, Any]]:
+def analyze_common_ticket_patterns() -> list[dict[str, Any]]:
     """Analyze common ticket patterns (placeholder)"""
     return [
         {
@@ -610,7 +597,7 @@ def analyze_common_ticket_patterns() -> List[Dict[str, Any]]:
 
 
 @shared_task
-def notify_kb_team(suggestions: List[Dict[str, Any]]):
+def notify_kb_team(suggestions: list[dict[str, Any]]):
     """Notify knowledge base team about content suggestions"""
 
     # Send suggestions to content team (placeholder)

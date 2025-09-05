@@ -1,0 +1,221 @@
+name: Dependabot Auto-Merge
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  auto-merge:
+    name: Auto-merge Dependabot PRs
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]'
+    
+    permissions:
+      contents: write
+      pull-requests: write
+      checks: read
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Dependabot metadata
+      id: metadata
+      uses: dependabot/fetch-metadata@v1
+      with:
+        github-token: "${{ secrets.GITHUB_TOKEN }}"
+
+    - name: Evaluate auto-merge conditions
+      id: evaluate
+      run: |
+        echo "PR Title: ${{ github.event.pull_request.title }}"
+        echo "Update Type: ${{ steps.metadata.outputs.update-type }}"
+        echo "Dependency Type: ${{ steps.metadata.outputs.dependency-type }}"
+        echo "Package Ecosystem: ${{ steps.metadata.outputs.package-ecosystem }}"
+        echo "Dependency Names: ${{ steps.metadata.outputs.dependency-names }}"
+        
+        # Define auto-merge criteria
+        AUTO_MERGE=false
+        
+        # Allow patch updates for development dependencies
+        if [[ "${{ steps.metadata.outputs.dependency-type }}" == "development" && "${{ steps.metadata.outputs.update-type }}" == "version-update:semver-patch" ]]; then
+          AUTO_MERGE=true
+          echo "✅ Auto-merge: Development dependency patch update"
+        fi
+        
+        # Allow patch updates for approved security tools
+        APPROVED_PACKAGES=("bandit" "safety" "semgrep" "pytest" "black" "ruff" "pre-commit" "mypy")
+        for package in "${APPROVED_PACKAGES[@]}"; do
+          if [[ "${{ steps.metadata.outputs.dependency-names }}" =~ $package && "${{ steps.metadata.outputs.update-type }}" == "version-update:semver-patch" ]]; then
+            AUTO_MERGE=true
+            echo "✅ Auto-merge: Approved package patch update - $package"
+          fi
+        done
+        
+        # Allow GitHub Actions minor updates
+        if [[ "${{ steps.metadata.outputs.package-ecosystem }}" == "github-actions" && ("${{ steps.metadata.outputs.update-type }}" == "version-update:semver-minor" || "${{ steps.metadata.outputs.update-type }}" == "version-update:semver-patch") ]]; then
+          AUTO_MERGE=true
+          echo "✅ Auto-merge: GitHub Actions minor/patch update"
+        fi
+        
+        # Block major version updates (require manual review)
+        if [[ "${{ steps.metadata.outputs.update-type }}" == "version-update:semver-major" ]]; then
+          AUTO_MERGE=false
+          echo "❌ Block auto-merge: Major version update requires manual review"
+        fi
+        
+        # Block security-sensitive packages for major updates
+        SECURITY_PACKAGES=("cryptography" "pyjwt" "sqlalchemy" "fastapi" "uvicorn" "redis")
+        for package in "${SECURITY_PACKAGES[@]}"; do
+          if [[ "${{ steps.metadata.outputs.dependency-names }}" =~ $package && "${{ steps.metadata.outputs.update-type }}" != "version-update:semver-patch" ]]; then
+            AUTO_MERGE=false
+            echo "❌ Block auto-merge: Security-sensitive package non-patch update - $package"
+          fi
+        done
+        
+        echo "auto_merge=$AUTO_MERGE" >> $GITHUB_OUTPUT
+
+    - name: Wait for status checks
+      if: steps.evaluate.outputs.auto_merge == 'true'
+      run: |
+        echo "⏳ Waiting for required status checks to complete..."
+        
+        # Wait up to 10 minutes for checks to complete
+        timeout=600
+        interval=30
+        elapsed=0
+        
+        while [ $elapsed -lt $timeout ]; do
+          # Get PR status checks
+          checks=$(gh api repos/${{ github.repository }}/commits/${{ github.event.pull_request.head.sha }}/status --jq '.state')
+          
+          if [ "$checks" = "success" ]; then
+            echo "✅ All status checks passed"
+            break
+          elif [ "$checks" = "failure" ]; then
+            echo "❌ Status checks failed - blocking auto-merge"
+            exit 1
+          else
+            echo "⏳ Status checks still pending (${elapsed}s elapsed)..."
+            sleep $interval
+            elapsed=$((elapsed + interval))
+          fi
+        done
+        
+        if [ $elapsed -ge $timeout ]; then
+          echo "⏰ Timeout waiting for status checks - manual review required"
+          exit 1
+        fi
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Enable auto-merge
+      if: steps.evaluate.outputs.auto_merge == 'true'
+      run: |
+        echo "🤖 Enabling auto-merge for Dependabot PR"
+        
+        # Enable auto-merge with squash strategy
+        gh pr merge --auto --squash ${{ github.event.pull_request.number }}
+        
+        # Add auto-merge label for tracking
+        gh pr edit ${{ github.event.pull_request.number }} --add-label "auto-merged"
+        
+        echo "✅ Auto-merge enabled - PR will merge automatically when checks pass"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Comment on auto-merge decision
+      if: always()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const autoMerge = '${{ steps.evaluate.outputs.auto_merge }}';
+          const updateType = '${{ steps.metadata.outputs.update-type }}';
+          const dependencyType = '${{ steps.metadata.outputs.dependency-type }}';
+          const dependencyNames = '${{ steps.metadata.outputs.dependency-names }}';
+          
+          let comment = '## 🤖 Dependabot Auto-Merge Decision\n\n';
+          
+          if (autoMerge === 'true') {
+            comment += '✅ **Auto-merge ENABLED**\n\n';
+            comment += `**Criteria met:**\n`;
+            comment += `- Update type: ${updateType}\n`;
+            comment += `- Dependency type: ${dependencyType}\n`;  
+            comment += `- Package(s): ${dependencyNames}\n\n`;
+            comment += `This PR will be automatically merged once all required status checks pass.\n\n`;
+            comment += `_If you need to make changes, close and reopen this PR to disable auto-merge._`;
+          } else {
+            comment += '🛑 **Auto-merge BLOCKED**\n\n';
+            comment += `**Reason:** This update requires manual review\n`;
+            comment += `- Update type: ${updateType}\n`;
+            comment += `- Dependency type: ${dependencyType}\n`;
+            comment += `- Package(s): ${dependencyNames}\n\n`;
+            comment += `Please review the changes and merge manually if approved.`;
+          }
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
+
+  security-check:
+    name: Additional Security Review
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]' && contains(github.event.pull_request.title, 'security')
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run security scan on updated dependencies
+      run: |
+        echo "🔍 Running additional security checks for dependency updates..."
+        
+        # Install security tools
+        pip install safety bandit
+        
+        # Check for known vulnerabilities in updated packages
+        if pip freeze | safety check --json --output safety-check.json; then
+          echo "✅ No known vulnerabilities in updated dependencies"
+        else
+          echo "⚠️ Potential security issues found - review required"
+          cat safety-check.json
+        fi
+
+    - name: Comment security results
+      if: always()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          let comment = '## 🛡️ Security Review Results\n\n';
+          
+          try {
+            const safetyResults = JSON.parse(fs.readFileSync('safety-check.json', 'utf8'));
+            const vulnCount = safetyResults.length;
+            
+            if (vulnCount === 0) {
+              comment += '✅ **No known vulnerabilities detected**\n\n';
+              comment += 'The dependency updates in this PR do not introduce known security issues.';
+            } else {
+              comment += `⚠️ **${vulnCount} potential security issues found**\n\n`;
+              comment += 'Please review the security findings before merging.\n\n';
+              comment += '<details><summary>Security Details</summary>\n\n```json\n';
+              comment += JSON.stringify(safetyResults, null, 2);
+              comment += '\n```\n</details>';
+            }
+          } catch (e) {
+            comment += '✅ **Security scan completed**\n\n';
+            comment += 'Additional security checks have been performed for this dependency update.';
+          }
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });

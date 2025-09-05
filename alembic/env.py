@@ -1,9 +1,10 @@
-from logging.config import fileConfig
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
-from alembic import context
 import os
 import sys
+from logging.config import fileConfig
+
+from sqlalchemy import engine_from_config, pool
+
+from alembic import context
 
 # Add the src directory to the path so we can import our models
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
@@ -25,7 +26,6 @@ all discovered SQLAlchemy metadata into a list so Alembic autogenerate can
 compare across modules.
 """
 from importlib import import_module
-from typing import List
 
 metadata_list: List = []
 
@@ -128,10 +128,10 @@ def run_migrations_online() -> None:
             apply_rls = os.getenv("APPLY_RLS_AFTER_MIGRATION", "false").lower() == "true"
             if apply_rls:
                 # Try to import and run scripts/setup_rls.apply_rls()
-                from pathlib import Path
                 import asyncio
+                from pathlib import Path
                 # Ensure project root is on sys.path for 'scripts' import
-                project_root = Path(__file__).resolve().parent.parent
+                project_root = Path(__file__).resolve().parent.parent  # noqa: B008
                 if str(project_root) not in sys.path:
                     sys.path.insert(0, str(project_root))
                 try:

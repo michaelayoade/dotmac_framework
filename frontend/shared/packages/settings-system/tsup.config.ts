@@ -9,7 +9,7 @@ export default defineConfig({
     'appearance/index': 'src/appearance/index.ts',
   },
   format: ['cjs', 'esm'],
-  dts: true,
+  dts: false, // Disable DTS generation to avoid tsconfig conflicts
   sourcemap: true,
   external: ['react', 'react-dom', '@dotmac/ui'],
   splitting: false,

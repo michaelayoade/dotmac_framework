@@ -4,13 +4,22 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Optional
 
-from sqlalchemy import JSON, Boolean, Column, DateTime
+from dotmac_isp.shared.database.base import BaseModel
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    DateTime,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy import Enum as SQLEnum
-from sqlalchemy import Float, ForeignKey, Index, Integer, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-
-from dotmac_isp.shared.database.base import BaseModel
 
 
 class SessionStatus(Enum):
@@ -88,34 +97,20 @@ class CaptivePortalConfig(BaseModel):
     # Authentication settings
     auth_methods: Mapped[dict] = mapped_column(JSON, default=list, nullable=False)
     require_terms: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
-    require_email_verification: Mapped[bool] = mapped_column(
-        Boolean, default=True, nullable=False
-    )
+    require_email_verification: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     # Session limits
-    session_timeout: Mapped[int] = mapped_column(
-        Integer, default=3600, nullable=False
-    )  # seconds
-    idle_timeout: Mapped[int] = mapped_column(
-        Integer, default=1800, nullable=False
-    )  # seconds
-    max_concurrent_sessions: Mapped[int] = mapped_column(
-        Integer, default=100, nullable=False
-    )
-    data_limit_mb: Mapped[int] = mapped_column(
-        Integer, default=0, nullable=False
-    )  # 0 = unlimited
+    session_timeout: Mapped[int] = mapped_column(Integer, default=3600, nullable=False)  # seconds
+    idle_timeout: Mapped[int] = mapped_column(Integer, default=1800, nullable=False)  # seconds
+    max_concurrent_sessions: Mapped[int] = mapped_column(Integer, default=100, nullable=False)
+    data_limit_mb: Mapped[int] = mapped_column(Integer, default=0, nullable=False)  # 0 = unlimited
 
     # Bandwidth limits (in kbps)
-    bandwidth_limit_down: Mapped[int] = mapped_column(
-        Integer, default=0, nullable=False
-    )
+    bandwidth_limit_down: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     bandwidth_limit_up: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     # Billing integration - use existing billing system
-    billing_enabled: Mapped[bool] = mapped_column(
-        Boolean, default=False, nullable=False
-    )
+    billing_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     default_billing_plan_id: Mapped[Optional[str]] = mapped_column(
         UUID(as_uuid=False), ForeignKey("billing_plans.id"), nullable=True
     )
@@ -126,20 +121,12 @@ class CaptivePortalConfig(BaseModel):
     logo_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
 
     # Portal status
-    portal_status: Mapped[str] = mapped_column(
-        SQLEnum(PortalStatus), default=PortalStatus.ACTIVE, nullable=False
-    )
+    portal_status: Mapped[str] = mapped_column(SQLEnum(PortalStatus), default=PortalStatus.ACTIVE, nullable=False)
     # Relationships - leverage existing models
     customer = relationship("Customer", back_populates="captive_portals")
-    sessions = relationship(
-        "CaptivePortalSession", back_populates="portal", cascade="all, delete-orphan"
-    )
-    auth_methods_config = relationship(
-        "AuthMethod", back_populates="portal", cascade="all, delete-orphan"
-    )
-    vouchers = relationship(
-        "Voucher", back_populates="portal", cascade="all, delete-orphan"
-    )
+    sessions = relationship("CaptivePortalSession", back_populates="portal", cascade="all, delete-orphan")
+    auth_methods_config = relationship("AuthMethod", back_populates="portal", cascade="all, delete-orphan")
+    vouchers = relationship("Voucher", back_populates="portal", cascade="all, delete-orphan")
     customization = relationship(
         "PortalCustomization",
         back_populates="portal",
@@ -194,17 +181,13 @@ class CaptivePortalSession(BaseModel):
         default=lambda: datetime.now(timezone.utc),
         nullable=False,
     )
-    end_time: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    end_time: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     last_activity: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
         nullable=False,
     )
-    expires_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
     # Usage tracking - integrates with analytics module
     bytes_downloaded: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
@@ -215,28 +198,18 @@ class CaptivePortalSession(BaseModel):
     # Location and access point
     access_point_mac: Mapped[Optional[str]] = mapped_column(String(17), nullable=True)
     access_point_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
-    location_coordinates: Mapped[Optional[str]] = mapped_column(
-        String(50), nullable=True
-    )
+    location_coordinates: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
 
     # Session status and termination
-    session_status: Mapped[str] = mapped_column(
-        SQLEnum(SessionStatus), default=SessionStatus.ACTIVE, nullable=False
-    )
-    termination_reason: Mapped[Optional[str]] = mapped_column(
-        String(255), nullable=True
-    )
+    session_status: Mapped[str] = mapped_column(SQLEnum(SessionStatus), default=SessionStatus.ACTIVE, nullable=False)
+    termination_reason: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
 
     # Authentication method used
-    auth_method_used: Mapped[str] = mapped_column(
-        SQLEnum(AuthMethodType), nullable=False
-    )
+    auth_method_used: Mapped[str] = mapped_column(SQLEnum(AuthMethodType), nullable=False)
     auth_data: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
 
     # Billing integration - use existing billing system
-    billing_session_id: Mapped[Optional[str]] = mapped_column(
-        String(255), nullable=True
-    )
+    billing_session_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     chargeable_bytes: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     charge_amount: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
 
@@ -262,10 +235,7 @@ class CaptivePortalSession(BaseModel):
     @property
     def is_active(self) -> bool:
         """Check if session is currently active."""
-        return (
-            self.session_status == SessionStatus.ACTIVE
-            and datetime.now(timezone.utc) < self.expires_at
-        )
+        return self.session_status == SessionStatus.ACTIVE and datetime.now(timezone.utc) < self.expires_at
 
 
 class AuthMethod(BaseModel):
@@ -332,9 +302,7 @@ class Voucher(BaseModel):
     # Access limits
     duration_minutes: Mapped[int] = mapped_column(Integer, nullable=False)
     data_limit_mb: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    bandwidth_limit_down: Mapped[int] = mapped_column(
-        Integer, default=0, nullable=False
-    )
+    bandwidth_limit_down: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     bandwidth_limit_up: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     # Usage restrictions
@@ -344,18 +312,12 @@ class Voucher(BaseModel):
         default=lambda: datetime.now(timezone.utc),
         nullable=False,
     )
-    valid_until: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    valid_until: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Redemption tracking
     redemption_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    first_redeemed_at: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    last_redeemed_at: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    first_redeemed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_redeemed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     redeemed_by_user_id: Mapped[Optional[str]] = mapped_column(
         UUID(as_uuid=False), ForeignKey("users.id"), nullable=True
     )
@@ -365,15 +327,11 @@ class Voucher(BaseModel):
     billing_reference: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
 
     # Generation metadata
-    generated_by: Mapped[Optional[str]] = mapped_column(
-        UUID(as_uuid=False), ForeignKey("users.id"), nullable=True
-    )
+    generated_by: Mapped[Optional[str]] = mapped_column(UUID(as_uuid=False), ForeignKey("users.id"), nullable=True)
     generation_notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     # Voucher status
-    voucher_status: Mapped[str] = mapped_column(
-        SQLEnum(VoucherStatus), default=VoucherStatus.ACTIVE, nullable=False
-    )
+    voucher_status: Mapped[str] = mapped_column(SQLEnum(VoucherStatus), default=VoucherStatus.ACTIVE, nullable=False)
     # Relationships
     portal = relationship("CaptivePortalConfig", back_populates="vouchers")
     batch = relationship("VoucherBatch", back_populates="vouchers")
@@ -420,9 +378,7 @@ class VoucherBatch(BaseModel):
     price: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
 
     # Generation metadata
-    generated_by: Mapped[str] = mapped_column(
-        UUID(as_uuid=False), ForeignKey("users.id"), nullable=False
-    )
+    generated_by: Mapped[str] = mapped_column(UUID(as_uuid=False), ForeignKey("users.id"), nullable=False)
     # Relationships
     vouchers = relationship("Voucher", back_populates="batch")
     generated_by_user = relationship("User")
@@ -454,9 +410,7 @@ class PortalCustomization(BaseModel):
     favicon_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
 
     # Theme configuration
-    primary_color: Mapped[Optional[str]] = mapped_column(
-        String(7), nullable=True
-    )  # hex color
+    primary_color: Mapped[Optional[str]] = mapped_column(String(7), nullable=True)  # hex color
     secondary_color: Mapped[Optional[str]] = mapped_column(String(7), nullable=True)
     accent_color: Mapped[Optional[str]] = mapped_column(String(7), nullable=True)
     text_color: Mapped[Optional[str]] = mapped_column(String(7), nullable=True)
@@ -469,9 +423,7 @@ class PortalCustomization(BaseModel):
     custom_html: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     # Language and localization
-    default_language: Mapped[str] = mapped_column(
-        String(5), default="en", nullable=False
-    )
+    default_language: Mapped[str] = mapped_column(String(5), default="en", nullable=False)
     supported_languages: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
 
     # Contact information
@@ -480,12 +432,8 @@ class PortalCustomization(BaseModel):
     website_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
 
     # Legal
-    terms_of_service_url: Mapped[Optional[str]] = mapped_column(
-        String(500), nullable=True
-    )
-    privacy_policy_url: Mapped[Optional[str]] = mapped_column(
-        String(500), nullable=True
-    )
+    terms_of_service_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    privacy_policy_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
 
     # Relationships
     portal = relationship("CaptivePortalConfig", back_populates="customization")
@@ -507,27 +455,17 @@ class PortalUsageStats(BaseModel):
         nullable=False,
     )
     # Time period
-    stats_date: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
-    period_type: Mapped[str] = mapped_column(
-        String(10), nullable=False
-    )  # hour, day, week, month
+    stats_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    period_type: Mapped[str] = mapped_column(String(10), nullable=False)  # hour, day, week, month
 
     # Session statistics
     total_sessions: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     unique_users: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    avg_session_duration: Mapped[float] = mapped_column(
-        Float, default=0.0, nullable=False
-    )
+    avg_session_duration: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
 
     # Data usage
-    total_bytes_downloaded: Mapped[int] = mapped_column(
-        Integer, default=0, nullable=False
-    )
-    total_bytes_uploaded: Mapped[int] = mapped_column(
-        Integer, default=0, nullable=False
-    )
+    total_bytes_downloaded: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    total_bytes_uploaded: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     # Authentication method breakdown
     auth_method_stats: Mapped[dict] = mapped_column(JSON, default=dict, nullable=False)

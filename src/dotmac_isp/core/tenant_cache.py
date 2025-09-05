@@ -7,7 +7,7 @@ between tenants in the container-per-tenant architecture.
 
 import logging
 import os
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional, Union
 
 from redis.asyncio import ConnectionPool, Redis
 from redis.exceptions import RedisError
@@ -73,9 +73,7 @@ class TenantCacheService:
             logger.error(f"Failed to get key {key}: {str(e)}")
             return None
 
-    async def set(
-        self, key: str, value: Union[str, int, float], ex: Optional[int] = None
-    ) -> bool:
+    async def set(self, key: str, value: Union[str, int, float], ex: Optional[int] = None) -> bool:
         """Set value with tenant namespace."""
         try:
             namespaced_key = self._get_namespaced_key(key)
@@ -103,7 +101,7 @@ class TenantCacheService:
             logger.error(f"Failed to check key existence {key}: {str(e)}")
             return False
 
-    async def hset(self, name: str, mapping: Dict[str, Any]) -> int:
+    async def hset(self, name: str, mapping: dict[str, Any]) -> int:
         """Set hash fields with tenant namespace."""
         try:
             namespaced_name = self._get_namespaced_key(name)
@@ -121,7 +119,7 @@ class TenantCacheService:
             logger.error(f"Failed to get hash field {name}:{key}: {str(e)}")
             return None
 
-    async def hgetall(self, name: str) -> Dict[str, str]:
+    async def hgetall(self, name: str) -> dict[str, str]:
         """Get all hash fields with tenant namespace."""
         try:
             namespaced_name = self._get_namespaced_key(name)
@@ -139,7 +137,7 @@ class TenantCacheService:
             logger.error(f"Failed to push to list {name}: {str(e)}")
             return 0
 
-    async def lrange(self, name: str, start: int, end: int) -> List[str]:
+    async def lrange(self, name: str, start: int, end: int) -> list[str]:
         """Get list range with tenant namespace."""
         try:
             namespaced_name = self._get_namespaced_key(name)
@@ -166,7 +164,7 @@ class TenantCacheService:
             logger.error(f"Failed to increment {name}: {str(e)}")
             return None
 
-    async def get_tenant_keys(self) -> List[str]:
+    async def get_tenant_keys(self) -> list[str]:
         """Get all keys for this tenant (for debugging/monitoring)."""
         try:
             pattern = f"{self.tenant_namespace}*"
@@ -206,9 +204,7 @@ def initialize_tenant_cache() -> TenantCacheService:
     if not tenant_namespace.endswith(":"):
         tenant_namespace += ":"
 
-    logger.info(
-        f"Initializing tenant cache for {tenant_id} with namespace {tenant_namespace}"
-    )
+    logger.info(f"Initializing tenant cache for {tenant_id} with namespace {tenant_namespace}")
 
     _tenant_cache = TenantCacheService(redis_url, tenant_namespace)
     return _tenant_cache

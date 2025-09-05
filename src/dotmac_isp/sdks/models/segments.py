@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 from uuid import UUID
 
 from .enums import SegmentOperator
@@ -26,7 +26,7 @@ class Segment:
     segment_id: UUID
     segment_name: str
     description: Optional[str] = None
-    rules: List[SegmentRule] = None
+    rules: list[SegmentRule] = None
     is_dynamic: bool = True
     created_by: Optional[str] = None
     created_at: Optional[datetime] = None

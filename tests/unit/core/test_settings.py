@@ -3,10 +3,9 @@ Test settings and configuration.
 """
 
 import os
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
-
 from dotmac_isp.core.settings import Settings, get_settings
 
 

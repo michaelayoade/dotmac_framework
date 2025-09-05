@@ -1,21 +1,25 @@
 """Configuration generation service for ISP containers."""
-
-import asyncio
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 from uuid import UUID
 
 from ..core.feature_flags import FeatureFlagManager
+
+# Moved to top: from ..core.feature_flags import FeatureFlagManager
 from ..core.secret_manager import SecretManager
 from ..core.template_engine import TemplateEngine
 from ..core.validators import ConfigurationValidator, ValidationResult
 from ..schemas.config_schemas import (
     DatabaseConfig,
     ISPConfiguration,
+    LogLevel,
     RedisConfig,
     SecurityConfig,
+    ServiceStatus,
 )
+
+# TODO: Define MonitoringConfig, LoggingConfig, NetworkConfig, ServiceConfig, ExternalServiceConfig
 from ..schemas.tenant_schemas import EnvironmentType, SubscriptionPlan, TenantInfo
 
 logger = logging.getLogger(__name__)
@@ -86,7 +90,7 @@ class ConfigurationGenerator:
         plan: SubscriptionPlan,
         environment: str,
         tenant_info: Optional[TenantInfo] = None,
-        custom_overrides: Optional[Dict[str, Any]] = None,
+        custom_overrides: Optional[dict[str, Any]] = None,
     ) -> ISPConfiguration:
         """
         Generate complete ISP configuration for a specific tenant.
@@ -101,34 +105,20 @@ class ConfigurationGenerator:
         Returns:
             Complete ISP configuration with all components
         """
-        logger.info(
-            f"Generating ISP configuration for tenant {isp_id}, plan {plan}, env {environment}"
-        )
+        logger.info(f"Generating ISP configuration for tenant {isp_id}, plan {plan}, env {environment}")
 
         try:
             # Generate base configuration components
-            database_config = await self._generate_database_config(
-                isp_id, plan, environment
-            )
+            database_config = await self._generate_database_config(isp_id, plan, environment)
             redis_config = await self._generate_redis_config(isp_id, plan, environment)
-            security_config = await self._generate_security_config(
-                isp_id, plan, environment
-            )
-            monitoring_config = await self._generate_monitoring_config(
-                isp_id, plan, environment
-            )
-            logging_config = await self._generate_logging_config(
-                isp_id, plan, environment
-            )
-            network_config = await self._generate_network_config(
-                isp_id, plan, environment
-            )
+            security_config = await self._generate_security_config(isp_id, plan, environment)
+            monitoring_config = await self._generate_monitoring_config(isp_id, plan, environment)
+            logging_config = await self._generate_logging_config(isp_id, plan, environment)
+            network_config = await self._generate_network_config(isp_id, plan, environment)
 
             # Generate service configurations
             services = await self._generate_service_configs(isp_id, plan, environment)
-            external_services = await self._generate_external_service_configs(
-                isp_id, plan, environment
-            )
+            external_services = await self._generate_external_service_configs(isp_id, plan, environment)
 
             # Create base configuration
             config = ISPConfiguration(
@@ -152,23 +142,17 @@ class ConfigurationGenerator:
 
             # Apply feature flags
             if tenant_info:
-                config = await self.feature_manager.apply_feature_flags(
-                    config, tenant_info
-                )
+                config = await self.feature_manager.apply_feature_flags(config, tenant_info)
             else:
                 # Generate basic feature flags based on plan
-                feature_flags = await self.feature_manager.generate_plan_features(
-                    isp_id, plan
-                )
+                feature_flags = await self.feature_manager.generate_plan_features(isp_id, plan)
                 config.feature_flags = feature_flags
 
             logger.info(f"Successfully generated configuration for tenant {isp_id}")
             return config
 
         except Exception as e:
-            logger.error(
-                f"Failed to generate configuration for tenant {isp_id}: {str(e)}"
-            )
+            logger.error(f"Failed to generate configuration for tenant {isp_id}: {str(e)}")
             raise
 
     async def inject_secrets(self, config: ISPConfiguration) -> ISPConfiguration:
@@ -186,14 +170,10 @@ class ConfigurationGenerator:
         try:
             return await self.secret_manager.inject_secrets(config)
         except Exception as e:
-            logger.error(
-                f"Failed to inject secrets for tenant {config.tenant_id}: {str(e)}"
-            )
+            logger.error(f"Failed to inject secrets for tenant {config.tenant_id}: {str(e)}")
             raise
 
-    async def validate_configuration(
-        self, config: ISPConfiguration
-    ) -> ValidationResult:
+    async def validate_configuration(self, config: ISPConfiguration) -> ValidationResult:
         """
         Comprehensive configuration validation.
 
@@ -208,9 +188,7 @@ class ConfigurationGenerator:
         try:
             return await self.validator.validate_configuration(config)
         except Exception as e:
-            logger.error(
-                f"Configuration validation failed for tenant {config.tenant_id}: {str(e)}"
-            )
+            logger.error(f"Configuration validation failed for tenant {config.tenant_id}: {str(e)}")
             raise
 
     async def apply_feature_flags(self, config: ISPConfiguration) -> ISPConfiguration:
@@ -227,13 +205,10 @@ class ConfigurationGenerator:
 
         try:
             # This would typically get tenant info from database
-            # For now, we'll create a basic tenant info from config
             tenant_info = await self._get_tenant_info(config.tenant_id)
             return await self.feature_manager.apply_feature_flags(config, tenant_info)
         except Exception as e:
-            logger.error(
-                f"Failed to apply feature flags for tenant {config.tenant_id}: {str(e)}"
-            )
+            logger.error(f"Failed to apply feature flags for tenant {config.tenant_id}: {str(e)}")
             raise
 
     async def _generate_database_config(
@@ -255,26 +230,20 @@ class ConfigurationGenerator:
             host=f"db-{tenant_id}.{environment}.dotmac.io",
             port=5432,
             name=f"isp_{tenant_id}_{environment}".replace("-", "_"),
-            username=f"isp_user_{tenant_id}".replace("-", "_")[
-                :63
-            ],  # PostgreSQL username limit
-            password="${SECRET:database_password}",  # Will be replaced by secret manager
+            username=f"isp_user_{tenant_id}".replace("-", "_")[:63],  # PostgreSQL username limit
+            password="${SECRET:database_password}",  # noqa: S106 - secret placeholder resolved by secret manager
             **base_config,
         )
 
-    async def _generate_redis_config(
-        self, tenant_id: UUID, plan: SubscriptionPlan, environment: str
-    ) -> RedisConfig:
+    async def _generate_redis_config(self, tenant_id: UUID, plan: SubscriptionPlan, environment: str) -> RedisConfig:
         """Generate Redis configuration based on plan and environment."""
-        base_config = self._default_configs["redis"].get(
-            plan, self._default_configs["redis"][SubscriptionPlan.BASIC]
-        )
+        base_config = self._default_configs["redis"].get(plan, self._default_configs["redis"][SubscriptionPlan.BASIC])
 
         return RedisConfig(
             host=f"redis-{tenant_id}.{environment}.dotmac.io",
             port=6379,
             database=0,
-            password="${SECRET:redis_password}",  # Will be replaced by secret manager
+            password="${SECRET:redis_password}",  # noqa: S106 - secret placeholder resolved by secret manager
             **base_config,
         )
 
@@ -286,16 +255,14 @@ class ConfigurationGenerator:
         enhanced_security = plan == SubscriptionPlan.ENTERPRISE
 
         return SecurityConfig(
-            jwt_secret_key="${SECRET:jwt_secret_key}",
+            jwt_secret_key="${SECRET:jwt_secret_key}",  # noqa: S106 - secret placeholder resolved by secret manager
             jwt_algorithm="RS256" if enhanced_security else "HS256",
             jwt_access_token_expire_minutes=15 if environment == "production" else 60,
             jwt_refresh_token_expire_days=30,
-            encryption_key="${SECRET:encryption_key}",
+            encryption_key="${SECRET:encryption_key}",  # noqa: S106 - secret placeholder resolved by secret manager
             password_hash_rounds=12 if enhanced_security else 10,
             rate_limit_enabled=True,
-            rate_limit_requests_per_minute=(
-                1000 if plan == SubscriptionPlan.ENTERPRISE else 100
-            ),
+            rate_limit_requests_per_minute=(1000 if plan == SubscriptionPlan.ENTERPRISE else 100),
             cors_enabled=True,
             cors_origins=[f"https://{tenant_id}.dotmac.io"],
             enable_security_headers=True,
@@ -303,9 +270,8 @@ class ConfigurationGenerator:
 
     async def _generate_monitoring_config(
         self, tenant_id: UUID, plan: SubscriptionPlan, environment: str
-    ) -> "MonitoringConfig":
+    ) -> "dict  # TODO: Define MonitoringConfig":
         """Generate monitoring configuration."""
-        from ..schemas.config_schemas import MonitoringConfig
 
         # Premium and Enterprise plans get enhanced monitoring
         enhanced_monitoring = plan in [
@@ -313,35 +279,33 @@ class ConfigurationGenerator:
             SubscriptionPlan.ENTERPRISE,
         ]
 
-        return MonitoringConfig(
-            metrics_enabled=True,
-            health_check_enabled=True,
-            tracing_enabled=enhanced_monitoring,
-            tracing_sample_rate=0.1 if enhanced_monitoring else 0.01,
-            prometheus_enabled=enhanced_monitoring,
-            grafana_dashboard_enabled=plan == SubscriptionPlan.ENTERPRISE,
-        )
+        return {
+            "metrics_enabled": True,
+            "health_check_enabled": True,
+            "tracing_enabled": enhanced_monitoring,
+            "tracing_sample_rate": 0.1 if enhanced_monitoring else 0.01,
+            "prometheus_enabled": enhanced_monitoring,
+            "grafana_dashboard_enabled": plan == SubscriptionPlan.ENTERPRISE,
+        }
 
     async def _generate_logging_config(
         self, tenant_id: UUID, plan: SubscriptionPlan, environment: str
-    ) -> "LoggingConfig":
+    ) -> dict[str, Any]:
         """Generate logging configuration."""
-        from ..schemas.config_schemas import LoggingConfig, LogLevel
 
-        return LoggingConfig(
-            level=LogLevel.DEBUG if environment == "development" else LogLevel.INFO,
-            format="json" if environment == "production" else "text",
-            log_to_file=environment != "development",
-            log_file_path=f"/var/log/isp/{tenant_id}/app.log",
-            structured_logging=True,
-            external_logging_enabled=plan == SubscriptionPlan.ENTERPRISE,
-        )
+        return {
+            "level": LogLevel.DEBUG if environment == "development" else LogLevel.INFO,
+            "format": "json" if environment == "production" else "text",
+            "log_to_file": environment != "development",
+            "log_file_path": f"/var/log/isp/{tenant_id}/app.log",
+            "structured_logging": True,
+            "external_logging_enabled": plan == SubscriptionPlan.ENTERPRISE,
+        }
 
     async def _generate_network_config(
         self, tenant_id: UUID, plan: SubscriptionPlan, environment: str
-    ) -> "NetworkConfig":
+    ) -> dict[str, Any]:
         """Generate network configuration."""
-        from ..schemas.config_schemas import NetworkConfig
 
         # Scale workers based on plan
         worker_counts = {
@@ -350,141 +314,129 @@ class ConfigurationGenerator:
             SubscriptionPlan.ENTERPRISE: 8,
         }
 
-        return NetworkConfig(
-            host="0.0.0.0",
-            port=8000,
-            workers=worker_counts.get(plan, 2),
-            request_timeout=60 if plan == SubscriptionPlan.ENTERPRISE else 30,
-            max_concurrent_requests=(
-                2000 if plan == SubscriptionPlan.ENTERPRISE else 1000
-            ),
-            websocket_enabled=True,
-            websocket_max_connections=(
-                500 if plan == SubscriptionPlan.ENTERPRISE else 100
-            ),
-        )
+        return {
+            "host": "0.0.0.0",
+            "port": 8000,
+            "workers": worker_counts.get(plan, 2),
+            "request_timeout": 60 if plan == SubscriptionPlan.ENTERPRISE else 30,
+            "max_concurrent_requests": (2000 if plan == SubscriptionPlan.ENTERPRISE else 1000),
+            "websocket_enabled": True,
+            "websocket_max_connections": (500 if plan == SubscriptionPlan.ENTERPRISE else 100),
+        }
 
     async def _generate_service_configs(
         self, tenant_id: UUID, plan: SubscriptionPlan, environment: str
-    ) -> List["ServiceConfig"]:
+    ) -> list["dict  # TODO: Define ServiceConfig"]:
         """Generate service configurations."""
-        from ..schemas.config_schemas import ServiceConfig, ServiceStatus
 
         services = [
-            ServiceConfig(
-                name="api",
-                version="latest",
-                status=ServiceStatus.ENABLED,
-                health_check_path="/health",
-                environment_variables={
+            {
+                "name": "api",
+                "version": "latest",
+                "status": ServiceStatus.ENABLED,
+                "health_check_path": "/health",
+                "environment_variables": {
                     "TENANT_ID": str(tenant_id),
                     "ENVIRONMENT": environment,
                     "SUBSCRIPTION_PLAN": plan,
                 },
-            ),
-            ServiceConfig(
-                name="worker",
-                version="latest",
-                status=ServiceStatus.ENABLED,
-                depends_on=["api"],
-                environment_variables={
+            },
+            {
+                "name": "worker",
+                "version": "latest",
+                "status": ServiceStatus.ENABLED,
+                "depends_on": ["api"],
+                "environment_variables": {
                     "TENANT_ID": str(tenant_id),
                     "WORKER_TYPE": "celery",
                 },
-            ),
-            ServiceConfig(
-                name="scheduler",
-                version="latest",
-                status=ServiceStatus.ENABLED,
-                depends_on=["api", "worker"],
-                environment_variables={
+            },
+            {
+                "name": "scheduler",
+                "version": "latest",
+                "status": ServiceStatus.ENABLED,
+                "depends_on": ["api", "worker"],
+                "environment_variables": {
                     "TENANT_ID": str(tenant_id),
                     "SCHEDULER_TYPE": "celery-beat",
                 },
-            ),
+            },
         ]
 
         # Add premium services for higher plans
         if plan in [SubscriptionPlan.PREMIUM, SubscriptionPlan.ENTERPRISE]:
             services.append(
-                ServiceConfig(
-                    name="analytics",
-                    version="latest",
-                    status=ServiceStatus.ENABLED,
-                    depends_on=["api"],
-                    environment_variables={
+                {
+                    "name": "analytics",
+                    "version": "latest",
+                    "status": ServiceStatus.ENABLED,
+                    "depends_on": ["api"],
+                    "environment_variables": {
                         "TENANT_ID": str(tenant_id),
                         "ANALYTICS_ENABLED": "true",
                     },
-                )
+                }
             )
 
         return services
 
     async def _generate_external_service_configs(
         self, tenant_id: UUID, plan: SubscriptionPlan, environment: str
-    ) -> List["ExternalServiceConfig"]:
+    ) -> list[dict[str, Any]]:
         """Generate external service configurations."""
-        from ..schemas.config_schemas import ExternalServiceConfig
 
         configs = []
 
         # All plans get email service
         configs.append(
-            ExternalServiceConfig(
-                service_name="email",
-                endpoint="https://api.sendgrid.com/v3",
-                api_key="${SECRET:sendgrid_api_key}",
-                auth_type="bearer",
-                timeout=30,
-                max_retries=3,
-            )
+            {
+                "service_name": "email",
+                "endpoint": "https://api.sendgrid.com/v3",
+                "api_key": "${SECRET:sendgrid_api_key}",
+                "auth_type": "bearer",
+                "timeout": 30,
+                "max_retries": 3,
+            }
         )
 
         # Premium and Enterprise get SMS service
         if plan in [SubscriptionPlan.PREMIUM, SubscriptionPlan.ENTERPRISE]:
             configs.append(
-                ExternalServiceConfig(
-                    service_name="sms",
-                    endpoint="https://api.twilio.com",
-                    api_key="${SECRET:twilio_api_key}",
-                    auth_type="basic",
-                    auth_config={
+                {
+                    "service_name": "sms",
+                    "endpoint": "https://api.twilio.com",
+                    "api_key": "${SECRET:twilio_api_key}",
+                    "auth_type": "basic",
+                    "auth_config": {
                         "username": "${SECRET:twilio_username}",
                         "password": "${SECRET:twilio_password}",
                     },
-                )
+                }
             )
 
         # Enterprise gets payment processing
         if plan == SubscriptionPlan.ENTERPRISE:
             configs.append(
-                ExternalServiceConfig(
-                    service_name="payment",
-                    endpoint="https://api.stripe.com/v1",
-                    api_key="${SECRET:stripe_secret_key}",
-                    auth_type="bearer",
-                    timeout=60,
-                    max_retries=5,
-                )
+                {
+                    "service_name": "payment",
+                    "endpoint": "https://api.stripe.com/v1",
+                    "api_key": "${SECRET:stripe_secret_key}",
+                    "auth_type": "bearer",
+                    "timeout": 60,
+                    "max_retries": 5,
+                }
             )
 
         return configs
 
-    async def _apply_custom_overrides(
-        self, config: ISPConfiguration, overrides: Dict[str, Any]
-    ) -> ISPConfiguration:
+    async def _apply_custom_overrides(self, config: ISPConfiguration, overrides: dict[str, Any]) -> ISPConfiguration:
         """Apply custom configuration overrides."""
 
         # Deep merge overrides into configuration
         def deep_merge(base_dict: dict, override_dict: dict) -> dict:
             result = base_dict.copy()
             for key, value in override_dict.items():
-                if (
-                    key in result
-                    and isinstance(result[key], dict)
-                    and isinstance(value, dict)
-                ):
+                if key in result and isinstance(result[key], dict) and isinstance(value, dict):
                     result[key] = deep_merge(result[key], value)
                 else:
                     result[key] = value
@@ -515,7 +467,7 @@ class ConfigurationGenerator:
         plan: SubscriptionPlan,
         environment: str,
         tenant_info: Optional[TenantInfo] = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Get template context for configuration generation."""
         context = {
             "tenant_id": str(tenant_id),

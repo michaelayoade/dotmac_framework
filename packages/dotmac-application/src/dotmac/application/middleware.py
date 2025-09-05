@@ -4,7 +4,7 @@ Provider-based composition approach for decoupled architecture.
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -16,19 +16,16 @@ logger = logging.getLogger(__name__)
 
 
 def apply_standard_middleware(
-    app: FastAPI, 
-    *, 
-    config: PlatformConfig, 
-    providers: Optional[Providers] = None
-) -> List[str]:
+    app: FastAPI, *, config: PlatformConfig, providers: Providers | None = None
+) -> list[str]:
     """
     Apply standard middleware stack using provider-based composition.
-    
+
     Args:
         app: FastAPI application instance
         config: Platform configuration
         providers: Optional providers for middleware components
-        
+
     Returns:
         List of applied middleware names
     """
@@ -39,12 +36,14 @@ def apply_standard_middleware(
 class StandardMiddlewareStack:
     """Standard middleware stack applied to all DotMac applications."""
 
-    def __init__(self, platform_config: PlatformConfig, providers: Optional[Providers] = None):
+    def __init__(
+        self, platform_config: PlatformConfig, providers: Providers | None = None
+    ):
         self.platform_config = platform_config
         self.providers = providers or Providers()
-        self.applied_middleware: List[str] = []
+        self.applied_middleware: list[str] = []
 
-    def apply_to_app(self, app: FastAPI) -> List[str]:
+    def apply_to_app(self, app: FastAPI) -> list[str]:
         """Apply standard middleware stack to FastAPI application."""
         logger.info(
             f"Applying standard middleware stack for {self.platform_config.platform_name}"
@@ -96,21 +95,27 @@ class StandardMiddlewareStack:
             return
 
         if not self.providers.security:
-            logger.warning("Security provider not available, skipping security middleware")
+            logger.warning(
+                "Security provider not available, skipping security middleware"
+            )
             return
 
         try:
             security_config = {
                 "csrf_enabled": self.platform_config.security_config.csrf_enabled,
                 "rate_limiting_enabled": self.platform_config.security_config.rate_limiting_enabled,
-                "deployment_mode": self.platform_config.deployment_context.mode if self.platform_config.deployment_context else None,
+                "deployment_mode": self.platform_config.deployment_context.mode
+                if self.platform_config.deployment_context
+                else None,
                 "custom_settings": self.platform_config.custom_settings,
             }
 
             # Apply JWT Authentication
             try:
                 self.providers.security.apply_jwt_authentication(app, security_config)
-                self.applied_middleware.extend(["JWTAuthenticationMiddleware", "APIKeyAuthenticationMiddleware"])
+                self.applied_middleware.extend(
+                    ["JWTAuthenticationMiddleware", "APIKeyAuthenticationMiddleware"]
+                )
                 logger.debug("Applied JWT authentication via security provider")
             except Exception as e:
                 logger.warning(f"JWT authentication setup failed: {e}")
@@ -142,14 +147,22 @@ class StandardMiddlewareStack:
             return
 
         if not self.providers.tenant:
-            logger.warning("Tenant provider not available, skipping tenant boundary enforcement")
+            logger.warning(
+                "Tenant provider not available, skipping tenant boundary enforcement"
+            )
             return
 
         try:
             tenant_config = {
-                "deployment_mode": self.platform_config.deployment_context.mode if self.platform_config.deployment_context else None,
-                "tenant_id": self.platform_config.deployment_context.tenant_id if self.platform_config.deployment_context else None,
-                "isolation_level": self.platform_config.deployment_context.isolation_level if self.platform_config.deployment_context else None,
+                "deployment_mode": self.platform_config.deployment_context.mode
+                if self.platform_config.deployment_context
+                else None,
+                "tenant_id": self.platform_config.deployment_context.tenant_id
+                if self.platform_config.deployment_context
+                else None,
+                "isolation_level": self.platform_config.deployment_context.isolation_level
+                if self.platform_config.deployment_context
+                else None,
                 "custom_settings": self.platform_config.custom_settings,
             }
 
@@ -169,11 +182,15 @@ class StandardMiddlewareStack:
                     if mode == DeploymentMode.TENANT_CONTAINER:
                         self.providers.tenant.apply_tenant_isolation(app, tenant_config)
                         self.applied_middleware.append("TenantIsolationMiddleware")
-                        logger.debug("Applied tenant container isolation via tenant provider")
+                        logger.debug(
+                            "Applied tenant container isolation via tenant provider"
+                        )
                     elif mode == DeploymentMode.MANAGEMENT_PLATFORM:
                         self.providers.tenant.apply_tenant_isolation(app, tenant_config)
                         self.applied_middleware.append("ManagementTenantMiddleware")
-                        logger.debug("Applied management platform tenant middleware via tenant provider")
+                        logger.debug(
+                            "Applied management platform tenant middleware via tenant provider"
+                        )
                 except Exception as e:
                     logger.warning(f"Tenant isolation setup failed: {e}")
 
@@ -186,7 +203,9 @@ class StandardMiddlewareStack:
             return
 
         if not self.providers.observability:
-            logger.warning("Observability provider not available, skipping observability middleware")
+            logger.warning(
+                "Observability provider not available, skipping observability middleware"
+            )
             return
 
         try:
@@ -202,16 +221,22 @@ class StandardMiddlewareStack:
             # Apply metrics collection
             if self.platform_config.observability_config.metrics_enabled:
                 try:
-                    self.providers.observability.apply_metrics(app, observability_config)
+                    self.providers.observability.apply_metrics(
+                        app, observability_config
+                    )
                     self.applied_middleware.append("MetricsMiddleware")
-                    logger.debug("Applied metrics collection via observability provider")
+                    logger.debug(
+                        "Applied metrics collection via observability provider"
+                    )
                 except Exception as e:
                     logger.warning(f"Metrics collection setup failed: {e}")
 
             # Apply tracing
             if self.platform_config.observability_config.tracing_enabled:
                 try:
-                    self.providers.observability.apply_tracing(app, observability_config)
+                    self.providers.observability.apply_tracing(
+                        app, observability_config
+                    )
                     self.applied_middleware.append("TracingMiddleware")
                     logger.debug("Applied tracing via observability provider")
                 except Exception as e:
@@ -228,7 +253,7 @@ class StandardMiddlewareStack:
         except Exception as e:
             logger.error(f"Failed to apply observability middleware: {e}")
 
-    def _get_allowed_hosts(self) -> List[str]:
+    def _get_allowed_hosts(self) -> list[str]:
         """Get allowed hosts based on deployment context."""
         # Default hosts
         allowed_hosts = ["localhost", "127.0.0.1", "testserver"]
@@ -260,7 +285,7 @@ class StandardMiddlewareStack:
 
         return allowed_hosts
 
-    def _get_cors_config(self) -> Dict[str, Any]:
+    def _get_cors_config(self) -> dict[str, Any]:
         """Get CORS configuration."""
         cors_config = {
             "allow_credentials": True,
@@ -302,7 +327,7 @@ class StandardMiddlewareStack:
 # Legacy compatibility - will be removed in future versions
 class StandardMiddlewareStackLegacy(StandardMiddlewareStack):
     """Legacy middleware stack for backward compatibility."""
-    
+
     def __init__(self, platform_config: PlatformConfig):
         super().__init__(platform_config, None)
         logger.warning(

@@ -3,9 +3,9 @@ Account-related models for SDKs.
 """
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 from uuid import UUID, uuid4
 
 
@@ -42,7 +42,7 @@ class MFAFactor:
     is_verified: bool
     created_at: datetime
     last_used_at: Optional[datetime] = None
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: Optional[dict[str, Any]] = None
 
     def __init__(self, **kwargs):
         """Init   operation."""
@@ -94,9 +94,7 @@ class Account:
     def lock_account(self, duration_minutes: int = 30) -> None:
         """Lock account for specified duration."""
         self.status = AccountStatus.LOCKED
-        self.locked_until = datetime.now(timezone.utc) + datetime.timedelta(
-            minutes=duration_minutes
-        )
+        self.locked_until = datetime.now(timezone.utc) + datetime.timedelta(minutes=duration_minutes)
 
     def unlock_account(self) -> None:
         """Unlock account."""

@@ -1,7 +1,6 @@
 """Data validation utilities."""
 
 import re
-from typing import Optional
 
 
 def validate_email(email: str) -> bool:
