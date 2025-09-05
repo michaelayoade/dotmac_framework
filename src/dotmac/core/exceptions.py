@@ -6,8 +6,10 @@ Prefer importing from dotmac_shared.core.exceptions when available.
 from __future__ import annotations
 
 try:
+    from dotmac_shared.core.exceptions import (
+        EntityNotFoundError as _EntityNotFoundError,
+    )
     from dotmac_shared.core.exceptions import ValidationError as _ValidationError
-    from dotmac_shared.core.exceptions import EntityNotFoundError as _EntityNotFoundError
 except Exception:  # pragma: no cover
     _ValidationError = None  # type: ignore
     _EntityNotFoundError = None  # type: ignore
@@ -22,4 +24,3 @@ class EntityNotFoundError(_EntityNotFoundError if _EntityNotFoundError is not No
 
 
 __all__ = ["ValidationError", "EntityNotFoundError"]
-

@@ -44,10 +44,16 @@ class CSRFViolation(str, Enum):
 
 
 class CSRFValidationResult:
-    def __init__(self, valid: bool, error: Optional[str] = None, violation: Optional[CSRFViolation] = None):
+    def __init__(
+        self,
+        valid: bool,
+        error: Optional[str] = None,
+        violation: Optional[CSRFViolation] = None,
+    ):
         self.valid = valid
         self.error = error
         self.violation = violation
+
 
 class CSRFMode(str, Enum):
     """CSRF protection modes for different scenarios."""
@@ -642,7 +648,9 @@ def get_portal_csrf_config(portal_type: str) -> CSRFConfig:
         "management": create_management_portal_csrf_config,
         "reseller": create_reseller_portal_csrf_config,
         "technician": create_technician_portal_csrf_config,
-        "api": lambda: CSRFConfig(mode=CSRFMode.API_ONLY, token_delivery=CSRFTokenDelivery.HEADER_ONLY),
+        "api": lambda: CSRFConfig(
+            mode=CSRFMode.API_ONLY, token_delivery=CSRFTokenDelivery.HEADER_ONLY
+        ),
     }
     factory = mapping.get(portal_type)
     return factory() if factory else CSRFConfig()

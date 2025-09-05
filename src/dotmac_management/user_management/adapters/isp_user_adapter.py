@@ -17,4 +17,3 @@ class ISPUserAdapter:
 
 
 __all__ = ["ISPUserAdapter"]
-
