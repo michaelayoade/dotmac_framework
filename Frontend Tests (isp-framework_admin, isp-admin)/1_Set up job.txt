@@ -1,0 +1,35 @@
+﻿2025-09-05T17:55:12.0766376Z Current runner version: '2.328.0'
+2025-09-05T17:55:12.0792928Z ##[group]Runner Image Provisioner
+2025-09-05T17:55:12.0793927Z Hosted Compute Agent
+2025-09-05T17:55:12.0794454Z Version: 20250829.383
+2025-09-05T17:55:12.0795037Z Commit: 27cb235aab5b0e52e153a26cd86b4742e89dac5d
+2025-09-05T17:55:12.0795793Z Build Date: 2025-08-29T13:48:48Z
+2025-09-05T17:55:12.0796401Z ##[endgroup]
+2025-09-05T17:55:12.0796948Z ##[group]Operating System
+2025-09-05T17:55:12.0797556Z Ubuntu
+2025-09-05T17:55:12.0798035Z 24.04.3
+2025-09-05T17:55:12.0798458Z LTS
+2025-09-05T17:55:12.0798979Z ##[endgroup]
+2025-09-05T17:55:12.0799443Z ##[group]Runner Image
+2025-09-05T17:55:12.0800020Z Image: ubuntu-24.04
+2025-09-05T17:55:12.0800558Z Version: 20250831.1.0
+2025-09-05T17:55:12.0801578Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20250831.1/images/ubuntu/Ubuntu2404-Readme.md
+2025-09-05T17:55:12.0803263Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20250831.1
+2025-09-05T17:55:12.0804558Z ##[endgroup]
+2025-09-05T17:55:12.0805924Z ##[group]GITHUB_TOKEN Permissions
+2025-09-05T17:55:12.0807874Z Checks: write
+2025-09-05T17:55:12.0808399Z Contents: read
+2025-09-05T17:55:12.0808983Z Metadata: read
+2025-09-05T17:55:12.0809528Z PullRequests: read
+2025-09-05T17:55:12.0810084Z Statuses: write
+2025-09-05T17:55:12.0810546Z ##[endgroup]
+2025-09-05T17:55:12.0813096Z Secret source: Actions
+2025-09-05T17:55:12.0813783Z Prepare workflow directory
+2025-09-05T17:55:12.1205097Z Prepare all required actions
+2025-09-05T17:55:12.1262573Z Getting action download info
+2025-09-05T17:55:12.6263819Z Download action repository 'actions/checkout@v4' (SHA:08eba0b27e820071cde6df949e0beb9ba4906955)
+2025-09-05T17:55:12.6945622Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2025-09-05T17:55:12.8263619Z Download action repository 'pnpm/action-setup@v2' (SHA:eae0cfeb286e66ffb5155f1a79b90583a127a68b)
+2025-09-05T17:55:13.4489098Z Download action repository 'actions/cache@v4' (SHA:0400d5f644dc74513175e3cd8d07132dd4860809)
+2025-09-05T17:55:13.5435306Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2025-09-05T17:55:13.7620366Z Complete job name: Frontend Tests (isp-framework/admin, isp-admin)

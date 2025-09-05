@@ -1,0 +1,74 @@
+﻿2025-09-05T17:55:25.1458602Z ##[group]Run pnpm install --frozen-lockfile
+2025-09-05T17:55:25.1458939Z [36;1mpnpm install --frozen-lockfile[0m
+2025-09-05T17:55:25.1488554Z shell: /usr/bin/bash -e {0}
+2025-09-05T17:55:25.1488778Z env:
+2025-09-05T17:55:25.1488954Z   PYTHON_VERSION: 3.9
+2025-09-05T17:55:25.1489145Z   NODE_VERSION: 18
+2025-09-05T17:55:25.1489327Z   PNPM_VERSION: 8
+2025-09-05T17:55:25.1489558Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2025-09-05T17:55:25.1489835Z ##[endgroup]
+2025-09-05T17:55:26.0693672Z Scope: all 64 workspace projects
+2025-09-05T17:55:26.2273718Z Lockfile is up to date, resolution step is skipped
+2025-09-05T17:55:26.8236268Z Packages: +3323
+2025-09-05T17:55:26.8237346Z ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+2025-09-05T17:55:27.3883971Z Progress: resolved 0, reused 0, downloaded 1, added 0
+2025-09-05T17:55:28.3921010Z Progress: resolved 0, reused 0, downloaded 22, added 8
+2025-09-05T17:55:29.3908854Z Progress: resolved 0, reused 0, downloaded 61, added 53
+2025-09-05T17:55:30.3907659Z Progress: resolved 0, reused 0, downloaded 124, added 161
+2025-09-05T17:55:31.3933708Z Progress: resolved 0, reused 0, downloaded 175, added 241
+2025-09-05T17:55:32.3911475Z Progress: resolved 0, reused 0, downloaded 230, added 322
+2025-09-05T17:55:33.3990207Z Progress: resolved 0, reused 0, downloaded 434, added 607
+2025-09-05T17:55:34.3985102Z Progress: resolved 0, reused 0, downloaded 500, added 673
+2025-09-05T17:55:35.3992084Z Progress: resolved 0, reused 0, downloaded 597, added 760
+2025-09-05T17:55:36.3994119Z Progress: resolved 0, reused 0, downloaded 698, added 928
+2025-09-05T17:55:37.4014177Z Progress: resolved 0, reused 0, downloaded 768, added 1086
+2025-09-05T17:55:38.4025775Z Progress: resolved 0, reused 0, downloaded 940, added 1418
+2025-09-05T17:55:39.4056073Z Progress: resolved 0, reused 0, downloaded 1058, added 1539
+2025-09-05T17:55:40.4031090Z Progress: resolved 0, reused 0, downloaded 1199, added 1783
+2025-09-05T17:55:41.4038769Z Progress: resolved 0, reused 0, downloaded 1424, added 2030
+2025-09-05T17:55:42.4037649Z Progress: resolved 0, reused 0, downloaded 1624, added 2229
+2025-09-05T17:55:43.4040693Z Progress: resolved 0, reused 0, downloaded 1806, added 2420
+2025-09-05T17:55:44.4037806Z Progress: resolved 0, reused 0, downloaded 2017, added 2666
+2025-09-05T17:55:45.4039685Z Progress: resolved 0, reused 0, downloaded 2281, added 2933
+2025-09-05T17:55:46.4040723Z Progress: resolved 0, reused 0, downloaded 2414, added 3100
+2025-09-05T17:55:47.4042990Z Progress: resolved 0, reused 0, downloaded 2482, added 3238
+2025-09-05T17:55:48.4078460Z Progress: resolved 0, reused 0, downloaded 2546, added 3314
+2025-09-05T17:55:48.9243553Z Progress: resolved 0, reused 0, downloaded 2546, added 3323, done
+2025-09-05T17:55:49.0128708Z node_modules/msw postinstall$ node -e "import('./config/scripts/postinstall.js').catch(() => void 0)"
+2025-09-05T17:55:49.0424267Z node_modules/protobufjs postinstall$ node scripts/postinstall
+2025-09-05T17:55:49.0720869Z node_modules/core-js postinstall$ node -e "try{require('./postinstall')}catch(e){}"
+2025-09-05T17:55:49.1003636Z node_modules/msw postinstall: Done
+2025-09-05T17:55:49.1011525Z node_modules/protobufjs postinstall: Done
+2025-09-05T17:55:49.1149626Z node_modules/core-js-pure postinstall$ node -e "try{require('./postinstall')}catch(e){}"
+2025-09-05T17:55:49.1396982Z node_modules/core-js postinstall: Done
+2025-09-05T17:55:49.1427668Z node_modules/@sentry/cli install$ node ./scripts/install.js
+2025-09-05T17:55:49.1710978Z node_modules/core-js-pure postinstall: Done
+2025-09-05T17:55:49.2350773Z node_modules/@sentry/cli install: [sentry-cli] Downloading from https://downloads.sentry-cdn.com/sentry-cli/1.77.3/sentry-cli-Linux-x86_64
+2025-09-05T17:55:49.5496280Z node_modules/@sentry/cli install: [sentry-cli] Checksum validation passed.
+2025-09-05T17:55:49.5960636Z node_modules/@sentry/cli install: Done
+2025-09-05T17:55:49.6010523Z node_modules/@swc/core postinstall$ node postinstall.js
+2025-09-05T17:55:49.6233286Z node_modules/esbuild postinstall$ node install.js
+2025-09-05T17:55:49.6235346Z node_modules/unrs-resolver postinstall$ napi-postinstall unrs-resolver 1.11.1 check
+2025-09-05T17:55:49.6629157Z node_modules/@swc/core postinstall: Done
+2025-09-05T17:55:49.6740141Z .../ts-jest/node_modules/esbuild postinstall$ node install.js
+2025-09-05T17:55:49.7040442Z node_modules/esbuild postinstall: Done
+2025-09-05T17:55:49.7164666Z node_modules/unrs-resolver postinstall: Done
+2025-09-05T17:55:49.7509020Z .../ts-jest/node_modules/esbuild postinstall: Done
+2025-09-05T17:55:49.7623007Z node_modules/leveldown install$ node-gyp-build
+2025-09-05T17:55:49.8469670Z node_modules/leveldown install: Done
+2025-09-05T17:55:49.8557067Z node_modules/sharp install$ node install/check
+2025-09-05T17:55:50.3955388Z node_modules/sharp install: Done
+2025-09-05T17:55:51.2883443Z 
+2025-09-05T17:55:51.2883960Z devDependencies:
+2025-09-05T17:55:51.2884598Z + @dotmac/governance 1.0.0 <- shared/packages/governance
+2025-09-05T17:55:51.2885463Z + @dotmac/typescript-config 1.0.0 <- shared/packages/typescript-config
+2025-09-05T17:55:51.2885979Z 
+2025-09-05T17:55:51.5951430Z . prepare$ husky install
+2025-09-05T17:55:51.6492561Z . prepare: husky - install command is DEPRECATED
+2025-09-05T17:55:51.6533416Z . prepare: .git can't be found
+2025-09-05T17:55:51.6535448Z . prepare: Done
+2025-09-05T17:55:51.7784940Z isp-framework/admin prepare$ husky install
+2025-09-05T17:55:51.8361564Z isp-framework/admin prepare: husky - install command is DEPRECATED
+2025-09-05T17:55:51.8402321Z isp-framework/admin prepare: .git can't be found
+2025-09-05T17:55:51.8404645Z isp-framework/admin prepare: Done
+2025-09-05T17:55:51.8449026Z Done in 26.6s

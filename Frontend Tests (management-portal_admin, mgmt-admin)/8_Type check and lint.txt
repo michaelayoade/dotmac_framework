@@ -1,0 +1,309 @@
+﻿2025-09-05T17:55:44.7505222Z ##[group]Run if [ -f "package.json" ]; then
+2025-09-05T17:55:44.7505575Z [36;1mif [ -f "package.json" ]; then[0m
+2025-09-05T17:55:44.7505870Z [36;1m  if grep -q "type-check" package.json; then[0m
+2025-09-05T17:55:44.7506150Z [36;1m    pnpm run type-check[0m
+2025-09-05T17:55:44.7506375Z [36;1m  else[0m
+2025-09-05T17:55:44.7506613Z [36;1m    echo "⚠️ No type-check script found, skipping"[0m
+2025-09-05T17:55:44.7506885Z [36;1m  fi[0m
+2025-09-05T17:55:44.7507048Z [36;1m  [0m
+2025-09-05T17:55:44.7507291Z [36;1m  if grep -q "lint" package.json; then[0m
+2025-09-05T17:55:44.7507556Z [36;1m    pnpm run lint[0m
+2025-09-05T17:55:44.7507750Z [36;1m  else[0m
+2025-09-05T17:55:44.7507955Z [36;1m    echo "⚠️ No lint script found, skipping"[0m
+2025-09-05T17:55:44.7508195Z [36;1m  fi[0m
+2025-09-05T17:55:44.7508357Z [36;1mfi[0m
+2025-09-05T17:55:44.7537852Z shell: /usr/bin/bash -e {0}
+2025-09-05T17:55:44.7538073Z env:
+2025-09-05T17:55:44.7538238Z   PYTHON_VERSION: 3.9
+2025-09-05T17:55:44.7538431Z   NODE_VERSION: 18
+2025-09-05T17:55:44.7538644Z   PNPM_VERSION: 8
+2025-09-05T17:55:44.7538870Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2025-09-05T17:55:44.7539141Z ##[endgroup]
+2025-09-05T17:55:45.1794231Z 
+2025-09-05T17:55:45.1795172Z > @dotmac/management-admin@1.0.0 type-check /home/runner/work/dotmac_framework/dotmac_framework/frontend/management-portal/admin
+2025-09-05T17:55:45.1795880Z > tsc --noEmit
+2025-09-05T17:55:45.1796035Z 
+2025-09-05T17:55:56.0588973Z ##[error]src/app/(dashboard)/api-docs/page.tsx(12,37): error TS2307: Cannot find module '@/lib/api-documentation' or its corresponding type declarations.
+2025-09-05T17:55:56.0602311Z ##[error]src/app/(dashboard)/api-docs/page.tsx(46,43): error TS2769: No overload matches this call.
+2025-09-05T17:55:56.0604184Z   Overload 1 of 2, '(o: ArrayLike<unknown> | { [s: string]: unknown; }): unknown[]', gave the following error.
+2025-09-05T17:55:56.0605386Z     Argument of type 'unknown' is not assignable to parameter of type 'ArrayLike<unknown> | { [s: string]: unknown; }'.
+2025-09-05T17:55:56.0606375Z   Overload 2 of 2, '(o: {}): any[]', gave the following error.
+2025-09-05T17:55:56.0607125Z     Argument of type 'unknown' is not assignable to parameter of type '{}'.
+2025-09-05T17:55:56.0608507Z ##[error]src/app/(dashboard)/api-docs/page.tsx(47,7): error TS18046: 'endpoint' is of type 'unknown'.
+2025-09-05T17:55:56.0611235Z ##[error]src/app/(dashboard)/api-docs/page.tsx(134,44): error TS7006: Parameter 'tag' implicitly has an 'any' type.
+2025-09-05T17:55:56.0613355Z ##[error]src/app/(dashboard)/api-docs/page.tsx(225,37): error TS2769: No overload matches this call.
+2025-09-05T17:55:56.0615183Z   Overload 1 of 2, '(o: ArrayLike<unknown> | { [s: string]: unknown; }): [string, unknown][]', gave the following error.
+2025-09-05T17:55:56.0616427Z     Argument of type 'unknown' is not assignable to parameter of type 'ArrayLike<unknown> | { [s: string]: unknown; }'.
+2025-09-05T17:55:56.0617400Z   Overload 2 of 2, '(o: {}): [string, any][]', gave the following error.
+2025-09-05T17:55:56.0618187Z     Argument of type 'unknown' is not assignable to parameter of type '{}'.
+2025-09-05T17:55:56.0619491Z ##[error]src/app/(dashboard)/api-docs/page.tsx(246,34): error TS18046: 'endpoint' is of type 'unknown'.
+2025-09-05T17:55:56.0621770Z ##[error]src/app/(dashboard)/api-docs/page.tsx(249,59): error TS18046: 'endpoint' is of type 'unknown'.
+2025-09-05T17:55:56.0623953Z ##[error]src/app/(dashboard)/api-docs/page.tsx(251,28): error TS18046: 'endpoint' is of type 'unknown'.
+2025-09-05T17:55:56.0626082Z ##[error]src/app/(dashboard)/api-docs/page.tsx(253,32): error TS18046: 'endpoint' is of type 'unknown'.
+2025-09-05T17:55:56.0628322Z ##[error]src/app/(dashboard)/api-docs/page.tsx(253,51): error TS7006: Parameter 'tag' implicitly has an 'any' type.
+2025-09-05T17:55:56.0630744Z ##[error]src/app/(dashboard)/api-docs/page.tsx(266,26): error TS18046: 'endpoint' is of type 'unknown'.
+2025-09-05T17:55:56.0632649Z ##[error]src/app/(dashboard)/api-docs/page.tsx(266,49): error TS18046: 'endpoint' is of type 'unknown'.
+2025-09-05T17:55:56.0634867Z ##[error]src/app/(dashboard)/api-docs/page.tsx(288,36): error TS18046: 'endpoint' is of type 'unknown'.
+2025-09-05T17:55:56.0636779Z ##[error]src/app/(dashboard)/api-docs/page.tsx(288,61): error TS7006: Parameter 'param' implicitly has an 'any' type.
+2025-09-05T17:55:56.0638536Z ##[error]src/app/(dashboard)/api-docs/page.tsx(315,26): error TS18046: 'endpoint' is of type 'unknown'.
+2025-09-05T17:55:56.0639960Z ##[error]src/app/(dashboard)/api-docs/page.tsx(319,32): error TS18046: 'endpoint' is of type 'unknown'.
+2025-09-05T17:55:56.0641185Z ##[error]src/app/(dashboard)/api-docs/page.tsx(321,30): error TS18046: 'endpoint' is of type 'unknown'.
+2025-09-05T17:55:56.0642363Z ##[error]src/app/(dashboard)/api-docs/page.tsx(333,30): error TS18046: 'endpoint' is of type 'unknown'.
+2025-09-05T17:55:56.0643606Z ##[error]src/app/(dashboard)/api-docs/page.tsx(333,54): error TS7006: Parameter 'response' implicitly has an 'any' type.
+2025-09-05T17:55:56.0644793Z ##[error]src/app/(dashboard)/api-docs/page.tsx(388,22): error TS18046: 'schema' is of type 'unknown'.
+2025-09-05T17:55:56.0646007Z ##[error]src/app/(dashboard)/api-docs/page.tsx(389,66): error TS18046: 'schema' is of type 'unknown'.
+2025-09-05T17:55:56.0647146Z ##[error]src/app/(dashboard)/api-docs/page.tsx(391,22): error TS18046: 'schema' is of type 'unknown'.
+2025-09-05T17:55:56.0648280Z ##[error]src/app/(dashboard)/api-docs/page.tsx(393,41): error TS18046: 'schema' is of type 'unknown'.
+2025-09-05T17:55:56.0649369Z ##[error]src/app/(dashboard)/api-docs/page.tsx(397,32): error TS18046: 'schema' is of type 'unknown'.
+2025-09-05T17:55:56.0650751Z ##[error]src/app/(dashboard)/api-docs/page.tsx(401,70): error TS18046: 'propSchema' is of type 'unknown'.
+2025-09-05T17:55:56.0652131Z ##[error]src/app/(dashboard)/dashboard/page.tsx(14,42): error TS2307: Cannot find module '@/lib/api' or its corresponding type declarations.
+2025-09-05T17:55:56.0653683Z ##[error]src/app/(dashboard)/dashboard/page.tsx(15,42): error TS2307: Cannot find module '@/lib/navigation' or its corresponding type declarations.
+2025-09-05T17:55:56.0655274Z ##[error]src/app/(dashboard)/dashboard/page.tsx(16,33): error TS2307: Cannot find module '@/lib/error-handling' or its corresponding type declarations.
+2025-09-05T17:55:56.0656875Z ##[error]src/app/(dashboard)/dashboard/page.tsx(201,53): error TS7006: Parameter 'activity' implicitly has an 'any' type.
+2025-09-05T17:55:56.0658178Z ##[error]src/app/(dashboard)/dashboard/page.tsx(201,63): error TS7006: Parameter 'index' implicitly has an 'any' type.
+2025-09-05T17:55:56.0659831Z ##[error]src/app/(dashboard)/offline/page.tsx(10,24): error TS2307: Cannot find module '@/lib/pwa-manager' or its corresponding type declarations.
+2025-09-05T17:55:56.0661448Z ##[error]src/app/(dashboard)/tenants/[id]/edit/page.tsx(10,39): error TS2307: Cannot find module '@/lib/api' or its corresponding type declarations.
+2025-09-05T17:55:56.0663320Z ##[error]src/app/(dashboard)/tenants/[id]/edit/page.tsx(338,48): error TS2322: Type '{ size: "small"; color: string; className: string; }' is not assignable to type 'IntrinsicAttributes & LoadingSpinnerProps'.
+2025-09-05T17:55:56.0664560Z   Property 'color' does not exist on type 'IntrinsicAttributes & LoadingSpinnerProps'.
+2025-09-05T17:55:56.0665546Z ##[error]src/app/(dashboard)/tenants/[id]/page.tsx(19,39): error TS2307: Cannot find module '@/lib/api' or its corresponding type declarations.
+2025-09-05T17:55:56.0667010Z ##[error]src/app/(dashboard)/tenants/new/page.tsx(10,39): error TS2307: Cannot find module '@/lib/api' or its corresponding type declarations.
+2025-09-05T17:55:56.0668238Z ##[error]src/app/(dashboard)/tenants/new/page.tsx(60,31): error TS18046: 'data' is of type 'unknown'.
+2025-09-05T17:55:56.0671482Z ##[error]src/app/(dashboard)/tenants/new/page.tsx(78,46): error TS2345: Argument of type '{ name: string; slug: string; domain?: string | undefined; billingEmail: string; contactEmail: string; contactPhone?: string | undefined; description?: string | undefined; planId?: string | undefined; settings?: Partial<...> | undefined; metadata?: Record<...> | undefined; }' is not assignable to parameter of type 'void'.
+2025-09-05T17:55:56.0674310Z ##[error]src/app/(dashboard)/tenants/new/page.tsx(291,48): error TS2322: Type '{ size: "small"; color: string; className: string; }' is not assignable to type 'IntrinsicAttributes & LoadingSpinnerProps'.
+2025-09-05T17:55:56.0675517Z   Property 'color' does not exist on type 'IntrinsicAttributes & LoadingSpinnerProps'.
+2025-09-05T17:55:56.0676475Z ##[error]src/app/(dashboard)/tenants/page.tsx(14,27): error TS2307: Cannot find module '@/lib/api' or its corresponding type declarations.
+2025-09-05T17:55:56.0677908Z ##[error]src/app/(dashboard)/tenants/page.tsx(59,35): error TS2345: Argument of type 'string' is not assignable to parameter of type 'void'.
+2025-09-05T17:55:56.0679534Z ##[error]src/app/(protected)/settings/page.tsx(22,3): error TS2353: Object literal may only specify known properties, and 'id' does not exist in type 'ProfileData'.
+2025-09-05T17:55:56.0681581Z ##[error]src/app/(protected)/settings/page.tsx(65,29): error TS2339: Property 'preferences' does not exist on type '{ email: boolean; sms: boolean; push: boolean; marketing: boolean; }'.
+2025-09-05T17:55:56.0683014Z ##[error]src/app/(protected)/settings/page.tsx(65,46): error TS7006: Parameter 'pref' implicitly has an 'any' type.
+2025-09-05T17:55:56.0684792Z ##[error]src/app/(protected)/settings/page.tsx(96,21): error TS2339: Property 'passwordPolicy' does not exist on type '{ twoFactor: boolean; sessionTimeout: number; loginNotifications: boolean; }'.
+2025-09-05T17:55:56.0686293Z ##[error]src/app/(protected)/settings/page.tsx(105,9): error TS2698: Spread types may only be created from object types.
+2025-09-05T17:55:56.0687557Z ##[error]src/app/(protected)/settings/page.tsx(120,9): error TS2698: Spread types may only be created from object types.
+2025-09-05T17:55:56.0711837Z ##[error]src/app/(protected)/settings/page.tsx(125,21): error TS2339: Property 'layout' does not exist on type '{ theme: "light"; language: string; timezone: string; }'.
+2025-09-05T17:55:56.0713276Z ##[error]src/app/(protected)/settings/page.tsx(132,39): error TS2554: Expected 0 arguments, but got 1.
+2025-09-05T17:55:56.0715222Z ##[error]src/app/(protected)/settings/page.tsx(173,21): error TS2339: Property 'updateSetting' does not exist on type '{ profile: ProfileData; updateProfile: (data: ProfileData) => void; loading: boolean; error: null; }'.
+2025-09-05T17:55:56.0717650Z ##[error]src/app/(protected)/settings/page.tsx(179,21): error TS2339: Property 'updateSetting' does not exist on type '{ profile: ProfileData; updateProfile: (data: ProfileData) => void; loading: boolean; error: null; }'.
+2025-09-05T17:55:56.0720065Z ##[error]src/app/(protected)/settings/page.tsx(185,21): error TS2339: Property 'updateSetting' does not exist on type '{ profile: ProfileData; updateProfile: (data: ProfileData) => void; loading: boolean; error: null; }'.
+2025-09-05T17:55:56.0722328Z ##[error]src/app/(protected)/settings/page.tsx(191,21): error TS2339: Property 'updateSetting' does not exist on type '{ profile: ProfileData; updateProfile: (data: ProfileData) => void; loading: boolean; error: null; }'.
+2025-09-05T17:55:56.0724527Z ##[error]src/app/(protected)/settings/page.tsx(196,45): error TS2339: Property 'saveSettings' does not exist on type '{ profile: ProfileData; updateProfile: (data: ProfileData) => void; loading: boolean; error: null; }'.
+2025-09-05T17:55:56.0726663Z ##[error]src/app/(protected)/settings/page.tsx(224,30): error TS2339: Property 'isDirty' does not exist on type '{ profile: ProfileData; updateProfile: (data: ProfileData) => void; loading: boolean; error: null; }'.
+2025-09-05T17:55:56.0728984Z ##[error]src/app/(protected)/settings/page.tsx(232,45): error TS2551: Property 'isLoading' does not exist on type '{ profile: ProfileData; updateProfile: (data: ProfileData) => void; loading: boolean; error: null; }'. Did you mean 'loading'?
+2025-09-05T17:55:56.0731687Z ##[error]src/app/(protected)/settings/page.tsx(236,36): error TS2551: Property 'isLoading' does not exist on type '{ profile: ProfileData; updateProfile: (data: ProfileData) => void; loading: boolean; error: null; }'. Did you mean 'loading'?
+2025-09-05T17:55:56.0734315Z ##[error]src/app/(protected)/settings/page.tsx(316,44): error TS2551: Property 'isLoading' does not exist on type '{ profile: ProfileData; updateProfile: (data: ProfileData) => void; loading: boolean; error: null; }'. Did you mean 'loading'?
+2025-09-05T17:55:56.0736697Z ##[error]src/app/(protected)/settings/page.tsx(326,44): error TS2551: Property 'isLoading' does not exist on type '{ profile: ProfileData; updateProfile: (data: ProfileData) => void; loading: boolean; error: null; }'. Did you mean 'loading'?
+2025-09-05T17:55:56.0739034Z ##[error]src/app/(protected)/settings/page.tsx(336,44): error TS2551: Property 'isLoading' does not exist on type '{ profile: ProfileData; updateProfile: (data: ProfileData) => void; loading: boolean; error: null; }'. Did you mean 'loading'?
+2025-09-05T17:55:56.0741615Z ##[error]src/app/(protected)/settings/page.tsx(346,44): error TS2551: Property 'isLoading' does not exist on type '{ profile: ProfileData; updateProfile: (data: ProfileData) => void; loading: boolean; error: null; }'. Did you mean 'loading'?
+2025-09-05T17:55:56.0743946Z ##[error]src/app/(protected)/settings/page.tsx(354,38): error TS2551: Property 'errors' does not exist on type '{ profile: ProfileData; updateProfile: (data: ProfileData) => void; loading: boolean; error: null; }'. Did you mean 'error'?
+2025-09-05T17:55:56.0746246Z ##[error]src/app/(protected)/settings/page.tsx(358,47): error TS2551: Property 'errors' does not exist on type '{ profile: ProfileData; updateProfile: (data: ProfileData) => void; loading: boolean; error: null; }'. Did you mean 'error'?
+2025-09-05T17:55:56.0747874Z ##[error]src/app/(protected)/settings/page.tsx(359,33): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+2025-09-05T17:55:56.0749320Z ##[error]src/app/api/auth/csrf/route.ts(3,31): error TS2307: Cannot find module '@/lib/csp-utils' or its corresponding type declarations.
+2025-09-05T17:55:56.0751458Z ##[error]src/app/api/auth/refresh/route.ts(3,28): error TS2307: Cannot find module '@/lib/server-http' or its corresponding type declarations.
+2025-09-05T17:55:56.0753109Z ##[error]src/app/api/chat/message/route.ts(97,16): error TS2304: Cannot find name 'body'.
+2025-09-05T17:55:56.0754194Z ##[error]src/app/api/chat/message/route.ts(98,13): error TS2304: Cannot find name 'body'.
+2025-09-05T17:55:56.0755245Z ##[error]src/app/api/chat/message/route.ts(99,14): error TS2304: Cannot find name 'body'.
+2025-09-05T17:55:56.0756299Z ##[error]src/app/api/chat/message/route.ts(100,16): error TS2304: Cannot find name 'body'.
+2025-09-05T17:55:56.0757317Z ##[error]src/app/api/leads/route.ts(78,13): error TS2304: Cannot find name 'body'.
+2025-09-05T17:55:56.0758331Z ##[error]src/app/api/leads/route.ts(79,14): error TS2304: Cannot find name 'body'.
+2025-09-05T17:55:56.0759328Z ##[error]src/app/api/leads/route.ts(80,16): error TS2304: Cannot find name 'body'.
+2025-09-05T17:55:56.0760581Z ##[error]src/app/api/leads/route.ts(81,15): error TS2304: Cannot find name 'body'.
+2025-09-05T17:55:56.0761592Z ##[error]src/app/api/leads/route.ts(83,24): error TS2304: Cannot find name 'body'.
+2025-09-05T17:55:56.0762923Z ##[error]src/app/api/monitoring/error/route.ts(2,49): error TS2307: Cannot find module '@/lib/audit' or its corresponding type declarations.
+2025-09-05T17:55:56.0764449Z ##[error]src/app/api/security/events/route.ts(3,31): error TS2307: Cannot find module '@/lib/server-http' or its corresponding type declarations.
+2025-09-05T17:55:56.0766030Z ##[error]src/app/api/security/scan/route.ts(228,53): error TS2307: Cannot find module '@/lib/auth-middleware' or its corresponding type declarations.
+2025-09-05T17:55:56.0767297Z ##[error]src/app/docs/app/contact-sales/page.tsx(165,16): error TS2304: Cannot find name 'Button'.
+2025-09-05T17:55:56.0768424Z ##[error]src/app/docs/app/contact-sales/page.tsx(167,17): error TS2304: Cannot find name 'Button'.
+2025-09-05T17:55:56.0769889Z ##[error]src/app/docs/app/contact-sales/page.tsx(183,14): error TS2304: Cannot find name 'Badge'.
+2025-09-05T17:55:56.0771050Z ##[error]src/app/docs/app/contact-sales/page.tsx(186,15): error TS2304: Cannot find name 'Badge'.
+2025-09-05T17:55:56.0772157Z ##[error]src/app/docs/app/contact-sales/page.tsx(199,16): error TS2304: Cannot find name 'Card'.
+2025-09-05T17:55:56.0773280Z ##[error]src/app/docs/app/contact-sales/page.tsx(200,18): error TS2304: Cannot find name 'CardHeader'.
+2025-09-05T17:55:56.0774409Z ##[error]src/app/docs/app/contact-sales/page.tsx(201,20): error TS2304: Cannot find name 'CardTitle'.
+2025-09-05T17:55:56.0775526Z ##[error]src/app/docs/app/contact-sales/page.tsx(201,63): error TS2304: Cannot find name 'CardTitle'.
+2025-09-05T17:55:56.0776655Z ##[error]src/app/docs/app/contact-sales/page.tsx(202,19): error TS2304: Cannot find name 'CardHeader'.
+2025-09-05T17:55:56.0777788Z ##[error]src/app/docs/app/contact-sales/page.tsx(203,18): error TS2304: Cannot find name 'CardContent'.
+2025-09-05T17:55:56.0778969Z ##[error]src/app/docs/app/contact-sales/page.tsx(431,22): error TS2304: Cannot find name 'Button'.
+2025-09-05T17:55:56.0780311Z ##[error]src/app/docs/app/contact-sales/page.tsx(443,23): error TS2304: Cannot find name 'Button'.
+2025-09-05T17:55:56.0781504Z ##[error]src/app/docs/app/contact-sales/page.tsx(445,19): error TS2304: Cannot find name 'CardContent'.
+2025-09-05T17:55:56.0782637Z ##[error]src/app/docs/app/contact-sales/page.tsx(446,17): error TS2304: Cannot find name 'Card'.
+2025-09-05T17:55:56.0783735Z ##[error]src/app/docs/app/contact-sales/page.tsx(453,18): error TS2304: Cannot find name 'Card'.
+2025-09-05T17:55:56.0784856Z ##[error]src/app/docs/app/contact-sales/page.tsx(454,20): error TS2304: Cannot find name 'CardHeader'.
+2025-09-05T17:55:56.0785977Z ##[error]src/app/docs/app/contact-sales/page.tsx(455,22): error TS2304: Cannot find name 'CardTitle'.
+2025-09-05T17:55:56.0787095Z ##[error]src/app/docs/app/contact-sales/page.tsx(458,23): error TS2304: Cannot find name 'CardTitle'.
+2025-09-05T17:55:56.0788232Z ##[error]src/app/docs/app/contact-sales/page.tsx(459,21): error TS2304: Cannot find name 'CardHeader'.
+2025-09-05T17:55:56.0789369Z ##[error]src/app/docs/app/contact-sales/page.tsx(460,20): error TS2304: Cannot find name 'CardContent'.
+2025-09-05T17:55:56.0790939Z ##[error]src/app/docs/app/contact-sales/page.tsx(469,21): error TS2304: Cannot find name 'CardContent'.
+2025-09-05T17:55:56.0792069Z ##[error]src/app/docs/app/contact-sales/page.tsx(470,19): error TS2304: Cannot find name 'Card'.
+2025-09-05T17:55:56.0793172Z ##[error]src/app/docs/app/contact-sales/page.tsx(473,18): error TS2304: Cannot find name 'Card'.
+2025-09-05T17:55:56.0794297Z ##[error]src/app/docs/app/contact-sales/page.tsx(474,20): error TS2304: Cannot find name 'CardHeader'.
+2025-09-05T17:55:56.0795425Z ##[error]src/app/docs/app/contact-sales/page.tsx(475,22): error TS2304: Cannot find name 'CardTitle'.
+2025-09-05T17:55:56.0796539Z ##[error]src/app/docs/app/contact-sales/page.tsx(475,56): error TS2304: Cannot find name 'CardTitle'.
+2025-09-05T17:55:56.0797662Z ##[error]src/app/docs/app/contact-sales/page.tsx(476,21): error TS2304: Cannot find name 'CardHeader'.
+2025-09-05T17:55:56.0798806Z ##[error]src/app/docs/app/contact-sales/page.tsx(477,20): error TS2304: Cannot find name 'CardContent'.
+2025-09-05T17:55:56.0800138Z ##[error]src/app/docs/app/contact-sales/page.tsx(509,21): error TS2304: Cannot find name 'CardContent'.
+2025-09-05T17:55:56.0801323Z ##[error]src/app/docs/app/contact-sales/page.tsx(510,19): error TS2304: Cannot find name 'Card'.
+2025-09-05T17:55:56.0802415Z ##[error]src/app/docs/app/contact-sales/page.tsx(513,18): error TS2304: Cannot find name 'Card'.
+2025-09-05T17:55:56.0803528Z ##[error]src/app/docs/app/contact-sales/page.tsx(514,20): error TS2304: Cannot find name 'CardHeader'.
+2025-09-05T17:55:56.0804652Z ##[error]src/app/docs/app/contact-sales/page.tsx(515,22): error TS2304: Cannot find name 'CardTitle'.
+2025-09-05T17:55:56.0805765Z ##[error]src/app/docs/app/contact-sales/page.tsx(515,48): error TS2304: Cannot find name 'CardTitle'.
+2025-09-05T17:55:56.0807070Z ##[error]src/app/docs/app/contact-sales/page.tsx(516,21): error TS2304: Cannot find name 'CardHeader'.
+2025-09-05T17:55:56.0808207Z ##[error]src/app/docs/app/contact-sales/page.tsx(517,20): error TS2304: Cannot find name 'CardContent'.
+2025-09-05T17:55:56.0809354Z ##[error]src/app/docs/app/contact-sales/page.tsx(541,21): error TS2304: Cannot find name 'CardContent'.
+2025-09-05T17:55:56.0810690Z ##[error]src/app/docs/app/contact-sales/page.tsx(542,19): error TS2304: Cannot find name 'Card'.
+2025-09-05T17:55:56.0812113Z ##[error]src/app/docs/app/layout.tsx(3,27): error TS2307: Cannot find module '@vercel/analytics/react' or its corresponding type declarations.
+2025-09-05T17:55:56.0813689Z ##[error]src/app/docs/app/layout.tsx(4,31): error TS2307: Cannot find module '@vercel/speed-insights/next' or its corresponding type declarations.
+2025-09-05T17:55:56.0815154Z ##[error]src/app/docs/app/layout.tsx(5,31): error TS2307: Cannot find module 'next-themes' or its corresponding type declarations.
+2025-09-05T17:55:56.0817446Z ##[error]src/app/docs/app/pricing/page.tsx(228,23): error TS2322: Type '{ children: Element; className: string; variant: "default" | "outline"; size: "lg"; asChild: true; }' is not assignable to type 'IntrinsicAttributes & ButtonProps & RefAttributes<HTMLButtonElement>'.
+2025-09-05T17:55:56.0818963Z   Property 'asChild' does not exist on type 'IntrinsicAttributes & ButtonProps & RefAttributes<HTMLButtonElement>'.
+2025-09-05T17:55:56.0820252Z ##[error]src/app/docs/components/layout/Header.tsx(5,26): error TS2307: Cannot find module 'next-themes' or its corresponding type declarations.
+2025-09-05T17:55:56.0822426Z ##[error]src/app/docs/components/layout/Header.tsx(135,21): error TS2322: Type '{ children: Element; asChild: true; variant: "outline"; }' is not assignable to type 'IntrinsicAttributes & ButtonProps & RefAttributes<HTMLButtonElement>'.
+2025-09-05T17:55:56.0823857Z   Property 'asChild' does not exist on type 'IntrinsicAttributes & ButtonProps & RefAttributes<HTMLButtonElement>'.
+2025-09-05T17:55:56.0825409Z ##[error]src/app/docs/components/layout/Header.tsx(139,21): error TS2322: Type '{ children: Element; asChild: true; }' is not assignable to type 'IntrinsicAttributes & ButtonProps & RefAttributes<HTMLButtonElement>'.
+2025-09-05T17:55:56.0826940Z   Property 'asChild' does not exist on type 'IntrinsicAttributes & ButtonProps & RefAttributes<HTMLButtonElement>'.
+2025-09-05T17:55:56.0828737Z ##[error]src/app/docs/components/layout/Header.tsx(216,27): error TS2322: Type '{ children: Element; asChild: true; variant: "outline"; className: string; }' is not assignable to type 'IntrinsicAttributes & ButtonProps & RefAttributes<HTMLButtonElement>'.
+2025-09-05T17:55:56.0830440Z   Property 'asChild' does not exist on type 'IntrinsicAttributes & ButtonProps & RefAttributes<HTMLButtonElement>'.
+2025-09-05T17:55:56.0832142Z ##[error]src/app/docs/components/layout/Header.tsx(219,27): error TS2322: Type '{ children: Element; asChild: true; className: string; }' is not assignable to type 'IntrinsicAttributes & ButtonProps & RefAttributes<HTMLButtonElement>'.
+2025-09-05T17:55:56.0833594Z   Property 'asChild' does not exist on type 'IntrinsicAttributes & ButtonProps & RefAttributes<HTMLButtonElement>'.
+2025-09-05T17:55:56.0835033Z ##[error]src/app/docs/components/sections/Architecture.tsx(211,42): error TS2322: Type '"outline"' is not assignable to type '"default" | "warning" | "success" | "secondary" | "destructive" | undefined'.
+2025-09-05T17:55:56.0837003Z ##[error]src/app/docs/components/sections/Architecture.tsx(216,34): error TS2322: Type '"outline"' is not assignable to type '"default" | "warning" | "success" | "secondary" | "destructive" | undefined'.
+2025-09-05T17:55:56.0839309Z ##[error]src/app/docs/components/sections/CTA.tsx(112,21): error TS2322: Type '{ children: Element; asChild: true; size: "lg"; className: string; }' is not assignable to type 'IntrinsicAttributes & ButtonProps & RefAttributes<HTMLButtonElement>'.
+2025-09-05T17:55:56.0841199Z   Property 'asChild' does not exist on type 'IntrinsicAttributes & ButtonProps & RefAttributes<HTMLButtonElement>'.
+2025-09-05T17:55:56.0843026Z ##[error]src/app/docs/components/sections/CTA.tsx(196,58): error TS2322: Type '{ children: Element; variant: "outline"; className: string; asChild: true; }' is not assignable to type 'IntrinsicAttributes & ButtonProps & RefAttributes<HTMLButtonElement>'.
+2025-09-05T17:55:56.0844506Z   Property 'asChild' does not exist on type 'IntrinsicAttributes & ButtonProps & RefAttributes<HTMLButtonElement>'.
+2025-09-05T17:55:56.0846278Z ##[error]src/app/docs/components/sections/CTA.tsx(212,58): error TS2322: Type '{ children: Element; variant: "outline"; className: string; asChild: true; }' is not assignable to type 'IntrinsicAttributes & ButtonProps & RefAttributes<HTMLButtonElement>'.
+2025-09-05T17:55:56.0847743Z   Property 'asChild' does not exist on type 'IntrinsicAttributes & ButtonProps & RefAttributes<HTMLButtonElement>'.
+2025-09-05T17:55:56.0851090Z ##[error]src/app/docs/components/sections/CompetitorComparison.tsx(320,44): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ 'Network Monitoring & Management': boolean[]; 'Customer Self-Service Portal': (string | boolean)[]; 'Automated Provisioning': (string | boolean)[]; 'Multi-Tenant Architecture': boolean[]; 'API-First Design': (string | boolean)[]; ... 19 more ...; 'Custom Development': (string | boolean)[]; }'.
+2025-09-05T17:55:56.0853971Z   No index signature with a parameter of type 'string' was found on type '{ 'Network Monitoring & Management': boolean[]; 'Customer Self-Service Portal': (string | boolean)[]; 'Automated Provisioning': (string | boolean)[]; 'Multi-Tenant Architecture': boolean[]; 'API-First Design': (string | boolean)[]; ... 19 more ...; 'Custom Development': (string | boolean)[]; }'.
+2025-09-05T17:55:56.0856370Z ##[error]src/app/docs/components/sections/Hero.tsx(84,23): error TS2322: Type '{ children: Element; asChild: true; size: "lg"; className: string; }' is not assignable to type 'IntrinsicAttributes & ButtonProps & RefAttributes<HTMLButtonElement>'.
+2025-09-05T17:55:56.0857829Z   Property 'asChild' does not exist on type 'IntrinsicAttributes & ButtonProps & RefAttributes<HTMLButtonElement>'.
+2025-09-05T17:55:56.0859219Z ##[error]src/app/docs/components/sections/ROICalculator.tsx(7,24): error TS2307: Cannot find module '@/components/ui/slider' or its corresponding type declarations.
+2025-09-05T17:55:56.0860993Z ##[error]src/app/docs/components/sections/ROICalculator.tsx(132,35): error TS7006: Parameter 'value' implicitly has an 'any' type.
+2025-09-05T17:55:56.0862418Z ##[error]src/app/docs/components/sections/ROICalculator.tsx(157,35): error TS7006: Parameter 'value' implicitly has an 'any' type.
+2025-09-05T17:55:56.0863840Z ##[error]src/app/docs/components/sections/ROICalculator.tsx(182,35): error TS7006: Parameter 'value' implicitly has an 'any' type.
+2025-09-05T17:55:56.0865249Z ##[error]src/app/docs/components/sections/ROICalculator.tsx(207,35): error TS7006: Parameter 'value' implicitly has an 'any' type.
+2025-09-05T17:55:56.0866663Z ##[error]src/app/docs/components/sections/ROICalculator.tsx(232,35): error TS7006: Parameter 'value' implicitly has an 'any' type.
+2025-09-05T17:55:56.0868172Z ##[error]src/app/docs/components/ui/badge.tsx(3,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+2025-09-05T17:55:56.0869800Z ##[error]src/app/docs/components/ui/button.tsx(4,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+2025-09-05T17:55:56.0871384Z ##[error]src/app/docs/components/ui/card.tsx(2,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+2025-09-05T17:55:56.0872949Z ##[error]src/app/docs/components/ui/slider.tsx(2,34): error TS2307: Cannot find module '@radix-ui/react-slider' or its corresponding type declarations.
+2025-09-05T17:55:56.0874457Z ##[error]src/app/docs/components/ui/slider.tsx(3,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+2025-09-05T17:55:56.0876072Z ##[error]src/app/layout.tsx(1,39): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:56.0877596Z ##[error]src/app/login/page.tsx(7,25): error TS2307: Cannot find module '@/components/auth/AuthProvider' or its corresponding type declarations.
+2025-09-05T17:55:56.0879376Z ##[error]src/app/login/page.tsx(147,50): error TS2322: Type '{ size: "small"; color: string; className: string; }' is not assignable to type 'IntrinsicAttributes & LoadingSpinnerProps'.
+2025-09-05T17:55:56.0880754Z   Property 'color' does not exist on type 'IntrinsicAttributes & LoadingSpinnerProps'.
+2025-09-05T17:55:56.0881779Z ##[error]src/app/marketing/api/payment/process/route.ts(106,9): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+2025-09-05T17:55:56.0882767Z   Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:56.0883854Z ##[error]src/app/providers.tsx(5,72): error TS2307: Cannot find module '@/components/temp/PortalProviderFactory' or its corresponding type declarations.
+2025-09-05T17:55:56.0885542Z ##[error]src/app/providers.tsx(6,68): error TS2307: Cannot find module '@/components/temp/PackageIntegrations' or its corresponding type declarations.
+2025-09-05T17:55:56.0887207Z ##[error]src/app/providers.tsx(7,66): error TS2307: Cannot find module '@/components/temp/ManagementProvider' or its corresponding type declarations.
+2025-09-05T17:55:56.0888743Z ##[error]src/app/providers.tsx(28,45): error TS2307: Cannot find module '@/lib/production-init' or its corresponding type declarations.
+2025-09-05T17:55:56.0890405Z ##[error]src/app/providers.tsx(41,62): error TS2307: Cannot find module '@/lib/production-init' or its corresponding type declarations.
+2025-09-05T17:55:56.0891993Z ##[error]src/components/ErrorBoundary.tsx(3,70): error TS2307: Cannot find module '@dotmac/providers' or its corresponding type declarations.
+2025-09-05T17:55:56.0893574Z ##[error]src/components/ErrorBoundary/QueryErrorBoundary.tsx(7,21): error TS2307: Cannot find module '@/lib/http' or its corresponding type declarations.
+2025-09-05T17:55:56.0895219Z ##[error]src/components/ErrorBoundary/RouteErrorBoundary.tsx(11,42): error TS2307: Cannot find module '@/lib/navigation' or its corresponding type declarations.
+2025-09-05T17:55:56.0897021Z ##[error]src/components/ErrorBoundary/RouteErrorBoundary.tsx(12,21): error TS2307: Cannot find module '@/lib/http' or its corresponding type declarations.
+2025-09-05T17:55:56.0898722Z ##[error]src/components/adapters/ComponentLoader.tsx(64,13): error TS2559: Type '{ children: ReactNode; }' has no properties in common with type 'IntrinsicAttributes'.
+2025-09-05T17:55:56.0900554Z ##[error]src/components/audit/AuditTrailVisualization.tsx(24,21): error TS2307: Cannot find module '@/lib/http' or its corresponding type declarations.
+2025-09-05T17:55:56.0902144Z ##[error]src/components/auth/MFASetup.tsx(15,57): error TS2307: Cannot find module '@/lib/mfa-service' or its corresponding type declarations.
+2025-09-05T17:55:56.0903672Z ##[error]src/components/auth/ProtectedRoute.tsx(3,25): error TS2307: Cannot find module './AuthProvider' or its corresponding type declarations.
+2025-09-05T17:55:56.0905353Z ##[error]src/components/billing/BillingManagementUniversal.tsx(3,43): error TS2307: Cannot find module '@dotmac/billing-system' or its corresponding type declarations.
+2025-09-05T17:55:56.0907085Z ##[error]src/components/collaboration/PluginCollaboration.tsx(9,22): error TS2307: Cannot find module '@dotmac/primitives' or its corresponding type declarations.
+2025-09-05T17:55:56.0908823Z ##[error]src/components/collaboration/PluginCollaboration.tsx(17,8): error TS2307: Cannot find module '@dotmac/collaboration' or its corresponding type declarations.
+2025-09-05T17:55:56.0910707Z ##[error]src/components/dashboard/ManagementDashboard.tsx(12,67): error TS2307: Cannot find module '@/lib/api' or its corresponding type declarations.
+2025-09-05T17:55:56.0912610Z ##[error]src/components/layout/AdminHeader.tsx(6,25): error TS2307: Cannot find module '@/components/auth/AuthProvider' or its corresponding type declarations.
+2025-09-05T17:55:56.0914285Z ##[error]src/components/layout/AdminLayout.tsx(8,8): error TS2307: Cannot find module '@dotmac/navigation-system' or its corresponding type declarations.
+2025-09-05T17:55:56.0915871Z ##[error]src/components/layout/AdminLayout.tsx(9,34): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:56.0917481Z ##[error]src/components/layout/AdminSidebar.tsx(3,53): error TS2307: Cannot find module '@dotmac/portal-components' or its corresponding type declarations.
+2025-09-05T17:55:56.0919108Z ##[error]src/components/monitoring/SystemMonitoringDashboard.tsx(26,21): error TS2307: Cannot find module '@/lib/http' or its corresponding type declarations.
+2025-09-05T17:55:56.0920974Z ##[error]src/components/plugins/InstalledPlugins.tsx(19,36): error TS2307: Cannot find module '@dotmac/primitives' or its corresponding type declarations.
+2025-09-05T17:55:56.0922499Z ##[error]src/components/plugins/InstalledPlugins.tsx(20,17): error TS2305: Module '"../ui/Modal"' has no exported member 'ConfirmModal'.
+2025-09-05T17:55:56.0924058Z ##[error]src/components/plugins/InstalledPlugins.tsx(22,30): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:56.0925683Z ##[error]src/components/plugins/InstalledPlugins.tsx(23,56): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:56.0927760Z ##[error]src/components/plugins/InstalledPlugins.tsx(451,12): error TS2322: Type '{ children: Element; isOpen: boolean; onClose: () => void; title: string; size: string; }' is not assignable to type 'IntrinsicAttributes & DialogProps'.
+2025-09-05T17:55:56.0929117Z   Property 'isOpen' does not exist on type 'IntrinsicAttributes & DialogProps'. Did you mean 'open'?
+2025-09-05T17:55:56.0930220Z ##[error]src/components/plugins/InstalledPlugins.tsx(525,42): error TS7006: Parameter 'issue' implicitly has an 'any' type.
+2025-09-05T17:55:56.0931614Z ##[error]src/components/plugins/InstalledPlugins.tsx(525,49): error TS7006: Parameter 'index' implicitly has an 'any' type.
+2025-09-05T17:55:56.0933821Z ##[error]src/components/plugins/InstalledPlugins.tsx(566,12): error TS2322: Type '{ children: Element; isOpen: boolean; onClose: () => void; title: string; size: string; }' is not assignable to type 'IntrinsicAttributes & DialogProps'.
+2025-09-05T17:55:56.0935189Z   Property 'isOpen' does not exist on type 'IntrinsicAttributes & DialogProps'. Did you mean 'open'?
+2025-09-05T17:55:56.0936317Z ##[error]src/components/plugins/PluginInstallationWizard.tsx(17,24): error TS2307: Cannot find module '../ui/Button' or its corresponding type declarations.
+2025-09-05T17:55:56.0938005Z ##[error]src/components/plugins/PluginInstallationWizard.tsx(20,40): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:56.0939889Z ##[error]src/components/plugins/PluginInstallationWizard.tsx(25,8): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:56.0941406Z ##[error]src/components/plugins/PluginInstallationWizard.tsx(333,13): error TS18046: 'perms' is of type 'unknown'.
+2025-09-05T17:55:56.0942714Z ##[error]src/components/plugins/PluginInstallationWizard.tsx(339,20): error TS18046: 'perms' is of type 'unknown'.
+2025-09-05T17:55:56.0944105Z ##[error]src/components/plugins/PluginInstallationWizard.tsx(339,31): error TS7006: Parameter 'perm' implicitly has an 'any' type.
+2025-09-05T17:55:56.0945545Z ##[error]src/components/plugins/PluginInstallationWizard.tsx(339,37): error TS7006: Parameter 'index' implicitly has an 'any' type.
+2025-09-05T17:55:56.0946961Z ##[error]src/components/plugins/PluginInstallationWizard.tsx(382,40): error TS7006: Parameter 'tier' implicitly has an 'any' type.
+2025-09-05T17:55:56.0948548Z ##[error]src/components/plugins/PluginInstallationWizard.tsx(382,46): error TS7006: Parameter 'index' implicitly has an 'any' type.
+2025-09-05T17:55:56.0950168Z ##[error]src/components/plugins/PluginInstallationWizard.tsx(399,41): error TS7006: Parameter 'feature' implicitly has an 'any' type.
+2025-09-05T17:55:56.0951674Z ##[error]src/components/plugins/PluginInstallationWizard.tsx(399,50): error TS7006: Parameter 'fIndex' implicitly has an 'any' type.
+2025-09-05T17:55:56.0954165Z ##[error]src/components/plugins/PluginInstallationWizard.tsx(570,7): error TS2322: Type '{ children: Element; isOpen: boolean; onClose: () => void; title: string; size: string; closeOnOverlayClick: boolean; closeOnEscape: boolean; }' is not assignable to type 'IntrinsicAttributes & DialogProps'.
+2025-09-05T17:55:56.0955746Z   Property 'isOpen' does not exist on type 'IntrinsicAttributes & DialogProps'. Did you mean 'open'?
+2025-09-05T17:55:56.0956883Z ##[error]src/components/plugins/PluginManagement.tsx(17,24): error TS2307: Cannot find module '@dotmac/primitives' or its corresponding type declarations.
+2025-09-05T17:55:56.0958539Z ##[error]src/components/plugins/PluginManagement.tsx(22,40): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:56.0960381Z ##[error]src/components/plugins/PluginMarketplace.tsx(17,36): error TS2307: Cannot find module '@dotmac/primitives' or its corresponding type declarations.
+2025-09-05T17:55:56.0962107Z ##[error]src/components/plugins/PluginMarketplace.tsx(20,40): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:56.0963739Z ##[error]src/components/plugins/PluginMarketplace.tsx(25,8): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:56.0965200Z ##[error]src/components/plugins/PluginMarketplace.tsx(116,17): error TS7006: Parameter 'prev' implicitly has an 'any' type.
+2025-09-05T17:55:56.0966540Z ##[error]src/components/plugins/PluginMarketplace.tsx(221,57): error TS7006: Parameter 'c' implicitly has an 'any' type.
+2025-09-05T17:55:56.0967866Z ##[error]src/components/plugins/PluginMarketplace.tsx(246,50): error TS7006: Parameter 't' implicitly has an 'any' type.
+2025-09-05T17:55:56.0970310Z ##[error]src/components/plugins/PluginMarketplace.tsx(442,7): error TS2322: Type '{ children: Element; isOpen: boolean; onClose: () => void; title: any; size: string; className: string; }' is not assignable to type 'IntrinsicAttributes & DialogProps'.
+2025-09-05T17:55:56.0971760Z   Property 'isOpen' does not exist on type 'IntrinsicAttributes & DialogProps'. Did you mean 'open'?
+2025-09-05T17:55:56.0972753Z ##[error]src/components/plugins/PluginMarketplace.tsx(475,52): error TS7006: Parameter 'screenshot' implicitly has an 'any' type.
+2025-09-05T17:55:56.0974154Z ##[error]src/components/plugins/PluginMarketplace.tsx(475,64): error TS7006: Parameter 'index' implicitly has an 'any' type.
+2025-09-05T17:55:56.0975512Z ##[error]src/components/plugins/PluginMarketplace.tsx(492,42): error TS7006: Parameter 'tier' implicitly has an 'any' type.
+2025-09-05T17:55:56.0976874Z ##[error]src/components/plugins/PluginMarketplace.tsx(492,48): error TS7006: Parameter 'index' implicitly has an 'any' type.
+2025-09-05T17:55:56.0978247Z ##[error]src/components/plugins/PluginMarketplace.tsx(508,41): error TS7006: Parameter 'feature' implicitly has an 'any' type.
+2025-09-05T17:55:56.0979611Z ##[error]src/components/plugins/PluginMarketplace.tsx(508,50): error TS7006: Parameter 'fIndex' implicitly has an 'any' type.
+2025-09-05T17:55:56.0981099Z ##[error]src/components/plugins/PluginMarketplace.tsx(527,17): error TS18046: 'perms' is of type 'unknown'.
+2025-09-05T17:55:56.0982326Z ##[error]src/components/plugins/PluginMarketplace.tsx(531,24): error TS18046: 'perms' is of type 'unknown'.
+2025-09-05T17:55:56.0983645Z ##[error]src/components/plugins/PluginMarketplace.tsx(531,35): error TS7006: Parameter 'perm' implicitly has an 'any' type.
+2025-09-05T17:55:56.0985174Z ##[error]src/components/plugins/PluginMarketplace.tsx(531,41): error TS7006: Parameter 'index' implicitly has an 'any' type.
+2025-09-05T17:55:56.0986723Z ##[error]src/components/plugins/PluginSecurityDashboard.tsx(23,21): error TS2307: Cannot find module '@/lib/http' or its corresponding type declarations.
+2025-09-05T17:55:56.0988320Z ##[error]src/components/plugins/index.ts(6,35): error TS2307: Cannot find module '@dotmac/providers' or its corresponding type declarations.
+2025-09-05T17:55:56.0989821Z ##[error]src/components/plugins/index.ts(15,13): error TS7006: Parameter 'error' implicitly has an 'any' type.
+2025-09-05T17:55:56.0991159Z ##[error]src/components/plugins/index.ts(15,20): error TS7006: Parameter 'errorInfo' implicitly has an 'any' type.
+2025-09-05T17:55:56.0992397Z ##[error]src/components/plugins/index.ts(23,13): error TS7006: Parameter 'error' implicitly has an 'any' type.
+2025-09-05T17:55:56.0993639Z ##[error]src/components/plugins/index.ts(23,20): error TS7006: Parameter 'errorInfo' implicitly has an 'any' type.
+2025-09-05T17:55:56.0995197Z ##[error]src/components/realtime/RealtimeDashboard.tsx(19,8): error TS2307: Cannot find module '@/lib/websocket-client' or its corresponding type declarations.
+2025-09-05T17:55:56.0996685Z ##[error]src/components/realtime/RealtimeDashboard.tsx(169,24): error TS7006: Parameter 'metric' implicitly has an 'any' type.
+2025-09-05T17:55:56.0998058Z ##[error]src/components/realtime/RealtimeDashboard.tsx(169,32): error TS7006: Parameter 'index' implicitly has an 'any' type.
+2025-09-05T17:55:56.0999612Z ##[error]src/components/security/IncidentResponseWorkflow.tsx(26,21): error TS2307: Cannot find module '@/lib/http' or its corresponding type declarations.
+2025-09-05T17:55:56.1001532Z ##[error]src/components/security/SecurityDashboard.tsx(20,8): error TS2307: Cannot find module '@/lib/security-scanner' or its corresponding type declarations.
+2025-09-05T17:55:56.1002985Z ##[error]src/components/security/SecurityDashboard.tsx(59,60): error TS7006: Parameter 'v' implicitly has an 'any' type.
+2025-09-05T17:55:56.1004338Z ##[error]src/components/security/SecurityDashboard.tsx(99,13): error TS7006: Parameter 'word' implicitly has an 'any' type.
+2025-09-05T17:55:56.1005766Z ##[error]src/components/security/SecurityDashboard.tsx(287,50): error TS7006: Parameter 'vulnerability' implicitly has an 'any' type.
+2025-09-05T17:55:56.1007618Z ##[error]src/components/security/__tests__/SecurityDashboard.test.tsx(5,53): error TS2307: Cannot find module '@/lib/security-scanner' or its corresponding type declarations.
+2025-09-05T17:55:56.1009336Z ##[error]src/components/tenant/TenantManagement.tsx(19,26): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:56.1011142Z ##[error]src/components/tenant/TenantManagement.tsx(21,54): error TS2307: Cannot find module '@/lib/api' or its corresponding type declarations.
+2025-09-05T17:55:56.1012742Z ##[error]src/components/tenant/TenantManagement.tsx(23,42): error TS2307: Cannot find module '@/lib/navigation' or its corresponding type declarations.
+2025-09-05T17:55:56.1014355Z ##[error]src/components/tenant/TenantManagement.tsx(102,37): error TS2345: Argument of type 'string' is not assignable to parameter of type 'void'.
+2025-09-05T17:55:56.1015940Z ##[error]src/components/tenant/TenantOnboardingWizard.tsx(22,21): error TS2307: Cannot find module '@/lib/http' or its corresponding type declarations.
+2025-09-05T17:55:56.1017575Z ##[error]src/components/tenant/TenantSwitcher.tsx(6,27): error TS2307: Cannot find module '@/lib/tenant-context' or its corresponding type declarations.
+2025-09-05T17:55:56.1019198Z ##[error]src/components/tenant/TenantSwitcher.tsx(8,73): error TS2307: Cannot find module '@/lib/security-monitor' or its corresponding type declarations.
+2025-09-05T17:55:56.1021041Z ##[error]src/components/tenant/TenantSwitcher.tsx(9,30): error TS2307: Cannot find module '@/lib/rate-limiting' or its corresponding type declarations.
+2025-09-05T17:55:56.1022428Z ##[error]src/components/tenant/TenantSwitcher.tsx(49,49): error TS7006: Parameter 't' implicitly has an 'any' type.
+2025-09-05T17:55:56.1023927Z ##[error]src/components/tenant/TenantSwitcher.tsx(115,39): error TS7006: Parameter 'tenant' implicitly has an 'any' type.
+2025-09-05T17:55:56.1025385Z ##[error]src/components/tenant/__tests__/TenantManagement.test.tsx(89,36): error TS7031: Binding element 'queryKey' implicitly has an 'any' type.
+2025-09-05T17:55:56.1026971Z ##[error]src/components/ui/ConfirmDialog.tsx(2,23): error TS2307: Cannot find module '@dotmac/primitives' or its corresponding type declarations.
+2025-09-05T17:55:56.1028443Z ##[error]src/components/ui/Modal.tsx(5,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+2025-09-05T17:55:56.1029874Z ##[error]src/components/ui/Toast.tsx(79,11): error TS18048: 'newToast.duration' is possibly 'undefined'.
+2025-09-05T17:55:56.1031281Z ##[error]src/components/ui/badge.tsx(2,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+2025-09-05T17:55:56.1032704Z ##[error]src/components/ui/button.tsx(2,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+2025-09-05T17:55:56.1034144Z ##[error]src/components/ui/card.tsx(2,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+2025-09-05T17:55:56.1035544Z ##[error]src/components/ui/index.ts(7,15): error TS2307: Cannot find module './Button' or its corresponding type declarations.
+2025-09-05T17:55:56.1037393Z ##[error]src/components/ui/index.ts(9,1): error TS2308: Module './LoadingSpinner' has already exported a member named 'PageLoading'. Consider explicitly re-exporting to resolve the ambiguity.
+2025-09-05T17:55:56.1038956Z ##[error]src/components/ui/index.ts(10,15): error TS2307: Cannot find module './Form' or its corresponding type declarations.
+2025-09-05T17:55:56.1040539Z ##[error]src/components/ui/index.ts(12,15): error TS2307: Cannot find module './Table' or its corresponding type declarations.
+2025-09-05T17:55:56.1041949Z ##[error]src/components/ui/index.ts(17,41): error TS2307: Cannot find module './Table' or its corresponding type declarations.
+2025-09-05T17:55:56.1043322Z ##[error]src/components/ui/index.ts(22,24): error TS2307: Cannot find module './Button' or its corresponding type declarations.
+2025-09-05T17:55:56.1044873Z ##[error]src/components/ui/index.ts(26,22): error TS2307: Cannot find module './Form' or its corresponding type declarations.
+2025-09-05T17:55:56.1046240Z ##[error]src/components/ui/index.ts(29,23): error TS2307: Cannot find module './Table' or its corresponding type declarations.
+2025-09-05T17:55:56.1047667Z ##[error]src/middleware.ts(2,31): error TS2307: Cannot find module '@/lib/csp-utils' or its corresponding type declarations.
+2025-09-05T17:55:56.1049257Z ##[error]tests/integration/core-features.test.ts(6,63): error TS2307: Cannot find module '../../src/lib/audit-logger' or its corresponding type declarations.
+2025-09-05T17:55:56.1051136Z ##[error]tests/integration/core-features.test.ts(7,42): error TS2307: Cannot find module '../../src/lib/mfa-service' or its corresponding type declarations.
+2025-09-05T17:55:56.1052816Z ##[error]tests/integration/core-features.test.ts(8,36): error TS2307: Cannot find module '../../src/lib/websocket-client' or its corresponding type declarations.
+2025-09-05T17:55:56.1054616Z ##[error]tests/integration/core-features.test.ts(12,8): error TS2307: Cannot find module '../../src/lib/business-performance-monitor' or its corresponding type declarations.
+2025-09-05T17:55:56.1056332Z ##[error]tests/integration/core-features.test.ts(13,36): error TS2307: Cannot find module '../../src/lib/security-scanner' or its corresponding type declarations.
+2025-09-05T17:55:56.1057972Z ##[error]tests/integration/core-features.test.ts(14,31): error TS2307: Cannot find module '../../src/lib/pwa-manager' or its corresponding type declarations.
+2025-09-05T17:55:56.1059603Z ##[error]tests/unit/security-scanner.test.ts(6,73): error TS2307: Cannot find module '../../src/lib/security' or its corresponding type declarations.
+2025-09-05T17:55:56.1061509Z ##[error]tests/unit/security-scanner.test.ts(66,19): error TS2540: Cannot assign to 'NODE_ENV' because it is a read-only property.
+2025-09-05T17:55:56.1193025Z  ELIFECYCLE  Command failed with exit code 2.
+2025-09-05T17:55:56.1379856Z ##[error]Process completed with exit code 2.

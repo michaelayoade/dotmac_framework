@@ -1,0 +1,19 @@
+﻿2025-09-05T17:55:20.5164026Z ##[group]Run actions/cache@v4
+2025-09-05T17:55:20.5164270Z with:
+2025-09-05T17:55:20.5164450Z   path: ~/.pnpm-store
+**/node_modules
+
+2025-09-05T17:55:20.5164849Z   key: pnpm-Linux-18-a73b2205d59b5113dcbf6b6fd1d2d2ed8f5938263cc7ad6527990dc5b8a3217f
+2025-09-05T17:55:20.5165258Z   restore-keys: pnpm-Linux-18-
+
+2025-09-05T17:55:20.5165495Z   enableCrossOsArchive: false
+2025-09-05T17:55:20.5165718Z   fail-on-cache-miss: false
+2025-09-05T17:55:20.5165921Z   lookup-only: false
+2025-09-05T17:55:20.5166107Z   save-always: false
+2025-09-05T17:55:20.5166271Z env:
+2025-09-05T17:55:20.5166428Z   PYTHON_VERSION: 3.9
+2025-09-05T17:55:20.5166618Z   NODE_VERSION: 18
+2025-09-05T17:55:20.5166795Z   PNPM_VERSION: 8
+2025-09-05T17:55:20.5167019Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2025-09-05T17:55:20.5167289Z ##[endgroup]
+2025-09-05T17:55:20.9407320Z Cache not found for input keys: pnpm-Linux-18-a73b2205d59b5113dcbf6b6fd1d2d2ed8f5938263cc7ad6527990dc5b8a3217f, pnpm-Linux-18-

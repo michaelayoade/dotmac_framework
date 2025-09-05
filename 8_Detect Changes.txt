@@ -1,0 +1,179 @@
+﻿2025-09-05T17:55:01.8682084Z Current runner version: '2.328.0'
+2025-09-05T17:55:01.8707478Z ##[group]Runner Image Provisioner
+2025-09-05T17:55:01.8708291Z Hosted Compute Agent
+2025-09-05T17:55:01.8708801Z Version: 20250829.383
+2025-09-05T17:55:01.8709461Z Commit: 27cb235aab5b0e52e153a26cd86b4742e89dac5d
+2025-09-05T17:55:01.8710162Z Build Date: 2025-08-29T13:48:48Z
+2025-09-05T17:55:01.8710792Z ##[endgroup]
+2025-09-05T17:55:01.8711560Z ##[group]Operating System
+2025-09-05T17:55:01.8712368Z Ubuntu
+2025-09-05T17:55:01.8712817Z 24.04.3
+2025-09-05T17:55:01.8713268Z LTS
+2025-09-05T17:55:01.8713770Z ##[endgroup]
+2025-09-05T17:55:01.8714279Z ##[group]Runner Image
+2025-09-05T17:55:01.8714834Z Image: ubuntu-24.04
+2025-09-05T17:55:01.8715368Z Version: 20250831.1.0
+2025-09-05T17:55:01.8716370Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20250831.1/images/ubuntu/Ubuntu2404-Readme.md
+2025-09-05T17:55:01.8717923Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20250831.1
+2025-09-05T17:55:01.8718912Z ##[endgroup]
+2025-09-05T17:55:01.8720291Z ##[group]GITHUB_TOKEN Permissions
+2025-09-05T17:55:01.8722600Z Checks: write
+2025-09-05T17:55:01.8723163Z Contents: read
+2025-09-05T17:55:01.8723700Z Metadata: read
+2025-09-05T17:55:01.8724233Z PullRequests: read
+2025-09-05T17:55:01.8724745Z Statuses: write
+2025-09-05T17:55:01.8725278Z ##[endgroup]
+2025-09-05T17:55:01.8727769Z Secret source: Actions
+2025-09-05T17:55:01.8728821Z Prepare workflow directory
+2025-09-05T17:55:01.9135786Z Prepare all required actions
+2025-09-05T17:55:01.9176125Z Getting action download info
+2025-09-05T17:55:02.2158796Z Download action repository 'actions/checkout@v4' (SHA:08eba0b27e820071cde6df949e0beb9ba4906955)
+2025-09-05T17:55:02.2825047Z Download action repository 'dorny/paths-filter@v3' (SHA:de90cc6fb38fc0963ad72b210f1f284cd68cea36)
+2025-09-05T17:55:02.6656405Z Complete job name: Detect Changes
+2025-09-05T17:55:02.7423443Z ##[group]Run actions/checkout@v4
+2025-09-05T17:55:02.7424286Z with:
+2025-09-05T17:55:02.7424720Z   repository: michaelayoade/dotmac_framework
+2025-09-05T17:55:02.7425447Z   token: ***
+2025-09-05T17:55:02.7425839Z   ssh-strict: true
+2025-09-05T17:55:02.7426230Z   ssh-user: git
+2025-09-05T17:55:02.7426642Z   persist-credentials: true
+2025-09-05T17:55:02.7427131Z   clean: true
+2025-09-05T17:55:02.7427558Z   sparse-checkout-cone-mode: true
+2025-09-05T17:55:02.7428026Z   fetch-depth: 1
+2025-09-05T17:55:02.7428414Z   fetch-tags: false
+2025-09-05T17:55:02.7428812Z   show-progress: true
+2025-09-05T17:55:02.7429219Z   lfs: false
+2025-09-05T17:55:02.7429583Z   submodules: false
+2025-09-05T17:55:02.7429995Z   set-safe-directory: true
+2025-09-05T17:55:02.7430646Z env:
+2025-09-05T17:55:02.7431014Z   PYTHON_VERSION: 3.9
+2025-09-05T17:55:02.7431666Z   NODE_VERSION: 18
+2025-09-05T17:55:02.7432104Z   PNPM_VERSION: 8
+2025-09-05T17:55:02.7432556Z ##[endgroup]
+2025-09-05T17:55:02.8551630Z Syncing repository: michaelayoade/dotmac_framework
+2025-09-05T17:55:02.8553828Z ##[group]Getting Git version info
+2025-09-05T17:55:02.8555137Z Working directory is '/home/runner/work/dotmac_framework/dotmac_framework'
+2025-09-05T17:55:02.8556992Z [command]/usr/bin/git version
+2025-09-05T17:55:02.8585322Z git version 2.51.0
+2025-09-05T17:55:02.8614269Z ##[endgroup]
+2025-09-05T17:55:02.8639656Z Temporarily overriding HOME='/home/runner/work/_temp/a84f5661-9bf7-4f6e-8ad9-60a2f2727a42' before making global git config changes
+2025-09-05T17:55:02.8642035Z Adding repository directory to the temporary git global config as a safe directory
+2025-09-05T17:55:02.8645548Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/dotmac_framework/dotmac_framework
+2025-09-05T17:55:02.8683510Z Deleting the contents of '/home/runner/work/dotmac_framework/dotmac_framework'
+2025-09-05T17:55:02.8687422Z ##[group]Initializing the repository
+2025-09-05T17:55:02.8693058Z [command]/usr/bin/git init /home/runner/work/dotmac_framework/dotmac_framework
+2025-09-05T17:55:02.8752687Z hint: Using 'master' as the name for the initial branch. This default branch name
+2025-09-05T17:55:02.8755108Z hint: is subject to change. To configure the initial branch name to use in all
+2025-09-05T17:55:02.8756608Z hint: of your new repositories, which will suppress this warning, call:
+2025-09-05T17:55:02.8757852Z hint:
+2025-09-05T17:55:02.8758775Z hint: 	git config --global init.defaultBranch <name>
+2025-09-05T17:55:02.8759772Z hint:
+2025-09-05T17:55:02.8760830Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2025-09-05T17:55:02.8762711Z hint: 'development'. The just-created branch can be renamed via this command:
+2025-09-05T17:55:02.8763978Z hint:
+2025-09-05T17:55:02.8764604Z hint: 	git branch -m <name>
+2025-09-05T17:55:02.8765345Z hint:
+2025-09-05T17:55:02.8766317Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2025-09-05T17:55:02.8768216Z Initialized empty Git repository in /home/runner/work/dotmac_framework/dotmac_framework/.git/
+2025-09-05T17:55:02.8771478Z [command]/usr/bin/git remote add origin https://github.com/michaelayoade/dotmac_framework
+2025-09-05T17:55:02.8810217Z ##[endgroup]
+2025-09-05T17:55:02.8811640Z ##[group]Disabling automatic garbage collection
+2025-09-05T17:55:02.8815674Z [command]/usr/bin/git config --local gc.auto 0
+2025-09-05T17:55:02.8849291Z ##[endgroup]
+2025-09-05T17:55:02.8850483Z ##[group]Setting up auth
+2025-09-05T17:55:02.8857431Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-09-05T17:55:02.8892708Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-09-05T17:55:02.9201190Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-09-05T17:55:02.9239672Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-09-05T17:55:02.9484603Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2025-09-05T17:55:02.9524541Z ##[endgroup]
+2025-09-05T17:55:02.9525310Z ##[group]Fetching the repository
+2025-09-05T17:55:02.9533133Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +a6ad6a37be5e8b46de83550ce713ab9fe6f4f8de:refs/remotes/origin/main
+2025-09-05T17:55:05.0345436Z From https://github.com/michaelayoade/dotmac_framework
+2025-09-05T17:55:05.0346581Z  * [new ref]         a6ad6a37be5e8b46de83550ce713ab9fe6f4f8de -> origin/main
+2025-09-05T17:55:05.0376435Z ##[endgroup]
+2025-09-05T17:55:05.0377204Z ##[group]Determining the checkout info
+2025-09-05T17:55:05.0378579Z ##[endgroup]
+2025-09-05T17:55:05.0384067Z [command]/usr/bin/git sparse-checkout disable
+2025-09-05T17:55:05.0426798Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2025-09-05T17:55:05.0457341Z ##[group]Checking out the ref
+2025-09-05T17:55:05.0462054Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2025-09-05T17:55:05.4557073Z Switched to a new branch 'main'
+2025-09-05T17:55:05.4558919Z branch 'main' set up to track 'origin/main'.
+2025-09-05T17:55:05.4570996Z ##[endgroup]
+2025-09-05T17:55:05.4612293Z [command]/usr/bin/git log -1 --format=%H
+2025-09-05T17:55:05.4637440Z a6ad6a37be5e8b46de83550ce713ab9fe6f4f8de
+2025-09-05T17:55:05.4902679Z ##[group]Run dorny/paths-filter@v3
+2025-09-05T17:55:05.4903968Z with:
+2025-09-05T17:55:05.4906589Z   filters: frontend:
+  - 'frontend/**'
+backend:
+  - 'src/**'
+  - 'packages/**'
+  - 'tests/**'
+shared:
+  - 'pyproject.toml'
+  - 'requirements*.txt'
+  - '.github/workflows/**'
+  - 'poetry.lock'
+
+2025-09-05T17:55:05.4909958Z   token: ***
+2025-09-05T17:55:05.4910855Z   list-files: none
+2025-09-05T17:55:05.4912143Z   initial-fetch-depth: 100
+2025-09-05T17:55:05.4913189Z env:
+2025-09-05T17:55:05.4914006Z   PYTHON_VERSION: 3.9
+2025-09-05T17:55:05.4914940Z   NODE_VERSION: 18
+2025-09-05T17:55:05.4916087Z   PNPM_VERSION: 8
+2025-09-05T17:55:05.4916968Z ##[endgroup]
+2025-09-05T17:55:05.5879975Z ##[group]Get current git ref
+2025-09-05T17:55:05.5923490Z [command]/usr/bin/git branch --show-current
+2025-09-05T17:55:05.5963213Z main
+2025-09-05T17:55:05.5988803Z ##[endgroup]
+2025-09-05T17:55:05.5990919Z Changes will be detected between e9b177c6fe980aab1343c27c1355484da2fceb7b and main
+2025-09-05T17:55:05.5994758Z ##[group]Ensuring e9b177c6fe980aab1343c27c1355484da2fceb7b is fetched from origin
+2025-09-05T17:55:05.6006541Z [command]/usr/bin/git cat-file -e e9b177c6fe980aab1343c27c1355484da2fceb7b^{commit}
+2025-09-05T17:55:05.6034242Z fatal: Not a valid object name e9b177c6fe980aab1343c27c1355484da2fceb7b^{commit}
+2025-09-05T17:55:05.6055549Z [command]/usr/bin/git fetch --depth=1 --no-tags origin e9b177c6fe980aab1343c27c1355484da2fceb7b
+2025-09-05T17:55:05.9010638Z From https://github.com/michaelayoade/dotmac_framework
+2025-09-05T17:55:05.9011627Z  * branch            e9b177c6fe980aab1343c27c1355484da2fceb7b -> FETCH_HEAD
+2025-09-05T17:55:05.9054663Z [command]/usr/bin/git cat-file -e e9b177c6fe980aab1343c27c1355484da2fceb7b^{commit}
+2025-09-05T17:55:05.9088338Z ##[endgroup]
+2025-09-05T17:55:05.9088891Z ##[group]Ensuring main is fetched from origin
+2025-09-05T17:55:05.9103759Z [command]/usr/bin/git show-ref main
+2025-09-05T17:55:05.9130922Z a6ad6a37be5e8b46de83550ce713ab9fe6f4f8de refs/heads/main
+2025-09-05T17:55:05.9131818Z a6ad6a37be5e8b46de83550ce713ab9fe6f4f8de refs/remotes/origin/main
+2025-09-05T17:55:05.9140314Z ##[endgroup]
+2025-09-05T17:55:05.9140881Z ##[group]Change detection e9b177c6fe980aab1343c27c1355484da2fceb7b..main
+2025-09-05T17:55:05.9154157Z [command]/usr/bin/git diff --no-renames --name-status -z e9b177c6fe980aab1343c27c1355484da2fceb7b..refs/remotes/origin/main
+2025-09-05T17:55:05.9187542Z M .github/workflows/security.yml 
+2025-09-05T17:55:05.9188472Z ##[endgroup]
+2025-09-05T17:55:05.9188846Z Detected 1 changed files
+2025-09-05T17:55:05.9196713Z Results:
+2025-09-05T17:55:05.9197812Z ##[group]Filter frontend = false
+2025-09-05T17:55:05.9198371Z Matching files: none
+2025-09-05T17:55:05.9208028Z ##[endgroup]
+2025-09-05T17:55:05.9208788Z ##[group]Filter backend = false
+2025-09-05T17:55:05.9209237Z Matching files: none
+2025-09-05T17:55:05.9210042Z ##[endgroup]
+2025-09-05T17:55:05.9210608Z ##[group]Filter shared = true
+2025-09-05T17:55:05.9210914Z Matching files:
+2025-09-05T17:55:05.9211243Z .github/workflows/security.yml [modified]
+2025-09-05T17:55:05.9212297Z ##[endgroup]
+2025-09-05T17:55:05.9214550Z Changes output set to ["shared"]
+2025-09-05T17:55:05.9378054Z Post job cleanup.
+2025-09-05T17:55:06.0374639Z [command]/usr/bin/git version
+2025-09-05T17:55:06.0414095Z git version 2.51.0
+2025-09-05T17:55:06.0463077Z Temporarily overriding HOME='/home/runner/work/_temp/dcd547a8-5e39-4f98-98a6-29ccb5bbc04e' before making global git config changes
+2025-09-05T17:55:06.0464544Z Adding repository directory to the temporary git global config as a safe directory
+2025-09-05T17:55:06.0470427Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/dotmac_framework/dotmac_framework
+2025-09-05T17:55:06.0512827Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-09-05T17:55:06.0549089Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-09-05T17:55:06.0790343Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-09-05T17:55:06.0814459Z http.https://github.com/.extraheader
+2025-09-05T17:55:06.0827544Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2025-09-05T17:55:06.0859578Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-09-05T17:55:06.1211166Z Evaluate and set job outputs
+2025-09-05T17:55:06.1220205Z Set output 'frontend'
+2025-09-05T17:55:06.1223017Z Set output 'backend'
+2025-09-05T17:55:06.1223800Z Set output 'shared'
+2025-09-05T17:55:06.1224514Z Cleaning up orphan processes

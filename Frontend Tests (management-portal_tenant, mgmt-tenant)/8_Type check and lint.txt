@@ -1,0 +1,100 @@
+﻿2025-09-05T17:55:51.9701750Z ##[group]Run if [ -f "package.json" ]; then
+2025-09-05T17:55:51.9702120Z [36;1mif [ -f "package.json" ]; then[0m
+2025-09-05T17:55:51.9702689Z [36;1m  if grep -q "type-check" package.json; then[0m
+2025-09-05T17:55:51.9703007Z [36;1m    pnpm run type-check[0m
+2025-09-05T17:55:51.9703227Z [36;1m  else[0m
+2025-09-05T17:55:51.9703468Z [36;1m    echo "⚠️ No type-check script found, skipping"[0m
+2025-09-05T17:55:51.9703749Z [36;1m  fi[0m
+2025-09-05T17:55:51.9703917Z [36;1m  [0m
+2025-09-05T17:55:51.9704114Z [36;1m  if grep -q "lint" package.json; then[0m
+2025-09-05T17:55:51.9704383Z [36;1m    pnpm run lint[0m
+2025-09-05T17:55:51.9704592Z [36;1m  else[0m
+2025-09-05T17:55:51.9704800Z [36;1m    echo "⚠️ No lint script found, skipping"[0m
+2025-09-05T17:55:51.9705058Z [36;1m  fi[0m
+2025-09-05T17:55:51.9705219Z [36;1mfi[0m
+2025-09-05T17:55:51.9735721Z shell: /usr/bin/bash -e {0}
+2025-09-05T17:55:51.9735967Z env:
+2025-09-05T17:55:51.9736141Z   PYTHON_VERSION: 3.9
+2025-09-05T17:55:51.9736342Z   NODE_VERSION: 18
+2025-09-05T17:55:51.9736562Z   PNPM_VERSION: 8
+2025-09-05T17:55:51.9736816Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2025-09-05T17:55:51.9737102Z ##[endgroup]
+2025-09-05T17:55:52.4117355Z 
+2025-09-05T17:55:52.4118633Z > @dotmac/tenant-portal@0.1.0 type-check /home/runner/work/dotmac_framework/dotmac_framework/frontend/management-portal/tenant
+2025-09-05T17:55:52.4119483Z > tsc --noEmit --project tsconfig.dev.json
+2025-09-05T17:55:52.4119730Z 
+2025-09-05T17:55:57.7135143Z ##[error]src/__tests__/mocks/file-mock.ts(6,1): error TS1203: Export assignment cannot be used when targeting ECMAScript modules. Consider using 'export default' or another module format instead.
+2025-09-05T17:55:57.7147269Z ##[error]src/__tests__/utils/test-utils.tsx(106,7): error TS2769: No overload matches this call.
+2025-09-05T17:55:57.7148330Z   The last overload gave the following error.
+2025-09-05T17:55:57.7149199Z     Argument of type '{ value: Partial<MockAuthContextValue>; }' is not assignable to parameter of type 'Attributes & { children: ReactNode; value?: Partial<MockAuthContextValue> | undefined; }'.
+2025-09-05T17:55:57.7150681Z       Property 'children' is missing in type '{ value: Partial<MockAuthContextValue>; }' but required in type '{ children: ReactNode; value?: Partial<MockAuthContextValue> | undefined; }'.
+2025-09-05T17:55:57.7152500Z ##[error]src/app/(authenticated)/dashboard/page.tsx(17,34): error TS2307: Cannot find module '@/lib/tenant-api-service' or its corresponding type declarations.
+2025-09-05T17:55:57.7154240Z ##[error]src/app/(authenticated)/dashboard/page.tsx(23,8): error TS2307: Cannot find module '@dotmac/primitives' or its corresponding type declarations.
+2025-09-05T17:55:57.7155827Z ##[error]src/app/api/csp-report/route.ts(224,43): error TS2307: Cannot find module '@/lib/server-http' or its corresponding type declarations.
+2025-09-05T17:55:57.7157345Z ##[error]src/app/layout.tsx(5,39): error TS2307: Cannot find module '@dotmac/portal-components' or its corresponding type declarations.
+2025-09-05T17:55:57.7158830Z ##[error]src/app/layout.tsx(6,42): error TS2307: Cannot find module '@/lib/error-handling' or its corresponding type declarations.
+2025-09-05T17:55:57.7160352Z ##[error]src/app/layout.tsx(7,49): error TS2307: Cannot find module '@/lib/performance-monitoring' or its corresponding type declarations.
+2025-09-05T17:55:57.7161855Z ##[error]src/app/layout.tsx(8,45): error TS2307: Cannot find module '@/lib/asset-optimization' or its corresponding type declarations.
+2025-09-05T17:55:57.7163644Z ##[error]src/app/layout.tsx(9,37): error TS2307: Cannot find module '@/lib/caching-strategies' or its corresponding type declarations.
+2025-09-05T17:55:57.7165186Z ##[error]src/app/login/page.tsx(6,33): error TS2307: Cannot find module '@/lib/env-config' or its corresponding type declarations.
+2025-09-05T17:55:57.7166678Z ##[error]src/app/login/page.tsx(13,40): error TS2307: Cannot find module '@/lib/accessibility' or its corresponding type declarations.
+2025-09-05T17:55:57.7168366Z ##[error]src/components/auth/TenantAuthProvider.tsx(13,35): error TS2307: Cannot find module '@/lib/secure-auth-service' or its corresponding type declarations.
+2025-09-05T17:55:57.7170428Z ##[error]src/components/auth/TenantAuthProvider.tsx(14,40): error TS2307: Cannot find module '@/lib/validation-schemas' or its corresponding type declarations.
+2025-09-05T17:55:57.7172359Z ##[error]src/components/auth/TenantAuthProvider.tsx(15,31): error TS2307: Cannot find module '@/lib/sanitization' or its corresponding type declarations.
+2025-09-05T17:55:57.7174120Z ##[error]src/components/auth/TenantAuthProvider.tsx(16,65): error TS2307: Cannot find module '@/lib/auth-performance' or its corresponding type declarations.
+2025-09-05T17:55:57.7176105Z ##[error]src/components/auth/TenantAuthProviderNew.tsx(3,39): error TS2307: Cannot find module '@dotmac/auth' or its corresponding type declarations.
+2025-09-05T17:55:57.7177977Z ##[error]src/components/auth/TenantAuthProviderNew.tsx(4,40): error TS2307: Cannot find module '@dotmac/auth' or its corresponding type declarations.
+2025-09-05T17:55:57.7179730Z ##[error]src/components/dev/AccessibilityTester.tsx(14,8): error TS2307: Cannot find module '@/lib/accessibility-testing' or its corresponding type declarations.
+2025-09-05T17:55:57.7181240Z ##[error]src/components/dev/AccessibilityTester.tsx(251,48): error TS7006: Parameter 'issue' implicitly has an 'any' type.
+2025-09-05T17:55:57.7182905Z ##[error]src/components/dev/AccessibilityTester.tsx(251,55): error TS7006: Parameter 'index' implicitly has an 'any' type.
+2025-09-05T17:55:57.7184572Z ##[error]src/components/dev/PerformanceMonitor.tsx(15,8): error TS2307: Cannot find module '@/lib/performance-monitoring' or its corresponding type declarations.
+2025-09-05T17:55:57.7186305Z ##[error]src/components/dev/PerformanceMonitor.tsx(16,33): error TS2307: Cannot find module '@/lib/caching-strategies' or its corresponding type declarations.
+2025-09-05T17:55:57.7188004Z ##[error]src/components/dev/PerformanceMonitor.tsx(17,41): error TS2307: Cannot find module '@/lib/asset-optimization' or its corresponding type declarations.
+2025-09-05T17:55:57.7189670Z ##[error]src/components/dev/PerformanceMonitor.tsx(251,52): error TS7006: Parameter 'rec' implicitly has an 'any' type.
+2025-09-05T17:55:57.7191020Z ##[error]src/components/dev/PerformanceMonitor.tsx(251,57): error TS7006: Parameter 'index' implicitly has an 'any' type.
+2025-09-05T17:55:57.7192761Z ##[error]src/components/error/ErrorBoundary.tsx(3,70): error TS2307: Cannot find module '@dotmac/providers' or its corresponding type declarations.
+2025-09-05T17:55:57.7194461Z ##[error]src/components/layout/TenantLayout.tsx(6,33): error TS2307: Cannot find module '@dotmac/primitives' or its corresponding type declarations.
+2025-09-05T17:55:57.7196116Z ##[error]src/components/lazy/LazyComponents.tsx(13,8): error TS2307: Cannot find module '@/lib/code-splitting' or its corresponding type declarations.
+2025-09-05T17:55:57.7197924Z ##[error]src/components/lazy/LazyComponents.tsx(14,10): error TS2305: Module '"@/components/ui/AccessibleForm"' has no exported member 'AccessibleLoadingSpinner'.
+2025-09-05T17:55:57.7199776Z ##[error]src/components/lazy/LazyComponents.tsx(251,16): error TS2307: Cannot find module '@/components/modals/ConfirmationModal' or its corresponding type declarations.
+2025-09-05T17:55:57.7201598Z ##[error]src/components/lazy/LazyComponents.tsx(257,64): error TS2307: Cannot find module '@/components/modals/AlertModal' or its corresponding type declarations.
+2025-09-05T17:55:57.7203585Z ##[error]src/components/lazy/LazyComponents.tsx(261,63): error TS2307: Cannot find module '@/components/modals/FormModal' or its corresponding type declarations.
+2025-09-05T17:55:57.7205398Z ##[error]src/components/lazy/LazyComponents.tsx(270,16): error TS2307: Cannot find module '@/components/charts/ChartComponent' or its corresponding type declarations.
+2025-09-05T17:55:57.7207238Z ##[error]src/components/lazy/LazyComponents.tsx(285,16): error TS2307: Cannot find module '@/components/charts/DataVisualization' or its corresponding type declarations.
+2025-09-05T17:55:57.7208859Z ##[error]src/components/lazy/LazyComponents.tsx(338,7): error TS2304: Cannot find name 'LazyUserProfile'.
+2025-09-05T17:55:57.7210359Z ##[error]src/components/ui/AccessibleForm.tsx(6,41): error TS2307: Cannot find module '@dotmac/primitives' or its corresponding type declarations.
+2025-09-05T17:55:57.7211950Z ##[error]src/components/ui/AccessibleForm.tsx(7,34): error TS2307: Cannot find module '@dotmac/primitives' or its corresponding type declarations.
+2025-09-05T17:55:57.7213779Z ##[error]src/middleware.ts(5,72): error TS2307: Cannot find module '@dotmac/middleware' or its corresponding type declarations.
+2025-09-05T17:55:57.7215708Z ##[error]tests/e2e/smoke.a11y.e2e.ts(2,10): error TS2614: Module '"@axe-core/playwright"' has no exported member 'injectAxe'. Did you mean to use 'import injectAxe from "@axe-core/playwright"' instead?
+2025-09-05T17:55:57.7217744Z ##[error]tests/e2e/smoke.a11y.e2e.ts(2,21): error TS2614: Module '"@axe-core/playwright"' has no exported member 'checkA11y'. Did you mean to use 'import checkA11y from "@axe-core/playwright"' instead?
+2025-09-05T17:55:57.7219475Z ##[error]tests/e2e/subscription-management.spec.ts(255,11): error TS2345: Argument of type 'Locator' is not assignable to parameter of type 'Page'.
+2025-09-05T17:55:57.7220667Z   Type 'Locator' is missing the following properties from type 'Page': addInitScript, $, $$, $eval, and 64 more.
+2025-09-05T17:55:57.7221768Z ##[error]tests/e2e/subscription-management.spec.ts(323,11): error TS2345: Argument of type 'Locator' is not assignable to parameter of type 'Page'.
+2025-09-05T17:55:57.7223151Z   Type 'Locator' is missing the following properties from type 'Page': addInitScript, $, $$, $eval, and 64 more.
+2025-09-05T17:55:57.7224242Z ##[error]tests/e2e/subscription-management.spec.ts(519,11): error TS2345: Argument of type 'Locator' is not assignable to parameter of type 'Page'.
+2025-09-05T17:55:57.7225407Z   Type 'Locator' is missing the following properties from type 'Page': addInitScript, $, $$, $eval, and 64 more.
+2025-09-05T17:55:57.7226490Z ##[error]tests/e2e/subscription-management.spec.ts(537,43): error TS2345: Argument of type 'Locator' is not assignable to parameter of type 'Page'.
+2025-09-05T17:55:57.7227835Z   Type 'Locator' is missing the following properties from type 'Page': addInitScript, $, $$, $eval, and 64 more.
+2025-09-05T17:55:57.7228953Z ##[error]tests/e2e/tenant-dashboard.spec.ts(851,26): error TS2345: Argument of type 'Locator' is not assignable to parameter of type 'string'.
+2025-09-05T17:55:57.7230347Z ##[error]tests/e2e/test-reporter.ts(183,30): error TS2339: Property 'parent' does not exist on type 'TestResult'.
+2025-09-05T17:55:57.7255125Z ##[error]tests/e2e/test-reporter.ts(192,23): error TS2339: Property 'parent' does not exist on type 'TestResult'.
+2025-09-05T17:55:57.7256586Z ##[error]tests/e2e/test-reporter.ts(201,20): error TS2339: Property 'test' does not exist on type 'TestResult'.
+2025-09-05T17:55:57.7258310Z ##[error]tests/e2e/test-reporter.ts(202,7): error TS2322: Type '"failed" | "passed" | "timedOut" | "skipped" | "interrupted"' is not assignable to type '"failed" | "passed" | "skipped"'.
+2025-09-05T17:55:57.7259489Z   Type '"timedOut"' is not assignable to type '"failed" | "passed" | "skipped"'.
+2025-09-05T17:55:57.7260327Z ##[error]tests/e2e/test-reporter.ts(209,37): error TS2339: Property 'test' does not exist on type 'TestResult'.
+2025-09-05T17:55:57.7261605Z ##[error]tests/e2e/test-reporter.ts(247,17): error TS2339: Property 'test' does not exist on type 'TestResult'.
+2025-09-05T17:55:57.7263105Z ##[error]tests/e2e/test-reporter.ts(260,17): error TS2339: Property 'test' does not exist on type 'TestResult'.
+2025-09-05T17:55:57.7264357Z ##[error]tests/e2e/test-reporter.ts(280,11): error TS2339: Property 'test' does not exist on type 'TestResult'.
+2025-09-05T17:55:57.7265579Z ##[error]tests/e2e/test-reporter.ts(281,11): error TS2339: Property 'test' does not exist on type 'TestResult'.
+2025-09-05T17:55:57.7266801Z ##[error]tests/e2e/test-reporter.ts(286,11): error TS2339: Property 'test' does not exist on type 'TestResult'.
+2025-09-05T17:55:57.7268252Z ##[error]tests/e2e/test-reporter.ts(287,11): error TS2339: Property 'test' does not exist on type 'TestResult'.
+2025-09-05T17:55:57.7269563Z ##[error]tests/e2e/test-reporter.ts(292,11): error TS2339: Property 'test' does not exist on type 'TestResult'.
+2025-09-05T17:55:57.7270809Z ##[error]tests/e2e/test-reporter.ts(293,11): error TS2339: Property 'test' does not exist on type 'TestResult'.
+2025-09-05T17:55:57.7272044Z ##[error]tests/e2e/test-reporter.ts(298,11): error TS2339: Property 'test' does not exist on type 'TestResult'.
+2025-09-05T17:55:57.7273535Z ##[error]tests/e2e/test-reporter.ts(299,11): error TS2339: Property 'test' does not exist on type 'TestResult'.
+2025-09-05T17:55:57.7275616Z ##[error]tests/e2e/utils/page-objects.ts(16,5): error TS2740: Type 'ElementHandle<HTMLElement | SVGElement>' is missing the following properties from type 'Locator': evaluateAll, elementHandle, all, allInnerTexts, and 27 more.
+2025-09-05T17:55:57.7277312Z ##[error]tests/e2e/utils/page-objects.ts(126,5): error TS2322: Type '(string | null)[]' is not assignable to type 'string[]'.
+2025-09-05T17:55:57.7278247Z   Type 'string | null' is not assignable to type 'string'.
+2025-09-05T17:55:57.7278618Z     Type 'null' is not assignable to type 'string'.
+2025-09-05T17:55:57.7561554Z  ELIFECYCLE  Command failed with exit code 2.
+2025-09-05T17:55:57.7761400Z ##[error]Process completed with exit code 2.

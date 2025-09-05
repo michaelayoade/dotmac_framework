@@ -1,0 +1,76 @@
+﻿2025-09-05T17:55:06.2223091Z ##[group]Run snok/install-poetry@v1
+2025-09-05T17:55:06.2223386Z with:
+2025-09-05T17:55:06.2223579Z   version: latest
+2025-09-05T17:55:06.2223794Z   virtualenvs-create: true
+2025-09-05T17:55:06.2224038Z   virtualenvs-in-project: true
+2025-09-05T17:55:06.2224307Z   virtualenvs-path: {cache-dir}/virtualenvs
+2025-09-05T17:55:06.2224589Z   installer-parallel: true
+2025-09-05T17:55:06.2224812Z env:
+2025-09-05T17:55:06.2225002Z   PYTHON_VERSION: 3.9
+2025-09-05T17:55:06.2225210Z   NODE_VERSION: 18
+2025-09-05T17:55:06.2225408Z   PNPM_VERSION: 8
+2025-09-05T17:55:06.2225669Z   pythonLocation: /opt/hostedtoolcache/Python/3.9.23/x64
+2025-09-05T17:55:06.2226098Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.9.23/x64/lib/pkgconfig
+2025-09-05T17:55:06.2226494Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.9.23/x64
+2025-09-05T17:55:06.2226854Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.9.23/x64
+2025-09-05T17:55:06.2227216Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.9.23/x64
+2025-09-05T17:55:06.2227575Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.9.23/x64/lib
+2025-09-05T17:55:06.2227902Z ##[endgroup]
+2025-09-05T17:55:06.2306285Z ##[group]Run $GITHUB_ACTION_PATH/main.sh
+2025-09-05T17:55:06.2306650Z [36;1m$GITHUB_ACTION_PATH/main.sh[0m
+2025-09-05T17:55:06.2410759Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2025-09-05T17:55:06.2411107Z env:
+2025-09-05T17:55:06.2411302Z   PYTHON_VERSION: 3.9
+2025-09-05T17:55:06.2411532Z   NODE_VERSION: 18
+2025-09-05T17:55:06.2411728Z   PNPM_VERSION: 8
+2025-09-05T17:55:06.2411999Z   pythonLocation: /opt/hostedtoolcache/Python/3.9.23/x64
+2025-09-05T17:55:06.2412420Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.9.23/x64/lib/pkgconfig
+2025-09-05T17:55:06.2412818Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.9.23/x64
+2025-09-05T17:55:06.2413168Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.9.23/x64
+2025-09-05T17:55:06.2413527Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.9.23/x64
+2025-09-05T17:55:06.2413885Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.9.23/x64/lib
+2025-09-05T17:55:06.2414197Z   VERSION: latest
+2025-09-05T17:55:06.2414399Z   VIRTUALENVS_CREATE: true
+2025-09-05T17:55:06.2414630Z   VIRTUALENVS_IN_PROJECT: true
+2025-09-05T17:55:06.2414884Z   VIRTUALENVS_PATH: {cache-dir}/virtualenvs
+2025-09-05T17:55:06.2415146Z   INSTALLER_PARALLEL: true
+2025-09-05T17:55:06.2415372Z   INSTALLATION_ARGUMENTS: 
+2025-09-05T17:55:06.2415590Z   POETRY_PLUGINS: 
+2025-09-05T17:55:06.2415795Z ##[endgroup]
+2025-09-05T17:55:07.2058107Z 
+2025-09-05T17:55:07.2059285Z [33mSetting Poetry installation path as /home/runner/.local[0m
+2025-09-05T17:55:07.2059798Z 
+2025-09-05T17:55:07.2060083Z [33mInstalling Poetry 👷[0m
+2025-09-05T17:55:07.2060560Z 
+2025-09-05T17:55:20.2219865Z Retrieving Poetry metadata
+2025-09-05T17:55:20.2221229Z 
+2025-09-05T17:55:20.2221792Z # Welcome to Poetry!
+2025-09-05T17:55:20.2222031Z 
+2025-09-05T17:55:20.2222294Z This will download and install the latest version of Poetry,
+2025-09-05T17:55:20.2222889Z a dependency and package manager for Python.
+2025-09-05T17:55:20.2223305Z 
+2025-09-05T17:55:20.2223602Z It will add the `poetry` command to Poetry's bin directory, located at:
+2025-09-05T17:55:20.2224033Z 
+2025-09-05T17:55:20.2224179Z /home/runner/.local/bin
+2025-09-05T17:55:20.2224431Z 
+2025-09-05T17:55:20.2224805Z You can uninstall at any time by executing this script with the --uninstall option,
+2025-09-05T17:55:20.2225469Z and these changes will be reverted.
+2025-09-05T17:55:20.2226046Z 
+2025-09-05T17:55:20.2226217Z Installing Poetry (2.1.4)
+2025-09-05T17:55:20.2226678Z Installing Poetry (2.1.4): Creating environment
+2025-09-05T17:55:20.2227087Z Installing Poetry (2.1.4): Installing Poetry
+2025-09-05T17:55:20.2227392Z Installing Poetry (2.1.4): Creating script
+2025-09-05T17:55:20.2227676Z Installing Poetry (2.1.4): Done
+2025-09-05T17:55:20.2227833Z 
+2025-09-05T17:55:20.2227939Z Poetry (2.1.4) is installed now. Great!
+2025-09-05T17:55:20.2228121Z 
+2025-09-05T17:55:20.2228251Z You can test that everything is set up by executing:
+2025-09-05T17:55:20.2228658Z 
+2025-09-05T17:55:20.2228787Z `poetry --version`
+2025-09-05T17:55:20.2228927Z 
+2025-09-05T17:55:22.6221220Z 
+2025-09-05T17:55:22.6222224Z [33mInstallation completed. Configuring settings 🛠[0m
+2025-09-05T17:55:22.6222756Z 
+2025-09-05T17:55:22.6223001Z [33mDone ✅[0m
+2025-09-05T17:55:22.6223264Z 
+2025-09-05T17:55:22.6224724Z [33mIf you are creating a venv in your project, you can activate it by running 'source .venv/bin/activate'. If you're running this in an OS matrix, you can use 'source $VENV' instead, as an OS agnostic option[0m

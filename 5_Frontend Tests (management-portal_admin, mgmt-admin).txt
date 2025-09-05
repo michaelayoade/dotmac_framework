@@ -1,0 +1,583 @@
+﻿2025-09-05T17:55:12.0608297Z Current runner version: '2.328.0'
+2025-09-05T17:55:12.0629451Z ##[group]Runner Image Provisioner
+2025-09-05T17:55:12.0630427Z Hosted Compute Agent
+2025-09-05T17:55:12.0631033Z Version: 20250829.383
+2025-09-05T17:55:12.0631628Z Commit: 27cb235aab5b0e52e153a26cd86b4742e89dac5d
+2025-09-05T17:55:12.0632273Z Build Date: 2025-08-29T13:48:48Z
+2025-09-05T17:55:12.0632916Z ##[endgroup]
+2025-09-05T17:55:12.0633439Z ##[group]Operating System
+2025-09-05T17:55:12.0633990Z Ubuntu
+2025-09-05T17:55:12.0634515Z 24.04.3
+2025-09-05T17:55:12.0634940Z LTS
+2025-09-05T17:55:12.0635392Z ##[endgroup]
+2025-09-05T17:55:12.0635871Z ##[group]Runner Image
+2025-09-05T17:55:12.0636456Z Image: ubuntu-24.04
+2025-09-05T17:55:12.0636912Z Version: 20250831.1.0
+2025-09-05T17:55:12.0637949Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20250831.1/images/ubuntu/Ubuntu2404-Readme.md
+2025-09-05T17:55:12.0639412Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20250831.1
+2025-09-05T17:55:12.0640591Z ##[endgroup]
+2025-09-05T17:55:12.0641802Z ##[group]GITHUB_TOKEN Permissions
+2025-09-05T17:55:12.0643539Z Checks: write
+2025-09-05T17:55:12.0644193Z Contents: read
+2025-09-05T17:55:12.0644677Z Metadata: read
+2025-09-05T17:55:12.0645123Z PullRequests: read
+2025-09-05T17:55:12.0645728Z Statuses: write
+2025-09-05T17:55:12.0646183Z ##[endgroup]
+2025-09-05T17:55:12.0648054Z Secret source: Actions
+2025-09-05T17:55:12.0648788Z Prepare workflow directory
+2025-09-05T17:55:12.1009913Z Prepare all required actions
+2025-09-05T17:55:12.1047512Z Getting action download info
+2025-09-05T17:55:12.6243537Z Download action repository 'actions/checkout@v4' (SHA:08eba0b27e820071cde6df949e0beb9ba4906955)
+2025-09-05T17:55:12.7026877Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2025-09-05T17:55:12.8300262Z Download action repository 'pnpm/action-setup@v2' (SHA:eae0cfeb286e66ffb5155f1a79b90583a127a68b)
+2025-09-05T17:55:14.8701888Z Download action repository 'actions/cache@v4' (SHA:0400d5f644dc74513175e3cd8d07132dd4860809)
+2025-09-05T17:55:15.0007910Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2025-09-05T17:55:15.2402809Z Complete job name: Frontend Tests (management-portal/admin, mgmt-admin)
+2025-09-05T17:55:15.3107727Z ##[group]Run actions/checkout@v4
+2025-09-05T17:55:15.3108619Z with:
+2025-09-05T17:55:15.3109078Z   repository: michaelayoade/dotmac_framework
+2025-09-05T17:55:15.3110283Z   token: ***
+2025-09-05T17:55:15.3110714Z   ssh-strict: true
+2025-09-05T17:55:15.3111126Z   ssh-user: git
+2025-09-05T17:55:15.3111552Z   persist-credentials: true
+2025-09-05T17:55:15.3112036Z   clean: true
+2025-09-05T17:55:15.3112479Z   sparse-checkout-cone-mode: true
+2025-09-05T17:55:15.3113002Z   fetch-depth: 1
+2025-09-05T17:55:15.3113407Z   fetch-tags: false
+2025-09-05T17:55:15.3113823Z   show-progress: true
+2025-09-05T17:55:15.3114263Z   lfs: false
+2025-09-05T17:55:15.3114635Z   submodules: false
+2025-09-05T17:55:15.3115055Z   set-safe-directory: true
+2025-09-05T17:55:15.3115847Z env:
+2025-09-05T17:55:15.3116229Z   PYTHON_VERSION: 3.9
+2025-09-05T17:55:15.3116660Z   NODE_VERSION: 18
+2025-09-05T17:55:15.3117058Z   PNPM_VERSION: 8
+2025-09-05T17:55:15.3117460Z ##[endgroup]
+2025-09-05T17:55:15.4167812Z Syncing repository: michaelayoade/dotmac_framework
+2025-09-05T17:55:15.4169855Z ##[group]Getting Git version info
+2025-09-05T17:55:15.4170795Z Working directory is '/home/runner/work/dotmac_framework/dotmac_framework'
+2025-09-05T17:55:15.4171946Z [command]/usr/bin/git version
+2025-09-05T17:55:15.4236398Z git version 2.51.0
+2025-09-05T17:55:15.4262621Z ##[endgroup]
+2025-09-05T17:55:15.4276630Z Temporarily overriding HOME='/home/runner/work/_temp/f68f2932-51f0-49cf-bfc6-2cbf80b131e2' before making global git config changes
+2025-09-05T17:55:15.4278973Z Adding repository directory to the temporary git global config as a safe directory
+2025-09-05T17:55:15.4288067Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/dotmac_framework/dotmac_framework
+2025-09-05T17:55:15.4322334Z Deleting the contents of '/home/runner/work/dotmac_framework/dotmac_framework'
+2025-09-05T17:55:15.4325604Z ##[group]Initializing the repository
+2025-09-05T17:55:15.4329585Z [command]/usr/bin/git init /home/runner/work/dotmac_framework/dotmac_framework
+2025-09-05T17:55:15.4403246Z hint: Using 'master' as the name for the initial branch. This default branch name
+2025-09-05T17:55:15.4404494Z hint: is subject to change. To configure the initial branch name to use in all
+2025-09-05T17:55:15.4405523Z hint: of your new repositories, which will suppress this warning, call:
+2025-09-05T17:55:15.4406271Z hint:
+2025-09-05T17:55:15.4406775Z hint: 	git config --global init.defaultBranch <name>
+2025-09-05T17:55:15.4407639Z hint:
+2025-09-05T17:55:15.4408619Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2025-09-05T17:55:15.4410660Z hint: 'development'. The just-created branch can be renamed via this command:
+2025-09-05T17:55:15.4411505Z hint:
+2025-09-05T17:55:15.4411923Z hint: 	git branch -m <name>
+2025-09-05T17:55:15.4412393Z hint:
+2025-09-05T17:55:15.4413202Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2025-09-05T17:55:15.4414650Z Initialized empty Git repository in /home/runner/work/dotmac_framework/dotmac_framework/.git/
+2025-09-05T17:55:15.4419364Z [command]/usr/bin/git remote add origin https://github.com/michaelayoade/dotmac_framework
+2025-09-05T17:55:15.4454921Z ##[endgroup]
+2025-09-05T17:55:15.4455686Z ##[group]Disabling automatic garbage collection
+2025-09-05T17:55:15.4458718Z [command]/usr/bin/git config --local gc.auto 0
+2025-09-05T17:55:15.4485859Z ##[endgroup]
+2025-09-05T17:55:15.4486563Z ##[group]Setting up auth
+2025-09-05T17:55:15.4492818Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-09-05T17:55:15.4521511Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-09-05T17:55:15.4827623Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-09-05T17:55:15.4855998Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-09-05T17:55:15.5071974Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2025-09-05T17:55:15.5112398Z ##[endgroup]
+2025-09-05T17:55:15.5114360Z ##[group]Fetching the repository
+2025-09-05T17:55:15.5122718Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +a6ad6a37be5e8b46de83550ce713ab9fe6f4f8de:refs/remotes/origin/main
+2025-09-05T17:55:16.6859337Z From https://github.com/michaelayoade/dotmac_framework
+2025-09-05T17:55:16.6863143Z  * [new ref]         a6ad6a37be5e8b46de83550ce713ab9fe6f4f8de -> origin/main
+2025-09-05T17:55:16.6893537Z ##[endgroup]
+2025-09-05T17:55:16.6895659Z ##[group]Determining the checkout info
+2025-09-05T17:55:16.6897955Z ##[endgroup]
+2025-09-05T17:55:16.6901795Z [command]/usr/bin/git sparse-checkout disable
+2025-09-05T17:55:16.6944839Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2025-09-05T17:55:16.6977373Z ##[group]Checking out the ref
+2025-09-05T17:55:16.6979245Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2025-09-05T17:55:17.1104735Z Switched to a new branch 'main'
+2025-09-05T17:55:17.1107897Z branch 'main' set up to track 'origin/main'.
+2025-09-05T17:55:17.1123616Z ##[endgroup]
+2025-09-05T17:55:17.1166442Z [command]/usr/bin/git log -1 --format=%H
+2025-09-05T17:55:17.1190976Z a6ad6a37be5e8b46de83550ce713ab9fe6f4f8de
+2025-09-05T17:55:17.1497176Z ##[group]Run actions/setup-node@v4
+2025-09-05T17:55:17.1498209Z with:
+2025-09-05T17:55:17.1499051Z   node-version: 18
+2025-09-05T17:55:17.1500080Z   always-auth: false
+2025-09-05T17:55:17.1501223Z   check-latest: false
+2025-09-05T17:55:17.1502415Z   token: ***
+2025-09-05T17:55:17.1503230Z env:
+2025-09-05T17:55:17.1504000Z   PYTHON_VERSION: 3.9
+2025-09-05T17:55:17.1504891Z   NODE_VERSION: 18
+2025-09-05T17:55:17.1505802Z   PNPM_VERSION: 8
+2025-09-05T17:55:17.1506626Z ##[endgroup]
+2025-09-05T17:55:17.3519911Z Found in cache @ /opt/hostedtoolcache/node/18.20.8/x64
+2025-09-05T17:55:17.3524353Z ##[group]Environment details
+2025-09-05T17:55:18.8199426Z node: v18.20.8
+2025-09-05T17:55:18.8201498Z npm: 10.8.2
+2025-09-05T17:55:18.8201822Z yarn: 1.22.22
+2025-09-05T17:55:18.8202769Z ##[endgroup]
+2025-09-05T17:55:18.8308131Z ##[group]Run pnpm/action-setup@v2
+2025-09-05T17:55:18.8308389Z with:
+2025-09-05T17:55:18.8308552Z   version: 8
+2025-09-05T17:55:18.8308731Z   dest: ~/setup-pnpm
+2025-09-05T17:55:18.8308923Z   run_install: null
+2025-09-05T17:55:18.8309121Z   package_json_file: package.json
+2025-09-05T17:55:18.8309347Z   standalone: false
+2025-09-05T17:55:18.8309528Z env:
+2025-09-05T17:55:18.8309958Z   PYTHON_VERSION: 3.9
+2025-09-05T17:55:18.8310149Z   NODE_VERSION: 18
+2025-09-05T17:55:18.8310329Z   PNPM_VERSION: 8
+2025-09-05T17:55:18.8310500Z ##[endgroup]
+2025-09-05T17:55:18.9191215Z ##[group]Running self-installer...
+2025-09-05T17:55:19.4385711Z Progress: resolved 1, reused 0, downloaded 0, added 0
+2025-09-05T17:55:19.4471298Z Packages: +1
+2025-09-05T17:55:19.4471647Z +
+2025-09-05T17:55:20.0006062Z Packages are hard linked from the content-addressable store to the virtual store.
+2025-09-05T17:55:20.0007143Z   Content-addressable store is at: /home/runner/.local/share/pnpm/store/v3
+2025-09-05T17:55:20.0008132Z   Virtual store is at:             node_modules/.pnpm
+2025-09-05T17:55:20.0275796Z 
+2025-09-05T17:55:20.0276243Z dependencies:
+2025-09-05T17:55:20.0276855Z + pnpm 8.15.9 (10.15.1 is available)
+2025-09-05T17:55:20.0277206Z 
+2025-09-05T17:55:20.0304233Z Done in 948ms
+2025-09-05T17:55:20.4394478Z Progress: resolved 1, reused 0, downloaded 1, added 1, done
+2025-09-05T17:55:20.4524823Z ##[endgroup]
+2025-09-05T17:55:20.4529125Z Installation Completed!
+2025-09-05T17:55:20.5164037Z ##[group]Run actions/cache@v4
+2025-09-05T17:55:20.5164272Z with:
+2025-09-05T17:55:20.5164455Z   path: ~/.pnpm-store
+**/node_modules
+
+2025-09-05T17:55:20.5164852Z   key: pnpm-Linux-18-a73b2205d59b5113dcbf6b6fd1d2d2ed8f5938263cc7ad6527990dc5b8a3217f
+2025-09-05T17:55:20.5165261Z   restore-keys: pnpm-Linux-18-
+
+2025-09-05T17:55:20.5165497Z   enableCrossOsArchive: false
+2025-09-05T17:55:20.5165721Z   fail-on-cache-miss: false
+2025-09-05T17:55:20.5165923Z   lookup-only: false
+2025-09-05T17:55:20.5166109Z   save-always: false
+2025-09-05T17:55:20.5166273Z env:
+2025-09-05T17:55:20.5166430Z   PYTHON_VERSION: 3.9
+2025-09-05T17:55:20.5166620Z   NODE_VERSION: 18
+2025-09-05T17:55:20.5166797Z   PNPM_VERSION: 8
+2025-09-05T17:55:20.5167022Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2025-09-05T17:55:20.5167291Z ##[endgroup]
+2025-09-05T17:55:20.9407341Z Cache not found for input keys: pnpm-Linux-18-a73b2205d59b5113dcbf6b6fd1d2d2ed8f5938263cc7ad6527990dc5b8a3217f, pnpm-Linux-18-
+2025-09-05T17:55:20.9485104Z ##[group]Run if [ -d "./frontend/management-portal/admin" ] && [ -f "./frontend/management-portal/admin/package.json" ]; then
+2025-09-05T17:55:20.9485905Z [36;1mif [ -d "./frontend/management-portal/admin" ] && [ -f "./frontend/management-portal/admin/package.json" ]; then[0m
+2025-09-05T17:55:20.9486404Z [36;1m  echo "exists=true" >> $GITHUB_OUTPUT[0m
+2025-09-05T17:55:20.9486711Z [36;1m  echo "✅ App management-portal/admin exists"[0m
+2025-09-05T17:55:20.9486966Z [36;1melse[0m
+2025-09-05T17:55:20.9487166Z [36;1m  echo "exists=false" >> $GITHUB_OUTPUT[0m
+2025-09-05T17:55:20.9487508Z [36;1m  echo "⚠️ App management-portal/admin does not exist, skipping"[0m
+2025-09-05T17:55:20.9487815Z [36;1mfi[0m
+2025-09-05T17:55:20.9545997Z shell: /usr/bin/bash -e {0}
+2025-09-05T17:55:20.9546236Z env:
+2025-09-05T17:55:20.9546402Z   PYTHON_VERSION: 3.9
+2025-09-05T17:55:20.9546598Z   NODE_VERSION: 18
+2025-09-05T17:55:20.9546955Z   PNPM_VERSION: 8
+2025-09-05T17:55:20.9547226Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2025-09-05T17:55:20.9547490Z ##[endgroup]
+2025-09-05T17:55:20.9619136Z ✅ App management-portal/admin exists
+2025-09-05T17:55:20.9660139Z ##[group]Run pnpm install --frozen-lockfile
+2025-09-05T17:55:20.9660469Z [36;1mpnpm install --frozen-lockfile[0m
+2025-09-05T17:55:20.9689018Z shell: /usr/bin/bash -e {0}
+2025-09-05T17:55:20.9689247Z env:
+2025-09-05T17:55:20.9689410Z   PYTHON_VERSION: 3.9
+2025-09-05T17:55:20.9689604Z   NODE_VERSION: 18
+2025-09-05T17:55:20.9690000Z   PNPM_VERSION: 8
+2025-09-05T17:55:20.9690232Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2025-09-05T17:55:20.9690519Z ##[endgroup]
+2025-09-05T17:55:21.6480566Z Scope: all 64 workspace projects
+2025-09-05T17:55:21.8207569Z Lockfile is up to date, resolution step is skipped
+2025-09-05T17:55:22.3931548Z Packages: +3323
+2025-09-05T17:55:22.3932550Z ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+2025-09-05T17:55:22.7626220Z Progress: resolved 0, reused 0, downloaded 1, added 0
+2025-09-05T17:55:23.7646413Z Progress: resolved 0, reused 0, downloaded 28, added 14
+2025-09-05T17:55:24.7654730Z Progress: resolved 0, reused 0, downloaded 107, added 171
+2025-09-05T17:55:25.7643729Z Progress: resolved 0, reused 0, downloaded 175, added 305
+2025-09-05T17:55:26.7644701Z Progress: resolved 0, reused 0, downloaded 268, added 416
+2025-09-05T17:55:27.7671606Z Progress: resolved 0, reused 0, downloaded 416, added 580
+2025-09-05T17:55:28.7691616Z Progress: resolved 0, reused 0, downloaded 530, added 703
+2025-09-05T17:55:29.7703478Z Progress: resolved 0, reused 0, downloaded 625, added 802
+2025-09-05T17:55:30.7707244Z Progress: resolved 0, reused 0, downloaded 744, added 1113
+2025-09-05T17:55:31.7709345Z Progress: resolved 0, reused 0, downloaded 961, added 1462
+2025-09-05T17:55:32.7718721Z Progress: resolved 0, reused 0, downloaded 1101, added 1606
+2025-09-05T17:55:33.7726725Z Progress: resolved 0, reused 0, downloaded 1297, added 1903
+2025-09-05T17:55:34.7723474Z Progress: resolved 0, reused 0, downloaded 1530, added 2149
+2025-09-05T17:55:35.7771445Z Progress: resolved 0, reused 0, downloaded 1673, added 2291
+2025-09-05T17:55:36.7756097Z Progress: resolved 0, reused 0, downloaded 1859, added 2484
+2025-09-05T17:55:37.7750407Z Progress: resolved 0, reused 0, downloaded 1997, added 2654
+2025-09-05T17:55:38.7743741Z Progress: resolved 0, reused 0, downloaded 2240, added 2912
+2025-09-05T17:55:39.7750260Z Progress: resolved 0, reused 0, downloaded 2385, added 3065
+2025-09-05T17:55:40.7746802Z Progress: resolved 0, reused 0, downloaded 2418, added 3117
+2025-09-05T17:55:41.7752484Z Progress: resolved 0, reused 0, downloaded 2545, added 3322
+2025-09-05T17:55:42.5662062Z Progress: resolved 0, reused 0, downloaded 2546, added 3323, done
+2025-09-05T17:55:42.6280546Z node_modules/msw postinstall$ node -e "import('./config/scripts/postinstall.js').catch(() => void 0)"
+2025-09-05T17:55:42.6542881Z node_modules/protobufjs postinstall$ node scripts/postinstall
+2025-09-05T17:55:42.6806807Z node_modules/core-js postinstall$ node -e "try{require('./postinstall')}catch(e){}"
+2025-09-05T17:55:42.7008632Z node_modules/msw postinstall: Done
+2025-09-05T17:55:42.7150850Z node_modules/protobufjs postinstall: Done
+2025-09-05T17:55:42.7226813Z node_modules/core-js-pure postinstall$ node -e "try{require('./postinstall')}catch(e){}"
+2025-09-05T17:55:42.7438958Z node_modules/core-js postinstall: Done
+2025-09-05T17:55:42.7455364Z node_modules/@sentry/cli install$ node ./scripts/install.js
+2025-09-05T17:55:42.7772339Z node_modules/core-js-pure postinstall: Done
+2025-09-05T17:55:42.8344030Z node_modules/@sentry/cli install: [sentry-cli] Downloading from https://downloads.sentry-cdn.com/sentry-cli/1.77.3/sentry-cli-Linux-x86_64
+2025-09-05T17:55:43.1193950Z node_modules/@sentry/cli install: [sentry-cli] Checksum validation passed.
+2025-09-05T17:55:43.1638703Z node_modules/@sentry/cli install: Done
+2025-09-05T17:55:43.1684837Z node_modules/@swc/core postinstall$ node postinstall.js
+2025-09-05T17:55:43.1875637Z node_modules/esbuild postinstall$ node install.js
+2025-09-05T17:55:43.2072965Z node_modules/unrs-resolver postinstall$ napi-postinstall unrs-resolver 1.11.1 check
+2025-09-05T17:55:43.2323534Z node_modules/@swc/core postinstall: Done
+2025-09-05T17:55:43.2444926Z .../ts-jest/node_modules/esbuild postinstall$ node install.js
+2025-09-05T17:55:43.2672844Z node_modules/esbuild postinstall: Done
+2025-09-05T17:55:43.2798448Z node_modules/unrs-resolver postinstall: Done
+2025-09-05T17:55:43.3099930Z .../ts-jest/node_modules/esbuild postinstall: Done
+2025-09-05T17:55:43.3208648Z node_modules/leveldown install$ node-gyp-build
+2025-09-05T17:55:43.4001840Z node_modules/leveldown install: Done
+2025-09-05T17:55:43.4073301Z node_modules/sharp install$ node install/check
+2025-09-05T17:55:43.4929421Z node_modules/sharp install: Done
+2025-09-05T17:55:44.1272052Z 
+2025-09-05T17:55:44.1272894Z devDependencies:
+2025-09-05T17:55:44.1273498Z + @dotmac/governance 1.0.0 <- shared/packages/governance
+2025-09-05T17:55:44.1274476Z + @dotmac/typescript-config 1.0.0 <- shared/packages/typescript-config
+2025-09-05T17:55:44.1274925Z 
+2025-09-05T17:55:44.4194296Z . prepare$ husky install
+2025-09-05T17:55:44.4704063Z . prepare: husky - install command is DEPRECATED
+2025-09-05T17:55:44.4739999Z . prepare: .git can't be found
+2025-09-05T17:55:44.4741863Z . prepare: Done
+2025-09-05T17:55:44.5803478Z isp-framework/admin prepare$ husky install
+2025-09-05T17:55:44.6357186Z isp-framework/admin prepare: husky - install command is DEPRECATED
+2025-09-05T17:55:44.6393105Z isp-framework/admin prepare: .git can't be found
+2025-09-05T17:55:44.6395002Z isp-framework/admin prepare: Done
+2025-09-05T17:55:44.6432323Z Done in 23.6s
+2025-09-05T17:55:44.7505237Z ##[group]Run if [ -f "package.json" ]; then
+2025-09-05T17:55:44.7505578Z [36;1mif [ -f "package.json" ]; then[0m
+2025-09-05T17:55:44.7505872Z [36;1m  if grep -q "type-check" package.json; then[0m
+2025-09-05T17:55:44.7506152Z [36;1m    pnpm run type-check[0m
+2025-09-05T17:55:44.7506378Z [36;1m  else[0m
+2025-09-05T17:55:44.7506616Z [36;1m    echo "⚠️ No type-check script found, skipping"[0m
+2025-09-05T17:55:44.7506887Z [36;1m  fi[0m
+2025-09-05T17:55:44.7507050Z [36;1m  [0m
+2025-09-05T17:55:44.7507294Z [36;1m  if grep -q "lint" package.json; then[0m
+2025-09-05T17:55:44.7507559Z [36;1m    pnpm run lint[0m
+2025-09-05T17:55:44.7507752Z [36;1m  else[0m
+2025-09-05T17:55:44.7507959Z [36;1m    echo "⚠️ No lint script found, skipping"[0m
+2025-09-05T17:55:44.7508205Z [36;1m  fi[0m
+2025-09-05T17:55:44.7508359Z [36;1mfi[0m
+2025-09-05T17:55:44.7537858Z shell: /usr/bin/bash -e {0}
+2025-09-05T17:55:44.7538076Z env:
+2025-09-05T17:55:44.7538240Z   PYTHON_VERSION: 3.9
+2025-09-05T17:55:44.7538465Z   NODE_VERSION: 18
+2025-09-05T17:55:44.7538646Z   PNPM_VERSION: 8
+2025-09-05T17:55:44.7538873Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2025-09-05T17:55:44.7539143Z ##[endgroup]
+2025-09-05T17:55:45.1794262Z 
+2025-09-05T17:55:45.1795177Z > @dotmac/management-admin@1.0.0 type-check /home/runner/work/dotmac_framework/dotmac_framework/frontend/management-portal/admin
+2025-09-05T17:55:45.1795884Z > tsc --noEmit
+2025-09-05T17:55:45.1796038Z 
+2025-09-05T17:55:56.0589010Z ##[error]src/app/(dashboard)/api-docs/page.tsx(12,37): error TS2307: Cannot find module '@/lib/api-documentation' or its corresponding type declarations.
+2025-09-05T17:55:56.0602323Z ##[error]src/app/(dashboard)/api-docs/page.tsx(46,43): error TS2769: No overload matches this call.
+2025-09-05T17:55:56.0604192Z   Overload 1 of 2, '(o: ArrayLike<unknown> | { [s: string]: unknown; }): unknown[]', gave the following error.
+2025-09-05T17:55:56.0605426Z     Argument of type 'unknown' is not assignable to parameter of type 'ArrayLike<unknown> | { [s: string]: unknown; }'.
+2025-09-05T17:55:56.0606381Z   Overload 2 of 2, '(o: {}): any[]', gave the following error.
+2025-09-05T17:55:56.0607131Z     Argument of type 'unknown' is not assignable to parameter of type '{}'.
+2025-09-05T17:55:56.0608514Z ##[error]src/app/(dashboard)/api-docs/page.tsx(47,7): error TS18046: 'endpoint' is of type 'unknown'.
+2025-09-05T17:55:56.0611245Z ##[error]src/app/(dashboard)/api-docs/page.tsx(134,44): error TS7006: Parameter 'tag' implicitly has an 'any' type.
+2025-09-05T17:55:56.0613363Z ##[error]src/app/(dashboard)/api-docs/page.tsx(225,37): error TS2769: No overload matches this call.
+2025-09-05T17:55:56.0615191Z   Overload 1 of 2, '(o: ArrayLike<unknown> | { [s: string]: unknown; }): [string, unknown][]', gave the following error.
+2025-09-05T17:55:56.0616433Z     Argument of type 'unknown' is not assignable to parameter of type 'ArrayLike<unknown> | { [s: string]: unknown; }'.
+2025-09-05T17:55:56.0617416Z   Overload 2 of 2, '(o: {}): [string, any][]', gave the following error.
+2025-09-05T17:55:56.0618192Z     Argument of type 'unknown' is not assignable to parameter of type '{}'.
+2025-09-05T17:55:56.0619499Z ##[error]src/app/(dashboard)/api-docs/page.tsx(246,34): error TS18046: 'endpoint' is of type 'unknown'.
+2025-09-05T17:55:56.0621781Z ##[error]src/app/(dashboard)/api-docs/page.tsx(249,59): error TS18046: 'endpoint' is of type 'unknown'.
+2025-09-05T17:55:56.0623964Z ##[error]src/app/(dashboard)/api-docs/page.tsx(251,28): error TS18046: 'endpoint' is of type 'unknown'.
+2025-09-05T17:55:56.0626094Z ##[error]src/app/(dashboard)/api-docs/page.tsx(253,32): error TS18046: 'endpoint' is of type 'unknown'.
+2025-09-05T17:55:56.0628334Z ##[error]src/app/(dashboard)/api-docs/page.tsx(253,51): error TS7006: Parameter 'tag' implicitly has an 'any' type.
+2025-09-05T17:55:56.0630757Z ##[error]src/app/(dashboard)/api-docs/page.tsx(266,26): error TS18046: 'endpoint' is of type 'unknown'.
+2025-09-05T17:55:56.0632924Z ##[error]src/app/(dashboard)/api-docs/page.tsx(266,49): error TS18046: 'endpoint' is of type 'unknown'.
+2025-09-05T17:55:56.0634873Z ##[error]src/app/(dashboard)/api-docs/page.tsx(288,36): error TS18046: 'endpoint' is of type 'unknown'.
+2025-09-05T17:55:56.0636784Z ##[error]src/app/(dashboard)/api-docs/page.tsx(288,61): error TS7006: Parameter 'param' implicitly has an 'any' type.
+2025-09-05T17:55:56.0638543Z ##[error]src/app/(dashboard)/api-docs/page.tsx(315,26): error TS18046: 'endpoint' is of type 'unknown'.
+2025-09-05T17:55:56.0639966Z ##[error]src/app/(dashboard)/api-docs/page.tsx(319,32): error TS18046: 'endpoint' is of type 'unknown'.
+2025-09-05T17:55:56.0641188Z ##[error]src/app/(dashboard)/api-docs/page.tsx(321,30): error TS18046: 'endpoint' is of type 'unknown'.
+2025-09-05T17:55:56.0642365Z ##[error]src/app/(dashboard)/api-docs/page.tsx(333,30): error TS18046: 'endpoint' is of type 'unknown'.
+2025-09-05T17:55:56.0643609Z ##[error]src/app/(dashboard)/api-docs/page.tsx(333,54): error TS7006: Parameter 'response' implicitly has an 'any' type.
+2025-09-05T17:55:56.0644803Z ##[error]src/app/(dashboard)/api-docs/page.tsx(388,22): error TS18046: 'schema' is of type 'unknown'.
+2025-09-05T17:55:56.0646009Z ##[error]src/app/(dashboard)/api-docs/page.tsx(389,66): error TS18046: 'schema' is of type 'unknown'.
+2025-09-05T17:55:56.0647149Z ##[error]src/app/(dashboard)/api-docs/page.tsx(391,22): error TS18046: 'schema' is of type 'unknown'.
+2025-09-05T17:55:56.0648283Z ##[error]src/app/(dashboard)/api-docs/page.tsx(393,41): error TS18046: 'schema' is of type 'unknown'.
+2025-09-05T17:55:56.0649372Z ##[error]src/app/(dashboard)/api-docs/page.tsx(397,32): error TS18046: 'schema' is of type 'unknown'.
+2025-09-05T17:55:56.0650756Z ##[error]src/app/(dashboard)/api-docs/page.tsx(401,70): error TS18046: 'propSchema' is of type 'unknown'.
+2025-09-05T17:55:56.0652135Z ##[error]src/app/(dashboard)/dashboard/page.tsx(14,42): error TS2307: Cannot find module '@/lib/api' or its corresponding type declarations.
+2025-09-05T17:55:56.0653694Z ##[error]src/app/(dashboard)/dashboard/page.tsx(15,42): error TS2307: Cannot find module '@/lib/navigation' or its corresponding type declarations.
+2025-09-05T17:55:56.0655276Z ##[error]src/app/(dashboard)/dashboard/page.tsx(16,33): error TS2307: Cannot find module '@/lib/error-handling' or its corresponding type declarations.
+2025-09-05T17:55:56.0656879Z ##[error]src/app/(dashboard)/dashboard/page.tsx(201,53): error TS7006: Parameter 'activity' implicitly has an 'any' type.
+2025-09-05T17:55:56.0658181Z ##[error]src/app/(dashboard)/dashboard/page.tsx(201,63): error TS7006: Parameter 'index' implicitly has an 'any' type.
+2025-09-05T17:55:56.0659835Z ##[error]src/app/(dashboard)/offline/page.tsx(10,24): error TS2307: Cannot find module '@/lib/pwa-manager' or its corresponding type declarations.
+2025-09-05T17:55:56.0661452Z ##[error]src/app/(dashboard)/tenants/[id]/edit/page.tsx(10,39): error TS2307: Cannot find module '@/lib/api' or its corresponding type declarations.
+2025-09-05T17:55:56.0663331Z ##[error]src/app/(dashboard)/tenants/[id]/edit/page.tsx(338,48): error TS2322: Type '{ size: "small"; color: string; className: string; }' is not assignable to type 'IntrinsicAttributes & LoadingSpinnerProps'.
+2025-09-05T17:55:56.0664563Z   Property 'color' does not exist on type 'IntrinsicAttributes & LoadingSpinnerProps'.
+2025-09-05T17:55:56.0665555Z ##[error]src/app/(dashboard)/tenants/[id]/page.tsx(19,39): error TS2307: Cannot find module '@/lib/api' or its corresponding type declarations.
+2025-09-05T17:55:56.0667013Z ##[error]src/app/(dashboard)/tenants/new/page.tsx(10,39): error TS2307: Cannot find module '@/lib/api' or its corresponding type declarations.
+2025-09-05T17:55:56.0668241Z ##[error]src/app/(dashboard)/tenants/new/page.tsx(60,31): error TS18046: 'data' is of type 'unknown'.
+2025-09-05T17:55:56.0671649Z ##[error]src/app/(dashboard)/tenants/new/page.tsx(78,46): error TS2345: Argument of type '{ name: string; slug: string; domain?: string | undefined; billingEmail: string; contactEmail: string; contactPhone?: string | undefined; description?: string | undefined; planId?: string | undefined; settings?: Partial<...> | undefined; metadata?: Record<...> | undefined; }' is not assignable to parameter of type 'void'.
+2025-09-05T17:55:56.0674313Z ##[error]src/app/(dashboard)/tenants/new/page.tsx(291,48): error TS2322: Type '{ size: "small"; color: string; className: string; }' is not assignable to type 'IntrinsicAttributes & LoadingSpinnerProps'.
+2025-09-05T17:55:56.0675521Z   Property 'color' does not exist on type 'IntrinsicAttributes & LoadingSpinnerProps'.
+2025-09-05T17:55:56.0676478Z ##[error]src/app/(dashboard)/tenants/page.tsx(14,27): error TS2307: Cannot find module '@/lib/api' or its corresponding type declarations.
+2025-09-05T17:55:56.0677911Z ##[error]src/app/(dashboard)/tenants/page.tsx(59,35): error TS2345: Argument of type 'string' is not assignable to parameter of type 'void'.
+2025-09-05T17:55:56.0679542Z ##[error]src/app/(protected)/settings/page.tsx(22,3): error TS2353: Object literal may only specify known properties, and 'id' does not exist in type 'ProfileData'.
+2025-09-05T17:55:56.0681585Z ##[error]src/app/(protected)/settings/page.tsx(65,29): error TS2339: Property 'preferences' does not exist on type '{ email: boolean; sms: boolean; push: boolean; marketing: boolean; }'.
+2025-09-05T17:55:56.0683017Z ##[error]src/app/(protected)/settings/page.tsx(65,46): error TS7006: Parameter 'pref' implicitly has an 'any' type.
+2025-09-05T17:55:56.0684795Z ##[error]src/app/(protected)/settings/page.tsx(96,21): error TS2339: Property 'passwordPolicy' does not exist on type '{ twoFactor: boolean; sessionTimeout: number; loginNotifications: boolean; }'.
+2025-09-05T17:55:56.0686295Z ##[error]src/app/(protected)/settings/page.tsx(105,9): error TS2698: Spread types may only be created from object types.
+2025-09-05T17:55:56.0687559Z ##[error]src/app/(protected)/settings/page.tsx(120,9): error TS2698: Spread types may only be created from object types.
+2025-09-05T17:55:56.0711858Z ##[error]src/app/(protected)/settings/page.tsx(125,21): error TS2339: Property 'layout' does not exist on type '{ theme: "light"; language: string; timezone: string; }'.
+2025-09-05T17:55:56.0713280Z ##[error]src/app/(protected)/settings/page.tsx(132,39): error TS2554: Expected 0 arguments, but got 1.
+2025-09-05T17:55:56.0715225Z ##[error]src/app/(protected)/settings/page.tsx(173,21): error TS2339: Property 'updateSetting' does not exist on type '{ profile: ProfileData; updateProfile: (data: ProfileData) => void; loading: boolean; error: null; }'.
+2025-09-05T17:55:56.0717655Z ##[error]src/app/(protected)/settings/page.tsx(179,21): error TS2339: Property 'updateSetting' does not exist on type '{ profile: ProfileData; updateProfile: (data: ProfileData) => void; loading: boolean; error: null; }'.
+2025-09-05T17:55:56.0720070Z ##[error]src/app/(protected)/settings/page.tsx(185,21): error TS2339: Property 'updateSetting' does not exist on type '{ profile: ProfileData; updateProfile: (data: ProfileData) => void; loading: boolean; error: null; }'.
+2025-09-05T17:55:56.0722338Z ##[error]src/app/(protected)/settings/page.tsx(191,21): error TS2339: Property 'updateSetting' does not exist on type '{ profile: ProfileData; updateProfile: (data: ProfileData) => void; loading: boolean; error: null; }'.
+2025-09-05T17:55:56.0724531Z ##[error]src/app/(protected)/settings/page.tsx(196,45): error TS2339: Property 'saveSettings' does not exist on type '{ profile: ProfileData; updateProfile: (data: ProfileData) => void; loading: boolean; error: null; }'.
+2025-09-05T17:55:56.0726666Z ##[error]src/app/(protected)/settings/page.tsx(224,30): error TS2339: Property 'isDirty' does not exist on type '{ profile: ProfileData; updateProfile: (data: ProfileData) => void; loading: boolean; error: null; }'.
+2025-09-05T17:55:56.0728987Z ##[error]src/app/(protected)/settings/page.tsx(232,45): error TS2551: Property 'isLoading' does not exist on type '{ profile: ProfileData; updateProfile: (data: ProfileData) => void; loading: boolean; error: null; }'. Did you mean 'loading'?
+2025-09-05T17:55:56.0731833Z ##[error]src/app/(protected)/settings/page.tsx(236,36): error TS2551: Property 'isLoading' does not exist on type '{ profile: ProfileData; updateProfile: (data: ProfileData) => void; loading: boolean; error: null; }'. Did you mean 'loading'?
+2025-09-05T17:55:56.0734318Z ##[error]src/app/(protected)/settings/page.tsx(316,44): error TS2551: Property 'isLoading' does not exist on type '{ profile: ProfileData; updateProfile: (data: ProfileData) => void; loading: boolean; error: null; }'. Did you mean 'loading'?
+2025-09-05T17:55:56.0736700Z ##[error]src/app/(protected)/settings/page.tsx(326,44): error TS2551: Property 'isLoading' does not exist on type '{ profile: ProfileData; updateProfile: (data: ProfileData) => void; loading: boolean; error: null; }'. Did you mean 'loading'?
+2025-09-05T17:55:56.0739041Z ##[error]src/app/(protected)/settings/page.tsx(336,44): error TS2551: Property 'isLoading' does not exist on type '{ profile: ProfileData; updateProfile: (data: ProfileData) => void; loading: boolean; error: null; }'. Did you mean 'loading'?
+2025-09-05T17:55:56.0741619Z ##[error]src/app/(protected)/settings/page.tsx(346,44): error TS2551: Property 'isLoading' does not exist on type '{ profile: ProfileData; updateProfile: (data: ProfileData) => void; loading: boolean; error: null; }'. Did you mean 'loading'?
+2025-09-05T17:55:56.0743949Z ##[error]src/app/(protected)/settings/page.tsx(354,38): error TS2551: Property 'errors' does not exist on type '{ profile: ProfileData; updateProfile: (data: ProfileData) => void; loading: boolean; error: null; }'. Did you mean 'error'?
+2025-09-05T17:55:56.0746249Z ##[error]src/app/(protected)/settings/page.tsx(358,47): error TS2551: Property 'errors' does not exist on type '{ profile: ProfileData; updateProfile: (data: ProfileData) => void; loading: boolean; error: null; }'. Did you mean 'error'?
+2025-09-05T17:55:56.0747877Z ##[error]src/app/(protected)/settings/page.tsx(359,33): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+2025-09-05T17:55:56.0749328Z ##[error]src/app/api/auth/csrf/route.ts(3,31): error TS2307: Cannot find module '@/lib/csp-utils' or its corresponding type declarations.
+2025-09-05T17:55:56.0751468Z ##[error]src/app/api/auth/refresh/route.ts(3,28): error TS2307: Cannot find module '@/lib/server-http' or its corresponding type declarations.
+2025-09-05T17:55:56.0753114Z ##[error]src/app/api/chat/message/route.ts(97,16): error TS2304: Cannot find name 'body'.
+2025-09-05T17:55:56.0754197Z ##[error]src/app/api/chat/message/route.ts(98,13): error TS2304: Cannot find name 'body'.
+2025-09-05T17:55:56.0755248Z ##[error]src/app/api/chat/message/route.ts(99,14): error TS2304: Cannot find name 'body'.
+2025-09-05T17:55:56.0756302Z ##[error]src/app/api/chat/message/route.ts(100,16): error TS2304: Cannot find name 'body'.
+2025-09-05T17:55:56.0757320Z ##[error]src/app/api/leads/route.ts(78,13): error TS2304: Cannot find name 'body'.
+2025-09-05T17:55:56.0758333Z ##[error]src/app/api/leads/route.ts(79,14): error TS2304: Cannot find name 'body'.
+2025-09-05T17:55:56.0759337Z ##[error]src/app/api/leads/route.ts(80,16): error TS2304: Cannot find name 'body'.
+2025-09-05T17:55:56.0760585Z ##[error]src/app/api/leads/route.ts(81,15): error TS2304: Cannot find name 'body'.
+2025-09-05T17:55:56.0761595Z ##[error]src/app/api/leads/route.ts(83,24): error TS2304: Cannot find name 'body'.
+2025-09-05T17:55:56.0762926Z ##[error]src/app/api/monitoring/error/route.ts(2,49): error TS2307: Cannot find module '@/lib/audit' or its corresponding type declarations.
+2025-09-05T17:55:56.0764451Z ##[error]src/app/api/security/events/route.ts(3,31): error TS2307: Cannot find module '@/lib/server-http' or its corresponding type declarations.
+2025-09-05T17:55:56.0766033Z ##[error]src/app/api/security/scan/route.ts(228,53): error TS2307: Cannot find module '@/lib/auth-middleware' or its corresponding type declarations.
+2025-09-05T17:55:56.0767300Z ##[error]src/app/docs/app/contact-sales/page.tsx(165,16): error TS2304: Cannot find name 'Button'.
+2025-09-05T17:55:56.0768566Z ##[error]src/app/docs/app/contact-sales/page.tsx(167,17): error TS2304: Cannot find name 'Button'.
+2025-09-05T17:55:56.0769893Z ##[error]src/app/docs/app/contact-sales/page.tsx(183,14): error TS2304: Cannot find name 'Badge'.
+2025-09-05T17:55:56.0771053Z ##[error]src/app/docs/app/contact-sales/page.tsx(186,15): error TS2304: Cannot find name 'Badge'.
+2025-09-05T17:55:56.0772160Z ##[error]src/app/docs/app/contact-sales/page.tsx(199,16): error TS2304: Cannot find name 'Card'.
+2025-09-05T17:55:56.0773283Z ##[error]src/app/docs/app/contact-sales/page.tsx(200,18): error TS2304: Cannot find name 'CardHeader'.
+2025-09-05T17:55:56.0774412Z ##[error]src/app/docs/app/contact-sales/page.tsx(201,20): error TS2304: Cannot find name 'CardTitle'.
+2025-09-05T17:55:56.0775529Z ##[error]src/app/docs/app/contact-sales/page.tsx(201,63): error TS2304: Cannot find name 'CardTitle'.
+2025-09-05T17:55:56.0776658Z ##[error]src/app/docs/app/contact-sales/page.tsx(202,19): error TS2304: Cannot find name 'CardHeader'.
+2025-09-05T17:55:56.0777796Z ##[error]src/app/docs/app/contact-sales/page.tsx(203,18): error TS2304: Cannot find name 'CardContent'.
+2025-09-05T17:55:56.0778977Z ##[error]src/app/docs/app/contact-sales/page.tsx(431,22): error TS2304: Cannot find name 'Button'.
+2025-09-05T17:55:56.0780315Z ##[error]src/app/docs/app/contact-sales/page.tsx(443,23): error TS2304: Cannot find name 'Button'.
+2025-09-05T17:55:56.0781507Z ##[error]src/app/docs/app/contact-sales/page.tsx(445,19): error TS2304: Cannot find name 'CardContent'.
+2025-09-05T17:55:56.0782640Z ##[error]src/app/docs/app/contact-sales/page.tsx(446,17): error TS2304: Cannot find name 'Card'.
+2025-09-05T17:55:56.0783738Z ##[error]src/app/docs/app/contact-sales/page.tsx(453,18): error TS2304: Cannot find name 'Card'.
+2025-09-05T17:55:56.0784859Z ##[error]src/app/docs/app/contact-sales/page.tsx(454,20): error TS2304: Cannot find name 'CardHeader'.
+2025-09-05T17:55:56.0785979Z ##[error]src/app/docs/app/contact-sales/page.tsx(455,22): error TS2304: Cannot find name 'CardTitle'.
+2025-09-05T17:55:56.0787102Z ##[error]src/app/docs/app/contact-sales/page.tsx(458,23): error TS2304: Cannot find name 'CardTitle'.
+2025-09-05T17:55:56.0788235Z ##[error]src/app/docs/app/contact-sales/page.tsx(459,21): error TS2304: Cannot find name 'CardHeader'.
+2025-09-05T17:55:56.0789372Z ##[error]src/app/docs/app/contact-sales/page.tsx(460,20): error TS2304: Cannot find name 'CardContent'.
+2025-09-05T17:55:56.0790945Z ##[error]src/app/docs/app/contact-sales/page.tsx(469,21): error TS2304: Cannot find name 'CardContent'.
+2025-09-05T17:55:56.0792072Z ##[error]src/app/docs/app/contact-sales/page.tsx(470,19): error TS2304: Cannot find name 'Card'.
+2025-09-05T17:55:56.0793175Z ##[error]src/app/docs/app/contact-sales/page.tsx(473,18): error TS2304: Cannot find name 'Card'.
+2025-09-05T17:55:56.0794300Z ##[error]src/app/docs/app/contact-sales/page.tsx(474,20): error TS2304: Cannot find name 'CardHeader'.
+2025-09-05T17:55:56.0795428Z ##[error]src/app/docs/app/contact-sales/page.tsx(475,22): error TS2304: Cannot find name 'CardTitle'.
+2025-09-05T17:55:56.0796549Z ##[error]src/app/docs/app/contact-sales/page.tsx(475,56): error TS2304: Cannot find name 'CardTitle'.
+2025-09-05T17:55:56.0797664Z ##[error]src/app/docs/app/contact-sales/page.tsx(476,21): error TS2304: Cannot find name 'CardHeader'.
+2025-09-05T17:55:56.0798808Z ##[error]src/app/docs/app/contact-sales/page.tsx(477,20): error TS2304: Cannot find name 'CardContent'.
+2025-09-05T17:55:56.0800142Z ##[error]src/app/docs/app/contact-sales/page.tsx(509,21): error TS2304: Cannot find name 'CardContent'.
+2025-09-05T17:55:56.0801325Z ##[error]src/app/docs/app/contact-sales/page.tsx(510,19): error TS2304: Cannot find name 'Card'.
+2025-09-05T17:55:56.0802417Z ##[error]src/app/docs/app/contact-sales/page.tsx(513,18): error TS2304: Cannot find name 'Card'.
+2025-09-05T17:55:56.0803530Z ##[error]src/app/docs/app/contact-sales/page.tsx(514,20): error TS2304: Cannot find name 'CardHeader'.
+2025-09-05T17:55:56.0804654Z ##[error]src/app/docs/app/contact-sales/page.tsx(515,22): error TS2304: Cannot find name 'CardTitle'.
+2025-09-05T17:55:56.0805905Z ##[error]src/app/docs/app/contact-sales/page.tsx(515,48): error TS2304: Cannot find name 'CardTitle'.
+2025-09-05T17:55:56.0807073Z ##[error]src/app/docs/app/contact-sales/page.tsx(516,21): error TS2304: Cannot find name 'CardHeader'.
+2025-09-05T17:55:56.0808209Z ##[error]src/app/docs/app/contact-sales/page.tsx(517,20): error TS2304: Cannot find name 'CardContent'.
+2025-09-05T17:55:56.0809356Z ##[error]src/app/docs/app/contact-sales/page.tsx(541,21): error TS2304: Cannot find name 'CardContent'.
+2025-09-05T17:55:56.0810694Z ##[error]src/app/docs/app/contact-sales/page.tsx(542,19): error TS2304: Cannot find name 'Card'.
+2025-09-05T17:55:56.0812121Z ##[error]src/app/docs/app/layout.tsx(3,27): error TS2307: Cannot find module '@vercel/analytics/react' or its corresponding type declarations.
+2025-09-05T17:55:56.0813692Z ##[error]src/app/docs/app/layout.tsx(4,31): error TS2307: Cannot find module '@vercel/speed-insights/next' or its corresponding type declarations.
+2025-09-05T17:55:56.0815162Z ##[error]src/app/docs/app/layout.tsx(5,31): error TS2307: Cannot find module 'next-themes' or its corresponding type declarations.
+2025-09-05T17:55:56.0817450Z ##[error]src/app/docs/app/pricing/page.tsx(228,23): error TS2322: Type '{ children: Element; className: string; variant: "default" | "outline"; size: "lg"; asChild: true; }' is not assignable to type 'IntrinsicAttributes & ButtonProps & RefAttributes<HTMLButtonElement>'.
+2025-09-05T17:55:56.0818966Z   Property 'asChild' does not exist on type 'IntrinsicAttributes & ButtonProps & RefAttributes<HTMLButtonElement>'.
+2025-09-05T17:55:56.0820255Z ##[error]src/app/docs/components/layout/Header.tsx(5,26): error TS2307: Cannot find module 'next-themes' or its corresponding type declarations.
+2025-09-05T17:55:56.0822429Z ##[error]src/app/docs/components/layout/Header.tsx(135,21): error TS2322: Type '{ children: Element; asChild: true; variant: "outline"; }' is not assignable to type 'IntrinsicAttributes & ButtonProps & RefAttributes<HTMLButtonElement>'.
+2025-09-05T17:55:56.0823866Z   Property 'asChild' does not exist on type 'IntrinsicAttributes & ButtonProps & RefAttributes<HTMLButtonElement>'.
+2025-09-05T17:55:56.0825412Z ##[error]src/app/docs/components/layout/Header.tsx(139,21): error TS2322: Type '{ children: Element; asChild: true; }' is not assignable to type 'IntrinsicAttributes & ButtonProps & RefAttributes<HTMLButtonElement>'.
+2025-09-05T17:55:56.0826943Z   Property 'asChild' does not exist on type 'IntrinsicAttributes & ButtonProps & RefAttributes<HTMLButtonElement>'.
+2025-09-05T17:55:56.0828741Z ##[error]src/app/docs/components/layout/Header.tsx(216,27): error TS2322: Type '{ children: Element; asChild: true; variant: "outline"; className: string; }' is not assignable to type 'IntrinsicAttributes & ButtonProps & RefAttributes<HTMLButtonElement>'.
+2025-09-05T17:55:56.0830444Z   Property 'asChild' does not exist on type 'IntrinsicAttributes & ButtonProps & RefAttributes<HTMLButtonElement>'.
+2025-09-05T17:55:56.0832151Z ##[error]src/app/docs/components/layout/Header.tsx(219,27): error TS2322: Type '{ children: Element; asChild: true; className: string; }' is not assignable to type 'IntrinsicAttributes & ButtonProps & RefAttributes<HTMLButtonElement>'.
+2025-09-05T17:55:56.0833597Z   Property 'asChild' does not exist on type 'IntrinsicAttributes & ButtonProps & RefAttributes<HTMLButtonElement>'.
+2025-09-05T17:55:56.0835036Z ##[error]src/app/docs/components/sections/Architecture.tsx(211,42): error TS2322: Type '"outline"' is not assignable to type '"default" | "warning" | "success" | "secondary" | "destructive" | undefined'.
+2025-09-05T17:55:56.0837006Z ##[error]src/app/docs/components/sections/Architecture.tsx(216,34): error TS2322: Type '"outline"' is not assignable to type '"default" | "warning" | "success" | "secondary" | "destructive" | undefined'.
+2025-09-05T17:55:56.0839505Z ##[error]src/app/docs/components/sections/CTA.tsx(112,21): error TS2322: Type '{ children: Element; asChild: true; size: "lg"; className: string; }' is not assignable to type 'IntrinsicAttributes & ButtonProps & RefAttributes<HTMLButtonElement>'.
+2025-09-05T17:55:56.0841203Z   Property 'asChild' does not exist on type 'IntrinsicAttributes & ButtonProps & RefAttributes<HTMLButtonElement>'.
+2025-09-05T17:55:56.0843029Z ##[error]src/app/docs/components/sections/CTA.tsx(196,58): error TS2322: Type '{ children: Element; variant: "outline"; className: string; asChild: true; }' is not assignable to type 'IntrinsicAttributes & ButtonProps & RefAttributes<HTMLButtonElement>'.
+2025-09-05T17:55:56.0844509Z   Property 'asChild' does not exist on type 'IntrinsicAttributes & ButtonProps & RefAttributes<HTMLButtonElement>'.
+2025-09-05T17:55:56.0846281Z ##[error]src/app/docs/components/sections/CTA.tsx(212,58): error TS2322: Type '{ children: Element; variant: "outline"; className: string; asChild: true; }' is not assignable to type 'IntrinsicAttributes & ButtonProps & RefAttributes<HTMLButtonElement>'.
+2025-09-05T17:55:56.0847750Z   Property 'asChild' does not exist on type 'IntrinsicAttributes & ButtonProps & RefAttributes<HTMLButtonElement>'.
+2025-09-05T17:55:56.0851094Z ##[error]src/app/docs/components/sections/CompetitorComparison.tsx(320,44): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ 'Network Monitoring & Management': boolean[]; 'Customer Self-Service Portal': (string | boolean)[]; 'Automated Provisioning': (string | boolean)[]; 'Multi-Tenant Architecture': boolean[]; 'API-First Design': (string | boolean)[]; ... 19 more ...; 'Custom Development': (string | boolean)[]; }'.
+2025-09-05T17:55:56.0853975Z   No index signature with a parameter of type 'string' was found on type '{ 'Network Monitoring & Management': boolean[]; 'Customer Self-Service Portal': (string | boolean)[]; 'Automated Provisioning': (string | boolean)[]; 'Multi-Tenant Architecture': boolean[]; 'API-First Design': (string | boolean)[]; ... 19 more ...; 'Custom Development': (string | boolean)[]; }'.
+2025-09-05T17:55:56.0856378Z ##[error]src/app/docs/components/sections/Hero.tsx(84,23): error TS2322: Type '{ children: Element; asChild: true; size: "lg"; className: string; }' is not assignable to type 'IntrinsicAttributes & ButtonProps & RefAttributes<HTMLButtonElement>'.
+2025-09-05T17:55:56.0857831Z   Property 'asChild' does not exist on type 'IntrinsicAttributes & ButtonProps & RefAttributes<HTMLButtonElement>'.
+2025-09-05T17:55:56.0859223Z ##[error]src/app/docs/components/sections/ROICalculator.tsx(7,24): error TS2307: Cannot find module '@/components/ui/slider' or its corresponding type declarations.
+2025-09-05T17:55:56.0860997Z ##[error]src/app/docs/components/sections/ROICalculator.tsx(132,35): error TS7006: Parameter 'value' implicitly has an 'any' type.
+2025-09-05T17:55:56.0862421Z ##[error]src/app/docs/components/sections/ROICalculator.tsx(157,35): error TS7006: Parameter 'value' implicitly has an 'any' type.
+2025-09-05T17:55:56.0863848Z ##[error]src/app/docs/components/sections/ROICalculator.tsx(182,35): error TS7006: Parameter 'value' implicitly has an 'any' type.
+2025-09-05T17:55:56.0865259Z ##[error]src/app/docs/components/sections/ROICalculator.tsx(207,35): error TS7006: Parameter 'value' implicitly has an 'any' type.
+2025-09-05T17:55:56.0866665Z ##[error]src/app/docs/components/sections/ROICalculator.tsx(232,35): error TS7006: Parameter 'value' implicitly has an 'any' type.
+2025-09-05T17:55:56.0868175Z ##[error]src/app/docs/components/ui/badge.tsx(3,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+2025-09-05T17:55:56.0869805Z ##[error]src/app/docs/components/ui/button.tsx(4,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+2025-09-05T17:55:56.0871387Z ##[error]src/app/docs/components/ui/card.tsx(2,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+2025-09-05T17:55:56.0872952Z ##[error]src/app/docs/components/ui/slider.tsx(2,34): error TS2307: Cannot find module '@radix-ui/react-slider' or its corresponding type declarations.
+2025-09-05T17:55:56.0874598Z ##[error]src/app/docs/components/ui/slider.tsx(3,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+2025-09-05T17:55:56.0876076Z ##[error]src/app/layout.tsx(1,39): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:56.0877599Z ##[error]src/app/login/page.tsx(7,25): error TS2307: Cannot find module '@/components/auth/AuthProvider' or its corresponding type declarations.
+2025-09-05T17:55:56.0879380Z ##[error]src/app/login/page.tsx(147,50): error TS2322: Type '{ size: "small"; color: string; className: string; }' is not assignable to type 'IntrinsicAttributes & LoadingSpinnerProps'.
+2025-09-05T17:55:56.0880758Z   Property 'color' does not exist on type 'IntrinsicAttributes & LoadingSpinnerProps'.
+2025-09-05T17:55:56.0881782Z ##[error]src/app/marketing/api/payment/process/route.ts(106,9): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+2025-09-05T17:55:56.0882776Z   Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:56.0883857Z ##[error]src/app/providers.tsx(5,72): error TS2307: Cannot find module '@/components/temp/PortalProviderFactory' or its corresponding type declarations.
+2025-09-05T17:55:56.0885544Z ##[error]src/app/providers.tsx(6,68): error TS2307: Cannot find module '@/components/temp/PackageIntegrations' or its corresponding type declarations.
+2025-09-05T17:55:56.0887210Z ##[error]src/app/providers.tsx(7,66): error TS2307: Cannot find module '@/components/temp/ManagementProvider' or its corresponding type declarations.
+2025-09-05T17:55:56.0888745Z ##[error]src/app/providers.tsx(28,45): error TS2307: Cannot find module '@/lib/production-init' or its corresponding type declarations.
+2025-09-05T17:55:56.0890412Z ##[error]src/app/providers.tsx(41,62): error TS2307: Cannot find module '@/lib/production-init' or its corresponding type declarations.
+2025-09-05T17:55:56.0892003Z ##[error]src/components/ErrorBoundary.tsx(3,70): error TS2307: Cannot find module '@dotmac/providers' or its corresponding type declarations.
+2025-09-05T17:55:56.0893576Z ##[error]src/components/ErrorBoundary/QueryErrorBoundary.tsx(7,21): error TS2307: Cannot find module '@/lib/http' or its corresponding type declarations.
+2025-09-05T17:55:56.0895222Z ##[error]src/components/ErrorBoundary/RouteErrorBoundary.tsx(11,42): error TS2307: Cannot find module '@/lib/navigation' or its corresponding type declarations.
+2025-09-05T17:55:56.0897025Z ##[error]src/components/ErrorBoundary/RouteErrorBoundary.tsx(12,21): error TS2307: Cannot find module '@/lib/http' or its corresponding type declarations.
+2025-09-05T17:55:56.0898726Z ##[error]src/components/adapters/ComponentLoader.tsx(64,13): error TS2559: Type '{ children: ReactNode; }' has no properties in common with type 'IntrinsicAttributes'.
+2025-09-05T17:55:56.0900558Z ##[error]src/components/audit/AuditTrailVisualization.tsx(24,21): error TS2307: Cannot find module '@/lib/http' or its corresponding type declarations.
+2025-09-05T17:55:56.0902152Z ##[error]src/components/auth/MFASetup.tsx(15,57): error TS2307: Cannot find module '@/lib/mfa-service' or its corresponding type declarations.
+2025-09-05T17:55:56.0903674Z ##[error]src/components/auth/ProtectedRoute.tsx(3,25): error TS2307: Cannot find module './AuthProvider' or its corresponding type declarations.
+2025-09-05T17:55:56.0905356Z ##[error]src/components/billing/BillingManagementUniversal.tsx(3,43): error TS2307: Cannot find module '@dotmac/billing-system' or its corresponding type declarations.
+2025-09-05T17:55:56.0907088Z ##[error]src/components/collaboration/PluginCollaboration.tsx(9,22): error TS2307: Cannot find module '@dotmac/primitives' or its corresponding type declarations.
+2025-09-05T17:55:56.0908826Z ##[error]src/components/collaboration/PluginCollaboration.tsx(17,8): error TS2307: Cannot find module '@dotmac/collaboration' or its corresponding type declarations.
+2025-09-05T17:55:56.0910852Z ##[error]src/components/dashboard/ManagementDashboard.tsx(12,67): error TS2307: Cannot find module '@/lib/api' or its corresponding type declarations.
+2025-09-05T17:55:56.0912613Z ##[error]src/components/layout/AdminHeader.tsx(6,25): error TS2307: Cannot find module '@/components/auth/AuthProvider' or its corresponding type declarations.
+2025-09-05T17:55:56.0914288Z ##[error]src/components/layout/AdminLayout.tsx(8,8): error TS2307: Cannot find module '@dotmac/navigation-system' or its corresponding type declarations.
+2025-09-05T17:55:56.0915873Z ##[error]src/components/layout/AdminLayout.tsx(9,34): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:56.0917483Z ##[error]src/components/layout/AdminSidebar.tsx(3,53): error TS2307: Cannot find module '@dotmac/portal-components' or its corresponding type declarations.
+2025-09-05T17:55:56.0919110Z ##[error]src/components/monitoring/SystemMonitoringDashboard.tsx(26,21): error TS2307: Cannot find module '@/lib/http' or its corresponding type declarations.
+2025-09-05T17:55:56.0920985Z ##[error]src/components/plugins/InstalledPlugins.tsx(19,36): error TS2307: Cannot find module '@dotmac/primitives' or its corresponding type declarations.
+2025-09-05T17:55:56.0922502Z ##[error]src/components/plugins/InstalledPlugins.tsx(20,17): error TS2305: Module '"../ui/Modal"' has no exported member 'ConfirmModal'.
+2025-09-05T17:55:56.0924061Z ##[error]src/components/plugins/InstalledPlugins.tsx(22,30): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:56.0925686Z ##[error]src/components/plugins/InstalledPlugins.tsx(23,56): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:56.0927764Z ##[error]src/components/plugins/InstalledPlugins.tsx(451,12): error TS2322: Type '{ children: Element; isOpen: boolean; onClose: () => void; title: string; size: string; }' is not assignable to type 'IntrinsicAttributes & DialogProps'.
+2025-09-05T17:55:56.0929124Z   Property 'isOpen' does not exist on type 'IntrinsicAttributes & DialogProps'. Did you mean 'open'?
+2025-09-05T17:55:56.0930224Z ##[error]src/components/plugins/InstalledPlugins.tsx(525,42): error TS7006: Parameter 'issue' implicitly has an 'any' type.
+2025-09-05T17:55:56.0931617Z ##[error]src/components/plugins/InstalledPlugins.tsx(525,49): error TS7006: Parameter 'index' implicitly has an 'any' type.
+2025-09-05T17:55:56.0933825Z ##[error]src/components/plugins/InstalledPlugins.tsx(566,12): error TS2322: Type '{ children: Element; isOpen: boolean; onClose: () => void; title: string; size: string; }' is not assignable to type 'IntrinsicAttributes & DialogProps'.
+2025-09-05T17:55:56.0935192Z   Property 'isOpen' does not exist on type 'IntrinsicAttributes & DialogProps'. Did you mean 'open'?
+2025-09-05T17:55:56.0936320Z ##[error]src/components/plugins/PluginInstallationWizard.tsx(17,24): error TS2307: Cannot find module '../ui/Button' or its corresponding type declarations.
+2025-09-05T17:55:56.0938014Z ##[error]src/components/plugins/PluginInstallationWizard.tsx(20,40): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:56.0939893Z ##[error]src/components/plugins/PluginInstallationWizard.tsx(25,8): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:56.0941415Z ##[error]src/components/plugins/PluginInstallationWizard.tsx(333,13): error TS18046: 'perms' is of type 'unknown'.
+2025-09-05T17:55:56.0942717Z ##[error]src/components/plugins/PluginInstallationWizard.tsx(339,20): error TS18046: 'perms' is of type 'unknown'.
+2025-09-05T17:55:56.0944107Z ##[error]src/components/plugins/PluginInstallationWizard.tsx(339,31): error TS7006: Parameter 'perm' implicitly has an 'any' type.
+2025-09-05T17:55:56.0945547Z ##[error]src/components/plugins/PluginInstallationWizard.tsx(339,37): error TS7006: Parameter 'index' implicitly has an 'any' type.
+2025-09-05T17:55:56.0947099Z ##[error]src/components/plugins/PluginInstallationWizard.tsx(382,40): error TS7006: Parameter 'tier' implicitly has an 'any' type.
+2025-09-05T17:55:56.0948551Z ##[error]src/components/plugins/PluginInstallationWizard.tsx(382,46): error TS7006: Parameter 'index' implicitly has an 'any' type.
+2025-09-05T17:55:56.0950172Z ##[error]src/components/plugins/PluginInstallationWizard.tsx(399,41): error TS7006: Parameter 'feature' implicitly has an 'any' type.
+2025-09-05T17:55:56.0951677Z ##[error]src/components/plugins/PluginInstallationWizard.tsx(399,50): error TS7006: Parameter 'fIndex' implicitly has an 'any' type.
+2025-09-05T17:55:56.0954169Z ##[error]src/components/plugins/PluginInstallationWizard.tsx(570,7): error TS2322: Type '{ children: Element; isOpen: boolean; onClose: () => void; title: string; size: string; closeOnOverlayClick: boolean; closeOnEscape: boolean; }' is not assignable to type 'IntrinsicAttributes & DialogProps'.
+2025-09-05T17:55:56.0955748Z   Property 'isOpen' does not exist on type 'IntrinsicAttributes & DialogProps'. Did you mean 'open'?
+2025-09-05T17:55:56.0956891Z ##[error]src/components/plugins/PluginManagement.tsx(17,24): error TS2307: Cannot find module '@dotmac/primitives' or its corresponding type declarations.
+2025-09-05T17:55:56.0958542Z ##[error]src/components/plugins/PluginManagement.tsx(22,40): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:56.0960385Z ##[error]src/components/plugins/PluginMarketplace.tsx(17,36): error TS2307: Cannot find module '@dotmac/primitives' or its corresponding type declarations.
+2025-09-05T17:55:56.0962110Z ##[error]src/components/plugins/PluginMarketplace.tsx(20,40): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:56.0963742Z ##[error]src/components/plugins/PluginMarketplace.tsx(25,8): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:56.0965203Z ##[error]src/components/plugins/PluginMarketplace.tsx(116,17): error TS7006: Parameter 'prev' implicitly has an 'any' type.
+2025-09-05T17:55:56.0966549Z ##[error]src/components/plugins/PluginMarketplace.tsx(221,57): error TS7006: Parameter 'c' implicitly has an 'any' type.
+2025-09-05T17:55:56.0967868Z ##[error]src/components/plugins/PluginMarketplace.tsx(246,50): error TS7006: Parameter 't' implicitly has an 'any' type.
+2025-09-05T17:55:56.0970315Z ##[error]src/components/plugins/PluginMarketplace.tsx(442,7): error TS2322: Type '{ children: Element; isOpen: boolean; onClose: () => void; title: any; size: string; className: string; }' is not assignable to type 'IntrinsicAttributes & DialogProps'.
+2025-09-05T17:55:56.0971763Z   Property 'isOpen' does not exist on type 'IntrinsicAttributes & DialogProps'. Did you mean 'open'?
+2025-09-05T17:55:56.0972757Z ##[error]src/components/plugins/PluginMarketplace.tsx(475,52): error TS7006: Parameter 'screenshot' implicitly has an 'any' type.
+2025-09-05T17:55:56.0974157Z ##[error]src/components/plugins/PluginMarketplace.tsx(475,64): error TS7006: Parameter 'index' implicitly has an 'any' type.
+2025-09-05T17:55:56.0975520Z ##[error]src/components/plugins/PluginMarketplace.tsx(492,42): error TS7006: Parameter 'tier' implicitly has an 'any' type.
+2025-09-05T17:55:56.0976877Z ##[error]src/components/plugins/PluginMarketplace.tsx(492,48): error TS7006: Parameter 'index' implicitly has an 'any' type.
+2025-09-05T17:55:56.0978250Z ##[error]src/components/plugins/PluginMarketplace.tsx(508,41): error TS7006: Parameter 'feature' implicitly has an 'any' type.
+2025-09-05T17:55:56.0979614Z ##[error]src/components/plugins/PluginMarketplace.tsx(508,50): error TS7006: Parameter 'fIndex' implicitly has an 'any' type.
+2025-09-05T17:55:56.0981103Z ##[error]src/components/plugins/PluginMarketplace.tsx(527,17): error TS18046: 'perms' is of type 'unknown'.
+2025-09-05T17:55:56.0982329Z ##[error]src/components/plugins/PluginMarketplace.tsx(531,24): error TS18046: 'perms' is of type 'unknown'.
+2025-09-05T17:55:56.0983783Z ##[error]src/components/plugins/PluginMarketplace.tsx(531,35): error TS7006: Parameter 'perm' implicitly has an 'any' type.
+2025-09-05T17:55:56.0985177Z ##[error]src/components/plugins/PluginMarketplace.tsx(531,41): error TS7006: Parameter 'index' implicitly has an 'any' type.
+2025-09-05T17:55:56.0986725Z ##[error]src/components/plugins/PluginSecurityDashboard.tsx(23,21): error TS2307: Cannot find module '@/lib/http' or its corresponding type declarations.
+2025-09-05T17:55:56.0988322Z ##[error]src/components/plugins/index.ts(6,35): error TS2307: Cannot find module '@dotmac/providers' or its corresponding type declarations.
+2025-09-05T17:55:56.0989828Z ##[error]src/components/plugins/index.ts(15,13): error TS7006: Parameter 'error' implicitly has an 'any' type.
+2025-09-05T17:55:56.0991162Z ##[error]src/components/plugins/index.ts(15,20): error TS7006: Parameter 'errorInfo' implicitly has an 'any' type.
+2025-09-05T17:55:56.0992400Z ##[error]src/components/plugins/index.ts(23,13): error TS7006: Parameter 'error' implicitly has an 'any' type.
+2025-09-05T17:55:56.0993647Z ##[error]src/components/plugins/index.ts(23,20): error TS7006: Parameter 'errorInfo' implicitly has an 'any' type.
+2025-09-05T17:55:56.0995205Z ##[error]src/components/realtime/RealtimeDashboard.tsx(19,8): error TS2307: Cannot find module '@/lib/websocket-client' or its corresponding type declarations.
+2025-09-05T17:55:56.0996688Z ##[error]src/components/realtime/RealtimeDashboard.tsx(169,24): error TS7006: Parameter 'metric' implicitly has an 'any' type.
+2025-09-05T17:55:56.0998061Z ##[error]src/components/realtime/RealtimeDashboard.tsx(169,32): error TS7006: Parameter 'index' implicitly has an 'any' type.
+2025-09-05T17:55:56.0999614Z ##[error]src/components/security/IncidentResponseWorkflow.tsx(26,21): error TS2307: Cannot find module '@/lib/http' or its corresponding type declarations.
+2025-09-05T17:55:56.1001536Z ##[error]src/components/security/SecurityDashboard.tsx(20,8): error TS2307: Cannot find module '@/lib/security-scanner' or its corresponding type declarations.
+2025-09-05T17:55:56.1002992Z ##[error]src/components/security/SecurityDashboard.tsx(59,60): error TS7006: Parameter 'v' implicitly has an 'any' type.
+2025-09-05T17:55:56.1004340Z ##[error]src/components/security/SecurityDashboard.tsx(99,13): error TS7006: Parameter 'word' implicitly has an 'any' type.
+2025-09-05T17:55:56.1005768Z ##[error]src/components/security/SecurityDashboard.tsx(287,50): error TS7006: Parameter 'vulnerability' implicitly has an 'any' type.
+2025-09-05T17:55:56.1007622Z ##[error]src/components/security/__tests__/SecurityDashboard.test.tsx(5,53): error TS2307: Cannot find module '@/lib/security-scanner' or its corresponding type declarations.
+2025-09-05T17:55:56.1009339Z ##[error]src/components/tenant/TenantManagement.tsx(19,26): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:56.1011146Z ##[error]src/components/tenant/TenantManagement.tsx(21,54): error TS2307: Cannot find module '@/lib/api' or its corresponding type declarations.
+2025-09-05T17:55:56.1012750Z ##[error]src/components/tenant/TenantManagement.tsx(23,42): error TS2307: Cannot find module '@/lib/navigation' or its corresponding type declarations.
+2025-09-05T17:55:56.1014357Z ##[error]src/components/tenant/TenantManagement.tsx(102,37): error TS2345: Argument of type 'string' is not assignable to parameter of type 'void'.
+2025-09-05T17:55:56.1015943Z ##[error]src/components/tenant/TenantOnboardingWizard.tsx(22,21): error TS2307: Cannot find module '@/lib/http' or its corresponding type declarations.
+2025-09-05T17:55:56.1017578Z ##[error]src/components/tenant/TenantSwitcher.tsx(6,27): error TS2307: Cannot find module '@/lib/tenant-context' or its corresponding type declarations.
+2025-09-05T17:55:56.1019201Z ##[error]src/components/tenant/TenantSwitcher.tsx(8,73): error TS2307: Cannot find module '@/lib/security-monitor' or its corresponding type declarations.
+2025-09-05T17:55:56.1021045Z ##[error]src/components/tenant/TenantSwitcher.tsx(9,30): error TS2307: Cannot find module '@/lib/rate-limiting' or its corresponding type declarations.
+2025-09-05T17:55:56.1022571Z ##[error]src/components/tenant/TenantSwitcher.tsx(49,49): error TS7006: Parameter 't' implicitly has an 'any' type.
+2025-09-05T17:55:56.1023935Z ##[error]src/components/tenant/TenantSwitcher.tsx(115,39): error TS7006: Parameter 'tenant' implicitly has an 'any' type.
+2025-09-05T17:55:56.1025387Z ##[error]src/components/tenant/__tests__/TenantManagement.test.tsx(89,36): error TS7031: Binding element 'queryKey' implicitly has an 'any' type.
+2025-09-05T17:55:56.1026973Z ##[error]src/components/ui/ConfirmDialog.tsx(2,23): error TS2307: Cannot find module '@dotmac/primitives' or its corresponding type declarations.
+2025-09-05T17:55:56.1028446Z ##[error]src/components/ui/Modal.tsx(5,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+2025-09-05T17:55:56.1029878Z ##[error]src/components/ui/Toast.tsx(79,11): error TS18048: 'newToast.duration' is possibly 'undefined'.
+2025-09-05T17:55:56.1031290Z ##[error]src/components/ui/badge.tsx(2,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+2025-09-05T17:55:56.1032707Z ##[error]src/components/ui/button.tsx(2,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+2025-09-05T17:55:56.1034147Z ##[error]src/components/ui/card.tsx(2,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+2025-09-05T17:55:56.1035547Z ##[error]src/components/ui/index.ts(7,15): error TS2307: Cannot find module './Button' or its corresponding type declarations.
+2025-09-05T17:55:56.1037396Z ##[error]src/components/ui/index.ts(9,1): error TS2308: Module './LoadingSpinner' has already exported a member named 'PageLoading'. Consider explicitly re-exporting to resolve the ambiguity.
+2025-09-05T17:55:56.1038958Z ##[error]src/components/ui/index.ts(10,15): error TS2307: Cannot find module './Form' or its corresponding type declarations.
+2025-09-05T17:55:56.1040554Z ##[error]src/components/ui/index.ts(12,15): error TS2307: Cannot find module './Table' or its corresponding type declarations.
+2025-09-05T17:55:56.1041952Z ##[error]src/components/ui/index.ts(17,41): error TS2307: Cannot find module './Table' or its corresponding type declarations.
+2025-09-05T17:55:56.1043324Z ##[error]src/components/ui/index.ts(22,24): error TS2307: Cannot find module './Button' or its corresponding type declarations.
+2025-09-05T17:55:56.1044877Z ##[error]src/components/ui/index.ts(26,22): error TS2307: Cannot find module './Form' or its corresponding type declarations.
+2025-09-05T17:55:56.1046243Z ##[error]src/components/ui/index.ts(29,23): error TS2307: Cannot find module './Table' or its corresponding type declarations.
+2025-09-05T17:55:56.1047670Z ##[error]src/middleware.ts(2,31): error TS2307: Cannot find module '@/lib/csp-utils' or its corresponding type declarations.
+2025-09-05T17:55:56.1049260Z ##[error]tests/integration/core-features.test.ts(6,63): error TS2307: Cannot find module '../../src/lib/audit-logger' or its corresponding type declarations.
+2025-09-05T17:55:56.1051147Z ##[error]tests/integration/core-features.test.ts(7,42): error TS2307: Cannot find module '../../src/lib/mfa-service' or its corresponding type declarations.
+2025-09-05T17:55:56.1052820Z ##[error]tests/integration/core-features.test.ts(8,36): error TS2307: Cannot find module '../../src/lib/websocket-client' or its corresponding type declarations.
+2025-09-05T17:55:56.1054620Z ##[error]tests/integration/core-features.test.ts(12,8): error TS2307: Cannot find module '../../src/lib/business-performance-monitor' or its corresponding type declarations.
+2025-09-05T17:55:56.1056334Z ##[error]tests/integration/core-features.test.ts(13,36): error TS2307: Cannot find module '../../src/lib/security-scanner' or its corresponding type declarations.
+2025-09-05T17:55:56.1057975Z ##[error]tests/integration/core-features.test.ts(14,31): error TS2307: Cannot find module '../../src/lib/pwa-manager' or its corresponding type declarations.
+2025-09-05T17:55:56.1059906Z ##[error]tests/unit/security-scanner.test.ts(6,73): error TS2307: Cannot find module '../../src/lib/security' or its corresponding type declarations.
+2025-09-05T17:55:56.1061512Z ##[error]tests/unit/security-scanner.test.ts(66,19): error TS2540: Cannot assign to 'NODE_ENV' because it is a read-only property.
+2025-09-05T17:55:56.1193043Z  ELIFECYCLE  Command failed with exit code 2.
+2025-09-05T17:55:56.1379868Z ##[error]Process completed with exit code 2.
+2025-09-05T17:55:56.1439414Z Post job cleanup.
+2025-09-05T17:55:56.2301140Z Pruning is unnecessary.
+2025-09-05T17:55:56.2390789Z Post job cleanup.
+2025-09-05T17:55:56.3551783Z [command]/usr/bin/git version
+2025-09-05T17:55:56.3611041Z git version 2.51.0
+2025-09-05T17:55:56.3656733Z Temporarily overriding HOME='/home/runner/work/_temp/39fa3747-f425-4e8b-b1b9-14690b043092' before making global git config changes
+2025-09-05T17:55:56.3658918Z Adding repository directory to the temporary git global config as a safe directory
+2025-09-05T17:55:56.3663646Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/dotmac_framework/dotmac_framework
+2025-09-05T17:55:56.3710774Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-09-05T17:55:56.3757516Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-09-05T17:55:56.4042971Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-09-05T17:55:56.4072924Z http.https://github.com/.extraheader
+2025-09-05T17:55:56.4091449Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2025-09-05T17:55:56.4131498Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-09-05T17:55:56.4525830Z Cleaning up orphan processes

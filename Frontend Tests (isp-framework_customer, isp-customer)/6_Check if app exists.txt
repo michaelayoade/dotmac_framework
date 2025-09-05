@@ -1,0 +1,16 @@
+﻿2025-09-05T17:55:21.9448121Z ##[group]Run if [ -d "./frontend/isp-framework/customer" ] && [ -f "./frontend/isp-framework/customer/package.json" ]; then
+2025-09-05T17:55:21.9448927Z [36;1mif [ -d "./frontend/isp-framework/customer" ] && [ -f "./frontend/isp-framework/customer/package.json" ]; then[0m
+2025-09-05T17:55:21.9449410Z [36;1m  echo "exists=true" >> $GITHUB_OUTPUT[0m
+2025-09-05T17:55:21.9449707Z [36;1m  echo "✅ App isp-framework/customer exists"[0m
+2025-09-05T17:55:21.9449964Z [36;1melse[0m
+2025-09-05T17:55:21.9450166Z [36;1m  echo "exists=false" >> $GITHUB_OUTPUT[0m
+2025-09-05T17:55:21.9450492Z [36;1m  echo "⚠️ App isp-framework/customer does not exist, skipping"[0m
+2025-09-05T17:55:21.9450801Z [36;1mfi[0m
+2025-09-05T17:55:21.9585946Z shell: /usr/bin/bash -e {0}
+2025-09-05T17:55:21.9586209Z env:
+2025-09-05T17:55:21.9586379Z   PYTHON_VERSION: 3.9
+2025-09-05T17:55:21.9586571Z   NODE_VERSION: 18
+2025-09-05T17:55:21.9586971Z   PNPM_VERSION: 8
+2025-09-05T17:55:21.9587218Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2025-09-05T17:55:21.9587537Z ##[endgroup]
+2025-09-05T17:55:21.9663268Z ✅ App isp-framework/customer exists

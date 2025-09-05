@@ -1,0 +1,465 @@
+﻿2025-09-05T17:55:42.7158224Z ##[group]Run if [ -f "package.json" ]; then
+2025-09-05T17:55:42.7158606Z [36;1mif [ -f "package.json" ]; then[0m
+2025-09-05T17:55:42.7158904Z [36;1m  if grep -q "type-check" package.json; then[0m
+2025-09-05T17:55:42.7159186Z [36;1m    pnpm run type-check[0m
+2025-09-05T17:55:42.7159411Z [36;1m  else[0m
+2025-09-05T17:55:42.7159643Z [36;1m    echo "⚠️ No type-check script found, skipping"[0m
+2025-09-05T17:55:42.7159939Z [36;1m  fi[0m
+2025-09-05T17:55:42.7160100Z [36;1m  [0m
+2025-09-05T17:55:42.7160295Z [36;1m  if grep -q "lint" package.json; then[0m
+2025-09-05T17:55:42.7160557Z [36;1m    pnpm run lint[0m
+2025-09-05T17:55:42.7160750Z [36;1m  else[0m
+2025-09-05T17:55:42.7160957Z [36;1m    echo "⚠️ No lint script found, skipping"[0m
+2025-09-05T17:55:42.7161201Z [36;1m  fi[0m
+2025-09-05T17:55:42.7161362Z [36;1mfi[0m
+2025-09-05T17:55:42.7191833Z shell: /usr/bin/bash -e {0}
+2025-09-05T17:55:42.7192054Z env:
+2025-09-05T17:55:42.7192223Z   PYTHON_VERSION: 3.9
+2025-09-05T17:55:42.7192413Z   NODE_VERSION: 18
+2025-09-05T17:55:42.7192641Z   PNPM_VERSION: 8
+2025-09-05T17:55:42.7192876Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2025-09-05T17:55:42.7193156Z ##[endgroup]
+2025-09-05T17:55:43.1375088Z 
+2025-09-05T17:55:43.1376368Z > @dotmac/reseller-app@1.0.0 type-check /home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/reseller
+2025-09-05T17:55:43.1377445Z > tsc --noEmit
+2025-09-05T17:55:43.1377653Z 
+2025-09-05T17:55:52.4705384Z ##[error]src/__tests__/integration/partner-api.test.tsx(10,8): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:52.4720016Z ##[error]src/__tests__/integration/partner-api.test.tsx(349,26): error TS7006: Parameter 'customer' implicitly has an 'any' type.
+2025-09-05T17:55:52.4722704Z ##[error]src/__tests__/integration/partner-api.test.tsx(634,25): error TS2532: Object is possibly 'undefined'.
+2025-09-05T17:55:52.4726404Z ##[error]src/app/(protected)/collaboration/page.tsx(3,41): error TS2307: Cannot find module '@/components/collaboration/PartnerCollaborationHub' or its corresponding type declarations.
+2025-09-05T17:55:52.4729735Z ##[error]src/app/(protected)/commissions/page.tsx(3,33): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:52.4733107Z ##[error]src/app/(protected)/dashboard/page.tsx(3,43): error TS2307: Cannot find module '@/components/dashboard/EnhancedResellerDashboard' or its corresponding type declarations.
+2025-09-05T17:55:52.4736437Z ##[error]src/app/(protected)/leads/page.tsx(3,41): error TS2307: Cannot find module '@/components/leads/LeadManagementDashboard' or its corresponding type declarations.
+2025-09-05T17:55:52.4739191Z ##[error]src/app/(protected)/marketing/page.tsx(3,41): error TS2307: Cannot find module '@/components/marketing/MarketingResourceCenter' or its corresponding type declarations.
+2025-09-05T17:55:52.4742380Z ##[error]src/app/(protected)/projects/page.tsx(9,62): error TS2307: Cannot find module '@dotmac/patterns/templates' or its corresponding type declarations.
+2025-09-05T17:55:52.4745399Z ##[error]src/app/(protected)/projects/page.tsx(10,33): error TS2307: Cannot find module '@dotmac/primitives' or its corresponding type declarations.
+2025-09-05T17:55:52.4747006Z ##[error]src/app/(protected)/projects/page.tsx(154,19): error TS7006: Parameter 'date' implicitly has an 'any' type.
+2025-09-05T17:55:52.4748542Z ##[error]src/app/(protected)/projects/page.tsx(160,19): error TS7006: Parameter 'date' implicitly has an 'any' type.
+2025-09-05T17:55:52.4750491Z ##[error]src/app/(protected)/projects/page.tsx(166,19): error TS7006: Parameter 'value' implicitly has an 'any' type.
+2025-09-05T17:55:52.4753480Z ##[error]src/app/(protected)/sales/page.tsx(9,62): error TS2307: Cannot find module '@dotmac/patterns/templates' or its corresponding type declarations.
+2025-09-05T17:55:52.4757225Z ##[error]src/app/(protected)/sales/page.tsx(10,55): error TS2307: Cannot find module '@dotmac/patterns/templates/KanbanBoard' or its corresponding type declarations.
+2025-09-05T17:55:52.4760786Z ##[error]src/app/(protected)/sales/page.tsx(11,60): error TS2307: Cannot find module '@dotmac/primitives' or its corresponding type declarations.
+2025-09-05T17:55:52.4763370Z ##[error]src/app/(protected)/sales/page.tsx(187,44): error TS7006: Parameter 'tag' implicitly has an 'any' type.
+2025-09-05T17:55:52.4765155Z ##[error]src/app/(protected)/sales/page.tsx(266,19): error TS7006: Parameter 'val' implicitly has an 'any' type.
+2025-09-05T17:55:52.4766553Z ##[error]src/app/(protected)/sales/page.tsx(271,21): error TS7031: Binding element 'value' implicitly has an 'any' type.
+2025-09-05T17:55:52.4767907Z ##[error]src/app/(protected)/sales/page.tsx(278,21): error TS7031: Binding element 'value' implicitly has an 'any' type.
+2025-09-05T17:55:52.4769556Z ##[error]src/app/(protected)/settings/page.tsx(17,8): error TS2307: Cannot find module '@dotmac/settings-system' or its corresponding type declarations.
+2025-09-05T17:55:52.4771021Z ##[error]src/app/(protected)/settings/page.tsx(65,46): error TS7006: Parameter 'pref' implicitly has an 'any' type.
+2025-09-05T17:55:52.4772416Z ##[error]src/app/(protected)/settings/page.tsx(351,33): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+2025-09-05T17:55:52.4774015Z ##[error]src/app/(protected)/territory/page.tsx(9,52): error TS2307: Cannot find module '@dotmac/patterns/templates' or its corresponding type declarations.
+2025-09-05T17:55:52.4775933Z ##[error]src/app/(protected)/territory/page.tsx(10,30): error TS2307: Cannot find module '@dotmac/mapping' or its corresponding type declarations.
+2025-09-05T17:55:52.4777544Z ##[error]src/app/(protected)/territory/page.tsx(11,22): error TS2307: Cannot find module '@dotmac/primitives' or its corresponding type declarations.
+2025-09-05T17:55:52.4779161Z ##[error]src/app/api/health/route.ts(6,36): error TS2307: Cannot find module '@dotmac/monitoring/health' or its corresponding type declarations.
+2025-09-05T17:55:52.4780756Z ##[error]src/app/api/health/route.ts(7,39): error TS2307: Cannot find module '@dotmac/monitoring/health' or its corresponding type declarations.
+2025-09-05T17:55:52.4782250Z ##[error]src/app/layout.tsx(1,37): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:52.4783685Z ##[error]src/app/layout.tsx(2,36): error TS2307: Cannot find module '@dotmac/providers' or its corresponding type declarations.
+2025-09-05T17:55:52.4785792Z ##[error]src/app/providers.tsx(3,60): error TS2307: Cannot find module '@dotmac/portal-components' or its corresponding type declarations.
+2025-09-05T17:55:52.4787430Z ##[error]src/components/auth/ResellerLogin.tsx(3,46): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:52.4789056Z ##[error]src/components/auth/ResellerLogin.tsx(4,43): error TS2307: Cannot find module '@dotmac/providers' or its corresponding type declarations.
+2025-09-05T17:55:52.4790696Z ##[error]src/components/auth/ResellerLogin.tsx(5,37): error TS2307: Cannot find module '@dotmac/ui/reseller' or its corresponding type declarations.
+2025-09-05T17:55:52.4792127Z ##[error]src/components/auth/ResellerLogin.tsx(45,11): error TS2451: Cannot redeclare block-scoped variable 'values'.
+2025-09-05T17:55:52.4793504Z ##[error]src/components/auth/ResellerLogin.tsx(45,51): error TS2451: Cannot redeclare block-scoped variable 'handleSubmit'.
+2025-09-05T17:55:52.4795050Z ##[error]src/components/auth/ResellerLogin.tsx(53,13): error TS2304: Cannot find name 'PartnerLoginSchema'.
+2025-09-05T17:55:52.4796364Z ##[error]src/components/auth/ResellerLogin.tsx(72,11): error TS2451: Cannot redeclare block-scoped variable 'values'.
+2025-09-05T17:55:52.4797732Z ##[error]src/components/auth/ResellerLogin.tsx(72,33): error TS2451: Cannot redeclare block-scoped variable 'handleSubmit'.
+2025-09-05T17:55:52.4799716Z ##[error]src/components/auth/ResellerLogin.tsx(181,23): error TS2322: Type '(onSubmit: (values: Record<string, string>) => Promise<void>) => Promise<void>' is not assignable to type 'FormEventHandler<HTMLFormElement>'.
+2025-09-05T17:55:52.4801196Z   Types of parameters 'onSubmit' and 'event' are incompatible.
+2025-09-05T17:55:52.4801804Z     Type 'FormEvent<HTMLFormElement>' is not assignable to type '(values: Record<string, string>) => Promise<void>'.
+2025-09-05T17:55:52.4802570Z       Type 'FormEvent<HTMLFormElement>' provides no match for the signature '(values: Record<string, string>): Promise<void>'.
+2025-09-05T17:55:52.4803892Z ##[error]src/components/billing/BillingManagementUniversal.tsx(3,43): error TS2307: Cannot find module '@dotmac/billing-system' or its corresponding type declarations.
+2025-09-05T17:55:52.4805955Z ##[error]src/components/commission/CommissionDashboard.tsx(34,75): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:52.4807501Z ##[error]src/components/commission/CommissionDashboard.tsx(147,8): error TS7006: Parameter 'acc' implicitly has an 'any' type.
+2025-09-05T17:55:52.4808983Z ##[error]src/components/commission/CommissionDashboard.tsx(147,13): error TS7006: Parameter 'transaction' implicitly has an 'any' type.
+2025-09-05T17:55:52.4810330Z ##[error]src/components/commission/CommissionDashboard.tsx(159,54): error TS18046: 'a' is of type 'unknown'.
+2025-09-05T17:55:52.4811569Z ##[error]src/components/commission/CommissionDashboard.tsx(159,76): error TS18046: 'b' is of type 'unknown'.
+2025-09-05T17:55:52.4812954Z ##[error]src/components/commission/CommissionDashboard.tsx(165,44): error TS7006: Parameter 'service' implicitly has an 'any' type.
+2025-09-05T17:55:52.4814601Z ##[error]src/components/commission/CommissionDashboard.tsx(165,53): error TS7006: Parameter 'index' implicitly has an 'any' type.
+2025-09-05T17:55:52.4839656Z ##[error]src/components/commission/CommissionDashboard.tsx(332,54): error TS7006: Parameter 'entry' implicitly has an 'any' type.
+2025-09-05T17:55:52.4841444Z ##[error]src/components/commission/CommissionDashboard.tsx(332,61): error TS7006: Parameter 'index' implicitly has an 'any' type.
+2025-09-05T17:55:52.4842988Z ##[error]src/components/commission/CommissionDashboard.tsx(342,48): error TS7006: Parameter 'service' implicitly has an 'any' type.
+2025-09-05T17:55:52.4844747Z ##[error]src/components/commission/CommissionDashboard.tsx(388,36): error TS7006: Parameter 'transaction' implicitly has an 'any' type.
+2025-09-05T17:55:52.4846668Z ##[error]src/components/commission/CommissionDashboard.tsx(422,21): error TS2339: Property 'value' does not exist on type 'JSX.IntrinsicElements'.
+2025-09-05T17:55:52.4848307Z ##[error]src/components/commission/CommissionDashboard.tsx(422,81): error TS2339: Property 'value' does not exist on type 'JSX.IntrinsicElements'.
+2025-09-05T17:55:52.4849918Z ##[error]src/components/commission/CommissionDashboard.tsx(426,21): error TS2339: Property 'value' does not exist on type 'JSX.IntrinsicElements'.
+2025-09-05T17:55:52.4851502Z ##[error]src/components/commission/CommissionDashboard.tsx(426,85): error TS2339: Property 'value' does not exist on type 'JSX.IntrinsicElements'.
+2025-09-05T17:55:52.4853100Z ##[error]src/components/commission/CommissionDashboard.tsx(430,21): error TS2339: Property 'value' does not exist on type 'JSX.IntrinsicElements'.
+2025-09-05T17:55:52.4854943Z ##[error]src/components/commission/CommissionDashboard.tsx(430,67): error TS2339: Property 'value' does not exist on type 'JSX.IntrinsicElements'.
+2025-09-05T17:55:52.4856627Z ##[error]src/components/commission/CommissionDashboard.tsx(434,21): error TS2339: Property 'value' does not exist on type 'JSX.IntrinsicElements'.
+2025-09-05T17:55:52.4858261Z ##[error]src/components/commission/CommissionDashboard.tsx(440,21): error TS2339: Property 'value' does not exist on type 'JSX.IntrinsicElements'.
+2025-09-05T17:55:52.4859764Z ##[error]src/components/commission/CommissionDashboard.tsx(459,45): error TS7006: Parameter 'payout' implicitly has an 'any' type.
+2025-09-05T17:55:52.4861411Z ##[error]src/components/commission/CommissionTracker.tsx(3,22): error TS2307: Cannot find module '@dotmac/ui/reseller' or its corresponding type declarations.
+2025-09-05T17:55:52.4863366Z ##[error]src/components/common/ErrorBoundary.tsx(3,70): error TS2307: Cannot find module '@dotmac/providers' or its corresponding type declarations.
+2025-09-05T17:55:52.4865303Z ##[error]src/components/communication/CommunicationCenter.tsx(4,34): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:52.4867073Z ##[error]src/components/communication/CommunicationCenter.tsx(5,71): error TS2307: Cannot find module '@dotmac/providers' or its corresponding type declarations.
+2025-09-05T17:55:52.4868622Z ##[error]src/components/communication/CommunicationCenter.tsx(52,56): error TS7006: Parameter 't' implicitly has an 'any' type.
+2025-09-05T17:55:52.4870088Z ##[error]src/components/communication/CommunicationCenter.tsx(84,43): error TS7006: Parameter 'message' implicitly has an 'any' type.
+2025-09-05T17:55:52.4871599Z ##[error]src/components/communication/CommunicationCenter.tsx(288,31): error TS7006: Parameter 'notification' implicitly has an 'any' type.
+2025-09-05T17:55:52.4873254Z ##[error]src/components/customers/CustomerManagement.tsx(7,8): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:52.4874904Z ##[error]src/components/customers/CustomerManagement.tsx(8,10): error TS2300: Duplicate identifier 'ErrorBoundary'.
+2025-09-05T17:55:52.4876528Z ##[error]src/components/customers/CustomerManagement.tsx(8,31): error TS2307: Cannot find module '@dotmac/providers' or its corresponding type declarations.
+2025-09-05T17:55:52.4878176Z ##[error]src/components/customers/CustomerManagement.tsx(9,44): error TS2307: Cannot find module '@dotmac/ui' or its corresponding type declarations.
+2025-09-05T17:55:52.4879601Z ##[error]src/components/customers/CustomerManagement.tsx(28,10): error TS2300: Duplicate identifier 'ErrorBoundary'.
+2025-09-05T17:55:52.4881211Z ##[error]src/components/customers/CustomerManagementAdvanced.tsx(3,31): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:52.4882994Z ##[error]src/components/customers/CustomerManagementAdvanced.tsx(4,22): error TS2307: Cannot find module '@dotmac/ui/reseller' or its corresponding type declarations.
+2025-09-05T17:55:52.4885235Z ##[error]src/components/customers/CustomerManagementVirtualized.tsx(17,8): error TS2307: Cannot find module '@dotmac/providers/performance/VirtualizedTable' or its corresponding type declarations.
+2025-09-05T17:55:52.4887361Z ##[error]src/components/customers/CustomerManagementVirtualized.tsx(24,8): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:52.4888924Z ##[error]src/components/customers/CustomerManagementVirtualized.tsx(144,7): error TS2304: Cannot find name 'useSanitizedForm'.
+2025-09-05T17:55:52.4890430Z ##[error]src/components/customers/CustomerManagementVirtualized.tsx(159,21): error TS7006: Parameter 'field' implicitly has an 'any' type.
+2025-09-05T17:55:52.4892029Z ##[error]src/components/customers/CustomerManagementVirtualized.tsx(159,28): error TS7006: Parameter 'fieldViolations' implicitly has an 'any' type.
+2025-09-05T17:55:52.4893582Z ##[error]src/components/customers/CustomerManagementVirtualized.tsx(225,18): error TS7006: Parameter 'value' implicitly has an 'any' type.
+2025-09-05T17:55:52.4895434Z ##[error]src/components/customers/CustomerManagementVirtualized.tsx(225,25): error TS7006: Parameter 'customer' implicitly has an 'any' type.
+2025-09-05T17:55:52.4897001Z ##[error]src/components/customers/CustomerManagementVirtualized.tsx(245,18): error TS7006: Parameter 'value' implicitly has an 'any' type.
+2025-09-05T17:55:52.4898545Z ##[error]src/components/customers/CustomerManagementVirtualized.tsx(245,25): error TS7006: Parameter 'customer' implicitly has an 'any' type.
+2025-09-05T17:55:52.4900081Z ##[error]src/components/customers/CustomerManagementVirtualized.tsx(265,18): error TS7006: Parameter 'status' implicitly has an 'any' type.
+2025-09-05T17:55:52.4901783Z ##[error]src/components/customers/CustomerManagementVirtualized.tsx(272,18): error TS7006: Parameter 'value' implicitly has an 'any' type.
+2025-09-05T17:55:52.4903297Z ##[error]src/components/customers/CustomerManagementVirtualized.tsx(280,18): error TS7006: Parameter 'value' implicitly has an 'any' type.
+2025-09-05T17:55:52.4905053Z ##[error]src/components/customers/CustomerManagementVirtualized.tsx(292,18): error TS7006: Parameter 'value' implicitly has an 'any' type.
+2025-09-05T17:55:52.4906587Z ##[error]src/components/customers/CustomerManagementVirtualized.tsx(303,18): error TS7006: Parameter 'value' implicitly has an 'any' type.
+2025-09-05T17:55:52.4908069Z ##[error]src/components/customers/CustomerManagementVirtualized.tsx(311,18): error TS7006: Parameter '_' implicitly has an 'any' type.
+2025-09-05T17:55:52.4909582Z ##[error]src/components/customers/CustomerManagementVirtualized.tsx(311,21): error TS7006: Parameter 'customer' implicitly has an 'any' type.
+2025-09-05T17:55:52.4911179Z ##[error]src/components/customers/CustomerManagementVirtualized.tsx(396,49): error TS7006: Parameter '_' implicitly has an 'any' type.
+2025-09-05T17:55:52.4912675Z ##[error]src/components/customers/CustomerManagementVirtualized.tsx(396,52): error TS7006: Parameter 'index' implicitly has an 'any' type.
+2025-09-05T17:55:52.4914383Z ##[error]src/components/customers/CustomerManagementVirtualized.tsx(403,28): error TS7006: Parameter 'customer' implicitly has an 'any' type.
+2025-09-05T17:55:52.4916273Z ##[error]src/components/customers/__tests__/CustomerManagementAdvanced.test.tsx(159,20): error TS7017: Element implicitly has an 'any' type because type 'typeof globalThis' has no index signature.
+2025-09-05T17:55:52.4917908Z ##[error]src/components/customers/__tests__/CustomerManagementAdvanced.test.tsx(411,22): error TS2304: Cannot find name 'defaultSanitizer'.
+2025-09-05T17:55:52.4919721Z ##[error]src/components/customers/__tests__/CustomerManagementAdvanced.test.tsx(440,24): error TS2345: Argument of type 'HTMLElement | undefined' is not assignable to parameter of type 'Element'.
+2025-09-05T17:55:52.4920897Z   Type 'undefined' is not assignable to type 'Element'.
+2025-09-05T17:55:52.4922096Z ##[error]src/components/customers/__tests__/CustomerManagementAdvanced.test.tsx(488,24): error TS2345: Argument of type 'HTMLElement | undefined' is not assignable to parameter of type 'Element'.
+2025-09-05T17:55:52.4923446Z   Type 'undefined' is not assignable to type 'Element'.
+2025-09-05T17:55:52.4924851Z ##[error]src/components/customers/__tests__/CustomerManagementAdvanced.test.tsx(541,20): error TS7017: Element implicitly has an 'any' type because type 'typeof globalThis' has no index signature.
+2025-09-05T17:55:52.4926861Z ##[error]src/components/customers/__tests__/CustomerManagementAdvanced.test.tsx(565,20): error TS7017: Element implicitly has an 'any' type because type 'typeof globalThis' has no index signature.
+2025-09-05T17:55:52.4928805Z ##[error]src/components/customers/__tests__/CustomerManagementAdvanced.test.tsx(599,14): error TS7017: Element implicitly has an 'any' type because type 'typeof globalThis' has no index signature.
+2025-09-05T17:55:52.4930749Z ##[error]src/components/customers/__tests__/CustomerManagementAdvanced.test.tsx(641,20): error TS7017: Element implicitly has an 'any' type because type 'typeof globalThis' has no index signature.
+2025-09-05T17:55:52.4932537Z ##[error]src/components/dashboard/ResellerDashboard.tsx(8,8): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:52.4933969Z ##[error]src/components/dashboard/ResellerDashboard.tsx(9,10): error TS2300: Duplicate identifier 'ErrorBoundary'.
+2025-09-05T17:55:52.4935816Z ##[error]src/components/dashboard/ResellerDashboard.tsx(9,31): error TS2307: Cannot find module '@dotmac/providers' or its corresponding type declarations.
+2025-09-05T17:55:52.4937524Z ##[error]src/components/dashboard/ResellerDashboard.tsx(10,22): error TS2307: Cannot find module '@dotmac/ui/reseller' or its corresponding type declarations.
+2025-09-05T17:55:52.4939149Z ##[error]src/components/dashboard/ResellerDashboard.tsx(38,10): error TS2300: Duplicate identifier 'ErrorBoundary'.
+2025-09-05T17:55:52.4940672Z ##[error]src/components/dashboard/ResellerDashboard.tsx(206,45): error TS2339: Property 'commission_alerts' does not exist on type 'Commission[]'.
+2025-09-05T17:55:52.4942269Z ##[error]src/components/dashboard/ResellerDashboard.tsx(213,33): error TS2339: Property 'commission_alerts' does not exist on type 'Commission[]'.
+2025-09-05T17:55:52.4943864Z ##[error]src/components/dashboard/ResellerDashboard.tsx(246,33): error TS2339: Property 'commission_summary' does not exist on type 'Commission[]'.
+2025-09-05T17:55:52.4945700Z ##[error]src/components/dashboard/ResellerDashboard.tsx(250,54): error TS2339: Property 'commission_summary' does not exist on type 'Commission[]'.
+2025-09-05T17:55:52.4947363Z ##[error]src/components/dashboard/ResellerDashboard.tsx(259,53): error TS2339: Property 'sales_opportunities' does not exist on type 'SalesOpportunity[]'.
+2025-09-05T17:55:52.4949053Z ##[error]src/components/dashboard/ResellerDashboard.tsx(267,39): error TS2339: Property 'sales_opportunities' does not exist on type 'SalesOpportunity[]'.
+2025-09-05T17:55:52.4951053Z ##[error]src/components/dashboard/ResellerDashboard.tsx(271,37): error TS2339: Property 'sales_opportunities' does not exist on type 'SalesOpportunity[]'.
+2025-09-05T17:55:52.4952773Z ##[error]src/components/dashboard/ResellerDashboard.tsx(401,49): error TS2339: Property 'deadline' does not exist on type 'SalesGoal'.
+2025-09-05T17:55:52.4954458Z ##[error]src/components/dashboard/ResellerDashboard.tsx(402,74): error TS2339: Property 'reward' does not exist on type 'SalesGoal'.
+2025-09-05T17:55:52.4956030Z ##[error]src/components/dashboard/ResellerDashboard.tsx(433,70): error TS2339: Property 'service' does not exist on type 'Customer'.
+2025-09-05T17:55:52.4957562Z ##[error]src/components/dashboard/ResellerDashboard.tsx(436,45): error TS2769: No overload matches this call.
+2025-09-05T17:55:52.4958617Z   Overload 1 of 4, '(value: string | number | Date): Date', gave the following error.
+2025-09-05T17:55:52.4959220Z     Argument of type 'string | undefined' is not assignable to parameter of type 'string | number | Date'.
+2025-09-05T17:55:52.4959776Z       Type 'undefined' is not assignable to type 'string | number | Date'.
+2025-09-05T17:55:52.4960406Z   Overload 2 of 4, '(value: string | number): Date', gave the following error.
+2025-09-05T17:55:52.4960968Z     Argument of type 'string | undefined' is not assignable to parameter of type 'string | number'.
+2025-09-05T17:55:52.4961487Z       Type 'undefined' is not assignable to type 'string | number'.
+2025-09-05T17:55:52.4962402Z ##[error]src/components/dashboard/ResellerDashboard.tsx(440,59): error TS2339: Property 'revenue' does not exist on type 'Customer'.
+2025-09-05T17:55:52.4963917Z ##[error]src/components/dashboard/ResellerDashboard.tsx(443,59): error TS2339: Property 'commission' does not exist on type 'Customer'.
+2025-09-05T17:55:52.4965837Z ##[error]src/components/dashboard/ResellerDashboardComplete.tsx(3,37): error TS2307: Cannot find module '@dotmac/ui' or its corresponding type declarations.
+2025-09-05T17:55:52.4967527Z ##[error]src/components/dashboard/SalesDashboard.tsx(3,46): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:52.4969208Z ##[error]src/components/dashboard/SalesDashboard.tsx(4,22): error TS2307: Cannot find module '@dotmac/ui/reseller' or its corresponding type declarations.
+2025-09-05T17:55:52.4970936Z ##[error]src/components/insights/ResellerAnalyticsDashboard.tsx(7,8): error TS2307: Cannot find module '@dotmac/ml-analytics' or its corresponding type declarations.
+2025-09-05T17:55:52.4972715Z ##[error]src/components/insights/ResellerAnalyticsDashboard.tsx(8,34): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:52.4974715Z ##[error]src/components/insights/ResellerAnalyticsDashboard.tsx(9,22): error TS2307: Cannot find module '@dotmac/primitives' or its corresponding type declarations.
+2025-09-05T17:55:52.4976644Z ##[error]src/components/insights/ResellerAnalyticsDashboard.tsx(29,30): error TS7006: Parameter 'forecast' implicitly has an 'any' type.
+2025-09-05T17:55:52.4978178Z ##[error]src/components/insights/ResellerAnalyticsDashboard.tsx(40,29): error TS7006: Parameter 'insight' implicitly has an 'any' type.
+2025-09-05T17:55:52.4979687Z ##[error]src/components/insights/ResellerAnalyticsDashboard.tsx(59,30): error TS7006: Parameter 'insight' implicitly has an 'any' type.
+2025-09-05T17:55:52.4981394Z ##[error]src/components/layout/ResellerLayout.tsx(9,8): error TS2307: Cannot find module '@dotmac/navigation-system' or its corresponding type declarations.
+2025-09-05T17:55:52.4983126Z ##[error]src/components/layout/ResellerLayout.tsx(10,34): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:52.4985224Z ##[error]src/components/layout/ResellerNavigationEnhanced.tsx(37,5): error TS2322: Type 'LucideIcon' is not assignable to type 'ComponentType<{ className?: string; }>'.
+2025-09-05T17:55:52.4986597Z   Type 'ForwardRefExoticComponent<LucideProps>' is not assignable to type 'FunctionComponent<{ className?: string; }>'.
+2025-09-05T17:55:52.4987462Z     Types of property 'defaultProps' are incompatible.
+2025-09-05T17:55:52.4988040Z       Type 'Partial<LucideProps> | undefined' is not assignable to type 'Partial<{ className?: string; }> | undefined'.
+2025-09-05T17:55:52.4989078Z         Type 'Partial<LucideProps>' is not assignable to type 'Partial<{ className?: string; }>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:52.4989864Z           Types of property 'className' are incompatible.
+2025-09-05T17:55:52.4990260Z             Type 'string | undefined' is not assignable to type 'string'.
+2025-09-05T17:55:52.4990661Z               Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:52.4991800Z ##[error]src/components/layout/ResellerNavigationEnhanced.tsx(44,5): error TS2322: Type 'LucideIcon' is not assignable to type 'ComponentType<{ className?: string; }>'.
+2025-09-05T17:55:52.4993156Z   Type 'ForwardRefExoticComponent<LucideProps>' is not assignable to type 'FunctionComponent<{ className?: string; }>'.
+2025-09-05T17:55:52.4993895Z     Types of property 'defaultProps' are incompatible.
+2025-09-05T17:55:52.4994654Z       Type 'Partial<LucideProps> | undefined' is not assignable to type 'Partial<{ className?: string; }> | undefined'.
+2025-09-05T17:55:52.4995681Z         Type 'Partial<LucideProps>' is not assignable to type 'Partial<{ className?: string; }>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:52.4996474Z           Types of property 'className' are incompatible.
+2025-09-05T17:55:52.4996866Z             Type 'string | undefined' is not assignable to type 'string'.
+2025-09-05T17:55:52.4997268Z               Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:52.4998396Z ##[error]src/components/layout/ResellerNavigationEnhanced.tsx(51,5): error TS2322: Type 'LucideIcon' is not assignable to type 'ComponentType<{ className?: string; }>'.
+2025-09-05T17:55:52.4999743Z   Type 'ForwardRefExoticComponent<LucideProps>' is not assignable to type 'FunctionComponent<{ className?: string; }>'.
+2025-09-05T17:55:52.5000313Z     Types of property 'defaultProps' are incompatible.
+2025-09-05T17:55:52.5000869Z       Type 'Partial<LucideProps> | undefined' is not assignable to type 'Partial<{ className?: string; }> | undefined'.
+2025-09-05T17:55:52.5001902Z         Type 'Partial<LucideProps>' is not assignable to type 'Partial<{ className?: string; }>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:52.5002672Z           Types of property 'className' are incompatible.
+2025-09-05T17:55:52.5003202Z             Type 'string | undefined' is not assignable to type 'string'.
+2025-09-05T17:55:52.5003606Z               Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:52.5004921Z ##[error]src/components/layout/ResellerNavigationEnhanced.tsx(58,5): error TS2322: Type 'LucideIcon' is not assignable to type 'ComponentType<{ className?: string; }>'.
+2025-09-05T17:55:52.5006318Z   Type 'ForwardRefExoticComponent<LucideProps>' is not assignable to type 'FunctionComponent<{ className?: string; }>'.
+2025-09-05T17:55:52.5006900Z     Types of property 'defaultProps' are incompatible.
+2025-09-05T17:55:52.5007459Z       Type 'Partial<LucideProps> | undefined' is not assignable to type 'Partial<{ className?: string; }> | undefined'.
+2025-09-05T17:55:52.5008486Z         Type 'Partial<LucideProps>' is not assignable to type 'Partial<{ className?: string; }>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:52.5009272Z           Types of property 'className' are incompatible.
+2025-09-05T17:55:52.5009661Z             Type 'string | undefined' is not assignable to type 'string'.
+2025-09-05T17:55:52.5010059Z               Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:52.5011161Z ##[error]src/components/layout/ResellerNavigationEnhanced.tsx(65,5): error TS2322: Type 'LucideIcon' is not assignable to type 'ComponentType<{ className?: string; }>'.
+2025-09-05T17:55:52.5012490Z   Type 'ForwardRefExoticComponent<LucideProps>' is not assignable to type 'FunctionComponent<{ className?: string; }>'.
+2025-09-05T17:55:52.5013054Z     Types of property 'defaultProps' are incompatible.
+2025-09-05T17:55:52.5013607Z       Type 'Partial<LucideProps> | undefined' is not assignable to type 'Partial<{ className?: string; }> | undefined'.
+2025-09-05T17:55:52.5014831Z         Type 'Partial<LucideProps>' is not assignable to type 'Partial<{ className?: string; }>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:52.5015621Z           Types of property 'className' are incompatible.
+2025-09-05T17:55:52.5016011Z             Type 'string | undefined' is not assignable to type 'string'.
+2025-09-05T17:55:52.5016400Z               Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:52.5017679Z ##[error]src/components/layout/ResellerNavigationEnhanced.tsx(72,5): error TS2322: Type 'LucideIcon' is not assignable to type 'ComponentType<{ className?: string; }>'.
+2025-09-05T17:55:52.5019027Z   Type 'ForwardRefExoticComponent<LucideProps>' is not assignable to type 'FunctionComponent<{ className?: string; }>'.
+2025-09-05T17:55:52.5019590Z     Types of property 'defaultProps' are incompatible.
+2025-09-05T17:55:52.5020139Z       Type 'Partial<LucideProps> | undefined' is not assignable to type 'Partial<{ className?: string; }> | undefined'.
+2025-09-05T17:55:52.5021157Z         Type 'Partial<LucideProps>' is not assignable to type 'Partial<{ className?: string; }>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:52.5021933Z           Types of property 'className' are incompatible.
+2025-09-05T17:55:52.5022323Z             Type 'string | undefined' is not assignable to type 'string'.
+2025-09-05T17:55:52.5022723Z               Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:52.5023806Z ##[error]src/components/layout/ResellerNavigationEnhanced.tsx(79,5): error TS2322: Type 'LucideIcon' is not assignable to type 'ComponentType<{ className?: string; }>'.
+2025-09-05T17:55:52.5025343Z   Type 'ForwardRefExoticComponent<LucideProps>' is not assignable to type 'FunctionComponent<{ className?: string; }>'.
+2025-09-05T17:55:52.5025905Z     Types of property 'defaultProps' are incompatible.
+2025-09-05T17:55:52.5026462Z       Type 'Partial<LucideProps> | undefined' is not assignable to type 'Partial<{ className?: string; }> | undefined'.
+2025-09-05T17:55:52.5027627Z         Type 'Partial<LucideProps>' is not assignable to type 'Partial<{ className?: string; }>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:52.5028404Z           Types of property 'className' are incompatible.
+2025-09-05T17:55:52.5028786Z             Type 'string | undefined' is not assignable to type 'string'.
+2025-09-05T17:55:52.5029201Z               Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:52.5030308Z ##[error]src/components/layout/ResellerNavigationEnhanced.tsx(86,5): error TS2322: Type 'LucideIcon' is not assignable to type 'ComponentType<{ className?: string; }>'.
+2025-09-05T17:55:52.5031635Z   Type 'ForwardRefExoticComponent<LucideProps>' is not assignable to type 'FunctionComponent<{ className?: string; }>'.
+2025-09-05T17:55:52.5032207Z     Types of property 'defaultProps' are incompatible.
+2025-09-05T17:55:52.5032764Z       Type 'Partial<LucideProps> | undefined' is not assignable to type 'Partial<{ className?: string; }> | undefined'.
+2025-09-05T17:55:52.5033792Z         Type 'Partial<LucideProps>' is not assignable to type 'Partial<{ className?: string; }>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:52.5034771Z           Types of property 'className' are incompatible.
+2025-09-05T17:55:52.5035176Z             Type 'string | undefined' is not assignable to type 'string'.
+2025-09-05T17:55:52.5035580Z               Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:52.5036687Z ##[error]src/components/layout/ResellerNavigationEnhanced.tsx(93,5): error TS2322: Type 'LucideIcon' is not assignable to type 'ComponentType<{ className?: string; }>'.
+2025-09-05T17:55:52.5038081Z   Type 'ForwardRefExoticComponent<LucideProps>' is not assignable to type 'FunctionComponent<{ className?: string; }>'.
+2025-09-05T17:55:52.5038654Z     Types of property 'defaultProps' are incompatible.
+2025-09-05T17:55:52.5039221Z       Type 'Partial<LucideProps> | undefined' is not assignable to type 'Partial<{ className?: string; }> | undefined'.
+2025-09-05T17:55:52.5040247Z         Type 'Partial<LucideProps>' is not assignable to type 'Partial<{ className?: string; }>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:52.5041177Z           Types of property 'className' are incompatible.
+2025-09-05T17:55:52.5041573Z             Type 'string | undefined' is not assignable to type 'string'.
+2025-09-05T17:55:52.5041974Z               Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:52.5043088Z ##[error]src/components/layout/ResellerNavigationEnhanced.tsx(101,5): error TS2322: Type 'LucideIcon' is not assignable to type 'ComponentType<{ className?: string; }>'.
+2025-09-05T17:55:52.5044631Z   Type 'ForwardRefExoticComponent<LucideProps>' is not assignable to type 'FunctionComponent<{ className?: string; }>'.
+2025-09-05T17:55:52.5045213Z     Types of property 'defaultProps' are incompatible.
+2025-09-05T17:55:52.5045775Z       Type 'Partial<LucideProps> | undefined' is not assignable to type 'Partial<{ className?: string; }> | undefined'.
+2025-09-05T17:55:52.5046793Z         Type 'Partial<LucideProps>' is not assignable to type 'Partial<{ className?: string; }>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:52.5047579Z           Types of property 'className' are incompatible.
+2025-09-05T17:55:52.5047966Z             Type 'string | undefined' is not assignable to type 'string'.
+2025-09-05T17:55:52.5048363Z               Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:52.5049473Z ##[error]src/components/layout/ResellerNavigationEnhanced.tsx(108,5): error TS2322: Type 'LucideIcon' is not assignable to type 'ComponentType<{ className?: string; }>'.
+2025-09-05T17:55:52.5050816Z   Type 'ForwardRefExoticComponent<LucideProps>' is not assignable to type 'FunctionComponent<{ className?: string; }>'.
+2025-09-05T17:55:52.5051528Z     Types of property 'defaultProps' are incompatible.
+2025-09-05T17:55:52.5052079Z       Type 'Partial<LucideProps> | undefined' is not assignable to type 'Partial<{ className?: string; }> | undefined'.
+2025-09-05T17:55:52.5053099Z         Type 'Partial<LucideProps>' is not assignable to type 'Partial<{ className?: string; }>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:52.5053883Z           Types of property 'className' are incompatible.
+2025-09-05T17:55:52.5054491Z             Type 'string | undefined' is not assignable to type 'string'.
+2025-09-05T17:55:52.5054888Z               Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:52.5056043Z ##[error]src/components/layout/ResellerNavigationEnhanced.tsx(115,5): error TS2322: Type 'LucideIcon' is not assignable to type 'ComponentType<{ className?: string; }>'.
+2025-09-05T17:55:52.5057411Z   Type 'ForwardRefExoticComponent<LucideProps>' is not assignable to type 'FunctionComponent<{ className?: string; }>'.
+2025-09-05T17:55:52.5057985Z     Types of property 'defaultProps' are incompatible.
+2025-09-05T17:55:52.5058540Z       Type 'Partial<LucideProps> | undefined' is not assignable to type 'Partial<{ className?: string; }> | undefined'.
+2025-09-05T17:55:52.5059558Z         Type 'Partial<LucideProps>' is not assignable to type 'Partial<{ className?: string; }>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:52.5060329Z           Types of property 'className' are incompatible.
+2025-09-05T17:55:52.5060719Z             Type 'string | undefined' is not assignable to type 'string'.
+2025-09-05T17:55:52.5061111Z               Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:52.5062269Z ##[error]src/components/marketing/MarketingResourceCenter.tsx(104,5): error TS2322: Type '"zip"' is not assignable to type '"html" | "pdf" | "pptx" | "docx" | "jpg" | "png" | "mp4"'.
+2025-09-05T17:55:52.5064051Z ##[error]src/components/provisioning/ProvisioningDashboard.tsx(4,33): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:52.5066037Z ##[error]src/components/provisioning/ProvisioningDashboard.tsx(5,59): error TS2307: Cannot find module '@dotmac/providers' or its corresponding type declarations.
+2025-09-05T17:55:52.5067859Z ##[error]src/components/provisioning/ProvisioningDashboard.tsx(71,42): error TS7006: Parameter 'request' implicitly has an 'any' type.
+2025-09-05T17:55:52.5069309Z ##[error]src/components/provisioning/ProvisioningDashboard.tsx(813,20): error TS18046: 'dayInstallations' is of type 'unknown'.
+2025-09-05T17:55:52.5070806Z ##[error]src/components/provisioning/ProvisioningDashboard.tsx(813,42): error TS7006: Parameter 'installation' implicitly has an 'any' type.
+2025-09-05T17:55:52.5072540Z ##[error]src/components/provisioning/__tests__/ProvisioningDashboard.test.tsx(18,8): error TS2307: Cannot find module '@dotmac/testing' or its corresponding type declarations.
+2025-09-05T17:55:52.5074547Z ##[error]src/components/provisioning/__tests__/ProvisioningDashboard.test.tsx(19,49): error TS2307: Cannot find module '@dotmac/testing' or its corresponding type declarations.
+2025-09-05T17:55:52.5076211Z ##[error]src/components/provisioning/__tests__/ProvisioningDashboard.test.tsx(422,59): error TS2322: Type 'any' is not assignable to type 'never'.
+2025-09-05T17:55:52.5077935Z ##[error]src/components/provisioning/__tests__/ProvisioningDashboard.test.tsx(502,7): error TS2322: Type '"Failed to load provisioning data"' is not assignable to type 'null'.
+2025-09-05T17:55:52.5079657Z ##[error]src/components/sales/SalesTools.tsx(3,22): error TS2307: Cannot find module '@dotmac/ui/reseller' or its corresponding type declarations.
+2025-09-05T17:55:52.5083672Z ##[error]src/components/sales/SalesTools.tsx(154,5): error TS2322: Type '{ services: never[]; contractTerm: number; discount: number; validUntil: string | undefined; }' is not assignable to type 'AsyncDefaultValues<{ customerName: string; customerEmail: string; customerPhone: string; customerAddress: string; services: { installation: number; type: string; speed: string; price: number; quantity: number; }[]; contractTerm: number; discount: number; validUntil: string; }> | { ...; } | undefined'.
+2025-09-05T17:55:52.5087657Z   Type '{ services: never[]; contractTerm: number; discount: number; validUntil: string | undefined; }' is not assignable to type '{ customerName?: string; customerEmail?: string; customerPhone?: string; customerAddress?: string; services?: ({ installation?: number; type?: string; speed?: string; price?: number; quantity?: number; } | undefined)[]; contractTerm?: number; discount?: number; validUntil?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:52.5089362Z     Types of property 'validUntil' are incompatible.
+2025-09-05T17:55:52.5089772Z       Type 'string | undefined' is not assignable to type 'string'.
+2025-09-05T17:55:52.5090168Z         Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:52.5091394Z ##[error]src/components/sales/SalesTools.tsx(269,50): error TS2345: Argument of type '(data: QuoteForm) => void' is not assignable to parameter of type 'SubmitHandler<TFieldValues>'.
+2025-09-05T17:55:52.5092505Z   Types of parameters 'data' and 'data' are incompatible.
+2025-09-05T17:55:52.5093731Z     Type 'TFieldValues' is not assignable to type '{ customerName: string; customerEmail: string; customerPhone: string; customerAddress: string; services: { installation: number; type: string; speed: string; price: number; quantity: number; }[]; contractTerm: number; discount: number; validUntil: string; }'.
+2025-09-05T17:55:52.5096219Z       Type 'FieldValues' is missing the following properties from type '{ customerName: string; customerEmail: string; customerPhone: string; customerAddress: string; services: { installation: number; type: string; speed: string; price: number; quantity: number; }[]; contractTerm: number; discount: number; validUntil: string; }': customerName, customerEmail, customerPhone, customerAddress, and 4 more.
+2025-09-05T17:55:52.5098462Z ##[error]src/components/sales/SalesTools.tsx(420,47): error TS2345: Argument of type '(data: QuoteForm) => void' is not assignable to parameter of type 'SubmitHandler<TFieldValues>'.
+2025-09-05T17:55:52.5099784Z   Types of parameters 'data' and 'data' are incompatible.
+2025-09-05T17:55:52.5101022Z     Type 'TFieldValues' is not assignable to type '{ customerName: string; customerEmail: string; customerPhone: string; customerAddress: string; services: { installation: number; type: string; speed: string; price: number; quantity: number; }[]; contractTerm: number; discount: number; validUntil: string; }'.
+2025-09-05T17:55:52.5103312Z       Type 'FieldValues' is missing the following properties from type '{ customerName: string; customerEmail: string; customerPhone: string; customerAddress: string; services: { installation: number; type: string; speed: string; price: number; quantity: number; }[]; contractTerm: number; discount: number; validUntil: string; }': customerName, customerEmail, customerPhone, customerAddress, and 4 more.
+2025-09-05T17:55:52.5107113Z ##[error]src/components/territory/__tests__/TerritoryManagement.test.tsx(130,42): error TS2345: Argument of type '{ territories: Territory[]; filteredTerritories: Territory[]; isLoading: boolean; error: null; filters: { searchTerm: string; sortBy: "revenue"; }; updateFilters: jest.Mock<any, any, any>; refreshData: jest.Mock<...>; }' is not assignable to parameter of type 'UseTerritoryDataReturn'.
+2025-09-05T17:55:52.5109732Z   Property 'isUsingMockData' is missing in type '{ territories: Territory[]; filteredTerritories: Territory[]; isLoading: boolean; error: null; filters: { searchTerm: string; sortBy: "revenue"; }; updateFilters: jest.Mock<any, any, any>; refreshData: jest.Mock<...>; }' but required in type 'UseTerritoryDataReturn'.
+2025-09-05T17:55:52.5113132Z ##[error]src/components/territory/__tests__/TerritoryManagement.test.tsx(135,44): error TS2345: Argument of type '{ isLoading: true; territories: Territory[]; filteredTerritories: Territory[]; error: null; filters: { searchTerm: string; sortBy: "revenue"; }; updateFilters: jest.Mock<any, any, any>; refreshData: jest.Mock<...>; }' is not assignable to parameter of type 'UseTerritoryDataReturn'.
+2025-09-05T17:55:52.5115952Z   Property 'isUsingMockData' is missing in type '{ isLoading: true; territories: Territory[]; filteredTerritories: Territory[]; error: null; filters: { searchTerm: string; sortBy: "revenue"; }; updateFilters: jest.Mock<any, any, any>; refreshData: jest.Mock<...>; }' but required in type 'UseTerritoryDataReturn'.
+2025-09-05T17:55:52.5119179Z ##[error]src/components/territory/__tests__/TerritoryManagement.test.tsx(147,44): error TS2345: Argument of type '{ isLoading: true; territories: Territory[]; filteredTerritories: Territory[]; error: null; filters: { searchTerm: string; sortBy: "revenue"; }; updateFilters: jest.Mock<any, any, any>; refreshData: jest.Mock<...>; }' is not assignable to parameter of type 'UseTerritoryDataReturn'.
+2025-09-05T17:55:52.5121738Z   Property 'isUsingMockData' is missing in type '{ isLoading: true; territories: Territory[]; filteredTerritories: Territory[]; error: null; filters: { searchTerm: string; sortBy: "revenue"; }; updateFilters: jest.Mock<any, any, any>; refreshData: jest.Mock<...>; }' but required in type 'UseTerritoryDataReturn'.
+2025-09-05T17:55:52.5125172Z ##[error]src/components/territory/__tests__/TerritoryManagement.test.tsx(162,44): error TS2345: Argument of type '{ error: string; isLoading: false; territories: Territory[]; filteredTerritories: Territory[]; filters: { searchTerm: string; sortBy: "revenue"; }; updateFilters: jest.Mock<any, any, any>; refreshData: jest.Mock<...>; }' is not assignable to parameter of type 'UseTerritoryDataReturn'.
+2025-09-05T17:55:52.5127790Z   Property 'isUsingMockData' is missing in type '{ error: string; isLoading: false; territories: Territory[]; filteredTerritories: Territory[]; filters: { searchTerm: string; sortBy: "revenue"; }; updateFilters: jest.Mock<any, any, any>; refreshData: jest.Mock<...>; }' but required in type 'UseTerritoryDataReturn'.
+2025-09-05T17:55:52.5131235Z ##[error]src/components/territory/__tests__/TerritoryManagement.test.tsx(176,44): error TS2345: Argument of type '{ error: string; isLoading: false; refreshData: jest.Mock<any, any, any>; territories: Territory[]; filteredTerritories: Territory[]; filters: { searchTerm: string; sortBy: "revenue"; }; updateFilters: jest.Mock<...>; }' is not assignable to parameter of type 'UseTerritoryDataReturn'.
+2025-09-05T17:55:52.5133821Z   Property 'isUsingMockData' is missing in type '{ error: string; isLoading: false; refreshData: jest.Mock<any, any, any>; territories: Territory[]; filteredTerritories: Territory[]; filters: { searchTerm: string; sortBy: "revenue"; }; updateFilters: jest.Mock<...>; }' but required in type 'UseTerritoryDataReturn'.
+2025-09-05T17:55:52.5137391Z ##[error]src/components/territory/__tests__/TerritoryManagement.test.tsx(306,44): error TS2345: Argument of type '{ filters: { searchTerm: string; sortBy: "growth"; region: string; }; territories: Territory[]; filteredTerritories: Territory[]; isLoading: boolean; error: null; updateFilters: jest.Mock<...>; refreshData: jest.Mock<...>; }' is not assignable to parameter of type 'UseTerritoryDataReturn'.
+2025-09-05T17:55:52.5140051Z   Property 'isUsingMockData' is missing in type '{ filters: { searchTerm: string; sortBy: "growth"; region: string; }; territories: Territory[]; filteredTerritories: Territory[]; isLoading: boolean; error: null; updateFilters: jest.Mock<...>; refreshData: jest.Mock<...>; }' but required in type 'UseTerritoryDataReturn'.
+2025-09-05T17:55:52.5141858Z ##[error]src/components/territory/__tests__/TerritoryManagement.test.tsx(326,9): error TS2322: Type '(Territory | undefined)[]' is not assignable to type 'Territory[]'.
+2025-09-05T17:55:52.5143170Z   Type 'Territory | undefined' is not assignable to type 'Territory'.
+2025-09-05T17:55:52.5143600Z     Type 'undefined' is not assignable to type 'Territory'.
+2025-09-05T17:55:52.5146314Z ##[error]src/components/territory/__tests__/TerritoryManagement.test.tsx(335,44): error TS2345: Argument of type '{ territories: never[]; filteredTerritories: never[]; isLoading: boolean; error: null; filters: { searchTerm: string; sortBy: "revenue"; }; updateFilters: jest.Mock<any, any, any>; refreshData: jest.Mock<...>; }' is not assignable to parameter of type 'UseTerritoryDataReturn'.
+2025-09-05T17:55:52.5148865Z   Property 'isUsingMockData' is missing in type '{ territories: never[]; filteredTerritories: never[]; isLoading: boolean; error: null; filters: { searchTerm: string; sortBy: "revenue"; }; updateFilters: jest.Mock<any, any, any>; refreshData: jest.Mock<...>; }' but required in type 'UseTerritoryDataReturn'.
+2025-09-05T17:55:52.5152075Z ##[error]src/components/territory/__tests__/TerritoryManagement.test.tsx(350,44): error TS2345: Argument of type '{ isLoading: true; territories: Territory[]; filteredTerritories: Territory[]; error: null; filters: { searchTerm: string; sortBy: "revenue"; }; updateFilters: jest.Mock<any, any, any>; refreshData: jest.Mock<...>; }' is not assignable to parameter of type 'UseTerritoryDataReturn'.
+2025-09-05T17:55:52.5154805Z   Property 'isUsingMockData' is missing in type '{ isLoading: true; territories: Territory[]; filteredTerritories: Territory[]; error: null; filters: { searchTerm: string; sortBy: "revenue"; }; updateFilters: jest.Mock<any, any, any>; refreshData: jest.Mock<...>; }' but required in type 'UseTerritoryDataReturn'.
+2025-09-05T17:55:52.5158112Z ##[error]src/components/territory/__tests__/TerritoryManagement.test.tsx(362,44): error TS2345: Argument of type '{ error: string; isLoading: false; territories: Territory[]; filteredTerritories: Territory[]; filters: { searchTerm: string; sortBy: "revenue"; }; updateFilters: jest.Mock<any, any, any>; refreshData: jest.Mock<...>; }' is not assignable to parameter of type 'UseTerritoryDataReturn'.
+2025-09-05T17:55:52.5160710Z   Property 'isUsingMockData' is missing in type '{ error: string; isLoading: false; territories: Territory[]; filteredTerritories: Territory[]; filters: { searchTerm: string; sortBy: "revenue"; }; updateFilters: jest.Mock<any, any, any>; refreshData: jest.Mock<...>; }' but required in type 'UseTerritoryDataReturn'.
+2025-09-05T17:55:52.5164038Z ##[error]src/components/territory/__tests__/TerritoryManagement.test.tsx(415,9): error TS2322: Type '{ id: string; name: string; region?: string; coordinates?: [number, number]; radius?: number; population?: number; households?: number; averageIncome?: number; competition?: "low" | "medium" | "high"; ... 9 more ...; opportunities?: { ...; }; }[]' is not assignable to type 'Territory[]'.
+2025-09-05T17:55:52.5166915Z   Type '{ id: string; name: string; region?: string; coordinates?: [number, number]; radius?: number; population?: number; households?: number; averageIncome?: number; competition?: "low" | "medium" | "high"; ... 9 more ...; opportunities?: { newDevelopments: number; businessParks: number; competitorWeakness: number; }; }' is not assignable to type 'Territory'.
+2025-09-05T17:55:52.5168956Z     Property 'region' is optional in type '{ id: string; name: string; region?: string; coordinates?: [number, number]; radius?: number; population?: number; households?: number; averageIncome?: number; competition?: "low" | "medium" | "high"; ... 9 more ...; opportunities?: { ...; }; }' but required in type 'Territory'.
+2025-09-05T17:55:52.5172011Z ##[error]src/components/territory/__tests__/TerritoryManagement.test.tsx(416,9): error TS2322: Type '{ id: string; name: string; region?: string; coordinates?: [number, number]; radius?: number; population?: number; households?: number; averageIncome?: number; competition?: "low" | "medium" | "high"; ... 9 more ...; opportunities?: { ...; }; }[]' is not assignable to type 'Territory[]'.
+2025-09-05T17:55:52.5175030Z   Type '{ id: string; name: string; region?: string; coordinates?: [number, number]; radius?: number; population?: number; households?: number; averageIncome?: number; competition?: "low" | "medium" | "high"; ... 9 more ...; opportunities?: { newDevelopments: number; businessParks: number; competitorWeakness: number; }; }' is not assignable to type 'Territory'.
+2025-09-05T17:55:52.5177092Z     Property 'region' is optional in type '{ id: string; name: string; region?: string; coordinates?: [number, number]; radius?: number; population?: number; households?: number; averageIncome?: number; competition?: "low" | "medium" | "high"; ... 9 more ...; opportunities?: { ...; }; }' but required in type 'Territory'.
+2025-09-05T17:55:52.5180365Z ##[error]src/components/territory/__tests__/TerritoryManagement.test.tsx(450,44): error TS2345: Argument of type '{ updateFilters: jest.Mock<any, any, any>; territories: Territory[]; filteredTerritories: Territory[]; isLoading: boolean; error: null; filters: { searchTerm: string; sortBy: "revenue"; }; refreshData: jest.Mock<...>; }' is not assignable to parameter of type 'UseTerritoryDataReturn'.
+2025-09-05T17:55:52.5182973Z   Property 'isUsingMockData' is missing in type '{ updateFilters: jest.Mock<any, any, any>; territories: Territory[]; filteredTerritories: Territory[]; isLoading: boolean; error: null; filters: { searchTerm: string; sortBy: "revenue"; }; refreshData: jest.Mock<...>; }' but required in type 'UseTerritoryDataReturn'.
+2025-09-05T17:55:52.5186437Z ##[error]src/components/territory/__tests__/TerritoryManagement.test.tsx(464,44): error TS2345: Argument of type '{ refreshData: jest.Mock<any, any, any>; territories: Territory[]; filteredTerritories: Territory[]; isLoading: boolean; error: null; filters: { searchTerm: string; sortBy: "revenue"; }; updateFilters: jest.Mock<...>; }' is not assignable to parameter of type 'UseTerritoryDataReturn'.
+2025-09-05T17:55:52.5189035Z   Property 'isUsingMockData' is missing in type '{ refreshData: jest.Mock<any, any, any>; territories: Territory[]; filteredTerritories: Territory[]; isLoading: boolean; error: null; filters: { searchTerm: string; sortBy: "revenue"; }; updateFilters: jest.Mock<...>; }' but required in type 'UseTerritoryDataReturn'.
+2025-09-05T17:55:52.5192300Z ##[error]src/components/territory/__tests__/TerritoryManagement.test.tsx(472,44): error TS2345: Argument of type '{ error: string; isLoading: false; refreshData: jest.Mock<any, any, any>; territories: Territory[]; filteredTerritories: Territory[]; filters: { searchTerm: string; sortBy: "revenue"; }; updateFilters: jest.Mock<...>; }' is not assignable to parameter of type 'UseTerritoryDataReturn'.
+2025-09-05T17:55:52.5195253Z   Property 'isUsingMockData' is missing in type '{ error: string; isLoading: false; refreshData: jest.Mock<any, any, any>; territories: Territory[]; filteredTerritories: Territory[]; filters: { searchTerm: string; sortBy: "revenue"; }; updateFilters: jest.Mock<...>; }' but required in type 'UseTerritoryDataReturn'.
+2025-09-05T17:55:52.5198564Z ##[error]src/components/territory/components/TerritoryFilters.tsx(29,21): error TS2379: Argument of type '{ searchTerm: string; sortBy: "revenue"; region: undefined; competitionLevel: undefined; }' is not assignable to parameter of type 'Partial<TerritoryFilters>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:52.5200313Z   Types of property 'region' are incompatible.
+2025-09-05T17:55:52.5200674Z     Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:52.5202765Z ##[error]src/components/territory/components/TerritoryFilters.tsx(84,46): error TS2379: Argument of type '{ region: string | undefined; }' is not assignable to parameter of type 'Partial<TerritoryFilters>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:52.5204480Z   Types of property 'region' are incompatible.
+2025-09-05T17:55:52.5205036Z     Type 'string | undefined' is not assignable to type 'string'.
+2025-09-05T17:55:52.5205437Z       Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:52.5206277Z ##[error]src/components/territory/components/TerritoryFilters.tsx(173,46): error TS2532: Object is possibly 'undefined'.
+2025-09-05T17:55:52.5207699Z ##[error]src/components/territory/components/TerritoryFilters.tsx(173,77): error TS2532: Object is possibly 'undefined'.
+2025-09-05T17:55:52.5209599Z ##[error]src/components/territory/hooks/useTerritoryData.ts(7,51): error TS2307: Cannot find module '@dotmac/headless/utils/production-data-guard' or its corresponding type declarations.
+2025-09-05T17:55:52.5211366Z ##[error]src/middleware.ts(6,72): error TS2307: Cannot find module '@dotmac/middleware' or its corresponding type declarations.
+2025-09-05T17:55:52.5212876Z ##[error]src/utils/accessibility.ts(15,5): error TS2322: Type 'HTMLElement | undefined' is not assignable to type 'HTMLElement'.
+2025-09-05T17:55:52.5213856Z   Type 'undefined' is not assignable to type 'HTMLElement'.
+2025-09-05T17:55:52.5215045Z ##[error]src/utils/accessibility.ts(16,5): error TS2322: Type 'HTMLElement | undefined' is not assignable to type 'HTMLElement'.
+2025-09-05T17:55:52.5216048Z   Type 'undefined' is not assignable to type 'HTMLElement'.
+2025-09-05T17:55:52.5216699Z ##[error]src/utils/accessibility.ts(209,19): error TS18048: 'r' is possibly 'undefined'.
+2025-09-05T17:55:52.5217794Z ##[error]src/utils/accessibility.ts(209,32): error TS18048: 'g' is possibly 'undefined'.
+2025-09-05T17:55:52.5218877Z ##[error]src/utils/accessibility.ts(209,45): error TS18048: 'b' is possibly 'undefined'.
+2025-09-05T17:55:52.5220301Z ##[error]src/utils/accessibility.ts(216,21): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+2025-09-05T17:55:52.5221307Z   Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:52.5222271Z ##[error]src/utils/accessibility.ts(217,21): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+2025-09-05T17:55:52.5223265Z   Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:52.5224399Z ##[error]src/utils/accessibility.ts(218,21): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+2025-09-05T17:55:52.5225607Z   Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:52.5227814Z ##[error]src/utils/logger.ts(69,39): error TS2379: Argument of type '{ userId: string | undefined; success: boolean; component: string; timestamp: number; }' is not assignable to parameter of type 'LogContext' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:52.5229304Z   Types of property 'userId' are incompatible.
+2025-09-05T17:55:52.5229695Z     Type 'string | undefined' is not assignable to type 'string'.
+2025-09-05T17:55:52.5230100Z       Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:52.5231379Z ##[error]tests/e2e/sales-process.spec.ts(17,8): error TS2307: Cannot find module '../../../testing/e2e/shared-scenarios/auth.scenarios' or its corresponding type declarations.
+2025-09-05T17:55:52.5232768Z ##[error]tests/e2e/sales-process.spec.ts(161,12): error TS2532: Object is possibly 'undefined'.
+2025-09-05T17:55:52.5234331Z ##[error]tests/e2e/sales-process.spec.ts(161,34): error TS2339: Property 'loadEventEnd' does not exist on type 'PerformanceEntry'.
+2025-09-05T17:55:52.5235916Z ##[error]tests/e2e/sales-process.spec.ts(172,11): error TS2451: Cannot redeclare block-scoped variable 'accessibilityScanResults'.
+2025-09-05T17:55:52.5237486Z ##[error]tests/e2e/sales-process.spec.ts(177,11): error TS2451: Cannot redeclare block-scoped variable 'accessibilityScanResults'.
+2025-09-05T17:55:52.5238942Z ##[error]tests/e2e/sales-process.spec.ts(182,11): error TS2451: Cannot redeclare block-scoped variable 'accessibilityScanResults'.
+2025-09-05T17:55:52.5240404Z ##[error]tests/e2e/sales-process.spec.ts(187,11): error TS2451: Cannot redeclare block-scoped variable 'accessibilityScanResults'.
+2025-09-05T17:55:52.5242063Z ##[error]tests/e2e/sales-process.spec.ts(192,11): error TS2451: Cannot redeclare block-scoped variable 'accessibilityScanResults'.
+2025-09-05T17:55:52.5243913Z ##[error]tests/e2e/territory-management.spec.ts(17,8): error TS2307: Cannot find module '../../../testing/e2e/shared-scenarios/auth.scenarios' or its corresponding type declarations.
+2025-09-05T17:55:52.5245619Z ##[error]tests/e2e/territory-management.spec.ts(161,12): error TS2532: Object is possibly 'undefined'.
+2025-09-05T17:55:52.5247069Z ##[error]tests/e2e/territory-management.spec.ts(161,34): error TS2339: Property 'loadEventEnd' does not exist on type 'PerformanceEntry'.
+2025-09-05T17:55:52.5248595Z ##[error]tests/e2e/territory-management.spec.ts(172,11): error TS2451: Cannot redeclare block-scoped variable 'accessibilityScanResults'.
+2025-09-05T17:55:52.5250118Z ##[error]tests/e2e/territory-management.spec.ts(177,11): error TS2451: Cannot redeclare block-scoped variable 'accessibilityScanResults'.
+2025-09-05T17:55:52.5251647Z ##[error]tests/e2e/territory-management.spec.ts(182,11): error TS2451: Cannot redeclare block-scoped variable 'accessibilityScanResults'.
+2025-09-05T17:55:52.5253160Z ##[error]tests/e2e/territory-management.spec.ts(187,11): error TS2451: Cannot redeclare block-scoped variable 'accessibilityScanResults'.
+2025-09-05T17:55:52.5254930Z ##[error]tests/e2e/territory-management.spec.ts(192,11): error TS2451: Cannot redeclare block-scoped variable 'accessibilityScanResults'.
+2025-09-05T17:55:52.5256325Z ##[error]../../playwright.config.unified.ts(68,7): error TS2769: No overload matches this call.
+2025-09-05T17:55:52.5257157Z   The last overload gave the following error.
+2025-09-05T17:55:52.5257552Z     Type 'string[]' is not assignable to type 'ReporterDescription'.
+2025-09-05T17:55:52.5257988Z       Type 'string[]' is not assignable to type 'readonly [string, any]'.
+2025-09-05T17:55:52.5258410Z         Target requires 2 element(s) but source may have fewer.
+2025-09-05T17:55:52.5260300Z           Type '{ name: string; use: { viewport: ViewportSize; userAgent: string; deviceScaleFactor: number; isMobile: boolean; hasTouch: boolean; defaultBrowserType: "chromium" | "firefox" | "webkit"; }; dependencies: string[]; } | { ...; } | { ...; }' is not assignable to type 'Project<PlaywrightTestOptions & CustomProperties<unknown>, PlaywrightWorkerOptions & CustomProperties<unknown>>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:52.5263404Z             Type '{ name: string; testMatch: RegExp; use: { permissions: string[]; serviceWorkers: string; viewport: ViewportSize; userAgent: string; deviceScaleFactor: number; isMobile: boolean; hasTouch: boolean; defaultBrowserType: "chromium" | "firefox" | "webkit"; }; dependencies: string[]; }' is not assignable to type 'Project<PlaywrightTestOptions & CustomProperties<unknown>, PlaywrightWorkerOptions & CustomProperties<unknown>>'.
+2025-09-05T17:55:52.5265087Z               Types of property 'use' are incompatible.
+2025-09-05T17:55:52.5266540Z                 Type '{ permissions: string[]; serviceWorkers: string; viewport: ViewportSize; userAgent: string; deviceScaleFactor: number; isMobile: boolean; hasTouch: boolean; defaultBrowserType: "chromium" | "firefox" | "webkit"; }' is not assignable to type 'UseOptions<PlaywrightTestOptions & CustomProperties<unknown>, PlaywrightWorkerOptions & CustomProperties<unknown>>'.
+2025-09-05T17:55:52.5268748Z                   Type '{ permissions: string[]; serviceWorkers: string; viewport: ViewportSize; userAgent: string; deviceScaleFactor: number; isMobile: boolean; hasTouch: boolean; defaultBrowserType: "chromium" | "firefox" | "webkit"; }' is not assignable to type 'Partial<PlaywrightTestOptions & CustomProperties<unknown>>'.
+2025-09-05T17:55:52.5269890Z                     Types of property 'serviceWorkers' are incompatible.
+2025-09-05T17:55:52.5270322Z                       Type 'string' is not assignable to type 'ServiceWorkerPolicy'.
+2025-09-05T17:55:52.5272166Z                         Type '{ name: string; testMatch: RegExp; use: { permissions: string[]; serviceWorkers: string; viewport: ViewportSize; userAgent: string; deviceScaleFactor: number; isMobile: boolean; hasTouch: boolean; defaultBrowserType: "chromium" | "firefox" | "webkit"; }; dependencies: string[]; }' is not assignable to type 'Project<PlaywrightTestOptions & CustomProperties<unknown>, PlaywrightWorkerOptions & CustomProperties<unknown>>'.
+2025-09-05T17:55:52.5273648Z                           Types of property 'use' are incompatible.
+2025-09-05T17:55:52.5275287Z                             Type '{ permissions: string[]; serviceWorkers: string; viewport: ViewportSize; userAgent: string; deviceScaleFactor: number; isMobile: boolean; hasTouch: boolean; defaultBrowserType: "chromium" | "firefox" | "webkit"; }' is not assignable to type 'UseOptions<PlaywrightTestOptions & CustomProperties<unknown>, PlaywrightWorkerOptions & CustomProperties<unknown>>'.
+2025-09-05T17:55:52.5277493Z                               Type '{ permissions: string[]; serviceWorkers: string; viewport: ViewportSize; userAgent: string; deviceScaleFactor: number; isMobile: boolean; hasTouch: boolean; defaultBrowserType: "chromium" | "firefox" | "webkit"; }' is not assignable to type 'Partial<PlaywrightTestOptions & CustomProperties<unknown>>'.
+2025-09-05T17:55:52.5278645Z                                 Types of property 'serviceWorkers' are incompatible.
+2025-09-05T17:55:52.5279092Z                                   Type 'string' is not assignable to type 'ServiceWorkerPolicy'.
+2025-09-05T17:55:52.5280795Z                                     Type '{ name: string; testMatch: RegExp; use: { reducedMotion: string; forcedColors: string; viewport: ViewportSize; userAgent: string; deviceScaleFactor: number; isMobile: boolean; hasTouch: boolean; defaultBrowserType: "chromium" | "firefox" | "webkit"; }; dependencies: string[]; }' is not assignable to type 'Project<PlaywrightTestOptions & CustomProperties<unknown>, PlaywrightWorkerOptions & CustomProperties<unknown>>'.
+2025-09-05T17:55:52.5282275Z                                       Types of property 'use' are incompatible.
+2025-09-05T17:55:52.5283244Z                                         Object literal may only specify known properties, and 'reducedMotion' does not exist in type 'UseOptions<PlaywrightTestOptions & CustomProperties<unknown>, PlaywrightWorkerOptions & CustomProperties<unknown>>'.
+2025-09-05T17:55:52.5285547Z ##[error]../../playwright.config.unified.ts(131,7): error TS2769: No overload matches this call.
+2025-09-05T17:55:52.5286507Z   The last overload gave the following error.
+2025-09-05T17:55:52.5286908Z     Type 'string[]' is not assignable to type 'ReporterDescription'.
+2025-09-05T17:55:52.5287356Z       Type 'string[]' is not assignable to type 'readonly [string, any]'.
+2025-09-05T17:55:52.5287772Z         Target requires 2 element(s) but source may have fewer.
+2025-09-05T17:55:52.5289666Z           Type '{ name: string; use: { viewport: ViewportSize; userAgent: string; deviceScaleFactor: number; isMobile: boolean; hasTouch: boolean; defaultBrowserType: "chromium" | "firefox" | "webkit"; }; dependencies: string[]; } | { ...; } | { ...; }' is not assignable to type 'Project<PlaywrightTestOptions & CustomProperties<unknown>, PlaywrightWorkerOptions & CustomProperties<unknown>>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:52.5292814Z             Type '{ name: string; testMatch: RegExp; use: { permissions: string[]; serviceWorkers: string; viewport: ViewportSize; userAgent: string; deviceScaleFactor: number; isMobile: boolean; hasTouch: boolean; defaultBrowserType: "chromium" | "firefox" | "webkit"; }; dependencies: string[]; }' is not assignable to type 'Project<PlaywrightTestOptions & CustomProperties<unknown>, PlaywrightWorkerOptions & CustomProperties<unknown>>'.
+2025-09-05T17:55:52.5294674Z               Types of property 'use' are incompatible.
+2025-09-05T17:55:52.5296371Z                 Type '{ permissions: string[]; serviceWorkers: string; viewport: ViewportSize; userAgent: string; deviceScaleFactor: number; isMobile: boolean; hasTouch: boolean; defaultBrowserType: "chromium" | "firefox" | "webkit"; }' is not assignable to type 'UseOptions<PlaywrightTestOptions & CustomProperties<unknown>, PlaywrightWorkerOptions & CustomProperties<unknown>>'.
+2025-09-05T17:55:52.5298586Z                   Type '{ permissions: string[]; serviceWorkers: string; viewport: ViewportSize; userAgent: string; deviceScaleFactor: number; isMobile: boolean; hasTouch: boolean; defaultBrowserType: "chromium" | "firefox" | "webkit"; }' is not assignable to type 'Partial<PlaywrightTestOptions & CustomProperties<unknown>>'.
+2025-09-05T17:55:52.5299728Z                     Types of property 'serviceWorkers' are incompatible.
+2025-09-05T17:55:52.5300155Z                       Type 'string' is not assignable to type 'ServiceWorkerPolicy'.
+2025-09-05T17:55:52.5301867Z                         Type '{ name: string; testMatch: RegExp; use: { permissions: string[]; serviceWorkers: string; viewport: ViewportSize; userAgent: string; deviceScaleFactor: number; isMobile: boolean; hasTouch: boolean; defaultBrowserType: "chromium" | "firefox" | "webkit"; }; dependencies: string[]; }' is not assignable to type 'Project<PlaywrightTestOptions & CustomProperties<unknown>, PlaywrightWorkerOptions & CustomProperties<unknown>>'.
+2025-09-05T17:55:52.5303338Z                           Types of property 'use' are incompatible.
+2025-09-05T17:55:52.5304989Z                             Type '{ permissions: string[]; serviceWorkers: string; viewport: ViewportSize; userAgent: string; deviceScaleFactor: number; isMobile: boolean; hasTouch: boolean; defaultBrowserType: "chromium" | "firefox" | "webkit"; }' is not assignable to type 'UseOptions<PlaywrightTestOptions & CustomProperties<unknown>, PlaywrightWorkerOptions & CustomProperties<unknown>>'.
+2025-09-05T17:55:52.5307695Z                               Type '{ permissions: string[]; serviceWorkers: string; viewport: ViewportSize; userAgent: string; deviceScaleFactor: number; isMobile: boolean; hasTouch: boolean; defaultBrowserType: "chromium" | "firefox" | "webkit"; }' is not assignable to type 'Partial<PlaywrightTestOptions & CustomProperties<unknown>>'.
+2025-09-05T17:55:52.5308996Z                                 Types of property 'serviceWorkers' are incompatible.
+2025-09-05T17:55:52.5309445Z                                   Type 'string' is not assignable to type 'ServiceWorkerPolicy'.
+2025-09-05T17:55:52.5311169Z                                     Type '{ name: string; testMatch: RegExp; use: { reducedMotion: string; forcedColors: string; viewport: ViewportSize; userAgent: string; deviceScaleFactor: number; isMobile: boolean; hasTouch: boolean; defaultBrowserType: "chromium" | "firefox" | "webkit"; }; dependencies: string[]; }' is not assignable to type 'Project<PlaywrightTestOptions & CustomProperties<unknown>, PlaywrightWorkerOptions & CustomProperties<unknown>>'.
+2025-09-05T17:55:52.5312655Z                                       Types of property 'use' are incompatible.
+2025-09-05T17:55:52.5313620Z                                         Object literal may only specify known properties, and 'reducedMotion' does not exist in type 'UseOptions<PlaywrightTestOptions & CustomProperties<unknown>, PlaywrightWorkerOptions & CustomProperties<unknown>>'.
+2025-09-05T17:55:52.5315068Z ##[error]../../playwright.config.unified.ts(157,7): error TS2769: No overload matches this call.
+2025-09-05T17:55:52.5315975Z   The last overload gave the following error.
+2025-09-05T17:55:52.5316366Z     Type 'string[]' is not assignable to type 'ReporterDescription'.
+2025-09-05T17:55:52.5316803Z       Type 'string[]' is not assignable to type 'readonly [string, any]'.
+2025-09-05T17:55:52.5317219Z         Target requires 2 element(s) but source may have fewer.
+2025-09-05T17:55:52.5319086Z           Type '{ name: string; use: { viewport: ViewportSize; userAgent: string; deviceScaleFactor: number; isMobile: boolean; hasTouch: boolean; defaultBrowserType: "chromium" | "firefox" | "webkit"; }; dependencies: string[]; } | { ...; } | { ...; }' is not assignable to type 'Project<PlaywrightTestOptions & CustomProperties<unknown>, PlaywrightWorkerOptions & CustomProperties<unknown>>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:52.5322155Z             Type '{ name: string; testMatch: RegExp; use: { permissions: string[]; serviceWorkers: string; viewport: ViewportSize; userAgent: string; deviceScaleFactor: number; isMobile: boolean; hasTouch: boolean; defaultBrowserType: "chromium" | "firefox" | "webkit"; }; dependencies: string[]; }' is not assignable to type 'Project<PlaywrightTestOptions & CustomProperties<unknown>, PlaywrightWorkerOptions & CustomProperties<unknown>>'.
+2025-09-05T17:55:52.5323613Z               Types of property 'use' are incompatible.
+2025-09-05T17:55:52.5325315Z                 Type '{ permissions: string[]; serviceWorkers: string; viewport: ViewportSize; userAgent: string; deviceScaleFactor: number; isMobile: boolean; hasTouch: boolean; defaultBrowserType: "chromium" | "firefox" | "webkit"; }' is not assignable to type 'UseOptions<PlaywrightTestOptions & CustomProperties<unknown>, PlaywrightWorkerOptions & CustomProperties<unknown>>'.
+2025-09-05T17:55:52.5327527Z                   Type '{ permissions: string[]; serviceWorkers: string; viewport: ViewportSize; userAgent: string; deviceScaleFactor: number; isMobile: boolean; hasTouch: boolean; defaultBrowserType: "chromium" | "firefox" | "webkit"; }' is not assignable to type 'Partial<PlaywrightTestOptions & CustomProperties<unknown>>'.
+2025-09-05T17:55:52.5328665Z                     Types of property 'serviceWorkers' are incompatible.
+2025-09-05T17:55:52.5329097Z                       Type 'string' is not assignable to type 'ServiceWorkerPolicy'.
+2025-09-05T17:55:52.5330796Z                         Type '{ name: string; testMatch: RegExp; use: { permissions: string[]; serviceWorkers: string; viewport: ViewportSize; userAgent: string; deviceScaleFactor: number; isMobile: boolean; hasTouch: boolean; defaultBrowserType: "chromium" | "firefox" | "webkit"; }; dependencies: string[]; }' is not assignable to type 'Project<PlaywrightTestOptions & CustomProperties<unknown>, PlaywrightWorkerOptions & CustomProperties<unknown>>'.
+2025-09-05T17:55:52.5332385Z                           Types of property 'use' are incompatible.
+2025-09-05T17:55:52.5333855Z                             Type '{ permissions: string[]; serviceWorkers: string; viewport: ViewportSize; userAgent: string; deviceScaleFactor: number; isMobile: boolean; hasTouch: boolean; defaultBrowserType: "chromium" | "firefox" | "webkit"; }' is not assignable to type 'UseOptions<PlaywrightTestOptions & CustomProperties<unknown>, PlaywrightWorkerOptions & CustomProperties<unknown>>'.
+2025-09-05T17:55:52.5336393Z                               Type '{ permissions: string[]; serviceWorkers: string; viewport: ViewportSize; userAgent: string; deviceScaleFactor: number; isMobile: boolean; hasTouch: boolean; defaultBrowserType: "chromium" | "firefox" | "webkit"; }' is not assignable to type 'Partial<PlaywrightTestOptions & CustomProperties<unknown>>'.
+2025-09-05T17:55:52.5337555Z                                 Types of property 'serviceWorkers' are incompatible.
+2025-09-05T17:55:52.5338006Z                                   Type 'string' is not assignable to type 'ServiceWorkerPolicy'.
+2025-09-05T17:55:52.5339718Z                                     Type '{ name: string; testMatch: RegExp; use: { reducedMotion: string; forcedColors: string; viewport: ViewportSize; userAgent: string; deviceScaleFactor: number; isMobile: boolean; hasTouch: boolean; defaultBrowserType: "chromium" | "firefox" | "webkit"; }; dependencies: string[]; }' is not assignable to type 'Project<PlaywrightTestOptions & CustomProperties<unknown>, PlaywrightWorkerOptions & CustomProperties<unknown>>'.
+2025-09-05T17:55:52.5341353Z                                       Types of property 'use' are incompatible.
+2025-09-05T17:55:52.5342328Z                                         Object literal may only specify known properties, and 'reducedMotion' does not exist in type 'UseOptions<PlaywrightTestOptions & CustomProperties<unknown>, PlaywrightWorkerOptions & CustomProperties<unknown>>'.
+2025-09-05T17:55:52.5343567Z ##[error]../../playwright.config.unified.ts(180,17): error TS2769: No overload matches this call.
+2025-09-05T17:55:52.5344697Z   The last overload gave the following error.
+2025-09-05T17:55:52.5345100Z     Type 'string[]' is not assignable to type 'ReporterDescription'.
+2025-09-05T17:55:52.5345540Z       Type 'string[]' is not assignable to type 'readonly [string, any]'.
+2025-09-05T17:55:52.5345953Z         Target requires 2 element(s) but source may have fewer.
+2025-09-05T17:55:52.5347829Z           Type '{ name: string; use: { viewport: ViewportSize; userAgent: string; deviceScaleFactor: number; isMobile: boolean; hasTouch: boolean; defaultBrowserType: "chromium" | "firefox" | "webkit"; }; dependencies: string[]; } | { ...; } | { ...; }' is not assignable to type 'Project<PlaywrightTestOptions & CustomProperties<unknown>, PlaywrightWorkerOptions & CustomProperties<unknown>>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:52.5350913Z             Type '{ name: string; testMatch: RegExp; use: { permissions: string[]; serviceWorkers: string; viewport: ViewportSize; userAgent: string; deviceScaleFactor: number; isMobile: boolean; hasTouch: boolean; defaultBrowserType: "chromium" | "firefox" | "webkit"; }; dependencies: string[]; }' is not assignable to type 'Project<PlaywrightTestOptions & CustomProperties<unknown>, PlaywrightWorkerOptions & CustomProperties<unknown>>'.
+2025-09-05T17:55:52.5352374Z               Types of property 'use' are incompatible.
+2025-09-05T17:55:52.5353824Z                 Type '{ permissions: string[]; serviceWorkers: string; viewport: ViewportSize; userAgent: string; deviceScaleFactor: number; isMobile: boolean; hasTouch: boolean; defaultBrowserType: "chromium" | "firefox" | "webkit"; }' is not assignable to type 'UseOptions<PlaywrightTestOptions & CustomProperties<unknown>, PlaywrightWorkerOptions & CustomProperties<unknown>>'.
+2025-09-05T17:55:52.5356393Z                   Type '{ permissions: string[]; serviceWorkers: string; viewport: ViewportSize; userAgent: string; deviceScaleFactor: number; isMobile: boolean; hasTouch: boolean; defaultBrowserType: "chromium" | "firefox" | "webkit"; }' is not assignable to type 'Partial<PlaywrightTestOptions & CustomProperties<unknown>>'.
+2025-09-05T17:55:52.5357541Z                     Types of property 'serviceWorkers' are incompatible.
+2025-09-05T17:55:52.5357967Z                       Type 'string' is not assignable to type 'ServiceWorkerPolicy'.
+2025-09-05T17:55:52.5359673Z                         Type '{ name: string; testMatch: RegExp; use: { permissions: string[]; serviceWorkers: string; viewport: ViewportSize; userAgent: string; deviceScaleFactor: number; isMobile: boolean; hasTouch: boolean; defaultBrowserType: "chromium" | "firefox" | "webkit"; }; dependencies: string[]; }' is not assignable to type 'Project<PlaywrightTestOptions & CustomProperties<unknown>, PlaywrightWorkerOptions & CustomProperties<unknown>>'.
+2025-09-05T17:55:52.5361151Z                           Types of property 'use' are incompatible.
+2025-09-05T17:55:52.5362607Z                             Type '{ permissions: string[]; serviceWorkers: string; viewport: ViewportSize; userAgent: string; deviceScaleFactor: number; isMobile: boolean; hasTouch: boolean; defaultBrowserType: "chromium" | "firefox" | "webkit"; }' is not assignable to type 'UseOptions<PlaywrightTestOptions & CustomProperties<unknown>, PlaywrightWorkerOptions & CustomProperties<unknown>>'.
+2025-09-05T17:55:52.5364976Z                               Type '{ permissions: string[]; serviceWorkers: string; viewport: ViewportSize; userAgent: string; deviceScaleFactor: number; isMobile: boolean; hasTouch: boolean; defaultBrowserType: "chromium" | "firefox" | "webkit"; }' is not assignable to type 'Partial<PlaywrightTestOptions & CustomProperties<unknown>>'.
+2025-09-05T17:55:52.5366262Z                                 Types of property 'serviceWorkers' are incompatible.
+2025-09-05T17:55:52.5366714Z                                   Type 'string' is not assignable to type 'ServiceWorkerPolicy'.
+2025-09-05T17:55:52.5368421Z                                     Type '{ name: string; testMatch: RegExp; use: { reducedMotion: string; forcedColors: string; viewport: ViewportSize; userAgent: string; deviceScaleFactor: number; isMobile: boolean; hasTouch: boolean; defaultBrowserType: "chromium" | "firefox" | "webkit"; }; dependencies: string[]; }' is not assignable to type 'Project<PlaywrightTestOptions & CustomProperties<unknown>, PlaywrightWorkerOptions & CustomProperties<unknown>>'.
+2025-09-05T17:55:52.5369892Z                                       Types of property 'use' are incompatible.
+2025-09-05T17:55:52.5370847Z                                         Object literal may only specify known properties, and 'reducedMotion' does not exist in type 'UseOptions<PlaywrightTestOptions & CustomProperties<unknown>, PlaywrightWorkerOptions & CustomProperties<unknown>>'.
+2025-09-05T17:55:52.5372510Z ##[error]../../tests/auth/auth-helpers.ts(6,10): error TS1484: 'Page' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+2025-09-05T17:55:52.5374497Z ##[error]../../tests/auth/auth-helpers.ts(6,16): error TS1484: 'Browser' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+2025-09-05T17:55:52.5376332Z ##[error]../../tests/auth/auth-helpers.ts(6,25): error TS1484: 'BrowserContext' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+2025-09-05T17:55:52.5377655Z ##[error]../../tests/auth/auth-helpers.ts(66,54): error TS18048: 'user' is possibly 'undefined'.
+2025-09-05T17:55:52.5378763Z ##[error]../../tests/auth/auth-helpers.ts(90,19): error TS18048: 'user' is possibly 'undefined'.
+2025-09-05T17:55:52.5379855Z ##[error]../../tests/auth/auth-helpers.ts(116,19): error TS18048: 'user' is possibly 'undefined'.
+2025-09-05T17:55:52.5380957Z ##[error]../../tests/auth/auth-helpers.ts(145,19): error TS18048: 'user' is possibly 'undefined'.
+2025-09-05T17:55:52.5382229Z ##[error]../../tests/auth/auth-helpers.ts(181,33): error TS18048: 'user' is possibly 'undefined'.
+2025-09-05T17:55:52.5383316Z ##[error]../../tests/auth/auth-helpers.ts(183,63): error TS18048: 'user' is possibly 'undefined'.
+2025-09-05T17:55:52.5385123Z ##[error]../../tests/fixtures/api-behaviors.ts(6,10): error TS1484: 'Page' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+2025-09-05T17:55:52.5386886Z ##[error]../../tests/fixtures/api-behaviors.ts(6,16): error TS1484: 'Route' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+2025-09-05T17:55:52.5390869Z ##[error]../../tests/fixtures/api-behaviors.ts(75,32): error TS2379: Argument of type '{ status: number; contentType: string; headers: Record<string, string> | undefined; body: string; }' is not assignable to parameter of type '{ body?: string | Buffer<ArrayBufferLike>; contentType?: string; headers?: { [key: string]: string; }; json?: any; path?: string; response?: APIResponse; status?: number; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:52.5392833Z   Types of property 'headers' are incompatible.
+2025-09-05T17:55:52.5393333Z     Type 'Record<string, string> | undefined' is not assignable to type '{ [key: string]: string; }'.
+2025-09-05T17:55:52.5393884Z       Type 'undefined' is not assignable to type '{ [key: string]: string; }'.
+2025-09-05T17:55:52.5395009Z  ELIFECYCLE  Command failed with exit code 2.
+2025-09-05T17:55:52.5500766Z ##[error]Process completed with exit code 2.

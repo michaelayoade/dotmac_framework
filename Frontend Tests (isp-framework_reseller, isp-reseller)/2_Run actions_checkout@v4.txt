@@ -1,0 +1,73 @@
+﻿2025-09-05T17:55:14.2059778Z ##[group]Run actions/checkout@v4
+2025-09-05T17:55:14.2061112Z with:
+2025-09-05T17:55:14.2061943Z   repository: michaelayoade/dotmac_framework
+2025-09-05T17:55:14.2063285Z   token: ***
+2025-09-05T17:55:14.2064034Z   ssh-strict: true
+2025-09-05T17:55:14.2065043Z   ssh-user: git
+2025-09-05T17:55:14.2065838Z   persist-credentials: true
+2025-09-05T17:55:14.2066732Z   clean: true
+2025-09-05T17:55:14.2067526Z   sparse-checkout-cone-mode: true
+2025-09-05T17:55:14.2068494Z   fetch-depth: 1
+2025-09-05T17:55:14.2069256Z   fetch-tags: false
+2025-09-05T17:55:14.2070056Z   show-progress: true
+2025-09-05T17:55:14.2070872Z   lfs: false
+2025-09-05T17:55:14.2071611Z   submodules: false
+2025-09-05T17:55:14.2072417Z   set-safe-directory: true
+2025-09-05T17:55:14.2073559Z env:
+2025-09-05T17:55:14.2074399Z   PYTHON_VERSION: 3.9
+2025-09-05T17:55:14.2075211Z   NODE_VERSION: 18
+2025-09-05T17:55:14.2075979Z   PNPM_VERSION: 8
+2025-09-05T17:55:14.2076740Z ##[endgroup]
+2025-09-05T17:55:14.3145432Z Syncing repository: michaelayoade/dotmac_framework
+2025-09-05T17:55:14.3148111Z ##[group]Getting Git version info
+2025-09-05T17:55:14.3149586Z Working directory is '/home/runner/work/dotmac_framework/dotmac_framework'
+2025-09-05T17:55:14.3151568Z [command]/usr/bin/git version
+2025-09-05T17:55:14.3239515Z git version 2.51.0
+2025-09-05T17:55:14.3265357Z ##[endgroup]
+2025-09-05T17:55:14.3279528Z Temporarily overriding HOME='/home/runner/work/_temp/cb03778c-955e-49f9-a0fb-90a74765258f' before making global git config changes
+2025-09-05T17:55:14.3282355Z Adding repository directory to the temporary git global config as a safe directory
+2025-09-05T17:55:14.3290962Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/dotmac_framework/dotmac_framework
+2025-09-05T17:55:14.3325848Z Deleting the contents of '/home/runner/work/dotmac_framework/dotmac_framework'
+2025-09-05T17:55:14.3329093Z ##[group]Initializing the repository
+2025-09-05T17:55:14.3333099Z [command]/usr/bin/git init /home/runner/work/dotmac_framework/dotmac_framework
+2025-09-05T17:55:14.3410692Z hint: Using 'master' as the name for the initial branch. This default branch name
+2025-09-05T17:55:14.3412754Z hint: is subject to change. To configure the initial branch name to use in all
+2025-09-05T17:55:14.3414763Z hint: of your new repositories, which will suppress this warning, call:
+2025-09-05T17:55:14.3416660Z hint:
+2025-09-05T17:55:14.3417564Z hint: 	git config --global init.defaultBranch <name>
+2025-09-05T17:55:14.3418692Z hint:
+2025-09-05T17:55:14.3419754Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2025-09-05T17:55:14.3421717Z hint: 'development'. The just-created branch can be renamed via this command:
+2025-09-05T17:55:14.3423100Z hint:
+2025-09-05T17:55:14.3423862Z hint: 	git branch -m <name>
+2025-09-05T17:55:14.3425039Z hint:
+2025-09-05T17:55:14.3426485Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2025-09-05T17:55:14.3428653Z Initialized empty Git repository in /home/runner/work/dotmac_framework/dotmac_framework/.git/
+2025-09-05T17:55:14.3431935Z [command]/usr/bin/git remote add origin https://github.com/michaelayoade/dotmac_framework
+2025-09-05T17:55:14.3464627Z ##[endgroup]
+2025-09-05T17:55:14.3465992Z ##[group]Disabling automatic garbage collection
+2025-09-05T17:55:14.3468422Z [command]/usr/bin/git config --local gc.auto 0
+2025-09-05T17:55:14.3497766Z ##[endgroup]
+2025-09-05T17:55:14.3500037Z ##[group]Setting up auth
+2025-09-05T17:55:14.3505059Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-09-05T17:55:14.3537443Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-09-05T17:55:14.3902832Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-09-05T17:55:14.3940999Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-09-05T17:55:14.4180964Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2025-09-05T17:55:14.4215041Z ##[endgroup]
+2025-09-05T17:55:14.4217647Z ##[group]Fetching the repository
+2025-09-05T17:55:14.4234673Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +a6ad6a37be5e8b46de83550ce713ab9fe6f4f8de:refs/remotes/origin/main
+2025-09-05T17:55:16.5191186Z From https://github.com/michaelayoade/dotmac_framework
+2025-09-05T17:55:16.5194908Z  * [new ref]         a6ad6a37be5e8b46de83550ce713ab9fe6f4f8de -> origin/main
+2025-09-05T17:55:16.5225384Z ##[endgroup]
+2025-09-05T17:55:16.5227883Z ##[group]Determining the checkout info
+2025-09-05T17:55:16.5228916Z ##[endgroup]
+2025-09-05T17:55:16.5232428Z [command]/usr/bin/git sparse-checkout disable
+2025-09-05T17:55:16.5272404Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2025-09-05T17:55:16.5299654Z ##[group]Checking out the ref
+2025-09-05T17:55:16.5302674Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2025-09-05T17:55:16.9257308Z Switched to a new branch 'main'
+2025-09-05T17:55:16.9259052Z branch 'main' set up to track 'origin/main'.
+2025-09-05T17:55:16.9273097Z ##[endgroup]
+2025-09-05T17:55:16.9316466Z [command]/usr/bin/git log -1 --format=%H
+2025-09-05T17:55:16.9339866Z a6ad6a37be5e8b46de83550ce713ab9fe6f4f8de

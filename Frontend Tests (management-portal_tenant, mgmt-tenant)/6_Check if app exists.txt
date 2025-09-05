@@ -1,0 +1,16 @@
+﻿2025-09-05T17:55:25.1141278Z ##[group]Run if [ -d "./frontend/management-portal/tenant" ] && [ -f "./frontend/management-portal/tenant/package.json" ]; then
+2025-09-05T17:55:25.1142111Z [36;1mif [ -d "./frontend/management-portal/tenant" ] && [ -f "./frontend/management-portal/tenant/package.json" ]; then[0m
+2025-09-05T17:55:25.1142867Z [36;1m  echo "exists=true" >> $GITHUB_OUTPUT[0m
+2025-09-05T17:55:25.1143189Z [36;1m  echo "✅ App management-portal/tenant exists"[0m
+2025-09-05T17:55:25.1143461Z [36;1melse[0m
+2025-09-05T17:55:25.1143673Z [36;1m  echo "exists=false" >> $GITHUB_OUTPUT[0m
+2025-09-05T17:55:25.1144033Z [36;1m  echo "⚠️ App management-portal/tenant does not exist, skipping"[0m
+2025-09-05T17:55:25.1144349Z [36;1mfi[0m
+2025-09-05T17:55:25.1338453Z shell: /usr/bin/bash -e {0}
+2025-09-05T17:55:25.1338715Z env:
+2025-09-05T17:55:25.1338899Z   PYTHON_VERSION: 3.9
+2025-09-05T17:55:25.1339109Z   NODE_VERSION: 18
+2025-09-05T17:55:25.1339512Z   PNPM_VERSION: 8
+2025-09-05T17:55:25.1339763Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2025-09-05T17:55:25.1340092Z ##[endgroup]
+2025-09-05T17:55:25.1413999Z ✅ App management-portal/tenant exists

@@ -1,0 +1,794 @@
+﻿2025-09-05T17:55:11.9186751Z Current runner version: '2.328.0'
+2025-09-05T17:55:11.9210936Z ##[group]Runner Image Provisioner
+2025-09-05T17:55:11.9211830Z Hosted Compute Agent
+2025-09-05T17:55:11.9212370Z Version: 20250829.383
+2025-09-05T17:55:11.9212969Z Commit: 27cb235aab5b0e52e153a26cd86b4742e89dac5d
+2025-09-05T17:55:11.9213632Z Build Date: 2025-08-29T13:48:48Z
+2025-09-05T17:55:11.9214297Z ##[endgroup]
+2025-09-05T17:55:11.9214818Z ##[group]Operating System
+2025-09-05T17:55:11.9215647Z Ubuntu
+2025-09-05T17:55:11.9216230Z 24.04.3
+2025-09-05T17:55:11.9216721Z LTS
+2025-09-05T17:55:11.9217136Z ##[endgroup]
+2025-09-05T17:55:11.9217671Z ##[group]Runner Image
+2025-09-05T17:55:11.9218241Z Image: ubuntu-24.04
+2025-09-05T17:55:11.9218702Z Version: 20250831.1.0
+2025-09-05T17:55:11.9219748Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20250831.1/images/ubuntu/Ubuntu2404-Readme.md
+2025-09-05T17:55:11.9221232Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20250831.1
+2025-09-05T17:55:11.9222267Z ##[endgroup]
+2025-09-05T17:55:11.9223489Z ##[group]GITHUB_TOKEN Permissions
+2025-09-05T17:55:11.9225565Z Checks: write
+2025-09-05T17:55:11.9226138Z Contents: read
+2025-09-05T17:55:11.9226589Z Metadata: read
+2025-09-05T17:55:11.9227136Z PullRequests: read
+2025-09-05T17:55:11.9227701Z Statuses: write
+2025-09-05T17:55:11.9228154Z ##[endgroup]
+2025-09-05T17:55:11.9230276Z Secret source: Actions
+2025-09-05T17:55:11.9230969Z Prepare workflow directory
+2025-09-05T17:55:11.9618708Z Prepare all required actions
+2025-09-05T17:55:11.9675189Z Getting action download info
+2025-09-05T17:55:12.4951744Z Download action repository 'actions/checkout@v4' (SHA:08eba0b27e820071cde6df949e0beb9ba4906955)
+2025-09-05T17:55:12.7057989Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2025-09-05T17:55:12.7946168Z Download action repository 'pnpm/action-setup@v2' (SHA:eae0cfeb286e66ffb5155f1a79b90583a127a68b)
+2025-09-05T17:55:13.7483632Z Download action repository 'actions/cache@v4' (SHA:0400d5f644dc74513175e3cd8d07132dd4860809)
+2025-09-05T17:55:13.8587185Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2025-09-05T17:55:14.0604498Z Complete job name: Frontend Tests (isp-framework/customer, isp-customer)
+2025-09-05T17:55:14.1322973Z ##[group]Run actions/checkout@v4
+2025-09-05T17:55:14.1323889Z with:
+2025-09-05T17:55:14.1324365Z   repository: michaelayoade/dotmac_framework
+2025-09-05T17:55:14.1325168Z   token: ***
+2025-09-05T17:55:14.1326022Z   ssh-strict: true
+2025-09-05T17:55:14.1326470Z   ssh-user: git
+2025-09-05T17:55:14.1326922Z   persist-credentials: true
+2025-09-05T17:55:14.1327454Z   clean: true
+2025-09-05T17:55:14.1327914Z   sparse-checkout-cone-mode: true
+2025-09-05T17:55:14.1328465Z   fetch-depth: 1
+2025-09-05T17:55:14.1328901Z   fetch-tags: false
+2025-09-05T17:55:14.1329347Z   show-progress: true
+2025-09-05T17:55:14.1329809Z   lfs: false
+2025-09-05T17:55:14.1330209Z   submodules: false
+2025-09-05T17:55:14.1330655Z   set-safe-directory: true
+2025-09-05T17:55:14.1331465Z env:
+2025-09-05T17:55:14.1331868Z   PYTHON_VERSION: 3.9
+2025-09-05T17:55:14.1332320Z   NODE_VERSION: 18
+2025-09-05T17:55:14.1332742Z   PNPM_VERSION: 8
+2025-09-05T17:55:14.1333160Z ##[endgroup]
+2025-09-05T17:55:14.2423884Z Syncing repository: michaelayoade/dotmac_framework
+2025-09-05T17:55:14.2427036Z ##[group]Getting Git version info
+2025-09-05T17:55:14.2428695Z Working directory is '/home/runner/work/dotmac_framework/dotmac_framework'
+2025-09-05T17:55:14.2430885Z [command]/usr/bin/git version
+2025-09-05T17:55:14.2504638Z git version 2.51.0
+2025-09-05T17:55:14.2531767Z ##[endgroup]
+2025-09-05T17:55:14.2553916Z Temporarily overriding HOME='/home/runner/work/_temp/9d66aebf-651d-4e11-b622-14ccf6dbf354' before making global git config changes
+2025-09-05T17:55:14.2558752Z Adding repository directory to the temporary git global config as a safe directory
+2025-09-05T17:55:14.2560234Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/dotmac_framework/dotmac_framework
+2025-09-05T17:55:14.2593439Z Deleting the contents of '/home/runner/work/dotmac_framework/dotmac_framework'
+2025-09-05T17:55:14.2597103Z ##[group]Initializing the repository
+2025-09-05T17:55:14.2601178Z [command]/usr/bin/git init /home/runner/work/dotmac_framework/dotmac_framework
+2025-09-05T17:55:14.2714887Z hint: Using 'master' as the name for the initial branch. This default branch name
+2025-09-05T17:55:14.2716295Z hint: is subject to change. To configure the initial branch name to use in all
+2025-09-05T17:55:14.2717399Z hint: of your new repositories, which will suppress this warning, call:
+2025-09-05T17:55:14.2718218Z hint:
+2025-09-05T17:55:14.2718772Z hint: 	git config --global init.defaultBranch <name>
+2025-09-05T17:55:14.2719450Z hint:
+2025-09-05T17:55:14.2720138Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2025-09-05T17:55:14.2721879Z hint: 'development'. The just-created branch can be renamed via this command:
+2025-09-05T17:55:14.2723216Z hint:
+2025-09-05T17:55:14.2723889Z hint: 	git branch -m <name>
+2025-09-05T17:55:14.2724392Z hint:
+2025-09-05T17:55:14.2725068Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2025-09-05T17:55:14.2726796Z Initialized empty Git repository in /home/runner/work/dotmac_framework/dotmac_framework/.git/
+2025-09-05T17:55:14.2732988Z [command]/usr/bin/git remote add origin https://github.com/michaelayoade/dotmac_framework
+2025-09-05T17:55:14.2801337Z ##[endgroup]
+2025-09-05T17:55:14.2802643Z ##[group]Disabling automatic garbage collection
+2025-09-05T17:55:14.2806227Z [command]/usr/bin/git config --local gc.auto 0
+2025-09-05T17:55:14.2834058Z ##[endgroup]
+2025-09-05T17:55:14.2834793Z ##[group]Setting up auth
+2025-09-05T17:55:14.2841342Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-09-05T17:55:14.2873250Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-09-05T17:55:14.3262102Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-09-05T17:55:14.3294158Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-09-05T17:55:14.3523273Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2025-09-05T17:55:14.3559559Z ##[endgroup]
+2025-09-05T17:55:14.3561262Z ##[group]Fetching the repository
+2025-09-05T17:55:14.3570293Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +a6ad6a37be5e8b46de83550ce713ab9fe6f4f8de:refs/remotes/origin/main
+2025-09-05T17:55:16.6170586Z From https://github.com/michaelayoade/dotmac_framework
+2025-09-05T17:55:16.6171596Z  * [new ref]         a6ad6a37be5e8b46de83550ce713ab9fe6f4f8de -> origin/main
+2025-09-05T17:55:16.6208423Z ##[endgroup]
+2025-09-05T17:55:16.6209096Z ##[group]Determining the checkout info
+2025-09-05T17:55:16.6210926Z ##[endgroup]
+2025-09-05T17:55:16.6218032Z [command]/usr/bin/git sparse-checkout disable
+2025-09-05T17:55:16.6262050Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2025-09-05T17:55:16.6291634Z ##[group]Checking out the ref
+2025-09-05T17:55:16.6296006Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2025-09-05T17:55:17.0348575Z Switched to a new branch 'main'
+2025-09-05T17:55:17.0349448Z branch 'main' set up to track 'origin/main'.
+2025-09-05T17:55:17.0365779Z ##[endgroup]
+2025-09-05T17:55:17.0407212Z [command]/usr/bin/git log -1 --format=%H
+2025-09-05T17:55:17.0430909Z a6ad6a37be5e8b46de83550ce713ab9fe6f4f8de
+2025-09-05T17:55:17.0664878Z ##[group]Run actions/setup-node@v4
+2025-09-05T17:55:17.0665493Z with:
+2025-09-05T17:55:17.0665796Z   node-version: 18
+2025-09-05T17:55:17.0666085Z   always-auth: false
+2025-09-05T17:55:17.0666707Z   check-latest: false
+2025-09-05T17:55:17.0667262Z   token: ***
+2025-09-05T17:55:17.0667496Z env:
+2025-09-05T17:55:17.0667795Z   PYTHON_VERSION: 3.9
+2025-09-05T17:55:17.0668065Z   NODE_VERSION: 18
+2025-09-05T17:55:17.0668380Z   PNPM_VERSION: 8
+2025-09-05T17:55:17.0668600Z ##[endgroup]
+2025-09-05T17:55:17.2423334Z Found in cache @ /opt/hostedtoolcache/node/18.20.8/x64
+2025-09-05T17:55:17.2428956Z ##[group]Environment details
+2025-09-05T17:55:19.6404369Z node: v18.20.8
+2025-09-05T17:55:19.6404804Z npm: 10.8.2
+2025-09-05T17:55:19.6405238Z yarn: 1.22.22
+2025-09-05T17:55:19.6407818Z ##[endgroup]
+2025-09-05T17:55:19.6520463Z ##[group]Run pnpm/action-setup@v2
+2025-09-05T17:55:19.6520732Z with:
+2025-09-05T17:55:19.6520891Z   version: 8
+2025-09-05T17:55:19.6521065Z   dest: ~/setup-pnpm
+2025-09-05T17:55:19.6521249Z   run_install: null
+2025-09-05T17:55:19.6521446Z   package_json_file: package.json
+2025-09-05T17:55:19.6521666Z   standalone: false
+2025-09-05T17:55:19.6521832Z env:
+2025-09-05T17:55:19.6522008Z   PYTHON_VERSION: 3.9
+2025-09-05T17:55:19.6522192Z   NODE_VERSION: 18
+2025-09-05T17:55:19.6522368Z   PNPM_VERSION: 8
+2025-09-05T17:55:19.6522535Z ##[endgroup]
+2025-09-05T17:55:19.7397766Z ##[group]Running self-installer...
+2025-09-05T17:55:20.5038350Z Progress: resolved 1, reused 0, downloaded 0, added 0
+2025-09-05T17:55:20.5126052Z Packages: +1
+2025-09-05T17:55:20.5126495Z +
+2025-09-05T17:55:21.1040592Z Packages are hard linked from the content-addressable store to the virtual store.
+2025-09-05T17:55:21.1041720Z   Content-addressable store is at: /home/runner/.local/share/pnpm/store/v3
+2025-09-05T17:55:21.1045556Z   Virtual store is at:             node_modules/.pnpm
+2025-09-05T17:55:21.1307382Z 
+2025-09-05T17:55:21.1307929Z dependencies:
+2025-09-05T17:55:21.1308426Z + pnpm 8.15.9 (10.15.1 is available)
+2025-09-05T17:55:21.1308720Z 
+2025-09-05T17:55:21.1334436Z Done in 1.2s
+2025-09-05T17:55:21.5046313Z Progress: resolved 1, reused 0, downloaded 1, added 1, done
+2025-09-05T17:55:21.5180739Z ##[endgroup]
+2025-09-05T17:55:21.5184394Z Installation Completed!
+2025-09-05T17:55:21.5837839Z ##[group]Run actions/cache@v4
+2025-09-05T17:55:21.5838088Z with:
+2025-09-05T17:55:21.5838276Z   path: ~/.pnpm-store
+**/node_modules
+
+2025-09-05T17:55:21.5838699Z   key: pnpm-Linux-18-a73b2205d59b5113dcbf6b6fd1d2d2ed8f5938263cc7ad6527990dc5b8a3217f
+2025-09-05T17:55:21.5839126Z   restore-keys: pnpm-Linux-18-
+
+2025-09-05T17:55:21.5839366Z   enableCrossOsArchive: false
+2025-09-05T17:55:21.5839592Z   fail-on-cache-miss: false
+2025-09-05T17:55:21.5839796Z   lookup-only: false
+2025-09-05T17:55:21.5839985Z   save-always: false
+2025-09-05T17:55:21.5840153Z env:
+2025-09-05T17:55:21.5840316Z   PYTHON_VERSION: 3.9
+2025-09-05T17:55:21.5840498Z   NODE_VERSION: 18
+2025-09-05T17:55:21.5840678Z   PNPM_VERSION: 8
+2025-09-05T17:55:21.5840909Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2025-09-05T17:55:21.5841187Z ##[endgroup]
+2025-09-05T17:55:21.9358364Z Cache not found for input keys: pnpm-Linux-18-a73b2205d59b5113dcbf6b6fd1d2d2ed8f5938263cc7ad6527990dc5b8a3217f, pnpm-Linux-18-
+2025-09-05T17:55:21.9448134Z ##[group]Run if [ -d "./frontend/isp-framework/customer" ] && [ -f "./frontend/isp-framework/customer/package.json" ]; then
+2025-09-05T17:55:21.9448930Z [36;1mif [ -d "./frontend/isp-framework/customer" ] && [ -f "./frontend/isp-framework/customer/package.json" ]; then[0m
+2025-09-05T17:55:21.9449413Z [36;1m  echo "exists=true" >> $GITHUB_OUTPUT[0m
+2025-09-05T17:55:21.9449710Z [36;1m  echo "✅ App isp-framework/customer exists"[0m
+2025-09-05T17:55:21.9449966Z [36;1melse[0m
+2025-09-05T17:55:21.9450168Z [36;1m  echo "exists=false" >> $GITHUB_OUTPUT[0m
+2025-09-05T17:55:21.9450504Z [36;1m  echo "⚠️ App isp-framework/customer does not exist, skipping"[0m
+2025-09-05T17:55:21.9450803Z [36;1mfi[0m
+2025-09-05T17:55:21.9585964Z shell: /usr/bin/bash -e {0}
+2025-09-05T17:55:21.9586212Z env:
+2025-09-05T17:55:21.9586382Z   PYTHON_VERSION: 3.9
+2025-09-05T17:55:21.9586574Z   NODE_VERSION: 18
+2025-09-05T17:55:21.9586975Z   PNPM_VERSION: 8
+2025-09-05T17:55:21.9587265Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2025-09-05T17:55:21.9587540Z ##[endgroup]
+2025-09-05T17:55:21.9663286Z ✅ App isp-framework/customer exists
+2025-09-05T17:55:21.9707311Z ##[group]Run pnpm install --frozen-lockfile
+2025-09-05T17:55:21.9707639Z [36;1mpnpm install --frozen-lockfile[0m
+2025-09-05T17:55:21.9737518Z shell: /usr/bin/bash -e {0}
+2025-09-05T17:55:21.9737811Z env:
+2025-09-05T17:55:21.9738036Z   PYTHON_VERSION: 3.9
+2025-09-05T17:55:21.9738327Z   NODE_VERSION: 18
+2025-09-05T17:55:21.9738656Z   PNPM_VERSION: 8
+2025-09-05T17:55:21.9739030Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2025-09-05T17:55:21.9739371Z ##[endgroup]
+2025-09-05T17:55:22.7157394Z Scope: all 64 workspace projects
+2025-09-05T17:55:22.8898784Z Lockfile is up to date, resolution step is skipped
+2025-09-05T17:55:23.4797561Z Packages: +3323
+2025-09-05T17:55:23.4798290Z ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+2025-09-05T17:55:23.8734540Z Progress: resolved 0, reused 0, downloaded 1, added 0
+2025-09-05T17:55:24.8748795Z Progress: resolved 0, reused 0, downloaded 20, added 9
+2025-09-05T17:55:25.8738599Z Progress: resolved 0, reused 0, downloaded 68, added 65
+2025-09-05T17:55:26.8776062Z Progress: resolved 0, reused 0, downloaded 150, added 245
+2025-09-05T17:55:27.8751437Z Progress: resolved 0, reused 0, downloaded 194, added 323
+2025-09-05T17:55:28.8766944Z Progress: resolved 0, reused 0, downloaded 262, added 409
+2025-09-05T17:55:29.8796901Z Progress: resolved 0, reused 0, downloaded 451, added 619
+2025-09-05T17:55:30.8777062Z Progress: resolved 0, reused 0, downloaded 577, added 747
+2025-09-05T17:55:31.8751629Z Progress: resolved 0, reused 0, downloaded 676, added 1007
+2025-09-05T17:55:32.8753108Z Progress: resolved 0, reused 0, downloaded 777, added 1250
+2025-09-05T17:55:33.8755480Z Progress: resolved 0, reused 0, downloaded 972, added 1457
+2025-09-05T17:55:34.8754885Z Progress: resolved 0, reused 0, downloaded 1108, added 1616
+2025-09-05T17:55:35.8750192Z Progress: resolved 0, reused 0, downloaded 1292, added 1885
+2025-09-05T17:55:36.8754432Z Progress: resolved 0, reused 0, downloaded 1488, added 2095
+2025-09-05T17:55:37.8758487Z Progress: resolved 0, reused 0, downloaded 1655, added 2265
+2025-09-05T17:55:38.8751697Z Progress: resolved 0, reused 0, downloaded 1872, added 2498
+2025-09-05T17:55:39.8754116Z Progress: resolved 0, reused 0, downloaded 2070, added 2712
+2025-09-05T17:55:40.8751255Z Progress: resolved 0, reused 0, downloaded 2309, added 2970
+2025-09-05T17:55:41.8749728Z Progress: resolved 0, reused 0, downloaded 2401, added 3106
+2025-09-05T17:55:42.8757093Z Progress: resolved 0, reused 0, downloaded 2425, added 3127
+2025-09-05T17:55:43.9357254Z Progress: resolved 0, reused 0, downloaded 2545, added 3314
+2025-09-05T17:55:44.8842987Z Progress: resolved 0, reused 0, downloaded 2546, added 3323, done
+2025-09-05T17:55:44.9467309Z node_modules/msw postinstall$ node -e "import('./config/scripts/postinstall.js').catch(() => void 0)"
+2025-09-05T17:55:44.9744153Z node_modules/protobufjs postinstall$ node scripts/postinstall
+2025-09-05T17:55:45.0023239Z node_modules/core-js postinstall$ node -e "try{require('./postinstall')}catch(e){}"
+2025-09-05T17:55:45.0285513Z node_modules/msw postinstall: Done
+2025-09-05T17:55:45.0337173Z node_modules/protobufjs postinstall: Done
+2025-09-05T17:55:45.0436360Z node_modules/core-js-pure postinstall$ node -e "try{require('./postinstall')}catch(e){}"
+2025-09-05T17:55:45.0632895Z node_modules/core-js postinstall: Done
+2025-09-05T17:55:45.0643694Z node_modules/@sentry/cli install$ node ./scripts/install.js
+2025-09-05T17:55:45.0995153Z node_modules/core-js-pure postinstall: Done
+2025-09-05T17:55:45.1574918Z node_modules/@sentry/cli install: [sentry-cli] Downloading from https://downloads.sentry-cdn.com/sentry-cli/1.77.3/sentry-cli-Linux-x86_64
+2025-09-05T17:55:45.4966500Z node_modules/@sentry/cli install: [sentry-cli] Checksum validation passed.
+2025-09-05T17:55:45.5420255Z node_modules/@sentry/cli install: Done
+2025-09-05T17:55:45.5468300Z node_modules/@swc/core postinstall$ node postinstall.js
+2025-09-05T17:55:45.5662325Z node_modules/esbuild postinstall$ node install.js
+2025-09-05T17:55:45.5837845Z node_modules/unrs-resolver postinstall$ napi-postinstall unrs-resolver 1.11.1 check
+2025-09-05T17:55:45.6067078Z node_modules/@swc/core postinstall: Done
+2025-09-05T17:55:45.6166129Z .../ts-jest/node_modules/esbuild postinstall$ node install.js
+2025-09-05T17:55:45.6413747Z node_modules/esbuild postinstall: Done
+2025-09-05T17:55:45.6549768Z node_modules/unrs-resolver postinstall: Done
+2025-09-05T17:55:45.6833798Z .../ts-jest/node_modules/esbuild postinstall: Done
+2025-09-05T17:55:45.6943529Z node_modules/leveldown install$ node-gyp-build
+2025-09-05T17:55:45.7751642Z node_modules/leveldown install: Done
+2025-09-05T17:55:45.7822307Z node_modules/sharp install$ node install/check
+2025-09-05T17:55:46.0388269Z node_modules/sharp install: Done
+2025-09-05T17:55:46.7875068Z 
+2025-09-05T17:55:46.7875752Z devDependencies:
+2025-09-05T17:55:46.7876662Z + @dotmac/governance 1.0.0 <- shared/packages/governance
+2025-09-05T17:55:46.7877981Z + @dotmac/typescript-config 1.0.0 <- shared/packages/typescript-config
+2025-09-05T17:55:46.7878508Z 
+2025-09-05T17:55:47.1321309Z . prepare$ husky install
+2025-09-05T17:55:47.1841148Z . prepare: husky - install command is DEPRECATED
+2025-09-05T17:55:47.1878600Z . prepare: .git can't be found
+2025-09-05T17:55:47.1881002Z . prepare: Done
+2025-09-05T17:55:47.2951720Z isp-framework/admin prepare$ husky install
+2025-09-05T17:55:47.3513466Z isp-framework/admin prepare: husky - install command is DEPRECATED
+2025-09-05T17:55:47.3552747Z isp-framework/admin prepare: .git can't be found
+2025-09-05T17:55:47.3554931Z isp-framework/admin prepare: Done
+2025-09-05T17:55:47.3600295Z Done in 25.3s
+2025-09-05T17:55:47.4642313Z ##[group]Run if [ -f "package.json" ]; then
+2025-09-05T17:55:47.4642661Z [36;1mif [ -f "package.json" ]; then[0m
+2025-09-05T17:55:47.4642953Z [36;1m  if grep -q "type-check" package.json; then[0m
+2025-09-05T17:55:47.4643256Z [36;1m    pnpm run type-check[0m
+2025-09-05T17:55:47.4643512Z [36;1m  else[0m
+2025-09-05T17:55:47.4643745Z [36;1m    echo "⚠️ No type-check script found, skipping"[0m
+2025-09-05T17:55:47.4644011Z [36;1m  fi[0m
+2025-09-05T17:55:47.4644163Z [36;1m  [0m
+2025-09-05T17:55:47.4644355Z [36;1m  if grep -q "lint" package.json; then[0m
+2025-09-05T17:55:47.4644620Z [36;1m    pnpm run lint[0m
+2025-09-05T17:55:47.4644815Z [36;1m  else[0m
+2025-09-05T17:55:47.4645011Z [36;1m    echo "⚠️ No lint script found, skipping"[0m
+2025-09-05T17:55:47.4645258Z [36;1m  fi[0m
+2025-09-05T17:55:47.4645653Z [36;1mfi[0m
+2025-09-05T17:55:47.4676972Z shell: /usr/bin/bash -e {0}
+2025-09-05T17:55:47.4677192Z env:
+2025-09-05T17:55:47.4677348Z   PYTHON_VERSION: 3.9
+2025-09-05T17:55:47.4677588Z   NODE_VERSION: 18
+2025-09-05T17:55:47.4677764Z   PNPM_VERSION: 8
+2025-09-05T17:55:47.4677992Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2025-09-05T17:55:47.4678255Z ##[endgroup]
+2025-09-05T17:55:47.8945910Z 
+2025-09-05T17:55:47.8947194Z > @dotmac/customer-app@1.0.0 type-check /home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer
+2025-09-05T17:55:47.8948239Z > tsc --noEmit
+2025-09-05T17:55:47.8948445Z 
+2025-09-05T17:55:55.5269363Z ##[error]src/app/(protected)/billing/payment/page.tsx(4,42): error TS2307: Cannot find module '@dotmac/billing-system' or its corresponding type declarations.
+2025-09-05T17:55:55.5282315Z ##[error]src/app/(protected)/billing/payment/page.tsx(5,25): error TS2307: Cannot find module '@dotmac/auth' or its corresponding type declarations.
+2025-09-05T17:55:55.5285181Z ##[error]src/app/(protected)/documents/page.tsx(3,33): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:55.5288185Z ##[error]src/app/(protected)/files/page.tsx(1,40): error TS2307: Cannot find module '@dotmac/patterns/templates' or its corresponding type declarations.
+2025-09-05T17:55:55.5290975Z ##[error]src/app/(protected)/projects/page.tsx(1,40): error TS2307: Cannot find module '@dotmac/patterns/templates' or its corresponding type declarations.
+2025-09-05T17:55:55.5294076Z ##[error]src/app/(protected)/quality/page.tsx(1,35): error TS2307: Cannot find module '@dotmac/patterns/templates' or its corresponding type declarations.
+2025-09-05T17:55:55.5296961Z ##[error]src/app/(protected)/services/page.tsx(3,36): error TS2307: Cannot find module '@dotmac/mapping' or its corresponding type declarations.
+2025-09-05T17:55:55.5299727Z ##[error]src/app/(protected)/settings/page.tsx(17,8): error TS2307: Cannot find module '@dotmac/settings-system' or its corresponding type declarations.
+2025-09-05T17:55:55.5302161Z ##[error]src/app/(protected)/settings/page.tsx(64,46): error TS7006: Parameter 'pref' implicitly has an 'any' type.
+2025-09-05T17:55:55.5304444Z ##[error]src/app/(protected)/settings/page.tsx(316,33): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+2025-09-05T17:55:55.5307450Z ##[error]src/app/(protected)/support/tickets/page.tsx(1,40): error TS2307: Cannot find module '@dotmac/patterns/templates' or its corresponding type declarations.
+2025-09-05T17:55:55.5310223Z ##[error]src/app/(protected)/usage/page.tsx(3,33): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:55.5312739Z ##[error]src/app/actions/auth.ts(37,32): error TS2339: Property 'fromRequest' does not exist on type '(...args: any[]) => any'.
+2025-09-05T17:55:55.5315265Z ##[error]src/app/actions/auth.ts(43,17): error TS2339: Property 'logAuthentication' does not exist on type '(...args: any[]) => any'.
+2025-09-05T17:55:55.5317266Z ##[error]src/app/actions/auth.ts(63,19): error TS2339: Property 'logAuthentication' does not exist on type '(...args: any[]) => any'.
+2025-09-05T17:55:55.5319731Z ##[error]src/app/actions/auth.ts(119,17): error TS2339: Property 'logAuthentication' does not exist on type '(...args: any[]) => any'.
+2025-09-05T17:55:55.5321285Z ##[error]src/app/actions/auth.ts(139,17): error TS2339: Property 'system' does not exist on type '(...args: any[]) => any'.
+2025-09-05T17:55:55.5322731Z ##[error]src/app/actions/auth.ts(217,34): error TS2339: Property 'fromBrowser' does not exist on type '(...args: any[]) => any'.
+2025-09-05T17:55:55.5324520Z ##[error]src/app/actions/auth.ts(220,17): error TS2339: Property 'logAuthentication' does not exist on type '(...args: any[]) => any'.
+2025-09-05T17:55:55.5326856Z ##[error]src/app/actions/auth.ts(232,17): error TS2339: Property 'logAuthentication' does not exist on type '(...args: any[]) => any'.
+2025-09-05T17:55:55.5329136Z ##[error]src/app/actions/auth.ts(235,17): error TS2339: Property 'system' does not exist on type '(...args: any[]) => any'.
+2025-09-05T17:55:55.5331473Z ##[error]src/app/api/auth/login/route.ts(17,3): error TS2322: Type 'string | boolean' is not assignable to type 'boolean'.
+2025-09-05T17:55:55.5332977Z   Type 'string' is not assignable to type 'boolean'.
+2025-09-05T17:55:55.5334030Z ##[error]src/app/api/health/route.ts(155,7): error TS2532: Object is possibly 'undefined'.
+2025-09-05T17:55:55.5336032Z ##[error]src/app/api/health/route.ts(156,11): error TS2532: Object is possibly 'undefined'.
+2025-09-05T17:55:55.5339143Z ##[error]src/app/api/health/route.ts(156,22): error TS2339: Property 'value' does not exist on type 'PromiseSettledResult<{ status: "pass" | "fail" | "warn"; duration: number; error?: string; details?: any; }>'.
+2025-09-05T17:55:55.5341128Z   Property 'value' does not exist on type 'PromiseRejectedResult'.
+2025-09-05T17:55:55.5342282Z ##[error]src/app/api/health/route.ts(164,7): error TS2532: Object is possibly 'undefined'.
+2025-09-05T17:55:55.5344135Z ##[error]src/app/api/health/route.ts(165,11): error TS2532: Object is possibly 'undefined'.
+2025-09-05T17:55:55.5347412Z ##[error]src/app/api/health/route.ts(165,22): error TS2339: Property 'value' does not exist on type 'PromiseSettledResult<{ status: "pass" | "fail" | "warn"; duration: number; error?: string; details?: any; }>'.
+2025-09-05T17:55:55.5349682Z   Property 'value' does not exist on type 'PromiseRejectedResult'.
+2025-09-05T17:55:55.5350746Z ##[error]src/app/api/health/route.ts(173,7): error TS2532: Object is possibly 'undefined'.
+2025-09-05T17:55:55.5352463Z ##[error]src/app/api/health/route.ts(174,11): error TS2532: Object is possibly 'undefined'.
+2025-09-05T17:55:55.5355554Z ##[error]src/app/api/health/route.ts(174,22): error TS2339: Property 'value' does not exist on type 'PromiseSettledResult<{ status: "pass" | "fail" | "warn"; duration: number; error?: string; details?: any; }>'.
+2025-09-05T17:55:55.5357519Z   Property 'value' does not exist on type 'PromiseRejectedResult'.
+2025-09-05T17:55:55.5358637Z ##[error]src/app/api/health/route.ts(182,7): error TS2532: Object is possibly 'undefined'.
+2025-09-05T17:55:55.5360443Z ##[error]src/app/api/health/route.ts(183,11): error TS2532: Object is possibly 'undefined'.
+2025-09-05T17:55:55.5363530Z ##[error]src/app/api/health/route.ts(183,22): error TS2339: Property 'value' does not exist on type 'PromiseSettledResult<{ status: "pass" | "fail" | "warn"; duration: number; error?: string; details?: any; }>'.
+2025-09-05T17:55:55.5365738Z   Property 'value' does not exist on type 'PromiseRejectedResult'.
+2025-09-05T17:55:55.5371084Z ##[error]src/app/api/health/route.ts(259,5): error TS2375: Type '{ status: "pass" | "fail" | "warn"; duration: number; details: { heapUsed: number; heapTotal: number; heapPercentage: number; rss: number; }; error: string | undefined; }' is not assignable to type '{ status: "pass" | "fail" | "warn"; duration: number; error?: string; details?: any; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:55.5374220Z   Types of property 'error' are incompatible.
+2025-09-05T17:55:55.5375035Z     Type 'string | undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.5375858Z       Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.5381164Z ##[error]src/app/api/health/route.ts(297,3): error TS2375: Type '{ status: "pass" | "fail"; duration: number; details: { required: number; missing: number; environment: "development" | "production" | "test"; }; error: string | undefined; }' is not assignable to type '{ status: "pass" | "fail" | "warn"; duration: number; error?: string; details?: any; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:55.5384455Z   Types of property 'error' are incompatible.
+2025-09-05T17:55:55.5385081Z     Type 'string | undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.5385854Z       Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.5390639Z ##[error]src/app/api/health/route.ts(333,5): error TS2375: Type '{ status: "pass" | "fail"; duration: number; details: { modules: Record<string, boolean>; nodeVersion: string; }; error: string | undefined; }' is not assignable to type '{ status: "pass" | "fail" | "warn"; duration: number; error?: string; details?: any; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:55.5393575Z   Types of property 'error' are incompatible.
+2025-09-05T17:55:55.5394181Z     Type 'string | undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.5394820Z       Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.5396649Z ##[error]src/app/api/monitoring/route.ts(11,29): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+2025-09-05T17:55:55.5398408Z   Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.5399800Z ##[error]src/app/global-error.tsx(17,49): error TS2339: Property 'gtag' does not exist on type 'Window & typeof globalThis'.
+2025-09-05T17:55:55.5402187Z ##[error]src/app/global-error.tsx(18,14): error TS2339: Property 'gtag' does not exist on type 'Window & typeof globalThis'.
+2025-09-05T17:55:55.5436270Z ##[error]src/app/layout.tsx(6,10): error TS2305: Module '"@dotmac/providers"' has no exported member 'UniversalProviders'.
+2025-09-05T17:55:55.5439003Z ##[error]src/app/layout.tsx(8,37): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:55.5441675Z ##[error]src/app/offline/page.tsx(9,32): error TS2307: Cannot find module '../../lib/utils/serviceWorker' or its corresponding type declarations.
+2025-09-05T17:55:55.5443844Z ##[error]src/app/offline/page.tsx(18,52): error TS7006: Parameter 'online' implicitly has an 'any' type.
+2025-09-05T17:55:55.5446890Z ##[error]src/app/page.tsx(4,10): error TS2305: Module '"../components/dashboard/CustomerDashboardRefactored"' has no exported member 'CustomerDashboardRefactored'.
+2025-09-05T17:55:55.5448639Z ##[error]src/app/page.tsx(5,42): error TS2307: Cannot find module '../lib/api/customerApi' or its corresponding type declarations.
+2025-09-05T17:55:55.5450221Z ##[error]src/app/providers.tsx(3,60): error TS2307: Cannot find module '@dotmac/portal-components' or its corresponding type declarations.
+2025-09-05T17:55:55.5451856Z ##[error]src/components/account/FamilyManagement.tsx(9,10): error TS2305: Module '"@dotmac/primitives"' has no exported member 'Button'.
+2025-09-05T17:55:55.5453382Z ##[error]src/components/account/FamilyManagement.tsx(9,18): error TS2305: Module '"@dotmac/primitives"' has no exported member 'Card'.
+2025-09-05T17:55:55.5454904Z ##[error]src/components/account/FamilyManagement.tsx(9,24): error TS2305: Module '"@dotmac/primitives"' has no exported member 'Input'.
+2025-09-05T17:55:55.5457158Z ##[error]src/components/account/FamilyManagement.tsx(57,11): error TS2367: This comparison appears to be unintentional because the types '"secondary"' and '"primary"' have no overlap.
+2025-09-05T17:55:55.5458898Z ##[error]src/components/account/FamilyManagement.tsx(102,30): error TS7006: Parameter 'e' implicitly has an 'any' type.
+2025-09-05T17:55:55.5460285Z ##[error]src/components/account/FamilyManagement.tsx(110,30): error TS7006: Parameter 'e' implicitly has an 'any' type.
+2025-09-05T17:55:55.5461630Z ##[error]src/components/account/FamilyManagement.tsx(131,32): error TS7006: Parameter 'e' implicitly has an 'any' type.
+2025-09-05T17:55:55.5463186Z ##[error]src/components/auth/CustomerLoginForm.tsx(3,31): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:55.5464769Z ##[error]src/components/auth/CustomerLoginForm.tsx(4,10): error TS2305: Module '"@dotmac/providers"' has no exported member 'OptimizedImage'.
+2025-09-05T17:55:55.5466623Z ##[error]src/components/auth/CustomerLoginForm.tsx(5,31): error TS2307: Cannot find module '@dotmac/ui/customer' or its corresponding type declarations.
+2025-09-05T17:55:55.5468149Z ##[error]src/components/auth/CustomerLoginForm.tsx(6,10): error TS2305: Module '"@dotmac/providers"' has no exported member 'Card'.
+2025-09-05T17:55:55.5469535Z ##[error]src/components/auth/CustomerLoginForm.tsx(172,43): error TS7006: Parameter 'method' implicitly has an 'any' type.
+2025-09-05T17:55:55.5471061Z ##[error]src/components/auth/PortalIdLogin.tsx(3,33): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:55.5472539Z ##[error]src/components/auth/PortalIdLogin.tsx(7,10): error TS2305: Module '"@dotmac/primitives"' has no exported member 'Button'.
+2025-09-05T17:55:55.5473972Z ##[error]src/components/auth/PortalIdLogin.tsx(7,18): error TS2305: Module '"@dotmac/primitives"' has no exported member 'Input'.
+2025-09-05T17:55:55.5475559Z ##[error]src/components/auth/PortalIdLogin.tsx(7,25): error TS2305: Module '"@dotmac/primitives"' has no exported member 'Card'.
+2025-09-05T17:55:55.5477072Z ##[error]src/components/auth/PortalIdLogin.tsx(7,31): error TS2305: Module '"@dotmac/primitives"' has no exported member 'CardContent'.
+2025-09-05T17:55:55.5478554Z ##[error]src/components/auth/PortalIdLogin.tsx(7,44): error TS2305: Module '"@dotmac/primitives"' has no exported member 'CardHeader'.
+2025-09-05T17:55:55.5480021Z ##[error]src/components/auth/PortalIdLogin.tsx(7,56): error TS2305: Module '"@dotmac/primitives"' has no exported member 'CardTitle'.
+2025-09-05T17:55:55.5481522Z ##[error]src/components/auth/PortalIdLogin.tsx(82,26): error TS7006: Parameter 'e' implicitly has an 'any' type.
+2025-09-05T17:55:55.5482782Z ##[error]src/components/auth/PortalIdLogin.tsx(108,28): error TS7006: Parameter 'e' implicitly has an 'any' type.
+2025-09-05T17:55:55.5484036Z ##[error]src/components/auth/PortalIdLogin.tsx(132,28): error TS7006: Parameter 'e' implicitly has an 'any' type.
+2025-09-05T17:55:55.5485992Z ##[error]src/components/auth/SecureAuthProvider.tsx(11,36): error TS2307: Cannot find module '../../lib/auth/secureTokenManager' or its corresponding type declarations.
+2025-09-05T17:55:55.5487873Z ##[error]src/components/auth/SecureAuthProvider.tsx(12,32): error TS2307: Cannot find module '../../lib/auth/sessionManager' or its corresponding type declarations.
+2025-09-05T17:55:55.5489581Z ##[error]src/components/auth/SecureCustomerLoginForm.tsx(6,41): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:55.5491396Z ##[error]src/components/auth/SecureCustomerLoginForm.tsx(7,51): error TS2307: Cannot find module '../../lib/validation/inputValidator' or its corresponding type declarations.
+2025-09-05T17:55:55.5494491Z ##[error]src/components/auth/SecureCustomerLoginForm.tsx(46,34): error TS2379: Argument of type '{ email: any; password: string; portalId: string | undefined; }' is not assignable to parameter of type '{ email: string; password: string; portalId?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:55.5496332Z   Types of property 'portalId' are incompatible.
+2025-09-05T17:55:55.5496861Z     Type 'string | undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.5497256Z       Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.5498295Z ##[error]src/components/billing/BillingOverviewNew.tsx(9,53): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:55.5500009Z ##[error]src/components/billing/BillingOverviewNew.tsx(10,22): error TS2307: Cannot find module '@dotmac/ui/customer' or its corresponding type declarations.
+2025-09-05T17:55:55.5501705Z ##[error]src/components/billing/BillingOverviewNew.tsx(23,30): error TS2307: Cannot find module '@dotmac/headless/auth' or its corresponding type declarations.
+2025-09-05T17:55:55.5503441Z ##[error]src/components/billing/BillingOverviewUniversal.tsx(3,43): error TS2307: Cannot find module '@dotmac/billing-system' or its corresponding type declarations.
+2025-09-05T17:55:55.5505172Z ##[error]src/components/billing/PaymentMethods.tsx(3,41): error TS2307: Cannot find module '@dotmac/billing-system' or its corresponding type declarations.
+2025-09-05T17:55:55.5507085Z ##[error]src/components/billing/PaymentMethods.tsx(28,30): error TS7006: Parameter 'method' implicitly has an 'any' type.
+2025-09-05T17:55:55.5508468Z ##[error]src/components/billing/PaymentMethods.tsx(31,32): error TS7006: Parameter 'method' implicitly has an 'any' type.
+2025-09-05T17:55:55.5509837Z ##[error]src/components/billing/PaymentMethods.tsx(34,32): error TS7006: Parameter 'methodId' implicitly has an 'any' type.
+2025-09-05T17:55:55.5511430Z ##[error]src/components/billing/QuickPayment.tsx(3,22): error TS2307: Cannot find module '@dotmac/ui/customer' or its corresponding type declarations.
+2025-09-05T17:55:55.5513360Z ##[error]src/components/common/APIErrorBoundary.tsx(53,3): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'Component<Props, State, any>'.
+2025-09-05T17:55:55.5516178Z ##[error]src/components/common/APIErrorBoundary.tsx(54,28): error TS2353: Object literal may only specify known properties, and 'errorInfo' does not exist in type 'State | ((prevState: Readonly<State>, props: Readonly<Props>) => State | Pick<State, keyof State> | null) | Pick<...>'.
+2025-09-05T17:55:55.5518376Z ##[error]src/components/common/APIErrorBoundary.tsx(62,14): error TS2339: Property 'gtag' does not exist on type 'Window & typeof globalThis'.
+2025-09-05T17:55:55.5520296Z ##[error]src/components/common/APIErrorBoundary.tsx(70,3): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'Component<Props, State, any>'.
+2025-09-05T17:55:55.5523205Z ##[error]src/components/common/APIErrorBoundary.tsx(88,21): error TS2345: Argument of type '{ hasError: false; error: undefined; retryCount: number; }' is not assignable to parameter of type 'State | ((prevState: Readonly<State>, props: Readonly<Props>) => State | Pick<State, "error" | "retryCount" | "hasError"> | null) | Pick<...> | null'.
+2025-09-05T17:55:55.5525485Z   Type '{ hasError: false; error: undefined; retryCount: number; }' is not assignable to type 'Pick<State, "error" | "retryCount" | "hasError">' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:55.5526392Z     Types of property 'error' are incompatible.
+2025-09-05T17:55:55.5526733Z       Type 'undefined' is not assignable to type 'Error'.
+2025-09-05T17:55:55.5528012Z ##[error]src/components/common/APIErrorBoundary.tsx(136,3): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'Component<Props, State, any>'.
+2025-09-05T17:55:55.5530073Z ##[error]src/components/common/AuthErrorBoundary.tsx(45,3): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'Component<Props, State, any>'.
+2025-09-05T17:55:55.5532839Z ##[error]src/components/common/AuthErrorBoundary.tsx(46,28): error TS2353: Object literal may only specify known properties, and 'errorInfo' does not exist in type 'State | ((prevState: Readonly<State>, props: Readonly<Props>) => State | Pick<State, keyof State> | null) | Pick<...>'.
+2025-09-05T17:55:55.5534815Z ##[error]src/components/common/AuthErrorBoundary.tsx(55,14): error TS2339: Property 'gtag' does not exist on type 'Window & typeof globalThis'.
+2025-09-05T17:55:55.5536412Z ##[error]src/components/common/AuthErrorBoundary.tsx(73,30): error TS18048: 'name' is possibly 'undefined'.
+2025-09-05T17:55:55.5538285Z ##[error]src/components/common/AuthErrorBoundary.tsx(126,3): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'Component<Props, State, any>'.
+2025-09-05T17:55:55.5540204Z ##[error]src/components/common/ErrorBoundary.tsx(3,25): error TS2724: '"@dotmac/providers"' has no exported member named 'withErrorBoundary'. Did you mean 'ErrorBoundary'?
+2025-09-05T17:55:55.5542076Z ##[error]src/components/common/ErrorBoundary.tsx(3,44): error TS2724: '"@dotmac/providers"' has no exported member named 'AsyncErrorBoundary'. Did you mean 'ErrorBoundary'?
+2025-09-05T17:55:55.5544059Z ##[error]src/components/common/RootErrorBoundary.tsx(27,3): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'Component<Props, State, any>'.
+2025-09-05T17:55:55.5545967Z ##[error]src/components/common/RootErrorBoundary.tsx(37,14): error TS2339: Property 'gtag' does not exist on type 'Window & typeof globalThis'.
+2025-09-05T17:55:55.5548806Z ##[error]src/components/common/RootErrorBoundary.tsx(49,19): error TS2345: Argument of type '{ hasError: false; error: undefined; errorInfo: undefined; }' is not assignable to parameter of type 'State | ((prevState: Readonly<State>, props: Readonly<Props>) => State | Pick<State, "error" | "hasError" | "errorInfo"> | null) | Pick<...> | null'.
+2025-09-05T17:55:55.5550973Z   Type '{ hasError: false; error: undefined; errorInfo: undefined; }' is not assignable to type 'Pick<State, "error" | "hasError" | "errorInfo">' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:55.5551863Z     Types of property 'error' are incompatible.
+2025-09-05T17:55:55.5552349Z       Type 'undefined' is not assignable to type 'Error'.
+2025-09-05T17:55:55.5553623Z ##[error]src/components/common/RootErrorBoundary.tsx(52,3): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'Component<Props, State, any>'.
+2025-09-05T17:55:55.5555636Z ##[error]src/components/dashboard/CustomerDashboard.tsx(6,50): error TS2307: Cannot find module '@dotmac/dashboard' or its corresponding type declarations.
+2025-09-05T17:55:55.5557354Z ##[error]src/components/dashboard/CustomerDashboard.tsx(7,46): error TS2307: Cannot find module '@dotmac/utils' or its corresponding type declarations.
+2025-09-05T17:55:55.5558934Z ##[error]src/components/dashboard/CustomerDashboard.tsx(24,23): error TS2339: Property 'onboardingComplete' does not exist on type 'User'.
+2025-09-05T17:55:55.5561727Z ##[error]src/components/dashboard/CustomerDashboard.tsx(70,10): error TS2375: Type '{ onComplete: () => void; onSkip: () => void; customerId: string | undefined; }' is not assignable to type 'CustomerOnboardingWorkflowProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:55.5563270Z   Types of property 'customerId' are incompatible.
+2025-09-05T17:55:55.5563656Z     Type 'string | undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.5564037Z       Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.5565158Z ##[error]src/components/dashboard/CustomerDashboardRefactored.tsx(3,43): error TS2307: Cannot find module '@dotmac/portal-components' or its corresponding type declarations.
+2025-09-05T17:55:55.5567289Z ##[error]src/components/dashboard/sections/QuickActionsSection.tsx(58,7): error TS2322: Type 'LucideIcon' is not assignable to type 'ComponentType<{ className?: string; }>'.
+2025-09-05T17:55:55.5568661Z   Type 'ForwardRefExoticComponent<LucideProps>' is not assignable to type 'FunctionComponent<{ className?: string; }>'.
+2025-09-05T17:55:55.5569227Z     Types of property 'defaultProps' are incompatible.
+2025-09-05T17:55:55.5569786Z       Type 'Partial<LucideProps> | undefined' is not assignable to type 'Partial<{ className?: string; }> | undefined'.
+2025-09-05T17:55:55.5570796Z         Type 'Partial<LucideProps>' is not assignable to type 'Partial<{ className?: string; }>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:55.5571566Z           Types of property 'className' are incompatible.
+2025-09-05T17:55:55.5571953Z             Type 'string | undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.5572345Z               Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.5573463Z ##[error]src/components/dashboard/sections/QuickActionsSection.tsx(67,7): error TS2322: Type 'LucideIcon' is not assignable to type 'ComponentType<{ className?: string; }>'.
+2025-09-05T17:55:55.5574799Z   Type 'ForwardRefExoticComponent<LucideProps>' is not assignable to type 'FunctionComponent<{ className?: string; }>'.
+2025-09-05T17:55:55.5575481Z     Types of property 'defaultProps' are incompatible.
+2025-09-05T17:55:55.5576035Z       Type 'Partial<LucideProps> | undefined' is not assignable to type 'Partial<{ className?: string; }> | undefined'.
+2025-09-05T17:55:55.5577040Z         Type 'Partial<LucideProps>' is not assignable to type 'Partial<{ className?: string; }>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:55.5577802Z           Types of property 'className' are incompatible.
+2025-09-05T17:55:55.5578187Z             Type 'string | undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.5578577Z               Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.5579676Z ##[error]src/components/dashboard/sections/QuickActionsSection.tsx(76,7): error TS2322: Type 'LucideIcon' is not assignable to type 'ComponentType<{ className?: string; }>'.
+2025-09-05T17:55:55.5581163Z   Type 'ForwardRefExoticComponent<LucideProps>' is not assignable to type 'FunctionComponent<{ className?: string; }>'.
+2025-09-05T17:55:55.5581722Z     Types of property 'defaultProps' are incompatible.
+2025-09-05T17:55:55.5582262Z       Type 'Partial<LucideProps> | undefined' is not assignable to type 'Partial<{ className?: string; }> | undefined'.
+2025-09-05T17:55:55.5583263Z         Type 'Partial<LucideProps>' is not assignable to type 'Partial<{ className?: string; }>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:55.5584026Z           Types of property 'className' are incompatible.
+2025-09-05T17:55:55.5584404Z             Type 'string | undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.5584796Z               Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.5586099Z ##[error]src/components/dashboard/sections/QuickActionsSection.tsx(85,7): error TS2322: Type 'LucideIcon' is not assignable to type 'ComponentType<{ className?: string; }>'.
+2025-09-05T17:55:55.5587474Z   Type 'ForwardRefExoticComponent<LucideProps>' is not assignable to type 'FunctionComponent<{ className?: string; }>'.
+2025-09-05T17:55:55.5588039Z     Types of property 'defaultProps' are incompatible.
+2025-09-05T17:55:55.5588593Z       Type 'Partial<LucideProps> | undefined' is not assignable to type 'Partial<{ className?: string; }> | undefined'.
+2025-09-05T17:55:55.5589605Z         Type 'Partial<LucideProps>' is not assignable to type 'Partial<{ className?: string; }>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:55.5590376Z           Types of property 'className' are incompatible.
+2025-09-05T17:55:55.5590905Z             Type 'string | undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.5591305Z               Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.5592432Z ##[error]src/components/dashboard/sections/ServiceOverviewSection.tsx(7,28): error TS2307: Cannot find module '../../ui/StatusCard' or its corresponding type declarations.
+2025-09-05T17:55:55.5594303Z ##[error]src/components/dashboard/sections/ServiceOverviewSectionOptimized.tsx(4,28): error TS2307: Cannot find module '../../ui/StatusCard' or its corresponding type declarations.
+2025-09-05T17:55:55.5596366Z ##[error]src/components/documents/DocumentManager.tsx(3,31): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:55.5598092Z ##[error]src/components/documents/DocumentManager.tsx(4,61): error TS2307: Cannot find module '@dotmac/file-system' or its corresponding type declarations.
+2025-09-05T17:55:55.5599776Z ##[error]src/components/documents/DocumentManager.tsx(5,49): error TS2307: Cannot find module '@dotmac/file-system' or its corresponding type declarations.
+2025-09-05T17:55:55.5601773Z ##[error]src/components/files/CustomerFilesManagement.tsx(4,40): error TS2307: Cannot find module '@dotmac/primitives/templates/ManagementPageTemplate' or its corresponding type declarations.
+2025-09-05T17:55:55.5604918Z ##[error]src/components/files/CustomerFilesManagement.tsx(462,11): error TS2322: Type '{ id: string; name: string; type: "video" | "document" | "other" | "photo" | "invoice" | "contract"; size: number; uploadDate: string; category: "billing" | "support" | "installation" | "contracts" | "personal"; ... 5 more ...; downloadCount: number; }[]' is not assignable to type 'CustomerFile[]'.
+2025-09-05T17:55:55.5607731Z   Type '{ id: string; name: string; type: "video" | "document" | "other" | "photo" | "invoice" | "contract"; size: number; uploadDate: string; category: CustomerFile["category"]; description: string | undefined; ... 4 more ...; downloadCount: number; }' is not assignable to type 'CustomerFile' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:55.5609019Z     Types of property 'description' are incompatible.
+2025-09-05T17:55:55.5609577Z       Type 'string | undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.5609969Z         Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.5610988Z ##[error]src/components/files/FilesDataTable.tsx(3,54): error TS2307: Cannot find module '@dotmac/data-tables' or its corresponding type declarations.
+2025-09-05T17:55:55.5612519Z ##[error]src/components/files/FilesDataTable.tsx(4,10): error TS2305: Module '"@dotmac/primitives"' has no exported member 'Card'.
+2025-09-05T17:55:55.5613862Z ##[error]src/components/files/FilesDataTable.tsx(36,19): error TS7006: Parameter 'v' implicitly has an 'any' type.
+2025-09-05T17:55:55.5615137Z ##[error]src/components/files/FilesDataTable.tsx(38,51): error TS7006: Parameter 'v' implicitly has an 'any' type.
+2025-09-05T17:55:55.5616763Z ##[error]src/components/files/FilesTable.tsx(3,10): error TS2305: Module '"@dotmac/primitives"' has no exported member 'Card'.
+2025-09-05T17:55:55.5618182Z ##[error]src/components/files/UploadArea.tsx(3,10): error TS2305: Module '"@dotmac/primitives"' has no exported member 'Button'.
+2025-09-05T17:55:55.5619582Z ##[error]src/components/files/UploadArea.tsx(3,18): error TS2305: Module '"@dotmac/primitives"' has no exported member 'Card'.
+2025-09-05T17:55:55.5621228Z ##[error]src/components/files/UploadArea.tsx(4,29): error TS2307: Cannot find module '@dotmac/monitoring/observability' or its corresponding type declarations.
+2025-09-05T17:55:55.5622629Z ##[error]src/components/files/UploadArea.tsx(23,20): error TS7006: Parameter 'e' implicitly has an 'any' type.
+2025-09-05T17:55:55.5623860Z ##[error]src/components/files/UploadArea.tsx(28,16): error TS7006: Parameter 'e' implicitly has an 'any' type.
+2025-09-05T17:55:55.5625619Z ##[error]src/components/forms/UnifiedContactForm.tsx(14,8): error TS2307: Cannot find module '@dotmac/forms' or its corresponding type declarations.
+2025-09-05T17:55:55.5627502Z ##[error]src/components/forms/UnifiedContactForm.tsx(15,28): error TS2307: Cannot find module '@dotmac/utils' or its corresponding type declarations.
+2025-09-05T17:55:55.5629271Z ##[error]src/components/insights/CustomerInsightsDashboard.tsx(3,75): error TS2307: Cannot find module '@dotmac/ml-analytics' or its corresponding type declarations.
+2025-09-05T17:55:55.5631081Z ##[error]src/components/insights/CustomerInsightsDashboard.tsx(4,34): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:55.5632784Z ##[error]src/components/insights/CustomerInsightsDashboard.tsx(5,10): error TS2305: Module '"@dotmac/primitives"' has no exported member 'Card'.
+2025-09-05T17:55:55.5634310Z ##[error]src/components/insights/CustomerInsightsDashboard.tsx(22,29): error TS7006: Parameter 'anomaly' implicitly has an 'any' type.
+2025-09-05T17:55:55.5636051Z ##[error]src/components/insights/CustomerInsightsDashboard.tsx(34,32): error TS7006: Parameter 'prediction' implicitly has an 'any' type.
+2025-09-05T17:55:55.5637599Z ##[error]src/components/insights/CustomerInsightsDashboard.tsx(53,30): error TS7006: Parameter 'insight' implicitly has an 'any' type.
+2025-09-05T17:55:55.5639305Z ##[error]src/components/layout/CustomerLayout.tsx(9,8): error TS2307: Cannot find module '@dotmac/navigation-system' or its corresponding type declarations.
+2025-09-05T17:55:55.5640972Z ##[error]src/components/layout/CustomerLayout.tsx(10,34): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:55.5642787Z ##[error]src/components/lazy/LazyComponents.tsx(7,10): error TS1484: 'ComponentProps' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+2025-09-05T17:55:55.5645967Z ##[error]src/components/lazy/LazyComponents.tsx(65,3): error TS2345: Argument of type '() => Promise<typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/billing/BillingOverviewUniversal")>' is not assignable to parameter of type 'DynamicOptions<{}> | Loader<{}>'.
+2025-09-05T17:55:55.5648450Z   Type '() => Promise<typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/billing/BillingOverviewUniversal")>' is not assignable to type '() => LoaderComponent<{}>'.
+2025-09-05T17:55:55.5650034Z     Type 'Promise<typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/billing/BillingOverviewUniversal")>' is not assignable to type 'LoaderComponent<{}>'.
+2025-09-05T17:55:55.5651634Z       Type 'typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/billing/BillingOverviewUniversal")' is not assignable to type 'ComponentType<{}> | ComponentModule<{}>'.
+2025-09-05T17:55:55.5654492Z ##[error]src/components/lazy/LazyComponents.tsx(72,43): error TS2345: Argument of type '() => Promise<typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/billing/PaymentMethods")>' is not assignable to parameter of type 'DynamicOptions<{}> | Loader<{}>'.
+2025-09-05T17:55:55.5656798Z   Type '() => Promise<typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/billing/PaymentMethods")>' is not assignable to type '() => LoaderComponent<{}>'.
+2025-09-05T17:55:55.5658293Z     Type 'Promise<typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/billing/PaymentMethods")>' is not assignable to type 'LoaderComponent<{}>'.
+2025-09-05T17:55:55.5659915Z       Type 'typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/billing/PaymentMethods")' is not assignable to type 'ComponentType<{}> | ComponentModule<{}>'.
+2025-09-05T17:55:55.5662709Z ##[error]src/components/lazy/LazyComponents.tsx(77,41): error TS2345: Argument of type '() => Promise<typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/billing/QuickPayment")>' is not assignable to parameter of type 'DynamicOptions<{}> | Loader<{}>'.
+2025-09-05T17:55:55.5664883Z   Type '() => Promise<typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/billing/QuickPayment")>' is not assignable to type '() => LoaderComponent<{}>'.
+2025-09-05T17:55:55.5666594Z     Type 'Promise<typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/billing/QuickPayment")>' is not assignable to type 'LoaderComponent<{}>'.
+2025-09-05T17:55:55.5668100Z       Type 'typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/billing/QuickPayment")' is not assignable to type 'ComponentType<{}> | ComponentModule<{}>'.
+2025-09-05T17:55:55.5670874Z ##[error]src/components/lazy/LazyComponents.tsx(82,41): error TS2345: Argument of type '() => Promise<typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/billing/InvoicesList")>' is not assignable to parameter of type 'DynamicOptions<{}> | Loader<{}>'.
+2025-09-05T17:55:55.5673048Z   Type '() => Promise<typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/billing/InvoicesList")>' is not assignable to type '() => LoaderComponent<{}>'.
+2025-09-05T17:55:55.5674514Z     Type 'Promise<typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/billing/InvoicesList")>' is not assignable to type 'LoaderComponent<{}>'.
+2025-09-05T17:55:55.5676200Z       Type 'typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/billing/InvoicesList")' is not assignable to type 'ComponentType<{}> | ComponentModule<{}>'.
+2025-09-05T17:55:55.5679022Z ##[error]src/components/lazy/LazyComponents.tsx(88,46): error TS2345: Argument of type '() => Promise<typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/services/ServiceManagement")>' is not assignable to parameter of type 'DynamicOptions<{}> | Loader<{}>'.
+2025-09-05T17:55:55.5681412Z   Type '() => Promise<typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/services/ServiceManagement")>' is not assignable to type '() => LoaderComponent<{}>'.
+2025-09-05T17:55:55.5682925Z     Type 'Promise<typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/services/ServiceManagement")>' is not assignable to type 'LoaderComponent<{}>'.
+2025-09-05T17:55:55.5684475Z       Type 'typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/services/ServiceManagement")' is not assignable to type 'ComponentType<{}> | ComponentModule<{}>'.
+2025-09-05T17:55:55.5687418Z ##[error]src/components/lazy/LazyComponents.tsx(93,41): error TS2345: Argument of type '() => Promise<typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/services/ServicePlans")>' is not assignable to parameter of type 'DynamicOptions<{}> | Loader<{}>'.
+2025-09-05T17:55:55.5689598Z   Type '() => Promise<typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/services/ServicePlans")>' is not assignable to type '() => LoaderComponent<{}>'.
+2025-09-05T17:55:55.5691062Z     Type 'Promise<typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/services/ServicePlans")>' is not assignable to type 'LoaderComponent<{}>'.
+2025-09-05T17:55:55.5692672Z       Type 'typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/services/ServicePlans")' is not assignable to type 'ComponentType<{}> | ComponentModule<{}>'.
+2025-09-05T17:55:55.5695751Z ##[error]src/components/lazy/LazyComponents.tsx(99,3): error TS2345: Argument of type '() => Promise<typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/services/ServiceTroubleshooting")>' is not assignable to parameter of type 'DynamicOptions<{}> | Loader<{}>'.
+2025-09-05T17:55:55.5698058Z   Type '() => Promise<typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/services/ServiceTroubleshooting")>' is not assignable to type '() => LoaderComponent<{}>'.
+2025-09-05T17:55:55.5699623Z     Type 'Promise<typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/services/ServiceTroubleshooting")>' is not assignable to type 'LoaderComponent<{}>'.
+2025-09-05T17:55:55.5701201Z       Type 'typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/services/ServiceTroubleshooting")' is not assignable to type 'ComponentType<{}> | ComponentModule<{}>'.
+2025-09-05T17:55:55.5704047Z ##[error]src/components/lazy/LazyComponents.tsx(107,42): error TS2345: Argument of type '() => Promise<typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/support/SupportCenter")>' is not assignable to parameter of type 'DynamicOptions<{}> | Loader<{}>'.
+2025-09-05T17:55:55.5706412Z   Type '() => Promise<typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/support/SupportCenter")>' is not assignable to type '() => LoaderComponent<{}>'.
+2025-09-05T17:55:55.5707884Z     Type 'Promise<typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/support/SupportCenter")>' is not assignable to type 'LoaderComponent<{}>'.
+2025-09-05T17:55:55.5709370Z       Type 'typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/support/SupportCenter")' is not assignable to type 'ComponentType<{}> | ComponentModule<{}>'.
+2025-09-05T17:55:55.5712312Z ##[error]src/components/lazy/LazyComponents.tsx(112,43): error TS2345: Argument of type '() => Promise<typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/support/SupportTickets")>' is not assignable to parameter of type 'DynamicOptions<{}> | Loader<{}>'.
+2025-09-05T17:55:55.5714510Z   Type '() => Promise<typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/support/SupportTickets")>' is not assignable to type '() => LoaderComponent<{}>'.
+2025-09-05T17:55:55.5716215Z     Type 'Promise<typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/support/SupportTickets")>' is not assignable to type 'LoaderComponent<{}>'.
+2025-09-05T17:55:55.5717720Z       Type 'typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/support/SupportTickets")' is not assignable to type 'ComponentType<{}> | ComponentModule<{}>'.
+2025-09-05T17:55:55.5720509Z ##[error]src/components/lazy/LazyComponents.tsx(117,42): error TS2345: Argument of type '() => Promise<typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/support/KnowledgeBase")>' is not assignable to parameter of type 'DynamicOptions<{}> | Loader<{}>'.
+2025-09-05T17:55:55.5722828Z   Type '() => Promise<typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/support/KnowledgeBase")>' is not assignable to type '() => LoaderComponent<{}>'.
+2025-09-05T17:55:55.5724305Z     Type 'Promise<typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/support/KnowledgeBase")>' is not assignable to type 'LoaderComponent<{}>'.
+2025-09-05T17:55:55.5725914Z       Type 'typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/support/KnowledgeBase")' is not assignable to type 'ComponentType<{}> | ComponentModule<{}>'.
+2025-09-05T17:55:55.5728713Z ##[error]src/components/lazy/LazyComponents.tsx(122,43): error TS2345: Argument of type '() => Promise<typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/support/LiveChatWidget")>' is not assignable to parameter of type 'DynamicOptions<{}> | Loader<{}>'.
+2025-09-05T17:55:55.5730953Z   Type '() => Promise<typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/support/LiveChatWidget")>' is not assignable to type '() => LoaderComponent<{}>'.
+2025-09-05T17:55:55.5732432Z     Type 'Promise<typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/support/LiveChatWidget")>' is not assignable to type 'LoaderComponent<{}>'.
+2025-09-05T17:55:55.5733936Z       Type 'typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/support/LiveChatWidget")' is not assignable to type 'ComponentType<{}> | ComponentModule<{}>'.
+2025-09-05T17:55:55.5736796Z ##[error]src/components/lazy/LazyComponents.tsx(128,43): error TS2345: Argument of type '() => Promise<typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/usage/UsageAnalytics")>' is not assignable to parameter of type 'DynamicOptions<{}> | Loader<{}>'.
+2025-09-05T17:55:55.5738967Z   Type '() => Promise<typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/usage/UsageAnalytics")>' is not assignable to type '() => LoaderComponent<{}>'.
+2025-09-05T17:55:55.5740424Z     Type 'Promise<typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/usage/UsageAnalytics")>' is not assignable to type 'LoaderComponent<{}>'.
+2025-09-05T17:55:55.5742030Z       Type 'typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/usage/UsageAnalytics")' is not assignable to type 'ComponentType<{}> | ComponentModule<{}>'.
+2025-09-05T17:55:55.5744874Z ##[error]src/components/lazy/LazyComponents.tsx(144,44): error TS2345: Argument of type '() => Promise<typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/documents/DocumentManager")>' is not assignable to parameter of type 'DynamicOptions<{}> | Loader<{}>'.
+2025-09-05T17:55:55.5747343Z   Type '() => Promise<typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/documents/DocumentManager")>' is not assignable to type '() => LoaderComponent<{}>'.
+2025-09-05T17:55:55.5748849Z     Type 'Promise<typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/documents/DocumentManager")>' is not assignable to type 'LoaderComponent<{}>'.
+2025-09-05T17:55:55.5750393Z       Type 'typeof import("/home/runner/work/dotmac_framework/dotmac_framework/frontend/isp-framework/customer/src/components/documents/DocumentManager")' is not assignable to type 'ComponentType<{}> | ComponentModule<{}>'.
+2025-09-05T17:55:55.5752211Z ##[error]src/components/lazy/LazyComponents.tsx(152,12): error TS2307: Cannot find module '@dotmac/primitives/src/charts/InteractiveChart' or its corresponding type declarations.
+2025-09-05T17:55:55.5754814Z ##[error]src/components/lazy/LazyComponents.tsx(167,12): error TS2307: Cannot find module '@dotmac/primitives/src/charts/InteractiveChart' or its corresponding type declarations.
+2025-09-05T17:55:55.5757272Z ##[error]src/components/lazy/LazyComponents.tsx(186,5): error TS2322: Type '(() => Element) | ComponentType<{}>' is not assignable to type '((loadingProps: DynamicOptionsLoadingProps) => Element | null) | undefined'.
+2025-09-05T17:55:55.5758687Z   Type 'FunctionComponent<{}>' is not assignable to type '(loadingProps: DynamicOptionsLoadingProps) => Element | null'.
+2025-09-05T17:55:55.5759264Z     Type 'ReactNode' is not assignable to type 'Element | null'.
+2025-09-05T17:55:55.5759664Z       Type 'undefined' is not assignable to type 'Element | null'.
+2025-09-05T17:55:55.5761058Z ##[error]src/components/lazy/LazyComponents.tsx(200,5): error TS2322: Type '(() => Element) | ComponentType<{}>' is not assignable to type '((loadingProps: DynamicOptionsLoadingProps) => Element | null) | undefined'.
+2025-09-05T17:55:55.5762452Z   Type 'FunctionComponent<{}>' is not assignable to type '(loadingProps: DynamicOptionsLoadingProps) => Element | null'.
+2025-09-05T17:55:55.5763017Z     Type 'ReactNode' is not assignable to type 'Element | null'.
+2025-09-05T17:55:55.5763411Z       Type 'undefined' is not assignable to type 'Element | null'.
+2025-09-05T17:55:55.5764558Z ##[error]src/components/onboarding/CustomerOnboardingWorkflow.tsx(5,45): error TS2307: Cannot find module '@dotmac/workflows-system' or its corresponding type declarations.
+2025-09-05T17:55:55.5767520Z ##[error]src/components/onboarding/CustomerOnboardingWorkflow.tsx(6,41): error TS2307: Cannot find module '@dotmac/workflows-system' or its corresponding type declarations.
+2025-09-05T17:55:55.5769348Z ##[error]src/components/onboarding/CustomerOnboardingWorkflow.tsx(7,10): error TS2305: Module '"@dotmac/primitives"' has no exported member 'Button'.
+2025-09-05T17:55:55.5771031Z ##[error]src/components/onboarding/CustomerOnboardingWorkflow.tsx(291,18): error TS7006: Parameter 'result' implicitly has an 'any' type.
+2025-09-05T17:55:55.5773045Z ##[error]src/components/onboarding/CustomerOnboardingWorkflow.tsx(295,15): error TS7006: Parameter 'error' implicitly has an 'any' type.
+2025-09-05T17:55:55.5774716Z ##[error]src/components/onboarding/CustomerOnboardingWorkflow.tsx(298,22): error TS7006: Parameter 'stepId' implicitly has an 'any' type.
+2025-09-05T17:55:55.5776809Z ##[error]src/components/onboarding/CustomerOnboardingWorkflow.tsx(298,30): error TS7006: Parameter 'output' implicitly has an 'any' type.
+2025-09-05T17:55:55.5778537Z ##[error]src/components/onboarding/index.ts(1,10): error TS2300: Duplicate identifier 'CustomerOnboardingWorkflow'.
+2025-09-05T17:55:55.5779870Z ##[error]src/components/onboarding/index.ts(2,21): error TS2300: Duplicate identifier 'CustomerOnboardingWorkflow'.
+2025-09-05T17:55:55.5781527Z ##[error]src/components/performance/BundleAnalyzer.tsx(9,66): error TS2307: Cannot find module '../../lib/utils/serviceWorker' or its corresponding type declarations.
+2025-09-05T17:55:55.5783062Z ##[error]src/components/performance/BundleAnalyzer.tsx(35,52): error TS7006: Parameter 'online' implicitly has an 'any' type.
+2025-09-05T17:55:55.5784474Z ##[error]src/components/performance/BundleAnalyzer.tsx(54,18): error TS7006: Parameter 'resource' implicitly has an 'any' type.
+2025-09-05T17:55:55.5786144Z ##[error]src/components/performance/BundleAnalyzer.tsx(55,18): error TS7006: Parameter 'sum' implicitly has an 'any' type.
+2025-09-05T17:55:55.5787576Z ##[error]src/components/performance/BundleAnalyzer.tsx(55,23): error TS7006: Parameter 'resource' implicitly has an 'any' type.
+2025-09-05T17:55:55.5789486Z ##[error]src/components/projects/ProjectsManagement.tsx(4,40): error TS2307: Cannot find module '@dotmac/primitives/templates/ManagementPageTemplate' or its corresponding type declarations.
+2025-09-05T17:55:55.5791181Z ##[error]src/components/projects/ProjectsManagement.tsx(532,30): error TS2552: Cannot find name 'DocumentIcon'. Did you mean 'Document'?
+2025-09-05T17:55:55.5794294Z ##[error]src/components/projects/ServiceRequestWizard.tsx(3,34): error TS2307: Cannot find module '@dotmac/patterns/templates' or its corresponding type declarations.
+2025-09-05T17:55:55.5798053Z ##[error]src/components/projects/ServiceRequestWizard.tsx(4,37): error TS2307: Cannot find module '@dotmac/patterns/templates' or its corresponding type declarations.
+2025-09-05T17:55:55.5801224Z ##[error]src/components/projects/ServiceRequestWizard.tsx(5,10): error TS2305: Module '"@dotmac/primitives"' has no exported member 'Card'.
+2025-09-05T17:55:55.5804454Z ##[error]src/components/providers/AuthErrorProvider.tsx(5,64): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:55.5807910Z ##[error]src/components/providers/ServiceWorkerProvider.tsx(9,31): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:55.5811339Z ##[error]src/components/providers/ServiceWorkerProvider.tsx(15,8): error TS2307: Cannot find module '../../lib/utils/serviceWorker' or its corresponding type declarations.
+2025-09-05T17:55:55.5814434Z ##[error]src/components/providers/ServiceWorkerProvider.tsx(57,21): error TS7006: Parameter 'reg' implicitly has an 'any' type.
+2025-09-05T17:55:55.5817450Z ##[error]src/components/providers/ServiceWorkerProvider.tsx(61,20): error TS7006: Parameter 'reg' implicitly has an 'any' type.
+2025-09-05T17:55:55.5820156Z ##[error]src/components/providers/ServiceWorkerProvider.tsx(65,19): error TS7006: Parameter 'error' implicitly has an 'any' type.
+2025-09-05T17:55:55.5822205Z ##[error]src/components/quality/QualityDashboard.tsx(4,35): error TS2307: Cannot find module '@dotmac/primitives/templates/DashboardTemplate' or its corresponding type declarations.
+2025-09-05T17:55:55.5824317Z ##[error]src/components/quality/QualityDashboard.tsx(75,71): error TS2345: Argument of type 'QualityMetric | undefined' is not assignable to parameter of type 'QualityMetric | (() => QualityMetric)'.
+2025-09-05T17:55:55.5825868Z   Type 'undefined' is not assignable to type 'QualityMetric | (() => QualityMetric)'.
+2025-09-05T17:55:55.5826904Z ##[error]src/components/quality/SignalStrengthWidget.tsx(3,10): error TS2305: Module '"@dotmac/primitives"' has no exported member 'Card'.
+2025-09-05T17:55:55.5828465Z ##[error]src/components/quality/SpeedTestWidget.tsx(3,10): error TS2305: Module '"@dotmac/primitives"' has no exported member 'Button'.
+2025-09-05T17:55:55.5830163Z ##[error]src/components/quality/SpeedTestWidget.tsx(3,28): error TS2305: Module '"@dotmac/primitives"' has no exported member 'Card'.
+2025-09-05T17:55:55.5833480Z ##[error]src/components/quality/SpeedTestWidget.tsx(4,29): error TS2307: Cannot find module '@dotmac/monitoring/observability' or its corresponding type declarations.
+2025-09-05T17:55:55.5837018Z ##[error]src/components/services/ServiceManagement.tsx(3,31): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:55.5840212Z ##[error]src/components/services/ServiceManagement.tsx(4,22): error TS2307: Cannot find module '@dotmac/ui/customer' or its corresponding type declarations.
+2025-09-05T17:55:55.5842983Z ##[error]src/components/services/ServiceManagement.tsx(17,3): error TS2305: Module '"lucide-react"' has no exported member 'Upgrade'.
+2025-09-05T17:55:55.5845696Z ##[error]src/components/services/ServiceManagement.tsx(208,36): error TS7006: Parameter 'service' implicitly has an 'any' type.
+2025-09-05T17:55:55.5847989Z ##[error]src/components/services/ServiceManagement.tsx(342,43): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'SetStateAction<"usage" | "overview" | "equipment" | "upgrades">'.
+2025-09-05T17:55:55.5849671Z ##[error]src/components/services/ServiceManagement.tsx(361,40): error TS7006: Parameter 'service' implicitly has an 'any' type.
+2025-09-05T17:55:55.5851107Z ##[error]src/components/services/ServiceManagement.tsx(365,42): error TS7006: Parameter 'feature' implicitly has an 'any' type.
+2025-09-05T17:55:55.5852849Z ##[error]src/components/services/ServiceManagement.tsx(365,51): error TS7006: Parameter 'index' implicitly has an 'any' type.
+2025-09-05T17:55:55.5855893Z ##[error]src/components/services/ServiceManagement.tsx(383,48): error TS7006: Parameter 'activity' implicitly has an 'any' type.
+2025-09-05T17:55:55.5858739Z ##[error]src/components/services/ServiceManagement.tsx(400,22): error TS7006: Parameter 'service' implicitly has an 'any' type.
+2025-09-05T17:55:55.5861159Z ##[error]src/components/services/ServiceManagement.tsx(401,19): error TS7006: Parameter 'service' implicitly has an 'any' type.
+2025-09-05T17:55:55.5862685Z ##[error]src/components/services/ServiceManagement.tsx(468,38): error TS7006: Parameter 'service' implicitly has an 'any' type.
+2025-09-05T17:55:55.5864142Z ##[error]src/components/services/ServiceManagement.tsx(473,41): error TS7006: Parameter 'equipment' implicitly has an 'any' type.
+2025-09-05T17:55:55.5865850Z ##[error]src/components/services/ServiceManagement.tsx(473,52): error TS7006: Parameter 'index' implicitly has an 'any' type.
+2025-09-05T17:55:55.5867368Z ##[error]src/components/services/ServiceManagement.tsx(530,51): error TS7006: Parameter 'upgrade' implicitly has an 'any' type.
+2025-09-05T17:55:55.5868814Z ##[error]src/components/services/ServiceManagement.tsx(549,46): error TS7006: Parameter 'benefit' implicitly has an 'any' type.
+2025-09-05T17:55:55.5870223Z ##[error]src/components/services/ServiceManagement.tsx(549,55): error TS7006: Parameter 'index' implicitly has an 'any' type.
+2025-09-05T17:55:55.5871802Z ##[error]src/components/services/ServicePlans.tsx(3,31): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:55.5873466Z ##[error]src/components/services/ServicePlans.tsx(4,22): error TS2307: Cannot find module '@dotmac/ui/customer' or its corresponding type declarations.
+2025-09-05T17:55:55.5875182Z ##[error]src/components/services/ServiceTroubleshooting.tsx(3,22): error TS2307: Cannot find module '@dotmac/ui/customer' or its corresponding type declarations.
+2025-09-05T17:55:55.5876902Z ##[error]src/components/services/ServiceTroubleshooting.tsx(233,58): error TS2532: Object is possibly 'undefined'.
+2025-09-05T17:55:55.5879713Z ##[error]src/components/services/ServiceTroubleshooting.tsx(244,22): error TS2345: Argument of type '(prev: DiagnosticStep[]) => (DiagnosticStep | { status: any; result: string; action: string | undefined; id: string; title: string; description: string; duration?: number; })[]' is not assignable to parameter of type 'SetStateAction<DiagnosticStep[]>'.
+2025-09-05T17:55:55.5882129Z   Type '(prev: DiagnosticStep[]) => (DiagnosticStep | { status: any; result: string; action: string | undefined; id: string; title: string; description: string; duration?: number; })[]' is not assignable to type '(prevState: DiagnosticStep[]) => DiagnosticStep[]'.
+2025-09-05T17:55:55.5883482Z     Type '(DiagnosticStep | { status: any; result: string; action: string | undefined; id: string; title: string; description: string; duration?: number; })[]' is not assignable to type 'DiagnosticStep[]'.
+2025-09-05T17:55:55.5885040Z       Type 'DiagnosticStep | { status: any; result: string; action: string | undefined; id: string; title: string; description: string; duration?: number; }' is not assignable to type 'DiagnosticStep' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:55.5887075Z         Type '{ status: any; result: string; action: string | undefined; id: string; title: string; description: string; duration?: number; }' is not assignable to type 'DiagnosticStep' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:55.5888073Z           Types of property 'action' are incompatible.
+2025-09-05T17:55:55.5888457Z             Type 'string | undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.5888847Z               Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.5889781Z ##[error]src/components/services/ServiceTroubleshooting.tsx(249,25): error TS2532: Object is possibly 'undefined'.
+2025-09-05T17:55:55.5891158Z ##[error]src/components/services/ServiceTroubleshooting.tsx(250,25): error TS2532: Object is possibly 'undefined'.
+2025-09-05T17:55:55.5892620Z ##[error]src/components/support/ConversationPanel.tsx(3,10): error TS2305: Module '"@dotmac/primitives"' has no exported member 'Card'.
+2025-09-05T17:55:55.5894126Z ##[error]src/components/support/ConversationPanel.tsx(3,16): error TS2305: Module '"@dotmac/primitives"' has no exported member 'Button'.
+2025-09-05T17:55:55.5895850Z ##[error]src/components/support/ConversationPanel.tsx(3,24): error TS2305: Module '"@dotmac/primitives"' has no exported member 'Input'.
+2025-09-05T17:55:55.5897545Z ##[error]src/components/support/KnowledgeBase.tsx(3,22): error TS2307: Cannot find module '@dotmac/ui/customer' or its corresponding type declarations.
+2025-09-05T17:55:55.5899218Z ##[error]src/components/support/KnowledgeBase.tsx(54,5): error TS2322: Type 'LucideIcon' is not assignable to type 'ComponentType<{ className?: string; }>'.
+2025-09-05T17:55:55.5900478Z   Type 'ForwardRefExoticComponent<LucideProps>' is not assignable to type 'FunctionComponent<{ className?: string; }>'.
+2025-09-05T17:55:55.5901038Z     Types of property 'defaultProps' are incompatible.
+2025-09-05T17:55:55.5901587Z       Type 'Partial<LucideProps> | undefined' is not assignable to type 'Partial<{ className?: string; }> | undefined'.
+2025-09-05T17:55:55.5902587Z         Type 'Partial<LucideProps>' is not assignable to type 'Partial<{ className?: string; }>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:55.5903353Z           Types of property 'className' are incompatible.
+2025-09-05T17:55:55.5903753Z             Type 'string | undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.5904139Z               Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.5905165Z ##[error]src/components/support/KnowledgeBase.tsx(61,5): error TS2322: Type 'LucideIcon' is not assignable to type 'ComponentType<{ className?: string; }>'.
+2025-09-05T17:55:55.5906680Z   Type 'ForwardRefExoticComponent<LucideProps>' is not assignable to type 'FunctionComponent<{ className?: string; }>'.
+2025-09-05T17:55:55.5907436Z     Types of property 'defaultProps' are incompatible.
+2025-09-05T17:55:55.5907982Z       Type 'Partial<LucideProps> | undefined' is not assignable to type 'Partial<{ className?: string; }> | undefined'.
+2025-09-05T17:55:55.5908984Z         Type 'Partial<LucideProps>' is not assignable to type 'Partial<{ className?: string; }>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:55.5909745Z           Types of property 'className' are incompatible.
+2025-09-05T17:55:55.5910127Z             Type 'string | undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.5910517Z               Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.5911567Z ##[error]src/components/support/KnowledgeBase.tsx(68,5): error TS2322: Type 'LucideIcon' is not assignable to type 'ComponentType<{ className?: string; }>'.
+2025-09-05T17:55:55.5913077Z   Type 'ForwardRefExoticComponent<LucideProps>' is not assignable to type 'FunctionComponent<{ className?: string; }>'.
+2025-09-05T17:55:55.5914155Z     Types of property 'defaultProps' are incompatible.
+2025-09-05T17:55:55.5915229Z       Type 'Partial<LucideProps> | undefined' is not assignable to type 'Partial<{ className?: string; }> | undefined'.
+2025-09-05T17:55:55.5917420Z         Type 'Partial<LucideProps>' is not assignable to type 'Partial<{ className?: string; }>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:55.5918968Z           Types of property 'className' are incompatible.
+2025-09-05T17:55:55.5919719Z             Type 'string | undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.5920714Z               Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.5922819Z ##[error]src/components/support/KnowledgeBase.tsx(75,5): error TS2322: Type 'LucideIcon' is not assignable to type 'ComponentType<{ className?: string; }>'.
+2025-09-05T17:55:55.5925656Z   Type 'ForwardRefExoticComponent<LucideProps>' is not assignable to type 'FunctionComponent<{ className?: string; }>'.
+2025-09-05T17:55:55.5926785Z     Types of property 'defaultProps' are incompatible.
+2025-09-05T17:55:55.5927841Z       Type 'Partial<LucideProps> | undefined' is not assignable to type 'Partial<{ className?: string; }> | undefined'.
+2025-09-05T17:55:55.5929861Z         Type 'Partial<LucideProps>' is not assignable to type 'Partial<{ className?: string; }>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:55.5931483Z           Types of property 'className' are incompatible.
+2025-09-05T17:55:55.5932233Z             Type 'string | undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.5932979Z               Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.5935040Z ##[error]src/components/support/KnowledgeBase.tsx(82,5): error TS2322: Type 'LucideIcon' is not assignable to type 'ComponentType<{ className?: string; }>'.
+2025-09-05T17:55:55.5937816Z   Type 'ForwardRefExoticComponent<LucideProps>' is not assignable to type 'FunctionComponent<{ className?: string; }>'.
+2025-09-05T17:55:55.5938907Z     Types of property 'defaultProps' are incompatible.
+2025-09-05T17:55:55.5939982Z       Type 'Partial<LucideProps> | undefined' is not assignable to type 'Partial<{ className?: string; }> | undefined'.
+2025-09-05T17:55:55.5941914Z         Type 'Partial<LucideProps>' is not assignable to type 'Partial<{ className?: string; }>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:55.5943373Z           Types of property 'className' are incompatible.
+2025-09-05T17:55:55.5944122Z             Type 'string | undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.5944870Z               Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.5946965Z ##[error]src/components/support/KnowledgeBase.tsx(89,5): error TS2322: Type 'LucideIcon' is not assignable to type 'ComponentType<{ className?: string; }>'.
+2025-09-05T17:55:55.5949163Z   Type 'ForwardRefExoticComponent<LucideProps>' is not assignable to type 'FunctionComponent<{ className?: string; }>'.
+2025-09-05T17:55:55.5949744Z     Types of property 'defaultProps' are incompatible.
+2025-09-05T17:55:55.5950313Z       Type 'Partial<LucideProps> | undefined' is not assignable to type 'Partial<{ className?: string; }> | undefined'.
+2025-09-05T17:55:55.5951328Z         Type 'Partial<LucideProps>' is not assignable to type 'Partial<{ className?: string; }>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:55.5952109Z           Types of property 'className' are incompatible.
+2025-09-05T17:55:55.5952501Z             Type 'string | undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.5952900Z               Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.5953961Z ##[error]src/components/support/LiveChatWidget.tsx(4,25): error TS2307: Cannot find module '@dotmac/auth' or its corresponding type declarations.
+2025-09-05T17:55:55.5956427Z ##[error]src/components/support/SupportCenter.tsx(3,22): error TS2307: Cannot find module '@dotmac/ui/customer' or its corresponding type declarations.
+2025-09-05T17:55:55.5959462Z ##[error]src/components/support/SupportCenter.tsx(40,5): error TS2322: Type 'LucideIcon' is not assignable to type 'ComponentType<{ className?: string; }>'.
+2025-09-05T17:55:55.5961690Z   Type 'ForwardRefExoticComponent<LucideProps>' is not assignable to type 'FunctionComponent<{ className?: string; }>'.
+2025-09-05T17:55:55.5962699Z     Types of property 'defaultProps' are incompatible.
+2025-09-05T17:55:55.5963843Z       Type 'Partial<LucideProps> | undefined' is not assignable to type 'Partial<{ className?: string; }> | undefined'.
+2025-09-05T17:55:55.5965881Z         Type 'Partial<LucideProps>' is not assignable to type 'Partial<{ className?: string; }>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:55.5967302Z           Types of property 'className' are incompatible.
+2025-09-05T17:55:55.5967964Z             Type 'string | undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.5968644Z               Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.5970458Z ##[error]src/components/support/SupportCenter.tsx(51,5): error TS2322: Type 'LucideIcon' is not assignable to type 'ComponentType<{ className?: string; }>'.
+2025-09-05T17:55:55.5972708Z   Type 'ForwardRefExoticComponent<LucideProps>' is not assignable to type 'FunctionComponent<{ className?: string; }>'.
+2025-09-05T17:55:55.5973696Z     Types of property 'defaultProps' are incompatible.
+2025-09-05T17:55:55.5974629Z       Type 'Partial<LucideProps> | undefined' is not assignable to type 'Partial<{ className?: string; }> | undefined'.
+2025-09-05T17:55:55.5976626Z         Type 'Partial<LucideProps>' is not assignable to type 'Partial<{ className?: string; }>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:55.5978050Z           Types of property 'className' are incompatible.
+2025-09-05T17:55:55.5978704Z             Type 'string | undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.5979359Z               Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.5981129Z ##[error]src/components/support/SupportCenter.tsx(62,5): error TS2322: Type 'LucideIcon' is not assignable to type 'ComponentType<{ className?: string; }>'.
+2025-09-05T17:55:55.5983338Z   Type 'ForwardRefExoticComponent<LucideProps>' is not assignable to type 'FunctionComponent<{ className?: string; }>'.
+2025-09-05T17:55:55.5984294Z     Types of property 'defaultProps' are incompatible.
+2025-09-05T17:55:55.5985240Z       Type 'Partial<LucideProps> | undefined' is not assignable to type 'Partial<{ className?: string; }> | undefined'.
+2025-09-05T17:55:55.5987379Z         Type 'Partial<LucideProps>' is not assignable to type 'Partial<{ className?: string; }>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:55.5988711Z           Types of property 'className' are incompatible.
+2025-09-05T17:55:55.5989350Z             Type 'string | undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.5989986Z               Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.5991755Z ##[error]src/components/support/SupportCenter.tsx(73,5): error TS2322: Type 'LucideIcon' is not assignable to type 'ComponentType<{ className?: string; }>'.
+2025-09-05T17:55:55.5994037Z   Type 'ForwardRefExoticComponent<LucideProps>' is not assignable to type 'FunctionComponent<{ className?: string; }>'.
+2025-09-05T17:55:55.5995020Z     Types of property 'defaultProps' are incompatible.
+2025-09-05T17:55:55.5996133Z       Type 'Partial<LucideProps> | undefined' is not assignable to type 'Partial<{ className?: string; }> | undefined'.
+2025-09-05T17:55:55.5997883Z         Type 'Partial<LucideProps>' is not assignable to type 'Partial<{ className?: string; }>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:55.5999290Z           Types of property 'className' are incompatible.
+2025-09-05T17:55:55.5999954Z             Type 'string | undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.6000626Z               Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.6002572Z ##[error]src/components/support/SupportCenter.tsx(84,5): error TS2322: Type 'LucideIcon' is not assignable to type 'ComponentType<{ className?: string; }>'.
+2025-09-05T17:55:55.6004827Z   Type 'ForwardRefExoticComponent<LucideProps>' is not assignable to type 'FunctionComponent<{ className?: string; }>'.
+2025-09-05T17:55:55.6006006Z     Types of property 'defaultProps' are incompatible.
+2025-09-05T17:55:55.6006988Z       Type 'Partial<LucideProps> | undefined' is not assignable to type 'Partial<{ className?: string; }> | undefined'.
+2025-09-05T17:55:55.6008798Z         Type 'Partial<LucideProps>' is not assignable to type 'Partial<{ className?: string; }>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:55.6010140Z           Types of property 'className' are incompatible.
+2025-09-05T17:55:55.6010802Z             Type 'string | undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.6011490Z               Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.6013302Z ##[error]src/components/support/SupportCenter.tsx(95,5): error TS2322: Type 'LucideIcon' is not assignable to type 'ComponentType<{ className?: string; }>'.
+2025-09-05T17:55:55.6015655Z   Type 'ForwardRefExoticComponent<LucideProps>' is not assignable to type 'FunctionComponent<{ className?: string; }>'.
+2025-09-05T17:55:55.6016669Z     Types of property 'defaultProps' are incompatible.
+2025-09-05T17:55:55.6017638Z       Type 'Partial<LucideProps> | undefined' is not assignable to type 'Partial<{ className?: string; }> | undefined'.
+2025-09-05T17:55:55.6019467Z         Type 'Partial<LucideProps>' is not assignable to type 'Partial<{ className?: string; }>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:55.6020803Z           Types of property 'className' are incompatible.
+2025-09-05T17:55:55.6021467Z             Type 'string | undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.6022157Z               Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.6024521Z ##[error]src/components/support/SupportTickets.tsx(4,40): error TS2307: Cannot find module '@dotmac/primitives/templates/ManagementPageTemplate' or its corresponding type declarations.
+2025-09-05T17:55:55.6027869Z ##[error]src/components/test/ImportTest.tsx(12,31): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:55.6030229Z ##[error]src/components/test/ImportTest.tsx(14,10): error TS2305: Module '"@dotmac/primitives"' has no exported member 'Button'.
+2025-09-05T17:55:55.6031804Z ##[error]src/components/test/ImportTest.tsx(14,18): error TS2305: Module '"@dotmac/primitives"' has no exported member 'Card'.
+2025-09-05T17:55:55.6034661Z ##[error]src/components/test/ImportTest.tsx(25,20): error TS2322: Type '{ children: Element; level: string; }' is not assignable to type 'IntrinsicAttributes & ErrorBoundaryProps'.
+2025-09-05T17:55:55.6036173Z   Property 'level' does not exist on type 'IntrinsicAttributes & ErrorBoundaryProps'.
+2025-09-05T17:55:55.6037233Z ##[error]src/components/ui/index.ts(4,28): error TS2307: Cannot find module './StatusCard' or its corresponding type declarations.
+2025-09-05T17:55:55.6038716Z ##[error]src/components/ui/index.ts(5,38): error TS2307: Cannot find module './StatusCard' or its corresponding type declarations.
+2025-09-05T17:55:55.6040185Z ##[error]src/components/ui/index.ts(7,29): error TS2307: Cannot find module './FormSection' or its corresponding type declarations.
+2025-09-05T17:55:55.6041641Z ##[error]src/components/ui/index.ts(8,39): error TS2307: Cannot find module './FormSection' or its corresponding type declarations.
+2025-09-05T17:55:55.6043149Z ##[error]src/components/ui/index.ts(10,55): error TS2307: Cannot find module './DiagnosticProgress' or its corresponding type declarations.
+2025-09-05T17:55:55.6044685Z ##[error]src/components/ui/index.ts(11,62): error TS2307: Cannot find module './DiagnosticProgress' or its corresponding type declarations.
+2025-09-05T17:55:55.6046625Z ##[error]src/components/ui/index.ts(13,27): error TS2307: Cannot find module './DataTable' or its corresponding type declarations.
+2025-09-05T17:55:55.6048129Z ##[error]src/components/ui/index.ts(14,45): error TS2307: Cannot find module './DataTable' or its corresponding type declarations.
+2025-09-05T17:55:55.6049654Z ##[error]src/components/ui/index.ts(16,64): error TS2307: Cannot find module './ProgressIndicator' or its corresponding type declarations.
+2025-09-05T17:55:55.6051204Z ##[error]src/components/ui/index.ts(21,8): error TS2307: Cannot find module './ProgressIndicator' or its corresponding type declarations.
+2025-09-05T17:55:55.6052777Z ##[error]src/components/usage/UsageAnalytics.tsx(3,31): error TS2307: Cannot find module '@dotmac/headless' or its corresponding type declarations.
+2025-09-05T17:55:55.6054422Z ##[error]src/components/usage/UsageAnalytics.tsx(4,22): error TS2307: Cannot find module '@dotmac/ui/customer' or its corresponding type declarations.
+2025-09-05T17:55:55.6056154Z ##[error]src/components/usage/UsageAnalytics.tsx(303,40): error TS7006: Parameter 'test' implicitly has an 'any' type.
+2025-09-05T17:55:55.6057545Z ##[error]src/components/usage/UsageAnalytics.tsx(303,46): error TS7006: Parameter 'index' implicitly has an 'any' type.
+2025-09-05T17:55:55.6058902Z ##[error]src/components/usage/UsageAnalytics.tsx(362,40): error TS7006: Parameter 'day' implicitly has an 'any' type.
+2025-09-05T17:55:55.6060274Z ##[error]src/components/usage/UsageAnalytics.tsx(362,45): error TS7006: Parameter '_index' implicitly has an 'any' type.
+2025-09-05T17:55:55.6061584Z ##[error]src/components/usage/UsageAnalytics.tsx(363,70): error TS7006: Parameter 'd' implicitly has an 'any' type.
+2025-09-05T17:55:55.6062938Z ##[error]src/components/usage/UsageAnalytics.tsx(406,53): error TS7006: Parameter 'device' implicitly has an 'any' type.
+2025-09-05T17:55:55.6064287Z ##[error]src/components/usage/UsageAnalytics.tsx(406,61): error TS7006: Parameter 'index' implicitly has an 'any' type.
+2025-09-05T17:55:55.6066098Z ##[error]src/config/files.config.ts(1,43): error TS2307: Cannot find module '@dotmac/patterns/templates' or its corresponding type declarations.
+2025-09-05T17:55:55.6067798Z ##[error]src/config/projects.config.ts(1,43): error TS2307: Cannot find module '@dotmac/patterns/templates' or its corresponding type declarations.
+2025-09-05T17:55:55.6069625Z ##[error]src/config/quality.config.ts(1,38): error TS2307: Cannot find module '@dotmac/patterns/templates' or its corresponding type declarations.
+2025-09-05T17:55:55.6071252Z ##[error]src/config/tickets.config.ts(1,43): error TS2307: Cannot find module '@dotmac/patterns/templates' or its corresponding type declarations.
+2025-09-05T17:55:55.6072882Z ##[error]src/hooks/useCustomerData.ts(7,29): error TS2307: Cannot find module '../lib/api/customerApi' or its corresponding type declarations.
+2025-09-05T17:55:55.6074466Z ##[error]src/hooks/useDashboardData.ts(5,29): error TS2307: Cannot find module '../lib/api/customerApi' or its corresponding type declarations.
+2025-09-05T17:55:55.6076783Z ##[error]src/hooks/useDashboardData.ts(89,26): error TS2339: Property 'notifications' does not exist on type 'DashboardData'.
+2025-09-05T17:55:55.6078884Z ##[error]src/hooks/useDashboardData.ts(92,26): error TS2339: Property 'insights' does not exist on type 'DashboardData'.
+2025-09-05T17:55:55.6080462Z ##[error]src/middleware.ts(6,72): error TS2307: Cannot find module '@dotmac/middleware' or its corresponding type declarations.
+2025-09-05T17:55:55.6082175Z ##[error]src/utils/test-utils.tsx(4,18): error TS1484: 'RenderOptions' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+2025-09-05T17:55:55.6083952Z ##[error]src/utils/test-utils.tsx(7,17): error TS1484: 'ReactElement' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+2025-09-05T17:55:55.6087833Z ##[error]src/utils/test-utils.tsx(110,10): error TS2375: Type '{ children: ReactNode; authValue: Partial<MockAuthContextValue> | undefined; queryClient: QueryClient | undefined; }' is not assignable to type '{ children: ReactNode; authValue?: Partial<MockAuthContextValue>; queryClient?: QueryClient; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:55.6089700Z   Types of property 'authValue' are incompatible.
+2025-09-05T17:55:55.6090255Z     Type 'Partial<MockAuthContextValue> | undefined' is not assignable to type 'Partial<MockAuthContextValue>'.
+2025-09-05T17:55:55.6090860Z       Type 'undefined' is not assignable to type 'Partial<MockAuthContextValue>'.
+2025-09-05T17:55:55.6093676Z ##[error]../../shared/packages/communication-system/src/components/BulkMessageSender/BulkMessageSender.tsx(68,48): error TS2379: Argument of type '{ tenantId: string | undefined; userId: string | undefined; enableRealtime: true; }' is not assignable to parameter of type 'UseCommunicationSystemOptions' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:55.6095744Z   Types of property 'tenantId' are incompatible.
+2025-09-05T17:55:55.6096132Z     Type 'string | undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.6096522Z       Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.6097496Z ##[error]../../shared/packages/communication-system/src/components/BulkMessageSender/BulkMessageSender.tsx(79,23): error TS2532: Object is possibly 'undefined'.
+2025-09-05T17:55:55.6099178Z ##[error]../../shared/packages/communication-system/src/components/BulkMessageSender/BulkMessageSender.tsx(83,24): error TS2532: Object is possibly 'undefined'.
+2025-09-05T17:55:55.6103150Z ##[error]../../shared/packages/communication-system/src/components/BulkMessageSender/BulkMessageSender.tsx(248,56): error TS2345: Argument of type '{ metadata: { recipientName: string | undefined; jobName: string; bulkSend: boolean; }; scheduledAt?: Date; templateId: string; channel: string; recipient: string; subject: string | undefined; variables: Record<...> | undefined; priority: "low" | ... 2 more ... | "critical"; }[]' is not assignable to parameter of type 'Omit<CommunicationMessage, "status" | "id" | "sentAt">[]'.
+2025-09-05T17:55:55.6106555Z   Type '{ metadata: { recipientName: string | undefined; jobName: string; bulkSend: boolean; }; scheduledAt?: Date; templateId: string; channel: string; recipient: string; subject: string | undefined; variables: Record<...> | undefined; priority: "low" | ... 2 more ... | "critical"; }' is missing the following properties from type 'Omit<CommunicationMessage, "status" | "id" | "sentAt">': body, channelType
+2025-09-05T17:55:55.6139675Z ##[error]../../shared/packages/communication-system/src/components/BulkMessageSender/BulkMessageSender.tsx(281,16): error TS2375: Type '{ tenantId: string | undefined; userId: string | undefined; onTemplateSelect: Dispatch<SetStateAction<CommunicationTemplate | null>>; compact: true; filterByChannel: string; }' is not assignable to type 'TemplateManagerProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:55.6141987Z   Types of property 'tenantId' are incompatible.
+2025-09-05T17:55:55.6142384Z     Type 'string | undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.6142777Z       Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.6144036Z ##[error]../../shared/packages/communication-system/src/components/BulkMessageSender/BulkMessageSender.tsx(396,24): error TS18048: 'selectedTemplate.variables.length' is possibly 'undefined'.
+2025-09-05T17:55:55.6146195Z ##[error]../../shared/packages/communication-system/src/components/BulkMessageSender/BulkMessageSender.tsx(402,30): error TS18047: 'selectedTemplate' is possibly 'null'.
+2025-09-05T17:55:55.6149840Z ##[error]../../shared/packages/communication-system/src/components/LiveChatWidget/LiveChatWidget.tsx(88,48): error TS2379: Argument of type '{ tenantId: string | undefined; userId: string | undefined; enableRealtime: true; }' is not assignable to parameter of type 'UseCommunicationSystemOptions' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:55.6151725Z   Types of property 'tenantId' are incompatible.
+2025-09-05T17:55:55.6152126Z     Type 'string | undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.6152515Z       Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.6153484Z ##[error]../../shared/packages/communication-system/src/components/LiveChatWidget/LiveChatWidget.tsx(222,11): error TS18048: 'lastMessage' is possibly 'undefined'.
+2025-09-05T17:55:55.6155584Z ##[error]../../shared/packages/communication-system/src/components/TemplateEditor/TemplateEditor.tsx(103,9): error TS2322: Type '"low" | "medium" | "high" | "critical"' is not assignable to type '"medium"'.
+2025-09-05T17:55:55.6156794Z   Type '"low"' is not assignable to type '"medium"'.
+2025-09-05T17:55:55.6159419Z ##[error]../../shared/packages/communication-system/src/components/TemplateManager/TemplateManager.tsx(85,48): error TS2379: Argument of type '{ tenantId: string | undefined; userId: string | undefined; enableRealtime: true; }' is not assignable to parameter of type 'UseCommunicationSystemOptions' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:55.6161235Z   Types of property 'tenantId' are incompatible.
+2025-09-05T17:55:55.6161606Z     Type 'string | undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.6161981Z       Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.6164576Z ##[error]../../shared/packages/communication-system/src/hooks/useCommunicationSystem.ts(291,13): error TS2375: Type '{ content: string; sender: "user"; senderId: string | undefined; conversationId: string; type: "image" | "text" | "file"; }' is not assignable to type 'Omit<ChatMessage, "status" | "id" | "timestamp">' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+2025-09-05T17:55:55.6166619Z   Types of property 'senderId' are incompatible.
+2025-09-05T17:55:55.6166998Z     Type 'string | undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.6167538Z       Type 'undefined' is not assignable to type 'string'.
+2025-09-05T17:55:55.6168437Z  ELIFECYCLE  Command failed with exit code 2.
+2025-09-05T17:55:55.6171385Z ##[error]Process completed with exit code 2.
+2025-09-05T17:55:55.6230761Z Post job cleanup.
+2025-09-05T17:55:55.7113741Z Pruning is unnecessary.
+2025-09-05T17:55:55.7204780Z Post job cleanup.
+2025-09-05T17:55:55.8131478Z [command]/usr/bin/git version
+2025-09-05T17:55:55.8167345Z git version 2.51.0
+2025-09-05T17:55:55.8210335Z Temporarily overriding HOME='/home/runner/work/_temp/7c796b22-3265-4e49-982d-59b7c30ee5f8' before making global git config changes
+2025-09-05T17:55:55.8211474Z Adding repository directory to the temporary git global config as a safe directory
+2025-09-05T17:55:55.8223045Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/dotmac_framework/dotmac_framework
+2025-09-05T17:55:55.8257370Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-09-05T17:55:55.8292956Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-09-05T17:55:55.8526911Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-09-05T17:55:55.8546899Z http.https://github.com/.extraheader
+2025-09-05T17:55:55.8559629Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2025-09-05T17:55:55.8590852Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-09-05T17:55:55.8923352Z Cleaning up orphan processes

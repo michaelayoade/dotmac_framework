@@ -1,0 +1,376 @@
+﻿2025-09-05T17:55:12.5362716Z Current runner version: '2.328.0'
+2025-09-05T17:55:12.5387599Z ##[group]Runner Image Provisioner
+2025-09-05T17:55:12.5388425Z Hosted Compute Agent
+2025-09-05T17:55:12.5388947Z Version: 20250829.383
+2025-09-05T17:55:12.5389610Z Commit: 27cb235aab5b0e52e153a26cd86b4742e89dac5d
+2025-09-05T17:55:12.5390296Z Build Date: 2025-08-29T13:48:48Z
+2025-09-05T17:55:12.5390885Z ##[endgroup]
+2025-09-05T17:55:12.5391391Z ##[group]Operating System
+2025-09-05T17:55:12.5392032Z Ubuntu
+2025-09-05T17:55:12.5392721Z 24.04.3
+2025-09-05T17:55:12.5393196Z LTS
+2025-09-05T17:55:12.5393717Z ##[endgroup]
+2025-09-05T17:55:12.5394236Z ##[group]Runner Image
+2025-09-05T17:55:12.5394818Z Image: ubuntu-24.04
+2025-09-05T17:55:12.5395363Z Version: 20250831.1.0
+2025-09-05T17:55:12.5396394Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20250831.1/images/ubuntu/Ubuntu2404-Readme.md
+2025-09-05T17:55:12.5398065Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20250831.1
+2025-09-05T17:55:12.5399080Z ##[endgroup]
+2025-09-05T17:55:12.5400460Z ##[group]GITHUB_TOKEN Permissions
+2025-09-05T17:55:12.5402902Z Checks: write
+2025-09-05T17:55:12.5403471Z Contents: read
+2025-09-05T17:55:12.5404030Z Metadata: read
+2025-09-05T17:55:12.5404570Z PullRequests: read
+2025-09-05T17:55:12.5405098Z Statuses: write
+2025-09-05T17:55:12.5405641Z ##[endgroup]
+2025-09-05T17:55:12.5408101Z Secret source: Actions
+2025-09-05T17:55:12.5408835Z Prepare workflow directory
+2025-09-05T17:55:12.5966142Z Prepare all required actions
+2025-09-05T17:55:12.6022034Z Getting action download info
+2025-09-05T17:55:13.0535420Z Download action repository 'actions/checkout@v4' (SHA:08eba0b27e820071cde6df949e0beb9ba4906955)
+2025-09-05T17:55:13.2478262Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2025-09-05T17:55:13.3369968Z Download action repository 'pnpm/action-setup@v2' (SHA:eae0cfeb286e66ffb5155f1a79b90583a127a68b)
+2025-09-05T17:55:13.7678714Z Download action repository 'actions/cache@v4' (SHA:0400d5f644dc74513175e3cd8d07132dd4860809)
+2025-09-05T17:55:13.9851710Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2025-09-05T17:55:14.3252132Z Complete job name: Frontend Tests (management-portal/tenant, mgmt-tenant)
+2025-09-05T17:55:14.4198119Z ##[group]Run actions/checkout@v4
+2025-09-05T17:55:14.4199419Z with:
+2025-09-05T17:55:14.4200242Z   repository: michaelayoade/dotmac_framework
+2025-09-05T17:55:14.4201579Z   token: ***
+2025-09-05T17:55:14.4202571Z   ssh-strict: true
+2025-09-05T17:55:14.4203371Z   ssh-user: git
+2025-09-05T17:55:14.4204156Z   persist-credentials: true
+2025-09-05T17:55:14.4205032Z   clean: true
+2025-09-05T17:55:14.4205826Z   sparse-checkout-cone-mode: true
+2025-09-05T17:55:14.4206787Z   fetch-depth: 1
+2025-09-05T17:55:14.4207555Z   fetch-tags: false
+2025-09-05T17:55:14.4208340Z   show-progress: true
+2025-09-05T17:55:14.4209122Z   lfs: false
+2025-09-05T17:55:14.4209840Z   submodules: false
+2025-09-05T17:55:14.4210673Z   set-safe-directory: true
+2025-09-05T17:55:14.4211832Z env:
+2025-09-05T17:55:14.4212677Z   PYTHON_VERSION: 3.9
+2025-09-05T17:55:14.4213489Z   NODE_VERSION: 18
+2025-09-05T17:55:14.4214251Z   PNPM_VERSION: 8
+2025-09-05T17:55:14.4214988Z ##[endgroup]
+2025-09-05T17:55:14.5313388Z Syncing repository: michaelayoade/dotmac_framework
+2025-09-05T17:55:14.5316041Z ##[group]Getting Git version info
+2025-09-05T17:55:14.5317466Z Working directory is '/home/runner/work/dotmac_framework/dotmac_framework'
+2025-09-05T17:55:14.5319432Z [command]/usr/bin/git version
+2025-09-05T17:55:14.5709811Z git version 2.51.0
+2025-09-05T17:55:14.5737953Z ##[endgroup]
+2025-09-05T17:55:14.5754310Z Temporarily overriding HOME='/home/runner/work/_temp/4f5de011-2144-42d2-89b3-32e8f465cfab' before making global git config changes
+2025-09-05T17:55:14.5758981Z Adding repository directory to the temporary git global config as a safe directory
+2025-09-05T17:55:14.5769561Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/dotmac_framework/dotmac_framework
+2025-09-05T17:55:14.5809342Z Deleting the contents of '/home/runner/work/dotmac_framework/dotmac_framework'
+2025-09-05T17:55:14.5813343Z ##[group]Initializing the repository
+2025-09-05T17:55:14.5817928Z [command]/usr/bin/git init /home/runner/work/dotmac_framework/dotmac_framework
+2025-09-05T17:55:14.5930874Z hint: Using 'master' as the name for the initial branch. This default branch name
+2025-09-05T17:55:14.5933686Z hint: is subject to change. To configure the initial branch name to use in all
+2025-09-05T17:55:14.5935982Z hint: of your new repositories, which will suppress this warning, call:
+2025-09-05T17:55:14.5938205Z hint:
+2025-09-05T17:55:14.5939728Z hint: 	git config --global init.defaultBranch <name>
+2025-09-05T17:55:14.5941604Z hint:
+2025-09-05T17:55:14.5943682Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2025-09-05T17:55:14.5946653Z hint: 'development'. The just-created branch can be renamed via this command:
+2025-09-05T17:55:14.5949072Z hint:
+2025-09-05T17:55:14.5950381Z hint: 	git branch -m <name>
+2025-09-05T17:55:14.5951716Z hint:
+2025-09-05T17:55:14.5953761Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2025-09-05T17:55:14.5956943Z Initialized empty Git repository in /home/runner/work/dotmac_framework/dotmac_framework/.git/
+2025-09-05T17:55:14.5960375Z [command]/usr/bin/git remote add origin https://github.com/michaelayoade/dotmac_framework
+2025-09-05T17:55:14.5992091Z ##[endgroup]
+2025-09-05T17:55:14.5994852Z ##[group]Disabling automatic garbage collection
+2025-09-05T17:55:14.5997370Z [command]/usr/bin/git config --local gc.auto 0
+2025-09-05T17:55:14.6028742Z ##[endgroup]
+2025-09-05T17:55:14.6031192Z ##[group]Setting up auth
+2025-09-05T17:55:14.6036574Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-09-05T17:55:14.6068035Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-09-05T17:55:14.6404316Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-09-05T17:55:14.6438478Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-09-05T17:55:14.6678938Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2025-09-05T17:55:14.6723570Z ##[endgroup]
+2025-09-05T17:55:14.6726108Z ##[group]Fetching the repository
+2025-09-05T17:55:14.6735065Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +a6ad6a37be5e8b46de83550ce713ab9fe6f4f8de:refs/remotes/origin/main
+2025-09-05T17:55:16.6491822Z From https://github.com/michaelayoade/dotmac_framework
+2025-09-05T17:55:16.6497189Z  * [new ref]         a6ad6a37be5e8b46de83550ce713ab9fe6f4f8de -> origin/main
+2025-09-05T17:55:16.6527268Z ##[endgroup]
+2025-09-05T17:55:16.6528238Z ##[group]Determining the checkout info
+2025-09-05T17:55:16.6529823Z ##[endgroup]
+2025-09-05T17:55:16.6535670Z [command]/usr/bin/git sparse-checkout disable
+2025-09-05T17:55:16.6576719Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2025-09-05T17:55:16.6604170Z ##[group]Checking out the ref
+2025-09-05T17:55:16.6608473Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2025-09-05T17:55:17.0654960Z Switched to a new branch 'main'
+2025-09-05T17:55:17.0655750Z branch 'main' set up to track 'origin/main'.
+2025-09-05T17:55:17.0670412Z ##[endgroup]
+2025-09-05T17:55:17.0715000Z [command]/usr/bin/git log -1 --format=%H
+2025-09-05T17:55:17.0740900Z a6ad6a37be5e8b46de83550ce713ab9fe6f4f8de
+2025-09-05T17:55:17.0975430Z ##[group]Run actions/setup-node@v4
+2025-09-05T17:55:17.0975948Z with:
+2025-09-05T17:55:17.0976222Z   node-version: 18
+2025-09-05T17:55:17.0976478Z   always-auth: false
+2025-09-05T17:55:17.0977097Z   check-latest: false
+2025-09-05T17:55:17.0977537Z   token: ***
+2025-09-05T17:55:17.0977814Z env:
+2025-09-05T17:55:17.0978096Z   PYTHON_VERSION: 3.9
+2025-09-05T17:55:17.0978412Z   NODE_VERSION: 18
+2025-09-05T17:55:17.0978706Z   PNPM_VERSION: 8
+2025-09-05T17:55:17.0978987Z ##[endgroup]
+2025-09-05T17:55:17.3162428Z Found in cache @ /opt/hostedtoolcache/node/18.20.8/x64
+2025-09-05T17:55:17.3168791Z ##[group]Environment details
+2025-09-05T17:55:23.0800259Z node: v18.20.8
+2025-09-05T17:55:23.0800752Z npm: 10.8.2
+2025-09-05T17:55:23.0801229Z yarn: 1.22.22
+2025-09-05T17:55:23.0803756Z ##[endgroup]
+2025-09-05T17:55:23.0917497Z ##[group]Run pnpm/action-setup@v2
+2025-09-05T17:55:23.0917762Z with:
+2025-09-05T17:55:23.0917923Z   version: 8
+2025-09-05T17:55:23.0918104Z   dest: ~/setup-pnpm
+2025-09-05T17:55:23.0918289Z   run_install: null
+2025-09-05T17:55:23.0918488Z   package_json_file: package.json
+2025-09-05T17:55:23.0918711Z   standalone: false
+2025-09-05T17:55:23.0918885Z env:
+2025-09-05T17:55:23.0919072Z   PYTHON_VERSION: 3.9
+2025-09-05T17:55:23.0919256Z   NODE_VERSION: 18
+2025-09-05T17:55:23.0919438Z   PNPM_VERSION: 8
+2025-09-05T17:55:23.0919611Z ##[endgroup]
+2025-09-05T17:55:23.1800158Z ##[group]Running self-installer...
+2025-09-05T17:55:23.7818984Z Progress: resolved 1, reused 0, downloaded 0, added 0
+2025-09-05T17:55:23.7920839Z Packages: +1
+2025-09-05T17:55:23.7921413Z +
+2025-09-05T17:55:24.3784168Z Packages are hard linked from the content-addressable store to the virtual store.
+2025-09-05T17:55:24.3784888Z   Content-addressable store is at: /home/runner/.local/share/pnpm/store/v3
+2025-09-05T17:55:24.3785481Z   Virtual store is at:             node_modules/.pnpm
+2025-09-05T17:55:24.4070700Z 
+2025-09-05T17:55:24.4071200Z dependencies:
+2025-09-05T17:55:24.4071613Z + pnpm 8.15.9 (10.15.1 is available)
+2025-09-05T17:55:24.4071856Z 
+2025-09-05T17:55:24.4097783Z Done in 1s
+2025-09-05T17:55:24.7830263Z Progress: resolved 1, reused 0, downloaded 1, added 1, done
+2025-09-05T17:55:24.7960723Z ##[endgroup]
+2025-09-05T17:55:24.7965560Z Installation Completed!
+2025-09-05T17:55:24.8615299Z ##[group]Run actions/cache@v4
+2025-09-05T17:55:24.8615568Z with:
+2025-09-05T17:55:24.8615768Z   path: ~/.pnpm-store
+**/node_modules
+
+2025-09-05T17:55:24.8616186Z   key: pnpm-Linux-18-a73b2205d59b5113dcbf6b6fd1d2d2ed8f5938263cc7ad6527990dc5b8a3217f
+2025-09-05T17:55:24.8616607Z   restore-keys: pnpm-Linux-18-
+
+2025-09-05T17:55:24.8616856Z   enableCrossOsArchive: false
+2025-09-05T17:55:24.8617082Z   fail-on-cache-miss: false
+2025-09-05T17:55:24.8617302Z   lookup-only: false
+2025-09-05T17:55:24.8617486Z   save-always: false
+2025-09-05T17:55:24.8617664Z env:
+2025-09-05T17:55:24.8617824Z   PYTHON_VERSION: 3.9
+2025-09-05T17:55:24.8618018Z   NODE_VERSION: 18
+2025-09-05T17:55:24.8618198Z   PNPM_VERSION: 8
+2025-09-05T17:55:24.8618428Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2025-09-05T17:55:24.8618710Z ##[endgroup]
+2025-09-05T17:55:25.1059350Z Cache not found for input keys: pnpm-Linux-18-a73b2205d59b5113dcbf6b6fd1d2d2ed8f5938263cc7ad6527990dc5b8a3217f, pnpm-Linux-18-
+2025-09-05T17:55:25.1141290Z ##[group]Run if [ -d "./frontend/management-portal/tenant" ] && [ -f "./frontend/management-portal/tenant/package.json" ]; then
+2025-09-05T17:55:25.1142114Z [36;1mif [ -d "./frontend/management-portal/tenant" ] && [ -f "./frontend/management-portal/tenant/package.json" ]; then[0m
+2025-09-05T17:55:25.1142870Z [36;1m  echo "exists=true" >> $GITHUB_OUTPUT[0m
+2025-09-05T17:55:25.1143193Z [36;1m  echo "✅ App management-portal/tenant exists"[0m
+2025-09-05T17:55:25.1143464Z [36;1melse[0m
+2025-09-05T17:55:25.1143675Z [36;1m  echo "exists=false" >> $GITHUB_OUTPUT[0m
+2025-09-05T17:55:25.1144037Z [36;1m  echo "⚠️ App management-portal/tenant does not exist, skipping"[0m
+2025-09-05T17:55:25.1144351Z [36;1mfi[0m
+2025-09-05T17:55:25.1338466Z shell: /usr/bin/bash -e {0}
+2025-09-05T17:55:25.1338718Z env:
+2025-09-05T17:55:25.1338901Z   PYTHON_VERSION: 3.9
+2025-09-05T17:55:25.1339111Z   NODE_VERSION: 18
+2025-09-05T17:55:25.1339515Z   PNPM_VERSION: 8
+2025-09-05T17:55:25.1339803Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2025-09-05T17:55:25.1340094Z ##[endgroup]
+2025-09-05T17:55:25.1414020Z ✅ App management-portal/tenant exists
+2025-09-05T17:55:25.1458611Z ##[group]Run pnpm install --frozen-lockfile
+2025-09-05T17:55:25.1458942Z [36;1mpnpm install --frozen-lockfile[0m
+2025-09-05T17:55:25.1488561Z shell: /usr/bin/bash -e {0}
+2025-09-05T17:55:25.1488781Z env:
+2025-09-05T17:55:25.1488957Z   PYTHON_VERSION: 3.9
+2025-09-05T17:55:25.1489147Z   NODE_VERSION: 18
+2025-09-05T17:55:25.1489329Z   PNPM_VERSION: 8
+2025-09-05T17:55:25.1489560Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2025-09-05T17:55:25.1489838Z ##[endgroup]
+2025-09-05T17:55:26.0693715Z Scope: all 64 workspace projects
+2025-09-05T17:55:26.2273760Z Lockfile is up to date, resolution step is skipped
+2025-09-05T17:55:26.8236310Z Packages: +3323
+2025-09-05T17:55:26.8237353Z ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+2025-09-05T17:55:27.3884016Z Progress: resolved 0, reused 0, downloaded 1, added 0
+2025-09-05T17:55:28.3921054Z Progress: resolved 0, reused 0, downloaded 22, added 8
+2025-09-05T17:55:29.3909114Z Progress: resolved 0, reused 0, downloaded 61, added 53
+2025-09-05T17:55:30.3907697Z Progress: resolved 0, reused 0, downloaded 124, added 161
+2025-09-05T17:55:31.3933760Z Progress: resolved 0, reused 0, downloaded 175, added 241
+2025-09-05T17:55:32.3911515Z Progress: resolved 0, reused 0, downloaded 230, added 322
+2025-09-05T17:55:33.3990258Z Progress: resolved 0, reused 0, downloaded 434, added 607
+2025-09-05T17:55:34.3985144Z Progress: resolved 0, reused 0, downloaded 500, added 673
+2025-09-05T17:55:35.3992132Z Progress: resolved 0, reused 0, downloaded 597, added 760
+2025-09-05T17:55:36.3994163Z Progress: resolved 0, reused 0, downloaded 698, added 928
+2025-09-05T17:55:37.4014232Z Progress: resolved 0, reused 0, downloaded 768, added 1086
+2025-09-05T17:55:38.4025815Z Progress: resolved 0, reused 0, downloaded 940, added 1418
+2025-09-05T17:55:39.4056118Z Progress: resolved 0, reused 0, downloaded 1058, added 1539
+2025-09-05T17:55:40.4031136Z Progress: resolved 0, reused 0, downloaded 1199, added 1783
+2025-09-05T17:55:41.4038841Z Progress: resolved 0, reused 0, downloaded 1424, added 2030
+2025-09-05T17:55:42.4037699Z Progress: resolved 0, reused 0, downloaded 1624, added 2229
+2025-09-05T17:55:43.4040735Z Progress: resolved 0, reused 0, downloaded 1806, added 2420
+2025-09-05T17:55:44.4037855Z Progress: resolved 0, reused 0, downloaded 2017, added 2666
+2025-09-05T17:55:45.4039733Z Progress: resolved 0, reused 0, downloaded 2281, added 2933
+2025-09-05T17:55:46.4040758Z Progress: resolved 0, reused 0, downloaded 2414, added 3100
+2025-09-05T17:55:47.4043049Z Progress: resolved 0, reused 0, downloaded 2482, added 3238
+2025-09-05T17:55:48.4078503Z Progress: resolved 0, reused 0, downloaded 2546, added 3314
+2025-09-05T17:55:48.9243596Z Progress: resolved 0, reused 0, downloaded 2546, added 3323, done
+2025-09-05T17:55:49.0128748Z node_modules/msw postinstall$ node -e "import('./config/scripts/postinstall.js').catch(() => void 0)"
+2025-09-05T17:55:49.0424314Z node_modules/protobufjs postinstall$ node scripts/postinstall
+2025-09-05T17:55:49.0720946Z node_modules/core-js postinstall$ node -e "try{require('./postinstall')}catch(e){}"
+2025-09-05T17:55:49.1003681Z node_modules/msw postinstall: Done
+2025-09-05T17:55:49.1011540Z node_modules/protobufjs postinstall: Done
+2025-09-05T17:55:49.1149670Z node_modules/core-js-pure postinstall$ node -e "try{require('./postinstall')}catch(e){}"
+2025-09-05T17:55:49.1397026Z node_modules/core-js postinstall: Done
+2025-09-05T17:55:49.1427704Z node_modules/@sentry/cli install$ node ./scripts/install.js
+2025-09-05T17:55:49.1711021Z node_modules/core-js-pure postinstall: Done
+2025-09-05T17:55:49.2350815Z node_modules/@sentry/cli install: [sentry-cli] Downloading from https://downloads.sentry-cdn.com/sentry-cli/1.77.3/sentry-cli-Linux-x86_64
+2025-09-05T17:55:49.5496326Z node_modules/@sentry/cli install: [sentry-cli] Checksum validation passed.
+2025-09-05T17:55:49.5960675Z node_modules/@sentry/cli install: Done
+2025-09-05T17:55:49.6010547Z node_modules/@swc/core postinstall$ node postinstall.js
+2025-09-05T17:55:49.6233804Z node_modules/esbuild postinstall$ node install.js
+2025-09-05T17:55:49.6235359Z node_modules/unrs-resolver postinstall$ napi-postinstall unrs-resolver 1.11.1 check
+2025-09-05T17:55:49.6629204Z node_modules/@swc/core postinstall: Done
+2025-09-05T17:55:49.6740182Z .../ts-jest/node_modules/esbuild postinstall$ node install.js
+2025-09-05T17:55:49.7040488Z node_modules/esbuild postinstall: Done
+2025-09-05T17:55:49.7164713Z node_modules/unrs-resolver postinstall: Done
+2025-09-05T17:55:49.7509062Z .../ts-jest/node_modules/esbuild postinstall: Done
+2025-09-05T17:55:49.7623040Z node_modules/leveldown install$ node-gyp-build
+2025-09-05T17:55:49.8469702Z node_modules/leveldown install: Done
+2025-09-05T17:55:49.8557091Z node_modules/sharp install$ node install/check
+2025-09-05T17:55:50.3955434Z node_modules/sharp install: Done
+2025-09-05T17:55:51.2883493Z 
+2025-09-05T17:55:51.2883967Z devDependencies:
+2025-09-05T17:55:51.2884604Z + @dotmac/governance 1.0.0 <- shared/packages/governance
+2025-09-05T17:55:51.2885505Z + @dotmac/typescript-config 1.0.0 <- shared/packages/typescript-config
+2025-09-05T17:55:51.2885984Z 
+2025-09-05T17:55:51.5951466Z . prepare$ husky install
+2025-09-05T17:55:51.6492609Z . prepare: husky - install command is DEPRECATED
+2025-09-05T17:55:51.6533448Z . prepare: .git can't be found
+2025-09-05T17:55:51.6535455Z . prepare: Done
+2025-09-05T17:55:51.7784988Z isp-framework/admin prepare$ husky install
+2025-09-05T17:55:51.8361612Z isp-framework/admin prepare: husky - install command is DEPRECATED
+2025-09-05T17:55:51.8402343Z isp-framework/admin prepare: .git can't be found
+2025-09-05T17:55:51.8404653Z isp-framework/admin prepare: Done
+2025-09-05T17:55:51.8449045Z Done in 26.6s
+2025-09-05T17:55:51.9701765Z ##[group]Run if [ -f "package.json" ]; then
+2025-09-05T17:55:51.9702124Z [36;1mif [ -f "package.json" ]; then[0m
+2025-09-05T17:55:51.9702694Z [36;1m  if grep -q "type-check" package.json; then[0m
+2025-09-05T17:55:51.9703010Z [36;1m    pnpm run type-check[0m
+2025-09-05T17:55:51.9703229Z [36;1m  else[0m
+2025-09-05T17:55:51.9703472Z [36;1m    echo "⚠️ No type-check script found, skipping"[0m
+2025-09-05T17:55:51.9703751Z [36;1m  fi[0m
+2025-09-05T17:55:51.9703919Z [36;1m  [0m
+2025-09-05T17:55:51.9704122Z [36;1m  if grep -q "lint" package.json; then[0m
+2025-09-05T17:55:51.9704386Z [36;1m    pnpm run lint[0m
+2025-09-05T17:55:51.9704594Z [36;1m  else[0m
+2025-09-05T17:55:51.9704804Z [36;1m    echo "⚠️ No lint script found, skipping"[0m
+2025-09-05T17:55:51.9705059Z [36;1m  fi[0m
+2025-09-05T17:55:51.9705221Z [36;1mfi[0m
+2025-09-05T17:55:51.9735728Z shell: /usr/bin/bash -e {0}
+2025-09-05T17:55:51.9735970Z env:
+2025-09-05T17:55:51.9736144Z   PYTHON_VERSION: 3.9
+2025-09-05T17:55:51.9736382Z   NODE_VERSION: 18
+2025-09-05T17:55:51.9736564Z   PNPM_VERSION: 8
+2025-09-05T17:55:51.9736819Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2025-09-05T17:55:51.9737104Z ##[endgroup]
+2025-09-05T17:55:52.4117394Z 
+2025-09-05T17:55:52.4118639Z > @dotmac/tenant-portal@0.1.0 type-check /home/runner/work/dotmac_framework/dotmac_framework/frontend/management-portal/tenant
+2025-09-05T17:55:52.4119487Z > tsc --noEmit --project tsconfig.dev.json
+2025-09-05T17:55:52.4119733Z 
+2025-09-05T17:55:57.7135186Z ##[error]src/__tests__/mocks/file-mock.ts(6,1): error TS1203: Export assignment cannot be used when targeting ECMAScript modules. Consider using 'export default' or another module format instead.
+2025-09-05T17:55:57.7147285Z ##[error]src/__tests__/utils/test-utils.tsx(106,7): error TS2769: No overload matches this call.
+2025-09-05T17:55:57.7148334Z   The last overload gave the following error.
+2025-09-05T17:55:57.7149235Z     Argument of type '{ value: Partial<MockAuthContextValue>; }' is not assignable to parameter of type 'Attributes & { children: ReactNode; value?: Partial<MockAuthContextValue> | undefined; }'.
+2025-09-05T17:55:57.7150686Z       Property 'children' is missing in type '{ value: Partial<MockAuthContextValue>; }' but required in type '{ children: ReactNode; value?: Partial<MockAuthContextValue> | undefined; }'.
+2025-09-05T17:55:57.7152506Z ##[error]src/app/(authenticated)/dashboard/page.tsx(17,34): error TS2307: Cannot find module '@/lib/tenant-api-service' or its corresponding type declarations.
+2025-09-05T17:55:57.7154244Z ##[error]src/app/(authenticated)/dashboard/page.tsx(23,8): error TS2307: Cannot find module '@dotmac/primitives' or its corresponding type declarations.
+2025-09-05T17:55:57.7155831Z ##[error]src/app/api/csp-report/route.ts(224,43): error TS2307: Cannot find module '@/lib/server-http' or its corresponding type declarations.
+2025-09-05T17:55:57.7157356Z ##[error]src/app/layout.tsx(5,39): error TS2307: Cannot find module '@dotmac/portal-components' or its corresponding type declarations.
+2025-09-05T17:55:57.7158834Z ##[error]src/app/layout.tsx(6,42): error TS2307: Cannot find module '@/lib/error-handling' or its corresponding type declarations.
+2025-09-05T17:55:57.7160355Z ##[error]src/app/layout.tsx(7,49): error TS2307: Cannot find module '@/lib/performance-monitoring' or its corresponding type declarations.
+2025-09-05T17:55:57.7161858Z ##[error]src/app/layout.tsx(8,45): error TS2307: Cannot find module '@/lib/asset-optimization' or its corresponding type declarations.
+2025-09-05T17:55:57.7163648Z ##[error]src/app/layout.tsx(9,37): error TS2307: Cannot find module '@/lib/caching-strategies' or its corresponding type declarations.
+2025-09-05T17:55:57.7165190Z ##[error]src/app/login/page.tsx(6,33): error TS2307: Cannot find module '@/lib/env-config' or its corresponding type declarations.
+2025-09-05T17:55:57.7166681Z ##[error]src/app/login/page.tsx(13,40): error TS2307: Cannot find module '@/lib/accessibility' or its corresponding type declarations.
+2025-09-05T17:55:57.7168596Z ##[error]src/components/auth/TenantAuthProvider.tsx(13,35): error TS2307: Cannot find module '@/lib/secure-auth-service' or its corresponding type declarations.
+2025-09-05T17:55:57.7170432Z ##[error]src/components/auth/TenantAuthProvider.tsx(14,40): error TS2307: Cannot find module '@/lib/validation-schemas' or its corresponding type declarations.
+2025-09-05T17:55:57.7172368Z ##[error]src/components/auth/TenantAuthProvider.tsx(15,31): error TS2307: Cannot find module '@/lib/sanitization' or its corresponding type declarations.
+2025-09-05T17:55:57.7174124Z ##[error]src/components/auth/TenantAuthProvider.tsx(16,65): error TS2307: Cannot find module '@/lib/auth-performance' or its corresponding type declarations.
+2025-09-05T17:55:57.7176113Z ##[error]src/components/auth/TenantAuthProviderNew.tsx(3,39): error TS2307: Cannot find module '@dotmac/auth' or its corresponding type declarations.
+2025-09-05T17:55:57.7177993Z ##[error]src/components/auth/TenantAuthProviderNew.tsx(4,40): error TS2307: Cannot find module '@dotmac/auth' or its corresponding type declarations.
+2025-09-05T17:55:57.7179734Z ##[error]src/components/dev/AccessibilityTester.tsx(14,8): error TS2307: Cannot find module '@/lib/accessibility-testing' or its corresponding type declarations.
+2025-09-05T17:55:57.7181243Z ##[error]src/components/dev/AccessibilityTester.tsx(251,48): error TS7006: Parameter 'issue' implicitly has an 'any' type.
+2025-09-05T17:55:57.7182911Z ##[error]src/components/dev/AccessibilityTester.tsx(251,55): error TS7006: Parameter 'index' implicitly has an 'any' type.
+2025-09-05T17:55:57.7184575Z ##[error]src/components/dev/PerformanceMonitor.tsx(15,8): error TS2307: Cannot find module '@/lib/performance-monitoring' or its corresponding type declarations.
+2025-09-05T17:55:57.7186308Z ##[error]src/components/dev/PerformanceMonitor.tsx(16,33): error TS2307: Cannot find module '@/lib/caching-strategies' or its corresponding type declarations.
+2025-09-05T17:55:57.7188013Z ##[error]src/components/dev/PerformanceMonitor.tsx(17,41): error TS2307: Cannot find module '@/lib/asset-optimization' or its corresponding type declarations.
+2025-09-05T17:55:57.7189674Z ##[error]src/components/dev/PerformanceMonitor.tsx(251,52): error TS7006: Parameter 'rec' implicitly has an 'any' type.
+2025-09-05T17:55:57.7191024Z ##[error]src/components/dev/PerformanceMonitor.tsx(251,57): error TS7006: Parameter 'index' implicitly has an 'any' type.
+2025-09-05T17:55:57.7192766Z ##[error]src/components/error/ErrorBoundary.tsx(3,70): error TS2307: Cannot find module '@dotmac/providers' or its corresponding type declarations.
+2025-09-05T17:55:57.7194465Z ##[error]src/components/layout/TenantLayout.tsx(6,33): error TS2307: Cannot find module '@dotmac/primitives' or its corresponding type declarations.
+2025-09-05T17:55:57.7196119Z ##[error]src/components/lazy/LazyComponents.tsx(13,8): error TS2307: Cannot find module '@/lib/code-splitting' or its corresponding type declarations.
+2025-09-05T17:55:57.7197935Z ##[error]src/components/lazy/LazyComponents.tsx(14,10): error TS2305: Module '"@/components/ui/AccessibleForm"' has no exported member 'AccessibleLoadingSpinner'.
+2025-09-05T17:55:57.7199780Z ##[error]src/components/lazy/LazyComponents.tsx(251,16): error TS2307: Cannot find module '@/components/modals/ConfirmationModal' or its corresponding type declarations.
+2025-09-05T17:55:57.7201602Z ##[error]src/components/lazy/LazyComponents.tsx(257,64): error TS2307: Cannot find module '@/components/modals/AlertModal' or its corresponding type declarations.
+2025-09-05T17:55:57.7203589Z ##[error]src/components/lazy/LazyComponents.tsx(261,63): error TS2307: Cannot find module '@/components/modals/FormModal' or its corresponding type declarations.
+2025-09-05T17:55:57.7205401Z ##[error]src/components/lazy/LazyComponents.tsx(270,16): error TS2307: Cannot find module '@/components/charts/ChartComponent' or its corresponding type declarations.
+2025-09-05T17:55:57.7207411Z ##[error]src/components/lazy/LazyComponents.tsx(285,16): error TS2307: Cannot find module '@/components/charts/DataVisualization' or its corresponding type declarations.
+2025-09-05T17:55:57.7208864Z ##[error]src/components/lazy/LazyComponents.tsx(338,7): error TS2304: Cannot find name 'LazyUserProfile'.
+2025-09-05T17:55:57.7210363Z ##[error]src/components/ui/AccessibleForm.tsx(6,41): error TS2307: Cannot find module '@dotmac/primitives' or its corresponding type declarations.
+2025-09-05T17:55:57.7211954Z ##[error]src/components/ui/AccessibleForm.tsx(7,34): error TS2307: Cannot find module '@dotmac/primitives' or its corresponding type declarations.
+2025-09-05T17:55:57.7213784Z ##[error]src/middleware.ts(5,72): error TS2307: Cannot find module '@dotmac/middleware' or its corresponding type declarations.
+2025-09-05T17:55:57.7215712Z ##[error]tests/e2e/smoke.a11y.e2e.ts(2,10): error TS2614: Module '"@axe-core/playwright"' has no exported member 'injectAxe'. Did you mean to use 'import injectAxe from "@axe-core/playwright"' instead?
+2025-09-05T17:55:57.7217753Z ##[error]tests/e2e/smoke.a11y.e2e.ts(2,21): error TS2614: Module '"@axe-core/playwright"' has no exported member 'checkA11y'. Did you mean to use 'import checkA11y from "@axe-core/playwright"' instead?
+2025-09-05T17:55:57.7219478Z ##[error]tests/e2e/subscription-management.spec.ts(255,11): error TS2345: Argument of type 'Locator' is not assignable to parameter of type 'Page'.
+2025-09-05T17:55:57.7220671Z   Type 'Locator' is missing the following properties from type 'Page': addInitScript, $, $$, $eval, and 64 more.
+2025-09-05T17:55:57.7221770Z ##[error]tests/e2e/subscription-management.spec.ts(323,11): error TS2345: Argument of type 'Locator' is not assignable to parameter of type 'Page'.
+2025-09-05T17:55:57.7223155Z   Type 'Locator' is missing the following properties from type 'Page': addInitScript, $, $$, $eval, and 64 more.
+2025-09-05T17:55:57.7224244Z ##[error]tests/e2e/subscription-management.spec.ts(519,11): error TS2345: Argument of type 'Locator' is not assignable to parameter of type 'Page'.
+2025-09-05T17:55:57.7225416Z   Type 'Locator' is missing the following properties from type 'Page': addInitScript, $, $$, $eval, and 64 more.
+2025-09-05T17:55:57.7226493Z ##[error]tests/e2e/subscription-management.spec.ts(537,43): error TS2345: Argument of type 'Locator' is not assignable to parameter of type 'Page'.
+2025-09-05T17:55:57.7227845Z   Type 'Locator' is missing the following properties from type 'Page': addInitScript, $, $$, $eval, and 64 more.
+2025-09-05T17:55:57.7228956Z ##[error]tests/e2e/tenant-dashboard.spec.ts(851,26): error TS2345: Argument of type 'Locator' is not assignable to parameter of type 'string'.
+2025-09-05T17:55:57.7230351Z ##[error]tests/e2e/test-reporter.ts(183,30): error TS2339: Property 'parent' does not exist on type 'TestResult'.
+2025-09-05T17:55:57.7255147Z ##[error]tests/e2e/test-reporter.ts(192,23): error TS2339: Property 'parent' does not exist on type 'TestResult'.
+2025-09-05T17:55:57.7256590Z ##[error]tests/e2e/test-reporter.ts(201,20): error TS2339: Property 'test' does not exist on type 'TestResult'.
+2025-09-05T17:55:57.7258322Z ##[error]tests/e2e/test-reporter.ts(202,7): error TS2322: Type '"failed" | "passed" | "timedOut" | "skipped" | "interrupted"' is not assignable to type '"failed" | "passed" | "skipped"'.
+2025-09-05T17:55:57.7259493Z   Type '"timedOut"' is not assignable to type '"failed" | "passed" | "skipped"'.
+2025-09-05T17:55:57.7260330Z ##[error]tests/e2e/test-reporter.ts(209,37): error TS2339: Property 'test' does not exist on type 'TestResult'.
+2025-09-05T17:55:57.7261608Z ##[error]tests/e2e/test-reporter.ts(247,17): error TS2339: Property 'test' does not exist on type 'TestResult'.
+2025-09-05T17:55:57.7263109Z ##[error]tests/e2e/test-reporter.ts(260,17): error TS2339: Property 'test' does not exist on type 'TestResult'.
+2025-09-05T17:55:57.7264360Z ##[error]tests/e2e/test-reporter.ts(280,11): error TS2339: Property 'test' does not exist on type 'TestResult'.
+2025-09-05T17:55:57.7265582Z ##[error]tests/e2e/test-reporter.ts(281,11): error TS2339: Property 'test' does not exist on type 'TestResult'.
+2025-09-05T17:55:57.7266991Z ##[error]tests/e2e/test-reporter.ts(286,11): error TS2339: Property 'test' does not exist on type 'TestResult'.
+2025-09-05T17:55:57.7268256Z ##[error]tests/e2e/test-reporter.ts(287,11): error TS2339: Property 'test' does not exist on type 'TestResult'.
+2025-09-05T17:55:57.7269567Z ##[error]tests/e2e/test-reporter.ts(292,11): error TS2339: Property 'test' does not exist on type 'TestResult'.
+2025-09-05T17:55:57.7270812Z ##[error]tests/e2e/test-reporter.ts(293,11): error TS2339: Property 'test' does not exist on type 'TestResult'.
+2025-09-05T17:55:57.7272047Z ##[error]tests/e2e/test-reporter.ts(298,11): error TS2339: Property 'test' does not exist on type 'TestResult'.
+2025-09-05T17:55:57.7273539Z ##[error]tests/e2e/test-reporter.ts(299,11): error TS2339: Property 'test' does not exist on type 'TestResult'.
+2025-09-05T17:55:57.7275625Z ##[error]tests/e2e/utils/page-objects.ts(16,5): error TS2740: Type 'ElementHandle<HTMLElement | SVGElement>' is missing the following properties from type 'Locator': evaluateAll, elementHandle, all, allInnerTexts, and 27 more.
+2025-09-05T17:55:57.7277316Z ##[error]tests/e2e/utils/page-objects.ts(126,5): error TS2322: Type '(string | null)[]' is not assignable to type 'string[]'.
+2025-09-05T17:55:57.7278250Z   Type 'string | null' is not assignable to type 'string'.
+2025-09-05T17:55:57.7278621Z     Type 'null' is not assignable to type 'string'.
+2025-09-05T17:55:57.7561599Z  ELIFECYCLE  Command failed with exit code 2.
+2025-09-05T17:55:57.7761423Z ##[error]Process completed with exit code 2.
+2025-09-05T17:55:57.7822922Z Post job cleanup.
+2025-09-05T17:55:57.8717625Z Pruning is unnecessary.
+2025-09-05T17:55:57.8811507Z Post job cleanup.
+2025-09-05T17:55:57.9782439Z [command]/usr/bin/git version
+2025-09-05T17:55:57.9823767Z git version 2.51.0
+2025-09-05T17:55:57.9868538Z Temporarily overriding HOME='/home/runner/work/_temp/e39d8880-bce2-4417-b371-c79e3597c6cc' before making global git config changes
+2025-09-05T17:55:57.9869635Z Adding repository directory to the temporary git global config as a safe directory
+2025-09-05T17:55:57.9874276Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/dotmac_framework/dotmac_framework
+2025-09-05T17:55:57.9911584Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-09-05T17:55:57.9945759Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-09-05T17:55:58.0189030Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-09-05T17:55:58.0210363Z http.https://github.com/.extraheader
+2025-09-05T17:55:58.0222944Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2025-09-05T17:55:58.0253566Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-09-05T17:55:58.0584860Z Cleaning up orphan processes

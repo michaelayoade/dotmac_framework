@@ -1,0 +1,27 @@
+﻿2025-09-05T17:55:18.3515264Z ##[group]Run pnpm/action-setup@v2
+2025-09-05T17:55:18.3515563Z with:
+2025-09-05T17:55:18.3515732Z   version: 8
+2025-09-05T17:55:18.3515915Z   dest: ~/setup-pnpm
+2025-09-05T17:55:18.3516107Z   run_install: null
+2025-09-05T17:55:18.3516311Z   package_json_file: package.json
+2025-09-05T17:55:18.3516537Z   standalone: false
+2025-09-05T17:55:18.3516715Z env:
+2025-09-05T17:55:18.3516890Z   PYTHON_VERSION: 3.9
+2025-09-05T17:55:18.3517089Z   NODE_VERSION: 18
+2025-09-05T17:55:18.3517263Z   PNPM_VERSION: 8
+2025-09-05T17:55:18.3517444Z ##[endgroup]
+2025-09-05T17:55:18.4452533Z ##[group]Running self-installer...
+2025-09-05T17:55:19.0166622Z Progress: resolved 1, reused 0, downloaded 0, added 0
+2025-09-05T17:55:19.0256989Z Packages: +1
+2025-09-05T17:55:19.0257496Z +
+2025-09-05T17:55:19.6175002Z Packages are hard linked from the content-addressable store to the virtual store.
+2025-09-05T17:55:19.6176113Z   Content-addressable store is at: /home/runner/.local/share/pnpm/store/v3
+2025-09-05T17:55:19.6176926Z   Virtual store is at:             node_modules/.pnpm
+2025-09-05T17:55:19.6460591Z 
+2025-09-05T17:55:19.6461180Z dependencies:
+2025-09-05T17:55:19.6461734Z + pnpm 8.15.9 (10.15.1 is available)
+2025-09-05T17:55:19.6462239Z 
+2025-09-05T17:55:19.6493112Z Done in 1s
+2025-09-05T17:55:20.0166673Z Progress: resolved 1, reused 0, downloaded 1, added 1, done
+2025-09-05T17:55:20.0304389Z ##[endgroup]
+2025-09-05T17:55:20.0307841Z Installation Completed!

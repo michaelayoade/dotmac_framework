@@ -1,0 +1,32 @@
+﻿2025-09-05T17:55:22.9491384Z ##[group]Run poetry install --with security
+2025-09-05T17:55:22.9491966Z [36;1mpoetry install --with security[0m
+2025-09-05T17:55:22.9526267Z shell: /usr/bin/bash -e {0}
+2025-09-05T17:55:22.9526516Z env:
+2025-09-05T17:55:22.9526703Z   PYTHON_VERSION: 3.9
+2025-09-05T17:55:22.9526921Z   NODE_VERSION: 18
+2025-09-05T17:55:22.9527136Z   PNPM_VERSION: 8
+2025-09-05T17:55:22.9527399Z   pythonLocation: /opt/hostedtoolcache/Python/3.9.23/x64
+2025-09-05T17:55:22.9527828Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.9.23/x64/lib/pkgconfig
+2025-09-05T17:55:22.9528238Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.9.23/x64
+2025-09-05T17:55:22.9528592Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.9.23/x64
+2025-09-05T17:55:22.9528934Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.9.23/x64
+2025-09-05T17:55:22.9529289Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.9.23/x64/lib
+2025-09-05T17:55:22.9529595Z   VENV: .venv/bin/activate
+2025-09-05T17:55:22.9529808Z ##[endgroup]
+2025-09-05T17:55:23.4220373Z Creating virtualenv dotmac-framework in /home/runner/work/dotmac_framework/dotmac_framework/.venv
+2025-09-05T17:55:24.1602197Z Updating dependencies
+2025-09-05T17:55:24.1605085Z Resolving dependencies...
+2025-09-05T17:55:30.4361588Z 
+2025-09-05T17:55:30.4365567Z The current project's supported Python range (>=3.9,<4.0) is not compatible with some of the required packages Python requirement:
+2025-09-05T17:55:30.4366997Z   - dotmac-ticketing requires Python >=3.11, so it will not be installable for Python >=3.9,<3.11
+2025-09-05T17:55:30.4367504Z 
+2025-09-05T17:55:30.4368424Z Because dotmac-framework depends on dotmac-ticketing (1.0.0) @ file:///home/runner/work/dotmac_framework/dotmac_framework/packages/dotmac-ticketing which requires Python >=3.11, version solving failed.
+2025-09-05T17:55:30.4369476Z 
+2025-09-05T17:55:30.4370016Z   * Check your dependencies Python requirement: The Python requirement can be specified via the `python` or `markers` properties
+2025-09-05T17:55:30.4370964Z 
+2025-09-05T17:55:30.4371379Z     For dotmac-ticketing, a possible solution would be to set the `python` property to ">=3.11,<4.0"
+2025-09-05T17:55:30.4371898Z 
+2025-09-05T17:55:30.4372322Z     https://python-poetry.org/docs/dependency-specification/#python-restricted-dependencies,
+2025-09-05T17:55:30.4373227Z     https://python-poetry.org/docs/dependency-specification/#using-environment-markers
+2025-09-05T17:55:30.4373736Z 
+2025-09-05T17:55:30.9926812Z ##[error]Process completed with exit code 1.

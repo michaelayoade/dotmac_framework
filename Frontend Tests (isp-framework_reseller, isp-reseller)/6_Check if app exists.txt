@@ -1,0 +1,16 @@
+﻿2025-09-05T17:55:19.8047925Z ##[group]Run if [ -d "./frontend/isp-framework/reseller" ] && [ -f "./frontend/isp-framework/reseller/package.json" ]; then
+2025-09-05T17:55:19.8048741Z [36;1mif [ -d "./frontend/isp-framework/reseller" ] && [ -f "./frontend/isp-framework/reseller/package.json" ]; then[0m
+2025-09-05T17:55:19.8049244Z [36;1m  echo "exists=true" >> $GITHUB_OUTPUT[0m
+2025-09-05T17:55:19.8049562Z [36;1m  echo "✅ App isp-framework/reseller exists"[0m
+2025-09-05T17:55:19.8049830Z [36;1melse[0m
+2025-09-05T17:55:19.8050035Z [36;1m  echo "exists=false" >> $GITHUB_OUTPUT[0m
+2025-09-05T17:55:19.8050379Z [36;1m  echo "⚠️ App isp-framework/reseller does not exist, skipping"[0m
+2025-09-05T17:55:19.8050689Z [36;1mfi[0m
+2025-09-05T17:55:19.8111704Z shell: /usr/bin/bash -e {0}
+2025-09-05T17:55:19.8111951Z env:
+2025-09-05T17:55:19.8112124Z   PYTHON_VERSION: 3.9
+2025-09-05T17:55:19.8112329Z   NODE_VERSION: 18
+2025-09-05T17:55:19.8112710Z   PNPM_VERSION: 8
+2025-09-05T17:55:19.8112958Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2025-09-05T17:55:19.8113266Z ##[endgroup]
+2025-09-05T17:55:19.8183852Z ✅ App isp-framework/reseller exists

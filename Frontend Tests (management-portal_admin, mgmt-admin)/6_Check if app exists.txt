@@ -1,0 +1,16 @@
+﻿2025-09-05T17:55:20.9485090Z ##[group]Run if [ -d "./frontend/management-portal/admin" ] && [ -f "./frontend/management-portal/admin/package.json" ]; then
+2025-09-05T17:55:20.9485902Z [36;1mif [ -d "./frontend/management-portal/admin" ] && [ -f "./frontend/management-portal/admin/package.json" ]; then[0m
+2025-09-05T17:55:20.9486401Z [36;1m  echo "exists=true" >> $GITHUB_OUTPUT[0m
+2025-09-05T17:55:20.9486708Z [36;1m  echo "✅ App management-portal/admin exists"[0m
+2025-09-05T17:55:20.9486964Z [36;1melse[0m
+2025-09-05T17:55:20.9487163Z [36;1m  echo "exists=false" >> $GITHUB_OUTPUT[0m
+2025-09-05T17:55:20.9487505Z [36;1m  echo "⚠️ App management-portal/admin does not exist, skipping"[0m
+2025-09-05T17:55:20.9487812Z [36;1mfi[0m
+2025-09-05T17:55:20.9545985Z shell: /usr/bin/bash -e {0}
+2025-09-05T17:55:20.9546234Z env:
+2025-09-05T17:55:20.9546400Z   PYTHON_VERSION: 3.9
+2025-09-05T17:55:20.9546596Z   NODE_VERSION: 18
+2025-09-05T17:55:20.9546952Z   PNPM_VERSION: 8
+2025-09-05T17:55:20.9547187Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2025-09-05T17:55:20.9547487Z ##[endgroup]
+2025-09-05T17:55:20.9619122Z ✅ App management-portal/admin exists

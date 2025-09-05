@@ -1,0 +1,67 @@
+﻿2025-09-05T17:56:16.0448525Z Current runner version: '2.328.0'
+2025-09-05T17:56:16.0471082Z ##[group]Runner Image Provisioner
+2025-09-05T17:56:16.0471872Z Hosted Compute Agent
+2025-09-05T17:56:16.0472374Z Version: 20250829.383
+2025-09-05T17:56:16.0473212Z Commit: 27cb235aab5b0e52e153a26cd86b4742e89dac5d
+2025-09-05T17:56:16.0473909Z Build Date: 2025-08-29T13:48:48Z
+2025-09-05T17:56:16.0474459Z ##[endgroup]
+2025-09-05T17:56:16.0475064Z ##[group]Operating System
+2025-09-05T17:56:16.0475588Z Ubuntu
+2025-09-05T17:56:16.0476053Z 24.04.3
+2025-09-05T17:56:16.0476502Z LTS
+2025-09-05T17:56:16.0476966Z ##[endgroup]
+2025-09-05T17:56:16.0477402Z ##[group]Runner Image
+2025-09-05T17:56:16.0477992Z Image: ubuntu-24.04
+2025-09-05T17:56:16.0478510Z Version: 20250831.1.0
+2025-09-05T17:56:16.0479454Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20250831.1/images/ubuntu/Ubuntu2404-Readme.md
+2025-09-05T17:56:16.0480988Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20250831.1
+2025-09-05T17:56:16.0481892Z ##[endgroup]
+2025-09-05T17:56:16.0483801Z ##[group]GITHUB_TOKEN Permissions
+2025-09-05T17:56:16.0485863Z Checks: write
+2025-09-05T17:56:16.0486351Z Contents: read
+2025-09-05T17:56:16.0486958Z Metadata: read
+2025-09-05T17:56:16.0487426Z PullRequests: read
+2025-09-05T17:56:16.0487911Z Statuses: write
+2025-09-05T17:56:16.0488439Z ##[endgroup]
+2025-09-05T17:56:16.0490426Z Secret source: Actions
+2025-09-05T17:56:16.0491058Z Prepare workflow directory
+2025-09-05T17:56:16.0881852Z Prepare all required actions
+2025-09-05T17:56:16.0932607Z Complete job name: CI Status
+2025-09-05T17:56:16.1638464Z ##[group]Run echo "=== CI PIPELINE RESULTS ==="
+2025-09-05T17:56:16.1639285Z [36;1mecho "=== CI PIPELINE RESULTS ==="[0m
+2025-09-05T17:56:16.1640013Z [36;1mecho "Security: failure"[0m
+2025-09-05T17:56:16.1640567Z [36;1mecho "Backend: skipped"[0m
+2025-09-05T17:56:16.1641248Z [36;1mecho "Frontend: failure"[0m
+2025-09-05T17:56:16.1641883Z [36;1mecho "Integration: skipped"[0m
+2025-09-05T17:56:16.1642474Z [36;1m[0m
+2025-09-05T17:56:16.1642926Z [36;1m# Fail if critical jobs failed[0m
+2025-09-05T17:56:16.1644057Z [36;1mif [[ "failure" == "failure" ]]; then[0m
+2025-09-05T17:56:16.1644830Z [36;1m  echo "❌ Security checks failed"[0m
+2025-09-05T17:56:16.1645384Z [36;1m  exit 1[0m
+2025-09-05T17:56:16.1645921Z [36;1mfi[0m
+2025-09-05T17:56:16.1646333Z [36;1m[0m
+2025-09-05T17:56:16.1646861Z [36;1mif [[ "skipped" == "failure" ]]; then[0m
+2025-09-05T17:56:16.1647491Z [36;1m  echo "❌ Backend tests failed"[0m
+2025-09-05T17:56:16.1648079Z [36;1m  exit 1[0m
+2025-09-05T17:56:16.1648578Z [36;1mfi[0m
+2025-09-05T17:56:16.1649112Z [36;1m[0m
+2025-09-05T17:56:16.1649555Z [36;1mif [[ "failure" == "failure" ]]; then[0m
+2025-09-05T17:56:16.1650170Z [36;1m  echo "❌ Frontend tests failed"[0m
+2025-09-05T17:56:16.1650798Z [36;1m  exit 1[0m
+2025-09-05T17:56:16.1651226Z [36;1mfi[0m
+2025-09-05T17:56:16.1651687Z [36;1m[0m
+2025-09-05T17:56:16.1652197Z [36;1mecho "✅ All critical checks passed"[0m
+2025-09-05T17:56:16.2859608Z shell: /usr/bin/bash -e {0}
+2025-09-05T17:56:16.2860551Z env:
+2025-09-05T17:56:16.2860972Z   PYTHON_VERSION: 3.9
+2025-09-05T17:56:16.2861597Z   NODE_VERSION: 18
+2025-09-05T17:56:16.2862039Z   PNPM_VERSION: 8
+2025-09-05T17:56:16.2862550Z ##[endgroup]
+2025-09-05T17:56:16.3051722Z === CI PIPELINE RESULTS ===
+2025-09-05T17:56:16.3052709Z Security: failure
+2025-09-05T17:56:16.3053931Z Backend: skipped
+2025-09-05T17:56:16.3054674Z Frontend: failure
+2025-09-05T17:56:16.3055419Z Integration: skipped
+2025-09-05T17:56:16.3157869Z ❌ Security checks failed
+2025-09-05T17:56:16.3174642Z ##[error]Process completed with exit code 1.
+2025-09-05T17:56:16.3280346Z Cleaning up orphan processes

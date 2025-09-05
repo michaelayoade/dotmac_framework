@@ -1,0 +1,16 @@
+﻿2025-09-05T17:55:20.5204448Z ##[group]Run if [ -d "./frontend/isp-framework/admin" ] && [ -f "./frontend/isp-framework/admin/package.json" ]; then
+2025-09-05T17:55:20.5205253Z [36;1mif [ -d "./frontend/isp-framework/admin" ] && [ -f "./frontend/isp-framework/admin/package.json" ]; then[0m
+2025-09-05T17:55:20.5205727Z [36;1m  echo "exists=true" >> $GITHUB_OUTPUT[0m
+2025-09-05T17:55:20.5206033Z [36;1m  echo "✅ App isp-framework/admin exists"[0m
+2025-09-05T17:55:20.5206304Z [36;1melse[0m
+2025-09-05T17:55:20.5206516Z [36;1m  echo "exists=false" >> $GITHUB_OUTPUT[0m
+2025-09-05T17:55:20.5206842Z [36;1m  echo "⚠️ App isp-framework/admin does not exist, skipping"[0m
+2025-09-05T17:55:20.5207146Z [36;1mfi[0m
+2025-09-05T17:55:20.5260241Z shell: /usr/bin/bash -e {0}
+2025-09-05T17:55:20.5260504Z env:
+2025-09-05T17:55:20.5260693Z   PYTHON_VERSION: 3.9
+2025-09-05T17:55:20.5260904Z   NODE_VERSION: 18
+2025-09-05T17:55:20.5261103Z   PNPM_VERSION: 8
+2025-09-05T17:55:20.5261581Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2025-09-05T17:55:20.5261940Z ##[endgroup]
+2025-09-05T17:55:20.5338918Z ✅ App isp-framework/admin exists

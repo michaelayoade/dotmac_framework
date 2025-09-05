@@ -1,0 +1,29 @@
+﻿2025-09-05T17:56:16.0447718Z Current runner version: '2.328.0'
+2025-09-05T17:56:16.0471060Z ##[group]Runner Image Provisioner
+2025-09-05T17:56:16.0471867Z Hosted Compute Agent
+2025-09-05T17:56:16.0472371Z Version: 20250829.383
+2025-09-05T17:56:16.0473206Z Commit: 27cb235aab5b0e52e153a26cd86b4742e89dac5d
+2025-09-05T17:56:16.0473905Z Build Date: 2025-08-29T13:48:48Z
+2025-09-05T17:56:16.0474456Z ##[endgroup]
+2025-09-05T17:56:16.0475060Z ##[group]Operating System
+2025-09-05T17:56:16.0475584Z Ubuntu
+2025-09-05T17:56:16.0476050Z 24.04.3
+2025-09-05T17:56:16.0476498Z LTS
+2025-09-05T17:56:16.0476963Z ##[endgroup]
+2025-09-05T17:56:16.0477399Z ##[group]Runner Image
+2025-09-05T17:56:16.0477988Z Image: ubuntu-24.04
+2025-09-05T17:56:16.0478507Z Version: 20250831.1.0
+2025-09-05T17:56:16.0479449Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20250831.1/images/ubuntu/Ubuntu2404-Readme.md
+2025-09-05T17:56:16.0480808Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20250831.1
+2025-09-05T17:56:16.0481888Z ##[endgroup]
+2025-09-05T17:56:16.0483787Z ##[group]GITHUB_TOKEN Permissions
+2025-09-05T17:56:16.0485844Z Checks: write
+2025-09-05T17:56:16.0486347Z Contents: read
+2025-09-05T17:56:16.0486954Z Metadata: read
+2025-09-05T17:56:16.0487423Z PullRequests: read
+2025-09-05T17:56:16.0487908Z Statuses: write
+2025-09-05T17:56:16.0488436Z ##[endgroup]
+2025-09-05T17:56:16.0490409Z Secret source: Actions
+2025-09-05T17:56:16.0491054Z Prepare workflow directory
+2025-09-05T17:56:16.0881817Z Prepare all required actions
+2025-09-05T17:56:16.0932586Z Complete job name: CI Status

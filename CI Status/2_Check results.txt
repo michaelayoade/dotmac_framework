@@ -1,0 +1,37 @@
+﻿2025-09-05T17:56:16.1638435Z ##[group]Run echo "=== CI PIPELINE RESULTS ==="
+2025-09-05T17:56:16.1639279Z [36;1mecho "=== CI PIPELINE RESULTS ==="[0m
+2025-09-05T17:56:16.1639959Z [36;1mecho "Security: failure"[0m
+2025-09-05T17:56:16.1640563Z [36;1mecho "Backend: skipped"[0m
+2025-09-05T17:56:16.1641244Z [36;1mecho "Frontend: failure"[0m
+2025-09-05T17:56:16.1641879Z [36;1mecho "Integration: skipped"[0m
+2025-09-05T17:56:16.1642470Z [36;1m[0m
+2025-09-05T17:56:16.1642923Z [36;1m# Fail if critical jobs failed[0m
+2025-09-05T17:56:16.1644048Z [36;1mif [[ "failure" == "failure" ]]; then[0m
+2025-09-05T17:56:16.1644826Z [36;1m  echo "❌ Security checks failed"[0m
+2025-09-05T17:56:16.1645377Z [36;1m  exit 1[0m
+2025-09-05T17:56:16.1645917Z [36;1mfi[0m
+2025-09-05T17:56:16.1646330Z [36;1m[0m
+2025-09-05T17:56:16.1646857Z [36;1mif [[ "skipped" == "failure" ]]; then[0m
+2025-09-05T17:56:16.1647486Z [36;1m  echo "❌ Backend tests failed"[0m
+2025-09-05T17:56:16.1648075Z [36;1m  exit 1[0m
+2025-09-05T17:56:16.1648525Z [36;1mfi[0m
+2025-09-05T17:56:16.1649109Z [36;1m[0m
+2025-09-05T17:56:16.1649552Z [36;1mif [[ "failure" == "failure" ]]; then[0m
+2025-09-05T17:56:16.1650167Z [36;1m  echo "❌ Frontend tests failed"[0m
+2025-09-05T17:56:16.1650795Z [36;1m  exit 1[0m
+2025-09-05T17:56:16.1651223Z [36;1mfi[0m
+2025-09-05T17:56:16.1651684Z [36;1m[0m
+2025-09-05T17:56:16.1652193Z [36;1mecho "✅ All critical checks passed"[0m
+2025-09-05T17:56:16.2859573Z shell: /usr/bin/bash -e {0}
+2025-09-05T17:56:16.2860541Z env:
+2025-09-05T17:56:16.2860968Z   PYTHON_VERSION: 3.9
+2025-09-05T17:56:16.2861594Z   NODE_VERSION: 18
+2025-09-05T17:56:16.2862036Z   PNPM_VERSION: 8
+2025-09-05T17:56:16.2862547Z ##[endgroup]
+2025-09-05T17:56:16.3051692Z === CI PIPELINE RESULTS ===
+2025-09-05T17:56:16.3052693Z Security: failure
+2025-09-05T17:56:16.3053914Z Backend: skipped
+2025-09-05T17:56:16.3054664Z Frontend: failure
+2025-09-05T17:56:16.3055405Z Integration: skipped
+2025-09-05T17:56:16.3157842Z ❌ Security checks failed
+2025-09-05T17:56:16.3174594Z ##[error]Process completed with exit code 1.
