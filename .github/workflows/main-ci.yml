@@ -186,7 +186,7 @@ jobs:
           echo "✅ Security bootstrap environment validated"
 
   # Frontend lint + typecheck (monorepo)
-  frontend:
+  frontend-lint:
     name: Frontend Lint and Typecheck
     runs-on: ubuntu-latest
     needs: [detect-changes, security]
